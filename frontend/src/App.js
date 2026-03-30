@@ -5,6 +5,8 @@ import LoginPage from './pages/LoginPage';
 import StudentDashboard from './pages/StudentDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import HodDashboard from './pages/HodDashboard';
+import ExamCellDashboard from './pages/ExamCellDashboard';
 import QuizAttempt from './pages/QuizAttempt';
 import QuizResults from './pages/QuizResults';
 import SemesterResults from './pages/SemesterResults';
@@ -14,6 +16,15 @@ import QuizBuilder from './pages/QuizBuilder';
 import LiveMonitor from './pages/LiveMonitor';
 import UserManagement from './pages/UserManagement';
 import CodePlayground from './pages/CodePlayground';
+import MarksEntry from './pages/MarksEntry';
+
+const ROLE_DASHBOARD = {
+  student: 'student-dashboard',
+  teacher: 'teacher-dashboard',
+  admin: 'admin-dashboard',
+  hod: 'hod-dashboard',
+  exam_cell: 'examcell-dashboard',
+};
 
 function App() {
   const [currentPage, setCurrentPage] = useState('login');
@@ -27,9 +38,7 @@ function App() {
     try {
       const { data } = await authAPI.me();
       setUser(data);
-      if (data.role === 'student') setCurrentPage('student-dashboard');
-      else if (data.role === 'teacher') setCurrentPage('teacher-dashboard');
-      else if (data.role === 'admin') setCurrentPage('admin-dashboard');
+      setCurrentPage(ROLE_DASHBOARD[data.role] || 'login');
     } catch {
       clearAuthToken();
       localStorage.removeItem('auth_token');
@@ -45,9 +54,7 @@ function App() {
       setAuthToken(userData.access_token);
       localStorage.setItem('auth_token', userData.access_token);
     }
-    if (userData.role === 'student') setCurrentPage('student-dashboard');
-    else if (userData.role === 'teacher') setCurrentPage('teacher-dashboard');
-    else if (userData.role === 'admin') setCurrentPage('admin-dashboard');
+    setCurrentPage(ROLE_DASHBOARD[userData.role] || 'login');
   };
 
   const handleLogout = async () => {
@@ -80,6 +87,8 @@ function App() {
       case 'student-dashboard': return <StudentDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
       case 'teacher-dashboard': return <TeacherDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
       case 'admin-dashboard': return <AdminDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
+      case 'hod-dashboard': return <HodDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
+      case 'examcell-dashboard': return <ExamCellDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
       case 'quiz-attempt': return <QuizAttempt quizData={selectedData} navigate={navigate} user={user} />;
       case 'quiz-results': return <QuizResults navigate={navigate} user={user} />;
       case 'semester-results': return <SemesterResults navigate={navigate} user={user} />;
@@ -89,6 +98,7 @@ function App() {
       case 'live-monitor': return <LiveMonitor quiz={selectedData} navigate={navigate} />;
       case 'user-management': return <UserManagement navigate={navigate} user={user} />;
       case 'code-playground': return <CodePlayground navigate={navigate} user={user} />;
+      case 'marks-entry': return <MarksEntry navigate={navigate} user={user} />;
       default: return <LoginPage onLogin={handleLogin} />;
     }
   };

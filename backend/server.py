@@ -12,10 +12,12 @@ import tempfile
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from bson import ObjectId
-from fastapi import FastAPI, HTTPException, Request, Response, Depends, Query
+from fastapi import FastAPI, HTTPException, Request, Response, Depends, Query, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
+import io
+import csv
 
 # ─── App & DB ───────────────────────────────────────────────────────────────
 app = FastAPI(title="QuizPortal API")
@@ -146,6 +148,42 @@ class CodeExecuteRequest(BaseModel):
     code: str
     language: str = "python"
     test_input: str = ""
+
+class FacultyAssignment(BaseModel):
+    teacher_id: str
+    subject_code: str
+    subject_name: str
+    department: str
+    batch: str
+    section: str
+    semester: int = 1
+
+class MarkEntryItem(BaseModel):
+    student_id: str
+    college_id: str
+    student_name: str
+    marks: Optional[float] = None
+
+class MarkEntrySave(BaseModel):
+    assignment_id: str
+    exam_type: str  # mid1 or mid2
+    semester: int
+    max_marks: float = 30
+    entries: List[MarkEntryItem]
+
+class MarkReview(BaseModel):
+    action: str  # approve or reject
+    remarks: str = ""
+
+class EndtermEntry(BaseModel):
+    subject_code: str
+    subject_name: str
+    department: str
+    batch: str
+    section: str
+    semester: int
+    max_marks: float = 100
+    entries: list
 
 # ─── Auth Routes ────────────────────────────────────────────────────────────
 @app.post("/api/auth/login")
@@ -553,14 +591,289 @@ async def teacher_dashboard(user: dict = Depends(require_role("teacher", "admin"
 async def admin_dashboard(user: dict = Depends(require_role("admin"))):
     total_students = await db.users.count_documents({"role": "student"})
     total_teachers = await db.users.count_documents({"role": "teacher"})
+    total_hods = await db.users.count_documents({"role": "hod"})
+    total_exam_cell = await db.users.count_documents({"role": "exam_cell"})
     total_quizzes = await db.quizzes.count_documents({})
     active_quizzes = await db.quizzes.count_documents({"status": "active"})
     dept_pipeline = [{"$match": {"role": "student"}}, {"$group": {"_id": "$department", "count": {"$sum": 1}}}]
     depts = await db.users.aggregate(dept_pipeline).to_list(20)
     return {
         "total_students": total_students, "total_teachers": total_teachers,
+        "total_hods": total_hods, "total_exam_cell": total_exam_cell,
         "total_quizzes": total_quizzes, "active_quizzes": active_quizzes,
         "departments": [{"name": d["_id"] or "Unassigned", "count": d["count"]} for d in depts],
+    }
+
+# ─── Faculty Assignment Routes (HOD) ───────────────────────────────────────
+@app.get("/api/faculty/teachers")
+async def list_department_teachers(user: dict = Depends(require_role("hod", "admin"))):
+    query = {"role": "teacher"}
+    if user["role"] == "hod":
+        query["department"] = user.get("department", "")
+    teachers = await db.users.find(query, {"password_hash": 0}).to_list(100)
+    return [serialize_doc(t) for t in teachers]
+
+@app.get("/api/faculty/assignments")
+async def list_assignments(user: dict = Depends(require_role("hod", "admin", "teacher"))):
+    query = {}
+    if user["role"] == "hod":
+        query["department"] = user.get("department", "")
+    elif user["role"] == "teacher":
+        query["teacher_id"] = user["id"]
+    assignments = await db.faculty_assignments.find(query).sort("created_at", -1).to_list(200)
+    return [serialize_doc(a) for a in assignments]
+
+@app.post("/api/faculty/assignments")
+async def create_assignment(req: FacultyAssignment, user: dict = Depends(require_role("hod", "admin"))):
+    teacher = await db.users.find_one({"_id": ObjectId(req.teacher_id)})
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    existing = await db.faculty_assignments.find_one({
+        "teacher_id": req.teacher_id, "subject_code": req.subject_code,
+        "batch": req.batch, "section": req.section, "semester": req.semester
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Assignment already exists")
+    doc = {
+        "teacher_id": req.teacher_id, "teacher_name": teacher.get("name", ""),
+        "subject_code": req.subject_code, "subject_name": req.subject_name,
+        "department": req.department, "batch": req.batch, "section": req.section,
+        "semester": req.semester, "assigned_by": user["id"],
+        "created_at": datetime.now(timezone.utc)
+    }
+    result = await db.faculty_assignments.insert_one(doc)
+    doc["_id"] = result.inserted_id
+    return serialize_doc(doc)
+
+@app.delete("/api/faculty/assignments/{assignment_id}")
+async def delete_assignment(assignment_id: str, user: dict = Depends(require_role("hod", "admin"))):
+    result = await db.faculty_assignments.delete_one({"_id": ObjectId(assignment_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    return {"message": "Assignment deleted"}
+
+# ─── Marks Entry Routes (Teacher) ─────────────────────────────────────────
+@app.get("/api/marks/my-assignments")
+async def my_assignments(user: dict = Depends(require_role("teacher"))):
+    assignments = await db.faculty_assignments.find({"teacher_id": user["id"]}).to_list(50)
+    return [serialize_doc(a) for a in assignments]
+
+@app.get("/api/marks/students")
+async def get_students_for_marks(department: str, batch: str, section: str, user: dict = Depends(require_role("teacher", "hod", "admin", "exam_cell"))):
+    students = await db.users.find({"role": "student", "department": department, "batch": batch, "section": section}, {"password_hash": 0}).sort("college_id", 1).to_list(200)
+    return [serialize_doc(s) for s in students]
+
+@app.get("/api/marks/entry/{assignment_id}/{exam_type}")
+async def get_mark_entry(assignment_id: str, exam_type: str, user: dict = Depends(require_role("teacher"))):
+    entry = await db.mark_entries.find_one({"assignment_id": assignment_id, "exam_type": exam_type, "teacher_id": user["id"]})
+    if entry:
+        return serialize_doc(entry)
+    return None
+
+@app.post("/api/marks/entry")
+async def save_mark_entry(req: MarkEntrySave, user: dict = Depends(require_role("teacher"))):
+    assignment = await db.faculty_assignments.find_one({"_id": ObjectId(req.assignment_id), "teacher_id": user["id"]})
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found or not yours")
+    existing = await db.mark_entries.find_one({"assignment_id": req.assignment_id, "exam_type": req.exam_type, "teacher_id": user["id"]})
+    entries_data = [e.dict() for e in req.entries]
+    if existing:
+        if existing.get("status") in ["submitted", "approved"]:
+            raise HTTPException(status_code=400, detail="Cannot edit submitted/approved marks")
+        await db.mark_entries.update_one({"_id": existing["_id"]}, {"$set": {
+            "entries": entries_data, "max_marks": req.max_marks,
+            "status": "draft", "updated_at": datetime.now(timezone.utc)
+        }})
+        updated = await db.mark_entries.find_one({"_id": existing["_id"]})
+        return serialize_doc(updated)
+    doc = {
+        "assignment_id": req.assignment_id, "teacher_id": user["id"], "teacher_name": user["name"],
+        "subject_code": assignment["subject_code"], "subject_name": assignment["subject_name"],
+        "department": assignment["department"], "batch": assignment["batch"], "section": assignment["section"],
+        "exam_type": req.exam_type, "semester": req.semester, "max_marks": req.max_marks,
+        "entries": entries_data, "status": "draft",
+        "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)
+    }
+    result = await db.mark_entries.insert_one(doc)
+    doc["_id"] = result.inserted_id
+    return serialize_doc(doc)
+
+@app.post("/api/marks/submit/{entry_id}")
+async def submit_marks(entry_id: str, user: dict = Depends(require_role("teacher"))):
+    entry = await db.mark_entries.find_one({"_id": ObjectId(entry_id), "teacher_id": user["id"]})
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    if entry["status"] != "draft":
+        raise HTTPException(status_code=400, detail=f"Cannot submit - current status: {entry['status']}")
+    await db.mark_entries.update_one({"_id": ObjectId(entry_id)}, {"$set": {
+        "status": "submitted", "submitted_at": datetime.now(timezone.utc)
+    }})
+    return {"message": "Marks submitted for HOD approval"}
+
+# ─── Marks Review Routes (HOD) ────────────────────────────────────────────
+@app.get("/api/marks/submissions")
+async def list_submissions(status: Optional[str] = None, user: dict = Depends(require_role("hod", "admin"))):
+    query = {}
+    if user["role"] == "hod":
+        query["department"] = user.get("department", "")
+    if status:
+        query["status"] = status
+    else:
+        query["status"] = {"$in": ["submitted", "approved", "rejected"]}
+    entries = await db.mark_entries.find(query).sort("submitted_at", -1).to_list(200)
+    return [serialize_doc(e) for e in entries]
+
+@app.post("/api/marks/review/{entry_id}")
+async def review_marks(entry_id: str, req: MarkReview, user: dict = Depends(require_role("hod", "admin"))):
+    entry = await db.mark_entries.find_one({"_id": ObjectId(entry_id)})
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    if entry["status"] != "submitted":
+        raise HTTPException(status_code=400, detail="Only submitted marks can be reviewed")
+    new_status = "approved" if req.action == "approve" else "rejected"
+    await db.mark_entries.update_one({"_id": ObjectId(entry_id)}, {"$set": {
+        "status": new_status, "reviewed_by": user["id"], "reviewer_name": user["name"],
+        "reviewed_at": datetime.now(timezone.utc), "review_remarks": req.remarks
+    }})
+    return {"message": f"Marks {new_status}"}
+
+# ─── Exam Cell Routes ──────────────────────────────────────────────────────
+@app.get("/api/examcell/approved-marks")
+async def get_approved_marks(user: dict = Depends(require_role("exam_cell", "admin"))):
+    entries = await db.mark_entries.find({"status": "approved"}).sort("subject_code", 1).to_list(500)
+    return [serialize_doc(e) for e in entries]
+
+@app.post("/api/examcell/endterm")
+async def save_endterm(req: EndtermEntry, user: dict = Depends(require_role("exam_cell", "admin"))):
+    existing = await db.endterm_entries.find_one({
+        "subject_code": req.subject_code, "department": req.department,
+        "batch": req.batch, "section": req.section, "semester": req.semester
+    })
+    if existing:
+        if existing.get("status") == "published":
+            raise HTTPException(status_code=400, detail="Already published, cannot edit")
+        await db.endterm_entries.update_one({"_id": existing["_id"]}, {"$set": {
+            "entries": req.entries, "max_marks": req.max_marks,
+            "updated_at": datetime.now(timezone.utc)
+        }})
+        updated = await db.endterm_entries.find_one({"_id": existing["_id"]})
+        return serialize_doc(updated)
+    doc = {
+        "subject_code": req.subject_code, "subject_name": req.subject_name,
+        "department": req.department, "batch": req.batch, "section": req.section,
+        "semester": req.semester, "max_marks": req.max_marks, "entries": req.entries,
+        "entered_by": user["id"], "status": "draft",
+        "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)
+    }
+    result = await db.endterm_entries.insert_one(doc)
+    doc["_id"] = result.inserted_id
+    return serialize_doc(doc)
+
+@app.get("/api/examcell/endterm")
+async def list_endterm(user: dict = Depends(require_role("exam_cell", "admin"))):
+    entries = await db.endterm_entries.find({}).sort("created_at", -1).to_list(200)
+    return [serialize_doc(e) for e in entries]
+
+@app.post("/api/examcell/upload")
+async def upload_marks_file(file: UploadFile = File(...), semester: int = Form(...), subject_code: str = Form(...), subject_name: str = Form(...), department: str = Form(...), batch: str = Form(...), section: str = Form(...), user: dict = Depends(require_role("exam_cell", "admin"))):
+    content = await file.read()
+    entries = []
+    filename = file.filename.lower()
+    try:
+        if filename.endswith('.csv'):
+            text = content.decode('utf-8')
+            reader = csv.DictReader(io.StringIO(text))
+            for row in reader:
+                cid = row.get('college_id', row.get('roll_no', row.get('College ID', ''))).strip()
+                marks_val = row.get('marks', row.get('Marks', row.get('score', '0')))
+                grade = row.get('grade', row.get('Grade', ''))
+                student = await db.users.find_one({"college_id": cid.upper()})
+                if student:
+                    entries.append({
+                        "student_id": str(student["_id"]), "college_id": cid.upper(),
+                        "student_name": student.get("name", ""), "marks": float(marks_val or 0),
+                        "grade": grade
+                    })
+        elif filename.endswith('.xlsx') or filename.endswith('.xls'):
+            import openpyxl
+            wb = openpyxl.load_workbook(io.BytesIO(content))
+            ws = wb.active
+            headers = [str(c.value or '').lower().strip() for c in ws[1]]
+            cid_col = next((i for i, h in enumerate(headers) if h in ['college_id', 'roll_no', 'roll number']), 0)
+            marks_col = next((i for i, h in enumerate(headers) if h in ['marks', 'score']), 1)
+            grade_col = next((i for i, h in enumerate(headers) if h in ['grade']), -1)
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                if not row[cid_col]:
+                    continue
+                cid = str(row[cid_col]).strip().upper()
+                student = await db.users.find_one({"college_id": cid})
+                if student:
+                    entries.append({
+                        "student_id": str(student["_id"]), "college_id": cid,
+                        "student_name": student.get("name", ""),
+                        "marks": float(row[marks_col] or 0),
+                        "grade": str(row[grade_col] or '') if grade_col >= 0 else ''
+                    })
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse file: {str(e)}")
+    if not entries:
+        raise HTTPException(status_code=400, detail="No valid student entries found in file")
+    existing = await db.endterm_entries.find_one({
+        "subject_code": subject_code, "department": department,
+        "batch": batch, "section": section, "semester": semester
+    })
+    if existing:
+        await db.endterm_entries.update_one({"_id": existing["_id"]}, {"$set": {
+            "entries": entries, "updated_at": datetime.now(timezone.utc)
+        }})
+    else:
+        await db.endterm_entries.insert_one({
+            "subject_code": subject_code, "subject_name": subject_name,
+            "department": department, "batch": batch, "section": section,
+            "semester": semester, "max_marks": 100, "entries": entries,
+            "entered_by": user["id"], "status": "draft",
+            "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)
+        })
+    return {"message": f"Uploaded {len(entries)} student marks", "count": len(entries)}
+
+@app.post("/api/examcell/publish/{entry_id}")
+async def publish_results(entry_id: str, user: dict = Depends(require_role("exam_cell", "admin"))):
+    entry = await db.endterm_entries.find_one({"_id": ObjectId(entry_id)})
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    await db.endterm_entries.update_one({"_id": ObjectId(entry_id)}, {"$set": {
+        "status": "published", "published_at": datetime.now(timezone.utc), "published_by": user["id"]
+    }})
+    return {"message": "Results published successfully"}
+
+@app.get("/api/dashboard/hod")
+async def hod_dashboard(user: dict = Depends(require_role("hod", "admin"))):
+    dept = user.get("department", "")
+    total_teachers = await db.users.count_documents({"role": "teacher", "department": dept})
+    total_students = await db.users.count_documents({"role": "student", "department": dept})
+    total_assignments = await db.faculty_assignments.count_documents({"department": dept})
+    pending_reviews = await db.mark_entries.count_documents({"department": dept, "status": "submitted"})
+    approved = await db.mark_entries.count_documents({"department": dept, "status": "approved"})
+    recent_subs = await db.mark_entries.find({"department": dept, "status": "submitted"}).sort("submitted_at", -1).to_list(5)
+    return {
+        "total_teachers": total_teachers, "total_students": total_students,
+        "total_assignments": total_assignments, "pending_reviews": pending_reviews,
+        "approved_count": approved,
+        "recent_submissions": [serialize_doc(s) for s in recent_subs]
+    }
+
+@app.get("/api/dashboard/exam_cell")
+async def exam_cell_dashboard(user: dict = Depends(require_role("exam_cell", "admin"))):
+    total_approved = await db.mark_entries.count_documents({"status": "approved"})
+    total_endterm = await db.endterm_entries.count_documents({})
+    total_published = await db.endterm_entries.count_documents({"status": "published"})
+    total_draft = await db.endterm_entries.count_documents({"status": "draft"})
+    recent = await db.endterm_entries.find({}).sort("updated_at", -1).to_list(5)
+    return {
+        "total_approved_midterms": total_approved,
+        "total_endterm": total_endterm, "total_published": total_published,
+        "total_draft": total_draft,
+        "recent_entries": [serialize_doc(e) for e in recent]
     }
 
 # ─── Code Execution ────────────────────────────────────────────────────────
@@ -652,6 +965,16 @@ async def seed_data():
     # Teacher
     if not await db.users.find_one({"college_id": "T001"}):
         await db.users.insert_one({"name": "Dr. Sarah Johnson", "college_id": "T001", "email": "sarah.j@quizportal.edu", "password_hash": hash_password("teacher123"), "role": "teacher", "department": "DS", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+    if not await db.users.find_one({"college_id": "T002"}):
+        await db.users.insert_one({"name": "Prof. Ravi Kumar", "college_id": "T002", "email": "ravi.k@quizportal.edu", "password_hash": hash_password("teacher123"), "role": "teacher", "department": "DS", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+
+    # HOD
+    if not await db.users.find_one({"college_id": "HOD001"}):
+        await db.users.insert_one({"name": "Dr. Venkat Rao", "college_id": "HOD001", "email": "venkat.hod@quizportal.edu", "password_hash": hash_password("hod123"), "role": "hod", "department": "DS", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+
+    # Exam Cell
+    if not await db.users.find_one({"college_id": "EC001"}):
+        await db.users.insert_one({"name": "Exam Cell Office", "college_id": "EC001", "email": "examcell@quizportal.edu", "password_hash": hash_password("exam123"), "role": "exam_cell", "department": "", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
 
     # Students from marksheets
     students_data = [
@@ -754,9 +1077,63 @@ async def seed_data():
     await db.users.create_index("college_id", unique=True)
     await db.users.create_index("email", unique=True)
     await db.quiz_attempts.create_index([("student_id", 1), ("quiz_id", 1)])
+    await db.mark_entries.create_index([("assignment_id", 1), ("exam_type", 1)])
+    await db.faculty_assignments.create_index([("teacher_id", 1), ("subject_code", 1)])
+
+    # Seed faculty assignments
+    teacher1 = await db.users.find_one({"college_id": "T001"})
+    if teacher1 and await db.faculty_assignments.count_documents({}) == 0:
+        hod = await db.users.find_one({"college_id": "HOD001"})
+        hod_id = str(hod["_id"]) if hod else ""
+        t1id = str(teacher1["_id"])
+        teacher2 = await db.users.find_one({"college_id": "T002"})
+        t2id = str(teacher2["_id"]) if teacher2 else t1id
+        assignments = [
+            {"teacher_id": t1id, "teacher_name": "Dr. Sarah Johnson", "subject_code": "22PC0DS17", "subject_name": "Automata Theory and Compiler Design", "department": "DS", "batch": "2022", "section": "A", "semester": 3, "assigned_by": hod_id, "created_at": datetime.now(timezone.utc)},
+            {"teacher_id": t1id, "teacher_name": "Dr. Sarah Johnson", "subject_code": "22PC0DS18", "subject_name": "Machine Learning", "department": "DS", "batch": "2022", "section": "A", "semester": 3, "assigned_by": hod_id, "created_at": datetime.now(timezone.utc)},
+            {"teacher_id": t2id, "teacher_name": "Prof. Ravi Kumar", "subject_code": "22PC0DS19", "subject_name": "Big Data Analytics", "department": "DS", "batch": "2022", "section": "A", "semester": 3, "assigned_by": hod_id, "created_at": datetime.now(timezone.utc)},
+        ]
+        await db.faculty_assignments.insert_many(assignments)
 
     # Write credentials
-    creds = f"""# Test Credentials\n\n## Admin\n- College ID: A001\n- Password: admin123\n- Role: admin\n\n## Teacher\n- College ID: T001\n- Password: teacher123\n- Role: teacher\n\n## Student (from marksheet)\n- College ID: 22WJ8A6745\n- Password: student123\n- Role: student\n\n## Other Students\n- S2024101 / student123 (Priya Sharma)\n- S2024045 / student123 (Amit Patel)\n- S2024089 / student123 (Sneha Reddy)\n- S2024034 / student123 (Rahul Kumar)\n\n## Auth Endpoints\n- POST /api/auth/login\n- POST /api/auth/register\n- GET /api/auth/me\n- POST /api/auth/logout\n"""
+    creds = """# Test Credentials
+
+## Admin
+- College ID: A001
+- Password: admin123
+- Role: admin
+
+## HOD (Head of Department)
+- College ID: HOD001
+- Password: hod123
+- Role: hod
+- Department: DS
+
+## Exam Cell
+- College ID: EC001
+- Password: exam123
+- Role: exam_cell
+
+## Teacher
+- College ID: T001
+- Password: teacher123
+- Role: teacher (Dr. Sarah Johnson)
+
+- College ID: T002
+- Password: teacher123
+- Role: teacher (Prof. Ravi Kumar)
+
+## Student (from marksheet)
+- College ID: 22WJ8A6745
+- Password: student123
+- Role: student (Rajana Akanksh)
+
+## Other Students
+- S2024101 / student123 (Priya Sharma, DS)
+- S2024045 / student123 (Amit Patel, ECE)
+- S2024089 / student123 (Sneha Reddy, DS)
+- S2024034 / student123 (Rahul Kumar, MECH)
+"""
     Path("/app/memory").mkdir(exist_ok=True)
     Path("/app/memory/test_credentials.md").write_text(creds)
 

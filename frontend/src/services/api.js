@@ -76,6 +76,36 @@ export const codeAPI = {
   execute: (code, language, test_input) => api.post('/api/code/execute', { code, language, test_input }),
 };
 
+// Faculty Management (HOD)
+export const facultyAPI = {
+  teachers: () => api.get('/api/faculty/teachers'),
+  assignments: () => api.get('/api/faculty/assignments'),
+  createAssignment: (data) => api.post('/api/faculty/assignments', data),
+  deleteAssignment: (id) => api.delete(`/api/faculty/assignments/${id}`),
+};
+
+// Marks Entry (Teacher)
+export const marksAPI = {
+  myAssignments: () => api.get('/api/marks/my-assignments'),
+  students: (department, batch, section) => api.get('/api/marks/students', { params: { department, batch, section } }),
+  getEntry: (assignmentId, examType) => api.get(`/api/marks/entry/${assignmentId}/${examType}`),
+  saveEntry: (data) => api.post('/api/marks/entry', data),
+  submit: (entryId) => api.post(`/api/marks/submit/${entryId}`),
+  submissions: (status) => api.get('/api/marks/submissions', { params: status ? { status } : {} }),
+  review: (entryId, data) => api.post(`/api/marks/review/${entryId}`, data),
+};
+
+// Exam Cell
+export const examCellAPI = {
+  approvedMarks: () => api.get('/api/examcell/approved-marks'),
+  endtermList: () => api.get('/api/examcell/endterm'),
+  saveEndterm: (data) => api.post('/api/examcell/endterm', data),
+  uploadFile: (formData) => api.post('/api/examcell/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  publish: (entryId) => api.post(`/api/examcell/publish/${entryId}`),
+  hodDashboard: () => api.get('/api/dashboard/hod'),
+  examCellDashboard: () => api.get('/api/dashboard/exam_cell'),
+};
+
 // Results
 export const resultsAPI = {
   semester: (studentId) => api.get(`/api/results/semester/${studentId}`),
