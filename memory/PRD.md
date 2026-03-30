@@ -1,67 +1,61 @@
 # College Quiz Platform & Results Portal - PRD
 
 ## Original Problem Statement
-Full-stack, cross-platform college quiz and results management system serving Students, Teachers/Faculty, and Admins/HOD.
+Full-stack college quiz and results management system with JWT auth, quiz CRUD, auto-grading, and real marksheet data integration.
 
 ## Architecture
-- Frontend: React + Tailwind CSS + Recharts + Phosphor Icons
-- Backend: FastAPI + MongoDB (not yet implemented)
-- State management: React useState hooks
-- Routing: State-based navigation in App.js
-
-## User Personas
-- **Student**: Takes quizzes, views results, tracks performance
-- **Teacher/Faculty**: Creates quizzes, monitors live sessions, reviews results
-- **Admin/HOD**: Manages users, departments, views college-wide analytics
-
-## Core Requirements (Static)
-- Multi-role authentication (Student/Teacher/Admin)
-- Quiz creation, scheduling, and attempt-taking
-- Anti-cheat and proctoring features
-- Quiz results with analytics
-- Semester results with SGPA/CGPA
-- Leaderboard and performance trends
-- User management (CRUD + bulk import)
+- Frontend: React + Tailwind CSS + Recharts + Axios
+- Backend: FastAPI + MongoDB (Motor async driver)
+- Auth: JWT (bcrypt password hashing, access + refresh tokens)
+- Database: MongoDB with indexed collections
 
 ## What's Been Implemented (March 30, 2026)
-### Phase 1 - Full Frontend (13 Pages)
-1. LoginPage - Password/OTP auth with role detection
-2. StudentDashboard - Stats, upcoming quizzes, recent results
-3. QuizAttempt - Question nav, timer, violation counter, proctoring
-4. QuizResults - Performance trends, topic accuracy charts
-5. SemesterResults - Grades table, SGPA/CGPA, attendance
-6. Analytics - Radar, line, bar, pie charts with insights
-7. Leaderboard - Top 3 podium + full rankings
-8. TeacherDashboard - Quiz management, activity feed
-9. QuizBuilder - Multi-type question editor
-10. LiveMonitor - Real-time student tracking
-11. AdminDashboard - College-wide analytics
-12. UserManagement - Student/teacher CRUD + modal
 
-### Design Iterations
-- v1: Neo-Brutalist (rejected by user - too boxy)
-- v2: Soft Pastel & Rounded (approved) - Indigo primary, frosted glass header, pill tabs, rounded cards with ambient shadows
+### Backend (FastAPI)
+- JWT auth (login, register, me, logout)
+- User management CRUD with role-based access
+- Quiz CRUD (create, update, delete, publish)
+- Quiz attempt flow (start, answer, submit)
+- Auto-grading engine (MCQ, True/False, keyword-based short answer)
+- Semester results with real marksheet data from PDFs
+- Student analytics and leaderboard
+- Dashboard APIs (student, teacher, admin)
+- Seed data: admin, teacher, 5 students, 2 quizzes, 3 semesters
+
+### Frontend (React)
+- 13 pages with smooth rounded design
+- Real API integration (login, dashboard, quiz flow, results)
+- JWT token management with localStorage persistence
+- Loading states, error handling, responsive layout
+
+### Data from Marksheets
+- Student: Rajana Akanksh (22WJ8A6745)
+- Sem 1: SGPA 9.10, CGPA 9.10 (8 subjects)
+- Sem 2: SGPA 9.55, CGPA 9.33 (9 subjects)
+- Sem 3: SGPA 7.60, CGPA 8.59 (9 subjects)
+
+## Test Results
+- Backend: 100% (30/30 tests passed)
+- Frontend: 95% (core flows working)
+
+## Credentials
+- Admin: A001 / admin123
+- Teacher: T001 / teacher123
+- Student: 22WJ8A6745 / student123
 
 ## Prioritized Backlog
-### P0 - Must Have
-- Backend API integration (auth, quiz CRUD, results)
-- Real database connectivity (MongoDB)
-- JWT authentication
+### P0
+- Quiz Builder connected to real API (create/edit quizzes from frontend)
+- Leaderboard page connected to real API
+- Analytics page connected to real API
 
-### P1 - Important
-- Real-time quiz monitoring (WebSocket)
-- File uploads (CSV import, PDF marksheets)
+### P1
+- CSV bulk import for users and results
 - PDF report generation
+- Real-time quiz monitoring via WebSocket
 
-### P2 - Nice to Have
-- Email/SMS notifications
+### P2
+- AI-powered short answer grading
 - ERP integration
-- Webcam proctoring
-- Code editor for coding questions
-
-## Next Tasks
-1. Build backend APIs (auth, users, quizzes, results)
-2. Connect frontend to real APIs
-3. Implement JWT-based authentication
-4. Add quiz scheduling and state management
-5. SGPA/CGPA calculation engine
+- Anti-cheat proctoring (webcam, tab detection)
+- Email/SMS notifications
