@@ -75,9 +75,9 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
             <div className="w-12 h-12 bg-violet-50 rounded-xl flex items-center justify-center group-hover:bg-violet-100 transition-colors"><PencilLine size={24} weight="duotone" className="text-violet-500" /></div>
             <div><p className="font-extrabold text-slate-900">Marks Entry</p><p className="text-sm font-medium text-slate-400">Mid-term marks</p></div>
           </button>
-          <button data-testid="view-all-results-button" onClick={() => navigate('quiz-results')} className="soft-card-hover p-6 text-left flex items-center gap-4 group">
+          <button data-testid="view-all-results-button" onClick={() => navigate('class-results')} className="soft-card-hover p-6 text-left flex items-center gap-4 group">
             <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 transition-colors"><ChartLine size={24} weight="duotone" className="text-emerald-500" /></div>
-            <div><p className="font-extrabold text-slate-900">View Results</p><p className="text-sm font-medium text-slate-400">Analyze performance</p></div>
+            <div><p className="font-extrabold text-slate-900">View Results</p><p className="text-sm font-medium text-slate-400">Class-wise analytics</p></div>
           </button>
           <button data-testid="manage-students-button" onClick={() => navigate('student-management')} className="soft-card-hover p-6 text-left flex items-center gap-4 group">
             <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center group-hover:bg-amber-100 transition-colors"><Users size={24} weight="duotone" className="text-amber-500" /></div>
