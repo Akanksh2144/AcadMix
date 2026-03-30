@@ -491,27 +491,54 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                       {s.status}
                     </span>
                   </div>
-                  {s.entries && (
+                  {s.entries && s.entries.length > 0 && (
                     <div className="overflow-x-auto mb-4">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-slate-100">
-                            <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs uppercase">College ID</th>
-                            <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs uppercase">Name</th>
-                            <th className="text-center py-2 px-3 font-bold text-slate-500 text-xs uppercase">Marks</th>
+                          <tr className="bg-slate-50 border-b border-slate-100">
+                            <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest w-12">#</th>
+                            <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">College ID</th>
+                            <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Student Name</th>
+                            <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest w-32">Marks / {s.max_marks}</th>
+                            <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest w-28">Percentage</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {s.entries.slice(0, 5).map((e, i) => (
-                            <tr key={i} className="border-b border-slate-50">
-                              <td className="py-2 px-3 font-medium text-slate-600">{e.college_id}</td>
-                              <td className="py-2 px-3 font-medium text-slate-800">{e.student_name}</td>
-                              <td className="py-2 px-3 text-center font-bold text-slate-900">{e.marks ?? '-'}</td>
-                            </tr>
-                          ))}
-                          {s.entries.length > 5 && <tr><td colSpan="3" className="py-2 px-3 text-center text-xs text-slate-400">...and {s.entries.length - 5} more</td></tr>}
+                          {s.entries.map((e, i) => {
+                            const marks = e.marks ?? null;
+                            const pct = marks !== null && s.max_marks > 0 ? ((marks / s.max_marks) * 100).toFixed(1) : null;
+                            return (
+                              <tr key={i} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                <td className="py-3 px-4 text-sm text-slate-400">{i + 1}</td>
+                                <td className="py-3 px-4 font-medium text-slate-700">{e.college_id}</td>
+                                <td className="py-3 px-4 font-medium text-slate-800">{e.student_name}</td>
+                                <td className="py-3 px-4 text-center">
+                                  <span className="font-bold text-slate-900">{marks ?? '-'}</span>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  {pct !== null ? (
+                                    <span className={`text-sm font-bold ${parseFloat(pct) >= 60 ? 'text-emerald-600' : parseFloat(pct) >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
+                                      {pct}%
+                                    </span>
+                                  ) : (
+                                    <span className="text-sm text-slate-300">-</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
+                      <div className="mt-3 p-3 bg-slate-50 rounded-xl flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <p className="text-sm font-bold text-slate-600">Total Students: <span className="text-slate-900">{s.entries.length}</span></p>
+                          <p className="text-sm font-bold text-slate-600">Avg Marks: <span className="text-slate-900">
+                            {s.entries.filter(e => e.marks !== null).length > 0 
+                              ? (s.entries.reduce((sum, e) => sum + (e.marks ?? 0), 0) / s.entries.filter(e => e.marks !== null).length).toFixed(1)
+                              : '-'}
+                          </span></p>
+                        </div>
+                      </div>
                     </div>
                   )}
                   {s.status === 'submitted' && (
