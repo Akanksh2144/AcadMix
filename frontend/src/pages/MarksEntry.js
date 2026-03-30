@@ -98,6 +98,13 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
 
   const handleSubmit = async () => {
     if (!entryId) return alert('Save marks first');
+    
+    // Check if all students have marks filled
+    const allStudentsGraded = students.every(s => marks[s.id] !== null && marks[s.id] !== undefined);
+    if (!allStudentsGraded) {
+      return alert('Please fill marks for all students before submitting for approval.');
+    }
+    
     if (!window.confirm('Submit marks for HOD approval? You cannot edit after submission.')) return;
     try {
       await marksAPI.submit(entryId);
@@ -289,7 +296,14 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
             {/* Actions */}
             {isEditable && students.length > 0 && (
               <div className="flex items-center justify-between mt-6">
-                <p className="text-sm text-slate-500">{stats.gradedCount} / {students.length} students graded</p>
+                <p className="text-sm text-slate-500">
+                  {stats.gradedCount} / {students.length} students graded
+                  {stats.gradedCount < students.length && (
+                    <span className="text-amber-600 font-bold ml-2">
+                      ⚠ Fill all students' marks to submit
+                    </span>
+                  )}
+                </p>
                 <div className="flex items-center gap-3">
                   <span className={`soft-badge ${
                     status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
@@ -302,7 +316,13 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
                   <button data-testid="save-marks-button" onClick={handleSave} disabled={saving} className="btn-ghost !py-2.5 text-sm flex items-center gap-2 disabled:opacity-60">
                     <FloppyDisk size={16} weight="duotone" /> {saving ? 'Saving...' : 'Save Draft'}
                   </button>
-                  <button data-testid="submit-marks-button" onClick={handleSubmit} disabled={!entryId || status !== 'draft'} className="btn-primary !py-2.5 text-sm flex items-center gap-2 disabled:opacity-60">
+                  <button 
+                    data-testid="submit-marks-button" 
+                    onClick={handleSubmit} 
+                    disabled={!entryId || status !== 'draft' || stats.gradedCount < students.length} 
+                    className="btn-primary !py-2.5 text-sm flex items-center gap-2 disabled:opacity-60"
+                    title={stats.gradedCount < students.length ? 'Fill marks for all students before submitting' : ''}
+                  >
                     <PaperPlaneTilt size={16} weight="duotone" /> Submit for Approval
                   </button>
                 </div>
