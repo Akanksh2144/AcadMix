@@ -32,11 +32,11 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
               </div>
               <div>
                 <h1 className="text-xl font-extrabold tracking-tight text-slate-900">QuizPortal</h1>
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Teacher</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Faculty</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button data-testid="profile-button" className="btn-ghost !px-4 !py-2 text-sm">{user?.name || 'Teacher'}</button>
+              <button data-testid="profile-button" className="btn-ghost !px-4 !py-2 text-sm">{user?.name || 'Faculty'}</button>
               <button data-testid="logout-button" onClick={onLogout} className="p-2.5 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors">
                 <SignOut size={20} weight="duotone" />
               </button>
@@ -47,8 +47,8 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-8">
-          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-2">Welcome Back, {user?.name?.split(' ').pop() || 'Teacher'}!</h2>
-          <p className="text-base font-medium text-slate-500">Manage your quizzes and track student performance</p>
+          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-2">Welcome Back, {user?.name?.split(' ').pop() || 'Faculty'}!</h2>
+          <p className="text-base font-medium text-slate-500">{user?.designation || 'Assistant Professor'}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
