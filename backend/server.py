@@ -771,14 +771,23 @@ async def save_mark_entry(req: MarkEntrySave, user: dict = Depends(require_role(
             })
             
             # Update with new entries and change status back to draft
-            await db.mark_entries.update_one({"_id": existing["_id"]}, {"$set": {
-                "entries": entries_data, 
-                "max_marks": req.max_marks,
-                "status": "draft",
-                "revision_history": revision_history,
-                "updated_at": datetime.now(timezone.utc)
-            }})
+            result = await db.mark_entries.update_one(
+                {"_id": existing["_id"]}, 
+                {"$set": {
+                    "entries": entries_data, 
+                    "max_marks": req.max_marks,
+                    "status": "draft",
+                    "revision_history": revision_history,
+                    "updated_at": datetime.now(timezone.utc)
+                }}
+            )
+            if result.modified_count == 0:
+                raise HTTPException(status_code=500, detail="Failed to update marks entry")
+            
             updated = await db.mark_entries.find_one({"_id": existing["_id"]})
+            if not updated:
+                raise HTTPException(status_code=500, detail="Failed to retrieve updated marks entry")
+            
             return serialize_doc(updated)
         
         # Prevent editing submitted marks (not approved)

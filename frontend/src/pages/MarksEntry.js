@@ -98,10 +98,20 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
       }
       
       const { data } = await marksAPI.saveEntry(payload);
+      
+      // Update state with response from backend
       setEntryId(data.id);
-      setStatus('draft');
-      alert(isEditingApproved ? 'Revised marks saved as draft. Submit for re-approval.' : 'Marks saved as draft');
-    } catch (err) { alert(err.response?.data?.detail || 'Save failed'); }
+      setStatus(data.status || 'draft'); // Use status from backend response
+      
+      if (isEditingApproved) {
+        alert('Revised marks saved as draft. Submit for re-approval.');
+      } else {
+        alert('Marks saved as draft');
+      }
+    } catch (err) { 
+      console.error('Save error:', err);
+      alert(err.response?.data?.detail || 'Save failed'); 
+    }
     setSaving(false);
   };
 
