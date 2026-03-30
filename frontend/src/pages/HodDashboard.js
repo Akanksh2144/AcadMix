@@ -11,7 +11,31 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newAssignment, setNewAssignment] = useState({ teacher_id: '', subject_code: '', subject_name: '', department: user?.department || 'DS', batch: '2022', section: 'A', semester: 3 });
+  const [newAssignment, setNewAssignment] = useState({ teacher_id: '', subject_code: '', subject_name: '', department: user?.department || 'DS', batch: '2024', section: 'A', semester: 3 });
+  
+  // Mock subjects data (prepopulated)
+  const mockSubjects = [
+    { code: '22DS201', name: 'Data Structures and Algorithms', department: 'DS', semester: 2 },
+    { code: '22DS301', name: 'Machine Learning Fundamentals', department: 'DS', semester: 3 },
+    { code: '22DS302', name: 'Database Management Systems', department: 'DS', semester: 3 },
+    { code: '22DS401', name: 'Deep Learning', department: 'DS', semester: 4 },
+    { code: '22DS402', name: 'Natural Language Processing', department: 'DS', semester: 4 },
+    { code: '22DS501', name: 'Big Data Analytics', department: 'DS', semester: 5 },
+    { code: '22CSE201', name: 'Operating Systems', department: 'CSE', semester: 2 },
+    { code: '22CSE301', name: 'Computer Networks', department: 'CSE', semester: 3 },
+    { code: '22CSE401', name: 'Software Engineering', department: 'CSE', semester: 4 },
+    { code: '22ECE201', name: 'Digital Electronics', department: 'ECE', semester: 2 },
+    { code: '22ECE301', name: 'Signals and Systems', department: 'ECE', semester: 3 },
+    { code: '22ECE401', name: 'VLSI Design', department: 'ECE', semester: 4 },
+  ];
+  
+  // Filter subjects by department
+  const departmentSubjects = mockSubjects.filter(s => s.department === (user?.department || 'DS'));
+  
+  const [subjectSearch, setSubjectSearch] = useState('');
+  const [teacherSearch, setTeacherSearch] = useState('');
+  const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
+  const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
 
   useEffect(() => { fetchData(); }, [activeTab]);
 
@@ -34,6 +58,28 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
     } catch (err) { console.error(err); }
     setLoading(false);
   };
+  
+  const handleSubjectSelect = (subject) => {
+    setNewAssignment({ ...newAssignment, subject_code: subject.code, subject_name: subject.name, semester: subject.semester });
+    setSubjectSearch(subject.code);
+    setShowSubjectDropdown(false);
+  };
+  
+  const handleTeacherSelect = (teacher) => {
+    setNewAssignment({ ...newAssignment, teacher_id: teacher.id });
+    setTeacherSearch(teacher.name);
+    setShowTeacherDropdown(false);
+  };
+  
+  const filteredSubjects = departmentSubjects.filter(s => 
+    s.code.toLowerCase().includes(subjectSearch.toLowerCase()) || 
+    s.name.toLowerCase().includes(subjectSearch.toLowerCase())
+  );
+  
+  const filteredTeachers = teachers.filter(t => 
+    t.name.toLowerCase().includes(teacherSearch.toLowerCase()) || 
+    t.college_id.toLowerCase().includes(teacherSearch.toLowerCase())
+  );
 
   const handleAddAssignment = async () => {
     try {
@@ -143,45 +189,166 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
 
             {showAddForm && (
               <div className="soft-card p-6 mb-6" data-testid="add-assignment-form">
-                <h4 className="font-bold text-slate-800 mb-4">New Faculty Assignment</h4>
+                <h4 className="text-lg font-bold text-slate-800 mb-4">New Faculty Assignment</h4>
+                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
+                  {/* Teacher Dropdown with Search */}
+                  <div className="relative">
                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Teacher</label>
-                    <select data-testid="teacher-select" value={newAssignment.teacher_id} onChange={(e) => setNewAssignment({ ...newAssignment, teacher_id: e.target.value })} className="soft-input w-full">
-                      <option value="">Select Teacher</option>
-                      {teachers.map(t => <option key={t.id} value={t.id}>{t.name} ({t.college_id})</option>)}
-                    </select>
+                    <input 
+                      data-testid="teacher-search-input" 
+                      type="text"
+                      value={teacherSearch} 
+                      onFocus={() => setShowTeacherDropdown(true)}
+                      onChange={(e) => {
+                        setTeacherSearch(e.target.value);
+                        setShowTeacherDropdown(true);
+                      }}
+                      placeholder="Search teacher..."
+                      className="soft-input w-full"
+                    />
+                    {showTeacherDropdown && (
+                      <div className="absolute z-10 mt-1 w-full bg-white rounded-xl shadow-lg border border-slate-100 max-h-60 overflow-y-auto">
+                        {filteredTeachers.length > 0 ? (
+                          filteredTeachers.map(t => (
+                            <button
+                              key={t.id}
+                              onClick={() => handleTeacherSelect(t)}
+                              className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-0"
+                            >
+                              <p className="font-bold text-slate-800 text-sm">{t.name}</p>
+                              <p className="text-xs text-slate-500">{t.college_id} - {t.department}</p>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-sm text-slate-400">No teachers found</div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div>
+
+                  {/* Subject Code Dropdown with Search */}
+                  <div className="relative">
                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Subject Code</label>
-                    <input data-testid="subject-code-input" value={newAssignment.subject_code} onChange={(e) => setNewAssignment({ ...newAssignment, subject_code: e.target.value })} className="soft-input w-full" placeholder="e.g., 22PC0DS17" />
+                    <input 
+                      data-testid="subject-code-search" 
+                      type="text"
+                      value={subjectSearch} 
+                      onFocus={() => setShowSubjectDropdown(true)}
+                      onChange={(e) => {
+                        setSubjectSearch(e.target.value);
+                        setShowSubjectDropdown(true);
+                      }}
+                      placeholder="Search subject code..."
+                      className="soft-input w-full"
+                    />
+                    {showSubjectDropdown && (
+                      <div className="absolute z-10 mt-1 w-full bg-white rounded-xl shadow-lg border border-slate-100 max-h-60 overflow-y-auto">
+                        {filteredSubjects.length > 0 ? (
+                          filteredSubjects.map(s => (
+                            <button
+                              key={s.code}
+                              onClick={() => handleSubjectSelect(s)}
+                              className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-0"
+                            >
+                              <p className="font-bold text-slate-800 text-sm">{s.code}</p>
+                              <p className="text-xs text-slate-500">{s.name} - Sem {s.semester}</p>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-sm text-slate-400">No subjects found</div>
+                        )}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Subject Name (Read-only, auto-populated) */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Subject Name</label>
-                    <input data-testid="subject-name-input" value={newAssignment.subject_name} onChange={(e) => setNewAssignment({ ...newAssignment, subject_name: e.target.value })} className="soft-input w-full" placeholder="e.g., Machine Learning" />
+                    <input 
+                      data-testid="subject-name-display" 
+                      value={newAssignment.subject_name} 
+                      readOnly
+                      placeholder="Auto-filled from code"
+                      className="soft-input w-full bg-slate-50 cursor-not-allowed text-slate-600" 
+                    />
                   </div>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                  {/* Department (Read-only for HOD) */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Department</label>
-                    <input value={newAssignment.department} onChange={(e) => setNewAssignment({ ...newAssignment, department: e.target.value })} className="soft-input w-full" />
+                    <input 
+                      value={newAssignment.department} 
+                      readOnly
+                      className="soft-input w-full bg-slate-50 cursor-not-allowed text-slate-600" 
+                    />
                   </div>
+
+                  {/* Batch Dropdown */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Batch</label>
-                    <input value={newAssignment.batch} onChange={(e) => setNewAssignment({ ...newAssignment, batch: e.target.value })} className="soft-input w-full" />
+                    <select 
+                      data-testid="batch-select"
+                      value={newAssignment.batch} 
+                      onChange={(e) => setNewAssignment({ ...newAssignment, batch: e.target.value })} 
+                      className="soft-input w-full"
+                    >
+                      <option value="2024">2024</option>
+                      <option value="2023">2023</option>
+                      <option value="2022">2022</option>
+                      <option value="2021">2021</option>
+                    </select>
                   </div>
+
+                  {/* Section Dropdown */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Section</label>
-                    <input value={newAssignment.section} onChange={(e) => setNewAssignment({ ...newAssignment, section: e.target.value })} className="soft-input w-full" />
+                    <select 
+                      data-testid="section-select"
+                      value={newAssignment.section} 
+                      onChange={(e) => setNewAssignment({ ...newAssignment, section: e.target.value })} 
+                      className="soft-input w-full"
+                    >
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                      <option value="C">C</option>
+                      <option value="D">D</option>
+                    </select>
                   </div>
+
+                  {/* Semester (Auto-filled from subject) */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Semester</label>
-                    <input type="number" value={newAssignment.semester} onChange={(e) => setNewAssignment({ ...newAssignment, semester: parseInt(e.target.value) })} className="soft-input w-full" />
+                    <input 
+                      type="number" 
+                      value={newAssignment.semester} 
+                      readOnly
+                      className="soft-input w-full bg-slate-50 cursor-not-allowed text-slate-600" 
+                    />
                   </div>
                 </div>
+
                 <div className="flex gap-3">
-                  <button data-testid="save-assignment-button" onClick={handleAddAssignment} className="btn-primary !py-2.5 text-sm">Save Assignment</button>
-                  <button onClick={() => setShowAddForm(false)} className="btn-ghost !py-2.5 text-sm">Cancel</button>
+                  <button 
+                    data-testid="save-assignment-button" 
+                    onClick={handleAddAssignment} 
+                    className="btn-primary !py-2.5 text-sm"
+                    disabled={!newAssignment.teacher_id || !newAssignment.subject_code}
+                  >
+                    Save Assignment
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setSubjectSearch('');
+                      setTeacherSearch('');
+                    }} 
+                    className="btn-ghost !py-2.5 text-sm"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             )}
