@@ -255,54 +255,6 @@ const Analytics = ({ navigate, user, userRole }) => {
                 </ResponsiveContainer>
               </div>
             </div>
-
-            {/* Semester Details Cards */}
-            <h3 className="text-xl font-bold text-slate-800 mb-4">Semester Details</h3>
-            <div className="space-y-6">
-              {semesterData.map((sem, i) => (
-                <div key={i} className="soft-card p-6" data-testid={`semester-detail-${sem.semester}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-bold text-slate-800">Semester {sem.semester}</h4>
-                    <div className="flex gap-4">
-                      <span className="soft-badge bg-indigo-50 text-indigo-600">SGPA: {sem.sgpa?.toFixed(2)}</span>
-                      <span className="soft-badge bg-emerald-50 text-emerald-600">CGPA: {sem.cgpa?.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  {sem.subjects && sem.subjects.length > 0 && (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-slate-100">
-                            <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs uppercase tracking-widest">Code</th>
-                            <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs uppercase tracking-widest">Subject</th>
-                            <th className="text-center py-2 px-3 font-bold text-slate-500 text-xs uppercase tracking-widest">Credits</th>
-                            <th className="text-center py-2 px-3 font-bold text-slate-500 text-xs uppercase tracking-widest">Grade</th>
-                            <th className="text-center py-2 px-3 font-bold text-slate-500 text-xs uppercase tracking-widest">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {sem.subjects.map((sub, j) => (
-                            <tr key={j} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                              <td className="py-2.5 px-3 font-medium text-slate-600">{sub.code}</td>
-                              <td className="py-2.5 px-3 font-medium text-slate-800">{sub.name}</td>
-                              <td className="py-2.5 px-3 text-center font-medium text-slate-600">{sub.credits}</td>
-                              <td className="py-2.5 px-3 text-center">
-                                <span className={`soft-badge ${sub.grade === 'O' ? 'bg-emerald-50 text-emerald-600' : sub.grade === 'A+' ? 'bg-indigo-50 text-indigo-600' : sub.grade === 'A' ? 'bg-sky-50 text-sky-600' : 'bg-amber-50 text-amber-600'}`}>
-                                  {sub.grade}
-                                </span>
-                              </td>
-                              <td className="py-2.5 px-3 text-center">
-                                <span className={`text-xs font-bold ${sub.status === 'PASS' ? 'text-emerald-500' : 'text-red-500'}`}>{sub.status}</span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
         )}
       </div>
