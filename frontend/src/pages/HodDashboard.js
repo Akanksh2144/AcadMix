@@ -14,6 +14,10 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newAssignment, setNewAssignment] = useState({ teacher_id: '', subject_code: '', subject_name: '', department: user?.department || 'ET', batch: '2024', section: 'DS-1', semester: 3 });
   
+  // Modal states
+  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
+  const [showTeachersModal, setShowTeachersModal] = useState(false);
+  
   // Mock subjects data (prepopulated)
   const mockSubjects = [
     { code: '22ET201', name: 'Data Structures and Algorithms', department: 'ET', semester: 2 },
@@ -122,10 +126,10 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
   };
 
   const stats = dashboard ? [
-    { label: 'Teachers', value: dashboard.total_teachers, icon: Users, color: 'bg-indigo-50 text-indigo-500' },
-    { label: 'Students', value: dashboard.total_students, icon: BookOpen, color: 'bg-emerald-50 text-emerald-500' },
-    { label: 'Analytics', value: '2', icon: ChartLine, color: 'bg-purple-50 text-purple-500' },
-    { label: 'Pending Reviews', value: dashboard.pending_reviews, icon: Clock, color: 'bg-rose-50 text-rose-500' },
+    { label: 'Teachers', value: dashboard.total_teachers, icon: Users, color: 'bg-indigo-50 text-indigo-500', onClick: () => setShowTeachersModal(true) },
+    { label: 'Students', value: dashboard.total_students, icon: BookOpen, color: 'bg-emerald-50 text-emerald-500', onClick: () => setActiveTab('results') },
+    { label: 'Analytics', value: '2', icon: ChartLine, color: 'bg-purple-50 text-purple-500', onClick: () => setShowAnalyticsModal(true) },
+    { label: 'Pending Reviews', value: dashboard.pending_reviews, icon: Clock, color: 'bg-rose-50 text-rose-500', onClick: () => setActiveTab('review') },
   ] : [];
 
   return (
@@ -169,154 +173,26 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
           <div data-testid="overview-content">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               {stats.map((stat, i) => (
-                <div key={i} className="soft-card p-6" data-testid={`stat-${stat.label.toLowerCase()}`}>
+                <button
+                  key={i}
+                  onClick={stat.onClick}
+                  className="soft-card-hover p-6 text-left transition-all duration-200 active:scale-95 cursor-pointer"
+                  data-testid={`stat-${stat.label.toLowerCase()}`}
+                >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
                     <div className={`${stat.color} p-2 rounded-xl`}><stat.icon size={18} weight="duotone" /></div>
                   </div>
                   <p className="text-3xl font-extrabold text-slate-900">{stat.value}</p>
-                </div>
+                  <p className="text-xs font-medium text-slate-400 mt-2">Click to view details →</p>
+                </button>
               ))}
             </div>
 
-            {/* Analytics Tabs */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 bg-slate-100 rounded-2xl p-1.5 w-fit">
-                <button 
-                  onClick={() => setAnalyticsTab('quiz')} 
-                  className={`pill-tab ${analyticsTab === 'quiz' ? 'pill-tab-active' : 'pill-tab-inactive'}`}
-                >
-                  Quiz Analytics
-                </button>
-                <button 
-                  onClick={() => setAnalyticsTab('semester')} 
-                  className={`pill-tab ${analyticsTab === 'semester' ? 'pill-tab-active' : 'pill-tab-inactive'}`}
-                >
-                  Semester Analytics
-                </button>
-              </div>
-            </div>
-
-            {/* Quiz Analytics */}
-            {analyticsTab === 'quiz' && (
-              <div className="space-y-6">
-                <div className="soft-card p-6">
-                  <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <ChartLine size={24} weight="duotone" className="text-indigo-500" />
-                    Department Quiz Performance
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div className="bg-indigo-50 rounded-2xl p-4">
-                      <p className="text-xs font-bold uppercase tracking-widest text-indigo-600 mb-1">Avg Score</p>
-                      <p className="text-3xl font-extrabold text-indigo-700">78.5%</p>
-                    </div>
-                    <div className="bg-teal-50 rounded-2xl p-4">
-                      <p className="text-xs font-bold uppercase tracking-widest text-teal-600 mb-1">Total Attempts</p>
-                      <p className="text-3xl font-extrabold text-teal-700">1,248</p>
-                    </div>
-                    <div className="bg-amber-50 rounded-2xl p-4">
-                      <p className="text-xs font-bold uppercase tracking-widest text-amber-600 mb-1">Completion Rate</p>
-                      <p className="text-3xl font-extrabold text-amber-700">94%</p>
-                    </div>
-                  </div>
-                  
-                  <h4 className="text-lg font-bold text-slate-700 mb-3">Section-wise Performance</h4>
-                  <div className="space-y-3">
-                    {['DS-1', 'DS-2', 'CS', 'AIML-1', 'AIML-2', 'AIML-3', 'IT-1', 'IT-2'].map(section => (
-                      <div key={section} className="flex items-center gap-4">
-                        <span className="soft-badge bg-indigo-50 text-indigo-600 !w-24">{section}</span>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-slate-600">Avg Score</span>
-                            <span className="text-sm font-bold text-slate-800">{75 + Math.floor(Math.random() * 15)}%</span>
-                          </div>
-                          <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-gradient-to-r from-indigo-500 to-teal-400 rounded-full"
-                              style={{ width: `${75 + Math.floor(Math.random() * 15)}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Semester Analytics */}
-            {analyticsTab === 'semester' && (
-              <div className="space-y-6">
-                <div className="soft-card p-6">
-                  <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <GraduationCap size={24} weight="duotone" className="text-indigo-500" />
-                    Department Semester Performance
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                    <div className="bg-purple-50 rounded-2xl p-4">
-                      <p className="text-xs font-bold uppercase tracking-widest text-purple-600 mb-1">Avg SGPA</p>
-                      <p className="text-3xl font-extrabold text-purple-700">8.2</p>
-                    </div>
-                    <div className="bg-emerald-50 rounded-2xl p-4">
-                      <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-1">Pass Rate</p>
-                      <p className="text-3xl font-extrabold text-emerald-700">96%</p>
-                    </div>
-                    <div className="bg-blue-50 rounded-2xl p-4">
-                      <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-1">First Class</p>
-                      <p className="text-3xl font-extrabold text-blue-700">78%</p>
-                    </div>
-                    <div className="bg-rose-50 rounded-2xl p-4">
-                      <p className="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">Distinction</p>
-                      <p className="text-3xl font-extrabold text-rose-700">45%</p>
-                    </div>
-                  </div>
-
-                  <h4 className="text-lg font-bold text-slate-700 mb-3">Section-wise Semester Results</h4>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-slate-50 border-b border-slate-100">
-                          <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Section</th>
-                          <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Students</th>
-                          <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Avg SGPA</th>
-                          <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Pass %</th>
-                          <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">First Class %</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {['DS-1', 'DS-2', 'CS', 'AIML-1', 'AIML-2', 'AIML-3', 'IT-1', 'IT-2'].map(section => {
-                          const avgSgpa = (7.5 + Math.random() * 1.5).toFixed(2);
-                          const passRate = 92 + Math.floor(Math.random() * 8);
-                          const firstClass = 70 + Math.floor(Math.random() * 20);
-                          return (
-                            <tr key={section} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                              <td className="py-3 px-4">
-                                <span className="soft-badge bg-indigo-50 text-indigo-600">{section}</span>
-                              </td>
-                              <td className="text-center py-3 px-4 font-medium text-slate-700">{section === 'DS-1' ? 10 : 8}</td>
-                              <td className="text-center py-3 px-4 font-bold text-slate-800">{avgSgpa}</td>
-                              <td className="text-center py-3 px-4">
-                                <span className={`soft-badge ${passRate >= 95 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                                  {passRate}%
-                                </span>
-                              </td>
-                              <td className="text-center py-3 px-4">
-                                <span className="soft-badge bg-blue-50 text-blue-600">{firstClass}%</span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Pending Reviews */}
             {dashboard?.recent_submissions?.length > 0 && (
-              <div className="soft-card p-6 mt-6">
-                <h3 className="text-xl font-bold text-slate-800 mb-4">Pending Mark Submissions</h3>
+              <div className="soft-card p-6">
+                <h3 className="text-xl font-bold text-slate-800 mb-4">Recent Submissions</h3>
                 <div className="space-y-3">
                   {dashboard.recent_submissions.map((s, i) => (
                     <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50">
@@ -611,6 +487,203 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
           </div>
         )}
       </div>
+
+      {/* Analytics Modal */}
+      {showAnalyticsModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6" onClick={() => setShowAnalyticsModal(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-slate-100 p-6 flex items-center justify-between rounded-t-3xl">
+              <h2 className="text-2xl font-extrabold text-slate-900 flex items-center gap-3">
+                <div className="bg-purple-50 p-3 rounded-xl">
+                  <ChartLine size={24} weight="duotone" className="text-purple-500" />
+                </div>
+                Department Analytics
+              </h2>
+              <button onClick={() => setShowAnalyticsModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                <X size={24} weight="bold" className="text-slate-400" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              {/* Analytics Tabs */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 bg-slate-100 rounded-2xl p-1.5 w-fit">
+                  <button 
+                    onClick={() => setAnalyticsTab('quiz')} 
+                    className={`pill-tab ${analyticsTab === 'quiz' ? 'pill-tab-active' : 'pill-tab-inactive'}`}
+                  >
+                    Quiz Analytics
+                  </button>
+                  <button 
+                    onClick={() => setAnalyticsTab('semester')} 
+                    className={`pill-tab ${analyticsTab === 'semester' ? 'pill-tab-active' : 'pill-tab-inactive'}`}
+                  >
+                    Semester Analytics
+                  </button>
+                </div>
+              </div>
+
+              {/* Quiz Analytics */}
+              {analyticsTab === 'quiz' && (
+                <div className="space-y-6">
+                  <div className="soft-card p-6">
+                    <h3 className="text-xl font-bold text-slate-800 mb-4">Department Quiz Performance</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                      <div className="bg-indigo-50 rounded-2xl p-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-indigo-600 mb-1">Avg Score</p>
+                        <p className="text-3xl font-extrabold text-indigo-700">78.5%</p>
+                      </div>
+                      <div className="bg-teal-50 rounded-2xl p-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-teal-600 mb-1">Total Attempts</p>
+                        <p className="text-3xl font-extrabold text-teal-700">1,248</p>
+                      </div>
+                      <div className="bg-amber-50 rounded-2xl p-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-amber-600 mb-1">Completion Rate</p>
+                        <p className="text-3xl font-extrabold text-amber-700">94%</p>
+                      </div>
+                    </div>
+                    
+                    <h4 className="text-lg font-bold text-slate-700 mb-3">Section-wise Performance</h4>
+                    <div className="space-y-3">
+                      {['DS-1', 'DS-2', 'CS', 'AIML-1', 'AIML-2', 'AIML-3', 'IT-1', 'IT-2'].map(section => {
+                        const score = 75 + Math.floor(Math.random() * 15);
+                        return (
+                          <div key={section} className="flex items-center gap-4">
+                            <span className="soft-badge bg-indigo-50 text-indigo-600 !w-24">{section}</span>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-medium text-slate-600">Avg Score</span>
+                                <span className="text-sm font-bold text-slate-800">{score}%</span>
+                              </div>
+                              <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-indigo-500 to-teal-400 rounded-full"
+                                  style={{ width: `${score}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Semester Analytics */}
+              {analyticsTab === 'semester' && (
+                <div className="space-y-6">
+                  <div className="soft-card p-6">
+                    <h3 className="text-xl font-bold text-slate-800 mb-4">Department Semester Performance</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                      <div className="bg-purple-50 rounded-2xl p-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-purple-600 mb-1">Avg SGPA</p>
+                        <p className="text-3xl font-extrabold text-purple-700">8.2</p>
+                      </div>
+                      <div className="bg-emerald-50 rounded-2xl p-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-1">Pass Rate</p>
+                        <p className="text-3xl font-extrabold text-emerald-700">96%</p>
+                      </div>
+                      <div className="bg-blue-50 rounded-2xl p-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-1">First Class</p>
+                        <p className="text-3xl font-extrabold text-blue-700">78%</p>
+                      </div>
+                      <div className="bg-rose-50 rounded-2xl p-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">Distinction</p>
+                        <p className="text-3xl font-extrabold text-rose-700">45%</p>
+                      </div>
+                    </div>
+
+                    <h4 className="text-lg font-bold text-slate-700 mb-3">Section-wise Semester Results</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-100">
+                            <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Section</th>
+                            <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Students</th>
+                            <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Avg SGPA</th>
+                            <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Pass %</th>
+                            <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">First Class %</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {['DS-1', 'DS-2', 'CS', 'AIML-1', 'AIML-2', 'AIML-3', 'IT-1', 'IT-2'].map(section => {
+                            const avgSgpa = (7.5 + Math.random() * 1.5).toFixed(2);
+                            const passRate = 92 + Math.floor(Math.random() * 8);
+                            const firstClass = 70 + Math.floor(Math.random() * 20);
+                            return (
+                              <tr key={section} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                <td className="py-3 px-4">
+                                  <span className="soft-badge bg-indigo-50 text-indigo-600">{section}</span>
+                                </td>
+                                <td className="text-center py-3 px-4 font-medium text-slate-700">{section === 'DS-1' ? 10 : 8}</td>
+                                <td className="text-center py-3 px-4 font-bold text-slate-800">{avgSgpa}</td>
+                                <td className="text-center py-3 px-4">
+                                  <span className={`soft-badge ${passRate >= 95 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                    {passRate}%
+                                  </span>
+                                </td>
+                                <td className="text-center py-3 px-4">
+                                  <span className="soft-badge bg-blue-50 text-blue-600">{firstClass}%</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Teachers Modal */}
+      {showTeachersModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6" onClick={() => setShowTeachersModal(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-slate-100 p-6 flex items-center justify-between rounded-t-3xl">
+              <h2 className="text-2xl font-extrabold text-slate-900 flex items-center gap-3">
+                <div className="bg-indigo-50 p-3 rounded-xl">
+                  <Users size={24} weight="duotone" className="text-indigo-500" />
+                </div>
+                Teachers List
+              </h2>
+              <button onClick={() => setShowTeachersModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                <X size={24} weight="bold" className="text-slate-400" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="space-y-3">
+                {teachers.length > 0 ? (
+                  teachers.map(teacher => (
+                    <div key={teacher.id} className="soft-card p-5 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="bg-indigo-50 text-indigo-600 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg">
+                          {teacher.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-900">{teacher.name}</p>
+                          <p className="text-sm text-slate-500">{teacher.college_id} • {teacher.email}</p>
+                          <p className="text-xs text-slate-400 mt-1">{teacher.department} Department</p>
+                        </div>
+                      </div>
+                      <span className="soft-badge bg-emerald-50 text-emerald-600">Active</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-slate-400 font-medium">No teachers found</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
