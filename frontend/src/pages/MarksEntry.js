@@ -121,7 +121,14 @@ const MarksEntry = ({ navigate, user }) => {
     <div className="min-h-screen bg-[#F8FAFC]">
       <header className="glass-header">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
-          <button data-testid="back-button" onClick={() => selectedAssignment ? setSelectedAssignment(null) : navigate('teacher-dashboard')}
+          <button data-testid="back-button" onClick={() => {
+            if (selectedAssignment) {
+              setSelectedAssignment(null);
+            } else {
+              const dashboardRoute = user?.role === 'hod' ? 'hod-dashboard' : 'teacher-dashboard';
+              navigate(dashboardRoute);
+            }
+          }}
             className="p-2.5 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors">
             <ArrowLeft size={22} weight="duotone" />
           </button>

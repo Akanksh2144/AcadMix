@@ -727,7 +727,7 @@ async def delete_assignment(assignment_id: str, user: dict = Depends(require_rol
 
 # ─── Marks Entry Routes (Teacher) ─────────────────────────────────────────
 @app.get("/api/marks/my-assignments")
-async def my_assignments(user: dict = Depends(require_role("teacher"))):
+async def my_assignments(user: dict = Depends(require_role("teacher", "hod"))):
     assignments = await db.faculty_assignments.find({"teacher_id": user["id"]}).to_list(50)
     return [serialize_doc(a) for a in assignments]
 
@@ -737,14 +737,14 @@ async def get_students_for_marks(department: str, batch: str, section: str, user
     return [serialize_doc(s) for s in students]
 
 @app.get("/api/marks/entry/{assignment_id}/{exam_type}")
-async def get_mark_entry(assignment_id: str, exam_type: str, user: dict = Depends(require_role("teacher"))):
+async def get_mark_entry(assignment_id: str, exam_type: str, user: dict = Depends(require_role("teacher", "hod"))):
     entry = await db.mark_entries.find_one({"assignment_id": assignment_id, "exam_type": exam_type, "teacher_id": user["id"]})
     if entry:
         return serialize_doc(entry)
     return None
 
 @app.post("/api/marks/entry")
-async def save_mark_entry(req: MarkEntrySave, user: dict = Depends(require_role("teacher"))):
+async def save_mark_entry(req: MarkEntrySave, user: dict = Depends(require_role("teacher", "hod"))):
     assignment = await db.faculty_assignments.find_one({"_id": ObjectId(req.assignment_id), "teacher_id": user["id"]})
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found or not yours")
@@ -772,7 +772,7 @@ async def save_mark_entry(req: MarkEntrySave, user: dict = Depends(require_role(
     return serialize_doc(doc)
 
 @app.post("/api/marks/submit/{entry_id}")
-async def submit_marks(entry_id: str, user: dict = Depends(require_role("teacher"))):
+async def submit_marks(entry_id: str, user: dict = Depends(require_role("teacher", "hod"))):
     entry = await db.mark_entries.find_one({"_id": ObjectId(entry_id), "teacher_id": user["id"]})
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
