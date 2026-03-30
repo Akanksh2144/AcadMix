@@ -124,7 +124,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
   const stats = dashboard ? [
     { label: 'Teachers', value: dashboard.total_teachers, icon: Users, color: 'bg-indigo-50 text-indigo-500' },
     { label: 'Students', value: dashboard.total_students, icon: BookOpen, color: 'bg-emerald-50 text-emerald-500' },
-    { label: 'Assignments', value: dashboard.total_assignments, icon: ClipboardText, color: 'bg-amber-50 text-amber-500' },
+    { label: 'Analytics', value: '2', icon: ChartLine, color: 'bg-purple-50 text-purple-500' },
     { label: 'Pending Reviews', value: dashboard.pending_reviews, icon: Clock, color: 'bg-rose-50 text-rose-500' },
   ] : [];
 
@@ -153,7 +153,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-2">Welcome, {user?.name}!</h2>
         <p className="text-base font-medium text-slate-500 mb-8">
-          {user?.designation || 'Head of Department'} - {user?.department || 'ET'} Department
+          {user?.designation || 'Head of Department'}
         </p>
 
         {/* Tabs */}
