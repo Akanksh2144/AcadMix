@@ -486,6 +486,48 @@ async def list_attempts(quiz_id: Optional[str] = None, user: dict = Depends(get_
     attempts = await db.quiz_attempts.find(query).sort("submitted_at", -1).to_list(200)
     return [serialize_doc(a) for a in attempts]
 
+# ─── Student Search & Profile (HOD / Admin) ───────────────────────────────
+@app.get("/api/students/search")
+async def search_students(q: str = "", department: Optional[str] = None, user: dict = Depends(require_role("hod", "admin", "exam_cell", "teacher"))):
+    query = {"role": "student"}
+    if user["role"] == "hod":
+        query["department"] = user.get("department", "")
+    elif department:
+        query["department"] = department
+    if q:
+        query["$or"] = [
+            {"name": {"$regex": q, "$options": "i"}},
+            {"college_id": {"$regex": q, "$options": "i"}}
+        ]
+    students = await db.users.find(query, {"password_hash": 0}).sort("college_id", 1).to_list(100)
+    return [serialize_doc(s) for s in students]
+
+@app.get("/api/students/{student_id}/profile")
+async def student_profile(student_id: str, user: dict = Depends(require_role("hod", "admin", "exam_cell", "teacher"))):
+    student = await db.users.find_one({"_id": ObjectId(student_id)}, {"password_hash": 0})
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if user["role"] == "hod" and student.get("department") != user.get("department"):
+        raise HTTPException(status_code=403, detail="Student not in your department")
+    semesters = await db.semester_results.find({"student_id": student_id}).sort("semester", 1).to_list(20)
+    attempts = await db.quiz_attempts.find({"student_id": student_id, "status": "submitted"}).sort("submitted_at", -1).to_list(20)
+    mid_marks = await db.mark_entries.find({"entries.student_id": student_id, "status": {"$in": ["approved", "submitted"]}}).to_list(50)
+    student_marks = []
+    for entry in mid_marks:
+        for e in entry.get("entries", []):
+            if e.get("student_id") == student_id:
+                student_marks.append({
+                    "subject_code": entry.get("subject_code"), "subject_name": entry.get("subject_name"),
+                    "exam_type": entry.get("exam_type"), "marks": e.get("marks"),
+                    "max_marks": entry.get("max_marks"), "semester": entry.get("semester")
+                })
+    return {
+        "student": serialize_doc(student),
+        "semesters": [serialize_doc(s) for s in semesters],
+        "quiz_attempts": [{"quiz_title": a.get("quiz_title", ""), "score": a.get("score", 0), "total": a.get("total_marks", 0), "percentage": a.get("percentage", 0), "submitted_at": a.get("submitted_at", "").isoformat() if isinstance(a.get("submitted_at"), datetime) else str(a.get("submitted_at", ""))} for a in attempts[:10]],
+        "mid_marks": student_marks
+    }
+
 # ─── Semester Results ──────────────────────────────────────────────────────
 @app.get("/api/results/semester/{student_id}")
 async def get_semester_results(student_id: str, user: dict = Depends(get_current_user)):

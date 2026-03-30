@@ -106,6 +106,12 @@ export const examCellAPI = {
   examCellDashboard: () => api.get('/api/dashboard/exam_cell'),
 };
 
+// Students Search & Profile
+export const studentsAPI = {
+  search: (q, department) => api.get('/api/students/search', { params: { q, ...(department ? { department } : {}) } }),
+  profile: (studentId) => api.get(`/api/students/${studentId}/profile`),
+};
+
 // Results
 export const resultsAPI = {
   semester: (studentId) => api.get(`/api/results/semester/${studentId}`),

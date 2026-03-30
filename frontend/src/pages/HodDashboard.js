@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Users, ClipboardText, CheckCircle, Clock, SignOut, Plus, Trash, UserPlus, ChartLine, Eye } from '@phosphor-icons/react';
+import { BookOpen, Users, ClipboardText, CheckCircle, Clock, SignOut, Plus, Trash, UserPlus, ChartLine, Eye, GraduationCap } from '@phosphor-icons/react';
 import { facultyAPI, examCellAPI, marksAPI } from '../services/api';
+import { StudentResultsSearch } from '../components/StudentResultsSearch';
 
 const HodDashboard = ({ navigate, user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -91,7 +92,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
 
         {/* Tabs */}
         <div className="flex items-center gap-2 bg-slate-100 rounded-2xl p-1.5 w-fit mb-8" data-testid="hod-tabs">
-          {[{ id: 'overview', label: 'Overview' }, { id: 'faculty', label: 'Faculty Management' }, { id: 'review', label: 'Mark Reviews' }].map(tab => (
+          {[{ id: 'overview', label: 'Overview' }, { id: 'faculty', label: 'Faculty Management' }, { id: 'review', label: 'Mark Reviews' }, { id: 'results', label: 'Student Results' }].map(tab => (
             <button key={tab.id} data-testid={`tab-${tab.id}`} onClick={() => setActiveTab(tab.id)}
               className={`pill-tab ${activeTab === tab.id ? 'pill-tab-active' : 'pill-tab-inactive'}`}>{tab.label}</button>
           ))}
@@ -256,6 +257,12 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
               ))}
               {submissions.length === 0 && <div className="soft-card p-8 text-center"><p className="text-slate-400 font-medium">No submissions to review</p></div>}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'results' && (
+          <div data-testid="results-content">
+            <StudentResultsSearch user={user} departmentLocked={true} />
           </div>
         )}
       </div>
