@@ -158,7 +158,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
 
         {/* Tabs */}
         <div className="flex items-center gap-2 bg-slate-100 rounded-2xl p-1.5 w-fit mb-8" data-testid="hod-tabs">
-          {[{ id: 'overview', label: 'Overview' }, { id: 'faculty', label: 'Faculty Management' }, { id: 'review', label: 'Mark Reviews' }, { id: 'results', label: 'Student Management' }].map(tab => (
+          {[{ id: 'overview', label: 'Overview' }, { id: 'marks-entry', label: 'Marks Entry' }, { id: 'faculty', label: 'Faculty Management' }, { id: 'review', label: 'Mark Reviews' }, { id: 'results', label: 'Student Management' }].map(tab => (
             <button key={tab.id} data-testid={`tab-${tab.id}`} onClick={() => setActiveTab(tab.id)}
               className={`pill-tab ${activeTab === tab.id ? 'pill-tab-active' : 'pill-tab-inactive'}`}>{tab.label}</button>
           ))}
@@ -202,6 +202,69 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Marks Entry */}
+        {activeTab === 'marks-entry' && (
+          <div data-testid="marks-entry-content">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-slate-800 mb-2">My Marks Entry</h3>
+                <p className="text-sm text-slate-500">Enter marks for your assigned subjects</p>
+              </div>
+            </div>
+
+            {/* My Assignments */}
+            <div className="mb-6">
+              <h4 className="text-lg font-bold text-slate-700 mb-4">My Assigned Subjects</h4>
+              {assignments.filter(a => a.teacher_id === user?.id).length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {assignments.filter(a => a.teacher_id === user?.id).map(assignment => (
+                    <div key={assignment.id} className="soft-card p-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h5 className="font-bold text-slate-900 text-lg">{assignment.subject_code}</h5>
+                          <p className="text-sm text-slate-600 mb-2">{assignment.subject_name}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="soft-badge bg-indigo-50 text-indigo-600">{assignment.section}</span>
+                            <span className="soft-badge bg-purple-50 text-purple-600">Batch {assignment.batch}</span>
+                            <span className="soft-badge bg-teal-50 text-teal-600">Sem {assignment.semester}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2 mt-4">
+                        <button 
+                          onClick={() => {
+                            // Navigate to marks entry form
+                            alert('Marks entry form will open for ' + assignment.subject_name);
+                          }}
+                          className="btn-primary w-full !py-2 text-sm"
+                        >
+                          Enter Mid-1 Marks
+                        </button>
+                        <button 
+                          onClick={() => {
+                            alert('Marks entry form will open for ' + assignment.subject_name);
+                          }}
+                          className="btn-secondary w-full !py-2 text-sm"
+                        >
+                          Enter Mid-2 Marks
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="soft-card p-12 text-center">
+                  <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <ClipboardText size={40} weight="duotone" className="text-slate-400" />
+                  </div>
+                  <h5 className="text-lg font-bold text-slate-700 mb-2">No Subjects Assigned</h5>
+                  <p className="text-sm text-slate-500">No subjects are assigned for the current semester.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
