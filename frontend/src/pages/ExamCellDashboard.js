@@ -15,23 +15,24 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
   
   // Dropdown states
   const [showSubjectCodeDropdown, setShowSubjectCodeDropdown] = useState(false);
-  const [showSubjectNameDropdown, setShowSubjectNameDropdown] = useState(false);
   const [showDepartmentDropdown, setShowDepartmentDropdown] = useState(false);
   const [showSectionDropdown, setShowSectionDropdown] = useState(false);
   const [subjectCodeSearch, setSubjectCodeSearch] = useState('');
-  const [subjectNameSearch, setSubjectNameSearch] = useState('');
   
-  // Mock data for dropdowns - replace with API calls
-  const subjectCodes = ['22ET301', '22ET302', '22ET303', '22ET401', '22ET402', '22ET501', '22ET502'];
-  const subjectNames = [
-    'Data Structures',
-    'Database Management Systems',
-    'Operating Systems',
-    'Computer Networks',
-    'Machine Learning',
-    'Artificial Intelligence',
-    'Web Technologies'
-  ];
+  // Subject code to name mapping
+  const subjectMapping = {
+    '22ET301': 'Data Structures',
+    '22ET302': 'Database Management Systems',
+    '22ET303': 'Operating Systems',
+    '22ET401': 'Computer Networks',
+    '22ET402': 'Software Engineering',
+    '22ET501': 'Machine Learning',
+    '22ET502': 'Artificial Intelligence',
+    '22ET503': 'Web Technologies'
+  };
+  
+  // Mock data for dropdowns
+  const subjectCodes = Object.keys(subjectMapping);
   const departments = ['DS', 'CS', 'ET', 'AIML', 'IT', 'ECE', 'EEE'];
   const sections = ['A', 'B', 'C', 'DS-1', 'DS-2', 'AIML-1', 'AIML-2'];
   const batches = ['2021', '2022', '2023', '2024'];
@@ -40,10 +41,6 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
   const filteredSubjectCodes = subjectCodes.filter(code => 
     code.toLowerCase().includes(subjectCodeSearch.toLowerCase())
   );
-  
-  const filteredSubjectNames = subjectNames.filter(name => 
-    name.toLowerCase().includes(subjectNameSearch.toLowerCase())
-  );
 
   useEffect(() => { fetchData(); }, [activeTab]);
   
@@ -51,7 +48,6 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
     const handleClickOutside = (e) => {
       if (!e.target.closest('.relative')) {
         setShowSubjectCodeDropdown(false);
-        setShowSubjectNameDropdown(false);
         setShowDepartmentDropdown(false);
         setShowSectionDropdown(false);
       }
@@ -235,7 +231,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                       data-testid="upload-subject-code"
                       value={uploadForm.subject_code}
                       onChange={(e) => {
-                        setUploadForm({ ...uploadForm, subject_code: e.target.value });
+                        setUploadForm({ ...uploadForm, subject_code: e.target.value, subject_name: '' });
                         setSubjectCodeSearch(e.target.value);
                         setShowSubjectCodeDropdown(true);
                       }}
@@ -246,7 +242,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                     {uploadForm.subject_code && (
                       <button
                         onClick={() => {
-                          setUploadForm({ ...uploadForm, subject_code: '' });
+                          setUploadForm({ ...uploadForm, subject_code: '', subject_name: '' });
                           setSubjectCodeSearch('');
                         }}
                         className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-lg transition-colors"
@@ -264,13 +260,18 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                           <button
                             key={code}
                             onClick={() => {
-                              setUploadForm({ ...uploadForm, subject_code: code });
+                              setUploadForm({ 
+                                ...uploadForm, 
+                                subject_code: code,
+                                subject_name: subjectMapping[code] || ''
+                              });
                               setShowSubjectCodeDropdown(false);
                               setSubjectCodeSearch('');
                             }}
-                            className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors font-medium text-slate-700"
+                            className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors"
                           >
-                            {code}
+                            <p className="font-bold text-slate-800">{code}</p>
+                            <p className="text-xs text-slate-500">{subjectMapping[code]}</p>
                           </button>
                         ))
                       ) : (
@@ -280,57 +281,12 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                   )}
                 </div>
                 
-                {/* Subject Name Dropdown */}
-                <div className="relative">
+                {/* Subject Name - Display Only */}
+                <div>
                   <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Subject Name</label>
-                  <div className="relative">
-                    <input
-                      data-testid="upload-subject-name"
-                      value={uploadForm.subject_name}
-                      onChange={(e) => {
-                        setUploadForm({ ...uploadForm, subject_name: e.target.value });
-                        setSubjectNameSearch(e.target.value);
-                        setShowSubjectNameDropdown(true);
-                      }}
-                      onFocus={() => setShowSubjectNameDropdown(true)}
-                      className="soft-input w-full pr-8"
-                      placeholder="Search or select..."
-                    />
-                    {uploadForm.subject_name && (
-                      <button
-                        onClick={() => {
-                          setUploadForm({ ...uploadForm, subject_name: '' });
-                          setSubjectNameSearch('');
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-lg transition-colors"
-                      >
-                        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
+                  <div className="soft-input w-full bg-slate-50 text-slate-600 flex items-center">
+                    {uploadForm.subject_name || 'Auto-filled from code'}
                   </div>
-                  {showSubjectNameDropdown && (
-                    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 max-h-48 overflow-y-auto">
-                      {filteredSubjectNames.length > 0 ? (
-                        filteredSubjectNames.map((name) => (
-                          <button
-                            key={name}
-                            onClick={() => {
-                              setUploadForm({ ...uploadForm, subject_name: name });
-                              setShowSubjectNameDropdown(false);
-                              setSubjectNameSearch('');
-                            }}
-                            className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors font-medium text-slate-700"
-                          >
-                            {name}
-                          </button>
-                        ))
-                      ) : (
-                        <div className="px-4 py-2.5 text-sm text-slate-400">No results found</div>
-                      )}
-                    </div>
-                  )}
                 </div>
                 
                 {/* Semester Dropdown */}
