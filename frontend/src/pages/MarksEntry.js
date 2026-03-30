@@ -163,22 +163,14 @@ const MarksEntry = ({ navigate, user }) => {
           </div>
         ) : (
           <div data-testid="marks-entry-form">
-            {/* Row 1: Mid-1/Mid-2 tabs + Status */}
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            {/* Row 1: Mid-1/Mid-2 tabs */}
+            <div className="flex flex-wrap items-center gap-4 mb-4">
               <div className="flex items-center gap-2 bg-slate-100 rounded-2xl p-1.5" data-testid="exam-type-tabs">
                 <button data-testid="tab-mid1" onClick={() => handleExamTypeChange('mid1')}
                   className={`pill-tab ${examType === 'mid1' ? 'pill-tab-active' : 'pill-tab-inactive'}`}>Mid-term 1</button>
                 <button data-testid="tab-mid2" onClick={() => handleExamTypeChange('mid2')}
                   className={`pill-tab ${examType === 'mid2' ? 'pill-tab-active' : 'pill-tab-inactive'}`}>Mid-term 2</button>
               </div>
-              <span className={`soft-badge ${
-                status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
-                status === 'submitted' ? 'bg-amber-50 text-amber-600' :
-                status === 'rejected' ? 'bg-red-50 text-red-600' :
-                'bg-slate-100 text-slate-500'
-              }`}>
-                {status === 'new' ? 'Not Started' : status.charAt(0).toUpperCase() + status.slice(1)}
-              </span>
             </div>
 
             {/* Row 2: Class Buttons (left) + Max / Avg / % (right) */}
@@ -277,7 +269,15 @@ const MarksEntry = ({ navigate, user }) => {
             {isEditable && students.length > 0 && (
               <div className="flex items-center justify-between mt-6">
                 <p className="text-sm text-slate-500">{stats.gradedCount} / {students.length} students graded</p>
-                <div className="flex gap-3">
+                <div className="flex items-center gap-3">
+                  <span className={`soft-badge ${
+                    status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
+                    status === 'submitted' ? 'bg-amber-50 text-amber-600' :
+                    status === 'rejected' ? 'bg-red-50 text-red-600' :
+                    'bg-slate-100 text-slate-500'
+                  }`}>
+                    {status === 'new' ? 'Not Started' : status.charAt(0).toUpperCase() + status.slice(1)}
+                  </span>
                   <button data-testid="save-marks-button" onClick={handleSave} disabled={saving} className="btn-ghost !py-2.5 text-sm flex items-center gap-2 disabled:opacity-60">
                     <FloppyDisk size={16} weight="duotone" /> {saving ? 'Saving...' : 'Save Draft'}
                   </button>
