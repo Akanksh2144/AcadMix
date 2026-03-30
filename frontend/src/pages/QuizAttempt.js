@@ -96,13 +96,18 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
   }, [attempt]);
 
   // Anti-cheat: Fullscreen enforcement
+  const fullscreenInitialized = useRef(false);
+
   const enterFullscreen = useCallback(() => {
     const el = document.documentElement;
-    try {
-      if (el.requestFullscreen) el.requestFullscreen();
-      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-      else if (el.msRequestFullscreen) el.msRequestFullscreen();
-    } catch {}
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (req) {
+      req.call(el).then(() => {
+        fullscreenInitialized.current = true;
+      }).catch(() => {
+        // Browser blocked auto-fullscreen (needs user gesture) — that's OK
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -110,7 +115,8 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     const handleFullscreenChange = () => {
       const isFull = !!document.fullscreenElement;
       setIsFullscreen(isFull);
-      if (!isFull && attempt) {
+      // Only count as violation if user exited after fullscreen was successfully entered
+      if (!isFull && fullscreenInitialized.current) {
         violationRef.current += 1;
         setViolations(violationRef.current);
         setShowWarning(true);
@@ -118,10 +124,8 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
       }
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    // Try to enter fullscreen on start
-    enterFullscreen();
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, [attempt, enterFullscreen]);
+  }, [attempt]);
 
   // Anti-cheat: Webcam monitoring
   useEffect(() => {
