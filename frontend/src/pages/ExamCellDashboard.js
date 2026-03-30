@@ -12,8 +12,53 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [manualEntry, setManualEntry] = useState(null);
+  
+  // Dropdown states
+  const [showSubjectCodeDropdown, setShowSubjectCodeDropdown] = useState(false);
+  const [showSubjectNameDropdown, setShowSubjectNameDropdown] = useState(false);
+  const [showDepartmentDropdown, setShowDepartmentDropdown] = useState(false);
+  const [showSectionDropdown, setShowSectionDropdown] = useState(false);
+  const [subjectCodeSearch, setSubjectCodeSearch] = useState('');
+  const [subjectNameSearch, setSubjectNameSearch] = useState('');
+  
+  // Mock data for dropdowns - replace with API calls
+  const subjectCodes = ['22ET301', '22ET302', '22ET303', '22ET401', '22ET402', '22ET501', '22ET502'];
+  const subjectNames = [
+    'Data Structures',
+    'Database Management Systems',
+    'Operating Systems',
+    'Computer Networks',
+    'Machine Learning',
+    'Artificial Intelligence',
+    'Web Technologies'
+  ];
+  const departments = ['DS', 'CS', 'ET', 'AIML', 'IT', 'ECE', 'EEE'];
+  const sections = ['A', 'B', 'C', 'DS-1', 'DS-2', 'AIML-1', 'AIML-2'];
+  const batches = ['2021', '2022', '2023', '2024'];
+  const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
+  
+  const filteredSubjectCodes = subjectCodes.filter(code => 
+    code.toLowerCase().includes(subjectCodeSearch.toLowerCase())
+  );
+  
+  const filteredSubjectNames = subjectNames.filter(name => 
+    name.toLowerCase().includes(subjectNameSearch.toLowerCase())
+  );
 
   useEffect(() => { fetchData(); }, [activeTab]);
+  
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.relative')) {
+        setShowSubjectCodeDropdown(false);
+        setShowSubjectNameDropdown(false);
+        setShowDepartmentDropdown(false);
+        setShowSectionDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -182,33 +227,212 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
             <h3 className="text-2xl font-bold text-slate-800 mb-6">Upload End-term Marks</h3>
             <div className="soft-card p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
+                {/* Subject Code Dropdown */}
+                <div className="relative">
                   <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Subject Code</label>
-                  <input data-testid="upload-subject-code" value={uploadForm.subject_code} onChange={(e) => setUploadForm({ ...uploadForm, subject_code: e.target.value })} className="soft-input w-full" placeholder="e.g., 22PC0DS17" />
+                  <div className="relative">
+                    <input
+                      data-testid="upload-subject-code"
+                      value={uploadForm.subject_code}
+                      onChange={(e) => {
+                        setUploadForm({ ...uploadForm, subject_code: e.target.value });
+                        setSubjectCodeSearch(e.target.value);
+                        setShowSubjectCodeDropdown(true);
+                      }}
+                      onFocus={() => setShowSubjectCodeDropdown(true)}
+                      className="soft-input w-full pr-8"
+                      placeholder="Search or select..."
+                    />
+                    {uploadForm.subject_code && (
+                      <button
+                        onClick={() => {
+                          setUploadForm({ ...uploadForm, subject_code: '' });
+                          setSubjectCodeSearch('');
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-lg transition-colors"
+                      >
+                        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                  {showSubjectCodeDropdown && (
+                    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 max-h-48 overflow-y-auto">
+                      {filteredSubjectCodes.length > 0 ? (
+                        filteredSubjectCodes.map((code) => (
+                          <button
+                            key={code}
+                            onClick={() => {
+                              setUploadForm({ ...uploadForm, subject_code: code });
+                              setShowSubjectCodeDropdown(false);
+                              setSubjectCodeSearch('');
+                            }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors font-medium text-slate-700"
+                          >
+                            {code}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2.5 text-sm text-slate-400">No results found</div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div>
+                
+                {/* Subject Name Dropdown */}
+                <div className="relative">
                   <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Subject Name</label>
-                  <input data-testid="upload-subject-name" value={uploadForm.subject_name} onChange={(e) => setUploadForm({ ...uploadForm, subject_name: e.target.value })} className="soft-input w-full" placeholder="e.g., Machine Learning" />
+                  <div className="relative">
+                    <input
+                      data-testid="upload-subject-name"
+                      value={uploadForm.subject_name}
+                      onChange={(e) => {
+                        setUploadForm({ ...uploadForm, subject_name: e.target.value });
+                        setSubjectNameSearch(e.target.value);
+                        setShowSubjectNameDropdown(true);
+                      }}
+                      onFocus={() => setShowSubjectNameDropdown(true)}
+                      className="soft-input w-full pr-8"
+                      placeholder="Search or select..."
+                    />
+                    {uploadForm.subject_name && (
+                      <button
+                        onClick={() => {
+                          setUploadForm({ ...uploadForm, subject_name: '' });
+                          setSubjectNameSearch('');
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-lg transition-colors"
+                      >
+                        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                  {showSubjectNameDropdown && (
+                    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 max-h-48 overflow-y-auto">
+                      {filteredSubjectNames.length > 0 ? (
+                        filteredSubjectNames.map((name) => (
+                          <button
+                            key={name}
+                            onClick={() => {
+                              setUploadForm({ ...uploadForm, subject_name: name });
+                              setShowSubjectNameDropdown(false);
+                              setSubjectNameSearch('');
+                            }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors font-medium text-slate-700"
+                          >
+                            {name}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2.5 text-sm text-slate-400">No results found</div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div>
+                
+                {/* Semester Dropdown */}
+                <div className="relative">
                   <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Semester</label>
-                  <input data-testid="upload-semester" type="number" value={uploadForm.semester} onChange={(e) => setUploadForm({ ...uploadForm, semester: parseInt(e.target.value) })} className="soft-input w-full" />
+                  <select
+                    data-testid="upload-semester"
+                    value={uploadForm.semester}
+                    onChange={(e) => setUploadForm({ ...uploadForm, semester: parseInt(e.target.value) })}
+                    className="soft-input w-full"
+                  >
+                    {semesters.map(sem => (
+                      <option key={sem} value={sem}>Semester {sem}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div>
+                {/* Department Dropdown */}
+                <div className="relative">
                   <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Department</label>
-                  <input value={uploadForm.department} onChange={(e) => setUploadForm({ ...uploadForm, department: e.target.value })} className="soft-input w-full" />
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowDepartmentDropdown(!showDepartmentDropdown)}
+                      className="soft-input w-full text-left flex items-center justify-between"
+                    >
+                      <span className={uploadForm.department ? 'text-slate-900' : 'text-slate-400'}>
+                        {uploadForm.department || 'Select department...'}
+                      </span>
+                      <svg className={`w-4 h-4 text-slate-400 transition-transform ${showDepartmentDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                  {showDepartmentDropdown && (
+                    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 max-h-48 overflow-y-auto">
+                      {departments.map((dept) => (
+                        <button
+                          key={dept}
+                          onClick={() => {
+                            setUploadForm({ ...uploadForm, department: dept });
+                            setShowDepartmentDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors font-medium text-slate-700"
+                        >
+                          {dept}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
+                
+                {/* Batch Dropdown */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Batch</label>
-                  <input value={uploadForm.batch} onChange={(e) => setUploadForm({ ...uploadForm, batch: e.target.value })} className="soft-input w-full" />
+                  <select
+                    value={uploadForm.batch}
+                    onChange={(e) => setUploadForm({ ...uploadForm, batch: e.target.value })}
+                    className="soft-input w-full"
+                  >
+                    {batches.map(batch => (
+                      <option key={batch} value={batch}>{batch}</option>
+                    ))}
+                  </select>
                 </div>
-                <div>
+                
+                {/* Section Dropdown */}
+                <div className="relative">
                   <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Section</label>
-                  <input value={uploadForm.section} onChange={(e) => setUploadForm({ ...uploadForm, section: e.target.value })} className="soft-input w-full" />
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowSectionDropdown(!showSectionDropdown)}
+                      className="soft-input w-full text-left flex items-center justify-between"
+                    >
+                      <span className={uploadForm.section ? 'text-slate-900' : 'text-slate-400'}>
+                        {uploadForm.section || 'Select section...'}
+                      </span>
+                      <svg className={`w-4 h-4 text-slate-400 transition-transform ${showSectionDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                  {showSectionDropdown && (
+                    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 max-h-48 overflow-y-auto">
+                      {sections.map((sec) => (
+                        <button
+                          key={sec}
+                          onClick={() => {
+                            setUploadForm({ ...uploadForm, section: sec });
+                            setShowSectionDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors font-medium text-slate-700"
+                        >
+                          {sec}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
+              
               <div className="mb-6">
                 <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Marks File (CSV or Excel)</label>
                 <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center">
