@@ -1,61 +1,103 @@
 # College Quiz Platform & Results Portal - PRD
 
 ## Original Problem Statement
-Full-stack college quiz and results management system with JWT auth, quiz CRUD, auto-grading, and real marksheet data integration.
+Build a full-stack cross-platform College Quiz Platform & Results Portal with three roles: Students, Teachers/Faculty, and Admin/HOD. Key features include a robust quiz engine (MCQ, True/False, Short Answer, Coding), anti-cheat/proctoring, a semester results portal, combined analytics, and notifications.
 
-## Architecture
-- Frontend: React + Tailwind CSS + Recharts + Axios
-- Backend: FastAPI + MongoDB (Motor async driver)
-- Auth: JWT (bcrypt password hashing, access + refresh tokens)
-- Database: MongoDB with indexed collections
+## Tech Stack
+- **Frontend**: React + TailwindCSS + Shadcn UI + Recharts + Monaco Editor
+- **Backend**: FastAPI + MongoDB (Motor async driver)
+- **Auth**: JWT (httpOnly cookies + Bearer token)
+- **Design**: "Smooth, rounded" light aesthetic with DM Sans / Nunito fonts
 
-## What's Been Implemented (March 30, 2026)
+## User Personas
+- **Students**: Take quizzes, view results, track analytics, view semester results
+- **Teachers**: Create quizzes, monitor live attempts, view analytics, manage results
+- **Admins**: User management, system oversight, department analytics
 
-### Backend (FastAPI)
-- JWT auth (login, register, me, logout)
-- User management CRUD with role-based access
-- Quiz CRUD (create, update, delete, publish)
-- Quiz attempt flow (start, answer, submit)
-- Auto-grading engine (MCQ, True/False, keyword-based short answer)
-- Semester results with real marksheet data from PDFs
-- Student analytics and leaderboard
-- Dashboard APIs (student, teacher, admin)
-- Seed data: admin, teacher, 5 students, 2 quizzes, 3 semesters
+## Core Requirements
 
-### Frontend (React)
-- 13 pages with smooth rounded design
-- Real API integration (login, dashboard, quiz flow, results)
-- JWT token management with localStorage persistence
-- Loading states, error handling, responsive layout
+### Authentication
+- JWT-based login with college ID + password
+- Role-based access (student, teacher, admin)
+- Persistent session via localStorage
 
-### Data from Marksheets
-- Student: Rajana Akanksh (22WJ8A6745)
-- Sem 1: SGPA 9.10, CGPA 9.10 (8 subjects)
-- Sem 2: SGPA 9.55, CGPA 9.33 (9 subjects)
-- Sem 3: SGPA 7.60, CGPA 8.59 (9 subjects)
+### Quiz Engine
+- Question types: MCQ, True/False, Short Answer, **Coding** (with Monaco editor + backend execution)
+- Timer, auto-submit on timeout
+- Question navigation panel
+- Code execution via `/api/code/execute` (Python, JavaScript, Java)
 
-## Test Results
-- Backend: 100% (30/30 tests passed)
-- Frontend: 95% (core flows working)
+### Results Portal
+- Semester results with SGPA/CGPA tracking
+- Subject-wise grades and credit details
+- Data seeded from real marksheet PDFs
 
-## Credentials
-- Admin: A001 / admin123
-- Teacher: T001 / teacher123
-- Student: 22WJ8A6745 / student123
+### Analytics
+- **Two tabs**: Quiz Analytics + Semester Analytics
+- Quiz: Performance trend, subject averages, skills radar, question type accuracy
+- Semester: SGPA/CGPA trend, semester bar chart, detailed subject tables
 
-## Prioritized Backlog
-### P0
-- Quiz Builder connected to real API (create/edit quizzes from frontend)
-- Leaderboard page connected to real API
-- Analytics page connected to real API
+---
 
-### P1
-- CSV bulk import for users and results
-- PDF report generation
-- Real-time quiz monitoring via WebSocket
+## What's Been Implemented
 
-### P2
-- AI-powered short answer grading
-- ERP integration
-- Anti-cheat proctoring (webcam, tab detection)
-- Email/SMS notifications
+### Phase 1 - MVP (Complete)
+- [x] React frontend with all page routing
+- [x] "Smooth, rounded" design aesthetic
+- [x] FastAPI + MongoDB backend
+- [x] JWT Authentication (login, register, logout, session persistence)
+- [x] Student Dashboard with stats, active quizzes, recent results
+- [x] Teacher Dashboard with quiz management
+- [x] Admin Dashboard with system overview
+- [x] Quiz Attempt flow (MCQ, True/False, Short Answer)
+- [x] Auto-grading engine
+- [x] Semester Results page with real marksheet data
+- [x] Leaderboard
+- [x] Quiz Builder (teacher)
+- [x] User Management (admin)
+
+### Phase 2 - Recent Updates (Complete - March 30, 2026)
+- [x] **Coding Quiz Support**: Monaco editor for coding questions, backend code execution (Python/JS/Java)
+- [x] **Login Page Fixes**: Auto-capitalize College ID, fixed icon/text overlap (pl-12 padding)
+- [x] **Analytics Tab Split**: Quiz Analytics and Semester Analytics separated into tabs
+- [x] **Python Coding Challenge quiz**: 3 coding questions seeded (factorial, palindrome, fibonacci)
+- [x] Code execution endpoint with 10s timeout, 10KB code limit
+
+---
+
+## Pending / Upcoming Tasks
+
+### P0 - High Priority
+- [ ] Anti-Cheat & Proctoring (tab-switch detection, fullscreen lock, webcam snapshots)
+
+### P1 - Medium Priority
+- [ ] Results Portal enhancements (PDF marksheet upload & parsing for teachers)
+- [ ] Teacher Dashboard flows (Quiz Builder to backend, Live Monitor websockets)
+- [ ] Practice mode for coding (standalone code playground)
+
+### P2 - Lower Priority
+- [ ] Notification System (FCM Push, SendGrid Email, In-app Socket.io)
+- [ ] Admin ERP Sync Configuration
+- [ ] Modularize backend (split server.py into routes/models)
+
+---
+
+## Key API Endpoints
+- `POST /api/auth/login` - JWT login
+- `GET /api/auth/me` - Current user
+- `GET /api/quizzes` - List quizzes
+- `POST /api/quizzes` - Create quiz (teacher/admin)
+- `POST /api/quizzes/{id}/start` - Start quiz attempt
+- `POST /api/attempts/{id}/answer` - Submit answer
+- `POST /api/attempts/{id}/submit` - Submit quiz
+- `POST /api/code/execute` - Execute code (Python/JS/Java)
+- `GET /api/results/semester/{id}` - Semester results
+- `GET /api/analytics/student/{id}` - Student analytics
+- `GET /api/dashboard/student` - Student dashboard
+- `GET /api/leaderboard` - Leaderboard
+
+## DB Collections
+- `users` - User accounts with roles
+- `quizzes` - Quiz definitions with questions
+- `quiz_attempts` - Student quiz attempts and results
+- `semester_results` - Semester academic results
