@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@100..900&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Outfit:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -11,53 +11,84 @@
 }
 
 body {
-  font-family: 'DM Sans', 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: #FDFCF8;
-  color: #0A0A0A;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  background-color: #F8FAFC;
+  color: #0F172A;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Cabinet Grotesk', 'Outfit', system-ui, sans-serif;
+  font-family: 'Nunito', system-ui, sans-serif;
 }
 
 @layer utilities {
-  .neo-card {
-    @apply bg-white border-2 border-[#0A0A0A] shadow-[4px_4px_0px_0px_#0A0A0A];
+  .soft-card {
+    @apply bg-white rounded-3xl border border-slate-100/50;
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.04);
   }
   
-  .neo-card-hover {
-    @apply bg-white border-2 border-[#0A0A0A] shadow-[4px_4px_0px_0px_#0A0A0A] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#0A0A0A];
+  .soft-card-hover {
+    @apply bg-white rounded-3xl border border-slate-100/50 transition-all duration-300;
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.04);
+  }
+
+  .soft-card-hover:hover {
+    box-shadow: 0 20px 40px rgb(0 0 0 / 0.08);
+    transform: translateY(-4px);
   }
   
-  .neo-button {
-    @apply font-bold border-2 border-[#0A0A0A] shadow-[4px_4px_0px_0px_#0A0A0A] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#0A0A0A] active:translate-y-0 active:translate-x-0 active:shadow-[0px_0px_0px_0px_#0A0A0A];
+  .btn-primary {
+    @apply bg-indigo-500 text-white rounded-2xl px-6 py-3 font-bold hover:bg-indigo-600 shadow-sm transition-all duration-200 active:scale-95;
   }
   
-  .neo-input {
-    @apply bg-white border-2 border-[#0A0A0A] rounded-none focus:ring-0 focus:outline-none focus:shadow-[4px_4px_0px_0px_#B4D8E7];
+  .btn-secondary {
+    @apply bg-indigo-50 text-indigo-600 rounded-2xl px-6 py-3 font-bold hover:bg-indigo-100 transition-all duration-200 active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply bg-slate-50 text-slate-700 rounded-2xl px-6 py-3 font-bold hover:bg-slate-100 transition-all duration-200 active:scale-95;
   }
   
-  .neo-badge {
-    @apply border-2 border-[#0A0A0A] font-bold uppercase tracking-widest text-xs px-2 py-1 shadow-[2px_2px_0px_0px_#0A0A0A];
+  .soft-input {
+    @apply bg-slate-50 border-none rounded-2xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none;
+  }
+  
+  .soft-badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
+  }
+
+  .glass-header {
+    @apply bg-white/70 backdrop-blur-xl border-b border-slate-100/50 shadow-sm sticky top-0 z-50;
+  }
+
+  .pill-tab {
+    @apply px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-200;
+  }
+
+  .pill-tab-active {
+    @apply bg-white shadow-sm text-indigo-600;
+  }
+
+  .pill-tab-inactive {
+    @apply text-slate-500 hover:text-slate-700 hover:bg-white/50;
   }
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F0EFEB;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #0A0A0A;
-  border: 1px solid #0A0A0A;
+  background: #CBD5E1;
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #FF9EC6;
+  background: #6366F1;
 }
