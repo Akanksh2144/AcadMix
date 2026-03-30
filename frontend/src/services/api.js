@@ -71,6 +71,11 @@ export const attemptsAPI = {
   violation: (attemptId) => api.post(`/api/attempts/${attemptId}/violation`),
 };
 
+// Code Execution
+export const codeAPI = {
+  execute: (code, language, test_input) => api.post('/api/code/execute', { code, language, test_input }),
+};
+
 // Results
 export const resultsAPI = {
   semester: (studentId) => api.get(`/api/results/semester/${studentId}`),

@@ -67,17 +67,17 @@ const LoginPage = ({ onLogin }) => {
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">College ID / Roll Number</label>
                 <div className="relative">
-                  <UserCircle size={20} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input data-testid="college-id-input" type="text" value={collegeId} onChange={(e) => setCollegeId(e.target.value)}
-                    placeholder="e.g., 22WJ8A6745, T001, A001" className="soft-input w-full pl-11 pr-4" />
+                  <UserCircle size={18} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input data-testid="college-id-input" type="text" value={collegeId} onChange={(e) => setCollegeId(e.target.value.toUpperCase())}
+                    placeholder="e.g., 22WJ8A6745, T001, A001" className="soft-input w-full pl-12 pr-4" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Password</label>
                 <div className="relative">
-                  <Lock size={20} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Lock size={18} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   <input data-testid="password-input" type={showPassword ? 'text' : 'password'} value={password}
-                    onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" className="soft-input w-full pl-11 pr-12" />
+                    onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" className="soft-input w-full pl-12 pr-12" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" data-testid="toggle-password-visibility">
                     {showPassword ? <EyeSlash size={20} weight="duotone" /> : <Eye size={20} weight="duotone" />}

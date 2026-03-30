@@ -1,6 +1,61 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Clock, Warning, Camera, CheckCircle, XCircle } from '@phosphor-icons/react';
+import React, { useState, useEffect } from 'react';
+import { Clock, Warning, Camera, CheckCircle, XCircle, Play, Code } from '@phosphor-icons/react';
 import { attemptsAPI, quizzesAPI } from '../services/api';
+import Editor from '@monaco-editor/react';
+import api from '../services/api';
+
+const CodeEditor = ({ value, onChange, language, onRun, running, output }) => {
+  return (
+    <div className="space-y-4" data-testid="code-editor-container">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Code size={18} weight="duotone" className="text-indigo-500" />
+          <span className="text-sm font-bold text-slate-600">Language: {language || 'python'}</span>
+        </div>
+        <button
+          data-testid="run-code-button"
+          onClick={onRun}
+          disabled={running}
+          className="btn-primary !px-4 !py-2 text-sm flex items-center gap-2 disabled:opacity-60"
+        >
+          {running ? (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <Play size={16} weight="fill" />
+          )}
+          {running ? 'Running...' : 'Run Code'}
+        </button>
+      </div>
+      <div className="rounded-2xl overflow-hidden border border-slate-200">
+        <Editor
+          height="300px"
+          language={language || 'python'}
+          value={value || ''}
+          onChange={(val) => onChange(val || '')}
+          theme="vs-dark"
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineNumbers: 'on',
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            padding: { top: 12 },
+            tabSize: 4,
+          }}
+        />
+      </div>
+      {output !== undefined && output !== null && (
+        <div className="rounded-2xl bg-slate-900 p-4" data-testid="code-output">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Output</span>
+          </div>
+          <pre className="text-sm text-slate-200 font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">{output || '(no output)'}</pre>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const QuizAttempt = ({ quizData, navigate, user }) => {
   const [quiz, setQuiz] = useState(null);
@@ -12,6 +67,8 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
   const [showWarning, setShowWarning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [codeOutputs, setCodeOutputs] = useState({});
+  const [runningCode, setRunningCode] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -35,7 +92,6 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     init();
   }, [quizData, navigate]);
 
-  // Timer
   useEffect(() => {
     if (!attempt || timeRemaining <= 0) return;
     const timer = setInterval(() => {
@@ -62,12 +118,30 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     }
   };
 
+  const handleRunCode = async (questionIndex) => {
+    const code = answers[questionIndex];
+    if (!code || !code.trim()) return;
+    setRunningCode(true);
+    try {
+      const q = quiz.questions[questionIndex];
+      const { data } = await api.post('/api/code/execute', {
+        code,
+        language: q.language || 'python',
+        test_input: q.test_input || '',
+      });
+      setCodeOutputs({ ...codeOutputs, [questionIndex]: data.output || data.error || '(no output)' });
+    } catch (err) {
+      setCodeOutputs({ ...codeOutputs, [questionIndex]: err.response?.data?.detail || 'Execution failed' });
+    }
+    setRunningCode(false);
+  };
+
   const handleSubmit = async () => {
     if (submitting) return;
     if (!window.confirm('Are you sure you want to submit?')) return;
     setSubmitting(true);
     try {
-      const { data } = await attemptsAPI.submit(attempt.id);
+      await attemptsAPI.submit(attempt.id);
       navigate('quiz-results');
     } catch (err) {
       alert(err.response?.data?.detail || 'Submit failed');
@@ -82,6 +156,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
   );
 
   const questions = quiz.questions || [];
+  const currentQ = questions[currentQuestion];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -144,25 +219,31 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
           </div>
 
           <div className="lg:col-span-3">
-            {questions[currentQuestion] && (
+            {currentQ && (
               <div className="soft-card p-8">
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Question {currentQuestion + 1} of {questions.length}</span>
                     <h2 className="text-lg font-bold text-slate-800 mt-1">
-                      {questions[currentQuestion].type === 'mcq' && 'Multiple Choice'}
-                      {questions[currentQuestion].type === 'boolean' && 'True / False'}
-                      {questions[currentQuestion].type === 'short' && 'Short Answer'}
+                      {currentQ.type === 'mcq' && 'Multiple Choice'}
+                      {currentQ.type === 'boolean' && 'True / False'}
+                      {currentQ.type === 'short' && 'Short Answer'}
+                      {currentQ.type === 'coding' && 'Coding Challenge'}
                     </h2>
                   </div>
-                  <span className="soft-badge bg-amber-50 text-amber-600">{questions[currentQuestion].marks} marks</span>
+                  <div className="flex items-center gap-2">
+                    {currentQ.type === 'coding' && (
+                      <span className="soft-badge bg-indigo-50 text-indigo-600">{currentQ.language || 'python'}</span>
+                    )}
+                    <span className="soft-badge bg-amber-50 text-amber-600">{currentQ.marks} marks</span>
+                  </div>
                 </div>
 
-                <p className="text-lg font-medium text-slate-700 leading-relaxed mb-8 select-none">{questions[currentQuestion].question}</p>
+                <p className="text-lg font-medium text-slate-700 leading-relaxed mb-8 select-none">{currentQ.question}</p>
 
-                {questions[currentQuestion].type === 'mcq' && (
+                {currentQ.type === 'mcq' && (
                   <div className="space-y-3">
-                    {(questions[currentQuestion].options || []).map((option, i) => (
+                    {(currentQ.options || []).map((option, i) => (
                       <button key={i} data-testid={`option-${i}`} onClick={() => handleAnswer(currentQuestion, i)}
                         className={`w-full text-left p-4 rounded-2xl font-medium transition-all select-none ${
                           answers[currentQuestion] === i ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
@@ -173,7 +254,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                   </div>
                 )}
 
-                {questions[currentQuestion].type === 'boolean' && (
+                {currentQ.type === 'boolean' && (
                   <div className="flex gap-4">
                     <button data-testid="true-button" onClick={() => handleAnswer(currentQuestion, true)}
                       className={`flex-1 p-6 rounded-2xl font-bold text-lg transition-all ${answers[currentQuestion] === true ? 'bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
@@ -186,10 +267,21 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                   </div>
                 )}
 
-                {questions[currentQuestion].type === 'short' && (
+                {currentQ.type === 'short' && (
                   <textarea data-testid="short-answer-input" value={answers[currentQuestion] || ''}
                     onChange={(e) => handleAnswer(currentQuestion, e.target.value)}
                     placeholder="Type your answer here..." rows="8" className="soft-input w-full resize-none" />
+                )}
+
+                {currentQ.type === 'coding' && (
+                  <CodeEditor
+                    value={answers[currentQuestion] || currentQ.starter_code || ''}
+                    onChange={(val) => handleAnswer(currentQuestion, val)}
+                    language={currentQ.language || 'python'}
+                    onRun={() => handleRunCode(currentQuestion)}
+                    running={runningCode}
+                    output={codeOutputs[currentQuestion]}
+                  />
                 )}
 
                 <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-100">

@@ -7,6 +7,8 @@ import os
 import bcrypt
 import jwt
 import secrets
+import subprocess
+import tempfile
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from bson import ObjectId
@@ -139,6 +141,11 @@ class SemesterResultCreate(BaseModel):
     subjects: list
     sgpa: float
     cgpa: float
+
+class CodeExecuteRequest(BaseModel):
+    code: str
+    language: str = "python"
+    test_input: str = ""
 
 # ─── Auth Routes ────────────────────────────────────────────────────────────
 @app.post("/api/auth/login")
@@ -384,6 +391,30 @@ async def submit_attempt(attempt_id: str, user: dict = Depends(get_current_user)
                 is_correct = ratio >= 0.5
             elif student_answer:
                 marks_awarded = round(q.get("marks", 0) * 0.5)
+        elif q["type"] == "coding":
+            if student_answer and str(student_answer).strip():
+                expected = q.get("expected_output", "").strip()
+                if expected:
+                    try:
+                        with tempfile.TemporaryDirectory() as tmpdir:
+                            lang = q.get("language", "python")
+                            if lang == "python":
+                                fp = os.path.join(tmpdir, "solution.py")
+                                with open(fp, "w") as f:
+                                    f.write(str(student_answer))
+                                r = subprocess.run(["python3", fp], input=q.get("test_input", ""), capture_output=True, text=True, timeout=10, cwd=tmpdir)
+                                actual = r.stdout.strip()
+                                if actual == expected:
+                                    is_correct = True
+                                    marks_awarded = q.get("marks", 0)
+                                elif actual:
+                                    marks_awarded = round(q.get("marks", 0) * 0.3)
+                            else:
+                                marks_awarded = round(q.get("marks", 0) * 0.5)
+                    except Exception:
+                        marks_awarded = round(q.get("marks", 0) * 0.2)
+                else:
+                    marks_awarded = round(q.get("marks", 0) * 0.5)
         score += marks_awarded
         results.append({
             "question_index": i, "question": q.get("question", ""), "type": q["type"],
@@ -532,6 +563,76 @@ async def admin_dashboard(user: dict = Depends(require_role("admin"))):
         "departments": [{"name": d["_id"] or "Unassigned", "count": d["count"]} for d in depts],
     }
 
+# ─── Code Execution ────────────────────────────────────────────────────────
+
+@app.post("/api/code/execute")
+async def execute_code(req: CodeExecuteRequest, user: dict = Depends(get_current_user)):
+    if len(req.code) > 10000:
+        raise HTTPException(status_code=400, detail="Code too long (max 10000 chars)")
+
+    language = req.language.lower()
+    allowed = {"python", "javascript", "java"}
+    if language not in allowed:
+        raise HTTPException(status_code=400, detail=f"Unsupported language. Supported: {', '.join(allowed)}")
+
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            if language == "python":
+                filepath = os.path.join(tmpdir, "solution.py")
+                with open(filepath, "w") as f:
+                    f.write(req.code)
+                result = subprocess.run(
+                    ["python3", filepath],
+                    input=req.test_input,
+                    capture_output=True, text=True, timeout=10,
+                    cwd=tmpdir
+                )
+            elif language == "javascript":
+                filepath = os.path.join(tmpdir, "solution.js")
+                with open(filepath, "w") as f:
+                    f.write(req.code)
+                result = subprocess.run(
+                    ["node", filepath],
+                    input=req.test_input,
+                    capture_output=True, text=True, timeout=10,
+                    cwd=tmpdir
+                )
+            elif language == "java":
+                filepath = os.path.join(tmpdir, "Solution.java")
+                with open(filepath, "w") as f:
+                    f.write(req.code)
+                compile_result = subprocess.run(
+                    ["javac", filepath],
+                    capture_output=True, text=True, timeout=15,
+                    cwd=tmpdir
+                )
+                if compile_result.returncode != 0:
+                    return {"output": "", "error": compile_result.stderr, "exit_code": compile_result.returncode}
+                result = subprocess.run(
+                    ["java", "-cp", tmpdir, "Solution"],
+                    input=req.test_input,
+                    capture_output=True, text=True, timeout=10,
+                    cwd=tmpdir
+                )
+
+            output = result.stdout
+            error = result.stderr
+            if result.returncode != 0 and not output:
+                output = error
+                error = ""
+
+            return {
+                "output": output[:5000],
+                "error": error[:2000],
+                "exit_code": result.returncode
+            }
+    except subprocess.TimeoutExpired:
+        return {"output": "", "error": "Execution timed out (10 second limit)", "exit_code": -1}
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail=f"Runtime for {language} not available on server")
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "exit_code": -1}
+
 # ─── Health ─────────────────────────────────────────────────────────────────
 @app.get("/api/health")
 async def health():
@@ -614,7 +715,7 @@ async def seed_data():
              "show_answers_after": True, "allow_reattempt": True, "status": "active", "created_by": tid, "created_by_name": "Dr. Sarah Johnson",
              "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc),
              "questions": [
-                 {"type": "mcq", "question": "What is the time complexity of searching in a balanced BST?", "options": ["O(n)", "O(log n)", "O(n²)", "O(1)"], "correct_answer": 1, "marks": 2},
+                 {"type": "mcq", "question": "What is the time complexity of searching in a balanced BST?", "options": ["O(n)", "O(log n)", "O(n\u00b2)", "O(1)"], "correct_answer": 1, "marks": 2},
                  {"type": "mcq", "question": "Which data structure uses LIFO principle?", "options": ["Queue", "Stack", "Array", "Linked List"], "correct_answer": 1, "marks": 2},
                  {"type": "boolean", "question": "A hash table provides O(1) average-case search.", "correct_answer": True, "marks": 1},
                  {"type": "mcq", "question": "Which traversal visits root first in a binary tree?", "options": ["Inorder", "Preorder", "Postorder", "Level order"], "correct_answer": 1, "marks": 2},
@@ -630,6 +731,21 @@ async def seed_data():
                  {"type": "mcq", "question": "What does SVM stand for?", "options": ["Simple Vector Machine", "Support Vector Machine", "Scaled Vector Model", "Standard Vector Machine"], "correct_answer": 1, "marks": 2},
                  {"type": "mcq", "question": "Which metric is used for regression?", "options": ["Accuracy", "RMSE", "F1 Score", "Precision"], "correct_answer": 1, "marks": 2},
                  {"type": "boolean", "question": "K-Means is a supervised learning algorithm.", "correct_answer": False, "marks": 2},
+             ]},
+            {"title": "Python Coding Challenge", "subject": "Programming", "description": "Solve coding problems using Python", "total_marks": 15,
+             "duration_mins": 90, "timed": True, "negative_marking": False, "randomize_questions": False, "randomize_options": False,
+             "show_answers_after": True, "allow_reattempt": True, "status": "active", "created_by": tid, "created_by_name": "Dr. Sarah Johnson",
+             "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc),
+             "questions": [
+                 {"type": "coding", "question": "Write a Python function `factorial(n)` that returns the factorial of a given number n. Print the result for n=5.", "language": "python",
+                  "starter_code": "def factorial(n):\n    # Write your code here\n    pass\n\nprint(factorial(5))",
+                  "test_input": "", "expected_output": "120", "marks": 5},
+                 {"type": "coding", "question": "Write a Python function `is_palindrome(s)` that checks if a string is a palindrome (case-insensitive). Print True or False for the string 'Racecar'.", "language": "python",
+                  "starter_code": "def is_palindrome(s):\n    # Write your code here\n    pass\n\nprint(is_palindrome('Racecar'))",
+                  "test_input": "", "expected_output": "True", "marks": 5},
+                 {"type": "coding", "question": "Write a Python function `fibonacci(n)` that returns the nth Fibonacci number (0-indexed). Print the result for n=10.", "language": "python",
+                  "starter_code": "def fibonacci(n):\n    # Write your code here\n    pass\n\nprint(fibonacci(10))",
+                  "test_input": "", "expected_output": "55", "marks": 5},
              ]},
         ]
         await db.quizzes.insert_many(quizzes)
