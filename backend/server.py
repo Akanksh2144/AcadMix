@@ -681,7 +681,8 @@ async def admin_dashboard(user: dict = Depends(require_role("admin"))):
 # ─── Faculty Assignment Routes (HOD) ───────────────────────────────────────
 @app.get("/api/faculty/teachers")
 async def list_department_teachers(user: dict = Depends(require_role("hod", "admin"))):
-    query = {"role": "teacher"}
+    # HOD is also a faculty member, include both teachers and HODs
+    query = {"role": {"$in": ["teacher", "hod"]}}
     if user["role"] == "hod":
         query["department"] = user.get("department", "")
     teachers = await db.users.find(query, {"password_hash": 0}).to_list(100)
@@ -1106,11 +1107,19 @@ async def seed_data():
 
     # Students from different colleges
     students_data = [
-        {"name": "Rajana Akanksh", "college_id": "22WJ8A6745", "email": "akanksh@gnitc.edu", "college": "GNITC", "department": "DS", "batch": "2022"},
-        {"name": "Priya Sharma", "college_id": "S2024101", "email": "priya@gnitc.edu", "college": "GNITC", "department": "DS", "batch": "2024"},
-        {"name": "Amit Patel", "college_id": "S2024045", "email": "amit@gnit.edu", "college": "GNIT", "department": "CSE", "batch": "2024"},
-        {"name": "Sneha Reddy", "college_id": "S2024089", "email": "sneha@gnit.edu", "college": "GNIT", "department": "CSE", "batch": "2024"},
-        {"name": "Rahul Kumar", "college_id": "S2024034", "email": "rahul@gnu.edu", "college": "GNU", "department": "ECE", "batch": "2024"},
+        # GNITC - DS Department - Batch 2022 Section A (matches faculty assignments)
+        {"name": "Rajana Akanksh", "college_id": "22WJ8A6745", "email": "akanksh@gnitc.edu", "college": "GNITC", "department": "DS", "batch": "2022", "section": "A"},
+        {"name": "Priya Sharma", "college_id": "S2024101", "email": "priya@gnitc.edu", "college": "GNITC", "department": "DS", "batch": "2022", "section": "A"},
+        {"name": "Sneha Reddy", "college_id": "S2024089", "email": "sneha@gnitc.edu", "college": "GNITC", "department": "DS", "batch": "2022", "section": "A"},
+        {"name": "Vikram Singh", "college_id": "S2022001", "email": "vikram@gnitc.edu", "college": "GNITC", "department": "DS", "batch": "2022", "section": "A"},
+        {"name": "Ananya Gupta", "college_id": "S2022002", "email": "ananya@gnitc.edu", "college": "GNITC", "department": "DS", "batch": "2022", "section": "A"},
+        {"name": "Rohan Mehta", "college_id": "S2022003", "email": "rohan@gnitc.edu", "college": "GNITC", "department": "DS", "batch": "2022", "section": "A"},
+        {"name": "Kavya Nair", "college_id": "S2022004", "email": "kavya@gnitc.edu", "college": "GNITC", "department": "DS", "batch": "2022", "section": "A"},
+        {"name": "Arjun Reddy", "college_id": "S2022005", "email": "arjun@gnitc.edu", "college": "GNITC", "department": "DS", "batch": "2022", "section": "A"},
+        # GNIT - CSE Department
+        {"name": "Amit Patel", "college_id": "S2024045", "email": "amit@gnit.edu", "college": "GNIT", "department": "CSE", "batch": "2024", "section": "A"},
+        # GNU - ECE Department
+        {"name": "Rahul Kumar", "college_id": "S2024034", "email": "rahul@gnu.edu", "college": "GNU", "department": "ECE", "batch": "2024", "section": "A"},
     ]
     for s in students_data:
         if not await db.users.find_one({"college_id": s["college_id"]}):
@@ -1214,13 +1223,13 @@ async def seed_data():
         hod = await db.users.find_one({"college_id": "HOD001"})
         hod_id = str(hod["_id"]) if hod else ""
         t1id = str(teacher1["_id"])
-        teacher2 = await db.users.find_one({"college_id": "T002"})
-        t2id = str(teacher2["_id"]) if teacher2 else t1id
         assignments = [
             {"teacher_id": t1id, "teacher_name": "Dr. Sarah Johnson", "subject_code": "22PC0DS17", "subject_name": "Automata Theory and Compiler Design", "department": "DS", "batch": "2022", "section": "A", "semester": 3, "assigned_by": hod_id, "created_at": datetime.now(timezone.utc)},
             {"teacher_id": t1id, "teacher_name": "Dr. Sarah Johnson", "subject_code": "22PC0DS18", "subject_name": "Machine Learning", "department": "DS", "batch": "2022", "section": "A", "semester": 3, "assigned_by": hod_id, "created_at": datetime.now(timezone.utc)},
-            {"teacher_id": t2id, "teacher_name": "Prof. Ravi Kumar", "subject_code": "22PC0DS19", "subject_name": "Big Data Analytics", "department": "DS", "batch": "2022", "section": "A", "semester": 3, "assigned_by": hod_id, "created_at": datetime.now(timezone.utc)},
         ]
+        # HOD is also a faculty - assign a subject to HOD
+        if hod:
+            assignments.append({"teacher_id": hod_id, "teacher_name": "Dr. Venkat Rao", "subject_code": "22PC0DS19", "subject_name": "Big Data Analytics", "department": "DS", "batch": "2022", "section": "A", "semester": 3, "assigned_by": hod_id, "created_at": datetime.now(timezone.utc)})
         await db.faculty_assignments.insert_many(assignments)
 
     # Write credentials
@@ -1235,32 +1244,57 @@ async def seed_data():
 - College ID: HOD001
 - Password: hod123
 - Role: hod
-- Department: DS
+- Department: DS (GNITC)
+
+- College ID: HOD002
+- Password: hod123
+- Role: hod
+- Department: CSE (GNIT)
+
+- College ID: HOD003
+- Password: hod123
+- Role: hod
+- Department: ECE (GNU)
 
 ## Exam Cell
 - College ID: EC001
 - Password: exam123
-- Role: exam_cell
+- Role: exam_cell (GNITC)
+
+- College ID: EC002
+- Password: exam123
+- Role: exam_cell (GNIT)
+
+- College ID: EC003
+- Password: exam123
+- Role: exam_cell (GNU)
 
 ## Teacher
 - College ID: T001
 - Password: teacher123
-- Role: teacher (Dr. Sarah Johnson)
+- Role: teacher (Dr. Sarah Johnson, GNITC, DS)
 
 - College ID: T002
 - Password: teacher123
-- Role: teacher (Prof. Ravi Kumar)
+- Role: teacher (Prof. Ravi Kumar, GNIT, CSE)
 
-## Student (from marksheet)
-- College ID: 22WJ8A6745
-- Password: student123
-- Role: student (Rajana Akanksh)
+- College ID: T003
+- Password: teacher123
+- Role: teacher (Dr. Priya Verma, GNU, ECE)
 
-## Other Students
-- S2024101 / student123 (Priya Sharma, DS)
-- S2024045 / student123 (Amit Patel, ECE)
-- S2024089 / student123 (Sneha Reddy, DS)
-- S2024034 / student123 (Rahul Kumar, MECH)
+## Students - DS Department (GNITC, Batch 2022, Section A)
+- 22WJ8A6745 / student123 (Rajana Akanksh)
+- S2024101 / student123 (Priya Sharma)
+- S2024089 / student123 (Sneha Reddy)
+- S2022001 / student123 (Vikram Singh)
+- S2022002 / student123 (Ananya Gupta)
+- S2022003 / student123 (Rohan Mehta)
+- S2022004 / student123 (Kavya Nair)
+- S2022005 / student123 (Arjun Reddy)
+
+## Students - Other Departments
+- S2024045 / student123 (Amit Patel, GNIT, CSE)
+- S2024034 / student123 (Rahul Kumar, GNU, ECE)
 """
     Path("/app/memory").mkdir(exist_ok=True)
     Path("/app/memory/test_credentials.md").write_text(creds)

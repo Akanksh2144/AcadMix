@@ -12,19 +12,27 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newAssignment, setNewAssignment] = useState({ teacher_id: '', subject_code: '', subject_name: '', department: user?.department || 'ET', batch: '2024', section: 'DS-1', semester: 3 });
+  const [newAssignment, setNewAssignment] = useState({ teacher_id: '', subject_code: '', subject_name: '', department: user?.department || 'DS', batch: '2022', section: 'A', semester: 3 });
   
   // Mock subjects data (prepopulated)
   const mockSubjects = [
-    { code: '22ET201', name: 'Data Structures and Algorithms', department: 'ET', semester: 2 },
-    { code: '22ET301', name: 'Machine Learning Fundamentals', department: 'ET', semester: 3 },
-    { code: '22ET302', name: 'Database Management Systems', department: 'ET', semester: 3 },
-    { code: '22ET401', name: 'Deep Learning', department: 'ET', semester: 4 },
-    { code: '22ET402', name: 'Natural Language Processing', department: 'ET', semester: 4 },
-    { code: '22ET501', name: 'Big Data Analytics', department: 'ET', semester: 5 },
+    // DS Department subjects (matching seed data)
+    { code: '22PC0DS17', name: 'Automata Theory and Compiler Design', department: 'DS', semester: 3 },
+    { code: '22PC0DS18', name: 'Machine Learning', department: 'DS', semester: 3 },
+    { code: '22PC0DS19', name: 'Big Data Analytics', department: 'DS', semester: 3 },
+    { code: '22PE0DS3A', name: 'Software Testing Methodologies', department: 'DS', semester: 3 },
+    { code: '22PC0DS20', name: 'Machine Learning Lab', department: 'DS', semester: 3 },
+    { code: '22PC0DS21', name: 'Big Data Analytics Lab', department: 'DS', semester: 3 },
+    { code: '22DS0201', name: 'Data Structures and Algorithms', department: 'DS', semester: 2 },
+    { code: '22DS0401', name: 'Deep Learning', department: 'DS', semester: 4 },
+    { code: '22DS0402', name: 'Natural Language Processing', department: 'DS', semester: 4 },
+    { code: '22DS0501', name: 'Computer Vision', department: 'DS', semester: 5 },
+    // CSE Department
     { code: '22CSE201', name: 'Operating Systems', department: 'CSE', semester: 2 },
     { code: '22CSE301', name: 'Computer Networks', department: 'CSE', semester: 3 },
     { code: '22CSE401', name: 'Software Engineering', department: 'CSE', semester: 4 },
+    { code: '22CSE302', name: 'Database Management Systems', department: 'CSE', semester: 3 },
+    // ECE Department
     { code: '22ECE201', name: 'Digital Electronics', department: 'ECE', semester: 2 },
     { code: '22ECE301', name: 'Signals and Systems', department: 'ECE', semester: 3 },
     { code: '22ECE401', name: 'VLSI Design', department: 'ECE', semester: 4 },
@@ -410,6 +418,8 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                       onChange={(e) => setNewAssignment({ ...newAssignment, section: e.target.value })} 
                       className="soft-input w-full"
                     >
+                      <option value="A">A</option>
+                      <option value="B">B</option>
                       <option value="DS-1">DS-1</option>
                       <option value="DS-2">DS-2</option>
                       <option value="CS">CS (Cyber Security)</option>
@@ -563,7 +573,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-slate-800 mb-2">Teachers List</h3>
-                <p className="text-sm text-slate-500">Manage teachers in {user?.department || 'ET'} department</p>
+                <p className="text-sm text-slate-500">Manage teachers in {user?.department || 'DS'} department</p>
               </div>
             </div>
             
@@ -599,7 +609,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-slate-800 mb-2">Department Analytics</h3>
-                <p className="text-sm text-slate-500">Performance insights for {user?.department || 'ET'} department</p>
+                <p className="text-sm text-slate-500">Performance insights for {user?.department || 'DS'} department</p>
               </div>
             </div>
 
