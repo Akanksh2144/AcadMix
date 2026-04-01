@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Trash, Copy, Eye, CalendarBlank, Clock, X, WarningCircle, CaretDown, CaretUp } from '@phosphor-icons/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Plus, Trash, Copy, Eye, CalendarBlank, Clock, X, WarningCircle, CaretDown, CaretUp, DownloadSimple, UploadSimple } from '@phosphor-icons/react';
 import { facultyAPI, quizzesAPI } from '../services/api';
+import * as XLSX from 'xlsx';
 
 const QuizBuilder = ({ navigate, user }) => {
   const [quizTitle, setQuizTitle] = useState('New Quiz');
@@ -22,6 +23,7 @@ const QuizBuilder = ({ navigate, user }) => {
   const [randomizeQuestions, setRandomizeQuestions] = useState(false);
   const [showAnswersAfter, setShowAnswersAfter] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const importQuizRef = useRef(null);
 
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -70,6 +72,142 @@ const QuizBuilder = ({ navigate, user }) => {
 
   const duplicateQuestion = (index) => {
     setQuestions([...questions, { ...questions[index], id: questions.length + 1 }]);
+  };
+
+  // ── Quiz Excel Template Download ───────────────────────
+  const handleDownloadQuizTemplate = () => {
+    const exampleRows = [
+      {
+        'Type': 'MCQ-Single',
+        'Question': 'Which data structure uses LIFO ordering?',
+        'Option A': 'Queue',
+        'Option B': 'Stack',
+        'Option C': 'Linked List',
+        'Option D': 'Tree',
+        'Correct Answer(s)': 'B',
+        'Marks': 2,
+        'Expected Answer / Max Length': '',
+      },
+      {
+        'Type': 'MCQ-Multiple',
+        'Question': 'Which of the following are sorting algorithms?',
+        'Option A': 'Bubble Sort',
+        'Option B': 'Binary Search',
+        'Option C': 'Merge Sort',
+        'Option D': 'DFS',
+        'Correct Answer(s)': 'A,C',
+        'Marks': 3,
+        'Expected Answer / Max Length': '',
+      },
+      {
+        'Type': 'Short',
+        'Question': 'What is the time complexity of binary search?',
+        'Option A': '',
+        'Option B': '',
+        'Option C': '',
+        'Option D': '',
+        'Correct Answer(s)': 'O(log n)',
+        'Marks': 2,
+        'Expected Answer / Max Length': 200,
+      },
+    ];
+    const ws = XLSX.utils.json_to_sheet(exampleRows);
+    ws['!cols'] = [
+      { wch: 14 }, { wch: 50 }, { wch: 22 }, { wch: 22 },
+      { wch: 22 }, { wch: 22 }, { wch: 20 }, { wch: 8 }, { wch: 28 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Quiz Questions');
+    XLSX.writeFile(wb, `${quizTitle.replace(/\s+/g, '_')}_template.xlsx`);
+  };
+
+  // ── Quiz Excel Import ──────────────────────────────
+  const handleImportQuizExcel = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        if (!rows.length) { alert('The spreadsheet appears to be empty.'); return; }
+
+        const imported = [];
+        const errors = [];
+
+        rows.forEach((row, idx) => {
+          const rowNum = idx + 2; // 1-indexed + header row
+          const typeRaw = String(row['Type'] || '').trim().toLowerCase();
+          const questionText = String(row['Question'] || '').trim();
+          const marksVal = parseInt(row['Marks']) || 2;
+          const correctRaw = String(row['Correct Answer(s)'] || '').trim().toUpperCase();
+          const letterToIdx = { A: 0, B: 1, C: 2, D: 3, E: 4 };
+
+          if (!questionText) { errors.push(`Row ${rowNum}: Question text is empty — skipped.`); return; }
+
+          if (typeRaw === 'mcq-single' || typeRaw === 'mcq single') {
+            const options = ['Option A', 'Option B', 'Option C', 'Option D']
+              .map(k => String(row[k] || '').trim())
+              .filter(o => o !== '');
+            if (options.length < 2) { errors.push(`Row ${rowNum}: MCQ-Single needs at least 2 options — skipped.`); return; }
+            const correctIdx = letterToIdx[correctRaw];
+            if (correctIdx === undefined || correctIdx >= options.length) {
+              errors.push(`Row ${rowNum}: Invalid correct answer "${correctRaw}" — defaulting to A.`);
+            }
+            imported.push({
+              id: questions.length + imported.length + 1,
+              type: 'mcq-single',
+              text: questionText,
+              options,
+              correctAnswer: correctIdx ?? 0,
+              marks: marksVal,
+            });
+          } else if (typeRaw === 'mcq-multiple' || typeRaw === 'mcq multiple') {
+            const options = ['Option A', 'Option B', 'Option C', 'Option D']
+              .map(k => String(row[k] || '').trim())
+              .filter(o => o !== '');
+            if (options.length < 2) { errors.push(`Row ${rowNum}: MCQ-Multiple needs at least 2 options — skipped.`); return; }
+            const correctAnswers = correctRaw.split(',').map(l => letterToIdx[l.trim()]).filter(i => i !== undefined && i < options.length);
+            if (!correctAnswers.length) { errors.push(`Row ${rowNum}: No valid correct answers for MCQ-Multiple — defaulting to A.`); correctAnswers.push(0); }
+            imported.push({
+              id: questions.length + imported.length + 1,
+              type: 'mcq-multiple',
+              text: questionText,
+              options,
+              correctAnswers,
+              marks: marksVal,
+            });
+          } else if (typeRaw === 'short') {
+            const expectedAnswer = String(row['Correct Answer(s)'] || '').trim();
+            const maxLen = parseInt(row['Expected Answer / Max Length']) || 500;
+            imported.push({
+              id: questions.length + imported.length + 1,
+              type: 'short',
+              text: questionText,
+              expectedAnswer,
+              maxLength: maxLen,
+              marks: marksVal,
+            });
+          } else {
+            errors.push(`Row ${rowNum}: Unknown type "${row['Type']}" — skipped. Use MCQ-Single, MCQ-Multiple, or Short.`);
+          }
+        });
+
+        if (!imported.length) { alert('No valid questions were imported. Check your template.\n\n' + errors.join('\n')); return; }
+
+        setQuestions(prev => [...prev, ...imported]);
+        setCurrentQuestion(questions.length); // jump to first imported
+        const summary = `✓ Imported ${imported.length} question${imported.length !== 1 ? 's' : ''}.`;
+        const warn = errors.length ? `\n\nWarnings:\n${errors.join('\n')}` : '';
+        alert(summary + warn);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to read file. Make sure it is a valid .xlsx file.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = '';
   };
 
   const addOption = () => {
@@ -343,6 +481,29 @@ const QuizBuilder = ({ navigate, user }) => {
                     <Plus size={16} weight="bold" />{b.label}
                   </button>
                 ))}
+              </div>
+              {/* Excel Import / Export */}
+              <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Bulk Import</p>
+                <button
+                  onClick={handleDownloadQuizTemplate}
+                  className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                >
+                  <DownloadSimple size={15} weight="bold" /> Template (.xlsx)
+                </button>
+                <button
+                  onClick={() => importQuizRef.current?.click()}
+                  className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                >
+                  <UploadSimple size={15} weight="bold" /> Import Questions
+                </button>
+                <input
+                  ref={importQuizRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleImportQuizExcel}
+                  className="hidden"
+                />
               </div>
             </div>
           </div>
