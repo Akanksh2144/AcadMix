@@ -23,6 +23,7 @@ import ClassResults from './pages/ClassResults';
 import AvailableQuizzes from './pages/AvailableQuizzes';
 import Placements from './pages/Placements';
 import TeacherQuizzes from './pages/TeacherQuizzes';
+import QuizCalendar from './pages/QuizCalendar';
 
 const ROLE_DASHBOARD = {
   student: 'student-dashboard',
@@ -118,6 +119,7 @@ function App() {
       case 'available-quizzes': return <AvailableQuizzes navigate={navigate} user={user} />;
       case 'placements': return <Placements navigate={navigate} user={user} />;
       case 'teacher-quizzes': return <TeacherQuizzes navigate={navigate} user={user} />;
+      case 'quiz-calendar': return <QuizCalendar navigate={navigate} user={user} />;
       default: return <LoginPage onLogin={handleLogin} />;
     }
   };
