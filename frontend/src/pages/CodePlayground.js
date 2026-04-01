@@ -7,6 +7,8 @@ const LANGUAGES = [
   { id: 'python', label: 'Python', icon: '🐍', template: '# Write your Python code here\n\ndef main():\n    print("Hello, World!")\n\nmain()\n' },
   { id: 'javascript', label: 'JavaScript', icon: 'JS', template: '// Write your JavaScript code here\n\nfunction main() {\n  console.log("Hello, World!");\n}\n\nmain();\n' },
   { id: 'java', label: 'Java', icon: '☕', template: 'public class Solution {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}\n' },
+  { id: 'c', label: 'C', icon: 'C', template: '#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}\n' },
+  { id: 'cpp', label: 'C++', icon: 'C+', template: '#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}\n' },
 ];
 
 const CHALLENGES = [
@@ -124,7 +126,7 @@ const CodePlayground = ({ navigate, user }) => {
                 </div>
                 <div>
                   <h1 className="text-xl font-extrabold tracking-tight text-slate-900">Code Playground</h1>
-                  <p className="text-xs font-medium text-slate-400">Practice coding in Python, JavaScript & Java</p>
+                  <p className="text-xs font-medium text-slate-400">Practice coding in Python, JavaScript, Java, C & C++</p>
                 </div>
               </div>
             </div>

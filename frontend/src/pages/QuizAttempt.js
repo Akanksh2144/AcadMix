@@ -1,48 +1,57 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Clock, Warning, Camera, CheckCircle, XCircle, Play, Code, ArrowsOut, CameraSlash } from '@phosphor-icons/react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Clock, Warning, Camera, CheckCircle, XCircle, Play, Code, ArrowsOut, CameraSlash, ShieldWarning, LockSimple, Eraser, BookmarkSimple, X, PaperPlaneTilt, Eye, Question } from '@phosphor-icons/react';
 import { attemptsAPI, quizzesAPI } from '../services/api';
 import Editor from '@monaco-editor/react';
 import api from '../services/api';
 
+const MOBILE_WIDTH = 768;
+
 const CodeEditor = ({ value, onChange, language, onRun, running, output }) => {
+  const [isMobile] = useState(() => window.innerWidth < MOBILE_WIDTH);
+  const monacoLang = { python: 'python', javascript: 'javascript', java: 'java', c: 'c', cpp: 'cpp' }[language] || 'python';
+
   return (
-    <div className="space-y-4" data-testid="code-editor-container">
+    <div className="space-y-3" data-testid="code-editor-container">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Code size={18} weight="duotone" className="text-indigo-500" />
-          <span className="text-sm font-bold text-slate-600">Language: {language || 'python'}</span>
+          <span className="text-sm font-bold text-slate-600 uppercase">{language || 'python'}</span>
         </div>
-        <button
-          data-testid="run-code-button"
-          onClick={onRun}
-          disabled={running}
-          className="btn-primary !px-4 !py-2 text-sm flex items-center gap-2 disabled:opacity-60"
-        >
-          {running ? (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            <Play size={16} weight="fill" />
-          )}
+        <button data-testid="run-code-button" onClick={onRun} disabled={running}
+          className="btn-primary !px-4 !py-2 text-sm flex items-center gap-2 disabled:opacity-60">
+          {running ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Play size={16} weight="fill" />}
           {running ? 'Running...' : 'Run Code'}
         </button>
       </div>
       <div className="rounded-2xl overflow-hidden border border-slate-200">
-        <Editor
-          height="300px"
-          language={language || 'python'}
-          value={value || ''}
-          onChange={(val) => onChange(val || '')}
-          theme="vs-dark"
-          options={{
-            minimap: { enabled: false },
-            fontSize: 14,
-            lineNumbers: 'on',
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            padding: { top: 12 },
-            tabSize: 4,
-          }}
-        />
+        {isMobile ? (
+          <textarea
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full bg-[#1e1e1e] text-green-300 font-mono text-sm p-4 resize-none outline-none"
+            rows={12}
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
+          />
+        ) : (
+          <Editor
+            height="300px"
+            language={monacoLang}
+            value={value || ''}
+            onChange={(val) => onChange(val || '')}
+            theme="vs-dark"
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              lineNumbers: 'on',
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              padding: { top: 12 },
+              tabSize: 4,
+            }}
+          />
+        )}
       </div>
       {output !== undefined && output !== null && (
         <div className="rounded-2xl bg-slate-900 p-4" data-testid="code-output">
@@ -57,99 +66,275 @@ const CodeEditor = ({ value, onChange, language, onRun, running, output }) => {
   );
 };
 
+/* ── Fullscreen Gate Overlay ──────────────────────────────────────────── */
+const FullscreenGate = ({ onEnter, violations, isReEntry }) => (
+  <div className="fixed inset-0 z-[9999] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6" data-testid="fullscreen-gate">
+    <div className="max-w-md w-full text-center">
+      <div className="w-20 h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+        {isReEntry ? (
+          <ShieldWarning size={40} weight="duotone" className="text-amber-400" />
+        ) : (
+          <LockSimple size={40} weight="duotone" className="text-indigo-400" />
+        )}
+      </div>
+      <h2 className="text-2xl font-extrabold text-white mb-2">
+        {isReEntry ? 'You Exited Fullscreen' : 'Fullscreen Required'}
+      </h2>
+      <p className="text-slate-400 font-medium mb-2">
+        {isReEntry
+          ? 'Exiting fullscreen has been recorded as a violation. Please re-enter fullscreen to continue your quiz.'
+          : 'This quiz must be taken in fullscreen mode to ensure academic integrity.'}
+      </p>
+      {violations > 0 && (
+        <div className="inline-flex items-center gap-2 bg-red-500/20 text-red-400 px-4 py-2 rounded-full text-sm font-bold mb-6">
+          <Warning size={16} weight="fill" /> {violations} violation{violations !== 1 ? 's' : ''} recorded
+        </div>
+      )}
+      <button
+        data-testid="enter-fullscreen-button"
+        onClick={onEnter}
+        className="w-full py-4 bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl font-bold text-lg transition-colors flex items-center justify-center gap-3 mt-4"
+      >
+        <ArrowsOut size={24} weight="bold" />
+        {isReEntry ? 'Re-enter Fullscreen' : 'Enter Fullscreen & Start'}
+      </button>
+      <p className="text-xs text-slate-500 mt-4">
+        Tab switching, window blur, and fullscreen exits are monitored and logged.
+      </p>
+    </div>
+  </div>
+);
+
+/* ── Submit Confirmation Modal ──────────────────────────────────────── */
+const SubmitModal = ({ questions, answers, marked, onClose, onSubmit, submitting }) => {
+  const answered = Object.keys(answers).length;
+  const unanswered = questions.length - answered;
+  const markedCount = marked.size;
+  const markedUnanswered = [...marked].filter(i => answers[i] === undefined).length;
+
+  const stats = [
+    { label: 'Answered', count: answered, icon: CheckCircle, color: 'emerald', bg: 'bg-emerald-50', text: 'text-emerald-600' },
+    { label: 'Unanswered', count: unanswered, icon: Question, color: 'red', bg: 'bg-red-50', text: 'text-red-500' },
+    { label: 'Marked for Review', count: markedCount, icon: BookmarkSimple, color: 'amber', bg: 'bg-amber-50', text: 'text-amber-600' },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[9998] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4" data-testid="submit-modal">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden" style={{animation: 'scaleIn 0.25s ease'}}>
+        {/* Header */}
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 sm:p-8 text-white relative">
+          <button data-testid="close-submit-modal" onClick={onClose}
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
+            <X size={18} weight="bold" />
+          </button>
+          <div className="flex items-center gap-3 mb-2">
+            <Eye size={28} weight="duotone" />
+            <h2 className="text-xl sm:text-2xl font-extrabold">Quiz Summary</h2>
+          </div>
+          <p className="text-sm text-white/70 font-medium">Review before submitting</p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="p-6 sm:p-8">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
+            {stats.map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <div key={i} className={`${s.bg} rounded-2xl p-4 text-center`}>
+                  <Icon size={24} weight="duotone" className={`${s.text} mx-auto mb-2`} />
+                  <p className={`text-2xl sm:text-3xl font-extrabold ${s.text}`}>{s.count}</p>
+                  <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mt-1">{s.label}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Question grid visual */}
+          <div className="mb-6">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Question Overview</p>
+            <div className="grid grid-cols-10 sm:grid-cols-10 gap-1.5">
+              {questions.map((_, i) => {
+                const isAnswered = answers[i] !== undefined;
+                const isMarked = marked.has(i);
+                return (
+                  <div key={i} className={`aspect-square rounded-lg flex items-center justify-center text-[10px] sm:text-xs font-bold relative ${
+                    isAnswered ? 'bg-emerald-100 text-emerald-700' : 'bg-red-50 text-red-400'
+                  }`}>
+                    {i + 1}
+                    {isMarked && (
+                      <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-400 rounded-full border border-white"></div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Warnings */}
+          {unanswered > 0 && (
+            <div className="bg-red-50 rounded-2xl p-4 mb-4 flex items-start gap-3">
+              <Warning size={20} weight="fill" className="text-red-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-red-700">You have {unanswered} unanswered question{unanswered !== 1 ? 's' : ''}</p>
+                <p className="text-xs text-red-500 mt-0.5">Unanswered questions will be marked as incorrect.</p>
+              </div>
+            </div>
+          )}
+          {markedUnanswered > 0 && (
+            <div className="bg-amber-50 rounded-2xl p-4 mb-4 flex items-start gap-3">
+              <BookmarkSimple size={20} weight="fill" className="text-amber-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-amber-700">{markedUnanswered} marked question{markedUnanswered !== 1 ? 's are' : ' is'} still unanswered</p>
+                <p className="text-xs text-amber-500 mt-0.5">Go back and review before submitting.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Legend */}
+          <div className="flex items-center gap-4 mb-6 text-xs font-medium text-slate-400">
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-emerald-100 rounded"></div>Answered</div>
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-red-50 rounded border border-red-200"></div>Unanswered</div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-amber-400 rounded-full"></div>Review</div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button data-testid="go-back-button" onClick={onClose}
+              className="flex-1 py-3.5 rounded-2xl font-bold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+              Go Back & Review
+            </button>
+            <button data-testid="confirm-submit-button" onClick={onSubmit} disabled={submitting}
+              className="flex-1 py-3.5 rounded-2xl font-bold text-sm bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60">
+              {submitting ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <PaperPlaneTilt size={18} weight="fill" />
+              )}
+              {submitting ? 'Submitting...' : 'Confirm Submit'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.92); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+    </div>
+  );
+};
+
 const QuizAttempt = ({ quizData, navigate, user }) => {
   const [quiz, setQuiz] = useState(null);
   const [attempt, setAttempt] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [markedForReview, setMarkedForReview] = useState(new Set());
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [violations, setViolations] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
+  const [warningType, setWarningType] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [codeOutputs, setCodeOutputs] = useState({});
   const [runningCode, setRunningCode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [needsFullscreen, setNeedsFullscreen] = useState(true);
   const [webcamActive, setWebcamActive] = useState(false);
   const [webcamError, setWebcamError] = useState(false);
-  const webcamRef = useRef(null);
   const videoRef = useRef(null);
   const violationRef = useRef(0);
+  const fullscreenInitialized = useRef(false);
+  const isSubmittingRef = useRef(false);
 
-  // Anti-cheat: Tab switch detection
-  useEffect(() => {
-    if (!attempt) return;
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        violationRef.current += 1;
-        setViolations(violationRef.current);
-        setShowWarning(true);
-        setTimeout(() => setShowWarning(false), 4000);
-        // Report to backend
-        if (attempt?.id) {
-          attemptsAPI.answer(attempt.id, { question_index: -1, answer: null, violation: true }).catch(() => {});
-        }
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  // ── Report violation to backend ──
+  const reportViolation = useCallback(async (type) => {
+    violationRef.current += 1;
+    setViolations(violationRef.current);
+    setWarningType(type === 'tab_switch' ? 'Tab Switch' : type === 'fullscreen_exit' ? 'Fullscreen Exit' : 'Window Blur');
+    setShowWarning(true);
+    setTimeout(() => setShowWarning(false), 4000);
+    if (attempt?.id) {
+      try {
+        await api.post(`/api/attempts/${attempt.id}/violation`, { violation_type: type });
+      } catch {}
+    }
   }, [attempt]);
 
-  // Anti-cheat: Fullscreen enforcement
-  const fullscreenInitialized = useRef(false);
-
+  // ── Enter fullscreen ──
   const enterFullscreen = useCallback(() => {
     const el = document.documentElement;
     const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
     if (req) {
       req.call(el).then(() => {
         fullscreenInitialized.current = true;
-      }).catch(() => {
-        // Browser blocked auto-fullscreen (needs user gesture) — that's OK
-      });
+        setIsFullscreen(true);
+        setNeedsFullscreen(false);
+      }).catch(() => {});
     }
   }, []);
 
+  // ── Exit fullscreen (on submit) ──
+  const exitFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, []);
+
+  // ── Tab-switch detection ──
   useEffect(() => {
     if (!attempt) return;
-    const handleFullscreenChange = () => {
+    const handler = () => {
+      if (document.hidden && !isSubmittingRef.current) reportViolation('tab_switch');
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, [attempt, reportViolation]);
+
+  // ── Window blur detection ──
+  useEffect(() => {
+    if (!attempt) return;
+    const handler = () => {
+      if (!isSubmittingRef.current && !document.hidden) reportViolation('window_blur');
+    };
+    window.addEventListener('blur', handler);
+    return () => window.removeEventListener('blur', handler);
+  }, [attempt, reportViolation]);
+
+  // ── Fullscreen change detection ──
+  useEffect(() => {
+    if (!attempt) return;
+    const handler = () => {
       const isFull = !!document.fullscreenElement;
       setIsFullscreen(isFull);
-      // Only count as violation if user exited after fullscreen was successfully entered
-      if (!isFull && fullscreenInitialized.current) {
-        violationRef.current += 1;
-        setViolations(violationRef.current);
-        setShowWarning(true);
-        setTimeout(() => setShowWarning(false), 4000);
+      if (!isFull && fullscreenInitialized.current && !isSubmittingRef.current) {
+        setNeedsFullscreen(true);
+        reportViolation('fullscreen_exit');
       }
     };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, [attempt]);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, [attempt, reportViolation]);
 
-  // Anti-cheat: Webcam monitoring
+  // ── Webcam ──
   useEffect(() => {
     if (!attempt) return;
     let stream = null;
     const startWebcam = async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 }, audio: false });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-        }
+        if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); }
         setWebcamActive(true);
-      } catch (err) {
-        console.warn('Webcam access denied:', err);
-        setWebcamError(true);
-      }
+      } catch { setWebcamError(true); }
     };
     startWebcam();
-    return () => {
-      if (stream) stream.getTracks().forEach(t => t.stop());
-    };
+    return () => { if (stream) stream.getTracks().forEach(t => t.stop()); };
   }, [attempt]);
 
+  // ── Init quiz ──
   useEffect(() => {
     const init = async () => {
       if (!quizData?.id) { navigate('student-dashboard'); return; }
@@ -163,6 +348,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
         (att.answers || []).forEach((a, i) => { if (a !== null) saved[i] = a; });
         setAnswers(saved);
         setViolations(att.violations || 0);
+        violationRef.current = att.violations || 0;
       } catch (err) {
         alert(err.response?.data?.detail || 'Failed to start quiz');
         navigate('student-dashboard');
@@ -172,15 +358,17 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     init();
   }, [quizData, navigate]);
 
+  // ── Timer ──
   useEffect(() => {
     if (!attempt || timeRemaining <= 0) return;
     const timer = setInterval(() => {
       setTimeRemaining(prev => {
-        if (prev <= 1) { handleSubmit(); return 0; }
+        if (prev <= 1) { doSubmit(true); return 0; }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attempt]);
 
   const formatTime = (seconds) => {
@@ -190,12 +378,30 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
   };
 
   const handleAnswer = async (questionIndex, answer) => {
-    setAnswers({ ...answers, [questionIndex]: answer });
+    setAnswers(prev => ({ ...prev, [questionIndex]: answer }));
     if (attempt?.id) {
-      try {
-        await attemptsAPI.answer(attempt.id, { question_index: questionIndex, answer });
-      } catch {}
+      try { await attemptsAPI.answer(attempt.id, { question_index: questionIndex, answer }); } catch {}
     }
+  };
+
+  const handleClearAnswer = async (questionIndex) => {
+    setAnswers(prev => {
+      const next = { ...prev };
+      delete next[questionIndex];
+      return next;
+    });
+    if (attempt?.id) {
+      try { await attemptsAPI.answer(attempt.id, { question_index: questionIndex, answer: null }); } catch {}
+    }
+  };
+
+  const toggleMarkForReview = (questionIndex) => {
+    setMarkedForReview(prev => {
+      const next = new Set(prev);
+      if (next.has(questionIndex)) next.delete(questionIndex);
+      else next.add(questionIndex);
+      return next;
+    });
   };
 
   const handleRunCode = async (questionIndex) => {
@@ -205,33 +411,56 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     try {
       const q = quiz.questions[questionIndex];
       const { data } = await api.post('/api/code/execute', {
-        code,
-        language: q.language || 'python',
-        test_input: q.test_input || '',
+        code, language: q.language || 'python', test_input: q.test_input || '',
       });
-      setCodeOutputs({ ...codeOutputs, [questionIndex]: data.output || data.error || '(no output)' });
+      setCodeOutputs(prev => ({ ...prev, [questionIndex]: data.output || data.error || '(no output)' }));
     } catch (err) {
-      setCodeOutputs({ ...codeOutputs, [questionIndex]: err.response?.data?.detail || 'Execution failed' });
+      setCodeOutputs(prev => ({ ...prev, [questionIndex]: err.response?.data?.detail || 'Execution failed' }));
     }
     setRunningCode(false);
   };
 
-  const handleSubmit = async () => {
-    if (submitting) return;
-    if (!window.confirm('Are you sure you want to submit?')) return;
+  // Show the submit modal (replaces window.confirm)
+  const handleSubmitClick = () => {
+    setShowSubmitModal(true);
+  };
+
+  // Actually submit
+  const doSubmit = async (autoSubmit = false) => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setSubmitting(true);
     try {
       await attemptsAPI.submit(attempt.id);
+      exitFullscreen();
       navigate('quiz-results');
     } catch (err) {
       alert(err.response?.data?.detail || 'Submit failed');
+      isSubmittingRef.current = false;
     }
     setSubmitting(false);
   };
 
+  // Memoize question nav colors
+  const getNavClass = useMemo(() => {
+    return (i) => {
+      const isCurrent = currentQuestion === i;
+      const isAnswered = answers[i] !== undefined;
+      const isMarked = markedForReview.has(i);
+      if (isCurrent) return 'bg-indigo-500 text-white shadow-md scale-110';
+      if (isMarked && isAnswered) return 'bg-amber-100 text-amber-700 ring-2 ring-amber-400';
+      if (isMarked) return 'bg-amber-50 text-amber-600 ring-2 ring-amber-300';
+      if (isAnswered) return 'bg-emerald-100 text-emerald-700';
+      return 'bg-slate-100 text-slate-500 hover:bg-slate-200';
+    };
+  }, [currentQuestion, answers, markedForReview]);
+
   if (loading || !quiz) return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-      <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="text-center">
+        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-sm font-bold text-slate-400">Loading quiz...</p>
+      </div>
     </div>
   );
 
@@ -240,66 +469,83 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      {/* Fullscreen Gate */}
+      {needsFullscreen && attempt && (
+        <FullscreenGate onEnter={enterFullscreen} violations={violations} isReEntry={fullscreenInitialized.current} />
+      )}
+
+      {/* Submit Confirmation Modal */}
+      {showSubmitModal && (
+        <SubmitModal
+          questions={questions}
+          answers={answers}
+          marked={markedForReview}
+          onClose={() => setShowSubmitModal(false)}
+          onSubmit={() => doSubmit(false)}
+          submitting={submitting}
+        />
+      )}
+
+      {/* Violation Warning Banner */}
       {showWarning && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-red-500 p-4 rounded-b-2xl" data-testid="violation-warning">
-          <div className="max-w-7xl mx-auto flex items-center gap-3">
-            <Warning size={24} weight="duotone" className="text-white" />
-            <p className="text-white font-bold">Tab Switch Detected! ({violations} violations)</p>
+        <div className="fixed top-0 left-0 right-0 z-[9998] bg-red-500 p-3 sm:p-4" data-testid="violation-warning"
+          style={{animation: 'slideDown 0.3s ease'}}>
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-3">
+            <Warning size={22} weight="fill" className="text-white" />
+            <p className="text-white font-bold text-sm sm:text-base">{warningType} Detected! ({violations} total violations)</p>
           </div>
         </div>
       )}
 
       <header className="glass-header">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-extrabold tracking-tight text-slate-900">{quiz.title}</h1>
-            <p className="text-sm font-medium text-slate-400">{quiz.subject} &bull; {quiz.total_marks} marks</p>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-xl font-extrabold tracking-tight text-slate-900 truncate">{quiz.title}</h1>
+            <p className="text-xs sm:text-sm font-medium text-slate-400 truncate">{quiz.subject} • {quiz.total_marks} marks</p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="bg-amber-50 px-4 py-2 rounded-2xl flex items-center gap-2" data-testid="quiz-timer">
-              <Clock size={22} weight="duotone" className="text-amber-500" />
-              <span className={`text-xl font-extrabold ${timeRemaining < 300 ? 'text-red-600' : 'text-amber-600'}`}>{formatTime(timeRemaining)}</span>
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <div className="bg-amber-50 px-3 sm:px-4 py-2 rounded-2xl flex items-center gap-1.5 sm:gap-2" data-testid="quiz-timer">
+              <Clock size={18} weight="duotone" className="text-amber-500" />
+              <span className={`text-base sm:text-xl font-extrabold ${timeRemaining < 300 ? 'text-red-600 animate-pulse' : 'text-amber-600'}`}>{formatTime(timeRemaining)}</span>
             </div>
-            <div className="bg-red-50 px-4 py-2 rounded-2xl flex items-center gap-2" data-testid="violation-counter">
-              <Warning size={22} weight="duotone" className="text-red-500" />
-              <span className="text-xl font-extrabold text-red-600">{violations}</span>
+            <div className="bg-red-50 px-3 sm:px-4 py-2 rounded-2xl flex items-center gap-1.5 sm:gap-2" data-testid="violation-counter">
+              <Warning size={18} weight="duotone" className="text-red-500" />
+              <span className="text-base sm:text-xl font-extrabold text-red-600">{violations}</span>
             </div>
-            <div className="bg-emerald-50 px-4 py-2 rounded-2xl flex items-center gap-2" data-testid="proctoring-status">
-              <Camera size={22} weight="duotone" className="text-emerald-500" />
+            <div className="hidden sm:flex bg-emerald-50 px-4 py-2 rounded-2xl items-center gap-2" data-testid="proctoring-status">
+              <Camera size={18} weight="duotone" className="text-emerald-500" />
               <span className="text-sm font-bold text-emerald-600">{webcamActive ? 'Cam On' : webcamError ? 'No Cam' : '...'}</span>
             </div>
-            {!isFullscreen && attempt && (
-              <button data-testid="enter-fullscreen-button" onClick={enterFullscreen} className="bg-indigo-50 px-4 py-2 rounded-2xl flex items-center gap-2 hover:bg-indigo-100 transition-colors">
-                <ArrowsOut size={20} weight="duotone" className="text-indigo-500" />
-                <span className="text-sm font-bold text-indigo-600">Fullscreen</span>
-              </button>
-            )}
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-1">
-            <div className="soft-card p-6 sticky top-24">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Questions</h3>
-              <div className="grid grid-cols-5 lg:grid-cols-3 gap-2">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-8">
+          {/* Question Navigation Sidebar */}
+          <div className="lg:col-span-1 order-2 lg:order-1">
+            <div className="soft-card p-4 sm:p-6 lg:sticky lg:top-24">
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-3 sm:mb-4">Questions</h3>
+              <div className="grid grid-cols-8 sm:grid-cols-5 lg:grid-cols-3 gap-2">
                 {questions.map((q, i) => (
                   <button key={i} data-testid={`question-nav-${i + 1}`} onClick={() => setCurrentQuestion(i)}
-                    className={`aspect-square rounded-xl font-bold text-sm transition-all ${
-                      currentQuestion === i ? 'bg-indigo-500 text-white shadow-md' :
-                      answers[i] !== undefined ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                    }`}>{i + 1}</button>
+                    className={`aspect-square rounded-xl font-bold text-xs sm:text-sm transition-all relative ${getNavClass(i)}`}>
+                    {i + 1}
+                    {markedForReview.has(i) && currentQuestion !== i && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-white"></div>
+                    )}
+                  </button>
                 ))}
               </div>
-              <div className="mt-6 space-y-2.5 text-sm">
+              <div className="mt-4 sm:mt-6 space-y-2 text-xs sm:text-sm">
                 <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-indigo-500 rounded-md"></div><span className="font-medium text-slate-500">Current</span></div>
                 <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-emerald-100 rounded-md"></div><span className="font-medium text-slate-500">Answered</span></div>
+                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-amber-100 rounded-md ring-2 ring-amber-400"></div><span className="font-medium text-slate-500">Marked for Review</span></div>
                 <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-slate-100 rounded-md"></div><span className="font-medium text-slate-500">Not Answered</span></div>
               </div>
-              <p className="text-sm font-medium text-slate-400 mt-4 text-center">{Object.keys(answers).length}/{questions.length} answered</p>
-              {/* Webcam feed */}
-              <div className="mt-4 rounded-2xl overflow-hidden bg-slate-900" data-testid="webcam-feed">
+              <p className="text-xs sm:text-sm font-medium text-slate-400 mt-4 text-center">{Object.keys(answers).length}/{questions.length} answered</p>
+              {/* Webcam feed — hidden on mobile */}
+              <div className="mt-4 rounded-2xl overflow-hidden bg-slate-900 hidden sm:block" data-testid="webcam-feed">
                 {webcamActive ? (
                   <video ref={videoRef} autoPlay muted playsInline className="w-full h-auto rounded-2xl" style={{ transform: 'scaleX(-1)' }} />
                 ) : webcamError ? (
@@ -313,19 +559,20 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                   </div>
                 )}
               </div>
-              <button data-testid="submit-quiz-button" onClick={handleSubmit} disabled={submitting} className="btn-primary w-full mt-4 text-sm disabled:opacity-60">
+              <button data-testid="submit-quiz-button" onClick={handleSubmitClick} disabled={submitting} className="btn-primary w-full mt-4 text-sm disabled:opacity-60">
                 {submitting ? 'Submitting...' : 'Submit Quiz'}
               </button>
             </div>
           </div>
 
-          <div className="lg:col-span-3">
+          {/* Question Content */}
+          <div className="lg:col-span-3 order-1 lg:order-2">
             {currentQ && (
-              <div className="soft-card p-8">
-                <div className="flex items-center justify-between mb-6">
+              <div className="soft-card p-5 sm:p-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
                   <div>
                     <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Question {currentQuestion + 1} of {questions.length}</span>
-                    <h2 className="text-lg font-bold text-slate-800 mt-1">
+                    <h2 className="text-base sm:text-lg font-bold text-slate-800 mt-1">
                       {currentQ.type === 'mcq' && 'Multiple Choice'}
                       {currentQ.type === 'boolean' && 'True / False'}
                       {currentQ.type === 'short' && 'Short Answer'}
@@ -340,13 +587,13 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                   </div>
                 </div>
 
-                <p className="text-lg font-medium text-slate-700 leading-relaxed mb-8 select-none">{currentQ.question}</p>
+                <p className="text-base sm:text-lg font-medium text-slate-700 leading-relaxed mb-6 sm:mb-8 select-none">{currentQ.question}</p>
 
                 {currentQ.type === 'mcq' && (
                   <div className="space-y-3">
                     {(currentQ.options || []).map((option, i) => (
                       <button key={i} data-testid={`option-${i}`} onClick={() => handleAnswer(currentQuestion, i)}
-                        className={`w-full text-left p-4 rounded-2xl font-medium transition-all select-none ${
+                        className={`w-full text-left p-3 sm:p-4 rounded-2xl font-medium transition-all select-none text-sm sm:text-base ${
                           answers[currentQuestion] === i ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                         }`}>
                         <span className="font-bold mr-3 text-sm">{String.fromCharCode(65 + i)}.</span>{option}
@@ -356,14 +603,14 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                 )}
 
                 {currentQ.type === 'boolean' && (
-                  <div className="flex gap-4">
+                  <div className="flex gap-3 sm:gap-4">
                     <button data-testid="true-button" onClick={() => handleAnswer(currentQuestion, true)}
-                      className={`flex-1 p-6 rounded-2xl font-bold text-lg transition-all ${answers[currentQuestion] === true ? 'bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
-                      <CheckCircle size={32} weight="duotone" className="mx-auto mb-2" />TRUE
+                      className={`flex-1 p-4 sm:p-6 rounded-2xl font-bold text-base sm:text-lg transition-all ${answers[currentQuestion] === true ? 'bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                      <CheckCircle size={28} weight="duotone" className="mx-auto mb-2" />TRUE
                     </button>
                     <button data-testid="false-button" onClick={() => handleAnswer(currentQuestion, false)}
-                      className={`flex-1 p-6 rounded-2xl font-bold text-lg transition-all ${answers[currentQuestion] === false ? 'bg-rose-50 text-rose-700 ring-2 ring-rose-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
-                      <XCircle size={32} weight="duotone" className="mx-auto mb-2" />FALSE
+                      className={`flex-1 p-4 sm:p-6 rounded-2xl font-bold text-base sm:text-lg transition-all ${answers[currentQuestion] === false ? 'bg-rose-50 text-rose-700 ring-2 ring-rose-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                      <XCircle size={28} weight="duotone" className="mx-auto mb-2" />FALSE
                     </button>
                   </div>
                 )}
@@ -371,7 +618,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                 {currentQ.type === 'short' && (
                   <textarea data-testid="short-answer-input" value={answers[currentQuestion] || ''}
                     onChange={(e) => handleAnswer(currentQuestion, e.target.value)}
-                    placeholder="Type your answer here..." rows="8" className="soft-input w-full resize-none" />
+                    placeholder="Type your answer here..." rows="6" className="soft-input w-full resize-none text-sm sm:text-base" />
                 )}
 
                 {currentQ.type === 'coding' && (
@@ -385,17 +632,46 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                   />
                 )}
 
-                <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-100">
-                  <button data-testid="previous-question-button" onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
-                    disabled={currentQuestion === 0} className={`btn-ghost !px-6 !py-2.5 text-sm ${currentQuestion === 0 ? 'opacity-40' : ''}`}>Previous</button>
-                  <button data-testid="next-question-button" onClick={() => setCurrentQuestion(Math.min(questions.length - 1, currentQuestion + 1))}
-                    disabled={currentQuestion === questions.length - 1} className={`btn-primary !px-6 !py-2.5 text-sm ${currentQuestion === questions.length - 1 ? 'opacity-40' : ''}`}>Next</button>
+                {/* Action Bar: Clear / Mark / Prev / Next */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-100 gap-3">
+                  <div className="flex items-center gap-2">
+                    {/* Clear Selection */}
+                    {answers[currentQuestion] !== undefined && currentQ.type !== 'coding' && (
+                      <button data-testid="clear-selection-button" onClick={() => handleClearAnswer(currentQuestion)}
+                        className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 transition-colors">
+                        <Eraser size={16} weight="duotone" /> Clear
+                      </button>
+                    )}
+                    {/* Mark for Review */}
+                    <button data-testid="mark-review-button" onClick={() => toggleMarkForReview(currentQuestion)}
+                      className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+                        markedForReview.has(currentQuestion)
+                          ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-300'
+                          : 'text-slate-500 bg-slate-50 hover:bg-slate-100'
+                      }`}>
+                      <BookmarkSimple size={16} weight={markedForReview.has(currentQuestion) ? 'fill' : 'duotone'} />
+                      {markedForReview.has(currentQuestion) ? 'Marked' : 'Review'}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button data-testid="previous-question-button" onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
+                      disabled={currentQuestion === 0} className={`btn-ghost !px-4 sm:!px-6 !py-2.5 text-sm ${currentQuestion === 0 ? 'opacity-40' : ''}`}>Previous</button>
+                    <button data-testid="next-question-button" onClick={() => setCurrentQuestion(Math.min(questions.length - 1, currentQuestion + 1))}
+                      disabled={currentQuestion === questions.length - 1} className={`btn-primary !px-4 sm:!px-6 !py-2.5 text-sm ${currentQuestion === questions.length - 1 ? 'opacity-40' : ''}`}>Next</button>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes slideDown {
+          from { transform: translateY(-100%); }
+          to { transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };

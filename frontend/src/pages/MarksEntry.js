@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, PaperPlaneTilt, FloppyDisk, CheckCircle, Clock, Warning, Percent, ChartBar, PencilLine } from '@phosphor-icons/react';
+import { ArrowLeft, PaperPlaneTilt, FloppyDisk, CheckCircle, Clock, Warning, WarningCircle, Percent, ChartBar, PencilLine, X } from '@phosphor-icons/react';
 import { marksAPI } from '../services/api';
 
 const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
@@ -16,6 +16,17 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
   const [isDirectNavigation, setIsDirectNavigation] = useState(!!preselectedAssignment);
   const [isEditingApproved, setIsEditingApproved] = useState(false);
   const [revisionReason, setRevisionReason] = useState('');
+  
+  // Custom UI Dialogs
+  const [toast, setToast] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
+  const [promptDialog, setPromptDialog] = useState(null);
+  const [promptInput, setPromptInput] = useState('');
+
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -79,9 +90,21 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
     setMarks({ ...marks, [studentId]: num });
   };
 
-  const handleSave = async () => {
-    if (!selectedAssignment) return;
+  const saveMarksData = async (isSubmit = false) => {
+    if (!selectedAssignment) return null;
+    if (!maxMarks || String(maxMarks).trim() === '') {
+      showToast("Max marks cannot be empty", "error");
+      return null;
+    }
+    
+    const currentMax = parseFloat(maxMarks);
+    if (isNaN(currentMax) || currentMax <= 0) {
+      showToast("Max marks must be greater than 0", "error");
+      return null;
+    }
+    
     setSaving(true);
+    let newEntryId = entryId;
     try {
       const entries = students.map(s => ({
         student_id: s.id, college_id: s.college_id, student_name: s.name,
@@ -89,59 +112,78 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
       }));
       const payload = {
         assignment_id: selectedAssignment.id, exam_type: examType,
-        semester: selectedAssignment.semester, max_marks: maxMarks, entries
+        semester: selectedAssignment.semester, max_marks: currentMax, entries
       };
       
-      // If editing approved marks, include revision reason
       if (isEditingApproved && revisionReason) {
         payload.revision_reason = revisionReason;
       }
       
       const { data } = await marksAPI.saveEntry(payload);
+      newEntryId = data.id;
+      setEntryId(newEntryId);
+      setStatus(data.status || 'draft');
       
-      // Update state with response from backend
-      setEntryId(data.id);
-      setStatus(data.status || 'draft'); // Use status from backend response
-      
-      if (isEditingApproved) {
-        alert('Revised marks saved as draft. Submit for re-approval.');
-      } else {
-        alert('Marks saved as draft');
+      if (!isSubmit) {
+        showToast(isEditingApproved ? 'Revised marks saved as draft. Submit for re-approval.' : 'Marks saved as draft', 'success');
       }
     } catch (err) { 
       console.error('Save error:', err);
-      alert(err.response?.data?.detail || 'Save failed'); 
+      showToast(err.response?.data?.detail || 'Save failed', 'error'); 
+      newEntryId = null;
     }
     setSaving(false);
+    return newEntryId;
   };
 
-  const handleSubmit = async () => {
-    if (!entryId) return alert('Save marks first');
-    
-    // Check if all students have marks filled
+  const handleSave = async () => {
+    await saveMarksData(false);
+  };
+
+  const handleInitiateSubmit = () => {
     const allStudentsGraded = students.every(s => marks[s.id] !== null && marks[s.id] !== undefined);
     if (!allStudentsGraded) {
-      return alert('Please fill marks for all students before submitting for approval.');
+      return showToast('Please fill marks for all students before submitting for approval.', 'error');
     }
     
-    if (!window.confirm('Submit marks for HOD approval? You cannot edit after submission.')) return;
+    setConfirmDialog({
+      title: "Submit for Approval?",
+      message: "Are you sure you want to submit these marks to the HOD? You will not be able to edit them after submission.",
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        await performSubmit();
+      }
+    });
+  };
+
+  const performSubmit = async () => {
+    const currentEntryId = await saveMarksData(true);
+    if (!currentEntryId) return; 
+    
     try {
-      await marksAPI.submit(entryId);
+      await marksAPI.submit(currentEntryId);
       setStatus('submitted');
       setIsEditingApproved(false);
       setRevisionReason('');
-      alert('Marks submitted for HOD approval');
-    } catch (err) { alert(err.response?.data?.detail || 'Submit failed'); }
+      showToast('Marks submitted for HOD approval', 'success');
+    } catch (err) { showToast(err.response?.data?.detail || 'Submit failed', 'error'); }
   };
 
   const handleEnableEditApproved = () => {
-    const reason = prompt('Enter reason for editing approved marks:');
-    if (!reason || reason.trim() === '') {
-      alert('Reason is required to edit approved marks');
-      return;
-    }
-    setRevisionReason(reason.trim());
-    setIsEditingApproved(true);
+    setPromptInput('');
+    setPromptDialog({
+      title: "Edit Approved Marks",
+      message: "Please enter the reason for revising these approved marks:",
+      onSubmit: (reason) => {
+        if (!reason || reason.trim() === '') {
+          showToast('Reason is required to edit approved marks', 'error');
+          return;
+        }
+        setRevisionReason(reason.trim());
+        setIsEditingApproved(true);
+        setPromptDialog(null);
+      }
+    });
   };
 
   const isEditable = status === 'new' || status === 'draft' || status === 'rejected' || isEditingApproved;
@@ -152,7 +194,11 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
     if (graded.length === 0) return { avgMarks: 0, avgPercent: 0, gradedCount: 0 };
     const total = graded.reduce((sum, s) => sum + (marks[s.id] || 0), 0);
     const avgMarks = total / graded.length;
-    const avgPercent = maxMarks > 0 ? (avgMarks / maxMarks) * 100 : 0;
+    
+    const parsedMax = parseFloat(maxMarks);
+    const safeMax = isNaN(parsedMax) || parsedMax <= 0 ? 30 : parsedMax;
+    const avgPercent = (avgMarks / safeMax) * 100;
+    
     return { avgMarks: avgMarks.toFixed(1), avgPercent: avgPercent.toFixed(1), gradedCount: graded.length };
   }, [marks, students, maxMarks]);
 
@@ -248,10 +294,13 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
                 })}
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 relative">
                   <label className="text-xs font-bold text-slate-400">Max:</label>
-                  <input data-testid="max-marks-input" type="number" value={maxMarks} onChange={(e) => setMaxMarks(parseFloat(e.target.value) || 30)}
-                    className="soft-input !py-1.5 !px-3 w-20 text-sm" disabled={!isEditable} />
+                  <input data-testid="max-marks-input" type="number" min="1" value={maxMarks} onChange={(e) => setMaxMarks(e.target.value)}
+                    className={`soft-input !py-1.5 !px-3 w-20 text-sm transition-colors outline-none ${(!maxMarks || String(maxMarks).trim() === '') ? 'border-2 !border-red-400 !bg-red-50 focus:!border-red-500' : 'border border-transparent shadow-sm'}`} disabled={!isEditable} />
+                  {(!maxMarks || String(maxMarks).trim() === '') && (
+                    <span className="absolute -bottom-4 left-9 text-[10px] font-bold text-red-500 whitespace-nowrap" style={{animation: 'fadeIn 0.2s ease'}}>*Required</span>
+                  )}
                 </div>
                 {stats.gradedCount > 0 && (
                   <div className="flex items-center gap-3" data-testid="avg-stats">
@@ -298,7 +347,7 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
                         <td className="py-3 px-4 font-medium text-slate-800">{s.name}</td>
                         <td className="py-3 px-4 text-center">
                           {isEditable ? (
-                            <input data-testid={`marks-input-${s.college_id}`} type="number" min="0" max={maxMarks} step="0.5"
+                            <input data-testid={`marks-input-${s.college_id}`} type="number" min="0" max={parseFloat(maxMarks) || 100} step="0.5"
                               value={m ?? ''} onChange={(e) => handleMarkChange(s.id, e.target.value)}
                               className="soft-input !py-1.5 !px-3 w-24 text-center text-sm font-bold mx-auto" placeholder="-" />
                           ) : (
@@ -354,8 +403,8 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
                   </button>
                   <button 
                     data-testid="submit-marks-button" 
-                    onClick={handleSubmit} 
-                    disabled={!entryId || (status !== 'draft' && !isEditingApproved) || stats.gradedCount < students.length} 
+                    onClick={handleInitiateSubmit} 
+                    disabled={(!entryId && marks.length===0) || (status !== 'draft' && status !== 'new' && !isEditingApproved) || stats.gradedCount < students.length || saving} 
                     className="btn-primary !py-2.5 text-sm flex items-center gap-2 disabled:opacity-60"
                     title={stats.gradedCount < students.length ? 'Fill marks for all students before submitting' : ''}
                   >
@@ -388,6 +437,57 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
           </div>
         )}
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0
+          ${toast.type === 'error' ? 'bg-red-50 text-red-700 border-l-4 border-red-500' : 
+            toast.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500' : 
+            'bg-slate-800 text-white'}`}
+          style={{animation: 'fadeInUp 0.3s ease'}}
+        >
+          {toast.type === 'error' && <WarningCircle size={24} weight="fill" className="text-red-500" />}
+          {toast.type === 'success' && <CheckCircle size={24} weight="fill" className="text-emerald-500" />}
+          <p className="text-sm font-bold tracking-wide">{toast.message}</p>
+          <button onClick={() => setToast(null)} className="ml-2 hover:opacity-70 transition-opacity"><X size={16} weight="bold" /></button>
+        </div>
+      )}
+
+      {/* Confirm Dialog UI */}
+      {confirmDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" style={{animation: 'fadeIn 0.2s ease'}}>
+           <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-sm shadow-2xl" style={{animation: 'scaleIn 0.2s ease'}}>
+              <h3 className="text-xl font-extrabold text-slate-900 mb-2">{confirmDialog.title}</h3>
+              <p className="text-sm font-medium text-slate-500 mb-6">{confirmDialog.message}</p>
+              <div className="flex gap-3 justify-end">
+                 <button onClick={() => setConfirmDialog(null)} className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 transition-colors">Cancel</button>
+                 <button onClick={confirmDialog.onConfirm} className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-colors shadow-md shadow-indigo-200">Yes, Submit</button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Prompt Dialog UI */}
+      {promptDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" style={{animation: 'fadeIn 0.2s ease'}}>
+           <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl" style={{animation: 'scaleIn 0.2s ease'}}>
+              <h3 className="text-xl font-extrabold text-slate-900 mb-2">{promptDialog.title}</h3>
+              <p className="text-sm font-medium text-slate-500 mb-4">{promptDialog.message}</p>
+              <textarea 
+                value={promptInput}
+                onChange={(e) => setPromptInput(e.target.value)}
+                autoFocus
+                className="w-full h-24 p-3 rounded-xl border border-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none resize-none mb-6"
+                placeholder="Type your reason here..."
+              />
+              <div className="flex gap-3 justify-end">
+                 <button onClick={() => setPromptDialog(null)} className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 transition-colors">Cancel</button>
+                 <button onClick={() => promptDialog.onSubmit(promptInput)} className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-colors shadow-md shadow-indigo-200">Confirm Edit</button>
+              </div>
+           </div>
+        </div>
+      )}
+
     </div>
   );
 };

@@ -1,18 +1,34 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Users, CheckCircle, Clock, Warning, Eye, Camera } from '@phosphor-icons/react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Users, CheckCircle, Clock, Warning, Eye, Camera, CircleNotch } from '@phosphor-icons/react';
+import { quizzesAPI } from '../services/api';
 
 const LiveMonitor = ({ quiz, navigate, user }) => {
   const [activeTab, setActiveTab] = useState('active');
-  const students = [
-    { id: 1, name: 'Rajesh Kumar', rollNo: 'S2024001', status: 'active', progress: 12, totalQuestions: 20, violations: 0, timeElapsed: 25, startTime: '10:05 AM' },
-    { id: 2, name: 'Priya Sharma', rollNo: 'S2024101', status: 'active', progress: 15, totalQuestions: 20, violations: 1, timeElapsed: 28, startTime: '10:02 AM' },
-    { id: 3, name: 'Amit Patel', rollNo: 'S2024045', status: 'active', progress: 10, totalQuestions: 20, violations: 3, timeElapsed: 22, startTime: '10:08 AM' },
-    { id: 4, name: 'Sneha Reddy', rollNo: 'S2024089', status: 'submitted', progress: 20, totalQuestions: 20, violations: 0, timeElapsed: 35, submitTime: '10:35 AM' },
-    { id: 5, name: 'Rahul Kumar', rollNo: 'S2024034', status: 'submitted', progress: 20, totalQuestions: 20, violations: 1, timeElapsed: 38, submitTime: '10:38 AM' },
-  ];
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!quiz?.id) return;
+    
+    const fetchLive = async () => {
+      try {
+        const { data } = await quizzesAPI.liveMonitor(quiz.id);
+        setStudents(data || []);
+      } catch (err) {
+        console.error("Live monitor fetch error", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchLive();
+    const interval = setInterval(fetchLive, 10000); // Poll every 10 seconds
+    return () => clearInterval(interval);
+  }, [quiz?.id]);
+
   const activeStudents = students.filter(s => s.status === 'active');
   const submittedStudents = students.filter(s => s.status === 'submitted');
-  const violationStudents = students.filter(s => s.violations > 2);
+  const violationStudents = students.filter(s => s.violations > 0);
   const displayStudents = activeTab === 'active' ? activeStudents : activeTab === 'submitted' ? submittedStudents : violationStudents;
 
   return (
@@ -64,44 +80,55 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
           ))}
         </div>
 
-        <div className="soft-card p-6">
-          <table className="w-full" data-testid="students-monitor-table">
-            <thead>
-              <tr className="border-b border-slate-100">
-                {['Student', 'Progress', 'Time', 'Violations', 'Status', 'Actions'].map(h => (
-                  <th key={h} className={`${h === 'Student' ? 'text-left' : 'text-center'} p-4 text-xs font-bold uppercase tracking-widest text-slate-400`}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {displayStudents.map((student) => (
-                <tr key={student.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors" data-testid={`student-row-${student.id}`}>
-                  <td className="p-4"><p className="font-bold text-slate-800">{student.name}</p><p className="text-sm font-medium text-slate-400">{student.rollNo}</p></td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-center gap-2 mb-1"><span className="font-bold text-slate-700 text-sm">{student.progress}/{student.totalQuestions}</span></div>
-                    <div className="h-2 bg-slate-100 rounded-full max-w-32 mx-auto overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-indigo-500 to-teal-400 rounded-full" style={{ width: `${(student.progress / student.totalQuestions) * 100}%` }}></div>
-                    </div>
-                  </td>
-                  <td className="text-center p-4">
-                    <div className="flex items-center justify-center gap-1"><Clock size={15} weight="duotone" className="text-slate-400" /><span className="font-bold text-slate-700">{student.timeElapsed}m</span></div>
-                    <p className="text-xs font-medium text-slate-400 mt-0.5">{student.status === 'active' ? `Started ${student.startTime}` : `Done ${student.submitTime}`}</p>
-                  </td>
-                  <td className="text-center p-4">
-                    {student.violations > 0 ? <span className={`soft-badge ${student.violations > 2 ? 'bg-red-100 text-red-600' : 'bg-amber-50 text-amber-600'}`}>{student.violations}</span>
-                      : <span className="text-emerald-500 font-bold">OK</span>}
-                  </td>
-                  <td className="text-center p-4"><span className={`soft-badge ${student.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>{student.status}</span></td>
-                  <td className="text-center p-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <button data-testid={`view-activity-${student.id}`} className="btn-ghost !px-3 !py-1.5 text-xs">View Activity</button>
-                      {student.violations > 0 && <button data-testid={`view-snapshots-${student.id}`} className="p-2 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"><Camera size={14} weight="duotone" /></button>}
-                    </div>
-                  </td>
+        <div className="soft-card p-6 overflow-hidden">
+          {loading && students.length === 0 ? (
+            <div className="py-12 flex flex-col items-center justify-center">
+              <CircleNotch size={32} weight="bold" className="text-indigo-500 animate-spin mb-3" />
+              <p className="text-slate-500 font-medium">Connecting to live feed...</p>
+            </div>
+          ) : students.length === 0 ? (
+            <div className="py-12 text-center text-slate-500 font-medium">No students have joined this quiz yet</div>
+          ) : displayStudents.length === 0 ? (
+            <div className="py-8 text-center text-slate-500 font-medium">No students in this view</div>
+          ) : (
+            <table className="w-full" data-testid="students-monitor-table">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  {['Student', 'Progress', 'Time', 'Violations', 'Status', 'Actions'].map(h => (
+                    <th key={h} className={`${h === 'Student' ? 'text-left' : 'text-center'} p-4 text-xs font-bold uppercase tracking-widest text-slate-400`}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {displayStudents.map((student) => (
+                  <tr key={student.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors" data-testid={`student-row-${student.id}`}>
+                    <td className="p-4"><p className="font-bold text-slate-800">{student.name}</p><p className="text-sm font-medium text-slate-400">{student.rollNo}</p></td>
+                    <td className="p-4">
+                      <div className="flex items-center justify-center gap-2 mb-1"><span className="font-bold text-slate-700 text-sm">{student.progress}/{student.totalQuestions}</span></div>
+                      <div className="h-2 bg-slate-100 rounded-full max-w-32 mx-auto overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-indigo-500 to-teal-400 rounded-full transition-all duration-1000" style={{ width: `${student.totalQuestions > 0 ? (student.progress / student.totalQuestions) * 100 : 0}%` }}></div>
+                      </div>
+                    </td>
+                    <td className="text-center p-4">
+                      <div className="flex items-center justify-center gap-1"><Clock size={15} weight="duotone" className="text-slate-400" /><span className="font-bold text-slate-700">{student.timeElapsed}m</span></div>
+                      <p className="text-xs font-medium text-slate-400 mt-0.5">{student.status === 'active' ? `Started ${student.startTime}` : `Done ${student.submitTime}`}</p>
+                    </td>
+                    <td className="text-center p-4">
+                      {student.violations > 0 ? <span className={`soft-badge ${student.violations >= 2 ? 'bg-red-100 text-red-600' : 'bg-amber-50 text-amber-600'}`}>{student.violations}</span>
+                        : <span className="text-emerald-500 font-bold">OK</span>}
+                    </td>
+                    <td className="text-center p-4"><span className={`soft-badge ${student.status === 'active' ? 'bg-emerald-50 text-emerald-600 animate-pulse' : 'bg-slate-100 text-slate-500'}`}>{student.status}</span></td>
+                    <td className="text-center p-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <button data-testid={`view-activity-${student.id}`} className="btn-ghost !px-3 !py-1.5 text-xs">View Activity</button>
+                        {student.violations > 0 && <button data-testid={`view-snapshots-${student.id}`} className="p-2 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"><Camera size={14} weight="duotone" /></button>}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">

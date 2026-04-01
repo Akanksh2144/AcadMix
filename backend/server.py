@@ -16,6 +16,7 @@ from fastapi import FastAPI, HTTPException, Request, Response, Depends, Query, U
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
+import certifi
 import io
 import csv
 
@@ -27,7 +28,7 @@ DB_NAME = os.environ["DB_NAME"]
 JWT_SECRET = os.environ["JWT_SECRET"]
 JWT_ALGORITHM = "HS256"
 
-client = AsyncIOMotorClient(MONGO_URL)
+client = AsyncIOMotorClient(MONGO_URL, tlsCAFile=certifi.where())
 db = client[DB_NAME]
 
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
@@ -132,6 +133,8 @@ class QuizCreate(BaseModel):
     randomize_options: bool = False
     show_answers_after: bool = True
     allow_reattempt: bool = False
+    assigned_classes: list = []
+    negative_marks: float = 0.0
     questions: list = []
 
 class AnswerSubmit(BaseModel):
@@ -284,6 +287,13 @@ async def list_quizzes(status: Optional[str] = None, user: dict = Depends(get_cu
         query["status"] = status
     if user["role"] == "teacher":
         query["created_by"] = user["id"]
+    elif user["role"] == "student":
+        student_class = {"department": user.get("department", ""), "batch": user.get("batch", ""), "section": user.get("section", "")}
+        query["$or"] = [
+            {"assigned_classes": {"$size": 0}},
+            {"assigned_classes": {"$exists": False}},
+            {"assigned_classes": {"$elemMatch": student_class}}
+        ]
     quizzes = await db.quizzes.find(query, {"questions.correct_answer": 0, "questions.correct_answers": 0, "questions.keywords": 0} if user["role"] == "student" else {}).sort("created_at", -1).to_list(100)
     return [serialize_doc(q) for q in quizzes]
 
@@ -296,6 +306,7 @@ async def create_quiz(req: QuizCreate, user: dict = Depends(require_role("teache
         "negative_marking": req.negative_marking, "timed": req.timed,
         "randomize_questions": req.randomize_questions, "randomize_options": req.randomize_options,
         "show_answers_after": req.show_answers_after, "allow_reattempt": req.allow_reattempt,
+        "assigned_classes": req.assigned_classes, "negative_marks": req.negative_marks,
         "questions": req.questions, "status": "draft",
         "created_by": user["id"], "created_by_name": user["name"],
         "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc),
@@ -315,6 +326,74 @@ async def get_quiz(quiz_id: str, user: dict = Depends(get_current_user)):
             question.pop("correct_answers", None)
             question.pop("keywords", None)
     return serialize_doc(q)
+
+@app.get("/api/quizzes/live/{quiz_id}")
+async def live_quiz_monitor(quiz_id: str, user: dict = Depends(require_role("teacher", "admin", "hod", "exam_cell"))):
+    q = await db.quizzes.find_one({"_id": ObjectId(quiz_id)})
+    if not q:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+        
+    attempts = await db.quiz_attempts.find({"quiz_id": quiz_id}).to_list(1000)
+    
+    student_ids = [ObjectId(a["student_id"]) for a in attempts if ObjectId.is_valid(a.get("student_id"))]
+    students_cursor = db.users.find({"_id": {"$in": student_ids}})
+    students_dict = {str(s["_id"]): s for s in await students_cursor.to_list(1000)}
+    
+    live_data = []
+    for a in attempts:
+        sid = a.get("student_id")
+        student = students_dict.get(sid, {})
+        
+        started = a.get("started_at")
+        if not started:
+            continue
+            
+        if isinstance(started, str):
+            try:
+                started = datetime.fromisoformat(started.replace('Z', '+00:00'))
+            except Exception:
+                continue
+                
+        status = a.get("status", "in_progress")
+        if status == "in_progress":
+            td = datetime.now(timezone.utc) - started
+            time_elapsed = int(td.total_seconds() / 60)
+            submit_time_str = None
+        else:
+            submitted = a.get("submitted_at")
+            if isinstance(submitted, str):
+                try:
+                    submitted = datetime.fromisoformat(submitted.replace('Z', '+00:00'))
+                except Exception:
+                    submitted = started
+            elif not submitted:
+                submitted = started
+                
+            td = submitted - started
+            time_elapsed = int(td.total_seconds() / 60)
+            submit_time_str = submitted.strftime("%I:%M %p")
+            
+        start_time_str = started.strftime("%I:%M %p")
+        answers = a.get("answers", [])
+        progress = sum(1 for ans in answers if ans is not None)
+        total_questions = q.get("total_questions", len(q.get("questions", [])))
+        if total_questions == 0:
+            total_questions = len(answers)
+            
+        live_data.append({
+            "id": str(a["_id"]),
+            "name": student.get("name", "Unknown Student"),
+            "rollNo": student.get("college_id", sid),
+            "status": "active" if status == "in_progress" else "submitted",
+            "progress": progress,
+            "totalQuestions": total_questions,
+            "violations": a.get("violations", 0),
+            "timeElapsed": max(0, time_elapsed),
+            "startTime": start_time_str,
+            "submitTime": submit_time_str
+        })
+        
+    return live_data
 
 @app.patch("/api/quizzes/{quiz_id}")
 async def update_quiz(quiz_id: str, updates: dict, user: dict = Depends(require_role("teacher", "admin"))):
@@ -381,10 +460,18 @@ async def submit_answer(attempt_id: str, req: AnswerSubmit, user: dict = Depends
     await db.quiz_attempts.update_one({"_id": ObjectId(attempt_id)}, {"$set": {"answers": answers}})
     return {"message": "Answer saved", "question_index": req.question_index}
 
+class ViolationReport(BaseModel):
+    violation_type: str = "tab_switch"  # tab_switch, fullscreen_exit, window_blur
+
 @app.post("/api/attempts/{attempt_id}/violation")
-async def log_violation(attempt_id: str, user: dict = Depends(get_current_user)):
-    await db.quiz_attempts.update_one({"_id": ObjectId(attempt_id)}, {"$inc": {"violations": 1}})
-    return {"message": "Violation logged"}
+async def log_violation(attempt_id: str, req: ViolationReport = ViolationReport(), user: dict = Depends(get_current_user)):
+    detail = {"type": req.violation_type, "timestamp": datetime.now(timezone.utc).isoformat()}
+    await db.quiz_attempts.update_one(
+        {"_id": ObjectId(attempt_id)},
+        {"$inc": {"violations": 1}, "$push": {"violation_details": detail}}
+    )
+    updated = await db.quiz_attempts.find_one({"_id": ObjectId(attempt_id)}, {"violations": 1})
+    return {"message": "Violation logged", "total_violations": updated.get("violations", 0)}
 
 @app.post("/api/attempts/{attempt_id}/submit")
 async def submit_attempt(attempt_id: str, user: dict = Depends(get_current_user)):
@@ -604,6 +691,256 @@ async def student_analytics(student_id: str, user: dict = Depends(get_current_us
         "semesters": [serialize_doc(s) for s in semesters]
     }
 
+@app.get("/api/analytics/teacher/class-results")
+async def class_results_analytics(user: dict = Depends(require_role("teacher", "hod", "exam_cell", "admin"))):
+    if user["role"] == "teacher":
+        assignments_cursor = db.faculty_assignments.find({"teacher_id": user["id"]})
+    else:
+        assignments_cursor = db.faculty_assignments.find()
+        
+    assignments = await assignments_cursor.to_list(100)
+    
+    assigned_classes = []
+    class_details = {}
+    
+    for a in assignments:
+        class_key = f"{a.get('subject_code', '')}_{a.get('batch', '')}_{a.get('section', '')}"
+        if any(c.get("class_key") == class_key for c in assigned_classes):
+            continue
+            
+        total_students = await db.users.count_documents({
+            "role": "student",
+            "department": a.get("department", ""),
+            "batch": str(a.get("batch", "")),
+            "section": str(a.get("section", ""))
+        })
+        
+        class_label = f"{a.get('department','')} {a.get('batch','')}-{a.get('section','')}"
+        assigned_classes.append({
+            "id": str(a["_id"]),
+            "class_key": class_key,
+            "section": class_label,
+            "rawSection": a.get("section", ""),
+            "department": a.get("department", ""),
+            "subject": a.get("subject_name", ""),
+            "batch": str(a.get("batch", "")),
+            "totalStudents": total_students
+        })
+        class_details[class_key] = {
+            "totalStudents": total_students,
+            "department": a.get("department"),
+            "batch": str(a.get("batch", "")),
+            "section": str(a.get("section", ""))
+        }
+        
+    quiz_results = {}
+    mid_marks = {}
+    
+    if user["role"] == "teacher":
+        qs = await db.quizzes.find({"created_by": user["id"]}).to_list(100)
+    else:
+        qs = await db.quizzes.find().to_list(100)
+        
+    quiz_ids = [str(q["_id"]) for q in qs]
+    all_attempts = await db.quiz_attempts.find({"quiz_id": {"$in": quiz_ids}, "status": "submitted"}).to_list(1000)
+        
+    for at in all_attempts:
+        sid = at.get("student_id")
+        if not sid: continue
+        st = await db.users.find_one({"_id": ObjectId(sid)}) if ObjectId.is_valid(sid) else None
+        if not st: continue
+        
+        for a in assigned_classes:
+            cd = class_details[a["class_key"]]
+            if st.get("department") == cd.get("department") and str(st.get("batch", "")) == cd.get("batch") and str(st.get("section", "")) == cd.get("section"):
+                class_key = a["class_key"]
+                qid = at["quiz_id"]
+                if class_key not in quiz_results:
+                    quiz_results[class_key] = {}
+                if qid not in quiz_results[class_key]:
+                    quiz_obj = next((qz for qz in qs if str(qz["_id"]) == qid), {})
+                    created_at = quiz_obj.get("created_at", datetime.now(timezone.utc))
+                    if isinstance(created_at, str):
+                        created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                    quiz_results[class_key][qid] = {
+                        "id": qid,
+                        "title": quiz_obj.get("title", "Quiz"),
+                        "date": created_at.strftime("%Y-%m-%d"),
+                        "totalStudents": a["totalStudents"],
+                        "completed": 0,
+                        "total_score": 0,
+                        "maxScore": quiz_obj.get("total_marks", 100),
+                        "passed": 0,
+                        "topPerformers": []
+                    }
+                
+                qr = quiz_results[class_key][qid]
+                qr["completed"] += 1
+                perc = at.get("percentage", 0)
+                qr["total_score"] += perc
+                if perc >= 40:
+                    qr["passed"] += 1
+                    
+                time_elapsed = 0
+                if at.get("started_at") and at.get("submitted_at"):
+                    s_dt = at["started_at"]
+                    e_dt = at["submitted_at"]
+                    if isinstance(s_dt, str): s_dt = datetime.fromisoformat(s_dt.replace('Z','+00:00'))
+                    if isinstance(e_dt, str): e_dt = datetime.fromisoformat(e_dt.replace('Z','+00:00'))
+                    time_elapsed = int((e_dt - s_dt).total_seconds() / 60)
+                    
+                qr["topPerformers"].append({
+                    "name": st.get("name", "Unknown"),
+                    "score": perc,
+                    "time": f"{max(1, time_elapsed)} mins"
+                })
+
+    final_quiz_results = {}
+    for class_key, q_dict in quiz_results.items():
+        arr = []
+        for qid, stat in q_dict.items():
+            stat["avgScore"] = round(stat["total_score"] / stat["completed"], 1) if stat["completed"] > 0 else 0
+            stat["passRate"] = round((stat["passed"] / stat["completed"]) * 100) if stat["completed"] > 0 else 0
+            stat["topPerformers"].sort(key=lambda x: x["score"], reverse=True)
+            stat["topPerformers"] = stat["topPerformers"][:3]
+            del stat["total_score"]
+            del stat["passed"]
+            arr.append(stat)
+        final_quiz_results[class_key] = arr
+        
+    if user["role"] == "teacher":
+        entries = await db.mark_entries.find({"teacher_id": user["id"]}).to_list(1000)
+    else:
+        entries = await db.mark_entries.find().to_list(1000)
+        
+    for me in entries:
+        assn = next((a for a in assignments if str(a["_id"]) == me.get("assignment_id")), None)
+        if not assn: continue
+        class_key = f"{assn.get('subject_code', '')}_{assn.get('batch', '')}_{assn.get('section', '')}"
+        exam_type = me.get("exam_type", "mid1")
+        
+        if class_key not in mid_marks:
+            mid_marks[class_key] = {}
+            
+        ents_arr = me.get("entries", [])
+        valid_marks = []
+        for e in ents_arr:
+            m = e.get("marks")
+            if m is not None:
+                try:
+                    valid_marks.append(float(m))
+                except: pass
+                
+        if not valid_marks: continue
+            
+        avg_marks = sum(valid_marks) / len(valid_marks)
+        try:
+            max_marks = float(me.get("max_marks", 30))
+        except:
+            max_marks = 30.0
+            
+        if max_marks <= 0: max_marks = 30.0
+        
+        excellent = sum(1 for v in valid_marks if (v/max_marks) >= 0.8)
+        good = sum(1 for v in valid_marks if 0.6 <= (v/max_marks) < 0.8)
+        average = sum(1 for v in valid_marks if 0.4 <= (v/max_marks) < 0.6)
+        poor = sum(1 for v in valid_marks if (v/max_marks) < 0.4)
+        passCount = excellent + good + average
+        
+        mid_marks[class_key][exam_type] = {
+            "totalStudents": class_details[class_key]["totalStudents"] if class_key in class_details else len(valid_marks),
+            "submitted": len(valid_marks),
+            "avgMarks": round(avg_marks, 1),
+            "maxMarks": max_marks,
+            "passRate": round((passCount / len(valid_marks)) * 100) if valid_marks else 0,
+            "distribution": {"excellent": excellent, "good": good, "average": average, "poor": poor}
+        }
+        
+    return {
+        "assignedClasses": assigned_classes,
+        "quizResults": final_quiz_results,
+        "midMarks": mid_marks
+    }
+
+@app.get("/api/analytics/teacher/quiz-results/{quiz_id}")
+async def get_quiz_detailed_analytics(
+    quiz_id: str, 
+    department: str = "", 
+    batch: str = "", 
+    section: str = "", 
+    user: dict = Depends(require_role("teacher", "hod", "exam_cell", "admin"))
+):
+    query = {"role": "student"}
+    if department: query["department"] = department
+    if batch: query["batch"] = str(batch)
+    if section: query["section"] = str(section)
+    
+    students_cursor = db.users.find(query)
+    
+    students = await students_cursor.to_list(1000)
+    
+    attempts = await db.quiz_attempts.find({"quiz_id": quiz_id}).to_list(1000)
+    attempts_map = {str(a.get("student_id")): a for a in attempts}
+    
+    results = []
+    for s in students:
+        sid = str(s["_id"])
+        attempt = attempts_map.get(sid)
+        
+        if attempt:
+            percentage = attempt.get("percentage", 0)
+            status_text = "Not Attempted"
+            raw_status = attempt.get("status", "none")
+            
+            started = attempt.get("started_at")
+            submitted = attempt.get("submitted_at")
+            
+            if isinstance(started, str):
+                try: started = datetime.fromisoformat(started.replace('Z', '+00:00'))
+                except: started = None
+            if isinstance(submitted, str):
+                try: submitted = datetime.fromisoformat(submitted.replace('Z', '+00:00'))
+                except: submitted = None
+                
+            time_elapsed = 0
+            if started and submitted:
+                td = submitted - started
+                time_elapsed = max(0, int(td.total_seconds() / 60))
+            elif started and raw_status == "in_progress":
+                td = datetime.now(timezone.utc) - started
+                time_elapsed = max(0, int(td.total_seconds() / 60))
+                
+            if raw_status == "in_progress":
+                status_text = "In Progress"
+            else:
+                status_text = "Pass" if percentage >= 40 else "Fail"
+                
+            results.append({
+                "id": sid,
+                "name": s.get("name", "Unknown"),
+                "rollNo": s.get("college_id", sid),
+                "scoreValue": percentage,
+                "score": f"{percentage}%",
+                "timeTaken": f"{time_elapsed} mins",
+                "status": status_text,
+                "raw_status": raw_status
+            })
+        else:
+            results.append({
+                "id": sid,
+                "name": s.get("name", "Unknown"),
+                "rollNo": s.get("college_id", sid),
+                "scoreValue": -1,
+                "score": "-",
+                "timeTaken": "-",
+                "status": "Not Attempted",
+                "raw_status": "none"
+            })
+            
+    # Default sorting: alphabetical by rollNo
+    results.sort(key=lambda x: str(x["rollNo"]))
+    return results
+
 @app.get("/api/leaderboard")
 async def get_leaderboard(user: dict = Depends(get_current_user)):
     pipeline = [
@@ -628,19 +965,108 @@ async def get_leaderboard(user: dict = Depends(get_current_user)):
 # ─── Dashboard Stats ───────────────────────────────────────────────────────
 @app.get("/api/dashboard/student")
 async def student_dashboard(user: dict = Depends(get_current_user)):
-    attempts = await db.quiz_attempts.find({"student_id": user["id"], "status": "submitted"}).sort("submitted_at", -1).to_list(10)
-    active_quizzes = await db.quizzes.find({"status": "active"}, {"questions": 0}).sort("created_at", -1).to_list(10)
+    # All submitted attempts (with details for analysis)
+    all_attempts = await db.quiz_attempts.find({"student_id": user["id"], "status": "submitted"}).sort("submitted_at", -1).to_list(50)
+    # Active quizzes with question_count + deadline info
+    active_quizzes_raw = await db.quizzes.find({"status": "active"}).sort("created_at", -1).to_list(10)
+    active_quizzes = []
+    for q in active_quizzes_raw:
+        doc = serialize_doc(q)
+        doc["question_count"] = len(q.get("questions", []))
+        doc.pop("questions", None)
+        active_quizzes.append(doc)
+    # In-progress attempts
+    in_progress = await db.quiz_attempts.find({"student_id": user["id"], "status": "in_progress"}).sort("started_at", -1).to_list(5)
     semesters = await db.semester_results.find({"student_id": user["id"]}).sort("semester", -1).to_list(1)
-    total_attempts = await db.quiz_attempts.count_documents({"student_id": user["id"], "status": "submitted"})
-    avg = 0
-    if attempts:
-        avg = round(sum(a.get("percentage", 0) for a in attempts[:total_attempts]) / total_attempts, 1) if total_attempts > 0 else 0
+    total_attempts = len(all_attempts)
+    avg = round(sum(a.get("percentage", 0) for a in all_attempts) / total_attempts, 1) if total_attempts > 0 else 0
+
+    # ── Score Trend (for chart) ──
+    score_trend = []
+    for a in reversed(all_attempts[:15]):  # oldest first for chart
+        submitted = a.get("submitted_at")
+        score_trend.append({
+            "quiz": a.get("quiz_title", "Quiz")[:20],
+            "score": round(a.get("percentage", 0), 1),
+            "date": submitted.strftime("%b %d") if isinstance(submitted, datetime) else "",
+        })
+
+    # ── Leaderboard Rank ──
+    rank = None
+    rank_pipeline = [
+        {"$match": {"status": "submitted"}},
+        {"$group": {"_id": "$student_id", "avg_score": {"$avg": "$percentage"}}},
+        {"$sort": {"avg_score": -1}},
+    ]
+    rank_results = await db.quiz_attempts.aggregate(rank_pipeline).to_list(200)
+    total_students = len(rank_results)
+    for i, r in enumerate(rank_results):
+        if r["_id"] == user["id"]:
+            rank = i + 1
+            break
+
+    # ── Weak Topics Analysis ──
+    subject_scores = {}
+    for a in all_attempts:
+        sub = a.get("quiz_subject", "General")
+        if sub not in subject_scores:
+            subject_scores[sub] = []
+        subject_scores[sub].append(a.get("percentage", 0))
+    weak_topics = []
+    for sub, scores in subject_scores.items():
+        avg_s = round(sum(scores) / len(scores), 1)
+        weak_topics.append({"subject": sub, "avg_score": avg_s, "attempts": len(scores)})
+    weak_topics.sort(key=lambda x: x["avg_score"])  # weakest first
+
+    # ── Activity Feed ──
+    activity = []
+    for a in all_attempts[:8]:
+        submitted = a.get("submitted_at")
+        activity.append({
+            "type": "quiz_result",
+            "title": f"Scored {a.get('percentage', 0):.0f}% on {a.get('quiz_title', 'Quiz')}",
+            "subtitle": a.get("quiz_subject", ""),
+            "score": a.get("percentage", 0),
+            "timestamp": submitted.isoformat() if isinstance(submitted, datetime) else "",
+        })
+    # Add recently published quizzes as activity
+    recent_quizzes = await db.quizzes.find({"status": "active"}).sort("published_at", -1).to_list(3)
+    for q in recent_quizzes:
+        pub = q.get("published_at") or q.get("created_at")
+        activity.append({
+            "type": "quiz_published",
+            "title": f"New quiz: {q.get('title', 'Untitled')}",
+            "subtitle": q.get("subject", ""),
+            "timestamp": pub.isoformat() if isinstance(pub, datetime) else "",
+        })
+    activity.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+    activity = activity[:10]
+
+    # ── Enrich recent results ──
+    recent_results = []
+    for a in all_attempts[:5]:
+        doc = serialize_doc(a)
+        if not doc.get("quiz_title"):
+            quiz = await db.quizzes.find_one({"_id": ObjectId(a["quiz_id"])}, {"title": 1, "subject": 1})
+            if quiz:
+                doc["quiz_title"] = quiz.get("title", "Unknown Quiz")
+                doc["quiz_subject"] = quiz.get("subject", "")
+        recent_results.append(doc)
+
     return {
-        "recent_results": [serialize_doc(a) for a in attempts[:5]],
-        "upcoming_quizzes": [serialize_doc(q) for q in active_quizzes],
+        "recent_results": recent_results,
+        "upcoming_quizzes": active_quizzes,
+        "in_progress": [serialize_doc(a) for a in in_progress],
         "cgpa": semesters[0]["cgpa"] if semesters else 0,
+        "current_sgpa": semesters[0].get("sgpa", 0) if semesters else 0,
+        "current_semester": semesters[0].get("semester", 0) if semesters else 0,
         "total_quizzes": total_attempts,
         "avg_score": avg,
+        "score_trend": score_trend,
+        "rank": rank,
+        "total_students": total_students,
+        "weak_topics": weak_topics,
+        "activity": activity,
     }
 
 @app.get("/api/dashboard/teacher")
@@ -995,7 +1421,91 @@ async def exam_cell_dashboard(user: dict = Depends(require_role("exam_cell", "ad
         "recent_entries": [serialize_doc(e) for e in recent]
     }
 
-# ─── Code Execution ────────────────────────────────────────────────────────
+# ─── Code Execution (Sandboxed) ────────────────────────────────────────────
+import asyncio as _asyncio
+import re as _re
+import shutil as _shutil
+
+# Dangerous patterns per language — block common attack vectors
+_BLOCKED_PATTERNS = {
+    "python": [
+        r"\bimport\s+os\b", r"\bimport\s+subprocess\b", r"\bimport\s+shutil\b",
+        r"\bimport\s+socket\b", r"\bimport\s+http\b", r"\bimport\s+urllib\b",
+        r"\bimport\s+requests\b", r"\bimport\s+pathlib\b",
+        r"\b__import__\s*\(", r"\bexec\s*\(", r"\beval\s*\(",
+        r"\bopen\s*\(", r"\bos\.", r"\bsubprocess\.",
+    ],
+    "javascript": [
+        r"require\s*\(\s*['\"]child_process", r"require\s*\(\s*['\"]fs",
+        r"require\s*\(\s*['\"]net", r"require\s*\(\s*['\"]http",
+        r"\bprocess\.exit", r"\bprocess\.env",
+        r"\bexecSync\b", r"\bspawnSync\b",
+    ],
+    "java": [
+        r"Runtime\.getRuntime", r"ProcessBuilder",
+        r"System\.exit", r"java\.io\.File",
+        r"java\.net\.", r"java\.nio\.file",
+    ],
+    "c": [
+        r"#include\s*<unistd\.h>", r"#include\s*<sys/",
+        r"\bsystem\s*\(", r"\bexecl?[vpe]*\s*\(",
+        r"\bfork\s*\(", r"\bpopen\s*\(",
+        r"\bsocket\s*\(",
+    ],
+    "cpp": [],  # inherits from c
+}
+_BLOCKED_PATTERNS["cpp"] = _BLOCKED_PATTERNS["c"]  # C++ inherits C restrictions
+
+def _validate_code(code: str, language: str):
+    """Check code for dangerous patterns."""
+    patterns = _BLOCKED_PATTERNS.get(language, [])
+    for pattern in patterns:
+        match = _re.search(pattern, code)
+        if match:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Blocked: '{match.group()}' is not allowed for security reasons."
+            )
+
+async def _run_process(cmd, stdin_data="", timeout=5, cwd=None):
+    """Run a subprocess in a thread executor (Windows-compatible)."""
+    import concurrent.futures
+    def _exec():
+        try:
+            result = subprocess.run(
+                cmd,
+                input=stdin_data or None,
+                capture_output=True, text=True,
+                timeout=timeout,
+                cwd=cwd,
+            )
+            return result.stdout, result.stderr, result.returncode
+        except subprocess.TimeoutExpired:
+            return "", f"Execution timed out ({timeout} second limit)", -1
+        except Exception as e:
+            return "", str(e), -1
+
+    loop = _asyncio.get_event_loop()
+    with concurrent.futures.ThreadPoolExecutor() as pool:
+        return await loop.run_in_executor(pool, _exec)
+
+# Detect available runtimes
+def _find_runtime(names):
+    for name in names:
+        path = _shutil.which(name)
+        if path and 'WindowsApps' not in path:  # Skip Windows Store stubs
+            return path
+    return None
+
+import sys as _sys
+_RUNTIMES = {
+    "python": _find_runtime(["python", "python3"]) or _sys.executable,  # fallback to current interpreter
+    "javascript": _find_runtime(["node"]),
+    "java": _find_runtime(["java"]),
+    "javac": _find_runtime(["javac"]),
+    "c": _find_runtime(["gcc"]),
+    "cpp": _find_runtime(["g++"]),
+}
 
 @app.post("/api/code/execute")
 async def execute_code(req: CodeExecuteRequest, user: dict = Depends(get_current_user)):
@@ -1003,65 +1513,89 @@ async def execute_code(req: CodeExecuteRequest, user: dict = Depends(get_current
         raise HTTPException(status_code=400, detail="Code too long (max 10000 chars)")
 
     language = req.language.lower()
-    allowed = {"python", "javascript", "java"}
+    allowed = {"python", "javascript", "java", "c", "cpp"}
     if language not in allowed:
-        raise HTTPException(status_code=400, detail=f"Unsupported language. Supported: {', '.join(allowed)}")
+        raise HTTPException(status_code=400, detail=f"Unsupported language. Supported: {', '.join(sorted(allowed))}")
+
+    # Validate code for dangerous patterns
+    _validate_code(req.code, language)
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             if language == "python":
+                rt = _RUNTIMES.get("python")
+                if not rt:
+                    raise HTTPException(status_code=500, detail="Python runtime not available on server")
                 filepath = os.path.join(tmpdir, "solution.py")
                 with open(filepath, "w") as f:
                     f.write(req.code)
-                result = subprocess.run(
-                    ["python3", filepath],
-                    input=req.test_input,
-                    capture_output=True, text=True, timeout=10,
-                    cwd=tmpdir
-                )
+                stdout, stderr, code = await _run_process([rt, filepath], req.test_input, timeout=5, cwd=tmpdir)
+
             elif language == "javascript":
+                rt = _RUNTIMES.get("javascript")
+                if not rt:
+                    raise HTTPException(status_code=500, detail="Node.js runtime not available on server")
                 filepath = os.path.join(tmpdir, "solution.js")
                 with open(filepath, "w") as f:
                     f.write(req.code)
-                result = subprocess.run(
-                    ["node", filepath],
-                    input=req.test_input,
-                    capture_output=True, text=True, timeout=10,
-                    cwd=tmpdir
-                )
+                stdout, stderr, code = await _run_process([rt, filepath], req.test_input, timeout=5, cwd=tmpdir)
+
             elif language == "java":
+                javac = _RUNTIMES.get("javac")
+                java = _RUNTIMES.get("java")
+                if not javac or not java:
+                    raise HTTPException(status_code=500, detail="Java runtime not available on server")
                 filepath = os.path.join(tmpdir, "Solution.java")
                 with open(filepath, "w") as f:
                     f.write(req.code)
-                compile_result = subprocess.run(
-                    ["javac", filepath],
-                    capture_output=True, text=True, timeout=15,
-                    cwd=tmpdir
-                )
-                if compile_result.returncode != 0:
-                    return {"output": "", "error": compile_result.stderr, "exit_code": compile_result.returncode}
-                result = subprocess.run(
-                    ["java", "-cp", tmpdir, "Solution"],
-                    input=req.test_input,
-                    capture_output=True, text=True, timeout=10,
-                    cwd=tmpdir
-                )
+                # Compile
+                cout, cerr, ccode = await _run_process([javac, filepath], timeout=10, cwd=tmpdir)
+                if ccode != 0:
+                    return {"output": "", "error": cerr[:2000], "exit_code": ccode}
+                # Run
+                stdout, stderr, code = await _run_process([java, "-cp", tmpdir, "Solution"], req.test_input, timeout=5, cwd=tmpdir)
 
-            output = result.stdout
-            error = result.stderr
-            if result.returncode != 0 and not output:
-                output = error
-                error = ""
+            elif language == "c":
+                gcc = _RUNTIMES.get("c")
+                if not gcc:
+                    raise HTTPException(status_code=500, detail="GCC (C compiler) not available on server. Install MinGW or GCC.")
+                src = os.path.join(tmpdir, "solution.c")
+                out = os.path.join(tmpdir, "solution.exe" if os.name == "nt" else "solution")
+                with open(src, "w") as f:
+                    f.write(req.code)
+                # Compile
+                cout, cerr, ccode = await _run_process([gcc, src, "-o", out, "-lm"], timeout=10, cwd=tmpdir)
+                if ccode != 0:
+                    return {"output": "", "error": cerr[:2000], "exit_code": ccode}
+                # Run
+                stdout, stderr, code = await _run_process([out], req.test_input, timeout=5, cwd=tmpdir)
+
+            elif language == "cpp":
+                gpp = _RUNTIMES.get("cpp")
+                if not gpp:
+                    raise HTTPException(status_code=500, detail="G++ (C++ compiler) not available on server. Install MinGW or G++.")
+                src = os.path.join(tmpdir, "solution.cpp")
+                out = os.path.join(tmpdir, "solution.exe" if os.name == "nt" else "solution")
+                with open(src, "w") as f:
+                    f.write(req.code)
+                # Compile
+                cout, cerr, ccode = await _run_process([gpp, src, "-o", out, "-lm"], timeout=10, cwd=tmpdir)
+                if ccode != 0:
+                    return {"output": "", "error": cerr[:2000], "exit_code": ccode}
+                # Run
+                stdout, stderr, code = await _run_process([out], req.test_input, timeout=5, cwd=tmpdir)
+
+            if code != 0 and not stdout:
+                stdout = stderr
+                stderr = ""
 
             return {
-                "output": output[:5000],
-                "error": error[:2000],
-                "exit_code": result.returncode
+                "output": stdout[:3000],
+                "error": stderr[:2000],
+                "exit_code": code
             }
-    except subprocess.TimeoutExpired:
-        return {"output": "", "error": "Execution timed out (10 second limit)", "exit_code": -1}
-    except FileNotFoundError:
-        raise HTTPException(status_code=500, detail=f"Runtime for {language} not available on server")
+    except HTTPException:
+        raise
     except Exception as e:
         return {"output": "", "error": str(e)[:500], "exit_code": -1}
 
@@ -1298,6 +1832,46 @@ async def seed_data():
 """
     Path("/app/memory").mkdir(exist_ok=True)
     Path("/app/memory/test_credentials.md").write_text(creds)
+
+# ─── Placements ────────────────────────────────────────────────────────────
+@app.get("/api/placements/student")
+async def student_placements(user: dict = Depends(get_current_user)):
+    """Get placement drives where this student is shortlisted."""
+    college_id = user.get("college_id", "")
+    email = user.get("email", "")
+    # Match placements where student's college_id or email is in the candidates list
+    query = {
+        "$or": [
+            {"candidates.college_id": college_id},
+            {"candidates.email": email},
+        ]
+    }
+    placements = await db.placements.find(query).sort("drive_date", -1).to_list(50)
+    result = []
+    for p in placements:
+        doc = serialize_doc(p)
+        # Remove other candidates' data for privacy
+        doc.pop("candidates", None)
+        result.append(doc)
+    # Also get upcoming placements (open to all / department-wide)
+    dept = user.get("department", "")
+    open_query = {
+        "open_to_all": True,
+        "$or": [
+            {"department": {"$in": [dept, "ALL", "all", ""]}},
+            {"department": {"$exists": False}},
+        ]
+    }
+    open_placements = await db.placements.find(open_query).sort("drive_date", -1).to_list(20)
+    seen_ids = {r["id"] for r in result}
+    for p in open_placements:
+        doc = serialize_doc(p)
+        if doc["id"] not in seen_ids:
+            doc.pop("candidates", None)
+            result.append(doc)
+    # Sort by date (upcoming first)
+    result.sort(key=lambda x: x.get("drive_date", ""), reverse=False)
+    return result
 
 @app.on_event("startup")
 async def startup():

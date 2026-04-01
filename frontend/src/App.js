@@ -19,6 +19,9 @@ import CodePlayground from './pages/CodePlayground';
 import MarksEntry from './pages/MarksEntry';
 import StudentManagement from './pages/StudentManagement';
 import ClassResults from './pages/ClassResults';
+import AvailableQuizzes from './pages/AvailableQuizzes';
+import Placements from './pages/Placements';
+import TeacherQuizzes from './pages/TeacherQuizzes';
 
 const ROLE_DASHBOARD = {
   student: 'student-dashboard',
@@ -103,6 +106,9 @@ function App() {
       case 'marks-entry': return <MarksEntry navigate={navigate} user={user} preselectedAssignment={selectedData} />;
       case 'student-management': return <StudentManagement navigate={navigate} user={user} />;
       case 'class-results': return <ClassResults navigate={navigate} user={user} />;
+      case 'available-quizzes': return <AvailableQuizzes navigate={navigate} user={user} />;
+      case 'placements': return <Placements navigate={navigate} user={user} />;
+      case 'teacher-quizzes': return <TeacherQuizzes navigate={navigate} user={user} />;
       default: return <LoginPage onLogin={handleLogin} />;
     }
   };

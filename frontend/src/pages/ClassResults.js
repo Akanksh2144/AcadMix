@@ -1,153 +1,67 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ChartBar, Clock, Users, Trophy, CheckCircle, XCircle, TrendUp } from '@phosphor-icons/react';
+import { ArrowLeft, ChartBar, Clock, Users, Trophy, CheckCircle, XCircle, TrendUp, CircleNotch, CaretUp, CaretDown } from '@phosphor-icons/react';
+import { analyticsAPI } from '../services/api';
 
 const ClassResults = ({ navigate, user }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   
-  // Mock data - will be replaced with API calls
-  const assignedClasses = [
-    { 
-      id: 1, 
-      section: 'DS-1', 
-      subject: 'Data Structures',
-      batch: '2024',
-      totalStudents: 45
-    },
-    { 
-      id: 2, 
-      section: 'DS-2', 
-      subject: 'Data Structures',
-      batch: '2024',
-      totalStudents: 42
-    },
-    { 
-      id: 3, 
-      section: 'AIML-1', 
-      subject: 'Artificial Intelligence',
-      batch: '2024',
-      totalStudents: 38
-    }
-  ];
+  const [assignedClasses, setAssignedClasses] = useState([]);
+  const [quizResults, setQuizResults] = useState({});
+  const [midMarks, setMidMarks] = useState({});
 
-  const quizResults = {
-    'DS-1': [
-      {
-        id: 1,
-        title: 'Arrays and Linked Lists',
-        date: '2024-01-28',
-        totalStudents: 45,
-        completed: 43,
-        avgScore: 78.5,
-        maxScore: 100,
-        passRate: 86,
-        topPerformers: [
-          { name: 'Rajesh Kumar', score: 98, time: '28 mins' },
-          { name: 'Priya Sharma', score: 95, time: '32 mins' },
-          { name: 'Amit Patel', score: 92, time: '30 mins' }
-        ]
-      },
-      {
-        id: 2,
-        title: 'Trees and Graphs',
-        date: '2024-01-20',
-        totalStudents: 45,
-        completed: 45,
-        avgScore: 72.3,
-        maxScore: 100,
-        passRate: 82,
-        topPerformers: [
-          { name: 'Sneha Singh', score: 96, time: '35 mins' },
-          { name: 'Rahul Verma', score: 94, time: '38 mins' },
-          { name: 'Anjali Reddy', score: 90, time: '33 mins' }
-        ]
-      }
-    ],
-    'DS-2': [
-      {
-        id: 3,
-        title: 'Sorting Algorithms',
-        date: '2024-01-25',
-        totalStudents: 42,
-        completed: 40,
-        avgScore: 81.2,
-        maxScore: 100,
-        passRate: 90,
-        topPerformers: [
-          { name: 'Vikram Joshi', score: 99, time: '25 mins' },
-          { name: 'Pooja Gupta', score: 97, time: '27 mins' },
-          { name: 'Karan Singh', score: 95, time: '29 mins' }
-        ]
-      }
-    ],
-    'AIML-1': []
-  };
-
-  const midMarks = {
-    'DS-1': {
-      mid1: {
-        totalStudents: 45,
-        submitted: 45,
-        avgMarks: 24.5,
-        maxMarks: 30,
-        passRate: 88,
-        distribution: { excellent: 18, good: 15, average: 8, poor: 4 }
-      },
-      mid2: {
-        totalStudents: 45,
-        submitted: 43,
-        avgMarks: 25.8,
-        maxMarks: 30,
-        passRate: 91,
-        distribution: { excellent: 22, good: 14, average: 5, poor: 2 }
-      }
-    },
-    'DS-2': {
-      mid1: {
-        totalStudents: 42,
-        submitted: 42,
-        avgMarks: 26.2,
-        maxMarks: 30,
-        passRate: 93,
-        distribution: { excellent: 20, good: 16, average: 4, poor: 2 }
-      },
-      mid2: {
-        totalStudents: 42,
-        submitted: 40,
-        avgMarks: 23.1,
-        maxMarks: 30,
-        passRate: 85,
-        distribution: { excellent: 15, good: 17, average: 6, poor: 2 }
-      }
-    },
-    'AIML-1': {
-      mid1: {
-        totalStudents: 38,
-        submitted: 0,
-        avgMarks: 0,
-        maxMarks: 30,
-        passRate: 0,
-        distribution: { excellent: 0, good: 0, average: 0, poor: 0 }
-      },
-      mid2: {
-        totalStudents: 38,
-        submitted: 0,
-        avgMarks: 0,
-        maxMarks: 30,
-        passRate: 0,
-        distribution: { excellent: 0, good: 0, average: 0, poor: 0 }
-      }
-    }
-  };
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+  const [quizDetails, setQuizDetails] = useState([]);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: 'rollNo', direction: 'asc' });
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => setLoading(false), 500);
+    const fetchAnalytics = async () => {
+      try {
+        const { data } = await analyticsAPI.classResults();
+        setAssignedClasses(data.assignedClasses || []);
+        setQuizResults(data.quizResults || {});
+        setMidMarks(data.midMarks || {});
+      } catch (err) {
+        console.error("Failed to fetch class analytics", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAnalytics();
   }, []);
 
-  const currentClass = assignedClasses[activeTab];
-  const currentQuizzes = quizResults[currentClass.section] || [];
-  const currentMidMarks = midMarks[currentClass.section] || { mid1: null, mid2: null };
+  const currentClass = assignedClasses[activeTab] || null;
+  const currentQuizzes = currentClass ? (quizResults[currentClass.class_key] || []) : [];
+  const currentMidMarks = currentClass ? (midMarks[currentClass.class_key] || { mid1: null, mid2: null }) : { mid1: null, mid2: null };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    setSortConfig({ key, direction });
+  };
+  
+  const sortedDetails = [...quizDetails].sort((a, b) => {
+    if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const openQuizDetails = async (quiz) => {
+    if (!currentClass) return;
+    setSelectedQuiz(quiz);
+    setIsQuizModalOpen(true);
+    setDetailsLoading(true);
+    try {
+      const { data } = await analyticsAPI.quizDetails(quiz.id, currentClass.department, currentClass.batch, currentClass.rawSection);
+      setQuizDetails(data || []);
+    } catch (err) {
+      console.error("Failed to load quiz detailed analytics", err);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -172,36 +86,48 @@ const ClassResults = ({ navigate, user }) => {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Class Tabs */}
-        <div className="soft-card p-2 mb-8">
-          <div className="flex items-center gap-2 overflow-x-auto">
-            {assignedClasses.map((cls, index) => (
-              <button
-                key={cls.id}
-                onClick={() => setActiveTab(index)}
-                className={`px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all duration-200 ${
-                  activeTab === index
-                    ? 'bg-indigo-500 text-white shadow-md'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span>{cls.section}</span>
-                  <span className="text-xs opacity-70">({cls.totalStudents})</span>
-                </div>
-              </button>
-            ))}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <CircleNotch size={48} weight="bold" className="text-indigo-500 animate-spin mb-4" />
+            <p className="text-slate-500 font-medium">Crunching analytics...</p>
           </div>
-        </div>
-
-        {/* Class Overview */}
-        <div className="soft-card p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-extrabold text-slate-900">{currentClass.section} - {currentClass.subject}</h2>
-              <p className="text-sm font-medium text-slate-500">Batch {currentClass.batch} • {currentClass.totalStudents} Students</p>
+        ) : !currentClass ? (
+          <div className="soft-card p-12 text-center mt-6">
+            <h3 className="text-xl font-bold text-slate-800 mb-2">No Classes Assigned</h3>
+            <p className="text-slate-500">You don't have any classes assigned to you yet.</p>
+          </div>
+        ) : (
+          <>
+            {/* Class Tabs */}
+            <div className="soft-card p-2 mb-8">
+              <div className="flex items-center gap-2 overflow-x-auto">
+                {assignedClasses.map((cls, index) => (
+                  <button
+                    key={cls.id}
+                    onClick={() => setActiveTab(index)}
+                    className={`px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all duration-200 ${
+                      activeTab === index
+                        ? 'bg-indigo-500 text-white shadow-md'
+                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{cls.section}</span>
+                      <span className="text-xs opacity-70">({cls.totalStudents})</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+
+            {/* Class Overview */}
+            <div className="soft-card p-6 mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-2xl font-extrabold text-slate-900">{currentClass.section} - {currentClass.subject}</h2>
+                  <p className="text-sm font-medium text-slate-500">Batch {currentClass.batch} • {currentClass.totalStudents} Students</p>
+                </div>
+              </div>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="p-4 bg-indigo-50 rounded-2xl">
@@ -277,10 +203,10 @@ const ClassResults = ({ navigate, user }) => {
               <p className="text-slate-500 font-medium">No quizzes conducted for this class yet</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {currentQuizzes.map((quiz) => (
-                <div key={quiz.id} className="p-6 bg-slate-50 rounded-2xl">
-                  <div className="flex items-start justify-between mb-4">
+                <div key={quiz.id} onClick={() => openQuizDetails(quiz)} className="cursor-pointer bg-white border border-slate-100 rounded-2xl p-6 hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-start justify-between mb-6">
                     <div>
                       <h4 className="text-lg font-bold text-slate-900">{quiz.title}</h4>
                       <p className="text-sm text-slate-500 mt-1">
@@ -490,7 +416,98 @@ const ClassResults = ({ navigate, user }) => {
             </div>
           </div>
         </div>
+        </>
+        )}
       </div>
+
+      {/* Quiz Details Modal */}
+      {isQuizModalOpen && selectedQuiz && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 sm:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-1">{selectedQuiz.title}</h3>
+                <p className="text-sm font-medium text-slate-500 flex items-center gap-2">
+                  <span className="flex items-center gap-1"><Clock size={14} weight="bold" /> {selectedQuiz.date}</span>
+                  <span>•</span>
+                  <span>{selectedQuiz.completed}/{selectedQuiz.totalStudents} Completed</span>
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsQuizModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                title="Close"
+              >
+                <XCircle size={28} weight="fill" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-auto p-0 sm:p-4">
+              {detailsLoading ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <CircleNotch size={40} weight="bold" className="text-indigo-500 animate-spin mb-4" />
+                  <p className="text-slate-500 font-medium">Fetching student performance...</p>
+                </div>
+              ) : (
+                <div className="border border-slate-100 sm:rounded-2xl overflow-hidden">
+                  <table className="w-full text-left">
+                    <thead className="bg-slate-50 border-b border-slate-100">
+                      <tr>
+                        {[
+                          { label: 'Student', key: 'name' },
+                          { label: 'Roll No', key: 'rollNo' },
+                          { label: 'Score', key: 'scoreValue' },
+                          { label: 'Status', key: 'status' },
+                          { label: 'Time Taken', key: 'timeTaken' }
+                        ].map((col) => (
+                          <th 
+                            key={col.key} 
+                            onClick={() => handleSort(col.key)}
+                            className="p-4 text-xs font-bold uppercase tracking-widest text-slate-500 cursor-pointer hover:bg-slate-200 transition-colors select-none"
+                          >
+                            <div className="flex items-center gap-2">
+                              {col.label}
+                              <div className="flex flex-col opacity-50">
+                                <CaretUp size={10} weight="fill" className={sortConfig.key === col.key && sortConfig.direction === 'asc' ? 'text-indigo-600 opacity-100' : ''} />
+                                <CaretDown size={10} weight="fill" className={sortConfig.key === col.key && sortConfig.direction === 'desc' ? 'text-indigo-600 opacity-100' : '-mt-[2px]'} />
+                              </div>
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {sortedDetails.map((student) => (
+                        <tr key={student.id} className="hover:bg-slate-50 hover:shadow-sm transition-all duration-200">
+                          <td className="p-4 font-bold text-slate-800">{student.name}</td>
+                          <td className="p-4 text-sm font-medium text-slate-500">{student.rollNo}</td>
+                          <td className="p-4 font-bold text-slate-700">{student.score}</td>
+                          <td className="p-4">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
+                              student.status === 'Pass' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                              student.status === 'Fail' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
+                              student.status === 'In Progress' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100 animate-pulse' :
+                              'bg-slate-100 text-slate-500 border border-slate-200'
+                            }`}>{student.status}</span>
+                          </td>
+                          <td className="p-4 text-sm font-medium text-slate-500">{student.timeTaken}</td>
+                        </tr>
+                      ))}
+                      {sortedDetails.length === 0 && (
+                        <tr>
+                          <td colSpan="5" className="p-8 text-center text-slate-500 font-medium">
+                            No records found for this quiz.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

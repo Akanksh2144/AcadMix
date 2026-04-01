@@ -53,6 +53,8 @@ export const usersAPI = {
 // Quizzes
 export const quizzesAPI = {
   list: (status) => api.get('/api/quizzes', { params: status ? { status } : {} }),
+  myQuizzes: () => api.get('/api/quizzes/user'),
+  liveMonitor: (quizId) => api.get(`/api/quizzes/live/${quizId}`),
   get: (id) => api.get(`/api/quizzes/${id}`),
   create: (data) => api.post('/api/quizzes', data),
   update: (id, data) => api.patch(`/api/quizzes/${id}`, data),
@@ -120,10 +122,17 @@ export const resultsAPI = {
 // Analytics & Dashboard
 export const analyticsAPI = {
   student: (studentId) => api.get(`/api/analytics/student/${studentId}`),
+  classResults: () => api.get('/api/analytics/teacher/class-results'),
+  quizDetails: (quizId, department, batch, section) => api.get(`/api/analytics/teacher/quiz-results/${quizId}`, { params: { department, batch, section } }),
   leaderboard: () => api.get('/api/leaderboard'),
   studentDashboard: () => api.get('/api/dashboard/student'),
   teacherDashboard: () => api.get('/api/dashboard/teacher'),
   adminDashboard: () => api.get('/api/dashboard/admin'),
+};
+
+// Placements
+export const placementsAPI = {
+  studentPlacements: () => api.get('/api/placements/student'),
 };
 
 export default api;
