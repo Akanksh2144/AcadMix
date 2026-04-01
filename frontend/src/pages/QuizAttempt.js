@@ -467,6 +467,25 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
   const questions = quiz.questions || [];
   const currentQ = questions[currentQuestion];
 
+  // Stable shuffled option indices per question (Fisher-Yates)
+  const shuffledMap = useMemo(() => {
+    if (!quiz?.randomize_options) return null;
+    const map = {};
+    (quiz.questions || []).forEach((q, qIdx) => {
+      if (q.type === 'mcq' && q.options?.length) {
+        const indices = q.options.map((_, i) => i);
+        // Fisher-Yates shuffle
+        for (let i = indices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        map[qIdx] = indices;
+      }
+    });
+    return map;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quiz?.id, quiz?.randomize_options]);
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* Fullscreen Gate */}
@@ -589,18 +608,21 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
 
                 <p className="text-base sm:text-lg font-medium text-slate-700 leading-relaxed mb-6 sm:mb-8 select-none">{currentQ.question}</p>
 
-                {currentQ.type === 'mcq' && (
+                {currentQ.type === 'mcq' && (() => {
+                  const indices = shuffledMap?.[currentQuestion] || currentQ.options.map((_, i) => i);
+                  return (
                   <div className="space-y-3">
-                    {(currentQ.options || []).map((option, i) => (
-                      <button key={i} data-testid={`option-${i}`} onClick={() => handleAnswer(currentQuestion, i)}
+                    {indices.map((origIdx, displayIdx) => (
+                      <button key={origIdx} data-testid={`option-${displayIdx}`} onClick={() => handleAnswer(currentQuestion, origIdx)}
                         className={`w-full text-left p-3 sm:p-4 rounded-2xl font-medium transition-all select-none text-sm sm:text-base ${
-                          answers[currentQuestion] === i ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                          answers[currentQuestion] === origIdx ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                         }`}>
-                        <span className="font-bold mr-3 text-sm">{String.fromCharCode(65 + i)}.</span>{option}
+                        <span className="font-bold mr-3 text-sm">{String.fromCharCode(65 + displayIdx)}.</span>{currentQ.options[origIdx]}
                       </button>
                     ))}
                   </div>
-                )}
+                  );
+                })()}
 
                 {currentQ.type === 'boolean' && (
                   <div className="flex gap-3 sm:gap-4">

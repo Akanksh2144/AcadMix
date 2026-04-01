@@ -21,6 +21,7 @@ const QuizBuilder = ({ navigate, user }) => {
   const [negativeMarking, setNegativeMarking] = useState(false);
   const [negativeMarks, setNegativeMarks] = useState(0.5);
   const [randomizeQuestions, setRandomizeQuestions] = useState(false);
+  const [randomizeOptions, setRandomizeOptions] = useState(true);
   const [showAnswersAfter, setShowAnswersAfter] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const importQuizRef = useRef(null);
@@ -46,7 +47,8 @@ const QuizBuilder = ({ navigate, user }) => {
       id: questions.length + 1, 
       type, 
       text: '', 
-      marks: 2 
+      marks: 2,
+      negativeMarks: 0,
     };
     
     let nq;
@@ -87,6 +89,7 @@ const QuizBuilder = ({ navigate, user }) => {
         'Option E': '',
         'Correct Answer(s)': 'B',
         'Marks': 2,
+        'Negative Marks': 0.5,
         'Expected Answer / Max Length': '',
       },
       {
@@ -99,6 +102,7 @@ const QuizBuilder = ({ navigate, user }) => {
         'Option E': 'DFS',
         'Correct Answer(s)': 'A,C,D',
         'Marks': 3,
+        'Negative Marks': 1,
         'Expected Answer / Max Length': '',
       },
       {
@@ -111,13 +115,14 @@ const QuizBuilder = ({ navigate, user }) => {
         'Option E': '',
         'Correct Answer(s)': 'O(log n)',
         'Marks': 2,
+        'Negative Marks': 0,
         'Expected Answer / Max Length': 200,
       },
     ];
     const ws = XLSX.utils.json_to_sheet(exampleRows);
     ws['!cols'] = [
       { wch: 14 }, { wch: 50 }, { wch: 22 }, { wch: 22 },
-      { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 20 }, { wch: 8 }, { wch: 28 },
+      { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 20 }, { wch: 8 }, { wch: 16 }, { wch: 28 },
     ];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Quiz Questions');
@@ -144,6 +149,7 @@ const QuizBuilder = ({ navigate, user }) => {
           const typeRaw = String(row['Type'] || '').trim().toLowerCase();
           const questionText = String(row['Question'] || '').trim();
           const marksVal = parseInt(row['Marks']) || 2;
+          const negMarksVal = parseFloat(row['Negative Marks']) || 0;
           const correctRaw = String(row['Correct Answer(s)'] || '').trim().toUpperCase();
 
           if (!questionText) { errors.push(`Row ${rowNum}: Question text is empty — skipped.`); return; }
@@ -175,6 +181,7 @@ const QuizBuilder = ({ navigate, user }) => {
               options: optionValues,
               correctAnswer: correctIdx ?? 0,
               marks: marksVal,
+              negativeMarks: negMarksVal,
             });
           } else if (typeRaw === 'mcq-multiple' || typeRaw === 'mcq multiple') {
             if (optionValues.length < 2) { errors.push(`Row ${rowNum}: MCQ-Multiple needs at least 2 options — skipped.`); return; }
@@ -184,9 +191,10 @@ const QuizBuilder = ({ navigate, user }) => {
               id: questions.length + imported.length + 1,
               type: 'mcq-multiple',
               text: questionText,
-              options,
+              options: optionValues,
               correctAnswers,
               marks: marksVal,
+              negativeMarks: negMarksVal,
             });
           } else if (typeRaw === 'short') {
             const expectedAnswer = String(row['Correct Answer(s)'] || '').trim();
@@ -198,6 +206,7 @@ const QuizBuilder = ({ navigate, user }) => {
               expectedAnswer,
               maxLength: maxLen,
               marks: marksVal,
+              negativeMarks: negMarksVal,
             });
           } else {
             errors.push(`Row ${rowNum}: Unknown type "${row['Type']}" — skipped. Use MCQ-Single, MCQ-Multiple, or Short.`);
@@ -285,7 +294,7 @@ const QuizBuilder = ({ navigate, user }) => {
       negative_marking: negativeMarking,
       negative_marks: negativeMarking ? parseFloat(negativeMarks) : 0,
       randomize_questions: randomizeQuestions,
-      randomize_options: false,
+      randomize_options: randomizeOptions,
       show_answers_after: showAnswersAfter,
       allow_reattempt: false,
       questions,
@@ -440,6 +449,10 @@ const QuizBuilder = ({ navigate, user }) => {
                 Randomize Questions
              </label>
              <label className="flex items-center gap-2.5 font-medium text-slate-600 cursor-pointer">
+                <input type="checkbox" checked={randomizeOptions} onChange={(e) => setRandomizeOptions(e.target.checked)} className="w-4 h-4 rounded-md accent-indigo-500" />
+                Shuffle Options
+             </label>
+             <label className="flex items-center gap-2.5 font-medium text-slate-600 cursor-pointer">
                 <input type="checkbox" checked={showAnswersAfter} onChange={(e) => setShowAnswersAfter(e.target.checked)} className="w-4 h-4 rounded-md accent-indigo-500" />
                 Show Answers After Submit
              </label>
@@ -450,9 +463,16 @@ const QuizBuilder = ({ navigate, user }) => {
                 </label>
                 {negativeMarking && (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-400">-</span>
+                    <span className="text-sm font-bold text-slate-500">-</span>
                     <input type="number" step="0.1" min="0" value={negativeMarks} onChange={(e) => setNegativeMarks(e.target.value)} className="soft-input w-20 py-1 px-2 text-sm" placeholder="0.5" />
-                    <span className="text-sm font-bold text-slate-400">marks</span>
+                    <span className="text-sm font-bold text-slate-500">marks</span>
+                    <button
+                      type="button"
+                      onClick={() => { const val = parseFloat(negativeMarks) || 0; setQuestions(qs => qs.map(q => ({ ...q, negativeMarks: val }))); alert(`Set −${val} negative marks on all ${questions.length} questions.`); }}
+                      className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      Apply to all
+                    </button>
                   </div>
                 )}
              </div>
@@ -628,6 +648,10 @@ const QuizBuilder = ({ navigate, user }) => {
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Marks</label>
                     <input type="number" value={q?.marks} onChange={(e) => { const nq = [...questions]; nq[currentQuestion].marks = parseInt(e.target.value) || 0; setQuestions(nq); }} min="1" className="soft-input w-full" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Negative Marks</label>
+                    <input type="number" step="0.1" min="0" value={q?.negativeMarks ?? 0} onChange={(e) => { const nq = [...questions]; nq[currentQuestion].negativeMarks = parseFloat(e.target.value) || 0; setQuestions(nq); }} className="soft-input w-full" />
                   </div>
                 </div>
               </div>
