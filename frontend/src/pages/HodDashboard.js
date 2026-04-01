@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Users, ClipboardText, CheckCircle, Clock, SignOut, Plus, Trash, UserPlus, ChartLine, Eye, GraduationCap, X } from '@phosphor-icons/react';
+import { BookOpen, Users, ClipboardText, CheckCircle, Clock, SignOut, Plus, Trash, UserPlus, ChartLine, Eye, GraduationCap, X, Bell, CalendarDots, PresentationChart } from '@phosphor-icons/react';
 import { facultyAPI, examCellAPI, marksAPI } from '../services/api';
 import { StudentResultsSearch } from '../components/StudentResultsSearch';
 import AlertModal from '../components/AlertModal';
+
+const getGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good Morning';
+  if (h < 17) return 'Good Afternoon';
+  return 'Good Evening';
+};
 
 const HodDashboard = ({ navigate, user, onLogout }) => {
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('hod_tab') || 'overview');
@@ -140,27 +147,33 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
 
 
   const stats = dashboard ? [
-    { label: 'Teachers', value: dashboard.total_teachers, icon: Users, color: 'bg-indigo-50 text-indigo-500', onClick: () => setActiveTab('teachers') },
-    { label: 'Students', value: dashboard.total_students, icon: BookOpen, color: 'bg-emerald-50 text-emerald-500', onClick: () => setActiveTab('results') },
-    { label: 'Analytics', value: '2', icon: ChartLine, color: 'bg-purple-50 text-purple-500', onClick: () => setActiveTab('analytics') },
-    { label: 'Pending Reviews', value: dashboard.pending_reviews, icon: Clock, color: 'bg-rose-50 text-rose-500', onClick: () => setActiveTab('review') },
+    { label: 'Teachers', value: String(dashboard.total_teachers), sub: 'in department', icon: Users, color: 'bg-indigo-50 text-indigo-500', gradient: 'from-indigo-500 to-blue-500', onClick: () => setActiveTab('teachers') },
+    { label: 'Students', value: String(dashboard.total_students), sub: 'enrolled', icon: BookOpen, color: 'bg-emerald-50 text-emerald-500', gradient: 'from-emerald-500 to-teal-500', onClick: () => setActiveTab('results') },
+    { label: 'Analytics', value: '2', sub: 'reports', icon: ChartLine, color: 'bg-purple-50 text-purple-500', gradient: 'from-purple-500 to-fuchsia-500', onClick: () => setActiveTab('analytics') },
+    { label: 'Pending Reviews', value: String(dashboard.pending_reviews), sub: 'needs action', icon: Clock, color: 'bg-rose-50 text-rose-500', gradient: 'from-rose-500 to-pink-500', onClick: () => setActiveTab('review') },
   ] : [];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <header className="glass-header">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-violet-500 rounded-xl flex items-center justify-center">
-              <BookOpen size={22} weight="duotone" className="text-white" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center">
+              <PresentationChart size={22} weight="duotone" className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-extrabold tracking-tight text-slate-900">QuizPortal</h1>
+              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">AcadeMix</h1>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Head of Department</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="btn-ghost !px-4 !py-2 text-sm">{user?.name}</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden sm:flex items-center gap-2 bg-slate-50 rounded-2xl px-4 py-2">
+              <GraduationCap size={18} weight="duotone" className="text-amber-500" />
+              <div className="text-right">
+                <p className="text-sm font-bold text-slate-800">{user?.name}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{user?.designation || 'Head of Department'}</p>
+              </div>
+            </div>
             <button data-testid="logout-button" onClick={onLogout} className="p-2.5 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-colors" aria-label="Sign out">
               <SignOut size={20} weight="duotone" />
             </button>
@@ -168,11 +181,16 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-2">Welcome, {user?.name}!</h2>
-        <p className="text-base font-medium text-slate-500 mb-8">
-          {user?.designation || 'Head of Department'}
-        </p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* ── Hero Greeting ───────────────────────── */}
+        <div className="mb-6 sm:mb-8" style={{animation: 'fadeInUp 0.2s ease'}}>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 mb-1">
+            {getGreeting()}, {user?.name?.split(' ').pop() || 'HOD'}!
+          </h2>
+          <p className="text-sm sm:text-base font-medium text-slate-500">
+            {user?.designation || 'Head of Department'} • {user?.department || 'DS'} Department
+          </p>
+        </div>
 
         {/* Tabs */}
         <div className="flex items-center gap-2 bg-slate-100 rounded-2xl p-1.5 w-fit mb-8" data-testid="hod-tabs">
@@ -185,22 +203,25 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
         {/* Overview */}
         {activeTab === 'overview' && (
           <div data-testid="overview-content">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              {stats.map((stat, i) => (
-                <button
-                  key={i}
-                  onClick={stat.onClick}
-                  className="soft-card-hover p-6 text-left transition-all duration-200 active:scale-95 cursor-pointer"
-                  data-testid={`stat-${stat.label.toLowerCase()}`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
-                    <div className={`${stat.color} p-2 rounded-xl`}><stat.icon size={18} weight="duotone" /></div>
-                  </div>
-                  <p className="text-3xl font-extrabold text-slate-900">{stat.value}</p>
-                  <p className="text-xs font-medium text-slate-400 mt-2">Click to view details →</p>
-                </button>
-              ))}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
+              {stats.map((stat, i) => {
+                const Icon = stat.icon;
+                const Wrapper = stat.onClick ? 'button' : 'div';
+                return (
+                  <Wrapper key={i} onClick={stat.onClick || undefined}
+                    className={`soft-card-hover p-4 sm:p-6 relative overflow-hidden group text-left ${stat.onClick ? 'cursor-pointer' : ''}`}
+                    data-testid={`stat-card-${stat.label.toLowerCase().replace(/\s+/g, '-')}`}
+                    style={{animation: `fadeInUp ${0.2 + i * 0.1}s ease`}}>
+                    <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${stat.gradient} opacity-0 group-hover:opacity-100 transition-opacity`}></div>
+                    <div className="flex items-center justify-between mb-3 sm:mb-4">
+                      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
+                      <div className={`${stat.color} p-2 sm:p-2.5 rounded-xl`}><Icon size={18} weight="duotone" /></div>
+                    </div>
+                    <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">{stat.value}</p>
+                    <p className="text-[10px] sm:text-xs font-medium text-slate-400 mt-1">{stat.sub}</p>
+                  </Wrapper>
+                );
+              })}
             </div>
 
             {/* Pending Reviews */}
@@ -770,16 +791,23 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
         onConfirm={closeAlert}
         onCancel={closeAlert}
       />
-      <AlertModal
-        open={confirmModal.open}
-        type={confirmModal.type}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        confirmText="Remove"
-        cancelText="Cancel"
-        onConfirm={confirmModal.onConfirm}
-        onCancel={() => setConfirmModal(prev => ({ ...prev, open: false }))}
-      />
+        <AlertModal
+          open={confirmModal.open}
+          type={confirmModal.type}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmText="Remove"
+          cancelText="Cancel"
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(prev => ({ ...prev, open: false }))}
+        />
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };
