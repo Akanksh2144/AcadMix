@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, PaperPlaneTilt, FloppyDisk, CheckCircle, Clock, Warning, WarningCircle, Percent, ChartBar, PencilLine, X } from '@phosphor-icons/react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { ArrowLeft, PaperPlaneTilt, FloppyDisk, CheckCircle, Clock, Warning, WarningCircle, Percent, ChartBar, PencilLine, X, DownloadSimple, UploadSimple } from '@phosphor-icons/react';
 import { marksAPI } from '../services/api';
+import * as XLSX from 'xlsx';
 
 const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
   const [assignments, setAssignments] = useState([]);
@@ -16,6 +17,7 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
   const [isDirectNavigation, setIsDirectNavigation] = useState(!!preselectedAssignment);
   const [isEditingApproved, setIsEditingApproved] = useState(false);
   const [revisionReason, setRevisionReason] = useState('');
+  const importFileRef = useRef(null);
   
   // Custom UI Dialogs
   const [toast, setToast] = useState(null);
@@ -26,6 +28,83 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
   const showToast = (message, type = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
+  };
+
+  // ── Excel Template Download ─────────────────────────────
+  const handleDownloadTemplate = () => {
+    if (!students.length) return showToast('Load a class first to download template', 'error');
+    const rows = students.map((s, i) => ({
+      'S.No': i + 1,
+      'College ID': s.college_id,
+      'Student Name': s.name,
+      [`Max Marks (${maxMarks})`]: maxMarks,
+      'Marks Obtained': marks[s.id] ?? '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    // Set column widths
+    ws['!cols'] = [{ wch: 6 }, { wch: 16 }, { wch: 32 }, { wch: 18 }, { wch: 16 }];
+    const wb = XLSX.utils.book_new();
+    const sheetName = `${selectedAssignment?.subject_code || 'Marks'}_${examType}`;
+    XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31));
+    XLSX.writeFile(wb, `${sheetName}_template.xlsx`);
+  };
+
+  // ── Excel Import ────────────────────────────────────────
+  const handleImportExcel = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws);
+        if (!rows.length) return showToast('The spreadsheet appears to be empty.', 'error');
+
+        // Build a lookup: college_id -> student obj
+        const idMap = {};
+        students.forEach(s => { idMap[String(s.college_id).trim().toLowerCase()] = s; });
+
+        let updated = 0;
+        let skipped = 0;
+        const newMarks = { ...marks };
+
+        // Detect the marks column (any key containing 'marks obtained' case-insensitive)
+        const marksKey = rows.length > 0
+          ? Object.keys(rows[0]).find(k => k.toLowerCase().includes('marks obtained'))
+          : null;
+        const maxKey = rows.length > 0
+          ? Object.keys(rows[0]).find(k => k.toLowerCase().startsWith('max marks'))
+          : null;
+
+        if (!marksKey) return showToast('Could not find "Marks Obtained" column. Use the downloaded template.', 'error');
+
+        // Optionally update max marks from first row
+        if (maxKey && rows[0][maxKey]) {
+          const parsedMax = parseFloat(rows[0][maxKey]);
+          if (!isNaN(parsedMax) && parsedMax > 0) setMaxMarks(parsedMax);
+        }
+
+        rows.forEach(row => {
+          const collegeId = String(row['College ID'] || '').trim().toLowerCase();
+          const student = idMap[collegeId];
+          if (!student) { skipped++; return; }
+          const marksVal = row[marksKey];
+          if (marksVal === '' || marksVal === null || marksVal === undefined) return;
+          const num = parseFloat(marksVal);
+          if (!isNaN(num)) { newMarks[student.id] = num; updated++; }
+        });
+
+        setMarks(newMarks);
+        showToast(`✓ Imported marks for ${updated} student${updated !== 1 ? 's' : ''}${skipped > 0 ? ` (${skipped} unmatched rows skipped)` : ''}.`, 'success');
+      } catch (err) {
+        console.error(err);
+        showToast('Failed to read file. Make sure it is a valid .xlsx file.', 'error');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    // Reset so the same file can be re-imported
+    e.target.value = '';
   };
 
   useEffect(() => {
@@ -294,7 +373,7 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
                   );
                 })}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-2 relative">
                   <label className="text-xs font-bold text-slate-400">Max:</label>
                   <input data-testid="max-marks-input" type="number" min="1" value={maxMarks} onChange={(e) => setMaxMarks(e.target.value)}
@@ -303,6 +382,36 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
                     <span className="absolute -bottom-4 left-9 text-[10px] font-bold text-red-500 whitespace-nowrap" style={{animation: 'fadeIn 0.2s ease'}}>*Required</span>
                   )}
                 </div>
+
+                {/* ── Excel Import / Export ── */}
+                {isEditable && students.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleDownloadTemplate}
+                      title="Download Excel template with student list"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+                    >
+                      <DownloadSimple size={14} weight="bold" />
+                      Template
+                    </button>
+                    <button
+                      onClick={() => importFileRef.current?.click()}
+                      title="Import filled Excel template"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+                    >
+                      <UploadSimple size={14} weight="bold" />
+                      Import Marks
+                    </button>
+                    <input
+                      ref={importFileRef}
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={handleImportExcel}
+                      className="hidden"
+                    />
+                  </div>
+                )}
+
                 {stats.gradedCount > 0 && (
                   <div className="flex items-center gap-3" data-testid="avg-stats">
                     <div className="flex items-center gap-1.5 bg-indigo-50 px-3 py-1.5 rounded-xl">
