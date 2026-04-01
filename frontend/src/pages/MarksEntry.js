@@ -451,20 +451,20 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
                     const m = marks[s.id];
                     const pct = m !== null && m !== undefined && maxMarks > 0 ? ((m / maxMarks) * 100).toFixed(1) : null;
                     return (
-                      <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors" data-testid={`student-row-${s.college_id}`}>
-                        <td className="py-3 px-4 text-sm text-slate-400">{i + 1}</td>
-                        <td className="py-3 px-4 font-medium text-slate-700">{s.college_id}</td>
-                        <td className="py-3 px-4 font-medium text-slate-800">{s.name}</td>
-                        <td className="py-3 px-4 text-center">
+                      <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors h-14" data-testid={`student-row-${s.college_id}`}>
+                        <td className="py-0 px-4 text-sm text-slate-400">{i + 1}</td>
+                        <td className="py-0 px-4 font-medium text-slate-700">{s.college_id}</td>
+                        <td className="py-0 px-4 font-medium text-slate-800">{s.name}</td>
+                        <td className="py-0 px-4 text-center">
                           {isEditable ? (
                             <input data-testid={`marks-input-${s.college_id}`} type="number" min="0" max={parseFloat(maxMarks) || 100} step="0.5"
                               value={m ?? ''} onChange={(e) => handleMarkChange(s.id, e.target.value)}
-                              className="soft-input !py-1.5 !px-3 w-24 text-center text-sm font-bold mx-auto" placeholder="-" />
+                              className="soft-input !py-1.5 !px-3 w-24 h-9 text-center text-sm font-bold mx-auto" placeholder="-" />
                           ) : (
-                            <span className="font-bold text-slate-900">{m ?? '-'}</span>
+                            <span className="inline-flex items-center justify-center w-24 h-9 rounded-xl bg-slate-50 text-sm font-bold text-slate-900 mx-auto">{m ?? '-'}</span>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-0 px-4 text-center">
                           {pct !== null ? (
                             <span className={`text-sm font-bold ${parseFloat(pct) >= 60 ? 'text-emerald-600' : parseFloat(pct) >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
                               {pct}%
