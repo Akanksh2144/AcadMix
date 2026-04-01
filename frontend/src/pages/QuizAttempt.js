@@ -458,6 +458,24 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     };
   }, [currentQuestion, answers, markedForReview]);
 
+  // Stable shuffled option indices per question (Fisher-Yates)
+  const shuffledMap = useMemo(() => {
+    if (!quiz?.randomize_options) return null;
+    const map = {};
+    (quiz.questions || []).forEach((q, qIdx) => {
+      if (q.type === 'mcq' && q.options?.length) {
+        const indices = q.options.map((_, i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        map[qIdx] = indices;
+      }
+    });
+    return map;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quiz?.id, quiz?.randomize_options]);
+
   if (loading || !quiz) return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
       <div className="text-center">
@@ -470,24 +488,6 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
   const questions = quiz.questions || [];
   const currentQ = questions[currentQuestion];
 
-  // Stable shuffled option indices per question (Fisher-Yates)
-  const shuffledMap = useMemo(() => {
-    if (!quiz?.randomize_options) return null;
-    const map = {};
-    (quiz.questions || []).forEach((q, qIdx) => {
-      if (q.type === 'mcq' && q.options?.length) {
-        const indices = q.options.map((_, i) => i);
-        // Fisher-Yates shuffle
-        for (let i = indices.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [indices[i], indices[j]] = [indices[j], indices[i]];
-        }
-        map[qIdx] = indices;
-      }
-    });
-    return map;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quiz?.id, quiz?.randomize_options]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
