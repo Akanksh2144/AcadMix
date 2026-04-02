@@ -513,32 +513,40 @@ async def submit_attempt(attempt_id: str, user: dict = Depends(get_current_user)
         student_answer = answers[i] if i < len(answers) else None
         is_correct = False
         marks_awarded = 0
-        if q["type"] == "mcq":
-            if student_answer is not None and student_answer == q.get("correct_answer"):
+        if q["type"] in ("mcq", "mcq-single", "boolean"):
+            correct_ans = q.get("correctAnswer") if "correctAnswer" in q else q.get("correct_answer")
+            if student_answer is not None and student_answer == correct_ans:
                 is_correct = True
                 marks_awarded = q.get("marks", 0)
             elif student_answer is not None and quiz.get("negative_marking"):
-                marks_awarded = -1
-        elif q["type"] == "boolean":
-            if student_answer is not None and student_answer == q.get("correct_answer"):
-                is_correct = True
-                marks_awarded = q.get("marks", 0)
-        elif q["type"] == "multiple":
-            correct = set(q.get("correct_answers", []))
+                negative = q.get("negativeMarks") if "negativeMarks" in q else q.get("negative_marks", 0)
+                marks_awarded = -abs(float(negative) if negative else 0)
+        elif q["type"] in ("multiple", "mcq-multiple"):
+            correct_ans = q.get("correctAnswers") if "correctAnswers" in q else q.get("correct_answers", [])
+            correct = set(correct_ans)
             selected = set(student_answer) if isinstance(student_answer, list) else set()
             if correct == selected:
                 is_correct = True
                 marks_awarded = q.get("marks", 0)
+            elif student_answer and quiz.get("negative_marking"):
+                negative = q.get("negativeMarks") if "negativeMarks" in q else q.get("negative_marks", 0)
+                marks_awarded = -abs(float(negative) if negative else 0)
         elif q["type"] == "short":
+            expected_answer = str(q.get("expectedAnswer") if "expectedAnswer" in q else q.get("expected_answer", "")).strip()
             keywords = [kw.lower() for kw in q.get("keywords", [])]
-            if student_answer and keywords:
-                answer_lower = str(student_answer).lower()
-                matches = sum(1 for kw in keywords if kw in answer_lower)
-                ratio = matches / len(keywords) if keywords else 0
-                marks_awarded = round(q.get("marks", 0) * ratio)
-                is_correct = ratio >= 0.5
-            elif student_answer:
-                marks_awarded = round(q.get("marks", 0) * 0.5)
+            if student_answer:
+                answer_str = str(student_answer).strip()
+                if expected_answer and answer_str.lower() == expected_answer.lower():
+                    is_correct = True
+                    marks_awarded = q.get("marks", 0)
+                elif keywords:
+                    answer_lower = answer_str.lower()
+                    matches = sum(1 for kw in keywords if kw in answer_lower)
+                    ratio = matches / len(keywords) if keywords else 0
+                    marks_awarded = round(q.get("marks", 0) * ratio)
+                    is_correct = ratio >= 0.5
+                else:
+                    marks_awarded = round(q.get("marks", 0) * 0.5)
         elif q["type"] == "coding":
             if student_answer and str(student_answer).strip():
                 expected = q.get("expected_output", "").strip()
@@ -564,9 +572,10 @@ async def submit_attempt(attempt_id: str, user: dict = Depends(get_current_user)
                 else:
                     marks_awarded = round(q.get("marks", 0) * 0.5)
         score += marks_awarded
+        correct_for_results = q.get("correctAnswer") if "correctAnswer" in q else (q.get("correctAnswers") if "correctAnswers" in q else (q.get("correct_answer") or q.get("correct_answers") or q.get("expectedAnswer") or q.get("expected_output")))
         results.append({
-            "question_index": i, "question": q.get("question", ""), "type": q["type"],
-            "student_answer": student_answer, "correct_answer": q.get("correct_answer") or q.get("correct_answers"),
+            "question_index": i, "question": q.get("text", q.get("question", "")), "type": q["type"],
+            "student_answer": student_answer, "correct_answer": correct_for_results,
             "is_correct": is_correct, "marks_awarded": marks_awarded, "max_marks": q.get("marks", 0)
         })
     percentage = round((score / quiz["total_marks"]) * 100, 1) if quiz["total_marks"] > 0 else 0
