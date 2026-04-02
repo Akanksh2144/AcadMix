@@ -199,7 +199,7 @@ const CodePlayground = ({ navigate, user }) => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowInsightsModal(true)}
-                className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 !px-4 !py-2.5 text-sm font-semibold rounded-xl transition-all shadow-sm flex items-center gap-2"
+                className="hidden lg:flex bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 !px-4 !py-2.5 text-sm font-semibold rounded-xl transition-all shadow-sm items-center gap-2"
               >
                 <ChartBar size={16} weight="duotone" />
                 Insights
@@ -207,7 +207,7 @@ const CodePlayground = ({ navigate, user }) => {
               <button
                 data-testid="challenges-button"
                 onClick={() => setShowChallengesModal(true)}
-                className="btn-primary !px-4 !py-2.5 text-sm flex items-center gap-2"
+                className="hidden lg:flex btn-primary !px-4 !py-2.5 text-sm items-center gap-2"
               >
                 <Lightning size={16} weight="duotone" />
                 Problem List
@@ -220,9 +220,9 @@ const CodePlayground = ({ navigate, user }) => {
       {/* Main Layout Area */}
       {activeChallenge ? (
         // Split-pane layout for selected challenge
-        <div className="flex-1 overflow-hidden p-6 flex" ref={containerRef}>
-          {/* Left Side: Question Description */}
-          <div style={{ width: `calc(${leftWidth}% - 12px)` }} className="flex flex-col h-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
+        <div className="flex-1 overflow-y-auto lg:overflow-hidden p-4 lg:p-6 flex flex-col lg:flex-row" ref={containerRef}>
+          {/* Left Side: Question Description (Hidden on mobile) */}
+          <div style={{ width: window.innerWidth >= 1024 ? `calc(${leftWidth}% - 12px)` : '100%' }} className="hidden lg:flex flex-col h-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <h2 className="text-lg font-bold text-slate-800 line-clamp-1 flex-1 mr-4">{activeChallenge.title}</h2>
               <div className="flex items-center gap-3 shrink-0">
@@ -237,9 +237,9 @@ const CodePlayground = ({ navigate, user }) => {
             <div className="p-5 flex-1 overflow-y-auto custom-scrollbar prose prose-sm max-w-none text-slate-600" dangerouslySetInnerHTML={{ __html: activeChallenge.description }}></div>
           </div>
 
-          {/* Splitter / Resizer */}
+          {/* Splitter / Resizer (Hidden on mobile) */}
           <div 
-            className="w-6 shrink-0 flex flex-col justify-center items-center cursor-col-resize group z-10"
+            className="hidden lg:flex w-6 shrink-0 flex-col justify-center items-center cursor-col-resize group z-10"
             onMouseDown={(e) => { e.preventDefault(); setIsDragging(true); }}
             title="Drag to resize panels"
           >
@@ -247,7 +247,7 @@ const CodePlayground = ({ navigate, user }) => {
           </div>
 
           {/* Right Side: Code Editor (Top) & Output (Bottom) */}
-          <div style={{ width: `calc(${100 - leftWidth}% - 12px)` }} className="flex flex-col h-full gap-6 relative">
+          <div style={{ width: window.innerWidth >= 1024 ? `calc(${100 - leftWidth}% - 12px)` : '100%' }} className="flex flex-col lg:h-full gap-4 lg:gap-6 relative min-h-[600px] lg:min-h-0">
             {/* Editor Container */}
             <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[50%]">
               <div className="bg-slate-50 border-b border-slate-100 px-4 py-2 flex items-center justify-between">
