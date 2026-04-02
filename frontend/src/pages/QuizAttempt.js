@@ -292,7 +292,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
   useEffect(() => {
     if (!attempt) return;
     const handler = () => {
-      if (document.hidden && !isSubmittingRef.current) reportViolation('tab_switch');
+      if (document.hidden && !isSubmittingRef.current && fullscreenInitialized.current) reportViolation('tab_switch');
     };
     document.addEventListener('visibilitychange', handler);
     return () => document.removeEventListener('visibilitychange', handler);
@@ -302,7 +302,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
   useEffect(() => {
     if (!attempt) return;
     const handler = () => {
-      if (!isSubmittingRef.current && !document.hidden) reportViolation('window_blur');
+      if (!isSubmittingRef.current && !document.hidden && fullscreenInitialized.current) reportViolation('window_blur');
     };
     window.addEventListener('blur', handler);
     return () => window.removeEventListener('blur', handler);
