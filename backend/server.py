@@ -1141,7 +1141,7 @@ async def list_department_teachers(user: dict = Depends(require_role("hod", "adm
     # HOD is also a faculty member, include both teachers and HODs
     query = {"role": {"$in": ["teacher", "hod"]}}
     if user["role"] == "hod":
-        dept = user.get("department", "")
+        dept = user.get("department") or ""
         if "," in dept:
             query["department"] = {"$in": [d.strip() for d in dept.split(",")]}
         else:
@@ -1153,7 +1153,7 @@ async def list_department_teachers(user: dict = Depends(require_role("hod", "adm
 async def list_assignments(user: dict = Depends(require_role("hod", "admin", "teacher"))):
     query = {}
     if user["role"] == "hod":
-        dept = user.get("department", "")
+        dept = user.get("department") or ""
         if "," in dept:
             query["department"] = {"$in": [d.strip() for d in dept.split(",")]}
         else:
@@ -1550,7 +1550,7 @@ async def get_at_risk_students(threshold: float = 5.0, user: dict = Depends(requ
 
 @app.get("/api/dashboard/hod")
 async def hod_dashboard(user: dict = Depends(require_role("hod", "admin"))):
-    dept_val = user.get("department", "")
+    dept_val = user.get("department") or ""
     if "," in dept_val:
         dept_query = {"$in": [d.strip() for d in dept_val.split(",")]}
     else:
