@@ -463,7 +463,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     if (!quiz?.randomize_options) return null;
     const map = {};
     (quiz.questions || []).forEach((q, qIdx) => {
-      if (q.type === 'mcq' && q.options?.length) {
+      if ((q.type === 'mcq-single' || q.type === 'mcq-multiple') && q.options?.length) {
         const indices = q.options.map((_, i) => i);
         for (let i = indices.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -595,7 +595,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                   <div>
                     <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Question {currentQuestion + 1} of {questions.length}</span>
                     <h2 className="text-base sm:text-lg font-bold text-slate-800 mt-1">
-                      {currentQ.type === 'mcq' && 'Multiple Choice'}
+                      {(currentQ.type === 'mcq-single' || currentQ.type === 'mcq-multiple') && 'Multiple Choice'}
                       {currentQ.type === 'boolean' && 'True / False'}
                       {currentQ.type === 'short' && 'Short Answer'}
                       {currentQ.type === 'coding' && 'Coding Challenge'}
@@ -609,16 +609,16 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                   </div>
                 </div>
 
-                <p className="text-base sm:text-lg font-medium text-slate-700 leading-relaxed mb-6 sm:mb-8 select-none">{currentQ.question}</p>
+                <p className="text-base sm:text-lg font-medium text-slate-700 leading-relaxed mb-6 sm:mb-8 select-none">{currentQ.text || currentQ.question}</p>
 
-                {currentQ.type === 'mcq' && (() => {
+                {(currentQ.type === 'mcq-single' || currentQ.type === 'mcq-multiple') && (() => {
                   const indices = shuffledMap?.[currentQuestion] || currentQ.options.map((_, i) => i);
                   return (
                   <div className="space-y-3">
                     {indices.map((origIdx, displayIdx) => (
-                      <button key={origIdx} data-testid={`option-${displayIdx}`} onClick={() => handleAnswer(currentQuestion, origIdx)}
+                      <button key={origIdx} data-testid={`option-${displayIdx}`} onClick={() => handleAnswer(currentQuestion, currentQ.type === 'mcq-multiple' ? ((answers[currentQuestion] || []).includes(origIdx) ? (answers[currentQuestion] || []).filter(a => a !== origIdx) : [...(answers[currentQuestion] || []), origIdx]) : origIdx)}
                         className={`w-full text-left p-3 sm:p-4 rounded-2xl font-medium transition-all select-none text-sm sm:text-base ${
-                          answers[currentQuestion] === origIdx ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                          (currentQ.type === 'mcq-single' ? answers[currentQuestion] === origIdx : (answers[currentQuestion] || []).includes(origIdx)) ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                         }`}>
                         <span className="font-bold mr-3 text-sm">{String.fromCharCode(65 + displayIdx)}.</span>{currentQ.options[origIdx]}
                       </button>
