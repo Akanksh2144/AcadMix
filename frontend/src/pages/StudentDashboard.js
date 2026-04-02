@@ -174,7 +174,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
           <div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 mb-1">{getGreeting()}, {user?.name?.split(' ')[0]}!</h2>
             <p className="text-sm sm:text-base font-medium text-slate-500">
-              {user?.college || 'GNI'} • {user?.department || 'DS'} • Batch {user?.batch || '2022'} • Section {user?.section || 'A'}
+              {user?.college || 'GNI'} • {user?.department || 'DS'} • Batch {user?.batch || '2026'} • Section {user?.section || 'A'}
             </p>
           </div>
           {/* CGPA Card */}

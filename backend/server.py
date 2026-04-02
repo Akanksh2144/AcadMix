@@ -442,14 +442,17 @@ async def publish_quiz(quiz_id: str, user: dict = Depends(require_role("teacher"
     return {"message": "Quiz published"}
 
 @app.post("/api/quizzes/{quiz_id}/extend-time")
-async def extend_quiz_time(quiz_id: str, user: dict = Depends(require_role("teacher", "admin", "hod"))):
-    """Add 10 minutes to the quiz duration for all active attempts."""
+async def extend_quiz_time(quiz_id: str, body: dict = {}, user: dict = Depends(require_role("teacher", "admin", "hod"))):
+    """Add custom minutes to the quiz duration."""
+    mins = int(body.get("mins", 10)) if body else 10
+    if mins < 1 or mins > 300:
+        raise HTTPException(status_code=400, detail="Minutes must be between 1 and 300")
     q = await db.quizzes.find_one({"_id": ObjectId(quiz_id)})
     if not q:
         raise HTTPException(status_code=404, detail="Quiz not found")
-    new_duration = q.get("duration_mins", 60) + 10
+    new_duration = q.get("duration_mins", 60) + mins
     await db.quizzes.update_one({"_id": ObjectId(quiz_id)}, {"$set": {"duration_mins": new_duration}})
-    return {"message": f"Extended by 10 mins. New duration: {new_duration} mins", "duration_mins": new_duration}
+    return {"message": f"Extended by {mins} mins. New duration: {new_duration} mins", "duration_mins": new_duration}
 
 @app.post("/api/quizzes/{quiz_id}/end")
 async def end_quiz_now(quiz_id: str, user: dict = Depends(require_role("teacher", "admin", "hod"))):

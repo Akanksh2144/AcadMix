@@ -10,6 +10,7 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
   const [actionLoading, setActionLoading] = useState('');
   const [toast, setToast] = useState(null);
   const [quizEnded, setQuizEnded] = useState(false);
+  const [extendMins, setExtendMins] = useState(10);
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -36,9 +37,10 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
 
   const handleExtendTime = async () => {
     if (!quiz?.id || actionLoading) return;
+    const mins = parseInt(extendMins) || 10;
     setActionLoading('extend');
     try {
-      const { data } = await quizzesAPI.extendTime(quiz.id);
+      const { data } = await quizzesAPI.extendTime(quiz.id, mins);
       showToast(`✓ ${data.message}`, 'success');
     } catch (err) {
       showToast(err.response?.data?.detail || 'Failed to extend time', 'error');
@@ -209,9 +211,20 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
             <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
               {actionLoading === 'extend' ? <CircleNotch size={24} weight="bold" className="text-indigo-500 animate-spin" /> : <Plus size={24} weight="duotone" className="text-indigo-500" />}
             </div>
-            <div>
+            <div className="flex-1">
               <p className="font-extrabold text-slate-900">Extend Time</p>
-              <p className="text-sm font-medium text-slate-400">Add 10 mins for all</p>
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={extendMins}
+                  onChange={e => setExtendMins(e.target.value)}
+                  onClick={e => e.stopPropagation()}
+                  className="soft-input !py-1 !px-2 w-16 text-sm font-bold text-center"
+                />
+                <span className="text-sm font-medium text-slate-400">mins for all</span>
+              </div>
             </div>
           </button>
 

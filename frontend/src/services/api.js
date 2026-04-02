@@ -58,7 +58,7 @@ export const quizzesAPI = {
   list: (status) => api.get('/api/quizzes', { params: status ? { status } : {} }),
   myQuizzes: () => api.get('/api/quizzes/user'),
   liveMonitor: (quizId) => api.get(`/api/quizzes/live/${quizId}`),
-  extendTime: (quizId) => api.post(`/api/quizzes/${quizId}/extend-time`),
+  extendTime: (quizId, mins = 10) => api.post(`/api/quizzes/${quizId}/extend-time`, { mins }),
   endQuiz: (quizId) => api.post(`/api/quizzes/${quizId}/end`),
   get: (id) => api.get(`/api/quizzes/${id}`),
   create: (data) => api.post('/api/quizzes', data),

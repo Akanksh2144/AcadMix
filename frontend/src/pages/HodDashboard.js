@@ -46,7 +46,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newAssignment, setNewAssignment] = useState({ teacher_id: '', subject_code: '', subject_name: '', department: user?.department || 'ET', batch: '2022', section: 'DS', semester: 3 });
+  const [newAssignment, setNewAssignment] = useState({ teacher_id: '', subject_code: '', subject_name: '', department: user?.department || 'ET', batch: '2026', section: 'DS', semester: 3 });
   
   const [showNotifications, setShowNotifications] = useState(false);
   const notifKey = `academix_notif_read_${user?.id || 'default'}`;
@@ -314,6 +314,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
               { id: 'review', label: 'Mark Reviews' },
               { id: 'faculty', label: 'Faculty Management' },
               { id: 'results', label: 'Student Management' },
+              { id: 'my-quizzes', label: '🎯 My Quizzes' },
             ].map(tab => (
               <button key={tab.id} data-testid={`tab-${tab.id}`} onClick={() => setActiveTab(tab.id)}
                 className={`px-3.5 py-2 rounded-[14px] text-xs font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
@@ -576,10 +577,10 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                       onChange={(e) => setNewAssignment({ ...newAssignment, batch: e.target.value })} 
                       className="soft-input w-full"
                     >
+                      <option value="2026">2026</option>
+                      <option value="2025">2025</option>
                       <option value="2024">2024</option>
                       <option value="2023">2023</option>
-                      <option value="2022">2022</option>
-                      <option value="2021">2021</option>
                     </select>
                   </div>
 
@@ -973,6 +974,52 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
         {activeTab === 'activity-log' && (
           <div data-testid="activity-log-content">
             <FacultyActivityLog submissions={submissions} />
+          </div>
+        )}
+
+        {/* My Quizzes tab — HOD as faculty */}
+        {activeTab === 'my-quizzes' && (
+          <div data-testid="my-quizzes-content">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-slate-800 mb-1">My Quizzes</h3>
+                <p className="text-sm text-slate-500">Create and monitor quizzes for your assigned classes</p>
+              </div>
+              <button
+                onClick={() => navigate('quiz-builder')}
+                className="btn-primary !px-5 !py-2.5 text-sm flex items-center gap-2"
+              >
+                <span className="text-lg">+</span> Create New Quiz
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Create Quiz Card */}
+              <button
+                onClick={() => navigate('quiz-builder')}
+                className="soft-card-hover p-8 text-left flex items-center gap-5 group"
+              >
+                <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors flex-shrink-0">
+                  <span className="text-3xl">📝</span>
+                </div>
+                <div>
+                  <p className="text-xl font-extrabold text-slate-900">Create Quiz</p>
+                  <p className="text-sm font-medium text-slate-500 mt-1">Build a new quiz with MCQ, short answer, or coding questions</p>
+                </div>
+              </button>
+              {/* Quiz Analytics Card */}
+              <button
+                onClick={() => navigate('class-results')}
+                className="soft-card-hover p-8 text-left flex items-center gap-5 group"
+              >
+                <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center group-hover:bg-emerald-100 transition-colors flex-shrink-0">
+                  <span className="text-3xl">📊</span>
+                </div>
+                <div>
+                  <p className="text-xl font-extrabold text-slate-900">Quiz Analytics</p>
+                  <p className="text-sm font-medium text-slate-500 mt-1">View class-wise results, pass rates, and student performance</p>
+                </div>
+              </button>
+            </div>
           </div>
         )}
 
