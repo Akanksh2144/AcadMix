@@ -1068,11 +1068,13 @@ async def student_dashboard(user: dict = Depends(get_current_user)):
     all_attempts = await db.quiz_attempts.find({"student_id": user["id"], "status": "submitted"}).sort("submitted_at", -1).to_list(50)
     # Active quizzes with question_count + deadline info
     active_quizzes_raw = await db.quizzes.find({"status": "active"}).sort("created_at", -1).to_list(10)
+    attempted_quiz_ids = {a["quiz_id"] for a in all_attempts}
     active_quizzes = []
     for q in active_quizzes_raw:
         doc = serialize_doc(q)
         doc["question_count"] = len(q.get("questions", []))
         doc.pop("questions", None)
+        doc["already_attempted"] = doc["id"] in attempted_quiz_ids
         active_quizzes.append(doc)
     # In-progress attempts
     in_progress = await db.quiz_attempts.find({"student_id": user["id"], "status": "in_progress"}).sort("started_at", -1).to_list(5)

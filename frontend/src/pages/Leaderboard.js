@@ -21,9 +21,9 @@ const Leaderboard = ({ navigate, user, userRole }) => {
   }, []);
 
   const getBadgeStyle = (rank) => {
-    if (rank === 1) return { icon: Trophy, bg: 'bg-amber-50', text: 'text-amber-500' };
-    if (rank === 2) return { icon: Medal, bg: 'bg-slate-100', text: 'text-slate-500 dark:text-slate-400' };
-    if (rank === 3) return { icon: Target, bg: 'bg-orange-50', text: 'text-orange-500' };
+    if (rank === 1) return { icon: Trophy, bg: 'bg-amber-50 dark:bg-amber-500/15', text: 'text-amber-500' };
+    if (rank === 2) return { icon: Medal, bg: 'bg-slate-100 dark:bg-slate-500/15', text: 'text-slate-500 dark:text-slate-400' };
+    if (rank === 3) return { icon: Target, bg: 'bg-orange-50 dark:bg-orange-500/15', text: 'text-orange-500' };
     return null;
   };
 
@@ -73,15 +73,15 @@ const Leaderboard = ({ navigate, user, userRole }) => {
             {top3.length >= 3 && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                 {/* Rank 2 */}
-                <div className="soft-card-hover p-6 bg-gradient-to-br from-slate-50 to-white" data-testid="podium-rank-2">
+                <div className="soft-card-hover p-6" data-testid="podium-rank-2">
                   <div className="flex justify-center mb-4">
-                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center">
+                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-500/15 rounded-2xl flex items-center justify-center">
                       <Medal size={36} weight="duotone" className="text-slate-500 dark:text-slate-400" />
                     </div>
                   </div>
                   <div className="text-center">
-                    <span className="soft-badge bg-slate-100 text-slate-600 dark:text-slate-400 mb-2">#2</span>
-                    <h3 className="text-xl font-extrabold text-slate-900 mt-2">{top3[1]?.name}</h3>
+                    <span className="soft-badge bg-slate-100 dark:bg-slate-500/15 text-slate-600 dark:text-slate-400 mb-2">#2</span>
+                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-white mt-2">{top3[1]?.name}</h3>
                     <p className="text-sm font-medium text-slate-400 mb-4">{top3[1]?.college_id}</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div><p className="text-2xl font-extrabold text-slate-900 dark:text-white">{top3[1]?.avg_score}%</p><p className="text-xs font-bold text-slate-400 uppercase">Score</p></div>
@@ -91,15 +91,15 @@ const Leaderboard = ({ navigate, user, userRole }) => {
                 </div>
 
                 {/* Rank 1 */}
-                <div className="soft-card-hover p-8 bg-gradient-to-br from-amber-50 via-amber-50 to-orange-50 md:-translate-y-4" data-testid="podium-rank-1">
+                <div className="soft-card-hover p-8 bg-gradient-to-br from-amber-50 via-amber-50 to-orange-50 dark:from-amber-500/10 dark:via-amber-500/5 dark:to-transparent md:-translate-y-4" data-testid="podium-rank-1">
                   <div className="flex justify-center mb-4">
-                    <div className="w-20 h-20 bg-amber-100 rounded-2xl flex items-center justify-center">
+                    <div className="w-20 h-20 bg-amber-100 dark:bg-amber-500/15 rounded-2xl flex items-center justify-center">
                       <Trophy size={48} weight="duotone" className="text-amber-500" />
                     </div>
                   </div>
                   <div className="text-center">
-                    <span className="soft-badge bg-amber-100 text-amber-700 mb-2 text-sm px-4">#1 CHAMPION</span>
-                    <h3 className="text-2xl font-extrabold text-slate-900 mt-3">{top3[0]?.name}</h3>
+                    <span className="soft-badge bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 mb-2 text-sm px-4">#1 CHAMPION</span>
+                    <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mt-3">{top3[0]?.name}</h3>
                     <p className="text-sm font-medium text-slate-400 mb-4">{top3[0]?.college_id}</p>
                     <div className="grid grid-cols-2 gap-4">
                       <div><p className="text-3xl font-extrabold text-slate-900 dark:text-white">{top3[0]?.avg_score}%</p><p className="text-xs font-bold text-slate-400 uppercase">Score</p></div>
@@ -109,15 +109,15 @@ const Leaderboard = ({ navigate, user, userRole }) => {
                 </div>
 
                 {/* Rank 3 */}
-                <div className="soft-card-hover p-6 bg-gradient-to-br from-orange-50 to-white" data-testid="podium-rank-3">
+                <div className="soft-card-hover p-6" data-testid="podium-rank-3">
                   <div className="flex justify-center mb-4">
-                    <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center">
+                    <div className="w-16 h-16 bg-orange-100 dark:bg-orange-500/15 rounded-2xl flex items-center justify-center">
                       <Target size={36} weight="duotone" className="text-orange-500" />
                     </div>
                   </div>
                   <div className="text-center">
-                    <span className="soft-badge bg-orange-50 text-orange-600 mb-2">#3</span>
-                    <h3 className="text-xl font-extrabold text-slate-900 mt-2">{top3[2]?.name}</h3>
+                    <span className="soft-badge bg-orange-50 dark:bg-orange-500/15 text-orange-600 dark:text-orange-400 mb-2">#3</span>
+                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-white mt-2">{top3[2]?.name}</h3>
                     <p className="text-sm font-medium text-slate-400 mb-4">{top3[2]?.college_id}</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div><p className="text-2xl font-extrabold text-slate-900 dark:text-white">{top3[2]?.avg_score}%</p><p className="text-xs font-bold text-slate-400 uppercase">Score</p></div>
@@ -149,7 +149,7 @@ const Leaderboard = ({ navigate, user, userRole }) => {
                       const isMe = student.student_id === currentUserId;
                       return (
                         <tr key={student.student_id}
-                          className={`border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors ${isMe ? 'bg-indigo-50 dark:bg-indigo-500/15/50' : ''}`}
+                          className={`border-b border-slate-50 dark:border-white/[0.06] hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors ${isMe ? 'bg-indigo-50/50 dark:bg-indigo-500/10' : ''}`}
                           data-testid={`leaderboard-row-${student.rank}`}>
                           <td className="text-center p-4"><span className="text-xl font-extrabold text-slate-900 dark:text-white">{student.rank}</span></td>
                           <td className="p-4">
@@ -159,7 +159,7 @@ const Leaderboard = ({ navigate, user, userRole }) => {
                                 <p className="font-bold text-slate-800 dark:text-slate-100">{student.name}</p>
                                 <p className="text-sm font-medium text-slate-400">{student.college_id}</p>
                               </div>
-                              {isMe && <span className="soft-badge bg-indigo-100 text-indigo-600 text-xs">YOU</span>}
+                              {isMe && <span className="soft-badge bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs">YOU</span>}
                             </div>
                           </td>
                           <td className="text-center p-4"><p className="text-lg font-extrabold text-slate-900 dark:text-white">{student.avg_score}%</p></td>

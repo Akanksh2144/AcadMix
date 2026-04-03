@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, BookOpen, ArrowLeft, Fire, Play } from '@phosphor-icons/react';
+import { Clock, BookOpen, ArrowLeft, Fire, Play, CheckCircle } from '@phosphor-icons/react';
 import { analyticsAPI } from '../services/api';
 
 const getDeadlineInfo = (quiz) => {
@@ -116,9 +116,15 @@ const AvailableQuizzes = ({ navigate, user }) => {
                   <div className="flex items-center gap-1.5"><Clock size={15} weight="duotone" /><span>{quiz.duration_mins} min</span></div>
                   <div className="flex items-center gap-1.5"><BookOpen size={15} weight="duotone" /><span>{quiz.question_count || '?'} questions</span></div>
                 </div>
-                <button onClick={() => navigate('quiz-attempt', quiz)} className="btn-primary w-full text-sm">
-                  Start Quiz
-                </button>
+                {quiz.already_attempted ? (
+                  <div className="w-full text-center py-3 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-sm flex items-center justify-center gap-2">
+                    <CheckCircle size={18} weight="bold" /> Already Submitted
+                  </div>
+                ) : (
+                  <button onClick={() => navigate('quiz-attempt', quiz)} className="btn-primary w-full text-sm">
+                    Start Quiz
+                  </button>
+                )}
               </div>
             );
           })}
