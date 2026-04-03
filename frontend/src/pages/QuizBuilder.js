@@ -59,7 +59,7 @@ const QuizBuilder = ({ navigate, user }) => {
     if (type === 'mcq-single' || type === 'mcq-multiple') {
       nq = { ...baseQuestion, options: ['', '', '', ''], correctAnswer: type === 'mcq-single' ? 0 : undefined, correctAnswers: type === 'mcq-multiple' ? [] : undefined };
     } else if (type === 'coding') {
-      nq = { ...baseQuestion, language: 'python', testCases: '', sampleInput: '', sampleOutput: '' };
+      nq = { ...baseQuestion, language: 'python', starter_code: '', test_input: '', expected_output: '', testCases: '', sampleInput: '', sampleOutput: '' };
     } else {
       nq = { ...baseQuestion };
     }
@@ -645,9 +645,26 @@ const QuizBuilder = ({ navigate, user }) => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Test Cases (One per line)</label>
-                      <textarea value={q.testCases} onChange={(e) => { const nq = [...questions]; nq[currentQuestion].testCases = e.target.value; setQuestions(nq); }}
-                        placeholder="Example:&#10;Input: [1, 2, 3]&#10;Output: 6&#10;&#10;Input: [4, 5, 6]&#10;Output: 15" rows="6" className="soft-input w-full resize-none font-mono text-sm" />
+                      <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Starter Code <span className="text-slate-300 dark:text-slate-600 normal-case">(pre-filled in editor)</span></label>
+                      <textarea value={q.starter_code || ''} onChange={(e) => { const nq = [...questions]; nq[currentQuestion].starter_code = e.target.value; setQuestions(nq); }}
+                        placeholder="# Write your solution here" rows="4" className="soft-input w-full resize-none font-mono text-sm" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Test Input <span className="text-slate-300 dark:text-slate-600 normal-case">(stdin)</span></label>
+                        <textarea value={q.test_input || ''} onChange={(e) => { const nq = [...questions]; nq[currentQuestion].test_input = e.target.value; setQuestions(nq); }}
+                          placeholder="5 3" rows="3" className="soft-input w-full resize-none font-mono text-sm" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-widest text-emerald-500 mb-2">Expected Output <span className="text-emerald-400/70 normal-case">(auto-grade key)</span></label>
+                        <textarea value={q.expected_output || ''} onChange={(e) => { const nq = [...questions]; nq[currentQuestion].expected_output = e.target.value; setQuestions(nq); }}
+                          placeholder="8" rows="3" className="soft-input w-full resize-none font-mono text-sm border-emerald-200 dark:border-emerald-800 focus:border-emerald-400" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Test Cases <span className="text-slate-300 dark:text-slate-600 normal-case">(documentation / reference)</span></label>
+                      <textarea value={q.testCases || ''} onChange={(e) => { const nq = [...questions]; nq[currentQuestion].testCases = e.target.value; setQuestions(nq); }}
+                        placeholder={'Example:\nInput: [1, 2, 3]\nOutput: 6\n\nInput: [4, 5, 6]\nOutput: 15'} rows="4" className="soft-input w-full resize-none font-mono text-sm" />
                     </div>
                   </div>
                 )}

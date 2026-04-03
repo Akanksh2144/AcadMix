@@ -46,7 +46,8 @@ const QuizSummary = ({ navigate, user, attemptData }) => {
 
   const formatTimeTaken = () => {
     if (!attempt?.started_at || !attempt?.submitted_at) return '—';
-    const start = new Date(attempt.started_at);
+    // Use first_interaction_at if available for true time taken, otherwise fallback to started_at
+    const start = attempt.first_interaction_at ? new Date(attempt.first_interaction_at) : new Date(attempt.started_at);
     const end = new Date(attempt.submitted_at);
     const diffMs = end - start;
     const mins = Math.floor(diffMs / 60000);

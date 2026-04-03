@@ -537,7 +537,11 @@ async def submit_answer(attempt_id: str, req: AnswerSubmit, user: dict = Depends
     answers = attempt.get("answers", [])
     if 0 <= req.question_index < len(answers):
         answers[req.question_index] = req.answer
-    await db.quiz_attempts.update_one({"_id": ObjectId(attempt_id)}, {"$set": {"answers": answers}})
+    update_fields = {"answers": answers}
+    # Track when student first interacts (for accurate time-taken calculation)
+    if not attempt.get("first_interaction_at"):
+        update_fields["first_interaction_at"] = datetime.now(timezone.utc)
+    await db.quiz_attempts.update_one({"_id": ObjectId(attempt_id)}, {"$set": update_fields})
     return {"message": "Answer saved", "question_index": req.question_index}
 
 class ViolationReport(BaseModel):
@@ -631,7 +635,13 @@ async def submit_attempt(attempt_id: str, user: dict = Depends(get_current_user)
                 else:
                     marks_awarded = round(q.get("marks", 0) * 0.5)
         score += marks_awarded
-        correct_for_results = q.get("correctAnswer") if "correctAnswer" in q else (q.get("correctAnswers") if "correctAnswers" in q else (q.get("correct_answer") or q.get("correct_answers") or q.get("expectedAnswer") or q.get("expected_output")))
+        # Determine correct answer for results display
+        if q["type"] == "coding":
+            correct_for_results = q.get("expected_output", "(run-based grading)")
+        elif q["type"] == "short":
+            correct_for_results = q.get("expectedAnswer") or q.get("expected_answer") or q.get("keywords", [])
+        else:
+            correct_for_results = q.get("correctAnswer") if "correctAnswer" in q else (q.get("correctAnswers") if "correctAnswers" in q else (q.get("correct_answer") or q.get("correct_answers")))
         results.append({
             "question_index": i, "question": q.get("text", q.get("question", "")), "type": q["type"],
             "student_answer": student_answer, "correct_answer": correct_for_results,
