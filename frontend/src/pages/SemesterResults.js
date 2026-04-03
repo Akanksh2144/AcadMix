@@ -53,7 +53,7 @@ const SemesterResults = ({ navigate, user }) => {
           <>
             <div className="mb-8">
               <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Select Semester</label>
-              <div className="bg-slate-100 rounded-full p-1 inline-flex gap-1">
+              <div className="bg-slate-100 dark:bg-slate-800 rounded-full p-1 inline-flex gap-1">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
                   <button key={sem} data-testid={`semester-${sem}-button`} onClick={() => allSemNumbers.includes(sem) && setSelectedSem(sem)}
                     disabled={!allSemNumbers.includes(sem)}
@@ -111,9 +111,11 @@ const SemesterResults = ({ navigate, user }) => {
                           <div key={s.semester} className="flex items-center justify-between" data-testid={`cgpa-history-sem-${s.semester}`}>
                             <span className="font-bold text-slate-700 dark:text-slate-300">Semester {s.semester}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-xl font-extrabold text-slate-900 dark:text-white">{s.cgpa}</span>
-                              {i > 0 && s.cgpa > semesters[i - 1].cgpa && <TrendUp size={16} weight="duotone" className="text-emerald-500" />}
-                              {i > 0 && s.cgpa < semesters[i - 1].cgpa && <TrendDown size={16} weight="duotone" className="text-red-500" />}
+                              <span className="text-xl font-extrabold text-slate-900 dark:text-white min-w-[56px] text-right" style={{ fontVariantNumeric: 'tabular-nums' }}>{s.cgpa}</span>
+                              <span className="w-5 flex items-center justify-center">
+                                {i > 0 && s.cgpa > semesters[i - 1].cgpa && <TrendUp size={16} weight="duotone" className="text-emerald-500" />}
+                                {i > 0 && s.cgpa < semesters[i - 1].cgpa && <TrendDown size={16} weight="duotone" className="text-red-500" />}
+                              </span>
                             </div>
                           </div>
                         ))}

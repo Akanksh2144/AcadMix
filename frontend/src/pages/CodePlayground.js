@@ -179,7 +179,7 @@ const CodePlayground = ({ navigate, user }) => {
   const dashboardPage = user?.role === 'teacher' ? 'teacher-dashboard' : user?.role === 'admin' ? 'admin-dashboard' : 'student-dashboard';
 
   return (
-    <div className="h-screen flex flex-col bg-[#F8FAFC]">
+    <div className="h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <header className="glass-header shrink-0">
         <div className="w-full max-w-[1600px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">

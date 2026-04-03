@@ -269,10 +269,10 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
           className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6 sm:mb-8"
         >
           {[
-            { id: 'quiz-results', icon: BookOpen, label: 'Quiz Results', sub: 'View all attempts', color: 'indigo', testId: 'view-all-quizzes-button' },
-            { id: 'semester-results', icon: Calendar, label: 'Semester Results', sub: 'Check your grades', color: 'teal', testId: 'view-semester-results-button' },
-            { id: 'analytics', icon: ChartLine, label: 'Analytics', sub: 'Track performance', color: 'amber', testId: 'view-analytics-button' },
-            { id: 'code-playground', icon: Terminal, label: 'Code Playground', sub: 'Practice coding', color: 'purple', testId: 'view-code-playground-button' },
+            { id: 'quiz-results', icon: BookOpen, label: 'Quiz Results', sub: 'View all attempts', iconBg: 'bg-indigo-50 dark:bg-indigo-500/10 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20', iconText: 'text-indigo-500', testId: 'view-all-quizzes-button' },
+            { id: 'semester-results', icon: Calendar, label: 'Semester Results', sub: 'Check your grades', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-semester-results-button' },
+            { id: 'analytics', icon: ChartLine, label: 'Analytics', sub: 'Track performance', iconBg: 'bg-amber-50 dark:bg-amber-500/10 group-hover:bg-amber-100 dark:group-hover:bg-amber-500/20', iconText: 'text-amber-500', testId: 'view-analytics-button' },
+            { id: 'code-playground', icon: Terminal, label: 'Code Playground', sub: 'Practice coding', iconBg: 'bg-purple-50 dark:bg-purple-500/10 group-hover:bg-purple-100 dark:group-hover:bg-purple-500/20', iconText: 'text-purple-500', testId: 'view-code-playground-button' },
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -280,8 +280,8 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
                 data-testid={item.testId} onClick={() => navigate(item.id)}
                 className="soft-card-hover p-4 sm:p-6 text-left flex items-center gap-3 sm:gap-4 group"
               >
-                <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-${item.color}-50 dark:bg-${item.color}-500/10 rounded-xl flex items-center justify-center group-hover:bg-${item.color}-100 dark:group-hover:bg-${item.color}-500/20 transition-colors`}>
-                  <Icon size={22} weight="duotone" className={`text-${item.color}-500`} />
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-colors ${item.iconBg}`}>
+                  <Icon size={22} weight="duotone" className={item.iconText} />
                 </div>
                 <div className="min-w-0">
                   <p className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white truncate">{item.label}</p>

@@ -111,13 +111,13 @@ const QuizResults = ({ navigate, user }) => {
               {attempts.map((a) => (
                 <div key={a.id} className="soft-card-hover p-6" data-testid={`quiz-result-${a.id}`}>
                   <div className="flex items-start justify-between mb-4">
-                    <div><h4 className="font-bold text-slate-900 mb-1">{a.quiz_title}</h4><p className="text-sm font-medium text-slate-400">{a.quiz_subject}</p></div>
+                    <div><h4 className="font-bold text-slate-900 dark:text-white mb-1">{a.quiz_title}</h4><p className="text-sm font-medium text-slate-400">{a.quiz_subject}</p></div>
                     <div className="text-right">
                       <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{a.percentage}%</p>
                       <p className="text-xs font-medium text-slate-400">{a.score}/{a.total_marks} marks</p>
                     </div>
                   </div>
-                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden mb-4">
+                  <div className="h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mb-4">
                     <div className="h-full bg-gradient-to-r from-indigo-500 to-teal-400 rounded-full" style={{ width: `${a.percentage}%` }}></div>
                   </div>
                   {a.results && (

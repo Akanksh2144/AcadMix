@@ -84,7 +84,7 @@ const Analytics = ({ navigate, user, userRole }) => {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Tab Switcher */}
-        <div className="flex items-center gap-2 bg-slate-100 rounded-2xl p-1.5 w-fit mb-8" data-testid="analytics-tabs">
+        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-2xl p-1.5 w-fit mb-8" data-testid="analytics-tabs">
           <button
             data-testid="quiz-tab"
             onClick={() => setActiveTab('quiz')}
