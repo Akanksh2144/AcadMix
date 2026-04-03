@@ -19,7 +19,6 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.dark body,
 html.dark body {
   background-color: #0B0F19;
   color: #CBD5E1;
@@ -35,27 +34,15 @@ h1, h2, h3, h4, h5, h6 {
     @apply bg-white rounded-3xl border border-slate-100/50;
     box-shadow: 0 8px 30px rgb(0 0 0 / 0.04);
   }
-  .dark .soft-card {
-    @apply bg-[#1A202C] border-white/[0.06];
-    box-shadow: 0 8px 30px rgb(0 0 0 / 0.25);
-  }
 
   .soft-card-hover {
     @apply bg-white rounded-3xl border border-slate-100/50 transition-all duration-300;
     box-shadow: 0 8px 30px rgb(0 0 0 / 0.04);
   }
-  .dark .soft-card-hover {
-    @apply bg-[#1A202C] border-white/[0.06];
-    box-shadow: 0 8px 30px rgb(0 0 0 / 0.25);
-  }
 
   .soft-card-hover:hover {
     box-shadow: 0 20px 40px rgb(0 0 0 / 0.08);
     transform: translateY(-4px);
-  }
-  .dark .soft-card-hover:hover {
-    box-shadow: 0 20px 40px rgb(0 0 0 / 0.4);
-    border-color: rgba(255,255,255,0.12);
   }
 
   /* ── Buttons ─────────────────────────────── */
@@ -66,23 +53,14 @@ h1, h2, h3, h4, h5, h6 {
   .btn-secondary {
     @apply bg-indigo-50 text-indigo-600 rounded-2xl px-6 py-3 font-bold hover:bg-indigo-100 transition-all duration-200 active:scale-95;
   }
-  .dark .btn-secondary {
-    @apply bg-indigo-500/15 text-indigo-400 hover:bg-indigo-500/25;
-  }
 
   .btn-ghost {
     @apply bg-slate-50 text-slate-700 rounded-2xl px-6 py-3 font-bold hover:bg-slate-100 transition-all duration-200 active:scale-95;
-  }
-  .dark .btn-ghost {
-    @apply bg-white/5 text-slate-300 hover:bg-white/10;
   }
 
   /* ── Inputs ──────────────────────────────── */
   .soft-input {
     @apply bg-slate-50 border-none rounded-2xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none;
-  }
-  .dark .soft-input {
-    @apply bg-white/5 text-slate-200 focus:bg-white/10 placeholder:text-slate-500;
   }
 
   /* ── Badges ──────────────────────────────── */
@@ -94,9 +72,6 @@ h1, h2, h3, h4, h5, h6 {
   .glass-header {
     @apply bg-white/70 backdrop-blur-xl border-b border-slate-100/50 shadow-sm sticky top-0 z-50;
   }
-  .dark .glass-header {
-    @apply bg-[#0B0F19]/80 border-white/[0.06];
-  }
 
   /* ── Pills ───────────────────────────────── */
   .pill-tab {
@@ -105,15 +80,74 @@ h1, h2, h3, h4, h5, h6 {
   .pill-tab-active {
     @apply bg-white shadow-sm text-indigo-600;
   }
-  .dark .pill-tab-active {
-    @apply bg-white/10 text-indigo-400;
-  }
   .pill-tab-inactive {
     @apply text-slate-500 hover:text-slate-700 hover:bg-white/50;
   }
-  .dark .pill-tab-inactive {
-    @apply text-slate-400 hover:text-slate-200 hover:bg-white/5;
-  }
+}
+
+/* ══════════════════════════════════════════════
+   DARK MODE OVERRIDES  (outside @layer so they
+   always beat the light-mode defaults above)
+   ══════════════════════════════════════════════ */
+
+html.dark .soft-card {
+  background-color: #1A202C;
+  border-color: rgba(255,255,255,0.06);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.25);
+}
+
+html.dark .soft-card-hover {
+  background-color: #1A202C;
+  border-color: rgba(255,255,255,0.06);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.25);
+}
+html.dark .soft-card-hover:hover {
+  box-shadow: 0 20px 40px rgb(0 0 0 / 0.4);
+  border-color: rgba(255,255,255,0.12);
+}
+
+html.dark .btn-secondary {
+  background-color: rgba(99,102,241,0.15);
+  color: #818cf8;
+}
+html.dark .btn-secondary:hover {
+  background-color: rgba(99,102,241,0.25);
+}
+
+html.dark .btn-ghost {
+  background-color: rgba(255,255,255,0.05);
+  color: #cbd5e1;
+}
+html.dark .btn-ghost:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+html.dark .soft-input {
+  background-color: rgba(255,255,255,0.05);
+  color: #e2e8f0;
+}
+html.dark .soft-input::placeholder {
+  color: #64748b;
+}
+html.dark .soft-input:focus {
+  background-color: rgba(255,255,255,0.1);
+}
+
+html.dark .glass-header {
+  background-color: rgba(11,15,25,0.8);
+  border-color: rgba(255,255,255,0.06);
+}
+
+html.dark .pill-tab-active {
+  background-color: rgba(255,255,255,0.1);
+  color: #818cf8;
+}
+html.dark .pill-tab-inactive {
+  color: #94a3b8;
+}
+html.dark .pill-tab-inactive:hover {
+  color: #e2e8f0;
+  background-color: rgba(255,255,255,0.05);
 }
 
 /* ── Skeleton Shimmer ──────────────────────── */
@@ -122,7 +156,7 @@ h1, h2, h3, h4, h5, h6 {
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
-.dark .skeleton-shimmer {
+html.dark .skeleton-shimmer {
   background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
   background-size: 200% 100%;
 }
@@ -147,9 +181,9 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb:hover {
   background: #6366F1;
 }
-.dark ::-webkit-scrollbar-thumb {
+html.dark ::-webkit-scrollbar-thumb {
   background: #334155;
 }
-.dark ::-webkit-scrollbar-thumb:hover {
+html.dark ::-webkit-scrollbar-thumb:hover {
   background: #6366F1;
 }
