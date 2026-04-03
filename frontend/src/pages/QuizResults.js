@@ -59,9 +59,9 @@ const QuizResults = ({ navigate, user }) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
             { label: 'Total Quizzes', value: attempts.length, icon: Target, color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-500' },
-            { label: 'Avg Score', value: `${avgScore}%`, icon: Trophy, color: 'bg-amber-50 text-amber-500' },
-            { label: 'Best Score', value: `${bestScore}%`, icon: CheckCircle, color: 'bg-emerald-50 text-emerald-500' },
-            { label: 'Avg Time', value: `${avgTime}m`, icon: Clock, color: 'bg-sky-50 text-sky-500' },
+            { label: 'Avg Score', value: `${avgScore}%`, icon: Trophy, color: 'bg-amber-50 dark:bg-amber-500/15 text-amber-500' },
+            { label: 'Best Score', value: `${bestScore}%`, icon: CheckCircle, color: 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-500' },
+            { label: 'Avg Time', value: `${avgTime}m`, icon: Clock, color: 'bg-sky-50 dark:bg-sky-500/15 text-sky-500' },
           ].map((s, i) => (
             <div key={i} className="soft-card p-6" data-testid={`${s.label.toLowerCase().replace(/\s+/g, '-')}-stat`}>
               <div className="flex items-center justify-between mb-2">

@@ -109,9 +109,9 @@ const Analytics = ({ navigate, user, userRole }) => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               {[
                 { label: 'Overall Score', value: analytics?.avg_score ? `${analytics.avg_score}%` : '86.5%', sub: 'Average across all quizzes', icon: Target, color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-500', subColor: 'text-emerald-500' },
-                { label: 'Quiz Completion', value: `${analytics?.total_quizzes || 24}`, sub: 'Total quizzes taken', icon: CheckCircle, color: 'bg-emerald-50 text-emerald-500' },
-                { label: 'Best Score', value: analytics?.best_score ? `${analytics.best_score}%` : '95%', sub: 'Highest quiz score', icon: TrendUp, color: 'bg-sky-50 text-sky-500' },
-                { label: 'Improvement', value: '+15%', sub: 'Since start of semester', icon: TrendUp, color: 'bg-amber-50 text-amber-500' },
+                { label: 'Quiz Completion', value: `${analytics?.total_quizzes || 24}`, sub: 'Total quizzes taken', icon: CheckCircle, color: 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-500' },
+                { label: 'Best Score', value: analytics?.best_score ? `${analytics.best_score}%` : '95%', sub: 'Highest quiz score', icon: TrendUp, color: 'bg-sky-50 dark:bg-sky-500/15 text-sky-500' },
+                { label: 'Improvement', value: '+15%', sub: 'Since start of semester', icon: TrendUp, color: 'bg-amber-50 dark:bg-amber-500/15 text-amber-500' },
               ].map((stat, i) => (
                 <div key={i} className="soft-card p-6" data-testid={`quiz-${stat.label.toLowerCase().replace(/\s+/g, '-')}-metric`}>
                   <div className="flex items-center justify-between mb-2">
@@ -213,8 +213,8 @@ const Analytics = ({ navigate, user, userRole }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {[
                 { label: 'Current CGPA', value: analytics?.latest_cgpa?.toFixed(2) || semesterData[semesterData.length - 1]?.cgpa?.toFixed(2) || '-', sub: 'Cumulative GPA', icon: GraduationCap, color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-500' },
-                { label: 'Latest SGPA', value: semesterData[semesterData.length - 1]?.sgpa?.toFixed(2) || '-', sub: `Semester ${semesterData.length}`, icon: Target, color: 'bg-emerald-50 text-emerald-500' },
-                { label: 'Semesters', value: semesterData.length, sub: 'Results available', icon: BookOpen, color: 'bg-amber-50 text-amber-500' },
+                { label: 'Latest SGPA', value: semesterData[semesterData.length - 1]?.sgpa?.toFixed(2) || '-', sub: `Semester ${semesterData.length}`, icon: Target, color: 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-500' },
+                { label: 'Semesters', value: semesterData.length, sub: 'Results available', icon: BookOpen, color: 'bg-amber-50 dark:bg-amber-500/15 text-amber-500' },
               ].map((stat, i) => (
                 <div key={i} className="soft-card p-6" data-testid={`sem-${stat.label.toLowerCase().replace(/\s+/g, '-')}-metric`}>
                   <div className="flex items-center justify-between mb-2">

@@ -5,6 +5,13 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
     "./public/index.html"
   ],
+  safelist: [
+    'bg-teal-50', 'dark:bg-teal-500/10', 'group-hover:bg-teal-100', 'dark:group-hover:bg-teal-500/20', 'text-teal-500',
+    'bg-amber-50', 'dark:bg-amber-500/10', 'group-hover:bg-amber-100', 'dark:group-hover:bg-amber-500/20', 'text-amber-500',
+    'bg-purple-50', 'dark:bg-purple-500/10', 'group-hover:bg-purple-100', 'dark:group-hover:bg-purple-500/20', 'text-purple-500',
+    'bg-indigo-50', 'dark:bg-indigo-500/10', 'group-hover:bg-indigo-100', 'dark:group-hover:bg-indigo-500/20', 'text-indigo-500',
+    'dark:bg-slate-800',
+  ],
   theme: {
   	extend: {
   		borderRadius: {
