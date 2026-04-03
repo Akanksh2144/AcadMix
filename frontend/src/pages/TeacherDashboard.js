@@ -52,8 +52,8 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
   }));
 
   const stats = [
-    { label: 'Total Quizzes', value: String(totalQuizzes), sub: 'created', icon: Clipboard, color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-500', gradient: 'from-indigo-500 to-blue-500' },
-    { label: 'Active Quizzes', value: String(activeQuizzes), sub: 'live now', icon: Fire, color: 'bg-rose-50 text-rose-500', gradient: 'from-rose-500 to-pink-500', onClick: () => navigate('teacher-quizzes') },
+    { label: 'Total Quizzes', value: String(totalQuizzes), sub: 'created', icon: Clipboard, color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-500 dark:text-indigo-400', gradient: 'from-indigo-500 to-blue-500' },
+    { label: 'Active Quizzes', value: String(activeQuizzes), sub: 'live now', icon: Fire, color: 'bg-rose-50 dark:bg-rose-500/15 text-rose-500 dark:text-rose-400', gradient: 'from-rose-500 to-pink-500', onClick: () => navigate('teacher-quizzes') },
   ];
 
   if (loading) return (
@@ -81,11 +81,11 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
                 Mark all as read
               </button>
             </div>
-            <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
+            <div className="max-h-80 overflow-y-auto divide-y divide-slate-50 dark:divide-white/[0.04]">
               {recentActivity.length > 0 ? recentActivity.map((item, i) => (
-                <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 bg-emerald-50">
-                    <Exam size={14} weight="duotone" className="text-emerald-500" />
+                <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 bg-emerald-50 dark:bg-emerald-500/15">
+                    <Exam size={14} weight="duotone" className="text-emerald-500 dark:text-emerald-400" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-slate-700 dark:text-slate-300 truncate">{item.title}</p>
@@ -149,7 +149,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* ── Hero Greeting ───────────────────────── */}
         <div className="mb-6 sm:mb-8" style={{animation: 'fadeInUp 0.2s ease'}}>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 mb-1">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-1">
             {getGreeting()}, {user?.name?.split(' ').pop() || 'Faculty'}!
           </h2>
           <p className="text-sm sm:text-base font-medium text-slate-500 dark:text-slate-400">
@@ -183,22 +183,22 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
         {/* ── Quick Actions ────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-5 mb-6 sm:mb-8">
           {[
-            { id: 'quiz-builder', icon: NotePencil, label: 'Create Quiz', sub: 'Build from scratch', color: 'indigo', testId: 'create-quiz-button' },
-            { id: 'marks-entry', icon: PencilLine, label: 'Marks Entry', sub: 'Mid-term marks', color: 'violet', testId: 'marks-entry-button' },
-            { id: 'class-results', icon: ChartLine, label: 'View Results', sub: 'Class-wise analytics', color: 'emerald', testId: 'view-all-results-button' },
-            { id: 'student-management', icon: Users, label: 'Students', sub: 'Manage enrollment', color: 'amber', testId: 'manage-students-button' },
-            { id: 'quiz-calendar', icon: CalendarDots, label: 'Calendar', sub: 'Quiz schedule', color: 'sky', testId: 'quiz-calendar-button' },
+            { id: 'quiz-builder', icon: NotePencil, label: 'Create Quiz', sub: 'Build from scratch', colorBg: 'bg-indigo-50 dark:bg-indigo-500/15 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/25', colorText: 'text-indigo-500 dark:text-indigo-400', testId: 'create-quiz-button' },
+            { id: 'marks-entry', icon: PencilLine, label: 'Marks Entry', sub: 'Mid-term marks', colorBg: 'bg-violet-50 dark:bg-violet-500/15 group-hover:bg-violet-100 dark:group-hover:bg-violet-500/25', colorText: 'text-violet-500 dark:text-violet-400', testId: 'marks-entry-button' },
+            { id: 'class-results', icon: ChartLine, label: 'View Results', sub: 'Class-wise analytics', colorBg: 'bg-emerald-50 dark:bg-emerald-500/15 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/25', colorText: 'text-emerald-500 dark:text-emerald-400', testId: 'view-all-results-button' },
+            { id: 'student-management', icon: Users, label: 'Students', sub: 'Manage enrollment', colorBg: 'bg-amber-50 dark:bg-amber-500/15 group-hover:bg-amber-100 dark:group-hover:bg-amber-500/25', colorText: 'text-amber-500 dark:text-amber-400', testId: 'manage-students-button' },
+            { id: 'quiz-calendar', icon: CalendarDots, label: 'Calendar', sub: 'Quiz schedule', colorBg: 'bg-sky-50 dark:bg-sky-500/15 group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25', colorText: 'text-sky-500 dark:text-sky-400', testId: 'quiz-calendar-button' },
           ].map((item, i) => {
             const Icon = item.icon;
             return (
               <button key={item.id} data-testid={item.testId} onClick={() => navigate(item.id)}
                 className="soft-card-hover p-4 sm:p-6 text-left flex items-center gap-3 sm:gap-4 group"
                 style={{animation: `fadeInUp ${0.4 + i * 0.08}s ease`}}>
-                <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-${item.color}-50 rounded-xl flex items-center justify-center group-hover:bg-${item.color}-100 transition-colors`}>
-                  <Icon size={22} weight="duotone" className={`text-${item.color}-500`} />
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-colors ${item.colorBg}`}>
+                  <Icon size={22} weight="duotone" className={item.colorText} />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-extrabold text-sm sm:text-base text-slate-900 truncate">{item.label}</p>
+                  <p className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate">{item.label}</p>
                   <p className="text-xs sm:text-sm font-medium text-slate-400 truncate">{item.sub}</p>
                 </div>
               </button>
