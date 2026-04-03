@@ -71,7 +71,7 @@ const CodeEditor = ({ value, onChange, language, onRun, running, output }) => {
 const FullscreenGate = ({ onEnter, violations, isReEntry }) => (
   <div className="fixed inset-0 z-[9999] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6" data-testid="fullscreen-gate">
     <div className="max-w-md w-full text-center">
-      <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-500/150/20 rounded-full flex items-center justify-center mx-auto mb-6">
+      <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
         {isReEntry ? (
           <ShieldWarning size={40} weight="duotone" className="text-amber-400" />
         ) : (
@@ -94,7 +94,7 @@ const FullscreenGate = ({ onEnter, violations, isReEntry }) => (
       <button
         data-testid="enter-fullscreen-button"
         onClick={onEnter}
-        className="w-full py-4 bg-indigo-50 dark:bg-indigo-500/150 hover:bg-indigo-600 text-white rounded-2xl font-bold text-lg transition-colors flex items-center justify-center gap-3 mt-4"
+        className="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90 text-white rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 mt-4"
       >
         <ArrowsOut size={24} weight="bold" />
         {isReEntry ? 'Re-enter Fullscreen' : 'Enter Fullscreen & Start'}
@@ -114,9 +114,9 @@ const SubmitModal = ({ questions, answers, marked, onClose, onSubmit, submitting
   const markedUnanswered = [...marked].filter(i => answers[i] === undefined).length;
 
   const stats = [
-    { label: 'Answered', count: answered, icon: CheckCircle, color: 'emerald', bg: 'bg-emerald-50', text: 'text-emerald-600' },
-    { label: 'Unanswered', count: unanswered, icon: Question, color: 'red', bg: 'bg-red-50', text: 'text-red-500' },
-    { label: 'Marked for Review', count: markedCount, icon: BookmarkSimple, color: 'amber', bg: 'bg-amber-50', text: 'text-amber-600' },
+    { label: 'Answered', count: answered, icon: CheckCircle, color: 'emerald', bg: 'bg-emerald-50 dark:bg-emerald-500/15', text: 'text-emerald-600 dark:text-emerald-400' },
+    { label: 'Unanswered', count: unanswered, icon: Question, color: 'red', bg: 'bg-red-50 dark:bg-red-500/15', text: 'text-red-500 dark:text-red-400' },
+    { label: 'Marked for Review', count: markedCount, icon: BookmarkSimple, color: 'amber', bg: 'bg-amber-50 dark:bg-amber-500/15', text: 'text-amber-600 dark:text-amber-400' },
   ];
 
   return (
@@ -159,11 +159,11 @@ const SubmitModal = ({ questions, answers, marked, onClose, onSubmit, submitting
                 const isMarked = marked.has(i);
                 return (
                   <div key={i} className={`aspect-square rounded-lg flex items-center justify-center text-[10px] sm:text-xs font-bold relative ${
-                    isAnswered ? 'bg-emerald-100 text-emerald-700' : 'bg-red-50 text-red-400'
+                    isAnswered ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/15 text-red-400'
                   }`}>
                     {i + 1}
                     {isMarked && (
-                      <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-400 rounded-full border border-white"></div>
+                      <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-400 rounded-full border border-white dark:border-slate-800"></div>
                     )}
                   </div>
                 );
@@ -173,35 +173,35 @@ const SubmitModal = ({ questions, answers, marked, onClose, onSubmit, submitting
 
           {/* Warnings */}
           {unanswered > 0 && (
-            <div className="bg-red-50 rounded-2xl p-4 mb-4 flex items-start gap-3">
+            <div className="bg-red-50 dark:bg-red-500/15 rounded-2xl p-4 mb-4 flex items-start gap-3">
               <Warning size={20} weight="fill" className="text-red-500 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm font-bold text-red-700">You have {unanswered} unanswered question{unanswered !== 1 ? 's' : ''}</p>
-                <p className="text-xs text-red-500 mt-0.5">Unanswered questions will be marked as incorrect.</p>
+                <p className="text-sm font-bold text-red-700 dark:text-red-400">You have {unanswered} unanswered question{unanswered !== 1 ? 's' : ''}</p>
+                <p className="text-xs text-red-500 dark:text-red-400/70 mt-0.5">Unanswered questions will be marked as incorrect.</p>
               </div>
             </div>
           )}
           {markedUnanswered > 0 && (
-            <div className="bg-amber-50 rounded-2xl p-4 mb-4 flex items-start gap-3">
+            <div className="bg-amber-50 dark:bg-amber-500/15 rounded-2xl p-4 mb-4 flex items-start gap-3">
               <BookmarkSimple size={20} weight="fill" className="text-amber-500 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm font-bold text-amber-700">{markedUnanswered} marked question{markedUnanswered !== 1 ? 's are' : ' is'} still unanswered</p>
-                <p className="text-xs text-amber-500 mt-0.5">Go back and review before submitting.</p>
+                <p className="text-sm font-bold text-amber-700 dark:text-amber-400">{markedUnanswered} marked question{markedUnanswered !== 1 ? 's are' : ' is'} still unanswered</p>
+                <p className="text-xs text-amber-500 dark:text-amber-400/70 mt-0.5">Go back and review before submitting.</p>
               </div>
             </div>
           )}
 
           {/* Legend */}
           <div className="flex items-center gap-4 mb-6 text-xs font-medium text-slate-400">
-            <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-emerald-100 rounded"></div>Answered</div>
-            <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-red-50 rounded border border-red-200"></div>Unanswered</div>
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-emerald-100 dark:bg-emerald-500/20 rounded"></div>Answered</div>
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-red-50 dark:bg-red-500/15 rounded border border-red-200 dark:border-red-500/30"></div>Unanswered</div>
             <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-amber-400 rounded-full"></div>Review</div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button data-testid="go-back-button" onClick={onClose}
-              className="flex-1 py-3.5 rounded-2xl font-bold text-sm bg-slate-100 text-slate-600 dark:text-slate-400 hover:bg-slate-200 transition-colors">
+              className="flex-1 py-3.5 rounded-2xl font-bold text-sm bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
               Go Back & Review
             </button>
             <button data-testid="confirm-submit-button" onClick={onSubmit} disabled={submitting}
@@ -450,11 +450,11 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
       const isCurrent = currentQuestion === i;
       const isAnswered = answers[i] !== undefined;
       const isMarked = markedForReview.has(i);
-      if (isCurrent) return 'bg-indigo-50 dark:bg-indigo-500/150 text-white shadow-md scale-110';
-      if (isMarked && isAnswered) return 'bg-amber-100 text-amber-700 ring-2 ring-amber-400';
-      if (isMarked) return 'bg-amber-50 text-amber-600 ring-2 ring-amber-300';
-      if (isAnswered) return 'bg-emerald-100 text-emerald-700';
-      return 'bg-slate-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200';
+      if (isCurrent) return 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md scale-110';
+      if (isMarked && isAnswered) return 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 ring-2 ring-amber-400';
+      if (isMarked) return 'bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-2 ring-amber-300';
+      if (isAnswered) return 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400';
+      return 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700';
     };
   }, [currentQuestion, answers, markedForReview]);
 
@@ -522,21 +522,21 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
       <header className="glass-header">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="min-w-0">
-            <h1 className="text-base sm:text-xl font-extrabold tracking-tight text-slate-900 truncate">{quiz.title}</h1>
+            <h1 className="text-base sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white truncate">{quiz.title}</h1>
             <p className="text-xs sm:text-sm font-medium text-slate-400 truncate">{quiz.subject} • {quiz.total_marks} marks</p>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            <div className="bg-amber-50 px-3 sm:px-4 py-2 rounded-2xl flex items-center gap-1.5 sm:gap-2" data-testid="quiz-timer">
+            <div className="bg-amber-50 dark:bg-amber-500/15 px-3 sm:px-4 py-2 rounded-2xl flex items-center gap-1.5 sm:gap-2" data-testid="quiz-timer">
               <Clock size={18} weight="duotone" className="text-amber-500" />
-              <span className={`text-base sm:text-xl font-extrabold ${timeRemaining < 300 ? 'text-red-600 animate-pulse' : 'text-amber-600'}`}>{formatTime(timeRemaining)}</span>
+              <span className={`text-base sm:text-xl font-extrabold ${timeRemaining < 300 ? 'text-red-600 animate-pulse' : 'text-amber-600 dark:text-amber-400'}`}>{formatTime(timeRemaining)}</span>
             </div>
-            <div className="bg-red-50 px-3 sm:px-4 py-2 rounded-2xl flex items-center gap-1.5 sm:gap-2" data-testid="violation-counter">
+            <div className="bg-red-50 dark:bg-red-500/15 px-3 sm:px-4 py-2 rounded-2xl flex items-center gap-1.5 sm:gap-2" data-testid="violation-counter">
               <Warning size={18} weight="duotone" className="text-red-500" />
-              <span className="text-base sm:text-xl font-extrabold text-red-600">{violations}</span>
+              <span className="text-base sm:text-xl font-extrabold text-red-600 dark:text-red-400">{violations}</span>
             </div>
-            <div className="hidden sm:flex bg-emerald-50 px-4 py-2 rounded-2xl items-center gap-2" data-testid="proctoring-status">
+            <div className="hidden sm:flex bg-emerald-50 dark:bg-emerald-500/15 px-4 py-2 rounded-2xl items-center gap-2" data-testid="proctoring-status">
               <Camera size={18} weight="duotone" className="text-emerald-500" />
-              <span className="text-sm font-bold text-emerald-600">{webcamActive ? 'Cam On' : webcamError ? 'No Cam' : '...'}</span>
+              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{webcamActive ? 'Cam On' : webcamError ? 'No Cam' : '...'}</span>
             </div>
           </div>
         </div>
@@ -554,16 +554,16 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                     className={`aspect-square rounded-xl font-bold text-xs sm:text-sm transition-all relative ${getNavClass(i)}`}>
                     {i + 1}
                     {markedForReview.has(i) && currentQuestion !== i && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-white"></div>
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-white dark:border-slate-800"></div>
                     )}
                   </button>
                 ))}
               </div>
               <div className="mt-4 sm:mt-6 space-y-2 text-xs sm:text-sm">
-                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-indigo-50 dark:bg-indigo-500/150 rounded-md"></div><span className="font-medium text-slate-500 dark:text-slate-400">Current</span></div>
-                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-emerald-100 rounded-md"></div><span className="font-medium text-slate-500 dark:text-slate-400">Answered</span></div>
-                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-amber-100 rounded-md ring-2 ring-amber-400"></div><span className="font-medium text-slate-500 dark:text-slate-400">Marked for Review</span></div>
-                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-slate-100 rounded-md"></div><span className="font-medium text-slate-500 dark:text-slate-400">Not Answered</span></div>
+                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-md"></div><span className="font-medium text-slate-500 dark:text-slate-400">Current</span></div>
+                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-emerald-100 dark:bg-emerald-500/20 rounded-md"></div><span className="font-medium text-slate-500 dark:text-slate-400">Answered</span></div>
+                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-amber-100 dark:bg-amber-500/20 rounded-md ring-2 ring-amber-400"></div><span className="font-medium text-slate-500 dark:text-slate-400">Marked for Review</span></div>
+                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-slate-100 dark:bg-slate-700/50 rounded-md"></div><span className="font-medium text-slate-500 dark:text-slate-400">Not Answered</span></div>
               </div>
               <p className="text-xs sm:text-sm font-medium text-slate-400 mt-4 text-center">{Object.keys(answers).length}/{questions.length} answered</p>
               {/* Webcam feed — hidden on mobile */}
@@ -605,7 +605,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                     {currentQ.type === 'coding' && (
                       <span className="soft-badge bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600">{currentQ.language || 'python'}</span>
                     )}
-                    <span className="soft-badge bg-amber-50 text-amber-600">{currentQ.marks} marks</span>
+                    <span className="soft-badge bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400">{currentQ.marks} marks</span>
                   </div>
                 </div>
 
@@ -618,7 +618,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                     {indices.map((origIdx, displayIdx) => (
                       <button key={origIdx} data-testid={`option-${displayIdx}`} onClick={() => handleAnswer(currentQuestion, currentQ.type === 'mcq-multiple' ? ((answers[currentQuestion] || []).includes(origIdx) ? (answers[currentQuestion] || []).filter(a => a !== origIdx) : [...(answers[currentQuestion] || []), origIdx]) : origIdx)}
                         className={`w-full text-left p-3 sm:p-4 rounded-2xl font-medium transition-all select-none text-sm sm:text-base ${
-                          (currentQ.type === 'mcq-single' ? answers[currentQuestion] === origIdx : (answers[currentQuestion] || []).includes(origIdx)) ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100'
+                          (currentQ.type === 'mcq-single' ? answers[currentQuestion] === origIdx : (answers[currentQuestion] || []).includes(origIdx)) ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50'
                         }`}>
                         <span className="font-bold mr-3 text-sm">{String.fromCharCode(65 + displayIdx)}.</span>{currentQ.options[origIdx]}
                       </button>
@@ -630,11 +630,11 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                 {currentQ.type === 'boolean' && (
                   <div className="flex gap-3 sm:gap-4">
                     <button data-testid="true-button" onClick={() => handleAnswer(currentQuestion, true)}
-                      className={`flex-1 p-4 sm:p-6 rounded-2xl font-bold text-base sm:text-lg transition-all ${answers[currentQuestion] === true ? 'bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100'}`}>
+                      className={`flex-1 p-4 sm:p-6 rounded-2xl font-bold text-base sm:text-lg transition-all ${answers[currentQuestion] === true ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 ring-2 ring-emerald-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}>
                       <CheckCircle size={28} weight="duotone" className="mx-auto mb-2" />TRUE
                     </button>
                     <button data-testid="false-button" onClick={() => handleAnswer(currentQuestion, false)}
-                      className={`flex-1 p-4 sm:p-6 rounded-2xl font-bold text-base sm:text-lg transition-all ${answers[currentQuestion] === false ? 'bg-rose-50 text-rose-700 ring-2 ring-rose-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100'}`}>
+                      className={`flex-1 p-4 sm:p-6 rounded-2xl font-bold text-base sm:text-lg transition-all ${answers[currentQuestion] === false ? 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 ring-2 ring-rose-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}>
                       <XCircle size={28} weight="duotone" className="mx-auto mb-2" />FALSE
                     </button>
                   </div>
