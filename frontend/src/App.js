@@ -24,6 +24,7 @@ import AvailableQuizzes from './pages/AvailableQuizzes';
 import Placements from './pages/Placements';
 import TeacherQuizzes from './pages/TeacherQuizzes';
 import QuizCalendar from './pages/QuizCalendar';
+import QuizSummary from './pages/QuizSummary';
 
 const ROLE_DASHBOARD = {
   student: 'student-dashboard',
@@ -122,6 +123,7 @@ function App() {
       case 'placements': return <Placements navigate={navigate} user={user} />;
       case 'teacher-quizzes': return <TeacherQuizzes navigate={navigate} user={user} />;
       case 'quiz-calendar': return <QuizCalendar navigate={navigate} user={user} />;
+      case 'quiz-summary': return <QuizSummary navigate={navigate} user={user} attemptData={selectedData} />;
       default: return <LoginPage onLogin={handleLogin} />;
     }
   };

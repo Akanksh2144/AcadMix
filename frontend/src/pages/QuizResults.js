@@ -109,9 +109,10 @@ const QuizResults = ({ navigate, user }) => {
           ) : (
             <div className="space-y-4">
               {attempts.map((a) => (
-                <div key={a.id} className="soft-card-hover p-6" data-testid={`quiz-result-${a.id}`}>
+                <div key={a.id} className="soft-card-hover p-6 cursor-pointer group" data-testid={`quiz-result-${a.id}`}
+                  onClick={() => navigate('quiz-summary', a)}>
                   <div className="flex items-start justify-between mb-4">
-                    <div><h4 className="font-bold text-slate-900 dark:text-white mb-1">{a.quiz_title}</h4><p className="text-sm font-medium text-slate-400">{a.quiz_subject}</p></div>
+                    <div><h4 className="font-bold text-slate-900 dark:text-white mb-1 group-hover:text-indigo-500 transition-colors">{a.quiz_title}</h4><p className="text-sm font-medium text-slate-400">{a.quiz_subject}</p></div>
                     <div className="text-right">
                       <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{a.percentage}%</p>
                       <p className="text-xs font-medium text-slate-400">{a.score}/{a.total_marks} marks</p>
@@ -124,7 +125,7 @@ const QuizResults = ({ navigate, user }) => {
                     <div className="grid grid-cols-3 gap-4 text-sm font-medium">
                       <span className="text-emerald-600 flex items-center gap-1"><CheckCircle size={16} weight="duotone" />{a.results.filter(r => r.is_correct).length} Correct</span>
                       <span className="text-red-500 flex items-center gap-1"><XCircle size={16} weight="duotone" />{a.results.filter(r => !r.is_correct).length} Wrong</span>
-                      <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1"><Clock size={16} weight="duotone" />{a.violations || 0} violations</span>
+                      <span className="text-indigo-500 flex items-center gap-1 group-hover:underline">View Details →</span>
                     </div>
                   )}
                 </div>

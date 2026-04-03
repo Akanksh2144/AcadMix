@@ -434,9 +434,9 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     isSubmittingRef.current = true;
     setSubmitting(true);
     try {
-      await attemptsAPI.submit(attempt.id);
+      const { data: result } = await attemptsAPI.submit(attempt.id);
       exitFullscreen();
-      navigate('quiz-results');
+      navigate('quiz-summary', result);
     } catch (err) {
       showAlert('Submit Failed', err.response?.data?.detail || 'Submit failed', 'danger');
       isSubmittingRef.current = false;
