@@ -39,7 +39,7 @@ const UserManagement = ({ navigate }) => {
           </div>
         </div>
 
-        <div className="bg-slate-100 rounded-full p-1 inline-flex gap-1 mb-6">
+        <div className="bg-slate-100 rounded-2xl p-1 inline-flex gap-1 mb-6">
           <button data-testid="students-tab" onClick={() => setActiveTab('students')} className={`pill-tab ${activeTab === 'students' ? 'pill-tab-active' : 'pill-tab-inactive'}`}>Students ({students.length})</button>
           <button data-testid="teachers-tab" onClick={() => setActiveTab('teachers')} className={`pill-tab ${activeTab === 'teachers' ? 'pill-tab-active' : 'pill-tab-inactive'}`}>Teachers ({teachers.length})</button>
         </div>

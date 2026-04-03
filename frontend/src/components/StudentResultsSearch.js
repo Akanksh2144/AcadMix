@@ -21,7 +21,7 @@ const SemesterTabView = ({ semesters }) => {
       {/* Semester pill tabs */}
       <div className="mb-6">
         <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Select Semester</label>
-        <div className="bg-slate-100 rounded-full p-1 inline-flex gap-1 flex-wrap">
+        <div className="bg-slate-100 rounded-2xl p-1 inline-flex gap-1 flex-wrap">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
             <button
               key={sem}

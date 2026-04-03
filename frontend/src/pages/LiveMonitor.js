@@ -147,7 +147,7 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
         </div>
 
         {/* Tabs */}
-        <div className="bg-slate-100 rounded-full p-1 inline-flex gap-1 mb-6">
+        <div className="bg-slate-100 rounded-2xl p-1 inline-flex gap-1 mb-6">
           {[{ key: 'active', label: `Active (${activeStudents.length})` }, { key: 'submitted', label: `Submitted (${submittedStudents.length})` }, { key: 'violations', label: `Violations (${violationStudents.length})` }].map(t => (
             <button key={t.key} data-testid={`${t.key}-tab`} onClick={() => setActiveTab(t.key)}
               className={`pill-tab ${activeTab === t.key ? 'pill-tab-active' : 'pill-tab-inactive'}`}>{t.label}</button>
