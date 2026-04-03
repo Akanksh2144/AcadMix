@@ -125,7 +125,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
               <BookOpen size={22} weight="duotone" className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">QuizPortal</h1>
+              <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">AcadMix</h1>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Exam Cell</p>
             </div>
           </div>

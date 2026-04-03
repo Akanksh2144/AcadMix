@@ -20,6 +20,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import certifi
 import io
 import csv
+from tenant import derive_tenant_id, get_tenant_id, is_super_admin, tenant_query, inject_tenant, COLLEGE_TO_TENANT
 
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -80,8 +81,8 @@ def hash_password(password: str) -> str:
 def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
-def create_access_token(user_id: str, role: str) -> str:
-    return jwt.encode({"sub": user_id, "role": role, "exp": datetime.now(timezone.utc) + timedelta(hours=24), "type": "access"}, JWT_SECRET, algorithm=JWT_ALGORITHM)
+def create_access_token(user_id: str, role: str, tenant_id: str = "") -> str:
+    return jwt.encode({"sub": user_id, "role": role, "tenant_id": tenant_id, "exp": datetime.now(timezone.utc) + timedelta(hours=24), "type": "access"}, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 def create_refresh_token(user_id: str) -> str:
     return jwt.encode({"sub": user_id, "exp": datetime.now(timezone.utc) + timedelta(days=7), "type": "refresh"}, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -118,6 +119,9 @@ async def get_current_user(request: Request) -> dict:
             raise HTTPException(status_code=401, detail="User not found")
         user = serialize_doc(user)
         user.pop("password_hash", None)
+        # Ensure tenant_id is always present on the user dict
+        if "tenant_id" not in user:
+            user["tenant_id"] = derive_tenant_id(user.get("college", ""))
         return user
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
@@ -246,7 +250,8 @@ async def login(req: LoginRequest, response: Response):
     if not verify_password(req.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     uid = str(user["_id"])
-    access = create_access_token(uid, user["role"])
+    tid = user.get("tenant_id", derive_tenant_id(user.get("college", "")))
+    access = create_access_token(uid, user["role"], tid)
     refresh = create_refresh_token(uid)
     response.set_cookie("access_token", access, httponly=True, secure=False, samesite="lax", max_age=86400)
     response.set_cookie("refresh_token", refresh, httponly=True, secure=False, samesite="lax", max_age=604800)
@@ -260,16 +265,18 @@ async def register(req: RegisterRequest, response: Response):
     existing = await db.users.find_one({"college_id": req.college_id.upper()})
     if existing:
         raise HTTPException(status_code=400, detail="College ID already registered")
+    tid = derive_tenant_id(req.college)
     doc = {
         "name": req.name, "college_id": req.college_id.upper(), "email": req.email.lower(),
         "password_hash": hash_password(req.password), "role": req.role,
         "college": req.college, "department": req.department, "batch": req.batch, "section": req.section,
+        "tenant_id": tid,
         "created_at": datetime.now(timezone.utc)
     }
     result = await db.users.insert_one(doc)
     doc["_id"] = result.inserted_id
     uid = str(result.inserted_id)
-    access = create_access_token(uid, req.role)
+    access = create_access_token(uid, req.role, tid)
     refresh = create_refresh_token(uid)
     response.set_cookie("access_token", access, httponly=True, secure=False, samesite="lax", max_age=86400)
     response.set_cookie("refresh_token", refresh, httponly=True, secure=False, samesite="lax", max_age=604800)
@@ -291,7 +298,7 @@ async def logout(response: Response):
 # ─── User Routes ────────────────────────────────────────────────────────────
 @app.get("/api/users")
 async def list_users(role: Optional[str] = None, user: dict = Depends(require_role("admin", "teacher", "hod", "exam_cell"))):
-    query = {}
+    query = tenant_query(user)
     if role:
         query["role"] = role
     users = await db.users.find(query, {"password_hash": 0}).to_list(500)
@@ -309,10 +316,12 @@ async def create_user(req: RegisterRequest, user: dict = Depends(require_role("a
     existing = await db.users.find_one({"college_id": req.college_id.upper()})
     if existing:
         raise HTTPException(status_code=400, detail="College ID already exists")
+    tid = derive_tenant_id(req.college)
     doc = {
         "name": req.name, "college_id": req.college_id.upper(), "email": req.email.lower(),
         "password_hash": hash_password(req.password), "role": req.role,
         "college": req.college, "department": req.department, "batch": req.batch, "section": req.section,
+        "tenant_id": tid,
         "created_at": datetime.now(timezone.utc)
     }
     result = await db.users.insert_one(doc)
@@ -329,7 +338,7 @@ async def delete_user(user_id: str, user: dict = Depends(require_role("admin")))
 # ─── Quiz Routes ────────────────────────────────────────────────────────────
 @app.get("/api/quizzes")
 async def list_quizzes(status: Optional[str] = None, user: dict = Depends(get_current_user)):
-    query = {}
+    query = tenant_query(user)
     if status:
         query["status"] = status
     if user["role"] == "teacher":
@@ -347,7 +356,7 @@ async def list_quizzes(status: Optional[str] = None, user: dict = Depends(get_cu
 @app.post("/api/quizzes")
 async def create_quiz(req: QuizCreate, user: dict = Depends(require_role("teacher", "admin"))):
     total = sum(q.get("marks", 0) for q in req.questions) if req.questions else req.total_marks
-    doc = {
+    doc = inject_tenant(user, {
         "title": req.title, "subject": req.subject, "description": req.description,
         "total_marks": total, "duration_mins": req.duration_mins,
         "negative_marking": req.negative_marking, "timed": req.timed,
@@ -357,7 +366,7 @@ async def create_quiz(req: QuizCreate, user: dict = Depends(require_role("teache
         "questions": req.questions, "status": "draft",
         "created_by": user["id"], "created_by_name": user["name"],
         "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc),
-    }
+    })
     result = await db.quizzes.insert_one(doc)
     doc["_id"] = result.inserted_id
     return serialize_doc(doc)
@@ -542,13 +551,13 @@ async def start_attempt(quiz_id: str, user: dict = Depends(get_current_user)):
     if in_progress:
         return serialize_doc(in_progress)
     num_q = len(quiz.get("questions", []))
-    attempt = {
+    attempt = inject_tenant(user, {
         "quiz_id": quiz_id, "quiz_title": quiz["title"], "quiz_subject": quiz["subject"],
         "student_id": user["id"], "student_name": user["name"],
         "total_questions": num_q, "total_marks": quiz["total_marks"],
         "answers": [None] * num_q, "status": "in_progress", "violations": 0,
         "started_at": datetime.now(timezone.utc), "score": 0
-    }
+    })
     result = await db.quiz_attempts.insert_one(attempt)
     attempt["_id"] = result.inserted_id
     return serialize_doc(attempt)
@@ -706,7 +715,7 @@ async def list_attempts(quiz_id: Optional[str] = None, user: dict = Depends(get_
 # ─── Student Search & Profile (HOD / Admin) ───────────────────────────────
 @app.get("/api/students/search")
 async def search_students(q: str = "", department: Optional[str] = None, college: Optional[str] = None, user: dict = Depends(require_role("hod", "admin", "exam_cell", "teacher"))):
-    query = {"role": "student"}
+    query = tenant_query(user, {"role": "student"})
     
     # Tier-based filtering
     if user["role"] == "hod":
@@ -1082,7 +1091,7 @@ async def get_quiz_detailed_analytics(
 @app.get("/api/leaderboard")
 async def get_leaderboard(user: dict = Depends(get_current_user)):
     pipeline = [
-        {"$match": {"status": "submitted"}},
+        {"$match": tenant_query(user, {"status": "submitted"})},
         {"$group": {"_id": "$student_id", "avg_score": {"$avg": "$percentage"}, "quizzes_taken": {"$sum": 1}, "student_name": {"$first": "$student_name"}}},
         {"$sort": {"avg_score": -1}},
         {"$limit": 50}
@@ -1106,7 +1115,7 @@ async def student_dashboard(user: dict = Depends(get_current_user)):
     # All submitted attempts (with details for analysis)
     all_attempts = await db.quiz_attempts.find({"student_id": user["id"], "status": "submitted"}).sort("submitted_at", -1).to_list(50)
     # Active quizzes with question_count + deadline info
-    active_quizzes_raw = await db.quizzes.find({"status": "active"}).sort("created_at", -1).to_list(10)
+    active_quizzes_raw = await db.quizzes.find(tenant_query(user, {"status": "active"})).sort("created_at", -1).to_list(10)
     attempted_quiz_ids = {a["quiz_id"] for a in all_attempts}
     active_quizzes = []
     for q in active_quizzes_raw:
@@ -1134,7 +1143,7 @@ async def student_dashboard(user: dict = Depends(get_current_user)):
     # ── Leaderboard Rank ──
     rank = None
     rank_pipeline = [
-        {"$match": {"status": "submitted"}},
+        {"$match": tenant_query(user, {"status": "submitted"})},
         {"$group": {"_id": "$student_id", "avg_score": {"$avg": "$percentage"}}},
         {"$sort": {"avg_score": -1}},
     ]
@@ -1170,7 +1179,7 @@ async def student_dashboard(user: dict = Depends(get_current_user)):
             "timestamp": submitted.isoformat() if isinstance(submitted, datetime) else "",
         })
     # Add recently published quizzes as activity
-    recent_quizzes = await db.quizzes.find({"status": "active"}).sort("published_at", -1).to_list(3)
+    recent_quizzes = await db.quizzes.find(tenant_query(user, {"status": "active"})).sort("published_at", -1).to_list(3)
     for q in recent_quizzes:
         pub = q.get("published_at") or q.get("created_at")
         activity.append({
@@ -1219,8 +1228,8 @@ async def teacher_dashboard(user: dict = Depends(require_role("teacher", "admin"
         pipeline = [{"$match": {"quiz_id": q_id, "status": "submitted"}}, {"$group": {"_id": None, "avg": {"$avg": "$percentage"}}}]
         agg = await db.quiz_attempts.aggregate(pipeline).to_list(1)
         q["avg_score"] = round(agg[0]["avg"], 1) if agg else 0
-    total_students = await db.users.count_documents({"role": "student"})
-    recent = await db.quiz_attempts.find({"status": "submitted"}).sort("submitted_at", -1).to_list(10)
+    total_students = await db.users.count_documents(tenant_query(user, {"role": "student"}))
+    recent = await db.quiz_attempts.find(tenant_query(user, {"status": "submitted"})).sort("submitted_at", -1).to_list(10)
     return {
         "quizzes": [serialize_doc(q) for q in my_quizzes],
         "total_students": total_students,
@@ -1229,13 +1238,14 @@ async def teacher_dashboard(user: dict = Depends(require_role("teacher", "admin"
 
 @app.get("/api/dashboard/admin")
 async def admin_dashboard(user: dict = Depends(require_role("admin"))):
-    total_students = await db.users.count_documents({"role": "student"})
-    total_teachers = await db.users.count_documents({"role": "teacher"})
-    total_hods = await db.users.count_documents({"role": "hod"})
-    total_exam_cell = await db.users.count_documents({"role": "exam_cell"})
-    total_quizzes = await db.quizzes.count_documents({})
-    active_quizzes = await db.quizzes.count_documents({"status": "active"})
-    dept_pipeline = [{"$match": {"role": "student"}}, {"$group": {"_id": "$department", "count": {"$sum": 1}}}]
+    tq = tenant_query(user)
+    total_students = await db.users.count_documents({**tq, "role": "student"})
+    total_teachers = await db.users.count_documents({**tq, "role": "teacher"})
+    total_hods = await db.users.count_documents({**tq, "role": "hod"})
+    total_exam_cell = await db.users.count_documents({**tq, "role": "exam_cell"})
+    total_quizzes = await db.quizzes.count_documents(tq)
+    active_quizzes = await db.quizzes.count_documents({**tq, "status": "active"})
+    dept_pipeline = [{"$match": {**tq, "role": "student"}}, {"$group": {"_id": "$department", "count": {"$sum": 1}}}]
     depts = await db.users.aggregate(dept_pipeline).to_list(20)
     return {
         "total_students": total_students, "total_teachers": total_teachers,
@@ -1248,7 +1258,7 @@ async def admin_dashboard(user: dict = Depends(require_role("admin"))):
 @app.get("/api/faculty/teachers")
 async def list_department_teachers(user: dict = Depends(require_role("hod", "admin"))):
     # HOD is also a faculty member, include both teachers and HODs
-    query = {"role": {"$in": ["teacher", "hod"]}}
+    query = tenant_query(user, {"role": {"$in": ["teacher", "hod"]}})
     if user["role"] == "hod":
         dept = user.get("department") or ""
         if "," in dept:
@@ -1260,7 +1270,7 @@ async def list_department_teachers(user: dict = Depends(require_role("hod", "adm
 
 @app.get("/api/faculty/assignments")
 async def list_assignments(user: dict = Depends(require_role("hod", "admin", "teacher"))):
-    query = {}
+    query = tenant_query(user)
     if user["role"] == "hod":
         dept = user.get("department") or ""
         if "," in dept:
@@ -1283,13 +1293,13 @@ async def create_assignment(req: FacultyAssignment, user: dict = Depends(require
     })
     if existing:
         raise HTTPException(status_code=400, detail="Assignment already exists")
-    doc = {
+    doc = inject_tenant(user, {
         "teacher_id": req.teacher_id, "teacher_name": teacher.get("name", ""),
         "subject_code": req.subject_code, "subject_name": req.subject_name,
         "department": req.department, "batch": req.batch, "section": req.section,
         "semester": req.semester, "assigned_by": user["id"],
         "created_at": datetime.now(timezone.utc)
-    }
+    })
     result = await db.faculty_assignments.insert_one(doc)
     doc["_id"] = result.inserted_id
     return serialize_doc(doc)
@@ -1378,7 +1388,7 @@ async def save_mark_entry(req: MarkEntrySave, user: dict = Depends(require_role(
         return serialize_doc(updated)
     
     # Create new entry
-    doc = {
+    doc = inject_tenant(user, {
         "assignment_id": req.assignment_id, "teacher_id": user["id"], "teacher_name": user["name"],
         "subject_code": assignment["subject_code"], "subject_name": assignment["subject_name"],
         "department": assignment["department"], "batch": assignment["batch"], "section": assignment["section"],
@@ -1386,7 +1396,7 @@ async def save_mark_entry(req: MarkEntrySave, user: dict = Depends(require_role(
         "entries": entries_data, "status": "draft",
         "revision_history": [],
         "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)
-    }
+    })
     result = await db.mark_entries.insert_one(doc)
     doc["_id"] = result.inserted_id
     return serialize_doc(doc)
@@ -1437,7 +1447,7 @@ async def review_marks(entry_id: str, req: MarkReview, user: dict = Depends(requ
 # ─── Exam Cell Routes ──────────────────────────────────────────────────────
 @app.get("/api/examcell/approved-marks")
 async def get_approved_marks(user: dict = Depends(require_role("exam_cell", "admin"))):
-    entries = await db.mark_entries.find({"status": "approved"}).sort("subject_code", 1).to_list(500)
+    entries = await db.mark_entries.find(tenant_query(user, {"status": "approved"})).sort("subject_code", 1).to_list(500)
     return [serialize_doc(e) for e in entries]
 
 @app.post("/api/examcell/endterm")
@@ -1595,13 +1605,13 @@ async def list_announcements(user: dict = Depends(get_current_user)):
 
 @app.post("/api/announcements")
 async def create_announcement(req: AnnouncementCreate, user: dict = Depends(require_role("hod", "admin"))):
-    doc = {
+    doc = inject_tenant(user, {
         "title": req.title, "message": req.message,
         "priority": req.priority, "visibility": req.visibility,
         "department": user.get("department", "ET"),
         "posted_by": user["name"], "posted_by_id": user["id"],
         "created_at": datetime.now(timezone.utc)
-    }
+    })
     result = await db.announcements.insert_one(doc)
     doc["_id"] = result.inserted_id
     return serialize_doc(doc)
@@ -1694,11 +1704,11 @@ async def hod_dashboard(user: dict = Depends(require_role("hod", "admin"))):
 
 @app.get("/api/dashboard/exam_cell")
 async def exam_cell_dashboard(user: dict = Depends(require_role("exam_cell", "admin"))):
-    total_approved = await db.mark_entries.count_documents({"status": "approved"})
-    total_endterm = await db.endterm_entries.count_documents({})
-    total_published = await db.endterm_entries.count_documents({"status": "published"})
-    total_draft = await db.endterm_entries.count_documents({"status": "draft"})
-    recent = await db.endterm_entries.find({}).sort("updated_at", -1).to_list(5)
+    total_approved = await db.mark_entries.count_documents(tenant_query(user, {"status": "approved"}))
+    total_endterm = await db.endterm_entries.count_documents(tenant_query(user))
+    total_published = await db.endterm_entries.count_documents(tenant_query(user, {"status": "published"}))
+    total_draft = await db.endterm_entries.count_documents(tenant_query(user, {"status": "draft"}))
+    recent = await db.endterm_entries.find(tenant_query(user)).sort("updated_at", -1).to_list(5)
     return {
         "total_approved_midterms": total_approved,
         "total_endterm": total_endterm, "total_published": total_published,
@@ -1815,33 +1825,33 @@ async def seed_data():
     admin_pwd = os.environ.get("ADMIN_PASSWORD", "admin123")
     existing = await db.users.find_one({"college_id": admin_cid})
     if not existing:
-        await db.users.insert_one({"name": "GNI Admin", "college_id": admin_cid, "email": "admin@gni.edu", "password_hash": hash_password(admin_pwd), "role": "admin", "college": "GNI", "department": "Administration", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+        await db.users.insert_one({"name": "GNI Admin", "college_id": admin_cid, "email": "admin@gni.edu", "password_hash": hash_password(admin_pwd), "role": "admin", "college": "ALL", "department": "Administration", "batch": "", "section": "", "tenant_id": "__all__", "created_at": datetime.now(timezone.utc)})
     elif not verify_password(admin_pwd, existing["password_hash"]):
-        await db.users.update_one({"college_id": admin_cid}, {"$set": {"password_hash": hash_password(admin_pwd), "college": "GNI"}})
+        await db.users.update_one({"college_id": admin_cid}, {"$set": {"password_hash": hash_password(admin_pwd), "college": "ALL", "tenant_id": "__all__"}})
 
     # Teachers from different colleges
     if not await db.users.find_one({"college_id": "T001"}):
-        await db.users.insert_one({"name": "Dr. Sarah Johnson", "college_id": "T001", "email": "sarah.j@gnitc.edu", "password_hash": hash_password("teacher123"), "role": "teacher", "college": "GNITC", "department": "DS", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+        await db.users.insert_one({"name": "Dr. Sarah Johnson", "college_id": "T001", "email": "sarah.j@gnitc.edu", "password_hash": hash_password("teacher123"), "role": "teacher", "college": "GNITC", "department": "DS", "batch": "", "section": "", "tenant_id": "gnitc", "created_at": datetime.now(timezone.utc)})
     if not await db.users.find_one({"college_id": "T002"}):
-        await db.users.insert_one({"name": "Prof. Ravi Kumar", "college_id": "T002", "email": "ravi.k@gnit.edu", "password_hash": hash_password("teacher123"), "role": "teacher", "college": "GNIT", "department": "CSE", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+        await db.users.insert_one({"name": "Prof. Ravi Kumar", "college_id": "T002", "email": "ravi.k@gnit.edu", "password_hash": hash_password("teacher123"), "role": "teacher", "college": "GNIT", "department": "CSE", "batch": "", "section": "", "tenant_id": "gnit", "created_at": datetime.now(timezone.utc)})
     if not await db.users.find_one({"college_id": "T003"}):
-        await db.users.insert_one({"name": "Dr. Priya Verma", "college_id": "T003", "email": "priya.v@gnu.edu", "password_hash": hash_password("teacher123"), "role": "teacher", "college": "GNU", "department": "ECE", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+        await db.users.insert_one({"name": "Dr. Priya Verma", "college_id": "T003", "email": "priya.v@gnu.edu", "password_hash": hash_password("teacher123"), "role": "teacher", "college": "GNU", "department": "ECE", "batch": "", "section": "", "tenant_id": "gnu", "created_at": datetime.now(timezone.utc)})
 
     # HODs from different colleges
     if not await db.users.find_one({"college_id": "HOD001"}):
-        await db.users.insert_one({"name": "Dr. Venkat Rao", "college_id": "HOD001", "email": "venkat.hod@gnitc.edu", "password_hash": hash_password("hod123"), "role": "hod", "college": "GNITC", "department": "DS", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+        await db.users.insert_one({"name": "Dr. Venkat Rao", "college_id": "HOD001", "email": "venkat.hod@gnitc.edu", "password_hash": hash_password("hod123"), "role": "hod", "college": "GNITC", "department": "DS", "batch": "", "section": "", "tenant_id": "gnitc", "created_at": datetime.now(timezone.utc)})
     if not await db.users.find_one({"college_id": "HOD002"}):
-        await db.users.insert_one({"name": "Dr. Lakshmi Iyer", "college_id": "HOD002", "email": "lakshmi.hod@gnit.edu", "password_hash": hash_password("hod123"), "role": "hod", "college": "GNIT", "department": "CSE", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+        await db.users.insert_one({"name": "Dr. Lakshmi Iyer", "college_id": "HOD002", "email": "lakshmi.hod@gnit.edu", "password_hash": hash_password("hod123"), "role": "hod", "college": "GNIT", "department": "CSE", "batch": "", "section": "", "tenant_id": "gnit", "created_at": datetime.now(timezone.utc)})
     if not await db.users.find_one({"college_id": "HOD003"}):
-        await db.users.insert_one({"name": "Dr. Ramesh Patel", "college_id": "HOD003", "email": "ramesh.hod@gnu.edu", "password_hash": hash_password("hod123"), "role": "hod", "college": "GNU", "department": "ECE", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+        await db.users.insert_one({"name": "Dr. Ramesh Patel", "college_id": "HOD003", "email": "ramesh.hod@gnu.edu", "password_hash": hash_password("hod123"), "role": "hod", "college": "GNU", "department": "ECE", "batch": "", "section": "", "tenant_id": "gnu", "created_at": datetime.now(timezone.utc)})
 
     # Exam Cells for each college
     if not await db.users.find_one({"college_id": "EC001"}):
-        await db.users.insert_one({"name": "GNITC Exam Cell", "college_id": "EC001", "email": "examcell@gnitc.edu", "password_hash": hash_password("exam123"), "role": "exam_cell", "college": "GNITC", "department": "", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+        await db.users.insert_one({"name": "GNITC Exam Cell", "college_id": "EC001", "email": "examcell@gnitc.edu", "password_hash": hash_password("exam123"), "role": "exam_cell", "college": "GNITC", "department": "", "batch": "", "section": "", "tenant_id": "gnitc", "created_at": datetime.now(timezone.utc)})
     if not await db.users.find_one({"college_id": "EC002"}):
-        await db.users.insert_one({"name": "GNIT Exam Cell", "college_id": "EC002", "email": "examcell@gnit.edu", "password_hash": hash_password("exam123"), "role": "exam_cell", "college": "GNIT", "department": "", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+        await db.users.insert_one({"name": "GNIT Exam Cell", "college_id": "EC002", "email": "examcell@gnit.edu", "password_hash": hash_password("exam123"), "role": "exam_cell", "college": "GNIT", "department": "", "batch": "", "section": "", "tenant_id": "gnit", "created_at": datetime.now(timezone.utc)})
     if not await db.users.find_one({"college_id": "EC003"}):
-        await db.users.insert_one({"name": "GNU Exam Cell", "college_id": "EC003", "email": "examcell@gnu.edu", "password_hash": hash_password("exam123"), "role": "exam_cell", "college": "GNU", "department": "", "batch": "", "section": "", "created_at": datetime.now(timezone.utc)})
+        await db.users.insert_one({"name": "GNU Exam Cell", "college_id": "EC003", "email": "examcell@gnu.edu", "password_hash": hash_password("exam123"), "role": "exam_cell", "college": "GNU", "department": "", "batch": "", "section": "", "tenant_id": "gnu", "created_at": datetime.now(timezone.utc)})
 
     # Students from different colleges
     students_data = [
@@ -1861,7 +1871,8 @@ async def seed_data():
     ]
     for s in students_data:
         if not await db.users.find_one({"college_id": s["college_id"]}):
-            await db.users.insert_one({**s, "password_hash": hash_password("student123"), "role": "student", "section": "A", "created_at": datetime.now(timezone.utc)})
+            tid = derive_tenant_id(s.get("college", "GNITC"))
+            await db.users.insert_one({**s, "password_hash": hash_password("student123"), "role": "student", "section": "A", "tenant_id": tid, "created_at": datetime.now(timezone.utc)})
 
     # Semester results from marksheets (RAJANA AKANKSH)
     student = await db.users.find_one({"college_id": "22WJ8A6745"})
@@ -2186,3 +2197,78 @@ async def submit_challenge(req: ChallengeSubmit, user: dict = Depends(get_curren
 @app.on_event("startup")
 async def startup():
     await seed_data()
+    await _migrate_tenant_ids()
+
+
+async def _migrate_tenant_ids():
+    """One-time migration: stamp tenant_id on every document that lacks it."""
+    # Check if migration is needed (quick check on users collection)
+    needs_migration = await db.users.count_documents({"tenant_id": {"$exists": False}})
+    if needs_migration == 0:
+        print("[tenant] All users already have tenant_id — skipping migration.")
+        return
+
+    print(f"[tenant] Migrating {needs_migration} users...")
+
+    # Step 1: Migrate users
+    user_tenant_map = {}
+    async for user in db.users.find({"tenant_id": {"$exists": False}}):
+        college = user.get("college", "GNITC")
+        # Super-admin check
+        if user.get("role") == "admin" and college.upper() == "ALL":
+            tid = "__all__"
+        else:
+            tid = derive_tenant_id(college)
+        await db.users.update_one({"_id": user["_id"]}, {"$set": {"tenant_id": tid}})
+        user_tenant_map[str(user["_id"])] = tid
+
+    # Build full lookup map
+    async for u in db.users.find({}, {"_id": 1, "tenant_id": 1}):
+        user_tenant_map[str(u["_id"])] = u.get("tenant_id", "gnitc")
+
+    # Step 2: Migrate other collections
+    collections_refs = {
+        "quizzes": "created_by",
+        "quiz_attempts": "student_id",
+        "semester_results": "student_id",
+        "mark_entries": "teacher_id",
+        "faculty_assignments": "teacher_id",
+        "timetable_slots": None,
+        "announcements": "posted_by_id",
+        "endterm_entries": "entered_by",
+        "placements": None,
+        "student_progress": "student_id",
+    }
+
+    for coll_name, user_field in collections_refs.items():
+        try:
+            count = 0
+            async for doc in db[coll_name].find({"tenant_id": {"$exists": False}}):
+                tid = "gnitc"
+                if user_field and doc.get(user_field):
+                    tid = user_tenant_map.get(doc[user_field], "gnitc")
+                await db[coll_name].update_one({"_id": doc["_id"]}, {"$set": {"tenant_id": tid}})
+                count += 1
+            if count > 0:
+                print(f"[tenant] {coll_name}: {count} docs migrated")
+        except Exception as e:
+            print(f"[tenant] {coll_name}: skipped ({e})")
+
+    # Step 3: Create compound indexes
+    index_specs = [
+        ("users", [("tenant_id", 1), ("role", 1)]),
+        ("users", [("tenant_id", 1), ("college_id", 1)]),
+        ("quizzes", [("tenant_id", 1), ("status", 1)]),
+        ("quiz_attempts", [("tenant_id", 1), ("student_id", 1), ("quiz_id", 1)]),
+        ("quiz_attempts", [("tenant_id", 1), ("status", 1)]),
+        ("mark_entries", [("tenant_id", 1), ("department", 1), ("status", 1)]),
+        ("faculty_assignments", [("tenant_id", 1), ("teacher_id", 1)]),
+        ("announcements", [("tenant_id", 1), ("department", 1)]),
+    ]
+    for coll_name, keys in index_specs:
+        try:
+            await db[coll_name].create_index(keys)
+        except Exception:
+            pass
+
+    print("[tenant] Migration complete!")

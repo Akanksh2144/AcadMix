@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GraduationCap, UserCircle, Lock, Eye, EyeSlash, PaperPlaneTilt, Sun, Moon } from '@phosphor-icons/react';
 import { authAPI, formatApiError } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
+import * as Sentry from '@sentry/react';
 
 const containerVariants = {
   hidden: { opacity: 0 },

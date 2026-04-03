@@ -228,7 +228,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
           className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"
         >
           <div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-1">{getGreeting()}, {user?.name?.split(' ')[0]}!</h2>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-1">{getGreeting()}, <span className="gradient-text">{user?.name?.split(' ')[0]}!</span></h2>
             <p className="text-sm sm:text-base font-medium text-slate-500 dark:text-slate-400">
               {user?.college || 'GNI'} • {user?.department || 'DS'} • Batch {user?.batch || '2026'} • Section {user?.section || 'A'}
             </p>

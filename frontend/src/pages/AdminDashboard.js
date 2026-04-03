@@ -58,7 +58,7 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center"><BookOpen size={22} weight="duotone" className="text-white" /></div>
-              <div><h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">QuizPortal</h1><p className="text-xs font-bold uppercase tracking-widest text-slate-400">Admin</p></div>
+              <div><h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">AcadMix</h1><p className="text-xs font-bold uppercase tracking-widest text-slate-400">Admin</p></div>
             </div>
             <div className="flex items-center gap-3">
               <button data-testid="profile-button" className="btn-ghost !px-4 !py-2 text-sm">{user?.name || 'Admin Panel'}</button>
@@ -69,8 +69,8 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-2">College Overview</h2>
+        <div className="mb-8 animate-fade-in-up">
+          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">College Overview</h2>
           <p className="text-base font-medium text-slate-500 dark:text-slate-400">Manage your institution's academic platform</p>
         </div>
 
@@ -95,7 +95,7 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
               {stats.map((stat, i) => {
                 const Icon = stat.icon;
                 return (
-                  <div key={i} className="soft-card-hover p-6" data-testid={`stat-card-${stat.label.toLowerCase().replace(/\s+/g, '-')}`}>
+                  <div key={i} className="stat-card p-6" data-testid={`stat-card-${stat.label.toLowerCase().replace(/\s+/g, '-')}`}>
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
                       <div className={`${stat.color} p-2.5 rounded-xl`}><Icon size={20} weight="duotone" /></div>

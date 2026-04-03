@@ -317,10 +317,10 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* ── Hero Greeting ───────────────────────── */}
-        <div className="mb-6 sm:mb-8 flex items-start justify-between" style={{animation: 'fadeInUp 0.2s ease'}}>
+        <div className="mb-6 sm:mb-8 flex items-start justify-between animate-fade-in-up">
           <div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 mb-1">
-              {getGreeting()}, {user?.name?.split(' ').pop() || 'HOD'}!
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-1">
+              {getGreeting()}, <span className="gradient-text">{user?.name?.split(' ').pop() || 'HOD'}!</span>
             </h2>
             <p className="text-sm sm:text-base font-medium text-slate-500 dark:text-slate-400">
               {user?.designation || 'Head of Department'} • {user?.department || 'DS'} Department
@@ -380,9 +380,8 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                 const Wrapper = stat.onClick ? 'button' : 'div';
                 return (
                   <Wrapper key={i} onClick={stat.onClick || undefined}
-                    className={`soft-card-hover p-4 sm:p-6 relative overflow-hidden group text-left ${stat.onClick ? 'cursor-pointer' : ''}`}
-                    data-testid={`stat-card-${stat.label.toLowerCase().replace(/\s+/g, '-')}`}
-                    style={{animation: `fadeInUp ${0.2 + i * 0.1}s ease`}}>
+                    className={`stat-card relative overflow-hidden group text-left ${stat.onClick ? 'cursor-pointer' : ''}`}
+                    data-testid={`stat-card-${stat.label.toLowerCase().replace(/\s+/g, '-')}`}>
                     <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${stat.gradient} opacity-0 group-hover:opacity-100 transition-opacity`}></div>
                     <div className="flex items-center justify-between mb-3 sm:mb-4">
                       <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>

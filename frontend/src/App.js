@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AlertModal from './components/AlertModal';
+import PageTransition from './components/PageTransition';
 import './App.css';
 import { authAPI, setAuthToken, clearAuthToken } from './services/api';
 import LoginPage from './pages/LoginPage';
@@ -130,7 +131,9 @@ function App() {
 
   return (
     <div className="App">
-      {renderPage()}
+      <PageTransition pageKey={currentPage}>
+        {renderPage()}
+      </PageTransition>
       <AlertModal
         open={showLogoutModal}
         type="logout"
