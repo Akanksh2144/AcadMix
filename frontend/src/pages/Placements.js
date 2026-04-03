@@ -47,7 +47,7 @@ const Placements = ({ navigate, user }) => {
   const completed = placements.filter(p => p.drive_date && new Date(p.drive_date) < now);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300 flex items-center justify-center">
       <div className="text-center">
         <div className="w-14 h-14 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p className="text-sm font-bold text-slate-400">Loading placement drives...</p>
@@ -56,14 +56,14 @@ const Placements = ({ navigate, user }) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <header className="glass-header">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
-          <button onClick={() => navigate('student-dashboard')} className="p-2.5 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors">
+          <button onClick={() => navigate('student-dashboard')} className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 transition-colors">
             <ArrowLeft size={20} weight="bold" />
           </button>
           <div className="flex-1">
-            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">Placements</h1>
+            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Placements</h1>
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
               {upcoming.length} upcoming • {completed.length} completed
             </p>
@@ -82,8 +82,8 @@ const Placements = ({ navigate, user }) => {
             <button key={tab.key} onClick={() => setFilter(tab.key)}
               className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
                 filter === tab.key
-                  ? 'bg-indigo-500 text-white'
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                  ? 'bg-indigo-50 dark:bg-indigo-500/150 text-white'
+                  : 'bg-slate-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200'
               }`}>
               {tab.label}
             </button>
@@ -107,7 +107,7 @@ const Placements = ({ navigate, user }) => {
                     onClick={() => setExpandedId(isExpanded ? null : p.id)}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      isPast ? 'bg-slate-100' : 'bg-indigo-50'
+                      isPast ? 'bg-slate-100' : 'bg-indigo-50 dark:bg-indigo-500/15'
                     }`}>
                       <Buildings size={24} weight="duotone" className={isPast ? 'text-slate-400' : 'text-indigo-500'} />
                     </div>
@@ -116,7 +116,7 @@ const Placements = ({ navigate, user }) => {
                         <div className="min-w-0 flex-1">
                           <h3 className="font-extrabold text-lg text-slate-900 truncate">{p.company_name || 'Company'}</h3>
                           {p.role && (
-                            <p className="text-sm font-medium text-slate-500 flex items-center gap-1.5 mt-0.5">
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
                               <Briefcase size={14} weight="duotone" /> {p.role}
                             </p>
                           )}
@@ -158,19 +158,19 @@ const Placements = ({ navigate, user }) => {
 
                   {/* Expanded Details */}
                   {isExpanded && (
-                    <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-0 border-t border-slate-100 mt-0"
+                    <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-0 border-t border-slate-100 dark:border-slate-700 mt-0"
                       style={{animation: 'fadeInUp 0.15s ease'}}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
                         {p.description && (
                           <div className="sm:col-span-2">
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">About</p>
-                            <p className="text-sm text-slate-600 leading-relaxed">{p.description}</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{p.description}</p>
                           </div>
                         )}
                         {p.eligibility && (
                           <div>
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Eligibility</p>
-                            <p className="text-sm text-slate-600">{p.eligibility}</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">{p.eligibility}</p>
                           </div>
                         )}
                         {p.package_lpa && (
@@ -182,13 +182,13 @@ const Placements = ({ navigate, user }) => {
                         {p.drive_date && (
                           <div>
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Date & Time</p>
-                            <p className="text-sm text-slate-600">{formatDate(p.drive_date)}{p.time ? ` at ${p.time}` : ''}</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">{formatDate(p.drive_date)}{p.time ? ` at ${p.time}` : ''}</p>
                           </div>
                         )}
                         {p.location && (
                           <div>
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Location</p>
-                            <p className="text-sm text-slate-600">{p.location}</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">{p.location}</p>
                           </div>
                         )}
                         {p.contact_email && (
@@ -202,7 +202,7 @@ const Placements = ({ navigate, user }) => {
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Rounds</p>
                             <div className="flex flex-wrap gap-2">
                               {(typeof p.rounds === 'string' ? p.rounds.split(',') : p.rounds).map((r, ri) => (
-                                <span key={ri} className="soft-badge bg-indigo-50 text-indigo-600">{typeof r === 'string' ? r.trim() : r}</span>
+                                <span key={ri} className="soft-badge bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600">{typeof r === 'string' ? r.trim() : r}</span>
                               ))}
                             </div>
                           </div>
@@ -219,7 +219,7 @@ const Placements = ({ navigate, user }) => {
             <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Briefcase size={36} weight="duotone" className="text-slate-400" />
             </div>
-            <h3 className="font-bold text-lg text-slate-600 mb-1">
+            <h3 className="font-bold text-lg text-slate-600 dark:text-slate-400 mb-1">
               {filter === 'upcoming' ? 'No upcoming placement drives' :
                 filter === 'completed' ? 'No past drives' : 'No placement drives yet'}
             </h3>

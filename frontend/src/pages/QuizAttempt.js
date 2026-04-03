@@ -16,7 +16,7 @@ const CodeEditor = ({ value, onChange, language, onRun, running, output }) => {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Code size={18} weight="duotone" className="text-indigo-500" />
-          <span className="text-sm font-bold text-slate-600 uppercase">{language || 'python'}</span>
+          <span className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase">{language || 'python'}</span>
         </div>
         <button data-testid="run-code-button" onClick={onRun} disabled={running}
           className="btn-primary !px-4 !py-2 text-sm flex items-center gap-2 disabled:opacity-60">
@@ -24,7 +24,7 @@ const CodeEditor = ({ value, onChange, language, onRun, running, output }) => {
           {running ? 'Running...' : 'Run Code'}
         </button>
       </div>
-      <div className="rounded-2xl overflow-hidden border border-slate-200">
+      <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
         {isMobile ? (
           <textarea
             value={value || ''}
@@ -71,7 +71,7 @@ const CodeEditor = ({ value, onChange, language, onRun, running, output }) => {
 const FullscreenGate = ({ onEnter, violations, isReEntry }) => (
   <div className="fixed inset-0 z-[9999] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6" data-testid="fullscreen-gate">
     <div className="max-w-md w-full text-center">
-      <div className="w-20 h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+      <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-500/150/20 rounded-full flex items-center justify-center mx-auto mb-6">
         {isReEntry ? (
           <ShieldWarning size={40} weight="duotone" className="text-amber-400" />
         ) : (
@@ -94,12 +94,12 @@ const FullscreenGate = ({ onEnter, violations, isReEntry }) => (
       <button
         data-testid="enter-fullscreen-button"
         onClick={onEnter}
-        className="w-full py-4 bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl font-bold text-lg transition-colors flex items-center justify-center gap-3 mt-4"
+        className="w-full py-4 bg-indigo-50 dark:bg-indigo-500/150 hover:bg-indigo-600 text-white rounded-2xl font-bold text-lg transition-colors flex items-center justify-center gap-3 mt-4"
       >
         <ArrowsOut size={24} weight="bold" />
         {isReEntry ? 'Re-enter Fullscreen' : 'Enter Fullscreen & Start'}
       </button>
-      <p className="text-xs text-slate-500 mt-4">
+      <p className="text-xs text-slate-500 dark:text-slate-400 mt-4">
         Tab switching, window blur, and fullscreen exits are monitored and logged.
       </p>
     </div>
@@ -121,11 +121,11 @@ const SubmitModal = ({ questions, answers, marked, onClose, onSubmit, submitting
 
   return (
     <div className="fixed inset-0 z-[9998] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4" data-testid="submit-modal">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden" style={{animation: 'scaleIn 0.25s ease'}}>
+      <div className="bg-white rounded-3xl dark:bg-[#1A202C] shadow-2xl max-w-lg w-full overflow-hidden" style={{animation: 'scaleIn 0.25s ease'}}>
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 sm:p-8 text-white relative">
           <button data-testid="close-submit-modal" onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white dark:bg-[#1A202C]/30 transition-colors">
             <X size={18} weight="bold" />
           </button>
           <div className="flex items-center gap-3 mb-2">
@@ -201,7 +201,7 @@ const SubmitModal = ({ questions, answers, marked, onClose, onSubmit, submitting
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button data-testid="go-back-button" onClick={onClose}
-              className="flex-1 py-3.5 rounded-2xl font-bold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+              className="flex-1 py-3.5 rounded-2xl font-bold text-sm bg-slate-100 text-slate-600 dark:text-slate-400 hover:bg-slate-200 transition-colors">
               Go Back & Review
             </button>
             <button data-testid="confirm-submit-button" onClick={onSubmit} disabled={submitting}
@@ -450,11 +450,11 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
       const isCurrent = currentQuestion === i;
       const isAnswered = answers[i] !== undefined;
       const isMarked = markedForReview.has(i);
-      if (isCurrent) return 'bg-indigo-500 text-white shadow-md scale-110';
+      if (isCurrent) return 'bg-indigo-50 dark:bg-indigo-500/150 text-white shadow-md scale-110';
       if (isMarked && isAnswered) return 'bg-amber-100 text-amber-700 ring-2 ring-amber-400';
       if (isMarked) return 'bg-amber-50 text-amber-600 ring-2 ring-amber-300';
       if (isAnswered) return 'bg-emerald-100 text-emerald-700';
-      return 'bg-slate-100 text-slate-500 hover:bg-slate-200';
+      return 'bg-slate-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200';
     };
   }, [currentQuestion, answers, markedForReview]);
 
@@ -477,7 +477,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
   }, [quiz?.id, quiz?.randomize_options]);
 
   if (loading || !quiz) return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300 flex items-center justify-center">
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p className="text-sm font-bold text-slate-400">Loading quiz...</p>
@@ -490,7 +490,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
 
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       {/* Fullscreen Gate */}
       {needsFullscreen && attempt && (
         <FullscreenGate onEnter={enterFullscreen} violations={violations} isReEntry={fullscreenInitialized.current} />
@@ -547,7 +547,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
           {/* Question Navigation Sidebar */}
           <div className="lg:col-span-1 order-2 lg:order-1">
             <div className="soft-card p-4 sm:p-6 lg:sticky lg:top-24">
-              <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-3 sm:mb-4">Questions</h3>
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 mb-3 sm:mb-4">Questions</h3>
               <div className="grid grid-cols-8 sm:grid-cols-5 lg:grid-cols-3 gap-2">
                 {questions.map((q, i) => (
                   <button key={i} data-testid={`question-nav-${i + 1}`} onClick={() => setCurrentQuestion(i)}
@@ -560,10 +560,10 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                 ))}
               </div>
               <div className="mt-4 sm:mt-6 space-y-2 text-xs sm:text-sm">
-                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-indigo-500 rounded-md"></div><span className="font-medium text-slate-500">Current</span></div>
-                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-emerald-100 rounded-md"></div><span className="font-medium text-slate-500">Answered</span></div>
-                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-amber-100 rounded-md ring-2 ring-amber-400"></div><span className="font-medium text-slate-500">Marked for Review</span></div>
-                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-slate-100 rounded-md"></div><span className="font-medium text-slate-500">Not Answered</span></div>
+                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-indigo-50 dark:bg-indigo-500/150 rounded-md"></div><span className="font-medium text-slate-500 dark:text-slate-400">Current</span></div>
+                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-emerald-100 rounded-md"></div><span className="font-medium text-slate-500 dark:text-slate-400">Answered</span></div>
+                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-amber-100 rounded-md ring-2 ring-amber-400"></div><span className="font-medium text-slate-500 dark:text-slate-400">Marked for Review</span></div>
+                <div className="flex items-center gap-2.5"><div className="w-4 h-4 bg-slate-100 rounded-md"></div><span className="font-medium text-slate-500 dark:text-slate-400">Not Answered</span></div>
               </div>
               <p className="text-xs sm:text-sm font-medium text-slate-400 mt-4 text-center">{Object.keys(answers).length}/{questions.length} answered</p>
               {/* Webcam feed — hidden on mobile */}
@@ -572,8 +572,8 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                   <video ref={videoRef} autoPlay muted playsInline className="w-full h-auto rounded-2xl" style={{ transform: 'scaleX(-1)' }} />
                 ) : webcamError ? (
                   <div className="p-4 flex flex-col items-center gap-2">
-                    <CameraSlash size={24} weight="duotone" className="text-slate-500" />
-                    <p className="text-xs text-slate-500 text-center">Camera access denied</p>
+                    <CameraSlash size={24} weight="duotone" className="text-slate-500 dark:text-slate-400" />
+                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center">Camera access denied</p>
                   </div>
                 ) : (
                   <div className="p-4 flex items-center justify-center">
@@ -594,7 +594,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
                   <div>
                     <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Question {currentQuestion + 1} of {questions.length}</span>
-                    <h2 className="text-base sm:text-lg font-bold text-slate-800 mt-1">
+                    <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 mt-1">
                       {(currentQ.type === 'mcq-single' || currentQ.type === 'mcq-multiple') && 'Multiple Choice'}
                       {currentQ.type === 'boolean' && 'True / False'}
                       {currentQ.type === 'short' && 'Short Answer'}
@@ -603,13 +603,13 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                   </div>
                   <div className="flex items-center gap-2">
                     {currentQ.type === 'coding' && (
-                      <span className="soft-badge bg-indigo-50 text-indigo-600">{currentQ.language || 'python'}</span>
+                      <span className="soft-badge bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600">{currentQ.language || 'python'}</span>
                     )}
                     <span className="soft-badge bg-amber-50 text-amber-600">{currentQ.marks} marks</span>
                   </div>
                 </div>
 
-                <p className="text-base sm:text-lg font-medium text-slate-700 leading-relaxed mb-6 sm:mb-8 select-none">{currentQ.text || currentQ.question}</p>
+                <p className="text-base sm:text-lg font-medium text-slate-700 dark:text-slate-300 leading-relaxed mb-6 sm:mb-8 select-none">{currentQ.text || currentQ.question}</p>
 
                 {(currentQ.type === 'mcq-single' || currentQ.type === 'mcq-multiple') && (() => {
                   const indices = shuffledMap?.[currentQuestion] || currentQ.options.map((_, i) => i);
@@ -618,7 +618,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                     {indices.map((origIdx, displayIdx) => (
                       <button key={origIdx} data-testid={`option-${displayIdx}`} onClick={() => handleAnswer(currentQuestion, currentQ.type === 'mcq-multiple' ? ((answers[currentQuestion] || []).includes(origIdx) ? (answers[currentQuestion] || []).filter(a => a !== origIdx) : [...(answers[currentQuestion] || []), origIdx]) : origIdx)}
                         className={`w-full text-left p-3 sm:p-4 rounded-2xl font-medium transition-all select-none text-sm sm:text-base ${
-                          (currentQ.type === 'mcq-single' ? answers[currentQuestion] === origIdx : (answers[currentQuestion] || []).includes(origIdx)) ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                          (currentQ.type === 'mcq-single' ? answers[currentQuestion] === origIdx : (answers[currentQuestion] || []).includes(origIdx)) ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100'
                         }`}>
                         <span className="font-bold mr-3 text-sm">{String.fromCharCode(65 + displayIdx)}.</span>{currentQ.options[origIdx]}
                       </button>
@@ -630,11 +630,11 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                 {currentQ.type === 'boolean' && (
                   <div className="flex gap-3 sm:gap-4">
                     <button data-testid="true-button" onClick={() => handleAnswer(currentQuestion, true)}
-                      className={`flex-1 p-4 sm:p-6 rounded-2xl font-bold text-base sm:text-lg transition-all ${answers[currentQuestion] === true ? 'bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                      className={`flex-1 p-4 sm:p-6 rounded-2xl font-bold text-base sm:text-lg transition-all ${answers[currentQuestion] === true ? 'bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100'}`}>
                       <CheckCircle size={28} weight="duotone" className="mx-auto mb-2" />TRUE
                     </button>
                     <button data-testid="false-button" onClick={() => handleAnswer(currentQuestion, false)}
-                      className={`flex-1 p-4 sm:p-6 rounded-2xl font-bold text-base sm:text-lg transition-all ${answers[currentQuestion] === false ? 'bg-rose-50 text-rose-700 ring-2 ring-rose-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                      className={`flex-1 p-4 sm:p-6 rounded-2xl font-bold text-base sm:text-lg transition-all ${answers[currentQuestion] === false ? 'bg-rose-50 text-rose-700 ring-2 ring-rose-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100'}`}>
                       <XCircle size={28} weight="duotone" className="mx-auto mb-2" />FALSE
                     </button>
                   </div>
@@ -658,12 +658,12 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                 )}
 
                 {/* Action Bar: Clear / Mark / Prev / Next */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-100 gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-100 dark:border-slate-700 gap-3">
                   <div className="flex items-center gap-2">
                     {/* Clear Selection */}
                     {answers[currentQuestion] !== undefined && currentQ.type !== 'coding' && (
                       <button data-testid="clear-selection-button" onClick={() => handleClearAnswer(currentQuestion)}
-                        className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 transition-colors">
+                        className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 transition-colors">
                         <Eraser size={16} weight="duotone" /> Clear
                       </button>
                     )}
@@ -672,7 +672,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                       className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
                         markedForReview.has(currentQuestion)
                           ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-300'
-                          : 'text-slate-500 bg-slate-50 hover:bg-slate-100'
+                          : 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100'
                       }`}>
                       <BookmarkSimple size={16} weight={markedForReview.has(currentQuestion) ? 'fill' : 'duotone'} />
                       {markedForReview.has(currentQuestion) ? 'Marked' : 'Review'}

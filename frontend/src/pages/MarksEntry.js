@@ -318,7 +318,7 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
   }, [assignments]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <header className="glass-header">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
           <button data-testid="back-button" onClick={() => {
@@ -331,11 +331,11 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
               navigate(dashboardRoute);
             }
           }}
-            className="p-2.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
+            className="p-2.5 rounded-full bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
             <ArrowLeft size={22} weight="duotone" />
           </button>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               {selectedAssignment ? selectedAssignment.subject_name : 'Mid-term Marks Entry'}
             </h1>
             <p className="text-sm font-medium text-slate-400">
@@ -348,7 +348,7 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {!selectedAssignment ? (
           <div data-testid="assignment-list">
-            <h3 className="text-2xl font-bold text-slate-800 mb-6">My Subject Assignments</h3>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">My Subject Assignments</h3>
             {classGroups.map((group, gi) => (
               <div key={gi} className="mb-6">
                 <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3">{group.label}</p>
@@ -356,8 +356,8 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
                   {group.assignments.map(a => (
                     <button key={a.id} data-testid={`assignment-${a.id}`} onClick={() => handleClassSelect(a)}
                       className="soft-card-hover p-6 text-left">
-                      <p className="font-bold text-lg text-slate-800">{a.subject_name}</p>
-                      <p className="text-sm font-medium text-slate-500">{a.subject_code}</p>
+                      <p className="font-bold text-lg text-slate-800 dark:text-slate-100">{a.subject_name}</p>
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{a.subject_code}</p>
                       <p className="text-xs text-slate-400 mt-1">Semester {a.semester}</p>
                     </button>
                   ))}
@@ -390,7 +390,7 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
                   return (
                     <button key={a.id} data-testid={`class-btn-${a.id}`} onClick={() => handleClassSelect(a)}
                       className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                        isActive ? 'bg-indigo-500 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50'
+                        isActive ? 'bg-indigo-50 dark:bg-indigo-500/150 text-white shadow-md' : 'bg-white text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 hover:bg-indigo-50 dark:bg-indigo-500/15'
                       }`}>
                       {a.subject_code} &bull; {a.batch}-{a.section}
                     </button>
@@ -421,7 +421,7 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
                     <button
                       onClick={() => importFileRef.current?.click()}
                       title="Import filled Excel template"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 border border-indigo-200 transition-colors"
                     >
                       <UploadSimple size={14} weight="bold" />
                       Import Marks
@@ -438,7 +438,7 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
 
                 {stats.gradedCount > 0 && (
                   <div className="flex items-center gap-3" data-testid="avg-stats">
-                    <div className="flex items-center gap-1.5 bg-indigo-50 px-3 py-1.5 rounded-xl">
+                    <div className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-500/15 px-3 py-1.5 rounded-xl">
                       <ChartBar size={16} weight="duotone" className="text-indigo-500" />
                       <span className="text-sm font-bold text-indigo-700">Avg: {stats.avgMarks}/{maxMarks}</span>
                     </div>
@@ -462,12 +462,12 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
             <div className="soft-card overflow-hidden">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-100">
-                    <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest w-12">#</th>
-                    <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">College ID</th>
-                    <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Student Name</th>
-                    <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest w-32">Marks / {maxMarks}</th>
-                    <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest w-28">Percentage</th>
+                  <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+                    <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest w-12">#</th>
+                    <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">College ID</th>
+                    <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Student Name</th>
+                    <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest w-32">Marks / {maxMarks}</th>
+                    <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest w-28">Percentage</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -475,17 +475,17 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
                     const m = marks[s.id];
                     const pct = m !== null && m !== undefined && maxMarks > 0 ? ((m / maxMarks) * 100).toFixed(1) : null;
                     return (
-                      <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors h-14" data-testid={`student-row-${s.college_id}`}>
+                      <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors h-14" data-testid={`student-row-${s.college_id}`}>
                         <td className="py-0 px-4 text-sm text-slate-400">{i + 1}</td>
-                        <td className="py-0 px-4 font-medium text-slate-700">{s.college_id}</td>
-                        <td className="py-0 px-4 font-medium text-slate-800">{s.name}</td>
+                        <td className="py-0 px-4 font-medium text-slate-700 dark:text-slate-300">{s.college_id}</td>
+                        <td className="py-0 px-4 font-medium text-slate-800 dark:text-slate-100">{s.name}</td>
                         <td className="py-0 px-4 text-center">
                           {isEditable ? (
                             <input data-testid={`marks-input-${s.college_id}`} type="number" min="0" max={parseFloat(maxMarks) || 100} step="0.5"
                               value={m ?? ''} onChange={(e) => handleMarkChange(s.id, e.target.value)}
                               className="soft-input !py-1.5 !px-3 w-24 h-9 text-center text-sm font-bold mx-auto" placeholder="-" />
                           ) : (
-                            <span className="inline-flex items-center justify-center w-24 h-9 rounded-xl bg-slate-50 text-sm font-bold text-slate-900 mx-auto">{m ?? '-'}</span>
+                            <span className="inline-flex items-center justify-center w-24 h-9 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-sm font-bold text-slate-900 mx-auto">{m ?? '-'}</span>
                           )}
                         </td>
                         <td className="py-0 px-4 text-center">
@@ -510,7 +510,7 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
             {/* Actions */}
             {isEditable && students.length > 0 && (
               <div className="flex items-center justify-between mt-6">
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   {stats.gradedCount} / {students.length} students graded
                   {stats.gradedCount < students.length && (
                     <span className="text-amber-600 font-bold ml-2">
@@ -528,7 +528,7 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
                     status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
                     status === 'submitted' ? 'bg-amber-50 text-amber-600' :
                     status === 'rejected' ? 'bg-red-50 text-red-600' :
-                    'bg-slate-100 text-slate-500'
+                    'bg-slate-100 text-slate-500 dark:text-slate-400'
                   }`}>
                     {status === 'new' ? 'Not Started' : isEditingApproved ? 'Editing Approved' : status.charAt(0).toUpperCase() + status.slice(1)}
                   </span>
@@ -590,12 +590,12 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
       {/* Confirm Dialog UI */}
       {confirmDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" style={{animation: 'fadeIn 0.2s ease'}}>
-           <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-sm shadow-2xl" style={{animation: 'scaleIn 0.2s ease'}}>
+           <div className="bg-white rounded-2xl dark:bg-[#1A202C] p-6 sm:p-8 w-full max-w-sm shadow-2xl" style={{animation: 'scaleIn 0.2s ease'}}>
               <h3 className="text-xl font-extrabold text-slate-900 mb-2">{confirmDialog.title}</h3>
-              <p className="text-sm font-medium text-slate-500 mb-6">{confirmDialog.message}</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-6">{confirmDialog.message}</p>
               <div className="flex gap-3 justify-end">
-                 <button onClick={() => setConfirmDialog(null)} className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 transition-colors">Cancel</button>
-                 <button onClick={confirmDialog.onConfirm} className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-colors shadow-md shadow-indigo-200">Yes, Submit</button>
+                 <button onClick={() => setConfirmDialog(null)} className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 transition-colors">Cancel</button>
+                 <button onClick={confirmDialog.onConfirm} className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-indigo-50 dark:bg-indigo-500/150 hover:bg-indigo-600 transition-colors shadow-md shadow-indigo-200">Yes, Submit</button>
               </div>
            </div>
         </div>
@@ -604,19 +604,19 @@ const MarksEntry = ({ navigate, user, preselectedAssignment }) => {
       {/* Prompt Dialog UI */}
       {promptDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" style={{animation: 'fadeIn 0.2s ease'}}>
-           <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl" style={{animation: 'scaleIn 0.2s ease'}}>
+           <div className="bg-white rounded-2xl dark:bg-[#1A202C] p-6 sm:p-8 w-full max-w-md shadow-2xl" style={{animation: 'scaleIn 0.2s ease'}}>
               <h3 className="text-xl font-extrabold text-slate-900 mb-2">{promptDialog.title}</h3>
-              <p className="text-sm font-medium text-slate-500 mb-4">{promptDialog.message}</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4">{promptDialog.message}</p>
               <textarea 
                 value={promptInput}
                 onChange={(e) => setPromptInput(e.target.value)}
                 autoFocus
-                className="w-full h-24 p-3 rounded-xl border border-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none resize-none mb-6"
+                className="w-full h-24 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none resize-none mb-6"
                 placeholder="Type your reason here..."
               />
               <div className="flex gap-3 justify-end">
-                 <button onClick={() => setPromptDialog(null)} className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 transition-colors">Cancel</button>
-                 <button onClick={() => promptDialog.onSubmit(promptInput)} className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-colors shadow-md shadow-indigo-200">Confirm Edit</button>
+                 <button onClick={() => setPromptDialog(null)} className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 transition-colors">Cancel</button>
+                 <button onClick={() => promptDialog.onSubmit(promptInput)} className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-indigo-50 dark:bg-indigo-500/150 hover:bg-indigo-600 transition-colors shadow-md shadow-indigo-200">Confirm Edit</button>
               </div>
            </div>
         </div>

@@ -7,7 +7,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 
 const statusConfig = {
   active:    { label: 'Active',    dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-600 ring-emerald-200',  bg: 'bg-emerald-50/60', border: 'border-emerald-200' },
-  ended:     { label: 'Ended',     dot: 'bg-slate-400',   badge: 'bg-slate-100 text-slate-500 ring-slate-200',       bg: 'bg-slate-50/60',   border: 'border-slate-200' },
+  ended:     { label: 'Ended',     dot: 'bg-slate-400',   badge: 'bg-slate-100 text-slate-500 dark:text-slate-400 ring-slate-200',       bg: 'bg-slate-50 dark:bg-slate-800/50/60',   border: 'border-slate-200 dark:border-slate-700' },
   scheduled: { label: 'Scheduled', dot: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-600 ring-amber-200',       bg: 'bg-amber-50/60',   border: 'border-amber-200' },
   draft:     { label: 'Draft',     dot: 'bg-purple-500',  badge: 'bg-purple-50 text-purple-600 ring-purple-200',     bg: 'bg-purple-50/60',  border: 'border-purple-200' },
 };
@@ -90,7 +90,7 @@ const QuizCalendar = ({ navigate, user }) => {
   const totalEnded = quizzes.filter(q => q.status === 'ended').length;
 
   if (loading) return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300 flex items-center justify-center">
       <div className="text-center">
         <div className="w-14 h-14 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p className="text-sm font-bold text-slate-400">Loading calendar...</p>
@@ -99,23 +99,23 @@ const QuizCalendar = ({ navigate, user }) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       {/* Header */}
       <header className="glass-header">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
           <button onClick={() => navigate(user?.role === 'hod' ? 'hod-dashboard' : 'teacher-dashboard')}
-            className="p-2.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition-colors"
+            className="p-2.5 rounded-full bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 text-indigo-500 transition-colors"
             aria-label="Go back">
             <ArrowLeft size={20} weight="bold" />
           </button>
           <div className="flex-1">
-            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">Quiz Calendar</h1>
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Quiz Calendar</h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
               {totalActive} active • {totalScheduled} scheduled • {totalEnded} ended
             </p>
           </div>
           <button onClick={goToday}
-            className="px-3 py-2 rounded-xl text-xs font-bold bg-indigo-500 text-white hover:bg-indigo-600 transition-colors flex items-center gap-1.5">
+            className="px-3 py-2 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-500/150 text-white hover:bg-indigo-600 transition-colors flex items-center gap-1.5">
             <CalendarBlank size={14} weight="bold" /> Today
           </button>
         </div>
@@ -127,7 +127,7 @@ const QuizCalendar = ({ navigate, user }) => {
           {Object.entries(statusConfig).map(([key, cfg]) => (
             <div key={key} className="flex items-center gap-1.5">
               <div className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`}></div>
-              <span className="text-xs font-bold text-slate-500">{cfg.label}</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{cfg.label}</span>
             </div>
           ))}
         </div>
@@ -137,13 +137,13 @@ const QuizCalendar = ({ navigate, user }) => {
           <div className="lg:col-span-2 soft-card p-4 sm:p-6" style={{animation: 'fadeInUp 0.3s ease'}}>
             {/* Month Navigation */}
             <div className="flex items-center justify-between mb-6">
-              <button onClick={prevMonth} className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors">
+              <button onClick={prevMonth} className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 transition-colors">
                 <CaretLeft size={20} weight="bold" />
               </button>
-              <h2 className="text-lg sm:text-xl font-extrabold text-slate-900">
+              <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">
                 {MONTHS[month]} {year}
               </h2>
-              <button onClick={nextMonth} className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors">
+              <button onClick={nextMonth} className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 transition-colors">
                 <CaretRight size={20} weight="bold" />
               </button>
             </div>
@@ -173,17 +173,17 @@ const QuizCalendar = ({ navigate, user }) => {
                       !dayObj.current ? 'opacity-30 border-transparent' :
                       isSelected ? 'bg-indigo-50 border-indigo-300 ring-2 ring-indigo-200' :
                       isToday ? 'bg-blue-50/50 border-blue-200' :
-                      hasQuizzes ? 'bg-white border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30' :
-                      'bg-white border-transparent hover:bg-slate-50'
+                      hasQuizzes ? 'bg-white border-slate-100 dark:border-slate-700 hover:border-indigo-200 hover:bg-indigo-50/30' :
+                      'bg-white border-transparent hover:bg-slate-50 dark:bg-slate-800/50'
                     }`}
                   >
                     <span className={`text-xs sm:text-sm font-bold block mb-1 ${
                       isToday ? 'text-indigo-600' :
                       !dayObj.current ? 'text-slate-300' :
-                      'text-slate-700'
+                      'text-slate-700 dark:text-slate-300'
                     }`}>
                       {isToday ? (
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-500 text-white text-xs">
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-50 dark:bg-indigo-500/150 text-white text-xs">
                           {dayObj.day}
                         </span>
                       ) : dayObj.day}
@@ -212,7 +212,7 @@ const QuizCalendar = ({ navigate, user }) => {
               <div className="soft-card p-5 sm:p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Calendar size={18} weight="duotone" className="text-indigo-500" />
-                  <h3 className="font-extrabold text-slate-900">
+                  <h3 className="font-extrabold text-slate-900 dark:text-white">
                     {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                   </h3>
                 </div>
@@ -227,7 +227,7 @@ const QuizCalendar = ({ navigate, user }) => {
                           key={quiz.id}
                           onClick={() => setSelectedQuiz(isExpanded ? null : quiz.id)}
                           className={`w-full text-left p-4 rounded-2xl border transition-all ${
-                            isExpanded ? `${cfg.bg} ${cfg.border} border` : 'bg-slate-50 border-transparent hover:bg-slate-100'
+                            isExpanded ? `${cfg.bg} ${cfg.border} border` : 'bg-slate-50 dark:bg-slate-800/50 border-transparent hover:bg-slate-100'
                           }`}
                         >
                           <div className="flex items-center gap-2 mb-1.5">
@@ -245,16 +245,16 @@ const QuizCalendar = ({ navigate, user }) => {
                           {isExpanded && (
                             <div className="mt-3 ml-4 space-y-2" style={{animation: 'fadeInUp 0.15s ease'}}>
                               <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div className="flex items-center gap-1.5 text-slate-500">
+                                <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                                   <Clock size={13} weight="duotone" />
                                   <span className="font-medium">{quiz.duration_mins || '–'} min</span>
                                 </div>
-                                <div className="flex items-center gap-1.5 text-slate-500">
+                                <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                                   <Users size={13} weight="duotone" />
                                   <span className="font-medium">{(quiz.attempt_count || 0) + (quiz.active_count || 0)} students</span>
                                 </div>
                                 {quiz.avg_score > 0 && (
-                                  <div className="flex items-center gap-1.5 text-slate-500">
+                                  <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                                     <Fire size={13} weight="duotone" />
                                     <span className="font-medium">{quiz.avg_score}% avg</span>
                                   </div>
@@ -296,10 +296,10 @@ const QuizCalendar = ({ navigate, user }) => {
               </div>
             ) : (
               <div className="soft-card p-8 sm:p-10 text-center">
-                <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-500/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Calendar size={32} weight="duotone" className="text-indigo-400" />
                 </div>
-                <h3 className="font-bold text-slate-700 mb-1">Select a date</h3>
+                <h3 className="font-bold text-slate-700 dark:text-slate-300 mb-1">Select a date</h3>
                 <p className="text-sm text-slate-400">Click any day on the calendar to see quizzes scheduled for that date.</p>
               </div>
             )}
@@ -319,10 +319,10 @@ const QuizCalendar = ({ navigate, user }) => {
                       const cfg = statusConfig[q.status] || statusConfig.active;
                       const date = q.created_at ? new Date(q.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
                       return (
-                        <div key={q.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors">
+                        <div key={q.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:bg-slate-800/50 transition-colors">
                           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`}></div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-slate-800 truncate">{q.title}</p>
+                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{q.title}</p>
                             <p className="text-xs text-slate-400">{date}{q.subject ? ` • ${q.subject}` : ''}</p>
                           </div>
                         </div>

@@ -22,7 +22,7 @@ const Leaderboard = ({ navigate, user, userRole }) => {
 
   const getBadgeStyle = (rank) => {
     if (rank === 1) return { icon: Trophy, bg: 'bg-amber-50', text: 'text-amber-500' };
-    if (rank === 2) return { icon: Medal, bg: 'bg-slate-100', text: 'text-slate-500' };
+    if (rank === 2) return { icon: Medal, bg: 'bg-slate-100', text: 'text-slate-500 dark:text-slate-400' };
     if (rank === 3) return { icon: Target, bg: 'bg-orange-50', text: 'text-orange-500' };
     return null;
   };
@@ -37,16 +37,16 @@ const Leaderboard = ({ navigate, user, userRole }) => {
     : 'teacher-dashboard';
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <header className="glass-header">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center gap-4">
             <button data-testid="back-button" onClick={() => navigate(backRoute)}
-              className="p-2.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
+              className="p-2.5 rounded-full bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
               <ArrowLeft size={22} weight="duotone" />
             </button>
             <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Leaderboard</h1>
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">Leaderboard</h1>
               <p className="text-sm font-medium text-slate-400">Top performers by quiz average score</p>
             </div>
           </div>
@@ -57,14 +57,14 @@ const Leaderboard = ({ navigate, user, userRole }) => {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24">
             <CircleNotch size={48} weight="bold" className="text-indigo-500 animate-spin mb-4" />
-            <p className="text-slate-500 font-medium">Loading leaderboard...</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium">Loading leaderboard...</p>
           </div>
         ) : leaderboardData.length === 0 ? (
           <div className="soft-card p-16 text-center">
             <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <ChartLine size={32} weight="duotone" className="text-slate-400" />
             </div>
-            <h3 className="text-xl font-bold text-slate-700 mb-2">No Data Yet</h3>
+            <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">No Data Yet</h3>
             <p className="text-slate-400">Leaderboard will populate once students complete quizzes.</p>
           </div>
         ) : (
@@ -76,16 +76,16 @@ const Leaderboard = ({ navigate, user, userRole }) => {
                 <div className="soft-card-hover p-6 bg-gradient-to-br from-slate-50 to-white" data-testid="podium-rank-2">
                   <div className="flex justify-center mb-4">
                     <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center">
-                      <Medal size={36} weight="duotone" className="text-slate-500" />
+                      <Medal size={36} weight="duotone" className="text-slate-500 dark:text-slate-400" />
                     </div>
                   </div>
                   <div className="text-center">
-                    <span className="soft-badge bg-slate-100 text-slate-600 mb-2">#2</span>
+                    <span className="soft-badge bg-slate-100 text-slate-600 dark:text-slate-400 mb-2">#2</span>
                     <h3 className="text-xl font-extrabold text-slate-900 mt-2">{top3[1]?.name}</h3>
                     <p className="text-sm font-medium text-slate-400 mb-4">{top3[1]?.college_id}</p>
                     <div className="grid grid-cols-2 gap-3">
-                      <div><p className="text-2xl font-extrabold text-slate-900">{top3[1]?.avg_score}%</p><p className="text-xs font-bold text-slate-400 uppercase">Score</p></div>
-                      <div><p className="text-2xl font-extrabold text-slate-900">{top3[1]?.cgpa || '-'}</p><p className="text-xs font-bold text-slate-400 uppercase">CGPA</p></div>
+                      <div><p className="text-2xl font-extrabold text-slate-900 dark:text-white">{top3[1]?.avg_score}%</p><p className="text-xs font-bold text-slate-400 uppercase">Score</p></div>
+                      <div><p className="text-2xl font-extrabold text-slate-900 dark:text-white">{top3[1]?.cgpa || '-'}</p><p className="text-xs font-bold text-slate-400 uppercase">CGPA</p></div>
                     </div>
                   </div>
                 </div>
@@ -102,8 +102,8 @@ const Leaderboard = ({ navigate, user, userRole }) => {
                     <h3 className="text-2xl font-extrabold text-slate-900 mt-3">{top3[0]?.name}</h3>
                     <p className="text-sm font-medium text-slate-400 mb-4">{top3[0]?.college_id}</p>
                     <div className="grid grid-cols-2 gap-4">
-                      <div><p className="text-3xl font-extrabold text-slate-900">{top3[0]?.avg_score}%</p><p className="text-xs font-bold text-slate-400 uppercase">Score</p></div>
-                      <div><p className="text-3xl font-extrabold text-slate-900">{top3[0]?.cgpa || '-'}</p><p className="text-xs font-bold text-slate-400 uppercase">CGPA</p></div>
+                      <div><p className="text-3xl font-extrabold text-slate-900 dark:text-white">{top3[0]?.avg_score}%</p><p className="text-xs font-bold text-slate-400 uppercase">Score</p></div>
+                      <div><p className="text-3xl font-extrabold text-slate-900 dark:text-white">{top3[0]?.cgpa || '-'}</p><p className="text-xs font-bold text-slate-400 uppercase">CGPA</p></div>
                     </div>
                   </div>
                 </div>
@@ -120,8 +120,8 @@ const Leaderboard = ({ navigate, user, userRole }) => {
                     <h3 className="text-xl font-extrabold text-slate-900 mt-2">{top3[2]?.name}</h3>
                     <p className="text-sm font-medium text-slate-400 mb-4">{top3[2]?.college_id}</p>
                     <div className="grid grid-cols-2 gap-3">
-                      <div><p className="text-2xl font-extrabold text-slate-900">{top3[2]?.avg_score}%</p><p className="text-xs font-bold text-slate-400 uppercase">Score</p></div>
-                      <div><p className="text-2xl font-extrabold text-slate-900">{top3[2]?.cgpa || '-'}</p><p className="text-xs font-bold text-slate-400 uppercase">CGPA</p></div>
+                      <div><p className="text-2xl font-extrabold text-slate-900 dark:text-white">{top3[2]?.avg_score}%</p><p className="text-xs font-bold text-slate-400 uppercase">Score</p></div>
+                      <div><p className="text-2xl font-extrabold text-slate-900 dark:text-white">{top3[2]?.cgpa || '-'}</p><p className="text-xs font-bold text-slate-400 uppercase">CGPA</p></div>
                     </div>
                   </div>
                 </div>
@@ -130,11 +130,11 @@ const Leaderboard = ({ navigate, user, userRole }) => {
 
             {/* Full Table */}
             <div className="soft-card p-6">
-              <h3 className="text-2xl font-bold text-slate-800 mb-6">Complete Rankings</h3>
+              <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">Complete Rankings</h3>
               <div className="overflow-x-auto">
                 <table className="w-full" data-testid="leaderboard-table">
                   <thead>
-                    <tr className="border-b border-slate-100">
+                    <tr className="border-b border-slate-100 dark:border-slate-700">
                       <th className="text-center p-4 text-xs font-bold uppercase tracking-widest text-slate-400">Rank</th>
                       <th className="text-left p-4 text-xs font-bold uppercase tracking-widest text-slate-400">Student</th>
                       <th className="text-center p-4 text-xs font-bold uppercase tracking-widest text-slate-400">Avg Score</th>
@@ -149,22 +149,22 @@ const Leaderboard = ({ navigate, user, userRole }) => {
                       const isMe = student.student_id === currentUserId;
                       return (
                         <tr key={student.student_id}
-                          className={`border-b border-slate-50 hover:bg-slate-50/50 transition-colors ${isMe ? 'bg-indigo-50/50' : ''}`}
+                          className={`border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors ${isMe ? 'bg-indigo-50 dark:bg-indigo-500/15/50' : ''}`}
                           data-testid={`leaderboard-row-${student.rank}`}>
-                          <td className="text-center p-4"><span className="text-xl font-extrabold text-slate-900">{student.rank}</span></td>
+                          <td className="text-center p-4"><span className="text-xl font-extrabold text-slate-900 dark:text-white">{student.rank}</span></td>
                           <td className="p-4">
                             <div className="flex items-center gap-3">
                               {student.rank <= 3 && <Fire size={20} weight="duotone" className="text-amber-500" />}
                               <div>
-                                <p className="font-bold text-slate-800">{student.name}</p>
+                                <p className="font-bold text-slate-800 dark:text-slate-100">{student.name}</p>
                                 <p className="text-sm font-medium text-slate-400">{student.college_id}</p>
                               </div>
                               {isMe && <span className="soft-badge bg-indigo-100 text-indigo-600 text-xs">YOU</span>}
                             </div>
                           </td>
-                          <td className="text-center p-4"><p className="text-lg font-extrabold text-slate-900">{student.avg_score}%</p></td>
-                          <td className="text-center p-4"><p className="font-bold text-slate-600">{student.quizzes_taken}</p></td>
-                          <td className="text-center p-4"><p className="text-lg font-extrabold text-slate-900">{student.cgpa || '-'}</p></td>
+                          <td className="text-center p-4"><p className="text-lg font-extrabold text-slate-900 dark:text-white">{student.avg_score}%</p></td>
+                          <td className="text-center p-4"><p className="font-bold text-slate-600 dark:text-slate-400">{student.quizzes_taken}</p></td>
+                          <td className="text-center p-4"><p className="text-lg font-extrabold text-slate-900 dark:text-white">{student.cgpa || '-'}</p></td>
                           <td className="text-center p-4">
                             {badgeInfo && (
                               <div className="flex justify-center">

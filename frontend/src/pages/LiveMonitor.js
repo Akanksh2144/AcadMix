@@ -92,7 +92,7 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
   const displayStudents = activeTab === 'active' ? activeStudents : activeTab === 'submitted' ? submittedStudents : violationStudents;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       {/* Toast */}
       {toast && (
         <div className={`fixed top-4 right-4 z-[100] px-5 py-3 rounded-2xl font-bold text-sm shadow-xl transition-all ${
@@ -106,21 +106,21 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button data-testid="back-button" onClick={() => navigate(user?.role === 'hod' ? 'hod-dashboard' : user?.role === 'exam_cell' ? 'examcell-dashboard' : user?.role === 'admin' ? 'admin-dashboard' : 'teacher-dashboard')} className="p-2.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
+              <button data-testid="back-button" onClick={() => navigate(user?.role === 'hod' ? 'hod-dashboard' : user?.role === 'exam_cell' ? 'examcell-dashboard' : user?.role === 'admin' ? 'admin-dashboard' : 'teacher-dashboard')} className="p-2.5 rounded-full bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
                 <ArrowLeft size={22} weight="duotone" />
               </button>
               <div>
-                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Live Quiz Monitor</h1>
+                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">Live Quiz Monitor</h1>
                 <p className="text-sm font-medium text-slate-400">{quiz?.title || 'Unknown Quiz'}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`soft-badge ${quizEnded ? 'bg-slate-100 text-slate-500' : 'bg-emerald-50 text-emerald-600'}`} data-testid="quiz-status">
+              <span className={`soft-badge ${quizEnded ? 'bg-slate-100 text-slate-500 dark:text-slate-400' : 'bg-emerald-50 text-emerald-600'}`} data-testid="quiz-status">
                 {quizEnded ? 'ENDED' : 'ACTIVE'}
               </span>
-              <div className="bg-slate-50 px-4 py-2 rounded-2xl flex items-center gap-2" data-testid="time-remaining">
-                <Clock size={18} weight="duotone" className="text-slate-500" />
-                <span className="font-bold text-slate-700">{quiz?.duration_mins || '-'} mins</span>
+              <div className="bg-slate-50 dark:bg-slate-800/50 px-4 py-2 rounded-2xl flex items-center gap-2" data-testid="time-remaining">
+                <Clock size={18} weight="duotone" className="text-slate-500 dark:text-slate-400" />
+                <span className="font-bold text-slate-700 dark:text-slate-300">{quiz?.duration_mins || '-'} mins</span>
               </div>
             </div>
           </div>
@@ -131,7 +131,7 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
-            { label: 'Total Students', value: students.length, icon: Users, color: 'bg-indigo-50 text-indigo-500' },
+            { label: 'Total Students', value: students.length, icon: Users, color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-500' },
             { label: 'Active Now', value: activeStudents.length, icon: Eye, color: 'bg-emerald-50 text-emerald-500' },
             { label: 'Submitted', value: submittedStudents.length, icon: CheckCircle, color: 'bg-amber-50 text-amber-500' },
             { label: 'Violations', value: violationStudents.length, icon: Warning, color: 'bg-red-50 text-red-500' },
@@ -141,7 +141,7 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
                 <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
                 <div className={`${stat.color} p-2 rounded-xl`}><stat.icon size={18} weight="duotone" /></div>
               </div>
-              <p className="text-3xl font-extrabold text-slate-900">{stat.value}</p>
+              <p className="text-3xl font-extrabold text-slate-900 dark:text-white">{stat.value}</p>
             </div>
           ))}
         </div>
@@ -159,16 +159,16 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
           {loading && students.length === 0 ? (
             <div className="py-12 flex flex-col items-center justify-center">
               <CircleNotch size={32} weight="bold" className="text-indigo-500 animate-spin mb-3" />
-              <p className="text-slate-500 font-medium">Connecting to live feed...</p>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">Connecting to live feed...</p>
             </div>
           ) : students.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 font-medium">No students have joined this quiz yet</div>
+            <div className="py-12 text-center text-slate-500 dark:text-slate-400 font-medium">No students have joined this quiz yet</div>
           ) : displayStudents.length === 0 ? (
-            <div className="py-8 text-center text-slate-500 font-medium">No students in this view</div>
+            <div className="py-8 text-center text-slate-500 dark:text-slate-400 font-medium">No students in this view</div>
           ) : (
             <table className="w-full" data-testid="students-monitor-table">
               <thead>
-                <tr className="border-b border-slate-100">
+                <tr className="border-b border-slate-100 dark:border-slate-700">
                   {['Student', 'Progress', 'Time', 'Violations', 'Status'].map(h => (
                     <th key={h} className={`${h === 'Student' ? 'text-left' : 'text-center'} p-4 text-xs font-bold uppercase tracking-widest text-slate-400`}>{h}</th>
                   ))}
@@ -176,23 +176,23 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
               </thead>
               <tbody>
                 {displayStudents.map((student) => (
-                  <tr key={student.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors" data-testid={`student-row-${student.id}`}>
-                    <td className="p-4"><p className="font-bold text-slate-800">{student.name}</p><p className="text-sm font-medium text-slate-400">{student.rollNo}</p></td>
+                  <tr key={student.id} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors" data-testid={`student-row-${student.id}`}>
+                    <td className="p-4"><p className="font-bold text-slate-800 dark:text-slate-100">{student.name}</p><p className="text-sm font-medium text-slate-400">{student.rollNo}</p></td>
                     <td className="p-4">
-                      <div className="flex items-center justify-center gap-2 mb-1"><span className="font-bold text-slate-700 text-sm">{student.progress}/{student.totalQuestions}</span></div>
+                      <div className="flex items-center justify-center gap-2 mb-1"><span className="font-bold text-slate-700 dark:text-slate-300 text-sm">{student.progress}/{student.totalQuestions}</span></div>
                       <div className="h-2 bg-slate-100 rounded-full max-w-32 mx-auto overflow-hidden">
                         <div className="h-full bg-gradient-to-r from-indigo-500 to-teal-400 rounded-full transition-all duration-1000" style={{ width: `${student.totalQuestions > 0 ? (student.progress / student.totalQuestions) * 100 : 0}%` }}></div>
                       </div>
                     </td>
                     <td className="text-center p-4">
-                      <div className="flex items-center justify-center gap-1"><Clock size={15} weight="duotone" className="text-slate-400" /><span className="font-bold text-slate-700">{student.timeElapsed}m</span></div>
+                      <div className="flex items-center justify-center gap-1"><Clock size={15} weight="duotone" className="text-slate-400" /><span className="font-bold text-slate-700 dark:text-slate-300">{student.timeElapsed}m</span></div>
                       <p className="text-xs font-medium text-slate-400 mt-0.5">{student.status === 'active' ? `Started ${student.startTime}` : `Done ${student.submitTime}`}</p>
                     </td>
                     <td className="text-center p-4">
                       {student.violations > 0 ? <span className={`soft-badge ${student.violations >= 2 ? 'bg-red-100 text-red-600' : 'bg-amber-50 text-amber-600'}`}>{student.violations}</span>
                         : <span className="text-emerald-500 font-bold">OK</span>}
                     </td>
-                    <td className="text-center p-4"><span className={`soft-badge ${student.status === 'active' ? 'bg-emerald-50 text-emerald-600 animate-pulse' : 'bg-slate-100 text-slate-500'}`}>{student.status}</span></td>
+                    <td className="text-center p-4"><span className={`soft-badge ${student.status === 'active' ? 'bg-emerald-50 text-emerald-600 animate-pulse' : 'bg-slate-100 text-slate-500 dark:text-slate-400'}`}>{student.status}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -208,11 +208,11 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
             disabled={!!actionLoading || quizEnded}
             className="soft-card-hover p-6 text-left flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/15 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
               {actionLoading === 'extend' ? <CircleNotch size={24} weight="bold" className="text-indigo-500 animate-spin" /> : <Plus size={24} weight="duotone" className="text-indigo-500" />}
             </div>
             <div className="flex-1">
-              <p className="font-extrabold text-slate-900">Extend Time</p>
+              <p className="font-extrabold text-slate-900 dark:text-white">Extend Time</p>
               <div className="flex items-center gap-2 mt-1">
                 <input
                   type="number"
@@ -253,7 +253,7 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
               <DownloadSimple size={24} weight="duotone" className="text-teal-500" />
             </div>
             <div>
-              <p className="font-extrabold text-slate-900">Export Log</p>
+              <p className="font-extrabold text-slate-900 dark:text-white">Export Log</p>
               <p className="text-sm font-medium text-slate-400">Download .xlsx activity</p>
             </div>
           </button>

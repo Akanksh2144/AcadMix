@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Play, Terminal, Copy, Trash, CaretDown, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise } from '@phosphor-icons/react';
 import Editor from '@monaco-editor/react';
 import api from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 
 const LANGUAGES = [
   { id: 'python', label: 'Python', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
@@ -20,6 +21,7 @@ const DEFAULT_TEMPLATES = {
 };
 
 const CodePlayground = ({ navigate, user }) => {
+  const { isDark } = useTheme();
   const [language, setLanguage] = useState('python');
   const [code, setCode] = useState(DEFAULT_TEMPLATES['python']);
   const [stdin, setStdin] = useState('');
@@ -183,7 +185,7 @@ const CodePlayground = ({ navigate, user }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button data-testid="back-button" onClick={() => navigate(dashboardPage)}
-                className="p-2.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
+                className="p-2.5 rounded-full bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
                 <ArrowLeft size={22} weight="duotone" />
               </button>
               <div className="flex items-center gap-3">
@@ -191,7 +193,7 @@ const CodePlayground = ({ navigate, user }) => {
                   <Terminal size={22} weight="duotone" className="text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-extrabold tracking-tight text-slate-900">Code Playground</h1>
+                  <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Code Playground</h1>
                   <p className="text-xs font-medium text-slate-400">Practice coding algorithms & data structures</p>
                 </div>
               </div>
@@ -199,7 +201,7 @@ const CodePlayground = ({ navigate, user }) => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowInsightsModal(true)}
-                className="hidden lg:flex bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 !px-4 !py-2.5 text-sm font-semibold rounded-xl transition-all shadow-sm items-center gap-2"
+                className="hidden lg:flex bg-white hover:bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 !px-4 !py-2.5 text-sm font-semibold rounded-xl transition-all shadow-sm items-center gap-2"
               >
                 <ChartBar size={16} weight="duotone" />
                 Insights
@@ -222,19 +224,19 @@ const CodePlayground = ({ navigate, user }) => {
         // Split-pane layout for selected challenge
         <div className="flex-1 overflow-y-auto lg:overflow-hidden p-4 lg:p-6 flex flex-col lg:flex-row" ref={containerRef}>
           {/* Left Side: Question Description (Hidden on mobile) */}
-          <div style={{ width: window.innerWidth >= 1024 ? `calc(${leftWidth}% - 12px)` : '100%' }} className="hidden lg:flex flex-col h-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h2 className="text-lg font-bold text-slate-800 line-clamp-1 flex-1 mr-4">{activeChallenge.title}</h2>
+          <div style={{ width: window.innerWidth >= 1024 ? `calc(${leftWidth}% - 12px)` : '100%' }} className="hidden lg:flex flex-col h-full bg-white rounded-2xl dark:bg-[#1A202C] shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden relative">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 line-clamp-1 flex-1 mr-4">{activeChallenge.title}</h2>
               <div className="flex items-center gap-3 shrink-0">
                 <span className={`text-xs px-2.5 py-1 rounded border font-bold ${activeChallenge.difficulty === 'Easy' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : activeChallenge.difficulty === 'Medium' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
                   {activeChallenge.difficulty}
                 </span>
-                <button onClick={() => setActiveChallenge(null)} className="text-sm font-bold text-slate-400 hover:text-slate-600" title="Exit Challenge">
+                <button onClick={() => setActiveChallenge(null)} className="text-sm font-bold text-slate-400 hover:text-slate-600 dark:text-slate-400" title="Exit Challenge">
                   <X size={20} />
                 </button>
               </div>
             </div>
-            <div className="p-5 flex-1 overflow-y-auto custom-scrollbar prose prose-sm max-w-none text-slate-600" dangerouslySetInnerHTML={{ __html: activeChallenge.description }}></div>
+            <div className="p-5 flex-1 overflow-y-auto custom-scrollbar prose prose-sm max-w-none text-slate-600 dark:text-slate-400" dangerouslySetInnerHTML={{ __html: activeChallenge.description }}></div>
           </div>
 
           {/* Splitter / Resizer (Hidden on mobile) */}
@@ -243,26 +245,26 @@ const CodePlayground = ({ navigate, user }) => {
             onMouseDown={(e) => { e.preventDefault(); setIsDragging(true); }}
             title="Drag to resize panels"
           >
-            <div className={`h-16 w-1 rounded-full transition-colors ${isDragging ? 'bg-indigo-500' : 'bg-slate-200 group-hover:bg-indigo-300'}`}></div>
+            <div className={`h-16 w-1 rounded-full transition-colors ${isDragging ? 'bg-indigo-50 dark:bg-indigo-500/150' : 'bg-slate-200 group-hover:bg-indigo-300'}`}></div>
           </div>
 
           {/* Right Side: Code Editor (Top) & Output (Bottom) */}
           <div style={{ width: window.innerWidth >= 1024 ? `calc(${100 - leftWidth}% - 12px)` : '100%' }} className="flex flex-col lg:h-full gap-4 lg:gap-6 relative min-h-[600px] lg:min-h-0">
             {/* Editor Container */}
-            <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[50%]">
-              <div className="bg-slate-50 border-b border-slate-100 px-4 py-2 flex items-center justify-between">
+            <div className="flex-1 flex flex-col bg-white rounded-2xl dark:bg-[#1A202C] shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden min-h-[50%]">
+              <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700 px-4 py-2 flex items-center justify-between">
                 <div className="relative">
                   <button onClick={() => setShowLangMenu(!showLangMenu)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors font-semibold text-sm text-slate-700">
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors font-semibold text-sm text-slate-700 dark:text-slate-300">
                     <span className="text-lg leading-none">{currentLang?.icon}</span>
                     {currentLang?.label}
                     <CaretDown size={14} weight="bold" />
                   </button>
                   {showLangMenu && (
-                    <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 p-2 z-50 min-w-[160px]">
+                    <div className="absolute top-full left-0 mt-2 bg-white rounded-xl dark:bg-[#1A202C] shadow-xl border border-slate-100 dark:border-slate-700 p-2 z-50 min-w-[160px]">
                       {LANGUAGES.map(lang => (
                         <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
-                          className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-slate-50 text-slate-700'}`}>
+                          className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300'}`}>
                           <span className="text-lg leading-none">{lang.icon}</span>
                           {lang.label}
                         </button>
@@ -271,7 +273,7 @@ const CodePlayground = ({ navigate, user }) => {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => { setCode(DEFAULT_TEMPLATES[language] || ''); setOutput(null); }} className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 transition-colors" title="Reset Code">
+                  <button onClick={() => { setCode(DEFAULT_TEMPLATES[language] || ''); setOutput(null); }} className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 dark:text-slate-400 transition-colors" title="Reset Code">
                     <ArrowCounterClockwise size={18} weight="duotone" />
                   </button>
                   <button onClick={handleRun} disabled={running} className="btn-primary !px-4 !py-1.5 text-sm flex items-center gap-2 disabled:opacity-60 shadow-none">
@@ -287,7 +289,7 @@ const CodePlayground = ({ navigate, user }) => {
                   value={code}
                   onChange={(val) => setCode(val || '')}
                   onMount={handleEditorMount}
-                  theme="vs-light"
+                  theme={isDark ? 'vs-dark' : 'vs-light'}
                   options={{
                     minimap: { enabled: false },
                     fontSize: 14,
@@ -322,13 +324,13 @@ const CodePlayground = ({ navigate, user }) => {
               <div className="flex-1 overflow-y-auto p-5 custom-scrollbar text-slate-300 font-mono text-sm layout-console">
                  {running ? (
                     <div className="flex items-center gap-3 animate-pulse">
-                       <div className="w-2 h-4 bg-indigo-500 animate-bounce"></div>
+                       <div className="w-2 h-4 bg-indigo-50 dark:bg-indigo-500/150 animate-bounce"></div>
                        <span className="text-slate-400">Evaluating your solution against test cases...</span>
                     </div>
                  ) : output !== null ? (
                     <pre className="whitespace-pre-wrap">{output}</pre>
                  ) : (
-                    <div className="text-slate-500 italic">Code output will appear here.</div>
+                    <div className="text-slate-500 dark:text-slate-400 italic">Code output will appear here.</div>
                  )}
               </div>
             </div>
@@ -345,16 +347,16 @@ const CodePlayground = ({ navigate, user }) => {
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors font-bold text-sm text-slate-700">
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 transition-colors font-bold text-sm text-slate-700 dark:text-slate-300">
                         <span className="text-base">{currentLang?.icon}</span>
                         {currentLang?.label}
                         <CaretDown size={14} weight="bold" />
                       </button>
                       {showLangMenu && (
-                        <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-50 min-w-[180px]">
+                        <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 dark:bg-[#1A202C] dark:border-white/[0.06] p-2 z-50 min-w-[180px]">
                           {LANGUAGES.map(lang => (
                             <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
-                              className={`w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-slate-50 text-slate-700'}`}>
+                              className={`w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300'}`}>
                               <span className="text-base">{lang.icon}</span>
                               {lang.label}
                             </button>
@@ -365,7 +367,7 @@ const CodePlayground = ({ navigate, user }) => {
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => { setCode(DEFAULT_TEMPLATES[language] || ''); setOutput(null); }}
-                      className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors" title="Reset to template">
+                      className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 transition-colors" title="Reset to template">
                       <ArrowCounterClockwise size={18} weight="duotone" />
                     </button>
                     <button onClick={handleRun} disabled={running}
@@ -383,7 +385,7 @@ const CodePlayground = ({ navigate, user }) => {
                     value={code}
                     onChange={(val) => setCode(val || '')}
                     onMount={handleEditorMount}
-                    theme="vs-light"
+                    theme={isDark ? 'vs-dark' : 'vs-light'}
                     options={{
                       minimap: { enabled: false },
                       fontSize: 14,
@@ -411,8 +413,8 @@ const CodePlayground = ({ navigate, user }) => {
                 <div className="soft-card flex flex-col flex-1 min-h-[300px]">
                   <div className="p-5 pb-3 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-2">
-                      <Terminal size={18} weight="duotone" className="text-slate-500" />
-                      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">Output</h3>
+                      <Terminal size={18} weight="duotone" className="text-slate-500 dark:text-slate-400" />
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Output</h3>
                     </div>
                     <div className="flex items-center gap-1.5">
                       {output && (
@@ -437,7 +439,7 @@ const CodePlayground = ({ navigate, user }) => {
                       ) : output !== null ? (
                         <pre className="text-sm text-slate-200 font-mono whitespace-pre-wrap">{output}</pre>
                       ) : (
-                        <p className="text-sm text-slate-500 font-medium">Click "Run Code" to see output here</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Click "Run Code" to see output here</p>
                       )}
                     </div>
                     {execTime !== null && (
@@ -451,23 +453,23 @@ const CodePlayground = ({ navigate, user }) => {
 
                 <div className="soft-card flex flex-col h-[280px] shrink-0">
                   <div className="p-5 pb-3 shrink-0">
-                     <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">Run History</h3>
+                     <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Run History</h3>
                   </div>
                   <div className="flex-1 overflow-y-auto px-5 pb-5 space-y-2 custom-scrollbar">
                     {history.length === 0 ? (
                       <p className="text-sm text-slate-400 font-medium py-2">No runs yet. Start coding!</p>
                     ) : (
                       history.map((h, i) => (
-                        <div key={i} className="p-3 rounded-xl bg-slate-50 flex items-start gap-3">
+                        <div key={i} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-start gap-3">
                           <div className={`mt-0.5 ${h.success ? 'text-emerald-500' : 'text-red-500'}`}>
                             <CheckCircle size={16} weight={h.success ? 'fill' : 'duotone'} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-xs font-bold text-slate-600">{LANGUAGES.find(l => l.id === h.language)?.label || 'Lang'}</span>
+                              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{LANGUAGES.find(l => l.id === h.language)?.label || 'Lang'}</span>
                               <span className="text-xs text-slate-400">{h.timestamp}</span>
                             </div>
-                            <p className="text-xs text-slate-500 font-mono truncate">{h.output}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">{h.output}</p>
                           </div>
                           <span className="text-xs font-medium text-slate-400 whitespace-nowrap">{h.time}ms</span>
                         </div>
@@ -487,19 +489,19 @@ const CodePlayground = ({ navigate, user }) => {
       {/* Challenges Modal */}
       {showChallengesModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-[2px] animate-fade-in" onClick={() => setShowChallengesModal(false)}>
-          <div className="w-full max-w-4xl max-h-[85vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+          <div className="w-full max-w-4xl max-h-[85vh] bg-white rounded-3xl dark:bg-[#1A202C] shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50/80">
               <div className="flex items-center gap-3">
                  <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
                    <Lightning size={20} weight="fill" />
                  </div>
-                 <h2 className="text-xl font-bold text-slate-800">Problem List</h2>
+                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Problem List</h2>
               </div>
               
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
+                <div className="flex items-center gap-2 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 shadow-sm">
                    <Funnel size={16} className="text-slate-400" />
-                   <select className="bg-transparent border-none outline-none text-sm font-semibold text-slate-700 cursor-pointer"
+                   <select className="bg-transparent border-none outline-none text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer"
                      value={difficultyFilter} onChange={e => setDifficultyFilter(e.target.value)}>
                      <option value="">All Difficulties</option>
                      <option value="Easy">Easy</option>
@@ -507,7 +509,7 @@ const CodePlayground = ({ navigate, user }) => {
                      <option value="Hard">Hard</option>
                    </select>
                 </div>
-                <button onClick={() => setShowChallengesModal(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                <button onClick={() => setShowChallengesModal(false)} className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-full transition-colors">
                   <X size={24} />
                 </button>
               </div>
@@ -515,16 +517,16 @@ const CodePlayground = ({ navigate, user }) => {
             
             <div className="flex-1 overflow-y-auto p-2 min-h-[300px]">
                {challenges.length === 0 ? (
-                 <div className="py-20 text-center text-slate-500">
+                 <div className="py-20 text-center text-slate-500 dark:text-slate-400">
                     Loading problems...
                  </div>
                ) : (
                  <div className="divide-y divide-slate-100">
                    {challenges.map((ch, i) => (
-                     <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => handleLoadChallenge(ch)}>
+                     <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:bg-slate-800/50 transition-colors group cursor-pointer" onClick={() => handleLoadChallenge(ch)}>
                         <div className="flex-1 pr-6">
                            <div className="flex items-center gap-3 mb-1">
-                             <h4 className="text-[15px] font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{ch.title}</h4>
+                             <h4 className="text-[15px] font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 transition-colors">{ch.title}</h4>
                              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${ch.difficulty === 'Easy' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : ch.difficulty === 'Medium' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
                                {ch.difficulty}
                              </span>
@@ -533,7 +535,7 @@ const CodePlayground = ({ navigate, user }) => {
                               {ch.topics?.slice(0, 3).map(t => <span key={t} className="bg-slate-100 px-2 py-0.5 rounded">{t}</span>)}
                            </div>
                         </div>
-                        <button className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
+                        <button className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 dark:text-slate-400 font-bold text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
                            Solve
                         </button>
                      </div>
@@ -548,24 +550,24 @@ const CodePlayground = ({ navigate, user }) => {
       {/* Insights Modal */}
       {showInsightsModal && stats && (
          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-[2px] animate-fade-in" onClick={() => setShowInsightsModal(false)}>
-           <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
-               <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+           <div className="w-full max-w-3xl bg-white rounded-3xl dark:bg-[#1A202C] shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+             <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50/80">
+               <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-3">
                  <ChartBar className="text-indigo-500 text-2xl" weight="duotone" />
                  My Insights
                </h2>
-               <button onClick={() => setShowInsightsModal(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+               <button onClick={() => setShowInsightsModal(false)} className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-full transition-colors">
                  <X size={24} />
                </button>
              </div>
              <div className="p-8 flex flex-col md:flex-row gap-8">
                <div className="flex-1">
-                 <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                 <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2">
                    <CheckCircle size={20} weight="fill" className="text-emerald-500" />
                    Overall Progress
                  </h3>
                  <div className="flex items-center gap-6">
-                   <div className="relative w-28 h-28 flex items-center justify-center bg-white rounded-full border-8 border-slate-50 shadow-inner">
+                   <div className="relative w-28 h-28 flex items-center justify-center bg-white dark:bg-[#1A202C] rounded-full border-8 border-slate-50 shadow-inner">
                      <div className="text-center">
                        <span className="block text-2xl font-black text-indigo-600">{stats.total_solved}</span>
                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Solved</span>
@@ -579,7 +581,7 @@ const CodePlayground = ({ navigate, user }) => {
                        <div key={diff}>
                          <div className="flex justify-between text-xs mb-1 font-bold">
                            <span className={diff === 'Easy' ? 'text-emerald-500' : diff === 'Medium' ? 'text-amber-500' : 'text-rose-500'}>{diff}</span>
-                           <span className="text-slate-500">{stats.difficulty[diff] || 0}</span>
+                           <span className="text-slate-500 dark:text-slate-400">{stats.difficulty[diff] || 0}</span>
                          </div>
                          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                            <div className={`h-full rounded-full ${diff === 'Easy' ? 'bg-emerald-500' : diff === 'Medium' ? 'bg-amber-500' : 'bg-rose-500'}`} style={{width: `${Math.min(((stats.difficulty[diff] || 0) / 20) * 100, 100)}%`}}></div>
@@ -590,12 +592,12 @@ const CodePlayground = ({ navigate, user }) => {
                  </div>
                </div>
                {stats.topics && Object.keys(stats.topics).length > 0 && (
-                 <div className="w-[250px] border-l border-slate-100 pl-8">
+                 <div className="w-[250px] border-l border-slate-100 dark:border-slate-700 pl-8">
                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Strong Topics</h3>
                    <div className="flex flex-col gap-2">
                      {Object.entries(stats.topics).map(([topic, count]) => (
-                       <div key={topic} className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2">
-                         <span className="text-sm font-semibold text-slate-700">{topic}</span>
+                       <div key={topic} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-lg px-3 py-2">
+                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{topic}</span>
                          <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-full">{count}</span>
                        </div>
                      ))}

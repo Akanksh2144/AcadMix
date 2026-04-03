@@ -4,7 +4,7 @@ import { analyticsAPI } from '../services/api';
 
 const statusStyle = {
   active: 'bg-emerald-50 text-emerald-600',
-  ended: 'bg-slate-100 text-slate-500',
+  ended: 'bg-slate-100 text-slate-500 dark:text-slate-400',
   scheduled: 'bg-amber-50 text-amber-600',
   draft: 'bg-purple-50 text-purple-600',
 };
@@ -38,7 +38,7 @@ const TeacherQuizzes = ({ navigate, user }) => {
   const endedCount = quizzes.filter(q => q.status === 'ended').length;
 
   if (loading) return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300 flex items-center justify-center">
       <div className="text-center">
         <div className="w-14 h-14 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p className="text-sm font-bold text-slate-400">Loading quizzes...</p>
@@ -47,14 +47,14 @@ const TeacherQuizzes = ({ navigate, user }) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <header className="glass-header">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
-          <button onClick={() => navigate('teacher-dashboard')} className="p-2.5 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors">
+          <button onClick={() => navigate('teacher-dashboard')} className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 transition-colors">
             <ArrowLeft size={20} weight="bold" />
           </button>
           <div className="flex-1">
-            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">My Quizzes</h1>
+            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">My Quizzes</h1>
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
               {activeCount} active • {endedCount} ended • {quizzes.length} total
             </p>
@@ -75,7 +75,7 @@ const TeacherQuizzes = ({ navigate, user }) => {
               className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
                 filter === tab.key
                   ? 'bg-emerald-500 text-white'
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                  : 'bg-slate-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200'
               }`}>
               {tab.label}
             </button>
@@ -106,7 +106,7 @@ const TeacherQuizzes = ({ navigate, user }) => {
                           {quiz.subject && <span>• {quiz.subject}</span>}
                         </div>
                       </div>
-                      <span className={`soft-badge ${statusStyle[status] || 'bg-slate-100 text-slate-500'}`}>
+                      <span className={`soft-badge ${statusStyle[status] || 'bg-slate-100 text-slate-500 dark:text-slate-400'}`}>
                         {statusLabel[status] || status}
                       </span>
                     </div>
@@ -114,15 +114,15 @@ const TeacherQuizzes = ({ navigate, user }) => {
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Students</p>
-                        <p className="text-xl font-extrabold text-slate-900">{totalStudents}</p>
+                        <p className="text-xl font-extrabold text-slate-900 dark:text-white">{totalStudents}</p>
                       </div>
                       <div>
                         <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Completed</p>
-                        <p className="text-xl font-extrabold text-slate-900">{attemptCount}</p>
+                        <p className="text-xl font-extrabold text-slate-900 dark:text-white">{attemptCount}</p>
                       </div>
                       <div>
                         <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Avg Score</p>
-                        <p className="text-xl font-extrabold text-slate-900">{avgScore > 0 ? `${avgScore}%` : '-'}</p>
+                        <p className="text-xl font-extrabold text-slate-900 dark:text-white">{avgScore > 0 ? `${avgScore}%` : '-'}</p>
                       </div>
                     </div>
 
@@ -159,7 +159,7 @@ const TeacherQuizzes = ({ navigate, user }) => {
             <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Clipboard size={36} weight="duotone" className="text-slate-400" />
             </div>
-            <h3 className="font-bold text-lg text-slate-600 mb-1">
+            <h3 className="font-bold text-lg text-slate-600 dark:text-slate-400 mb-1">
               {filter === 'active' ? 'No active quizzes' : filter === 'ended' ? 'No ended quizzes' : 'No quizzes yet'}
             </h3>
             <p className="text-sm text-slate-400 mb-4">

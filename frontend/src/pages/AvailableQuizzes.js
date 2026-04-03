@@ -31,7 +31,7 @@ const AvailableQuizzes = ({ navigate, user }) => {
   }, []);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300 flex items-center justify-center">
       <div className="text-center">
         <div className="w-14 h-14 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p className="text-sm font-bold text-slate-400">Loading quizzes...</p>
@@ -40,14 +40,14 @@ const AvailableQuizzes = ({ navigate, user }) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <header className="glass-header">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
-          <button onClick={() => navigate('student-dashboard')} className="p-2.5 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors">
+          <button onClick={() => navigate('student-dashboard')} className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 transition-colors">
             <ArrowLeft size={20} weight="bold" />
           </button>
           <div>
-            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">Available Quizzes</h1>
+            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Available Quizzes</h1>
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
               {quizzes.length} active quiz{quizzes.length !== 1 ? 'zes' : ''}
             </p>
@@ -59,7 +59,7 @@ const AvailableQuizzes = ({ navigate, user }) => {
         {/* In Progress */}
         {inProgress.length > 0 && (
           <div className="mb-6 sm:mb-8" style={{animation: 'fadeInUp 0.3s ease'}}>
-            <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-800 mb-4 flex items-center gap-2">
+            <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
               <Play size={20} weight="fill" className="text-amber-500" /> Continue Where You Left Off
             </h3>
             <div className="space-y-3">
@@ -70,8 +70,8 @@ const AvailableQuizzes = ({ navigate, user }) => {
                       <Play size={20} weight="fill" className="text-amber-500" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900">{attempt.quiz_title || 'Untitled Quiz'}</h4>
-                      <p className="text-xs sm:text-sm text-slate-500">
+                      <h4 className="font-bold text-slate-900 dark:text-white">{attempt.quiz_title || 'Untitled Quiz'}</h4>
+                      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                         {attempt.quiz_subject} • {(attempt.answers || []).filter(a => a !== null).length}/{attempt.total_questions} answered
                       </p>
                     </div>
@@ -89,7 +89,7 @@ const AvailableQuizzes = ({ navigate, user }) => {
         )}
 
         {/* Active Quizzes */}
-        <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-800 mb-4 flex items-center gap-2">
+        <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
           <Fire size={20} weight="duotone" className="text-rose-500" /> Active Quizzes
         </h3>
         <div className="space-y-3 sm:space-y-4">
@@ -112,7 +112,7 @@ const AvailableQuizzes = ({ navigate, user }) => {
                     <span className="soft-badge bg-amber-50 text-amber-600 whitespace-nowrap">{quiz.total_marks} marks</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 mb-4 text-sm font-medium text-slate-500">
+                <div className="flex items-center gap-4 mb-4 text-sm font-medium text-slate-500 dark:text-slate-400">
                   <div className="flex items-center gap-1.5"><Clock size={15} weight="duotone" /><span>{quiz.duration_mins} min</span></div>
                   <div className="flex items-center gap-1.5"><BookOpen size={15} weight="duotone" /><span>{quiz.question_count || '?'} questions</span></div>
                 </div>
@@ -127,7 +127,7 @@ const AvailableQuizzes = ({ navigate, user }) => {
               <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <BookOpen size={28} weight="duotone" className="text-slate-400" />
               </div>
-              <p className="text-slate-500 font-bold mb-1">No active quizzes right now</p>
+              <p className="text-slate-500 dark:text-slate-400 font-bold mb-1">No active quizzes right now</p>
               <p className="text-sm text-slate-400">Quizzes will appear here when your teacher publishes them</p>
             </div>
           )}

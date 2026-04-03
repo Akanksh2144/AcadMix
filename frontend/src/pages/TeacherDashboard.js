@@ -52,12 +52,12 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
   }));
 
   const stats = [
-    { label: 'Total Quizzes', value: String(totalQuizzes), sub: 'created', icon: Clipboard, color: 'bg-indigo-50 text-indigo-500', gradient: 'from-indigo-500 to-blue-500' },
+    { label: 'Total Quizzes', value: String(totalQuizzes), sub: 'created', icon: Clipboard, color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-500', gradient: 'from-indigo-500 to-blue-500' },
     { label: 'Active Quizzes', value: String(activeQuizzes), sub: 'live now', icon: Fire, color: 'bg-rose-50 text-rose-500', gradient: 'from-rose-500 to-pink-500', onClick: () => navigate('teacher-quizzes') },
   ];
 
   if (loading) return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300 flex items-center justify-center">
       <div className="text-center">
         <div className="w-14 h-14 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p className="text-sm font-bold text-slate-400">Loading your dashboard...</p>
@@ -66,14 +66,14 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       {/* Notification overlay */}
       {showNotifications && (
         <>
           <div className="fixed inset-0 z-[60]" onClick={() => setShowNotifications(false)}></div>
-          <div className="fixed top-16 right-4 sm:right-8 z-[61] w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden" style={{animation: 'fadeInUp 0.15s ease'}}>
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h4 className="font-extrabold text-slate-800">Recent Activity</h4>
+          <div className="fixed top-16 right-4 sm:right-8 z-[61] w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 dark:bg-[#1A202C] dark:border-white/[0.06] overflow-hidden" style={{animation: 'fadeInUp 0.15s ease'}}>
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+              <h4 className="font-extrabold text-slate-800 dark:text-slate-100">Recent Activity</h4>
               <button
                 onClick={() => { setNotifRead(true); setShowNotifications(false); }}
                 className="text-xs font-bold text-emerald-500 hover:text-emerald-600 transition-colors"
@@ -83,12 +83,12 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
             </div>
             <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
               {recentActivity.length > 0 ? recentActivity.map((item, i) => (
-                <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 transition-colors">
+                <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 bg-emerald-50">
                     <Exam size={14} weight="duotone" className="text-emerald-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-700 truncate">{item.title}</p>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300 truncate">{item.title}</p>
                     <p className="text-[10px] font-medium text-slate-400 mt-0.5">{item.subtitle} • {timeAgo(item.timestamp)}</p>
                   </div>
                   {item.score !== undefined && item.score !== null && (
@@ -114,7 +114,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
               <BookOpen size={22} weight="duotone" className="text-white" />
             </div>
             <div>
-              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">AcadeMix</h1>
+              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">AcadeMix</h1>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Faculty</p>
             </div>
           </div>
@@ -123,7 +123,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
             <button
               data-testid="notification-bell"
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2.5 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors relative"
+              className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 transition-colors relative"
             >
               <Bell size={20} weight={showNotifications ? 'fill' : 'duotone'} />
               {!notifRead && recentActivity.length > 0 && (
@@ -132,10 +132,10 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
                 </div>
               )}
             </button>
-            <div className="hidden sm:flex items-center gap-2 bg-slate-50 rounded-2xl px-4 py-2">
+            <div className="hidden sm:flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 rounded-2xl px-4 py-2">
               <GraduationCap size={18} weight="duotone" className="text-emerald-500" />
               <div className="text-right">
-                <p className="text-sm font-bold text-slate-800">{user?.name}</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{user?.name}</p>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{user?.designation || 'Assistant Professor'}</p>
               </div>
             </div>
@@ -152,7 +152,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 mb-1">
             {getGreeting()}, {user?.name?.split(' ').pop() || 'Faculty'}!
           </h2>
-          <p className="text-sm sm:text-base font-medium text-slate-500">
+          <p className="text-sm sm:text-base font-medium text-slate-500 dark:text-slate-400">
             {user?.designation || 'Assistant Professor'}
           </p>
         </div>
@@ -172,7 +172,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
                   <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
                   <div className={`${stat.color} p-2 sm:p-2.5 rounded-xl`}><Icon size={18} weight="duotone" /></div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">{stat.value}</p>
+                <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{stat.value}</p>
                 <p className="text-[10px] sm:text-xs font-medium text-slate-400 mt-1">{stat.sub}</p>
                 {stat.onClick && <p className="text-[10px] font-bold text-indigo-500 mt-2 flex items-center gap-1">View all <ArrowRight size={10} weight="bold" /></p>}
               </Wrapper>

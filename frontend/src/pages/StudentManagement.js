@@ -41,15 +41,15 @@ const StudentManagement = ({ navigate, user }) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <header className="glass-header">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
           <button data-testid="back-button" onClick={() => navigate('teacher-dashboard')}
-            className="p-2.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
+            className="p-2.5 rounded-full bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
             <ArrowLeft size={22} weight="duotone" />
           </button>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">My Students</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">My Students</h1>
             <p className="text-sm font-medium text-slate-400">Students in your assigned classes</p>
           </div>
         </div>
@@ -65,7 +65,7 @@ const StudentManagement = ({ navigate, user }) => {
               return (
                 <button key={a.id} data-testid={`class-btn-${key}`} onClick={() => handleClassSelect(a)}
                   className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                    isActive ? 'bg-indigo-500 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50'
+                    isActive ? 'bg-indigo-50 dark:bg-indigo-500/150 text-white shadow-md' : 'bg-white text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 hover:bg-indigo-50 dark:bg-indigo-500/15'
                   }`}>
                   {a.subject_code} &bull; {a.batch}-{a.section}
                 </button>
@@ -79,11 +79,11 @@ const StudentManagement = ({ navigate, user }) => {
             <div className="flex items-center gap-3">
               <GraduationCap size={20} weight="duotone" className="text-indigo-500" />
               <div>
-                <p className="font-bold text-slate-800">{selectedAssignment.subject_name}</p>
-                <p className="text-xs text-slate-500">Batch {selectedAssignment.batch} | Section {selectedAssignment.section} | Semester {selectedAssignment.semester}</p>
+                <p className="font-bold text-slate-800 dark:text-slate-100">{selectedAssignment.subject_name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Batch {selectedAssignment.batch} | Section {selectedAssignment.section} | Semester {selectedAssignment.semester}</p>
               </div>
             </div>
-            <span className="soft-badge bg-indigo-50 text-indigo-600">{students.length} students</span>
+            <span className="soft-badge bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600">{students.length} students</span>
           </div>
         )}
 
@@ -98,24 +98,24 @@ const StudentManagement = ({ navigate, user }) => {
         <div className="soft-card overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest w-12">#</th>
-                <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">College ID</th>
-                <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Student Name</th>
-                <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Department</th>
-                <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Batch</th>
-                <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Section</th>
+              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+                <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest w-12">#</th>
+                <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">College ID</th>
+                <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Student Name</th>
+                <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Department</th>
+                <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Batch</th>
+                <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Section</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((s, i) => (
-                <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors" data-testid={`student-row-${s.college_id}`}>
+                <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors" data-testid={`student-row-${s.college_id}`}>
                   <td className="py-3 px-4 text-sm text-slate-400">{i + 1}</td>
                   <td className="py-3 px-4 font-bold text-indigo-600">{s.college_id}</td>
-                  <td className="py-3 px-4 font-medium text-slate-800">{s.name}</td>
-                  <td className="py-3 px-4 text-sm text-slate-600">{s.department || '-'}</td>
-                  <td className="py-3 px-4 text-sm text-slate-600">{s.batch || '-'}</td>
-                  <td className="py-3 px-4 text-sm text-slate-600">{s.section || '-'}</td>
+                  <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-100">{s.name}</td>
+                  <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{s.department || '-'}</td>
+                  <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{s.batch || '-'}</td>
+                  <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{s.section || '-'}</td>
                 </tr>
               ))}
             </tbody>

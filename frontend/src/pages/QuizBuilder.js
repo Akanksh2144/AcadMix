@@ -335,17 +335,17 @@ const QuizBuilder = ({ navigate, user }) => {
   const q = questions[currentQuestion];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <header className="glass-header">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button data-testid="back-button" onClick={() => navigate(user?.role === 'hod' ? 'hod-dashboard' : 'teacher-dashboard')} className="p-2.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
+              <button data-testid="back-button" onClick={() => navigate(user?.role === 'hod' ? 'hod-dashboard' : 'teacher-dashboard')} className="p-2.5 rounded-full bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
                 <ArrowLeft size={22} weight="duotone" />
               </button>
               <div>
                 <input data-testid="quiz-title-input" type="text" value={quizTitle} onChange={(e) => setQuizTitle(e.target.value)}
-                  className="text-2xl font-extrabold tracking-tight bg-transparent border-none outline-none text-slate-900" />
+                  className="text-2xl font-extrabold tracking-tight bg-transparent border-none outline-none text-slate-900 dark:text-white" />
                 <p className="text-sm font-medium text-slate-400">Quiz Builder</p>
               </div>
             </div>
@@ -365,7 +365,7 @@ const QuizBuilder = ({ navigate, user }) => {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="soft-card p-6 mb-8">
-          <h3 className="text-xl font-bold text-slate-800 mb-4">Quiz Configuration</h3>
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">Quiz Configuration</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div>
@@ -411,20 +411,20 @@ const QuizBuilder = ({ navigate, user }) => {
                 </div>
                 
                 {isClassDropdownOpen && (
-                  <div className="absolute left-0 right-0 top-[100%] mt-2 bg-white border border-slate-200 shadow-xl rounded-xl p-2 max-h-60 overflow-y-auto z-10 flex flex-col gap-1">
+                  <div className="absolute left-0 right-0 top-[100%] mt-2 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl p-2 max-h-60 overflow-y-auto z-10 flex flex-col gap-1">
                     {classesForSubject.map(cls => {
                       const isSelected = selectedClasses.includes(cls.id);
                       return (
-                        <label key={cls.id} className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-slate-50 border border-transparent'}`}>
+                        <label key={cls.id} className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-slate-50 dark:bg-slate-800/50 border border-transparent'}`}>
                           <input 
                             type="checkbox" 
                             checked={isSelected}
                             onChange={() => {
                               setSelectedClasses(prev => isSelected ? prev.filter(id => id !== cls.id) : [...prev, cls.id]);
                             }}
-                            className="w-4 h-4 rounded text-indigo-500 bg-white border-slate-300 accent-indigo-500 cursor-pointer"
+                            className="w-4 h-4 rounded text-indigo-500 bg-white dark:bg-[#1A202C] border-slate-300 accent-indigo-500 cursor-pointer"
                           />
-                          <span className={`text-sm font-bold ${isSelected ? 'text-indigo-700' : 'text-slate-600'}`}>
+                          <span className={`text-sm font-bold ${isSelected ? 'text-indigo-700' : 'text-slate-600 dark:text-slate-400'}`}>
                             {cls.department} • {cls.batch} • Sec {cls.section}
                           </span>
                         </label>
@@ -434,7 +434,7 @@ const QuizBuilder = ({ navigate, user }) => {
                 )}
               </div>
             ) : (
-              <p className="text-sm text-slate-400 italic p-3 bg-slate-50 rounded-xl">Quiz will be available to all students. To target specific sections, create faculty assignments first.</p>
+              <p className="text-sm text-slate-400 italic p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">Quiz will be available to all students. To target specific sections, create faculty assignments first.</p>
             )}
           </div>
 
@@ -452,32 +452,32 @@ const QuizBuilder = ({ navigate, user }) => {
           )}
           
           <div className="flex flex-wrap gap-8 items-center pt-2">
-             <label className="flex items-center gap-2.5 font-medium text-slate-600 cursor-pointer">
+             <label className="flex items-center gap-2.5 font-medium text-slate-600 dark:text-slate-400 cursor-pointer">
                 <input type="checkbox" checked={randomizeQuestions} onChange={(e) => setRandomizeQuestions(e.target.checked)} className="w-4 h-4 rounded-md accent-indigo-500" />
                 Randomize Questions
              </label>
-             <label className="flex items-center gap-2.5 font-medium text-slate-600 cursor-pointer">
+             <label className="flex items-center gap-2.5 font-medium text-slate-600 dark:text-slate-400 cursor-pointer">
                 <input type="checkbox" checked={randomizeOptions} onChange={(e) => setRandomizeOptions(e.target.checked)} className="w-4 h-4 rounded-md accent-indigo-500" />
                 Shuffle Options
              </label>
-             <label className="flex items-center gap-2.5 font-medium text-slate-600 cursor-pointer">
+             <label className="flex items-center gap-2.5 font-medium text-slate-600 dark:text-slate-400 cursor-pointer">
                 <input type="checkbox" checked={showAnswersAfter} onChange={(e) => setShowAnswersAfter(e.target.checked)} className="w-4 h-4 rounded-md accent-indigo-500" />
                 Show Answers After Submit
              </label>
              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2.5 font-medium text-slate-600 cursor-pointer">
+                <label className="flex items-center gap-2.5 font-medium text-slate-600 dark:text-slate-400 cursor-pointer">
                   <input type="checkbox" checked={negativeMarking} onChange={(e) => setNegativeMarking(e.target.checked)} className="w-4 h-4 rounded-md accent-indigo-500" />
                   Negative Marking
                 </label>
                 {negativeMarking && (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-500">-</span>
+                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">-</span>
                     <input type="number" step="0.1" min="0" value={negativeMarks} onChange={(e) => setNegativeMarks(e.target.value)} className="soft-input w-20 py-1 px-2 text-sm" placeholder="0.5" />
-                    <span className="text-sm font-bold text-slate-500">marks</span>
+                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">marks</span>
                     <button
                       type="button"
                       onClick={() => { const val = parseFloat(negativeMarks) || 0; setQuestions(qs => qs.map(q => ({ ...q, negativeMarks: val }))); showAlert('Applied', `Set −${val} negative marks on all ${questions.length} questions.`, 'success'); }}
-                      className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
+                      className="text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
                     >
                       Apply to all
                     </button>
@@ -491,12 +491,12 @@ const QuizBuilder = ({ navigate, user }) => {
           {/* Sidebar */}
           <div>
             <div className="soft-card p-5 sticky top-24">
-              <h4 className="font-bold text-slate-800 mb-3">Questions ({questions.length})</h4>
+              <h4 className="font-bold text-slate-800 dark:text-slate-100 mb-3">Questions ({questions.length})</h4>
               <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
                 {questions.map((qItem, index) => (
                   <button key={qItem.id} onClick={() => setCurrentQuestion(index)}
                     className={`w-full text-left p-3 rounded-xl font-medium transition-all duration-200 ${
-                      currentQuestion === index ? 'bg-indigo-500 text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                      currentQuestion === index ? 'bg-indigo-500 text-white shadow-md' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100'
                     }`}>
                     <div className="flex items-center justify-between">
                       <span className="font-bold">Q{index + 1}</span>
@@ -509,7 +509,7 @@ const QuizBuilder = ({ navigate, user }) => {
               </div>
               <div className="space-y-2">
                 {[
-                  { type: 'mcq-single', label: 'MCQ (Single)', color: 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100' },
+                  { type: 'mcq-single', label: 'MCQ (Single)', color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 hover:bg-indigo-100' },
                   { type: 'mcq-multiple', label: 'MCQ (Multiple)', color: 'bg-purple-50 text-purple-600 hover:bg-purple-100' },
                   { type: 'short', label: 'Short Answer', color: 'bg-amber-50 text-amber-600 hover:bg-amber-100' },
                   { type: 'coding', label: 'Coding', color: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' }
@@ -521,7 +521,7 @@ const QuizBuilder = ({ navigate, user }) => {
                 ))}
               </div>
               {/* Excel Import / Export */}
-              <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700 space-y-2">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Bulk Import</p>
                 <button
                   onClick={handleDownloadQuizTemplate}
@@ -531,7 +531,7 @@ const QuizBuilder = ({ navigate, user }) => {
                 </button>
                 <button
                   onClick={() => importQuizRef.current?.click()}
-                  className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                  className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 hover:bg-indigo-100"
                 >
                   <UploadSimple size={15} weight="bold" /> Import Questions
                 </button>
@@ -550,10 +550,10 @@ const QuizBuilder = ({ navigate, user }) => {
           <div className="lg:col-span-3">
             {questions.length === 0 ? (
               <div className="soft-card p-16 text-center">
-                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Plus size={32} weight="duotone" className="text-slate-400" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-700 mb-2">No Questions Yet</h3>
+                <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">No Questions Yet</h3>
                 <p className="text-slate-400 mb-8 max-w-sm mx-auto">Start building your quiz by adding a question type below.</p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <button onClick={() => addQuestion('mcq-single')} className="btn-primary text-sm flex items-center gap-1"><Plus size={14}/> MCQ (Single)</button>
@@ -569,7 +569,7 @@ const QuizBuilder = ({ navigate, user }) => {
                     <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Question {currentQuestion + 1} of {questions.length}</span>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`soft-badge text-xs uppercase ${
-                        q?.type === 'mcq-single' ? 'bg-indigo-50 text-indigo-600' :
+                        q?.type === 'mcq-single' ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600' :
                         q?.type === 'mcq-multiple' ? 'bg-purple-50 text-purple-600' :
                         q?.type === 'coding' ? 'bg-emerald-50 text-emerald-600' :
                         'bg-amber-50 text-amber-600'
@@ -579,7 +579,7 @@ const QuizBuilder = ({ navigate, user }) => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => duplicateQuestion(currentQuestion)} className="p-2.5 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors">
+                    <button onClick={() => duplicateQuestion(currentQuestion)} className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 transition-colors">
                       <Copy size={18} weight="duotone" />
                     </button>
                     <button onClick={() => deleteQuestion(currentQuestion)}

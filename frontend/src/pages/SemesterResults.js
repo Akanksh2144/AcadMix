@@ -23,21 +23,21 @@ const SemesterResults = ({ navigate, user }) => {
   const allSemNumbers = semesters.map(s => s.semester);
 
   const getGradeColor = (grade) => {
-    if (!grade) return 'bg-slate-100 text-slate-600';
+    if (!grade) return 'bg-slate-100 text-slate-600 dark:text-slate-400';
     if (grade === 'O' || grade.startsWith('A')) return 'bg-emerald-50 text-emerald-600';
     if (grade.startsWith('B')) return 'bg-amber-50 text-amber-600';
     return 'bg-rose-50 text-rose-600';
   };
 
-  if (loading) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center"><div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>;
+  if (loading) return <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300 flex items-center justify-center"><div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <header className="glass-header">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button data-testid="back-button" onClick={() => navigate('student-dashboard')} className="p-2.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back"><ArrowLeft size={22} weight="duotone" /></button>
-            <div><h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Semester Results</h1><p className="text-sm font-medium text-slate-400">Academic performance & grades</p></div>
+            <button data-testid="back-button" onClick={() => navigate('student-dashboard')} className="p-2.5 rounded-full bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back"><ArrowLeft size={22} weight="duotone" /></button>
+            <div><h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">Semester Results</h1><p className="text-sm font-medium text-slate-400">Academic performance & grades</p></div>
           </div>
           <button data-testid="download-report-button" className="btn-primary flex items-center gap-2 text-sm"><Download size={18} weight="duotone" /> Download Report</button>
         </div>
@@ -67,12 +67,12 @@ const SemesterResults = ({ navigate, user }) => {
             {currentSem && (
               <>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                  <div className="soft-card p-5" data-testid="sgpa-card"><span className="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">SGPA</span><p className="text-3xl font-extrabold text-slate-900">{currentSem.sgpa}</p></div>
+                  <div className="soft-card p-5" data-testid="sgpa-card"><span className="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">SGPA</span><p className="text-3xl font-extrabold text-slate-900 dark:text-white">{currentSem.sgpa}</p></div>
                   <div className="soft-card p-5" data-testid="cgpa-card">
                     <span className="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">CGPA</span>
-                    <div className="flex items-center gap-2"><p className="text-3xl font-extrabold text-slate-900">{currentSem.cgpa}</p></div>
+                    <div className="flex items-center gap-2"><p className="text-3xl font-extrabold text-slate-900 dark:text-white">{currentSem.cgpa}</p></div>
                   </div>
-                  <div className="soft-card p-5" data-testid="subjects-count-card"><span className="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">Subjects</span><p className="text-3xl font-extrabold text-slate-900">{currentSem.subjects?.length || 0}</p></div>
+                  <div className="soft-card p-5" data-testid="subjects-count-card"><span className="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">Subjects</span><p className="text-3xl font-extrabold text-slate-900 dark:text-white">{currentSem.subjects?.length || 0}</p></div>
                   <div className="soft-card p-5" data-testid="status-card"><span className="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">Status</span><span className="soft-badge bg-emerald-50 text-emerald-600 text-base mt-1">
                     {currentSem.subjects?.every(s => s.status === 'PASS') ? 'All Pass' : 'Has Arrears'}
                   </span></div>
@@ -80,10 +80,10 @@ const SemesterResults = ({ navigate, user }) => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   <div className="lg:col-span-2 soft-card p-6">
-                    <h3 className="text-2xl font-bold text-slate-800 mb-6">Subject-wise Results</h3>
+                    <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">Subject-wise Results</h3>
                     <table className="w-full" data-testid="subjects-table">
                       <thead>
-                        <tr className="border-b border-slate-100">
+                        <tr className="border-b border-slate-100 dark:border-slate-700">
                           <th className="text-left p-4 text-xs font-bold uppercase tracking-widest text-slate-400">Subject</th>
                           <th className="text-center p-4 text-xs font-bold uppercase tracking-widest text-slate-400">Credits</th>
                           <th className="text-center p-4 text-xs font-bold uppercase tracking-widest text-slate-400">Grade</th>
@@ -92,9 +92,9 @@ const SemesterResults = ({ navigate, user }) => {
                       </thead>
                       <tbody>
                         {(currentSem.subjects || []).map((sub, i) => (
-                          <tr key={i} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors" data-testid={`subject-row-${i}`}>
-                            <td className="p-4"><p className="font-bold text-slate-800">{sub.name}</p><p className="text-sm font-medium text-slate-400">{sub.code}</p></td>
-                            <td className="text-center p-4"><p className="font-bold text-slate-700">{sub.credits}</p></td>
+                          <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors" data-testid={`subject-row-${i}`}>
+                            <td className="p-4"><p className="font-bold text-slate-800 dark:text-slate-100">{sub.name}</p><p className="text-sm font-medium text-slate-400">{sub.code}</p></td>
+                            <td className="text-center p-4"><p className="font-bold text-slate-700 dark:text-slate-300">{sub.credits}</p></td>
                             <td className="text-center p-4"><span className={`soft-badge ${getGradeColor(sub.grade)}`}>{sub.grade}</span></td>
                             <td className="text-center p-4"><span className={`soft-badge ${sub.status === 'PASS' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{sub.status}</span></td>
                           </tr>
@@ -105,13 +105,13 @@ const SemesterResults = ({ navigate, user }) => {
 
                   <div className="space-y-6">
                     <div className="soft-card p-6">
-                      <h3 className="text-xl font-bold text-slate-800 mb-4">CGPA Progression</h3>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">CGPA Progression</h3>
                       <div className="space-y-4">
                         {semesters.map((s, i) => (
                           <div key={s.semester} className="flex items-center justify-between" data-testid={`cgpa-history-sem-${s.semester}`}>
-                            <span className="font-bold text-slate-700">Semester {s.semester}</span>
+                            <span className="font-bold text-slate-700 dark:text-slate-300">Semester {s.semester}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-xl font-extrabold text-slate-900">{s.cgpa}</span>
+                              <span className="text-xl font-extrabold text-slate-900 dark:text-white">{s.cgpa}</span>
                               {i > 0 && s.cgpa > semesters[i - 1].cgpa && <TrendUp size={16} weight="duotone" className="text-emerald-500" />}
                               {i > 0 && s.cgpa < semesters[i - 1].cgpa && <TrendDown size={16} weight="duotone" className="text-red-500" />}
                             </div>

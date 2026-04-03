@@ -224,25 +224,25 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
   }));
 
   const stats = dashboard ? [
-    { label: 'Teachers', value: String(dashboard.total_teachers), sub: 'in department', icon: Users, color: 'bg-indigo-50 text-indigo-500', gradient: 'from-indigo-500 to-blue-500', onClick: () => setActiveTab('teachers') },
+    { label: 'Teachers', value: String(dashboard.total_teachers), sub: 'in department', icon: Users, color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-500', gradient: 'from-indigo-500 to-blue-500', onClick: () => setActiveTab('teachers') },
     { label: 'Students', value: String(dashboard.total_students), sub: 'enrolled', icon: BookOpen, color: 'bg-emerald-50 text-emerald-500', gradient: 'from-emerald-500 to-teal-500', onClick: () => setActiveTab('results') },
     { label: 'Analytics', value: '2', sub: 'reports', icon: ChartLine, color: 'bg-purple-50 text-purple-500', gradient: 'from-purple-500 to-fuchsia-500', onClick: () => setActiveTab('analytics') },
     { label: 'Pending Reviews', value: String(dashboard.pending_reviews), sub: 'needs action', icon: Clock, color: 'bg-rose-50 text-rose-500', gradient: 'from-rose-500 to-pink-500', onClick: () => setActiveTab('review') },
     { label: 'Timetable', value: '6', sub: 'periods/day', icon: Calendar, color: 'bg-blue-50 text-blue-500', gradient: 'from-blue-500 to-cyan-500', onClick: () => setActiveTab('timetable') },
     { label: 'Announcements', value: '—', sub: 'board', icon: Megaphone, color: 'bg-violet-50 text-violet-500', gradient: 'from-violet-500 to-purple-500', onClick: () => setActiveTab('announcements') },
     { label: 'At-Risk', value: '!', sub: 'student alerts', icon: WarningOctagon, color: 'bg-red-50 text-red-500', gradient: 'from-red-500 to-orange-500', onClick: () => setActiveTab('at-risk') },
-    { label: 'Activity Log', value: '📋', sub: 'audit trail', icon: ClipboardText, color: 'bg-slate-100 text-slate-500', gradient: 'from-slate-500 to-slate-700', onClick: () => setActiveTab('activity-log') },
+    { label: 'Activity Log', value: '📋', sub: 'audit trail', icon: ClipboardText, color: 'bg-slate-100 text-slate-500 dark:text-slate-400', gradient: 'from-slate-500 to-slate-700', onClick: () => setActiveTab('activity-log') },
   ] : [];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       {/* Notification overlay */}
       {showNotifications && (
         <>
           <div className="fixed inset-0 z-[60]" onClick={() => setShowNotifications(false)}></div>
-          <div className="fixed top-16 right-4 sm:right-8 z-[61] w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden" style={{animation: 'fadeInUp 0.15s ease'}}>
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h4 className="font-extrabold text-slate-800">Recent Activity</h4>
+          <div className="fixed top-16 right-4 sm:right-8 z-[61] w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 dark:bg-[#1A202C] dark:border-white/[0.06] overflow-hidden" style={{animation: 'fadeInUp 0.15s ease'}}>
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+              <h4 className="font-extrabold text-slate-800 dark:text-slate-100">Recent Activity</h4>
               <button
                 onClick={() => { setNotifRead(true); setShowNotifications(false); }}
                 className="text-xs font-bold text-amber-500 hover:text-amber-600 transition-colors"
@@ -252,12 +252,12 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
             </div>
             <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
               {recentActivity.length > 0 ? recentActivity.map((item, i) => (
-                <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => { setActiveTab('review'); setShowNotifications(false); }}>
+                <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => { setActiveTab('review'); setShowNotifications(false); }}>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 bg-amber-50">
                     <ClipboardText size={14} weight="duotone" className="text-amber-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-700 truncate">{item.title}</p>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300 truncate">{item.title}</p>
                     <p className="text-[10px] font-medium text-slate-400 mt-0.5">{item.subtitle} • {timeAgo(item.timestamp)}</p>
                   </div>
                   {item.status && (
@@ -283,7 +283,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
               <PresentationChart size={22} weight="duotone" className="text-white" />
             </div>
             <div>
-              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">AcadeMix</h1>
+              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">AcadeMix</h1>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Head of Department</p>
             </div>
           </div>
@@ -292,7 +292,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
             <button
               data-testid="notification-bell"
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2.5 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors relative"
+              className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 transition-colors relative"
             >
               <Bell size={20} weight={showNotifications ? 'fill' : 'duotone'} />
               {!notifRead && recentActivity.length > 0 && (
@@ -301,10 +301,10 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                 </div>
               )}
             </button>
-            <div className="hidden sm:flex items-center gap-2 bg-slate-50 rounded-2xl px-4 py-2">
+            <div className="hidden sm:flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 rounded-2xl px-4 py-2">
               <GraduationCap size={18} weight="duotone" className="text-amber-500" />
               <div className="text-right">
-                <p className="text-sm font-bold text-slate-800">{user?.name}</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{user?.name}</p>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{user?.designation || 'Head of Department'}</p>
               </div>
             </div>
@@ -322,22 +322,22 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 mb-1">
               {getGreeting()}, {user?.name?.split(' ').pop() || 'HOD'}!
             </h2>
-            <p className="text-sm sm:text-base font-medium text-slate-500">
+            <p className="text-sm sm:text-base font-medium text-slate-500 dark:text-slate-400">
               {user?.designation || 'Head of Department'} • {user?.department || 'DS'} Department
             </p>
           </div>
           <div className="relative">
             <button
               onClick={() => setShowExportPanel(!showExportPanel)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-md text-slate-600 hover:text-indigo-600 text-sm font-semibold transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-700 hover:border-indigo-300 hover:shadow-md text-slate-600 dark:text-slate-400 hover:text-indigo-600 text-sm font-semibold transition-all shadow-sm"
             >
               <Download size={16} weight="duotone" />
               Export
             </button>
             {showExportPanel && (
-              <div className="absolute right-0 top-full mt-2 z-50 w-[480px] bg-white rounded-2xl shadow-2xl border border-slate-200 p-1 animate-in">
+              <div className="absolute right-0 top-full mt-2 z-50 w-[480px] bg-white rounded-2xl dark:bg-[#1A202C] shadow-2xl border border-slate-200 dark:border-slate-700 p-1 animate-in">
                 <div className="flex items-center justify-between p-4 pb-2">
-                  <h4 className="font-bold text-slate-800">Export Reports</h4>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-100">Export Reports</h4>
                   <button onClick={() => setShowExportPanel(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"><X size={16} weight="bold" /></button>
                 </div>
                 <div className="max-h-[400px] overflow-y-auto">
@@ -350,7 +350,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
 
         {/* Unified Navigation */}
         <div className="mb-8 overflow-x-auto" data-testid="hod-tabs">
-          <div className="flex items-center gap-1.5 bg-white/60 backdrop-blur-md border border-slate-200/80 rounded-2xl p-1.5 shadow-sm w-fit min-w-full sm:min-w-0">
+          <div className="flex items-center gap-1.5 bg-white dark:bg-[#1A202C]/60 backdrop-blur-md border border-slate-200 dark:border-slate-700/80 rounded-2xl p-1.5 shadow-sm w-fit min-w-full sm:min-w-0">
             {[
               { id: 'overview', label: 'Overview' },
               { id: 'marks-entry', label: 'Marks Entry' },
@@ -363,7 +363,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                 className={`px-3.5 py-2 rounded-[14px] text-xs font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'bg-slate-900 text-white shadow-md'
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-800/50'
                 }`}>
                 {tab.label}
               </button>
@@ -388,7 +388,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                       <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
                       <div className={`${stat.color} p-2 sm:p-2.5 rounded-xl`}><Icon size={18} weight="duotone" /></div>
                     </div>
-                    <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">{stat.value}</p>
+                    <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{stat.value}</p>
                     <p className="text-[10px] sm:text-xs font-medium text-slate-400 mt-1">{stat.sub}</p>
                   </Wrapper>
                 );
@@ -398,13 +398,13 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
             {/* Pending Reviews */}
             {dashboard?.recent_submissions?.length > 0 && (
               <div className="soft-card p-6">
-                <h3 className="text-xl font-bold text-slate-800 mb-4">Recent Submissions</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">Recent Submissions</h3>
                 <div className="space-y-3">
                   {dashboard.recent_submissions.map((s, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50">
+                    <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
                       <div>
-                        <p className="font-bold text-slate-800">{s.teacher_name} - {s.subject_name}</p>
-                        <p className="text-sm text-slate-500">{s.exam_type?.toUpperCase()} | {s.batch} {s.section} | {s.entries?.length} students</p>
+                        <p className="font-bold text-slate-800 dark:text-slate-100">{s.teacher_name} - {s.subject_name}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{s.exam_type?.toUpperCase()} | {s.batch} {s.section} | {s.entries?.length} students</p>
                       </div>
                       <button onClick={() => setActiveTab('review')} className="btn-primary !px-4 !py-2 text-sm">Review</button>
                     </div>
@@ -420,14 +420,14 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
           <div data-testid="marks-entry-content">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-2">My Marks Entry</h3>
-                <p className="text-sm text-slate-500">Enter marks for your assigned subjects</p>
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">My Marks Entry</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Enter marks for your assigned subjects</p>
               </div>
             </div>
 
             {/* My Assignments */}
             <div className="mb-6">
-              <h4 className="text-lg font-bold text-slate-700 mb-4">My Assigned Subjects</h4>
+              <h4 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-4">My Assigned Subjects</h4>
               {assignments.filter(a => a.teacher_id === user?.id).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {assignments.filter(a => a.teacher_id === user?.id).map(assignment => (
@@ -435,9 +435,9 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <h5 className="font-bold text-slate-900 text-lg">{assignment.subject_code}</h5>
-                          <p className="text-sm text-slate-600 mb-2">{assignment.subject_name}</p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">{assignment.subject_name}</p>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="soft-badge bg-indigo-50 text-indigo-600">{assignment.section}</span>
+                            <span className="soft-badge bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600">{assignment.section}</span>
                             <span className="soft-badge bg-purple-50 text-purple-600">Batch {assignment.batch}</span>
                             <span className="soft-badge bg-teal-50 text-teal-600">Sem {assignment.semester}</span>
                           </div>
@@ -459,8 +459,8 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                   <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <ClipboardText size={40} weight="duotone" className="text-slate-400" />
                   </div>
-                  <h5 className="text-lg font-bold text-slate-700 mb-2">No Subjects Assigned</h5>
-                  <p className="text-sm text-slate-500">No subjects are assigned for the current semester.</p>
+                  <h5 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-2">No Subjects Assigned</h5>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">No subjects are assigned for the current semester.</p>
                 </div>
               )}
             </div>
@@ -473,11 +473,11 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-1 bg-slate-100 rounded-2xl p-1.5">
                 <button onClick={() => setFacultySubView('assignments')}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${facultySubView === 'assignments' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                  className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${facultySubView === 'assignments' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}>
                   Assignments
                 </button>
                 <button onClick={() => setFacultySubView('workload')}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${facultySubView === 'workload' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                  className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${facultySubView === 'workload' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'}`}>
                   Workload Matrix
                 </button>
               </div>
@@ -496,7 +496,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
 
             {showAddForm && (
               <div className="soft-card p-6 mb-6" data-testid="add-assignment-form">
-                <h4 className="text-lg font-bold text-slate-800 mb-4">New Faculty Assignment</h4>
+                <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">New Faculty Assignment</h4>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   {/* Teacher Dropdown with Search */}
@@ -515,17 +515,17 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                       className="soft-input w-full"
                     />
                     {showTeacherDropdown && (
-                      <div className="absolute z-10 mt-1 w-full bg-white rounded-xl shadow-lg border border-slate-100 max-h-60 overflow-y-auto">
+                      <div className="absolute z-10 mt-1 w-full bg-white rounded-xl dark:bg-[#1A202C] shadow-lg border border-slate-100 dark:border-slate-700 max-h-60 overflow-y-auto">
                         {filteredTeachers.length > 0 ? (
                           filteredTeachers.map(t => (
                             <button
                               key={t.id}
                               onClick={() => handleTeacherSelect(t)}
-                              className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-0"
+                              className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 dark:bg-indigo-500/15 transition-colors border-b border-slate-50 last:border-0"
                               type="button"
                             >
-                              <p className="font-bold text-slate-800 text-sm">{t.name}</p>
-                              <p className="text-xs text-slate-500">{t.college_id} - {t.department}</p>
+                              <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">{t.name}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">{t.college_id} - {t.department}</p>
                             </button>
                           ))
                         ) : (
@@ -567,17 +567,17 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                       )}
                     </div>
                     {showSubjectDropdown && (
-                      <div className="absolute z-10 mt-1 w-full bg-white rounded-xl shadow-lg border border-slate-100 max-h-60 overflow-y-auto">
+                      <div className="absolute z-10 mt-1 w-full bg-white rounded-xl dark:bg-[#1A202C] shadow-lg border border-slate-100 dark:border-slate-700 max-h-60 overflow-y-auto">
                         {filteredSubjects.length > 0 ? (
                           filteredSubjects.map(s => (
                             <button
                               key={s.code}
                               onClick={() => handleSubjectSelect(s)}
-                              className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-0"
+                              className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 dark:bg-indigo-500/15 transition-colors border-b border-slate-50 last:border-0"
                               type="button"
                             >
-                              <p className="font-bold text-slate-800 text-sm">{s.code}</p>
-                              <p className="text-xs text-slate-500">{s.name} - Sem {s.semester}</p>
+                              <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">{s.code}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">{s.name} - Sem {s.semester}</p>
                             </button>
                           ))
                         ) : (
@@ -595,7 +595,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                       value={newAssignment.subject_name} 
                       readOnly
                       placeholder="Auto-filled from code"
-                      className="soft-input w-full bg-slate-50 cursor-not-allowed text-slate-600" 
+                      className="soft-input w-full bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed text-slate-600 dark:text-slate-400" 
                     />
                   </div>
                 </div>
@@ -607,7 +607,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                     <input 
                       value={newAssignment.department} 
                       readOnly
-                      className="soft-input w-full bg-slate-50 cursor-not-allowed text-slate-600" 
+                      className="soft-input w-full bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed text-slate-600 dark:text-slate-400" 
                     />
                   </div>
 
@@ -655,7 +655,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                       type="number" 
                       value={newAssignment.semester} 
                       readOnly
-                      className="soft-input w-full bg-slate-50 cursor-not-allowed text-slate-600" 
+                      className="soft-input w-full bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed text-slate-600 dark:text-slate-400" 
                     />
                   </div>
                 </div>
@@ -687,8 +687,8 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
               {assignments.map(a => (
                 <div key={a.id} className="soft-card p-5 flex items-center justify-between" data-testid={`assignment-${a.id}`}>
                   <div>
-                    <p className="font-bold text-slate-800">{a.teacher_name}</p>
-                    <p className="text-sm font-medium text-slate-500">{a.subject_code} - {a.subject_name}</p>
+                    <p className="font-bold text-slate-800 dark:text-slate-100">{a.teacher_name}</p>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{a.subject_code} - {a.subject_name}</p>
                     <p className="text-xs text-slate-400">Batch {a.batch} | Section {a.section} | Sem {a.semester}</p>
                   </div>
                   <button onClick={() => handleDeleteAssignment(a.id)} className="p-2.5 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-colors">
@@ -705,14 +705,14 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
         {/* Mark Reviews */}
         {activeTab === 'review' && (
           <div data-testid="review-content">
-            <h3 className="text-2xl font-bold text-slate-800 mb-6">Mark Submissions</h3>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">Mark Submissions</h3>
             <div className="space-y-4">
               {submissions.map(s => (
                 <div key={s.id} className="soft-card p-6" data-testid={`submission-${s.id}`}>
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <p className="font-bold text-lg text-slate-800">{s.subject_name} ({s.subject_code})</p>
-                      <p className="text-sm font-medium text-slate-500">By: {s.teacher_name} | {s.exam_type?.toUpperCase()} | Batch {s.batch} Sec {s.section}</p>
+                      <p className="font-bold text-lg text-slate-800 dark:text-slate-100">{s.subject_name} ({s.subject_code})</p>
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">By: {s.teacher_name} | {s.exam_type?.toUpperCase()} | Batch {s.batch} Sec {s.section}</p>
                       <p className="text-xs text-slate-400">{s.entries?.length} students | Max: {s.max_marks} marks</p>
                     </div>
                     <span className={`soft-badge ${s.status === 'submitted' ? 'bg-amber-50 text-amber-600' : s.status === 'approved' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
@@ -723,12 +723,12 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                     <div className="overflow-x-auto mb-4">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="bg-slate-50 border-b border-slate-100">
-                            <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest w-12">#</th>
-                            <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">College ID</th>
-                            <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Student Name</th>
-                            <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest w-32">Marks / {s.max_marks}</th>
-                            <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest w-28">Percentage</th>
+                          <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+                            <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest w-12">#</th>
+                            <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">College ID</th>
+                            <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Student Name</th>
+                            <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest w-32">Marks / {s.max_marks}</th>
+                            <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest w-28">Percentage</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -736,12 +736,12 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                             const marks = e.marks ?? null;
                             const pct = marks !== null && s.max_marks > 0 ? ((marks / s.max_marks) * 100).toFixed(1) : null;
                             return (
-                              <tr key={i} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                              <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors">
                                 <td className="py-3 px-4 text-sm text-slate-400">{i + 1}</td>
-                                <td className="py-3 px-4 font-medium text-slate-700">{e.college_id}</td>
-                                <td className="py-3 px-4 font-medium text-slate-800">{e.student_name}</td>
+                                <td className="py-3 px-4 font-medium text-slate-700 dark:text-slate-300">{e.college_id}</td>
+                                <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-100">{e.student_name}</td>
                                 <td className="py-3 px-4 text-center">
-                                  <span className="font-bold text-slate-900">{marks ?? '-'}</span>
+                                  <span className="font-bold text-slate-900 dark:text-white">{marks ?? '-'}</span>
                                 </td>
                                 <td className="py-3 px-4 text-center">
                                   {pct !== null ? (
@@ -757,10 +757,10 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                           })}
                         </tbody>
                       </table>
-                      <div className="mt-3 p-3 bg-slate-50 rounded-xl flex items-center justify-between">
+                      <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <p className="text-sm font-bold text-slate-600">Total Students: <span className="text-slate-900">{s.entries.length}</span></p>
-                          <p className="text-sm font-bold text-slate-600">Avg Marks: <span className="text-slate-900">
+                          <p className="text-sm font-bold text-slate-600 dark:text-slate-400">Total Students: <span className="text-slate-900 dark:text-white">{s.entries.length}</span></p>
+                          <p className="text-sm font-bold text-slate-600 dark:text-slate-400">Avg Marks: <span className="text-slate-900 dark:text-white">
                             {s.entries.filter(e => e.marks !== null).length > 0 
                               ? (s.entries.reduce((sum, e) => sum + (e.marks ?? 0), 0) / s.entries.filter(e => e.marks !== null).length).toFixed(1)
                               : '-'}
@@ -797,7 +797,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                       <button data-testid={`reject-${s.id}`} onClick={() => handleReview(s.id, 'reject')} className="btn-ghost !py-2 text-sm text-red-600">Reject</button>
                     </div>
                   )}
-                  {s.review_remarks && <p className="text-sm text-slate-500 mt-2">Remarks: {s.review_remarks}</p>}
+                  {s.review_remarks && <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Remarks: {s.review_remarks}</p>}
                 </div>
               ))}
               {submissions.length === 0 && <div className="soft-card p-8 text-center"><p className="text-slate-400 font-medium">No submissions to review</p></div>}
@@ -810,8 +810,8 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
           <div data-testid="teachers-content">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-2">Teachers List</h3>
-                <p className="text-sm text-slate-500">Manage teachers in {user?.department || 'DS'} department</p>
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Teachers List</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Manage teachers in {user?.department || 'DS'} department</p>
               </div>
             </div>
             
@@ -820,12 +820,12 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                 teachers.map(teacher => (
                   <div key={teacher.id} className="soft-card p-6 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="bg-indigo-50 text-indigo-600 w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl">
+                      <div className="bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl">
                         {teacher.name.charAt(0)}
                       </div>
                       <div>
                         <p className="font-bold text-slate-900 text-lg">{teacher.name}</p>
-                        <p className="text-sm text-slate-500">{teacher.college_id} • {teacher.email}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{teacher.college_id} • {teacher.email}</p>
                         <p className="text-xs text-slate-400 mt-1">{teacher.department} Department • {teacher.college}</p>
                       </div>
                     </div>
@@ -846,8 +846,8 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
           <div data-testid="analytics-content">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-2">Department Analytics</h3>
-                <p className="text-sm text-slate-500">Performance insights for {user?.department || 'DS'} department</p>
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Department Analytics</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Performance insights for {user?.department || 'DS'} department</p>
               </div>
             </div>
 
@@ -873,9 +873,9 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
             {analyticsTab === 'quiz' && (
               <div className="space-y-6">
                 <div className="soft-card p-6">
-                  <h4 className="text-xl font-bold text-slate-800 mb-4">Department Quiz Performance</h4>
+                  <h4 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">Department Quiz Performance</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div className="bg-indigo-50 rounded-2xl p-4">
+                    <div className="bg-indigo-50 dark:bg-indigo-500/15 rounded-2xl p-4">
                       <p className="text-xs font-bold uppercase tracking-widest text-indigo-600 mb-1">Avg Score</p>
                       <p className="text-3xl font-extrabold text-indigo-700">78.5%</p>
                     </div>
@@ -889,17 +889,17 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                     </div>
                   </div>
                   
-                  <h5 className="text-lg font-bold text-slate-700 mb-3">Section-wise Performance</h5>
+                  <h5 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-3">Section-wise Performance</h5>
                   <div className="space-y-3">
                     {['DS', 'CS', 'IT', 'AIML', 'CSE', 'CSM', 'CSD', 'ECE'].map(section => {
                       const score = 75 + Math.floor(Math.random() * 15);
                       return (
                         <div key={section} className="flex items-center gap-4">
-                          <span className="soft-badge bg-indigo-50 text-indigo-600 !w-24">{section}</span>
+                          <span className="soft-badge bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 !w-24">{section}</span>
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium text-slate-600">Avg Score</span>
-                              <span className="text-sm font-bold text-slate-800">{score}%</span>
+                              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Avg Score</span>
+                              <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{score}%</span>
                             </div>
                             <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
                               <div 
@@ -920,7 +920,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
             {analyticsTab === 'semester' && (
               <div className="space-y-6">
                 <div className="soft-card p-6">
-                  <h4 className="text-xl font-bold text-slate-800 mb-4">Department Semester Performance</h4>
+                  <h4 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">Department Semester Performance</h4>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                     <div className="bg-purple-50 rounded-2xl p-4">
                       <p className="text-xs font-bold uppercase tracking-widest text-purple-600 mb-1">Avg SGPA</p>
@@ -940,16 +940,16 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                     </div>
                   </div>
 
-                  <h5 className="text-lg font-bold text-slate-700 mb-3">Section-wise Semester Results</h5>
+                  <h5 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-3">Section-wise Semester Results</h5>
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="bg-slate-50 border-b border-slate-100">
-                          <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Section</th>
-                          <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Students</th>
-                          <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Avg SGPA</th>
-                          <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Pass %</th>
-                          <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">First Class %</th>
+                        <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+                          <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Section</th>
+                          <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Students</th>
+                          <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Avg SGPA</th>
+                          <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Pass %</th>
+                          <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">First Class %</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -958,12 +958,12 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                           const passRate = 92 + Math.floor(Math.random() * 8);
                           const firstClass = 70 + Math.floor(Math.random() * 20);
                           return (
-                            <tr key={section} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                            <tr key={section} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors">
                               <td className="py-3 px-4">
-                                <span className="soft-badge bg-indigo-50 text-indigo-600">{section}</span>
+                                <span className="soft-badge bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600">{section}</span>
                               </td>
-                              <td className="text-center py-3 px-4 font-medium text-slate-700">{section === 'DS-1' ? 10 : 8}</td>
-                              <td className="text-center py-3 px-4 font-bold text-slate-800">{avgSgpa}</td>
+                              <td className="text-center py-3 px-4 font-medium text-slate-700 dark:text-slate-300">{section === 'DS-1' ? 10 : 8}</td>
+                              <td className="text-center py-3 px-4 font-bold text-slate-800 dark:text-slate-100">{avgSgpa}</td>
                               <td className="text-center py-3 px-4">
                                 <span className={`soft-badge ${passRate >= 95 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                                   {passRate}%
@@ -1025,8 +1025,8 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
           <div data-testid="quizzes-content">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-1">Quiz Management</h3>
-                <p className="text-sm text-slate-500">Create and monitor quizzes for your assigned classes</p>
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-1">Quiz Management</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Create and monitor quizzes for your assigned classes</p>
               </div>
               <button
                 onClick={() => navigate('quiz-builder')}
@@ -1041,12 +1041,12 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                 onClick={() => navigate('quiz-builder')}
                 className="soft-card-hover p-8 text-left flex items-center gap-5 group"
               >
-                <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors flex-shrink-0">
+                <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-500/15 rounded-2xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors flex-shrink-0">
                   <span className="text-3xl">📝</span>
                 </div>
                 <div>
-                  <p className="text-xl font-extrabold text-slate-900">Create Quiz</p>
-                  <p className="text-sm font-medium text-slate-500 mt-1">Build a new quiz with MCQ, short answer, or coding questions</p>
+                  <p className="text-xl font-extrabold text-slate-900 dark:text-white">Create Quiz</p>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">Build a new quiz with MCQ, short answer, or coding questions</p>
                 </div>
               </button>
               {/* Quiz Analytics Card */}
@@ -1058,8 +1058,8 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                   <span className="text-3xl">📊</span>
                 </div>
                 <div>
-                  <p className="text-xl font-extrabold text-slate-900">Quiz Analytics</p>
-                  <p className="text-sm font-medium text-slate-500 mt-1">View class-wise results, pass rates, and student performance</p>
+                  <p className="text-xl font-extrabold text-slate-900 dark:text-white">Quiz Analytics</p>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">View class-wise results, pass rates, and student performance</p>
                 </div>
               </button>
             </div>

@@ -111,13 +111,13 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
 
   const stats = dashboard ? [
     { label: 'Approved Midterms', value: dashboard.total_approved_midterms, icon: CheckCircle, color: 'bg-emerald-50 text-emerald-500' },
-    { label: 'End-term Entries', value: dashboard.total_endterm, icon: FileText, color: 'bg-indigo-50 text-indigo-500' },
+    { label: 'End-term Entries', value: dashboard.total_endterm, icon: FileText, color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-500' },
     { label: 'Published', value: dashboard.total_published, icon: ChartBar, color: 'bg-amber-50 text-amber-500' },
-    { label: 'Draft', value: dashboard.total_draft, icon: Clock, color: 'bg-slate-100 text-slate-500' },
+    { label: 'Draft', value: dashboard.total_draft, icon: Clock, color: 'bg-slate-100 text-slate-500 dark:text-slate-400' },
   ] : [];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <header className="glass-header">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -125,7 +125,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
               <BookOpen size={22} weight="duotone" className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-extrabold tracking-tight text-slate-900">QuizPortal</h1>
+              <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">QuizPortal</h1>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Exam Cell</p>
             </div>
           </div>
@@ -140,7 +140,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-2">Exam Cell</h2>
-        <p className="text-base font-medium text-slate-500 mb-8">Manage end-term marks and publish results</p>
+        <p className="text-base font-medium text-slate-500 dark:text-slate-400 mb-8">Manage end-term marks and publish results</p>
 
         <div className="flex items-center gap-2 bg-slate-100 rounded-2xl p-1.5 w-fit mb-8" data-testid="examcell-tabs">
           {[{ id: 'overview', label: 'Overview' }, { id: 'midterm', label: 'Approved Midterms' }, { id: 'endterm', label: 'End-term Marks' }, { id: 'upload', label: 'Upload Marks' }].map(tab => (
@@ -158,7 +158,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                     <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
                     <div className={`${stat.color} p-2 rounded-xl`}><stat.icon size={18} weight="duotone" /></div>
                   </div>
-                  <p className="text-3xl font-extrabold text-slate-900">{stat.value}</p>
+                  <p className="text-3xl font-extrabold text-slate-900 dark:text-white">{stat.value}</p>
                 </div>
               ))}
             </div>
@@ -167,29 +167,29 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
 
         {activeTab === 'midterm' && (
           <div data-testid="midterm-content">
-            <h3 className="text-2xl font-bold text-slate-800 mb-6">HOD-Approved Mid-term Marks</h3>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">HOD-Approved Mid-term Marks</h3>
             <div className="space-y-4">
               {approvedMarks.map(m => (
                 <div key={m.id} className="soft-card p-6" data-testid={`midterm-${m.id}`}>
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="font-bold text-lg text-slate-800">{m.subject_name} ({m.subject_code})</p>
-                      <p className="text-sm text-slate-500">{m.exam_type?.toUpperCase()} | Teacher: {m.teacher_name} | Batch {m.batch} Sec {m.section}</p>
+                      <p className="font-bold text-lg text-slate-800 dark:text-slate-100">{m.subject_name} ({m.subject_code})</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{m.exam_type?.toUpperCase()} | Teacher: {m.teacher_name} | Batch {m.batch} Sec {m.section}</p>
                     </div>
                     <span className="soft-badge bg-emerald-50 text-emerald-600">Approved</span>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead><tr className="border-b border-slate-100">
-                        <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs uppercase">College ID</th>
-                        <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs uppercase">Name</th>
-                        <th className="text-center py-2 px-3 font-bold text-slate-500 text-xs uppercase">Marks / {m.max_marks}</th>
+                      <thead><tr className="border-b border-slate-100 dark:border-slate-700">
+                        <th className="text-left py-2 px-3 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase">College ID</th>
+                        <th className="text-left py-2 px-3 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase">Name</th>
+                        <th className="text-center py-2 px-3 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase">Marks / {m.max_marks}</th>
                       </tr></thead>
                       <tbody>
                         {m.entries?.map((e, i) => (
                           <tr key={i} className="border-b border-slate-50">
-                            <td className="py-2 px-3 font-medium text-slate-600">{e.college_id}</td>
-                            <td className="py-2 px-3 text-slate-800">{e.student_name}</td>
+                            <td className="py-2 px-3 font-medium text-slate-600 dark:text-slate-400">{e.college_id}</td>
+                            <td className="py-2 px-3 text-slate-800 dark:text-slate-100">{e.student_name}</td>
                             <td className="py-2 px-3 text-center font-bold">{e.marks ?? '-'}</td>
                           </tr>
                         ))}
@@ -205,14 +205,14 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
 
         {activeTab === 'endterm' && (
           <div data-testid="endterm-content">
-            <h3 className="text-2xl font-bold text-slate-800 mb-6">End-term Results</h3>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">End-term Results</h3>
             <div className="space-y-4">
               {endtermEntries.map(e => (
                 <div key={e.id} className="soft-card p-6" data-testid={`endterm-${e.id}`}>
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="font-bold text-lg text-slate-800">{e.subject_name} ({e.subject_code})</p>
-                      <p className="text-sm text-slate-500">Sem {e.semester} | Batch {e.batch} Sec {e.section} | {e.entries?.length} students</p>
+                      <p className="font-bold text-lg text-slate-800 dark:text-slate-100">{e.subject_name} ({e.subject_code})</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Sem {e.semester} | Batch {e.batch} Sec {e.section} | {e.entries?.length} students</p>
                     </div>
                     <span className={`soft-badge ${e.status === 'published' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>{e.status}</span>
                   </div>
@@ -230,7 +230,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
 
         {activeTab === 'upload' && (
           <div data-testid="upload-content">
-            <h3 className="text-2xl font-bold text-slate-800 mb-6">Upload End-term Marks</h3>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">Upload End-term Marks</h3>
             <div className="soft-card p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 {/* Subject Code Dropdown */}
@@ -264,7 +264,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                     )}
                   </div>
                   {showSubjectCodeDropdown && (
-                    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 max-h-48 overflow-y-auto">
+                    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl dark:bg-[#1A202C] shadow-lg border border-slate-100 dark:border-slate-700 max-h-48 overflow-y-auto">
                       {filteredSubjectCodes.length > 0 ? (
                         filteredSubjectCodes.map((code) => (
                           <button
@@ -278,10 +278,10 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                               setShowSubjectCodeDropdown(false);
                               setSubjectCodeSearch('');
                             }}
-                            className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors"
+                            className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors"
                           >
-                            <p className="font-bold text-slate-800">{code}</p>
-                            <p className="text-xs text-slate-500">{subjectMapping[code]}</p>
+                            <p className="font-bold text-slate-800 dark:text-slate-100">{code}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{subjectMapping[code]}</p>
                           </button>
                         ))
                       ) : (
@@ -294,7 +294,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                 {/* Subject Name - Display Only */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Subject Name</label>
-                  <div className="soft-input w-full bg-slate-50 text-slate-600 flex items-center">
+                  <div className="soft-input w-full bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 flex items-center">
                     {uploadForm.subject_name || 'Auto-filled from code'}
                   </div>
                 </div>
@@ -324,7 +324,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                       onClick={() => setShowDepartmentDropdown(!showDepartmentDropdown)}
                       className="soft-input w-full text-left flex items-center justify-between"
                     >
-                      <span className={uploadForm.department ? 'text-slate-900' : 'text-slate-400'}>
+                      <span className={uploadForm.department ? 'text-slate-900 dark:text-white' : 'text-slate-400'}>
                         {uploadForm.department || 'Select department...'}
                       </span>
                       <svg className={`w-4 h-4 text-slate-400 transition-transform ${showDepartmentDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -333,7 +333,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                     </button>
                   </div>
                   {showDepartmentDropdown && (
-                    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 max-h-48 overflow-y-auto">
+                    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl dark:bg-[#1A202C] shadow-lg border border-slate-100 dark:border-slate-700 max-h-48 overflow-y-auto">
                       {departments.map((dept) => (
                         <button
                           key={dept}
@@ -341,7 +341,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                             setUploadForm({ ...uploadForm, department: dept });
                             setShowDepartmentDropdown(false);
                           }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors font-medium text-slate-700"
+                          className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors font-medium text-slate-700 dark:text-slate-300"
                         >
                           {dept}
                         </button>
@@ -372,7 +372,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                       onClick={() => setShowSectionDropdown(!showSectionDropdown)}
                       className="soft-input w-full text-left flex items-center justify-between"
                     >
-                      <span className={uploadForm.section ? 'text-slate-900' : 'text-slate-400'}>
+                      <span className={uploadForm.section ? 'text-slate-900 dark:text-white' : 'text-slate-400'}>
                         {uploadForm.section || 'Select section...'}
                       </span>
                       <svg className={`w-4 h-4 text-slate-400 transition-transform ${showSectionDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -381,7 +381,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                     </button>
                   </div>
                   {showSectionDropdown && (
-                    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 max-h-48 overflow-y-auto">
+                    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl dark:bg-[#1A202C] shadow-lg border border-slate-100 dark:border-slate-700 max-h-48 overflow-y-auto">
                       {sections.map((sec) => (
                         <button
                           key={sec}
@@ -389,7 +389,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                             setUploadForm({ ...uploadForm, section: sec });
                             setShowSectionDropdown(false);
                           }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors font-medium text-slate-700"
+                          className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors font-medium text-slate-700 dark:text-slate-300"
                         >
                           {sec}
                         </button>
@@ -401,9 +401,9 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
               
               <div className="mb-6">
                 <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Marks File (CSV or Excel)</label>
-                <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center">
+                <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-8 text-center">
                   <Upload size={40} weight="duotone" className="mx-auto mb-3 text-slate-400" />
-                  <p className="text-sm font-medium text-slate-500 mb-3">Upload CSV or XLSX file with columns: college_id, marks, grade</p>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">Upload CSV or XLSX file with columns: college_id, marks, grade</p>
                   <input data-testid="file-upload" type="file" accept=".csv,.xlsx,.xls" onChange={(e) => setUploadFile(e.target.files[0])} className="text-sm" />
                   {uploadFile && <p className="mt-2 text-sm font-bold text-indigo-600">{uploadFile.name}</p>}
                 </div>

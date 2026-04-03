@@ -18,14 +18,14 @@ const UserManagement = ({ navigate }) => {
   const displayData = activeTab === 'students' ? students : teachers;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <header className="glass-header">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center gap-4">
-            <button data-testid="back-button" onClick={() => navigate('admin-dashboard')} className="p-2.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
+            <button data-testid="back-button" onClick={() => navigate('admin-dashboard')} className="p-2.5 rounded-full bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 text-indigo-500 transition-colors" aria-label="Go back">
               <ArrowLeft size={22} weight="duotone" />
             </button>
-            <div><h1 className="text-2xl font-extrabold tracking-tight text-slate-900">User Management</h1><p className="text-sm font-medium text-slate-400">Manage students and faculty</p></div>
+            <div><h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">User Management</h1><p className="text-sm font-medium text-slate-400">Manage students and faculty</p></div>
           </div>
         </div>
       </header>
@@ -55,7 +55,7 @@ const UserManagement = ({ navigate }) => {
         <div className="soft-card p-6">
           <table className="w-full" data-testid="users-table">
             <thead>
-              <tr className="border-b border-slate-100">
+              <tr className="border-b border-slate-100 dark:border-slate-700">
                 {activeTab === 'students' ? (
                   <>
                     <th className="text-left p-4 text-xs font-bold uppercase tracking-widest text-slate-400">Student</th>
@@ -80,32 +80,32 @@ const UserManagement = ({ navigate }) => {
             </thead>
             <tbody>
               {displayData.map((user, index) => (
-                <tr key={user.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors" data-testid={`user-row-${index}`}>
+                <tr key={user.id} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors" data-testid={`user-row-${index}`}>
                   {activeTab === 'students' ? (
                     <>
-                      <td className="p-4"><p className="font-bold text-slate-800">{user.name}</p><p className="text-sm font-medium text-slate-400">{user.email}</p></td>
-                      <td className="text-center p-4"><p className="font-bold text-slate-700">{user.rollNo}</p></td>
-                      <td className="text-center p-4"><span className="soft-badge bg-indigo-50 text-indigo-600">{user.department}</span></td>
-                      <td className="text-center p-4"><p className="font-bold text-slate-700">{user.batch}</p></td>
-                      <td className="text-center p-4"><p className="font-bold text-lg text-slate-900">{user.cgpa}</p></td>
+                      <td className="p-4"><p className="font-bold text-slate-800 dark:text-slate-100">{user.name}</p><p className="text-sm font-medium text-slate-400">{user.email}</p></td>
+                      <td className="text-center p-4"><p className="font-bold text-slate-700 dark:text-slate-300">{user.rollNo}</p></td>
+                      <td className="text-center p-4"><span className="soft-badge bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600">{user.department}</span></td>
+                      <td className="text-center p-4"><p className="font-bold text-slate-700 dark:text-slate-300">{user.batch}</p></td>
+                      <td className="text-center p-4"><p className="font-bold text-lg text-slate-900 dark:text-white">{user.cgpa}</p></td>
                       <td className="text-center p-4"><span className="soft-badge bg-emerald-50 text-emerald-600">{user.status}</span></td>
                       <td className="text-center p-4">
                         <div className="flex items-center justify-center gap-2">
-                          <button data-testid={`edit-user-${index}`} className="p-2 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors"><Pencil size={16} weight="duotone" /></button>
+                          <button data-testid={`edit-user-${index}`} className="p-2 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 transition-colors"><Pencil size={16} weight="duotone" /></button>
                           <button data-testid={`delete-user-${index}`} className="p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-colors"><Trash size={16} weight="duotone" /></button>
                         </div>
                       </td>
                     </>
                   ) : (
                     <>
-                      <td className="p-4"><p className="font-bold text-slate-800">{user.name}</p><p className="text-sm font-medium text-slate-400">{user.email}</p></td>
-                      <td className="text-center p-4"><p className="font-bold text-slate-700">{user.empId}</p></td>
-                      <td className="text-center p-4"><span className="soft-badge bg-indigo-50 text-indigo-600">{user.department}</span></td>
-                      <td className="p-4"><p className="font-medium text-sm text-slate-600">{user.subjects}</p></td>
+                      <td className="p-4"><p className="font-bold text-slate-800 dark:text-slate-100">{user.name}</p><p className="text-sm font-medium text-slate-400">{user.email}</p></td>
+                      <td className="text-center p-4"><p className="font-bold text-slate-700 dark:text-slate-300">{user.empId}</p></td>
+                      <td className="text-center p-4"><span className="soft-badge bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600">{user.department}</span></td>
+                      <td className="p-4"><p className="font-medium text-sm text-slate-600 dark:text-slate-400">{user.subjects}</p></td>
                       <td className="text-center p-4"><span className="soft-badge bg-emerald-50 text-emerald-600">{user.status}</span></td>
                       <td className="text-center p-4">
                         <div className="flex items-center justify-center gap-2">
-                          <button data-testid={`edit-teacher-${index}`} className="p-2 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors"><Pencil size={16} weight="duotone" /></button>
+                          <button data-testid={`edit-teacher-${index}`} className="p-2 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 transition-colors"><Pencil size={16} weight="duotone" /></button>
                           <button data-testid={`delete-teacher-${index}`} className="p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-colors"><Trash size={16} weight="duotone" /></button>
                         </div>
                       </td>

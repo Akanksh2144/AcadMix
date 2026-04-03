@@ -7,8 +7,8 @@ import { analyticsAPI } from '../services/api';
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white rounded-xl p-3 shadow-lg border border-slate-100">
-        <p className="font-bold text-sm text-slate-800">{label}</p>
+      <div className="bg-white rounded-xl dark:bg-[#1A202C] p-3 shadow-lg border border-slate-100 dark:border-slate-700">
+        <p className="font-bold text-sm text-slate-800 dark:text-slate-100">{label}</p>
         {payload.map((p, i) => (<p key={i} className="text-sm font-medium" style={{ color: p.color }}>{p.name}: {p.value}</p>))}
       </div>
     );
@@ -37,7 +37,7 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
   const deptCount = dashboardData?.departments?.length || 0;
 
   const stats = [
-    { label: 'Total Students', value: totalStudents.toLocaleString(), icon: Users, color: 'bg-indigo-50 text-indigo-500' },
+    { label: 'Total Students', value: totalStudents.toLocaleString(), icon: Users, color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-500' },
     { label: 'Total Teachers', value: totalTeachers.toLocaleString(), icon: GraduationCap, color: 'bg-emerald-50 text-emerald-500' },
     { label: 'Active Quizzes', value: activeQuizzes.toLocaleString(), icon: ChartBar, color: 'bg-amber-50 text-amber-500' },
     { label: 'Departments', value: deptCount.toLocaleString(), icon: Database, color: 'bg-sky-50 text-sky-500' },
@@ -52,13 +52,13 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <header className="glass-header">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center"><BookOpen size={22} weight="duotone" className="text-white" /></div>
-              <div><h1 className="text-xl font-extrabold tracking-tight text-slate-900">QuizPortal</h1><p className="text-xs font-bold uppercase tracking-widest text-slate-400">Admin</p></div>
+              <div><h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">QuizPortal</h1><p className="text-xs font-bold uppercase tracking-widest text-slate-400">Admin</p></div>
             </div>
             <div className="flex items-center gap-3">
               <button data-testid="profile-button" className="btn-ghost !px-4 !py-2 text-sm">{user?.name || 'Admin Panel'}</button>
@@ -71,7 +71,7 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-8">
           <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-2">College Overview</h2>
-          <p className="text-base font-medium text-slate-500">Manage your institution's academic platform</p>
+          <p className="text-base font-medium text-slate-500 dark:text-slate-400">Manage your institution's academic platform</p>
         </div>
 
         {/* Tabs */}
@@ -100,7 +100,7 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
                       <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
                       <div className={`${stat.color} p-2.5 rounded-xl`}><Icon size={20} weight="duotone" /></div>
                     </div>
-                    <p className="text-3xl font-extrabold tracking-tight text-slate-900">{stat.value}</p>
+                    <p className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{stat.value}</p>
                   </div>
                 );
               })}
@@ -108,26 +108,26 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
               <button data-testid="user-management-button" onClick={() => navigate('user-management')} className="soft-card-hover p-6 text-left flex items-center gap-4 group">
-                <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors"><Users size={24} weight="duotone" className="text-indigo-500" /></div>
-                <div><p className="font-extrabold text-slate-900">User Management</p><p className="text-sm font-medium text-slate-400">Add/edit users</p></div>
+                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/15 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors"><Users size={24} weight="duotone" className="text-indigo-500" /></div>
+                <div><p className="font-extrabold text-slate-900 dark:text-white">User Management</p><p className="text-sm font-medium text-slate-400">Add/edit users</p></div>
               </button>
               <button data-testid="view-all-results-button" onClick={() => navigate('quiz-results')} className="soft-card-hover p-6 text-left flex items-center gap-4 group">
                 <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 transition-colors"><ChartBar size={24} weight="duotone" className="text-emerald-500" /></div>
-                <div><p className="font-extrabold text-slate-900">Quiz Results</p><p className="text-sm font-medium text-slate-400">College-wide data</p></div>
+                <div><p className="font-extrabold text-slate-900 dark:text-white">Quiz Results</p><p className="text-sm font-medium text-slate-400">College-wide data</p></div>
               </button>
               <button data-testid="student-results-button" onClick={() => setActiveTab('results')} className="soft-card-hover p-6 text-left flex items-center gap-4 group">
                 <div className="w-12 h-12 bg-violet-50 rounded-xl flex items-center justify-center group-hover:bg-violet-100 transition-colors"><GraduationCap size={24} weight="duotone" className="text-violet-500" /></div>
-                <div><p className="font-extrabold text-slate-900">Student Results</p><p className="text-sm font-medium text-slate-400">Search & view profiles</p></div>
+                <div><p className="font-extrabold text-slate-900 dark:text-white">Student Results</p><p className="text-sm font-medium text-slate-400">Search & view profiles</p></div>
               </button>
               <button data-testid="analytics-button" onClick={() => navigate('analytics')} className="soft-card-hover p-6 text-left flex items-center gap-4 group">
                 <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center group-hover:bg-amber-100 transition-colors"><Database size={24} weight="duotone" className="text-amber-500" /></div>
-                <div><p className="font-extrabold text-slate-900">Analytics</p><p className="text-sm font-medium text-slate-400">Insights & trends</p></div>
+                <div><p className="font-extrabold text-slate-900 dark:text-white">Analytics</p><p className="text-sm font-medium text-slate-400">Insights & trends</p></div>
               </button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               <div className="soft-card p-6">
-                <h3 className="text-xl font-bold text-slate-800 mb-4">Department Performance</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">Department Performance</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={departmentPerformance}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
@@ -140,7 +140,7 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
                 </ResponsiveContainer>
               </div>
               <div className="soft-card p-6">
-                <h3 className="text-xl font-bold text-slate-800 mb-4">Student Enrollment Trend</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">Student Enrollment Trend</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={enrollmentTrend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
@@ -155,14 +155,14 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 soft-card p-6">
-                <h3 className="text-xl font-bold text-slate-800 mb-4">Recent Activity</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">Recent Activity</h3>
                 <div className="space-y-3">
                   {[{ action: 'New quiz created', user: 'Dr. Sarah Johnson', time: '10 mins ago' },
                     { action: '42 students completed quiz', user: 'DBMS - Normalization', time: '25 mins ago' },
                     { action: 'Semester results uploaded', user: 'Admin', time: '1 hour ago' },
                     { action: '8 new students added', user: 'Admin', time: '2 hours ago' }].map((a, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl" data-testid={`activity-${i}`}>
-                      <div><p className="font-bold text-sm text-slate-800">{a.action}</p><p className="text-xs font-medium text-slate-400">{a.user}</p></div>
+                    <div key={i} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl" data-testid={`activity-${i}`}>
+                      <div><p className="font-bold text-sm text-slate-800 dark:text-slate-100">{a.action}</p><p className="text-xs font-medium text-slate-400">{a.user}</p></div>
                       <span className="text-xs font-medium text-slate-400">{a.time}</span>
                     </div>
                   ))}
@@ -195,20 +195,20 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
                 <div key={college} className="soft-card p-6">
                   <h4 className="text-xl font-bold text-slate-900 mb-4">{college}</h4>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-xl">
-                      <span className="text-sm font-bold text-slate-600">Total Students</span>
+                    <div className="flex items-center justify-between p-3 bg-indigo-50 dark:bg-indigo-500/15 rounded-xl">
+                      <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Total Students</span>
                       <span className="text-2xl font-extrabold text-indigo-600">{idx === 0 ? '420' : idx === 1 ? '385' : '443'}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-xl">
-                      <span className="text-sm font-bold text-slate-600">Avg Score</span>
+                      <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Avg Score</span>
                       <span className="text-2xl font-extrabold text-emerald-600">{idx === 0 ? '82.5' : idx === 1 ? '79.3' : '84.1'}%</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-amber-50 rounded-xl">
-                      <span className="text-sm font-bold text-slate-600">Pass Rate</span>
+                      <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Pass Rate</span>
                       <span className="text-2xl font-extrabold text-amber-600">{idx === 0 ? '88' : idx === 1 ? '85' : '90'}%</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-purple-50 rounded-xl">
-                      <span className="text-sm font-bold text-slate-600">Departments</span>
+                      <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Departments</span>
                       <span className="text-2xl font-extrabold text-purple-600">{idx === 0 ? '5' : idx === 1 ? '4' : '6'}</span>
                     </div>
                   </div>
@@ -250,19 +250,19 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
               ].map((dept) => (
                 <div key={dept.name} className="soft-card p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-bold text-slate-900">{dept.name}</h4>
+                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">{dept.name}</h4>
                     <div className={`w-10 h-10 bg-${dept.color}-100 rounded-xl flex items-center justify-center`}>
                       <span className={`text-${dept.color}-600 font-bold`}>{dept.students}</span>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600">Avg Score</span>
-                      <span className="text-lg font-bold text-slate-900">{dept.avg}%</span>
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Avg Score</span>
+                      <span className="text-lg font-bold text-slate-900 dark:text-white">{dept.avg}%</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600">Pass Rate</span>
-                      <span className="text-lg font-bold text-slate-900">{dept.pass}%</span>
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Pass Rate</span>
+                      <span className="text-lg font-bold text-slate-900 dark:text-white">{dept.pass}%</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-2 mt-3">
                       <div className={`bg-${dept.color}-500 h-2 rounded-full`} style={{ width: `${dept.pass}%` }}></div>
@@ -306,32 +306,32 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
                 <div key={section} className="soft-card p-6">
                   <h4 className="text-xl font-bold text-slate-900 mb-4">{section}</h4>
                   <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="p-3 bg-indigo-50 rounded-xl text-center">
-                      <p className="text-xs font-bold text-slate-500 mb-1">Students</p>
+                    <div className="p-3 bg-indigo-50 dark:bg-indigo-500/15 rounded-xl text-center">
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Students</p>
                       <p className="text-2xl font-extrabold text-indigo-600">{45 - idx * 2}</p>
                     </div>
                     <div className="p-3 bg-emerald-50 rounded-xl text-center">
-                      <p className="text-xs font-bold text-slate-500 mb-1">Avg Score</p>
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Avg Score</p>
                       <p className="text-2xl font-extrabold text-emerald-600">{85 - idx}%</p>
                     </div>
                     <div className="p-3 bg-amber-50 rounded-xl text-center">
-                      <p className="text-xs font-bold text-slate-500 mb-1">Pass Rate</p>
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Pass Rate</p>
                       <p className="text-2xl font-extrabold text-amber-600">{90 - idx}%</p>
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                      <span className="text-sm font-medium text-slate-600">Quizzes Conducted</span>
-                      <span className="font-bold text-slate-900">{12 + idx}</span>
+                    <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Quizzes Conducted</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{12 + idx}</span>
                     </div>
-                    <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                      <span className="text-sm font-medium text-slate-600">Mid-term Avg</span>
-                      <span className="font-bold text-slate-900">{24 + idx}/30</span>
+                    <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Mid-term Avg</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{24 + idx}/30</span>
                     </div>
-                    <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                      <span className="text-sm font-medium text-slate-600">Attendance</span>
-                      <span className="font-bold text-slate-900">{92 - idx}%</span>
+                    <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Attendance</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{92 - idx}%</span>
                     </div>
                   </div>
                 </div>
@@ -370,14 +370,14 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-100">
-                      <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">College ID</th>
-                      <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Name</th>
-                      <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Department</th>
-                      <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Section</th>
-                      <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Batch</th>
-                      <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Avg Score</th>
-                      <th className="text-center py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Status</th>
+                    <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+                      <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">College ID</th>
+                      <th className="text-left py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Name</th>
+                      <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Department</th>
+                      <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Section</th>
+                      <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Batch</th>
+                      <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Avg Score</th>
+                      <th className="text-center py-3 px-4 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -388,12 +388,12 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
                       { id: '22WJ8A6748', name: 'Sneha Singh', dept: 'ET', section: 'A', batch: '2024', avg: 79.3, status: 'Active' },
                       { id: '22WJ8A6749', name: 'Rahul Verma', dept: 'AIML', section: 'AIML-1', batch: '2024', avg: 91.0, status: 'Active' }
                     ].map((student) => (
-                      <tr key={student.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                      <tr key={student.id} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors">
                         <td className="py-3 px-4 font-bold text-indigo-600">{student.id}</td>
-                        <td className="py-3 px-4 font-medium text-slate-800">{student.name}</td>
-                        <td className="py-3 px-4 text-center font-medium text-slate-700">{student.dept}</td>
-                        <td className="py-3 px-4 text-center font-medium text-slate-700">{student.section}</td>
-                        <td className="py-3 px-4 text-center font-medium text-slate-700">{student.batch}</td>
+                        <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-100">{student.name}</td>
+                        <td className="py-3 px-4 text-center font-medium text-slate-700 dark:text-slate-300">{student.dept}</td>
+                        <td className="py-3 px-4 text-center font-medium text-slate-700 dark:text-slate-300">{student.section}</td>
+                        <td className="py-3 px-4 text-center font-medium text-slate-700 dark:text-slate-300">{student.batch}</td>
                         <td className="py-3 px-4 text-center">
                           <span className={`soft-badge ${
                             student.avg >= 85 ? 'bg-emerald-50 text-emerald-600' :
