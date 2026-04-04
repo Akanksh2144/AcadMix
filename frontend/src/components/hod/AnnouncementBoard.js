@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Megaphone, Plus, Trash, X, WarningCircle, Info, Lightning } from '@phosphor-icons/react';
 import { announcementsAPI } from '../../services/api';
 
@@ -27,6 +28,7 @@ export default function AnnouncementBoard({ user }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: '', message: '', priority: 'info', visibility: 'all' });
   const [submitting, setSubmitting] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const fetchAnnouncements = useCallback(async () => {
     try {
@@ -49,13 +51,13 @@ export default function AnnouncementBoard({ user }) {
       setShowForm(false);
       fetchAnnouncements();
     } catch (err) {
-      alert('Failed to post: ' + (err.response?.data?.detail || err.message));
+      console.error('Failed to post:', err);
     }
     setSubmitting(false);
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this announcement?')) return;
+    setConfirmDeleteId(null);
     try {
       await announcementsAPI.delete(id);
       fetchAnnouncements();
@@ -66,6 +68,46 @@ export default function AnnouncementBoard({ user }) {
 
   return (
     <div className="space-y-6">
+
+      {/* ── Delete Confirmation Modal ── */}
+      <AnimatePresence>
+        {confirmDeleteId && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-sm"
+              onClick={() => setConfirmDeleteId(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 8 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+              className="fixed inset-0 z-[81] flex items-center justify-center p-4"
+            >
+              <div className="bg-white dark:bg-[#151B2B] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/[0.06] w-full max-w-sm overflow-hidden">
+                <div className="px-6 pt-6 pb-4 flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-500/15 flex items-center justify-center mb-4">
+                    <Trash size={28} weight="duotone" className="text-red-500" />
+                  </div>
+                  <h3 className="text-lg font-extrabold text-slate-900 dark:text-white mb-1.5">Delete Announcement?</h3>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">This announcement will be permanently removed and students will no longer see it.</p>
+                </div>
+                <div className="h-px bg-slate-100 dark:bg-white/[0.06]" />
+                <div className="px-6 py-4 flex gap-3">
+                  <button onClick={() => setConfirmDeleteId(null)}
+                    className="flex-1 py-2.5 rounded-xl font-bold text-sm bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors">
+                    Cancel
+                  </button>
+                  <button onClick={() => handleDelete(confirmDeleteId)}
+                    className="flex-1 py-2.5 rounded-xl font-bold text-sm bg-red-500 hover:bg-red-600 text-white transition-all shadow-lg shadow-red-500/20">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -159,7 +201,7 @@ export default function AnnouncementBoard({ user }) {
                       </div>
                     </div>
                   </div>
-                  <button onClick={() => handleDelete(ann.id)}
+                  <button onClick={() => setConfirmDeleteId(ann.id)}
                     className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-100 rounded-xl transition-all">
                     <Trash size={16} className="text-red-500" />
                   </button>

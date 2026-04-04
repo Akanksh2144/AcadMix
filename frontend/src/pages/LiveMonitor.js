@@ -1,8 +1,70 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Users, CheckCircle, Clock, Warning, Eye, Camera, CircleNotch, DownloadSimple, StopCircle, Plus } from '@phosphor-icons/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Users, CheckCircle, Clock, Warning, Eye, Camera, CircleNotch, DownloadSimple, StopCircle, Plus, X, StopCircle as StopIcon } from '@phosphor-icons/react';
 import { quizzesAPI } from '../services/api';
 import * as XLSX from 'xlsx';
 
+/* ── Reusable Confirm Modal ──────────────────────────────────────────────── */
+function ConfirmModal({ open, onConfirm, onCancel, title, description, confirmLabel = 'Confirm', confirmClass = 'bg-indigo-600 hover:bg-indigo-700 text-white', icon: Icon, iconClass = 'text-indigo-500', iconBg = 'bg-indigo-50 dark:bg-indigo-500/15' }) {
+  if (!open) return null;
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-sm"
+            onClick={onCancel}
+          />
+          {/* Modal */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: 8 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            className="fixed inset-0 z-[81] flex items-center justify-center p-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="bg-white dark:bg-[#151B2B] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/[0.06] w-full max-w-sm overflow-hidden">
+              {/* Icon Header */}
+              <div className="px-6 pt-6 pb-4 flex flex-col items-center text-center">
+                <div className={`w-14 h-14 rounded-2xl ${iconBg} flex items-center justify-center mb-4`}>
+                  {Icon && <Icon size={28} weight="duotone" className={iconClass} />}
+                </div>
+                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white mb-1.5">{title}</h3>
+                {description && (
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">{description}</p>
+                )}
+              </div>
+              {/* Divider */}
+              <div className="h-px bg-slate-100 dark:bg-white/[0.06]" />
+              {/* Actions */}
+              <div className="px-6 py-4 flex gap-3">
+                <button
+                  onClick={onCancel}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-sm bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={onConfirm}
+                  className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all ${confirmClass}`}
+                >
+                  {confirmLabel}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ── LiveMonitor ─────────────────────────────────────────────────────────── */
 const LiveMonitor = ({ quiz, navigate, user }) => {
   const [activeTab, setActiveTab] = useState('active');
   const [students, setStudents] = useState([]);
@@ -11,6 +73,7 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
   const [toast, setToast] = useState(null);
   const [quizEnded, setQuizEnded] = useState(false);
   const [extendMins, setExtendMins] = useState(10);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -50,15 +113,14 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
   };
 
   const handleEndQuiz = async () => {
+    setShowEndConfirm(false);
     if (!quiz?.id || actionLoading) return;
-    const confirm = window.confirm(`End "${quiz.title}" now? All in-progress attempts will be auto-submitted.`);
-    if (!confirm) return;
     setActionLoading('end');
     try {
       const { data } = await quizzesAPI.endQuiz(quiz.id);
       showToast(`✓ ${data.message}`, 'success');
       setQuizEnded(true);
-      fetchLive(); // refresh table
+      fetchLive();
     } catch (err) {
       showToast(err.response?.data?.detail || 'Failed to end quiz', 'error');
     } finally {
@@ -93,14 +155,36 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
+
+      {/* ── End Quiz Confirm Modal ── */}
+      <ConfirmModal
+        open={showEndConfirm}
+        onCancel={() => setShowEndConfirm(false)}
+        onConfirm={handleEndQuiz}
+        title="End Quiz Now?"
+        description={`"${quiz?.title}" will be closed immediately. All ${activeStudents.length} in-progress attempt${activeStudents.length !== 1 ? 's' : ''} will be auto-submitted and graded.`}
+        confirmLabel="Yes, End Quiz"
+        confirmClass="bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20"
+        icon={StopCircle}
+        iconClass="text-red-500"
+        iconBg="bg-red-50 dark:bg-red-500/15"
+      />
+
       {/* Toast */}
-      {toast && (
-        <div className={`fixed top-4 right-4 z-[100] px-5 py-3 rounded-2xl font-bold text-sm shadow-xl transition-all ${
-          toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'
-        }`} style={{ animation: 'fadeInUp 0.2s ease' }}>
-          {toast.msg}
-        </div>
-      )}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className={`fixed top-4 right-4 z-[100] px-5 py-3 rounded-2xl font-bold text-sm shadow-xl ${
+              toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'
+            }`}
+          >
+            {toast.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <header className="glass-header">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -147,7 +231,7 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
         </div>
 
         {/* Tabs */}
-        <div className="bg-slate-100 rounded-2xl p-1 inline-flex gap-1 mb-6">
+        <div className="bg-slate-100 dark:bg-slate-800/60 rounded-2xl p-1 inline-flex gap-1 mb-6">
           {[{ key: 'active', label: `Active (${activeStudents.length})` }, { key: 'submitted', label: `Submitted (${submittedStudents.length})` }, { key: 'violations', label: `Violations (${violationStudents.length})` }].map(t => (
             <button key={t.key} data-testid={`${t.key}-tab`} onClick={() => setActiveTab(t.key)}
               className={`pill-tab ${activeTab === t.key ? 'pill-tab-active' : 'pill-tab-inactive'}`}>{t.label}</button>
@@ -176,11 +260,11 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
               </thead>
               <tbody>
                 {displayStudents.map((student) => (
-                  <tr key={student.id} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors" data-testid={`student-row-${student.id}`}>
+                  <tr key={student.id} className="border-b border-slate-50 dark:border-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors" data-testid={`student-row-${student.id}`}>
                     <td className="p-4"><p className="font-bold text-slate-800 dark:text-slate-100">{student.name}</p><p className="text-sm font-medium text-slate-400">{student.rollNo}</p></td>
                     <td className="p-4">
                       <div className="flex items-center justify-center gap-2 mb-1"><span className="font-bold text-slate-700 dark:text-slate-300 text-sm">{student.progress}/{student.totalQuestions}</span></div>
-                      <div className="h-2 bg-slate-100 rounded-full max-w-32 mx-auto overflow-hidden">
+                      <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full max-w-32 mx-auto overflow-hidden">
                         <div className="h-full bg-gradient-to-r from-indigo-500 to-teal-400 rounded-full transition-all duration-1000" style={{ width: `${student.totalQuestions > 0 ? (student.progress / student.totalQuestions) * 100 : 0}%` }}></div>
                       </div>
                     </td>
@@ -192,7 +276,7 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
                       {student.violations > 0 ? <span className={`soft-badge ${student.violations >= 2 ? 'bg-red-100 text-red-600' : 'bg-amber-50 text-amber-600'}`}>{student.violations}</span>
                         : <span className="text-emerald-500 font-bold">OK</span>}
                     </td>
-                    <td className="text-center p-4"><span className={`soft-badge ${student.status === 'active' ? 'bg-emerald-50 text-emerald-600 animate-pulse' : 'bg-slate-100 text-slate-500 dark:text-slate-400'}`}>{student.status}</span></td>
+                    <td className="text-center p-4"><span className={`soft-badge ${student.status === 'active' ? 'bg-emerald-50 text-emerald-600 animate-pulse' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>{student.status}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -215,10 +299,7 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
               <p className="font-extrabold text-slate-900 dark:text-white">Extend Time</p>
               <div className="flex items-center gap-2 mt-1">
                 <input
-                  type="number"
-                  min="1"
-                  max="120"
-                  value={extendMins}
+                  type="number" min="1" max="120" value={extendMins}
                   onChange={e => setExtendMins(e.target.value)}
                   onClick={e => e.stopPropagation()}
                   className="soft-input !py-1 !px-2 w-16 text-sm font-bold text-center"
@@ -230,16 +311,16 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
 
           <button
             data-testid="end-quiz-button"
-            onClick={handleEndQuiz}
+            onClick={() => !quizEnded && !actionLoading && setShowEndConfirm(true)}
             disabled={!!actionLoading || quizEnded}
-            className="soft-card-hover p-6 text-left flex items-center gap-4 bg-red-50 group disabled:opacity-50 disabled:cursor-not-allowed"
+            className="soft-card-hover p-6 text-left flex items-center gap-4 bg-red-50 dark:bg-red-500/10 group disabled:opacity-50 disabled:cursor-not-allowed border border-red-100 dark:border-red-500/20"
           >
-            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-500/20 rounded-xl flex items-center justify-center">
               {actionLoading === 'end' ? <CircleNotch size={24} weight="bold" className="text-red-500 animate-spin" /> : <StopCircle size={24} weight="duotone" className="text-red-500" />}
             </div>
             <div>
-              <p className="font-extrabold text-red-700">{quizEnded ? 'Quiz Ended' : 'End Quiz Now'}</p>
-              <p className="text-sm font-medium text-red-400">Force submit all</p>
+              <p className="font-extrabold text-red-700 dark:text-red-400">{quizEnded ? 'Quiz Ended' : 'End Quiz Now'}</p>
+              <p className="text-sm font-medium text-red-400 dark:text-red-500">Force submit all</p>
             </div>
           </button>
 
@@ -249,7 +330,7 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
             disabled={!students.length}
             className="soft-card-hover p-6 text-left flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <div className="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center group-hover:bg-teal-100 transition-colors">
+            <div className="w-12 h-12 bg-teal-50 dark:bg-teal-500/15 rounded-xl flex items-center justify-center group-hover:bg-teal-100 transition-colors">
               <DownloadSimple size={24} weight="duotone" className="text-teal-500" />
             </div>
             <div>
@@ -259,13 +340,6 @@ const LiveMonitor = ({ quiz, navigate, user }) => {
           </button>
         </div>
       </div>
-
-      <style>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(-8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 };
