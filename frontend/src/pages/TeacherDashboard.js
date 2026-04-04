@@ -224,12 +224,89 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
                 </div>
                 <div className="min-w-0">
                   <p className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate">{item.label}</p>
-                  <p className="text-xs sm:text-sm font-medium text-slate-400 truncate">{item.sub}</p>
+                  <p className="text-xs sm:text-sm font-medium text-slate-400 dark:text-slate-500 truncate">{item.sub}</p>
                 </div>
               </motion.button>
             );
           })}
         </motion.div>
+
+        {/* ── Activity Feed + Quiz Summary ─────────── */}
+        <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
+          {/* Recent Submissions */}
+          <motion.div variants={itemVariants} className="lg:col-span-3 soft-card p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-100">Recent Submissions</h3>
+              <button onClick={() => navigate('teacher-quizzes')} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 flex items-center gap-1 transition-colors">
+                View all <ArrowRight size={12} weight="bold" />
+              </button>
+            </div>
+            <div className="space-y-1">
+              {recentActivity.length > 0 ? recentActivity.slice(0, 6).map((item, i) => (
+                <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-emerald-50 dark:bg-emerald-500/15">
+                    <Exam size={14} weight="duotone" className="text-emerald-500 dark:text-emerald-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{item.title}</p>
+                    <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 truncate">{item.subtitle}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {item.score !== undefined && item.score !== null && (
+                      <span className={`text-sm font-extrabold ${
+                        item.score >= 60 ? 'text-emerald-500' : item.score >= 40 ? 'text-amber-500' : 'text-red-500'
+                      }`}>{item.score?.toFixed(0)}%</span>
+                    )}
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{timeAgo(item.timestamp)}</span>
+                  </div>
+                </div>
+              )) : (
+                <div className="py-12 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
+                    <Clipboard size={22} weight="duotone" className="text-slate-400" />
+                  </div>
+                  <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No submissions yet</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Create a quiz to get started</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Active Quizzes Summary */}
+          <motion.div variants={itemVariants} className="lg:col-span-2 soft-card p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-100">My Quizzes</h3>
+              <button onClick={() => navigate('teacher-quizzes')} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 flex items-center gap-1 transition-colors">
+                Manage <ArrowRight size={12} weight="bold" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {myQuizzes.slice(0, 5).map((q, i) => (
+                <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer" onClick={() => navigate('teacher-quizzes')}>
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                    q.status === 'active' ? 'bg-emerald-500' : q.status === 'scheduled' ? 'bg-amber-400' : 'bg-slate-300 dark:bg-slate-600'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{q.title}</p>
+                    <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 capitalize">{q.subject} · {q.status}</p>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    q.status === 'active' ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
+                    q.status === 'scheduled' ? 'bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400' :
+                    'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                  }`}>{q.attempt_count || 0} attempts</span>
+                </div>
+              ))}
+              {myQuizzes.length === 0 && (
+                <div className="py-10 text-center">
+                  <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No quizzes yet</p>
+                  <button onClick={() => navigate('quiz-builder')} className="mt-2 text-xs font-bold text-indigo-500 hover:text-indigo-600 transition-colors">Create your first quiz →</button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+
       </div>
     </div>
   );

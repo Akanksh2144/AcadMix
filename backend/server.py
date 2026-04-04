@@ -727,7 +727,7 @@ async def get_attempt_result(attempt_id: str, user: dict = Depends(get_current_u
 
 @app.get("/api/attempts")
 async def list_attempts(quiz_id: Optional[str] = None, user: dict = Depends(get_current_user)):
-    query = {}
+    query = tenant_query(user)
     if user["role"] == "student":
         query["student_id"] = user["id"]
     if quiz_id:
@@ -907,9 +907,9 @@ async def class_results_analytics(user: dict = Depends(require_role("teacher", "
     mid_marks = {}
     
     if user["role"] == "teacher":
-        qs = await db.quizzes.find({"created_by": user["id"]}).to_list(100)
+        qs = await db.quizzes.find(tenant_query(user, {"created_by": user["id"]})).to_list(100)
     else:
-        qs = await db.quizzes.find().to_list(100)
+        qs = await db.quizzes.find(tenant_query(user)).to_list(100)
         
     quiz_ids = [str(q["_id"]) for q in qs]
     all_attempts = await db.quiz_attempts.find({"quiz_id": {"$in": quiz_ids}, "status": "submitted"}).to_list(1000)
@@ -979,9 +979,9 @@ async def class_results_analytics(user: dict = Depends(require_role("teacher", "
         final_quiz_results[class_key] = arr
         
     if user["role"] == "teacher":
-        entries = await db.mark_entries.find({"teacher_id": user["id"]}).to_list(1000)
+        entries = await db.mark_entries.find(tenant_query(user, {"teacher_id": user["id"]})).to_list(1000)
     else:
-        entries = await db.mark_entries.find().to_list(1000)
+        entries = await db.mark_entries.find(tenant_query(user)).to_list(1000)
         
     for me in entries:
         assn = next((a for a in assignments if str(a["_id"]) == me.get("assignment_id")), None)
@@ -1243,7 +1243,7 @@ async def student_dashboard(user: dict = Depends(get_current_user)):
 
 @app.get("/api/dashboard/teacher")
 async def teacher_dashboard(user: dict = Depends(require_role("teacher", "admin"))):
-    my_quizzes = await db.quizzes.find({"created_by": user["id"]}).sort("created_at", -1).to_list(20)
+    my_quizzes = await db.quizzes.find(tenant_query(user, {"created_by": user["id"]})).sort("created_at", -1).to_list(20)
     for q in my_quizzes:
         q_id = str(q["_id"])
         q["attempt_count"] = await db.quiz_attempts.count_documents({"quiz_id": q_id, "status": "submitted"})
@@ -1501,7 +1501,7 @@ async def save_endterm(req: EndtermEntry, user: dict = Depends(require_role("exa
 
 @app.get("/api/examcell/endterm")
 async def list_endterm(user: dict = Depends(require_role("exam_cell", "admin"))):
-    entries = await db.endterm_entries.find({}).sort("created_at", -1).to_list(200)
+    entries = await db.endterm_entries.find(tenant_query(user)).sort("created_at", -1).to_list(200)
     return [serialize_doc(e) for e in entries]
 
 @app.post("/api/examcell/upload")
@@ -1579,7 +1579,7 @@ async def publish_results(entry_id: str, user: dict = Depends(require_role("exam
 # ─── Timetable Routes (HOD) ────────────────────────────────────────────────
 @app.get("/api/timetable")
 async def get_timetable(section: str, semester: int = 3, user: dict = Depends(require_role("hod", "admin", "teacher", "student"))):
-    slots = await db.timetable_slots.find({"section": section, "semester": semester}).to_list(200)
+    slots = await db.timetable_slots.find(tenant_query(user, {"section": section, "semester": semester})).to_list(200)
     return [serialize_doc(s) for s in slots]
 
 @app.post("/api/timetable")
@@ -1655,7 +1655,7 @@ async def get_at_risk_students(threshold: float = 5.0, user: dict = Depends(requ
     else:
         dept_q = dept
     # Get all students in department
-    students = await db.users.find({"role": "student", "department": dept_q}, {"password_hash": 0}).to_list(2000)
+    students = await db.users.find(tenant_query(user, {"role": "student", "department": dept_q}), {"password_hash": 0}).to_list(2000)
     at_risk = []
     for student in students:
         sid = str(student["_id"])
@@ -1698,13 +1698,13 @@ async def hod_dashboard(user: dict = Depends(require_role("hod", "admin"))):
     else:
         dept_query = dept_val
 
-    total_teachers = await db.users.count_documents({"role": "teacher", "department": dept_query})
-    total_students = await db.users.count_documents({"role": "student", "department": dept_query})
-    total_assignments = await db.faculty_assignments.count_documents({"department": dept_query})
-    pending_reviews = await db.mark_entries.count_documents({"department": dept_query, "status": "submitted"})
-    approved = await db.mark_entries.count_documents({"department": dept_query, "status": "approved"})
-    recent_subs = await db.mark_entries.find({"department": dept_query}).sort("submitted_at", -1).to_list(15)
-    published_results = await db.endterm_entries.find({"department": dept_query, "status": "published"}).sort("published_at", -1).to_list(15)
+    total_teachers = await db.users.count_documents(tenant_query(user, {"role": "teacher", "department": dept_query}))
+    total_students = await db.users.count_documents(tenant_query(user, {"role": "student", "department": dept_query}))
+    total_assignments = await db.faculty_assignments.count_documents(tenant_query(user, {"department": dept_query}))
+    pending_reviews = await db.mark_entries.count_documents(tenant_query(user, {"department": dept_query, "status": "submitted"}))
+    approved = await db.mark_entries.count_documents(tenant_query(user, {"department": dept_query, "status": "approved"}))
+    recent_subs = await db.mark_entries.find(tenant_query(user, {"department": dept_query})).sort("submitted_at", -1).to_list(15)
+    published_results = await db.endterm_entries.find(tenant_query(user, {"department": dept_query, "status": "published"})).sort("published_at", -1).to_list(15)
     
     combined = []
     for s in recent_subs:

@@ -1,4 +1,4 @@
-app = "academix-code-runner"
+app = "acadmix-code-runner"
 primary_region = "bom"
 
 [build]

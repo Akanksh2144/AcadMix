@@ -313,6 +313,19 @@ html.dark .section-divider {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
 }
 
+/* Better dark mode text contrast for secondary content */
+html.dark .text-slate-400 {
+  color: #94a3b8;
+}
+html.dark .text-slate-500 {
+  color: #64748b;
+}
+
+/* Consistent rounded-2xl for all soft-cards */
+.soft-card, .soft-card-hover, .glass-card, .stat-card {
+  border-radius: 1rem;
+}
+
 /* ══════════════════════════════════════════════
    SKELETON SHIMMER
    ══════════════════════════════════════════════ */
