@@ -10,7 +10,7 @@ app = FastAPI(title="AcadeMix Code Runner")
 
 SANDBOX_UID = 1001  # matches 'sandbox' user created in Dockerfile
 SANDBOX_GID = 1001
-MAX_MEMORY_BYTES = 128 * 1024 * 1024  # 128 MB
+MAX_MEMORY_BYTES = 512 * 1024 * 1024  # 512 MB (Python ~40MB, Node ~60MB, JVM ~200MB at startup)
 MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024  # 1 MB
 MAX_PROCESSES = 32
 
@@ -65,11 +65,13 @@ def _set_sandbox_limits():
     """Pre-exec function: drop to sandbox user and set resource limits.
     This runs in the child process BEFORE exec, so it affects only student code."""
     try:
-        # Set resource limits
-        resource.setrlimit(resource.RLIMIT_AS, (MAX_MEMORY_BYTES, MAX_MEMORY_BYTES))
+        # RLIMIT_DATA limits actual heap, not virtual address space.
+        # Node.js V8 reserves ~1.5GB virtual space but only uses ~60MB real memory.
+        # RLIMIT_AS would kill V8 on startup; RLIMIT_DATA lets it work.
+        resource.setrlimit(resource.RLIMIT_DATA, (MAX_MEMORY_BYTES, MAX_MEMORY_BYTES))
         resource.setrlimit(resource.RLIMIT_FSIZE, (MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_BYTES))
         resource.setrlimit(resource.RLIMIT_NPROC, (MAX_PROCESSES, MAX_PROCESSES))
-        resource.setrlimit(resource.RLIMIT_CPU, (5, 5))  # 5 second CPU time hard limit
+        resource.setrlimit(resource.RLIMIT_CPU, (10, 10))  # 10 second CPU time hard limit (JVM needs more)
 
         # Drop privileges: switch to sandbox user
         os.setgid(SANDBOX_GID)
