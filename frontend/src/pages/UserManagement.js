@@ -157,6 +157,7 @@ const UserManagement = ({ navigate }) => {
     if (changed) {
       setFormData(newData);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.department, formData.section, formData.batch, formData.name, activeTab, modalMode]);
 
   const handleSubmit = async (e) => {
