@@ -3,6 +3,19 @@ import { ArrowLeft, Plus, Upload, MagnifyingGlass, Pencil, Trash, Spinner } from
 import { usersAPI, departmentsAPI, sectionsAPI, rolesAPI } from '../services/api';
 import { Toaster, toast } from 'sonner';
 
+const PERMISSION_MODULES = [
+  { id: 'students', label: 'Students', actions: ['view', 'create', 'edit', 'deactivate'] },
+  { id: 'faculty', label: 'Faculty', actions: ['view', 'create', 'edit', 'deactivate'] },
+  { id: 'departments', label: 'Departments', actions: ['view', 'create', 'edit', 'delete'] },
+  { id: 'sections', label: 'Sections', actions: ['view', 'create', 'edit', 'delete'] },
+  { id: 'roles', label: 'Roles', actions: ['view', 'manage'] },
+  { id: 'quizzes', label: 'Quizzes', actions: ['view', 'create', 'assign', 'grade'] },
+  { id: 'timetable', label: 'Timetable', actions: ['view', 'manage'] },
+  { id: 'attendance', label: 'Attendance', actions: ['view', 'upload', 'approve'] },
+  { id: 'proctoring', label: 'Proctoring', actions: ['view_logs', 'review_appeals', 'configure'] },
+  { id: 'metrics', label: 'Metrics', actions: ['view_dept', 'view_college'] },
+];
+
 const UserManagement = ({ navigate }) => {
   const [activeTab, setActiveTab] = useState('students');
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,6 +75,8 @@ const UserManagement = ({ navigate }) => {
     let initialData = {};
     if (activeTab === 'teachers') {
        initialData.password = Math.random().toString(36).slice(-8);
+    } else if (activeTab === 'roles') {
+       initialData.permissions = {};
     }
     setFormData(initialData);
     setShowModal(true);
@@ -159,6 +174,10 @@ const UserManagement = ({ navigate }) => {
          else await rolesAPI.update(editItem.id, formData);
       } else {
         const payload = { ...formData };
+        delete payload._auto_generated_id;
+        delete payload._auto_generated_email;
+        delete payload._auto_generated_pwd;
+        
         if (activeTab === 'students') payload.role = 'student';
         else payload.role = payload.role || 'teacher';
         
@@ -289,7 +308,11 @@ const UserManagement = ({ navigate }) => {
                     ) : activeTab === 'roles' ? (
                       <>
                         <td className="p-4"><p className="font-bold text-slate-800 dark:text-slate-100">{item.name}</p></td>
-                        <td className="text-center p-4"><span className="soft-badge bg-teal-50 text-teal-600">{item.system_role.toUpperCase()}</span></td>
+                        <td className="text-center p-4">
+                          <span className="soft-badge bg-teal-50 text-teal-600">
+                            {Object.keys(item.permissions || {}).length} Modules Granted
+                          </span>
+                        </td>
                         <td className="text-center p-4">
                           <button onClick={() => openEditModal(item)} className="p-2 mx-1 rounded-full hover:bg-slate-100 text-slate-500"><Pencil size={16} weight="duotone" /></button>
                           <button onClick={() => { if(window.confirm('Delete this item?')) handleDelete(item.id); }} className="p-2 mx-1 rounded-full hover:bg-red-100 text-red-500"><Trash size={16} weight="duotone" /></button>
@@ -353,15 +376,44 @@ const UserManagement = ({ navigate }) => {
                 )}
                 
                 {activeTab === 'roles' && (
-                   <div className="grid grid-cols-2 gap-4">
-                      <div><label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Custom Role Name</label><input required value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} type="text" className="soft-input w-full" placeholder="Lab Assistant" /></div>
+                   <div className="flex flex-col gap-4">
                       <div>
-                        <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Maps to System Permissions</label>
-                        <select required className="soft-input w-full" value={formData.system_role || 'teacher'} onChange={e => setFormData({...formData, system_role: e.target.value})}>
-                          <option value="teacher">Standard Faculty Privileges</option>
-                          <option value="hod">HOD / Department Head Privileges</option>
-                          <option value="exam_cell">Exam Cell Privileges</option>
-                        </select>
+                        <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Custom Role Name</label>
+                        <input required value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} type="text" className="soft-input w-full" placeholder="e.g. Lab Assistant" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Configure Permission Matrix</label>
+                        <div className="border border-slate-100 dark:border-slate-700 rounded-xl max-h-64 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
+                          {PERMISSION_MODULES.map(module => (
+                            <div key={module.id} className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                              <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">{module.label}</p>
+                              <div className="flex flex-wrap gap-4">
+                                {module.actions.map(action => (
+                                  <label key={action} className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                      type="checkbox" 
+                                      className="rounded border-slate-300 text-indigo-500 focus:ring-indigo-500"
+                                      checked={formData.permissions?.[module.id]?.includes(action) || false}
+                                      onChange={(e) => {
+                                        const currentPerms = formData.permissions || {};
+                                        const modulePerms = currentPerms[module.id] || [];
+                                        let updatedModulePerms;
+                                        if (e.target.checked) updatedModulePerms = [...modulePerms, action];
+                                        else updatedModulePerms = modulePerms.filter(a => a !== action);
+                                        
+                                        setFormData({
+                                          ...formData, 
+                                          permissions: { ...currentPerms, [module.id]: updatedModulePerms }
+                                        });
+                                      }}
+                                    />
+                                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400 capitalize">{action.replace('_', ' ')}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                    </div>
                 )}
