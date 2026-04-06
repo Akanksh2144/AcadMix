@@ -304,7 +304,7 @@ class FacultyAssignment(BaseModel):
     batch: str
     section: str
     semester: int = 1
-    academic_year: str = "2024-25"
+    academic_year: str
     credits: Optional[int] = None
     hours_per_week: Optional[int] = None
     is_lab: bool = False
@@ -332,7 +332,7 @@ class CIATemplateUpdate(BaseModel):
 class SubjectCIAConfigCreate(BaseModel):
     subject_code: str
     subject_name: Optional[str] = None
-    academic_year: str = "2024-25"
+    academic_year: str
     semester: int = Field(..., ge=1, le=8)
     template_id: str
 
@@ -389,7 +389,7 @@ class ViolationReport(BaseModel):
     violation_type: str = "tab_switch"  # tab_switch, fullscreen_exit, window_blur
 
 class AcademicCalendarCreate(BaseModel):
-    academic_year: str = "2024-25"
+    academic_year: str
     semester: int = Field(..., ge=1, le=8)
     start_date: str   # "YYYY-MM-DD"
     end_date: str
@@ -401,7 +401,7 @@ class PeriodSlotCreate(BaseModel):
     batch: str
     section: str
     semester: int = Field(..., ge=1, le=8)
-    academic_year: str = "2024-25"
+    academic_year: str
     day: str          # MON, TUE, WED, THU, FRI
     period_no: int = Field(..., ge=1, le=10)
     start_time: str   # "09:00"
@@ -440,14 +440,14 @@ class SubstituteAssign(BaseModel):
 
 class RegistrationWindowCreate(BaseModel):
     semester: int = Field(..., ge=1, le=8)
-    academic_year: str = "2024-25"
+    academic_year: str
     open_at: str    # "YYYY-MM-DDTHH:MM"
     close_at: str   # "YYYY-MM-DDTHH:MM"
 
 class CourseRegistrationSchema(BaseModel):
     subject_code: str
     semester: int = Field(..., ge=1, le=8)
-    academic_year: str = "2024-25"
+    academic_year: str
     is_arrear: bool = False
 
 class InstitutionProfileUpdate(BaseModel):
@@ -458,6 +458,39 @@ class InstitutionProfileUpdate(BaseModel):
     extension_activities: Optional[dict] = None
     research_publications: Optional[dict] = None
 
+# ─── Phase 6: Teaching Work Schemas ──────────────────────────────────────────
+
+VALID_METHODOLOGIES = {"Lecture", "Demo", "Lab", "Discussion", "Tutorial"}
+
+class TeachingPlanCreate(BaseModel):
+    period_slot_id: str
+    date: str  # "YYYY-MM-DD"
+    planned_topic: str = Field(..., max_length=500)
+
+class ClassRecordCreate(BaseModel):
+    period_slot_id: str
+    date: str  # "YYYY-MM-DD"
+    actual_topic: str = Field(..., max_length=500)
+    methodology: str = Field(..., pattern="^(Lecture|Demo|Lab|Discussion|Tutorial)$")
+    remarks: Optional[str] = Field(None, max_length=500)
+
+class TeachingRecordUpdate(BaseModel):
+    planned_topic: Optional[str] = Field(None, max_length=500)
+    actual_topic: Optional[str] = Field(None, max_length=500)
+    methodology: Optional[str] = None
+    remarks: Optional[str] = Field(None, max_length=500)
+
+class FacultyProfileUpdate(BaseModel):
+    """Sectioned profile structure. Each section is a list of records with a status field.
+    Structure: { "educational": [{"degree": "...", "status": "draft"}], "experience": [...], ... }
+    """
+    personal: Optional[dict] = None       # phone, dob, aadhaar, blood_group, gender, address
+    educational: Optional[list] = None    # [{degree, university, year, percentage, status}]
+    experience: Optional[list] = None     # [{position, institution, from_date, to_date, status}]
+    research: Optional[list] = None       # [{title, journal, year, doi, status}]
+    publications: Optional[list] = None   # [{title, publisher, year, isbn, status}]
+    memberships: Optional[list] = None    # [{body, membership_id, from_date, status}]
+    training: Optional[list] = None       # [{program, organizer, dates, certificate_url, status}]
 
 
 async def log_audit(session: AsyncSession, user_id: str, resource: str, action: str, details: dict = None):
@@ -1127,28 +1160,279 @@ async def get_current_academic_year(session: AsyncSession, college_id: str) -> s
     return calendar.academic_year
 
 @app.get("/api/faculty/timetable/today")
-async def get_faculty_today_timetable(user: dict = Depends(require_role("teacher", "faculty", "hod")), session: AsyncSession = Depends(get_db)):
-    """Get today's periods for the logged-in faculty."""
+async def get_faculty_today_timetable(
+    week: bool = False,
+    user: dict = Depends(require_role("teacher", "faculty", "hod")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Get today's periods (default) or full weekly grid (?week=true) for the logged-in faculty."""
     today = datetime.now(timezone.utc)
-    # Map Python weekday() (0=Mon, 6=Sun) to our DB day strings ("MON", "TUE"...)
     days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
     current_day = days[today.weekday()]
 
     current_academic_year = await get_current_academic_year(session, user.get("college_id", ""))
 
-    result = await session.execute(
-        select(models.PeriodSlot).where(
-            models.PeriodSlot.faculty_id == user["id"],
-            models.PeriodSlot.day == current_day,
-            models.PeriodSlot.academic_year == current_academic_year
-        ).order_by(models.PeriodSlot.period_no)
+    stmt = select(models.PeriodSlot).where(
+        models.PeriodSlot.faculty_id == user["id"],
+        models.PeriodSlot.academic_year == current_academic_year
     )
+    if not week:
+        stmt = stmt.where(models.PeriodSlot.day == current_day)
+    stmt = stmt.order_by(models.PeriodSlot.day, models.PeriodSlot.period_no)
+
+    result = await session.execute(stmt)
     slots = result.scalars().all()
     return [{
-        "id": s.id, "period_no": s.period_no, "start_time": s.start_time, "end_time": s.end_time,
+        "id": s.id, "day": s.day, "period_no": s.period_no, "start_time": s.start_time, "end_time": s.end_time,
         "batch": s.batch, "section": s.section, "department_id": s.department_id,
         "subject_code": s.subject_code, "subject_name": s.subject_name, "slot_type": s.slot_type
     } for s in slots]
+
+# ─── Phase 6: Daily Teaching Work ─────────────────────────────────────────────
+
+@app.get("/api/faculty/teaching-records")
+async def get_teaching_records(
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    user: dict = Depends(require_role("teacher", "faculty", "hod")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Get teaching records for the faculty, optionally filtered by month/year."""
+    params = {"faculty_id": user["id"]}
+    where_clauses = ["tr.faculty_id = :faculty_id", "tr.is_deleted = false"]
+    
+    if month and year:
+        where_clauses.append("EXTRACT(MONTH FROM tr.date) = :month")
+        where_clauses.append("EXTRACT(YEAR FROM tr.date) = :year")
+        params["month"] = month
+        params["year"] = year
+
+    where_sql = " AND ".join(where_clauses)
+    stmt = text(f"""
+        SELECT 
+            tr.id, tr.date, tr.planned_topic, tr.actual_topic, 
+            tr.methodology, tr.remarks, tr.is_class_record_submitted,
+            tr.period_slot_id,
+            ps.period_no, ps.start_time, ps.end_time, ps.day,
+            ps.subject_code, ps.subject_name, ps.batch, ps.section
+        FROM teaching_records tr
+        JOIN period_slots ps ON tr.period_slot_id = ps.id
+        WHERE {where_sql}
+        ORDER BY tr.date DESC, ps.period_no ASC
+    """)
+    result = await session.execute(stmt, params)
+    rows = result.all()
+    return [{
+        "id": r.id, "date": str(r.date),
+        "planned_topic": r.planned_topic, "actual_topic": r.actual_topic,
+        "methodology": r.methodology, "remarks": r.remarks,
+        "is_class_record_submitted": r.is_class_record_submitted,
+        "period_slot_id": r.period_slot_id,
+        "period_no": r.period_no, "start_time": r.start_time, "end_time": r.end_time,
+        "day": r.day, "subject_code": r.subject_code, "subject_name": r.subject_name,
+        "batch": r.batch, "section": r.section
+    } for r in rows]
+
+@app.post("/api/faculty/teaching-plan")
+async def save_teaching_plan(
+    req: TeachingPlanCreate,
+    user: dict = Depends(require_role("teacher", "faculty", "hod")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Save a teaching plan (planned topic). Enforces T+14 day window server-side."""
+    try:
+        target_date = datetime.strptime(req.date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format, use YYYY-MM-DD")
+
+    today = datetime.now(timezone.utc).date()
+    if target_date < today:
+        raise HTTPException(status_code=400, detail="Cannot create teaching plan for a past date.")
+    if (target_date - today).days > 14:
+        raise HTTPException(status_code=400, detail=f"Teaching plan can only be set up to 14 days in advance. Target date {req.date} is {(target_date - today).days} days away.")
+
+    # Verify the period slot belongs to this faculty
+    slot = await session.get(models.PeriodSlot, req.period_slot_id)
+    if not slot or slot.faculty_id != user["id"]:
+        raise HTTPException(status_code=404, detail="Period slot not found or does not belong to you.")
+
+    # Check for existing record (upsert logic)
+    existing = await session.execute(
+        select(models.TeachingRecord).where(
+            models.TeachingRecord.faculty_id == user["id"],
+            models.TeachingRecord.period_slot_id == req.period_slot_id,
+            models.TeachingRecord.date == target_date,
+            models.TeachingRecord.is_deleted == False
+        )
+    )
+    record = existing.scalars().first()
+    if record:
+        record.planned_topic = req.planned_topic
+    else:
+        record = models.TeachingRecord(
+            college_id=user["college_id"],
+            faculty_id=user["id"],
+            period_slot_id=req.period_slot_id,
+            date=target_date,
+            planned_topic=req.planned_topic
+        )
+        session.add(record)
+    
+    await session.commit()
+    return {"id": record.id, "message": "Teaching plan saved"}
+
+@app.post("/api/faculty/class-record")
+async def save_class_record(
+    req: ClassRecordCreate,
+    user: dict = Depends(require_role("teacher", "faculty", "hod")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Save a class record (actual topic + methodology). Enforces T to T-3 day window server-side."""
+    try:
+        target_date = datetime.strptime(req.date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format, use YYYY-MM-DD")
+
+    today = datetime.now(timezone.utc).date()
+    if target_date > today:
+        raise HTTPException(status_code=400, detail="Cannot submit class record for a future date.")
+    if (today - target_date).days > 3:
+        raise HTTPException(status_code=400, detail=f"Class record submission window closed. Date {req.date} is {(today - target_date).days} days ago (limit is 3 days).")
+
+    # Verify slot ownership
+    slot = await session.get(models.PeriodSlot, req.period_slot_id)
+    if not slot or slot.faculty_id != user["id"]:
+        raise HTTPException(status_code=404, detail="Period slot not found or does not belong to you.")
+
+    # Upsert
+    existing = await session.execute(
+        select(models.TeachingRecord).where(
+            models.TeachingRecord.faculty_id == user["id"],
+            models.TeachingRecord.period_slot_id == req.period_slot_id,
+            models.TeachingRecord.date == target_date,
+            models.TeachingRecord.is_deleted == False
+        )
+    )
+    record = existing.scalars().first()
+    if record:
+        record.actual_topic = req.actual_topic
+        record.methodology = req.methodology
+        record.remarks = req.remarks
+        record.is_class_record_submitted = True
+    else:
+        record = models.TeachingRecord(
+            college_id=user["college_id"],
+            faculty_id=user["id"],
+            period_slot_id=req.period_slot_id,
+            date=target_date,
+            actual_topic=req.actual_topic,
+            methodology=req.methodology,
+            remarks=req.remarks,
+            is_class_record_submitted=True
+        )
+        session.add(record)
+
+    await session.commit()
+    return {"id": record.id, "message": "Class record submitted"}
+
+@app.patch("/api/faculty/teaching-records/{record_id}")
+async def update_teaching_record(
+    record_id: str,
+    req: TeachingRecordUpdate,
+    user: dict = Depends(require_role("teacher", "faculty", "hod")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Edit an existing teaching record. Enforces same time windows as create."""
+    record = await session.get(models.TeachingRecord, record_id)
+    if not record or record.faculty_id != user["id"] or record.is_deleted:
+        raise HTTPException(status_code=404, detail="Teaching record not found.")
+
+    today = datetime.now(timezone.utc).date()
+
+    # If updating planned_topic, enforce T+14 window
+    if req.planned_topic is not None:
+        if record.date < today:
+            raise HTTPException(status_code=400, detail="Cannot edit teaching plan for a past date.")
+        if (record.date - today).days > 14:
+            raise HTTPException(status_code=400, detail="Teaching plan can only be edited up to 14 days in advance.")
+        record.planned_topic = req.planned_topic
+
+    # If updating actual_topic/methodology, enforce T to T-3 window
+    if req.actual_topic is not None or req.methodology is not None:
+        if record.date > today:
+            raise HTTPException(status_code=400, detail="Cannot submit class record for a future date.")
+        if (today - record.date).days > 3:
+            raise HTTPException(status_code=400, detail=f"Class record edit window closed ({(today - record.date).days} days ago, limit is 3).")
+        if req.actual_topic is not None:
+            record.actual_topic = req.actual_topic
+        if req.methodology is not None:
+            if req.methodology not in VALID_METHODOLOGIES:
+                raise HTTPException(status_code=400, detail=f"Invalid methodology. Must be one of: {', '.join(VALID_METHODOLOGIES)}")
+            record.methodology = req.methodology
+        record.is_class_record_submitted = True
+
+    if req.remarks is not None:
+        record.remarks = req.remarks
+
+    await session.commit()
+    return {"id": record.id, "message": "Teaching record updated"}
+
+# ─── Phase 6: Faculty Profile ────────────────────────────────────────────────
+
+@app.get("/api/faculty/profile")
+async def get_faculty_profile(
+    user: dict = Depends(require_role("teacher", "faculty", "hod")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Get the full faculty profile with sectioned DHTE fields."""
+    u = await session.get(models.User, user["id"])
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+    profile = u.profile_data or {}
+    return {
+        "id": u.id, "name": u.name, "email": u.email, "role": u.role,
+        "college_id": u.college_id, "department": u.department,
+        "designation": profile.get("designation", ""),
+        "date_of_joining": profile.get("date_of_joining", ""),
+        "personal": profile.get("personal", {}),
+        "educational": profile.get("educational", []),
+        "experience": profile.get("experience", []),
+        "research": profile.get("research", []),
+        "publications": profile.get("publications", []),
+        "memberships": profile.get("memberships", []),
+        "training": profile.get("training", []),
+    }
+
+@app.put("/api/faculty/profile")
+async def update_faculty_profile(
+    req: FacultyProfileUpdate,
+    user: dict = Depends(require_role("teacher", "faculty", "hod")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Update faculty profile sections. Each record in a list section gets a status field."""
+    u = await session.get(models.User, user["id"])
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    profile = dict(u.profile_data or {})
+    updates = req.dict(exclude_unset=True)
+    
+    # For list sections, ensure every record has a status field
+    list_sections = ["educational", "experience", "research", "publications", "memberships", "training"]
+    for section_name in list_sections:
+        if section_name in updates and updates[section_name] is not None:
+            for record in updates[section_name]:
+                if isinstance(record, dict) and "status" not in record:
+                    record["status"] = "draft"
+    
+    profile.update(updates)
+    u.profile_data = profile
+    # Flag the column as modified for SQLAlchemy to detect JSONB changes
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(u, "profile_data")
+    
+    await session.commit()
+    return {"message": "Profile updated successfully"}
 
 @app.get("/api/student/timetable")
 async def get_student_timetable(user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):

@@ -199,7 +199,7 @@ class FacultyAssignment(Base, SoftDeleteMixin):
     section = Column(String, nullable=False)
     semester = Column(Integer, nullable=False, default=1)
     # Phase 1 enhancements
-    academic_year = Column(String, nullable=True, server_default="2024-25")  # e.g. "2024-25"
+    academic_year = Column(String, nullable=True)  # dynamically resolved via AcademicCalendar
     credits = Column(Integer, nullable=True)
     hours_per_week = Column(Integer, nullable=True)
     is_lab = Column(Boolean, nullable=False, server_default='false')
@@ -481,4 +481,30 @@ class InstitutionProfile(Base, SoftDeleteMixin):
     updated_by       = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
 
+# ─── Phase 6: Daily Teaching Work (DHTE spec 7.1, 7.3, 7.4) ────────────────
 
+class TeachingRecord(Base, SoftDeleteMixin):
+    """One record per faculty per period slot per date.
+    Supports two-phase entry:
+      1. Teaching Plan (planned_topic) — editable up to T+14 days
+      2. Class Record (actual_topic) — editable from T to T-3 days
+    methodology is constrained to: Lecture, Demo, Lab, Discussion, Tutorial
+    """
+    __tablename__ = "teaching_records"
+    id                        = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id                = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    faculty_id                = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    period_slot_id            = Column(String, ForeignKey("period_slots.id", ondelete="RESTRICT"), nullable=False)
+    date                      = Column(Date, nullable=False)
+    planned_topic             = Column(String, nullable=True)
+    actual_topic              = Column(String, nullable=True)
+    methodology               = Column(String, nullable=True)  # Lecture | Demo | Lab | Discussion | Tutorial
+    remarks                   = Column(String, nullable=True)
+    is_class_record_submitted = Column(Boolean, nullable=False, server_default='false')
+    created_at                = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at                = Column(DateTime(timezone=True), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("faculty_id", "period_slot_id", "date", name="uq_teaching_record"),
+        Index("ix_teaching_record_faculty_date", "faculty_id", "date"),
+    )

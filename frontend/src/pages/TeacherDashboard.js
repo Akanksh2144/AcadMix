@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, NotePencil, ChartLine, Users, Eye, SignOut, Clipboard, Calendar, CalendarDots, PencilLine, Bell, GraduationCap, ArrowRight, Exam, Fire, Sun, Moon } from '@phosphor-icons/react';
+import { BookOpen, NotePencil, ChartLine, Users, Eye, SignOut, Clipboard, Calendar, CalendarDots, PencilLine, Bell, GraduationCap, ArrowRight, Exam, Fire, Sun, Moon, Notebook, UserCircle } from '@phosphor-icons/react';
 import { analyticsAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 import AttendanceMarker from '../components/faculty/AttendanceMarker';
+import FacultyTimetableGrid from '../components/faculty/FacultyTimetableGrid';
+import FacultyProfile from '../components/faculty/FacultyProfile';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -43,6 +45,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const { isDark, toggle: toggleTheme } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [teachingMode, setTeachingMode] = useState('plan');
   const notifKey = `acadmix_notif_read_${user?.id || 'default'}`;
   const [notifRead, setNotifReadState] = useState(() => localStorage.getItem(notifKey) === 'true');
   const setNotifRead = (val) => { setNotifReadState(val); localStorage.setItem(notifKey, String(val)); };
@@ -189,7 +192,10 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
           <div className="flex items-center gap-1.5 bg-white dark:bg-[#1A202C]/60 backdrop-blur-md border border-slate-200 dark:border-slate-700/80 rounded-2xl p-1.5 shadow-sm w-fit min-w-full sm:min-w-0">
             {[
               { id: 'overview', label: 'Overview' }, 
-              { id: 'attendance', label: 'Daily Attendance' }
+              { id: 'attendance', label: 'Attendance' },
+              { id: 'timetable', label: 'Timetable' },
+              { id: 'teaching', label: 'Teaching Work' },
+              { id: 'profile', label: 'My Profile' },
             ].map(tab => (
               <button 
                 key={tab.id} 
@@ -337,6 +343,46 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
           <motion.div data-testid="attendance-content" variants={containerVariants} initial="hidden" animate="show">
             <motion.div variants={itemVariants}>
               <AttendanceMarker user={user} />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === 'timetable' && (
+          <motion.div data-testid="timetable-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <FacultyTimetableGrid mode="view" />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === 'teaching' && (
+          <motion.div data-testid="teaching-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants} className="mb-4">
+              <div className="flex items-center gap-1.5 bg-white dark:bg-[#1A202C]/60 backdrop-blur-md border border-slate-200 dark:border-slate-700/80 rounded-2xl p-1.5 shadow-sm w-fit">
+                <button onClick={() => setTeachingMode('plan')}
+                  className={`px-3.5 py-2 rounded-[14px] text-xs font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 ${
+                    teachingMode === 'plan' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                  }`}>
+                  <Notebook size={14} weight="duotone" /> Teaching Plan
+                </button>
+                <button onClick={() => setTeachingMode('record')}
+                  className={`px-3.5 py-2 rounded-[14px] text-xs font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 ${
+                    teachingMode === 'record' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                  }`}>
+                  <PencilLine size={14} weight="duotone" /> Class Record
+                </button>
+              </div>
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <FacultyTimetableGrid mode={teachingMode} />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === 'profile' && (
+          <motion.div data-testid="profile-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <FacultyProfile />
             </motion.div>
           </motion.div>
         )}

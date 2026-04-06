@@ -179,7 +179,18 @@ export const timetableAPI = {
   saveHod: (slots) => api.put('/api/hod/timetable/slots', slots),
   delete: (slotId) => api.delete(`/api/timetable/${slotId}`),
   getFacultyToday: () => api.get('/api/faculty/timetable/today'),
+  getFacultyWeek: () => api.get('/api/faculty/timetable/today', { params: { week: true } }),
   getStudentTimetable: () => api.get('/api/student/timetable'),
+};
+
+// Faculty Panel (DHTE spec Phase 6)
+export const facultyPanelAPI = {
+  teachingRecords: (params) => api.get('/api/faculty/teaching-records', { params }),
+  saveTeachingPlan: (data) => api.post('/api/faculty/teaching-plan', data),
+  saveClassRecord: (data) => api.post('/api/faculty/class-record', data),
+  updateTeachingRecord: (id, data) => api.patch(`/api/faculty/teaching-records/${id}`, data),
+  getProfile: () => api.get('/api/faculty/profile'),
+  updateProfile: (data) => api.put('/api/faculty/profile', data),
 };
 
 export const attendanceAPI = {
