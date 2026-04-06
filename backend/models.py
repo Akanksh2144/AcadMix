@@ -465,3 +465,20 @@ class CourseRegistration(Base, SoftDeleteMixin):
         Index("ix_course_reg_college_status", "college_id", "status"),
     )
 
+# ─── Phase 5: NAAC Institutional Data ──────────────────────────────────────
+
+class InstitutionProfile(Base, SoftDeleteMixin):
+    __tablename__ = "institution_profiles"
+    id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id       = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, unique=True)
+    recognitions     = Column(JSONB)   # NBA, NAAC grade, AICTE approval number + date
+    infrastructure   = Column(JSONB)   # classrooms, labs, area, equipment lists
+    library          = Column(JSONB)   # volumes, journals, e-resources, digital library
+    mous             = Column(JSONB)   # [{company, signed_date, purpose, validity}]
+    extension_activities = Column(JSONB)
+    research_publications = Column(JSONB)
+    updated_at       = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_by       = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+
+

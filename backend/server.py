@@ -450,6 +450,15 @@ class CourseRegistrationSchema(BaseModel):
     academic_year: str = "2024-25"
     is_arrear: bool = False
 
+class InstitutionProfileUpdate(BaseModel):
+    recognitions: Optional[dict] = None
+    infrastructure: Optional[dict] = None
+    library: Optional[dict] = None
+    mous: Optional[list] = None
+    extension_activities: Optional[dict] = None
+    research_publications: Optional[dict] = None
+
+
 
 async def log_audit(session: AsyncSession, user_id: str, resource: str, action: str, details: dict = None):
     log_entry = models.AuditLog(
@@ -1768,7 +1777,67 @@ async def get_hall_ticket(semester: int, academic_year: str, user: dict = Depend
         ]
     }
 
+# ─── Phase 5: NAAC Institutional Data ───────────────────────────────────────
 
+@app.get("/api/principal/institution-profile")
+async def get_institution_profile(user: dict = Depends(require_role("principal", "admin")), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(
+        select(models.InstitutionProfile).where(
+            models.InstitutionProfile.college_id == user["college_id"]
+        )
+    )
+    profile = result.scalars().first()
+    
+    if not profile:
+        return {}
+        
+    return {
+        "id": profile.id,
+        "recognitions": profile.recognitions,
+        "infrastructure": profile.infrastructure,
+        "library": profile.library,
+        "mous": profile.mous,
+        "extension_activities": profile.extension_activities,
+        "research_publications": profile.research_publications,
+        "updated_at": profile.updated_at.isoformat() if profile.updated_at else None
+    }
+
+@app.put("/api/principal/institution-profile")
+async def update_institution_profile(req: InstitutionProfileUpdate, user: dict = Depends(require_role("principal", "admin")), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(
+        select(models.InstitutionProfile).where(
+            models.InstitutionProfile.college_id == user["college_id"]
+        )
+    )
+    profile = result.scalars().first()
+    
+    if not profile:
+        profile = models.InstitutionProfile(
+            college_id=user["college_id"],
+            updated_by=user["id"]
+        )
+        session.add(profile)
+    else:
+        profile.updated_by = user["id"]
+        
+    # Update fields that were provided
+    if req.recognitions is not None:
+        profile.recognitions = req.recognitions
+    if req.infrastructure is not None:
+        profile.infrastructure = req.infrastructure
+    if req.library is not None:
+        profile.library = req.library
+    if req.mous is not None:
+        profile.mous = req.mous
+    if req.extension_activities is not None:
+        profile.extension_activities = req.extension_activities
+    if req.research_publications is not None:
+        profile.research_publications = req.research_publications
+        
+    await log_audit(session, user["id"], "institution_profile", "update", {})
+    await session.commit()
+    
+    return {"message": "Institution profile updated successfully"}
 
 # ─── User Routes ────────────────────────────────────────────────────────────
 @app.get("/api/users")
