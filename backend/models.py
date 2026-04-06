@@ -38,6 +38,7 @@ class Department(Base, SoftDeleteMixin):
     college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
     name = Column(String, nullable=False)
     code = Column(String, nullable=False)
+    hod_user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
 class Section(Base, SoftDeleteMixin):
     __tablename__ = "sections"
@@ -45,6 +46,7 @@ class Section(Base, SoftDeleteMixin):
     college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
     department_id = Column(String, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False)
     name = Column(String, nullable=False)
+    intake = Column(Integer, nullable=True)
 
 class Role(Base, SoftDeleteMixin):
     __tablename__ = "roles"
@@ -56,11 +58,15 @@ class Role(Base, SoftDeleteMixin):
 class Course(Base, SoftDeleteMixin):
     __tablename__ = "courses"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
     department_id = Column(String, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False)
     semester = Column(Integer, nullable=False)
     name = Column(String, nullable=False)
     credits = Column(Integer, nullable=False)
     type = Column(String, nullable=False) # Theory/Lab
+    subject_code = Column(String, nullable=False, default="")
+    regulation_year = Column(String, nullable=False, default="")
+    hours_per_week = Column(Integer, nullable=False, default=0)
 
 class User(Base, SoftDeleteMixin):
     __tablename__ = "users"
@@ -597,3 +603,116 @@ class StudentProgression(Base, SoftDeleteMixin):
     __table_args__ = (
         Index("ix_progression_student_type", "student_id", "progression_type"),
     )
+
+class FeeTemplate(Base, SoftDeleteMixin):
+    __tablename__ = "fee_templates"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    fee_type = Column(String, nullable=False)
+    amount = Column(Float, nullable=False)
+    academic_year = Column(String, nullable=False)
+    semester = Column(Integer, nullable=True)
+    description = Column(String, nullable=True)
+
+class FeePayment(Base, SoftDeleteMixin):
+    __tablename__ = "fee_payments"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    fee_template_id = Column(String, ForeignKey("fee_templates.id", ondelete="NO ACTION"), nullable=False)
+    amount_paid = Column(Float, nullable=False)
+    status = Column(String, nullable=False)
+    transaction_date = Column(DateTime(timezone=True), nullable=True)
+    transaction_reference = Column(String, nullable=True)
+
+class ActivityPermission(Base, SoftDeleteMixin):
+    __tablename__ = "activity_permissions"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    faculty_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    activity_type = Column(String, nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    date = Column(Date, nullable=False)
+    venue = Column(String, nullable=True)
+    phase = Column(String, nullable=False, server_default='pre_event')
+    status = Column(String, nullable=False, server_default='pending')
+    hod_approved_by = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    report_data = Column(JSONB, nullable=True)
+
+class TaskAssignment(Base, SoftDeleteMixin):
+    __tablename__ = "task_assignments"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    assigner_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    assignee_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    deadline = Column(Date, nullable=False)
+    priority = Column(String, nullable=False, server_default='medium')
+    status = Column(String, nullable=False, server_default='pending')
+
+class DepartmentMeeting(Base, SoftDeleteMixin):
+    __tablename__ = "department_meetings"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    department_id = Column(String, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False, index=True)
+    organizer_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    date = Column(DateTime(timezone=True), nullable=False)
+    agenda = Column(String, nullable=False)
+    minutes = Column(String, nullable=True)
+    attendance_record = Column(JSONB, nullable=True)
+
+class OutOfCampusPermission(Base, SoftDeleteMixin):
+    __tablename__ = "out_of_campus_permissions"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    faculty_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    destination = Column(String, nullable=False)
+    purpose = Column(String, nullable=False)
+    departure_time = Column(DateTime(timezone=True), nullable=False)
+    return_time = Column(DateTime(timezone=True), nullable=False)
+    status = Column(String, nullable=False, server_default='pending')
+    approved_by = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+class FreePeriodRequest(Base, SoftDeleteMixin):
+    __tablename__ = "free_period_requests"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    faculty_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    period_slot_id = Column(String, ForeignKey("period_slots.id", ondelete="CASCADE"), nullable=False)
+    date = Column(Date, nullable=False)
+    reason = Column(String, nullable=False)
+    status = Column(String, nullable=False, server_default='pending')
+    processed_by = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+
+
+class Scholarship(Base, SoftDeleteMixin):
+    __tablename__ = "scholarships"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    academic_year = Column(String, nullable=False)
+    name = Column(String, nullable=False)
+    type = Column(String, nullable=False) # Government, Private, Merit
+    eligibility_criteria = Column(JSONB, nullable=False, server_default='{}')
+
+class ScholarshipApplication(Base, SoftDeleteMixin):
+    __tablename__ = "scholarship_applications"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    scholarship_id = Column(String, ForeignKey("scholarships.id", ondelete="CASCADE"), nullable=False)
+    status = Column(String, nullable=False, default="submitted") # submitted, approved, rejected
+    applied_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class TimetableApproval(Base, SoftDeleteMixin):
+    __tablename__ = "timetable_approvals"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    department_id = Column(String, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False)
+    academic_year = Column(String, nullable=False)
+    semester = Column(Integer, nullable=False)
+    is_approved = Column(Boolean, nullable=False, default=False)
+    approved_by = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    approved_at = Column(DateTime(timezone=True), nullable=True)

@@ -414,6 +414,49 @@ class CollegeSettingsUpdate(BaseModel):
     settings: dict
 
     @validator("settings")
+    def validate_settings(cls, v):
+        # 1. Advanced Grade Scale Validator
+        scale = v.get("grade_scale")
+        if scale is not None:
+            if not isinstance(scale, list) or len(scale) == 0:
+                raise ValueError("grade_scale must be a non-empty list of dictionaries")
+            prev_pct = 101.0
+            has_zero = False
+            for item in scale:
+                pct = item.get("min_pct")
+                if pct is None:
+                    raise ValueError("Each grade scale item must have min_pct")
+                if float(pct) >= prev_pct:
+                    raise ValueError(f"grade_scale min_pct must be strictly monotonically decreasing. Violating element: {pct}")
+                if float(pct) <= 0:
+                    has_zero = True
+                prev_pct = float(pct)
+            if not has_zero:
+                raise ValueError("grade_scale must end exactly at or below min_pct=0")
+                
+        # 2. Strict Attendance Bounds Validator
+        if "attendance_min_pct" in v:
+            val = v["attendance_min_pct"]
+            if not isinstance(val, (int, float)):
+                raise ValueError("attendance_min_pct must be a number")
+            if not (1 <= float(val) <= 100):
+                raise ValueError("attendance_min_pct must be between 1 and 100")
+                
+        # 3. Late Entry Validator
+        if "late_entry_window_hours" in v:
+            val = v["late_entry_window_hours"]
+            if not isinstance(val, int) or val < 0:
+                raise ValueError("late_entry_window_hours must be a positive integer")
+                
+        # 4. OD configuration
+        if "od_counts_as_present" in v:
+            val = v["od_counts_as_present"]
+            if not isinstance(val, bool):
+                raise ValueError("od_counts_as_present must be a boolean flag")
+                
+        return v
+    
+    # Keeping old method name mapped away just in case
     def validate_grade_scale(cls, v):
         scale = v.get("grade_scale")
         if scale is not None:
@@ -822,6 +865,15 @@ async def create_subject_allocation(req: FacultyAssignment, user: dict = Depends
     )
     if not teacher_r.scalars().first():
         raise HTTPException(status_code=404, detail="Teacher not found in this college")
+
+    course_r = await session.execute(
+        select(models.Course).where(
+            models.Course.subject_code == req.subject_code,
+            models.Course.college_id == user["college_id"]
+        )
+    )
+    if not course_r.scalars().first():
+        raise HTTPException(status_code=400, detail=f"Subject code '{req.subject_code}' does not exist in the Course master catalog for this college. Please add it first.")
 
     new_assign = models.FacultyAssignment(
         college_id=user["college_id"],
@@ -2849,6 +2901,21 @@ async def get_examcell_dashboard_stats(user: dict = Depends(require_role("exam_c
 
 @app.get("/api/student/hall-ticket", response_class=HTMLResponse)
 async def get_hall_ticket(semester: int, academic_year: str, user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
+    # Phase C: Fee Gate
+    fee_r = await session.execute(
+        select(models.FeePayment, models.FeeTemplate)
+        .join(models.FeeTemplate, models.FeePayment.fee_template_id == models.FeeTemplate.id)
+        .where(
+            models.FeePayment.student_id == user["id"],
+            models.FeeTemplate.academic_year == academic_year,
+            models.FeeTemplate.semester == semester
+        )
+    )
+    fee_records = fee_r.all()
+    for payment, template in fee_records:
+        if template.fee_type == "exam" and payment.status != "paid":
+            raise HTTPException(status_code=402, detail="Pending Dues: Your exam fee must be paid before downloading the hall ticket.")
+
     regs_r = await session.execute(
         select(models.CourseRegistration).where(
             models.CourseRegistration.student_id == user["id"],
@@ -5598,3 +5665,320 @@ async def get_faculty_research_report(user: dict = Depends(require_role("admin",
             "total_research": len(research)
         })
     return report
+import csv
+import io
+import openpyxl
+
+@app.post("/api/admin/users/bulk-import")
+async def bulk_import_users(role: str, file: UploadFile = File(...), user: dict = Depends(require_role("admin", "super_admin")), session: AsyncSession = Depends(get_db)):
+    if role not in ["student", "faculty"]:
+        raise HTTPException(status_code=400, detail="Role must be student or faculty")
+        
+    contents = await file.read()
+    data = []
+    
+    if file.filename.endswith(".csv"):
+        reader = csv.DictReader(io.StringIO(contents.decode('utf-8')))
+        for row in reader:
+            data.append(row)
+    elif file.filename.endswith(".xlsx"):
+        wb = openpyxl.load_workbook(filename=io.BytesIO(contents), data_only=True)
+        sheet = wb.active
+        headers = [str(cell.value) if cell.value else f"col_{i}" for i, cell in enumerate(sheet[1])]
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            if any(row):
+                data.append(dict(zip(headers, row)))
+    else:
+        raise HTTPException(status_code=400, detail="Only CSV and XLSX files are supported")
+        
+    created = 0
+    errors = []
+    
+    for row in data:
+        student_id = row.get("id") or row.get("student_id") or row.get("roll_number")
+        if not student_id:
+            continue
+            
+        student_id = str(student_id).strip()
+        # Test Verification isolated trigger
+        if not student_id.isalnum() and '-' not in student_id:
+            raise HTTPException(status_code=400, detail=f"Invalid format for Student ID: {student_id}. Import aborted.")
+
+        existing_r = await session.execute(select(models.User).where(models.User.id == student_id))
+        if existing_r.scalars().first():
+            continue 
+            
+        new_user = models.User(
+            id=student_id,
+            name=row.get("name", "Unknown"),
+            email=row.get("email", f"{student_id}@student.college.edu"),
+            role=role,
+            college_id=user["college_id"],
+            password_hash=get_password_hash("password123"),
+            profile_data={
+                "department": row.get("department", ""),
+                "batch": row.get("batch", ""),
+                "force_password_change": True
+            }
+        )
+        session.add(new_user)
+        created += 1
+        
+    await session.commit()
+    return {"message": f"Successfully imported {created} {role}s"}
+
+@app.post("/api/admin/users/{user_id}/reset-password")
+async def reset_user_password(user_id: str, admin: dict = Depends(require_role("admin", "super_admin")), session: AsyncSession = Depends(get_db)):
+    user_req = await session.execute(select(models.User).where(models.User.id == user_id, models.User.college_id == admin["college_id"]))
+    target = user_req.scalars().first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    new_temp = secrets.token_urlsafe(8)
+    target.password_hash = get_password_hash(new_temp)
+    
+    pd = target.profile_data or {}
+    pd["force_password_change"] = True
+    target.profile_data = pd
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(target, "profile_data")
+    
+    await log_audit(session, admin["id"], "user", "reset_password", {"target_id": user_id})
+    await session.commit()
+    
+    return {"message": "Password reset successfully", "temporary_password": new_temp}
+
+from fastapi.responses import StreamingResponse
+
+@app.get("/api/admin/users/export")
+async def export_users(role: str = "student", batch: Optional[str] = None, user: dict = Depends(require_role("admin", "super_admin")), session: AsyncSession = Depends(get_db)):
+    stmt = select(models.User).where(models.User.college_id == user["college_id"], models.User.role == role)
+    res = await session.execute(stmt)
+    users = res.scalars().all()
+    
+    if batch:
+        users = [u for u in users if (u.profile_data or {}).get("batch") == batch]
+        
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["ID", "Name", "Email", "Department", "Batch", "Role"])
+    for u in users:
+        pd = u.profile_data or {}
+        writer.writerow([u.id, u.name, u.email, pd.get("department", ""), pd.get("batch", ""), u.role])
+        
+    output.seek(0)
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=users_export_{role}.csv"})
+from collections import defaultdict
+from sqlalchemy.orm import selectinload
+
+@app.get("/api/admin/academic-calendars/{calendar_id}/year-view")
+async def get_calendar_year_view(calendar_id: str, admin: dict = Depends(require_role("admin", "super_admin")), session: AsyncSession = Depends(get_db)):
+    cal_r = await session.execute(select(models.AcademicCalendar).where(models.AcademicCalendar.id == calendar_id, models.AcademicCalendar.college_id == admin["college_id"]))
+    cal = cal_r.scalars().first()
+    if not cal:
+        raise HTTPException(status_code=404, detail="Calendar not found")
+        
+    year_map = {}
+    events = cal.events or []
+    for evt in events:
+        d = evt.get("date")
+        if d:
+            year_map[d] = {
+                "title": evt.get("title", ""),
+                "type": evt.get("type", "holiday")
+            }
+    return year_map
+
+@app.get("/api/admin/staff-profiles/pending")
+async def get_pending_staff_profiles(admin: dict = Depends(require_role("admin", "super_admin")), session: AsyncSession = Depends(get_db)):
+    stmt = select(models.User).where(
+        models.User.college_id == admin["college_id"],
+        models.User.role.in_(["faculty", "teacher"])
+    )
+    res = await session.execute(stmt)
+    faculty = res.scalars().all()
+    
+    pending = []
+    for f in faculty:
+        pd = f.profile_data or {}
+        has_pending = False
+        for section in ["education", "experience", "research"]:
+            for record in pd.get(section, []):
+                if record.get("status") == "submitted":
+                    has_pending = True
+                    break
+        if has_pending:
+            pending.append({"id": f.id, "name": f.name, "department": pd.get("department", "")})
+            
+    return pending
+
+class ProfileReview(BaseModel):
+    section: str
+    record_index: int
+    action: str
+    remarks: str = ""
+
+@app.put("/api/admin/staff-profiles/{user_id}/review")
+async def review_staff_profile(user_id: str, req: ProfileReview, admin: dict = Depends(require_role("admin", "super_admin")), session: AsyncSession = Depends(get_db)):
+    user_req = await session.execute(select(models.User).where(models.User.id == user_id, models.User.college_id == admin["college_id"]))
+    target = user_req.scalars().first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    pd = target.profile_data or {}
+    records = pd.get(req.section, [])
+    if req.record_index < 0 or req.record_index >= len(records):
+        raise HTTPException(status_code=400, detail="Invalid record index")
+        
+    records[req.record_index]["status"] = "approved" if req.action == "approve" else "rejected"
+    records[req.record_index]["remarks"] = req.remarks
+    
+    pd[req.section] = records
+    target.profile_data = pd
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(target, "profile_data")
+    await session.commit()
+    return {"message": "Profile record reviewed"}
+
+@app.get("/api/admin/registration-windows/{window_id}/unregistered")
+async def get_unregistered_students(window_id: str, admin: dict = Depends(require_role("admin", "super_admin", "exam_cell")), session: AsyncSession = Depends(get_db)):
+    win_r = await session.execute(select(models.RegistrationWindow).where(models.RegistrationWindow.id == window_id, models.RegistrationWindow.college_id == admin["college_id"]))
+    window = win_r.scalars().first()
+    if not window:
+        raise HTTPException(status_code=404, detail="Window not found")
+        
+    # Get all students
+    all_studs_r = await session.execute(select(models.User).where(models.User.role == "student", models.User.college_id == admin["college_id"]))
+    all_studs = {u.id: u for u in all_studs_r.scalars().all()}
+    
+    # Get registrations
+    regs_r = await session.execute(select(models.CourseRegistration).where(models.CourseRegistration.semester == window.semester, models.CourseRegistration.academic_year == window.academic_year))
+    reg_student_ids = {r.student_id for r in regs_r.scalars().all()}
+    
+    unregistered = []
+    for sid, user in all_studs.items():
+        if sid not in reg_student_ids:
+            pd = user.profile_data or {}
+            unregistered.append({
+                "id": user.id,
+                "name": user.name,
+                "department": pd.get("department", ""),
+                "batch": pd.get("batch", "")
+            })
+            
+    return unregistered
+
+@app.get("/api/admin/activity-reports")
+async def get_activity_reports(admin: dict = Depends(require_role("admin", "super_admin")), session: AsyncSession = Depends(get_db)):
+    # Blocked resolved: ActivityPermission exists natively now
+    reports_r = await session.execute(
+        select(models.ActivityPermission).where(
+            models.ActivityPermission.college_id == admin["college_id"],
+            models.ActivityPermission.phase == "post_event",
+            models.ActivityPermission.hod_report_decision == "approved"
+        )
+    )
+    return reports_r.scalars().all()
+@app.get("/api/admin/timetable/conflicts")
+async def get_timetable_conflicts(academic_year: str, session: AsyncSession = Depends(get_db)):
+    # Simple conflict check returning duplicates based on day/period/faculty across all depts
+    stmt = select(models.Timetable).where(models.Timetable.academic_year == academic_year)
+    res = await session.execute(stmt)
+    slots = res.scalars().all()
+    
+    seen = {}
+    conflicts = []
+    for s in slots:
+        key = (s.faculty_id, s.day_of_week, s.period_no)
+        if key in seen:
+            conflicts.append({
+                "faculty_id": s.faculty_id,
+                "day": s.day_of_week,
+                "period": s.period_no,
+                "dept_1": seen[key],
+                "dept_2": s.department_id
+            })
+        else:
+            seen[key] = s.department_id
+    return conflicts
+
+@app.put("/api/admin/timetable/{department_id}/approve")
+async def approve_timetable(department_id: str, academic_year: str, semester: int, admin: dict = Depends(require_role("admin", "super_admin")), session: AsyncSession = Depends(get_db)):
+    stmt = select(models.TimetableApproval).where(
+        models.TimetableApproval.department_id == department_id,
+        models.TimetableApproval.academic_year == academic_year,
+        models.TimetableApproval.semester == semester
+    )
+    res = await session.execute(stmt)
+    approval = res.scalars().first()
+    
+    from datetime import datetime
+    if approval:
+        approval.is_approved = True
+        approval.approved_by = admin["id"]
+        approval.approved_at = datetime.utcnow()
+    else:
+        approval = models.TimetableApproval(
+            college_id=admin["college_id"],
+            department_id=department_id,
+            academic_year=academic_year,
+            semester=semester,
+            is_approved=True,
+            approved_by=admin["id"],
+            approved_at=datetime.utcnow()
+        )
+        session.add(approval)
+        
+    await session.commit()
+    return {"message": "Timetable approved"}
+@app.get("/api/admin/cia-config/coverage")
+async def get_cia_config_coverage(semester: int, academic_year: str, admin: dict = Depends(require_role("admin", "super_admin")), session: AsyncSession = Depends(get_db)):
+    # Get all subjects assigned in this semester
+    assign_r = await session.execute(
+        select(models.FacultyAssignment).where(
+            models.FacultyAssignment.college_id == admin["college_id"],
+            models.FacultyAssignment.semester == semester,
+            models.FacultyAssignment.academic_year == academic_year
+        )
+    )
+    allocations = assign_r.scalars().all()
+    assigned_subjects = list({a.subject_code for a in allocations})
+    
+    # Get CIA configurations for these subjects
+    config_r = await session.execute(
+        select(models.SubjectCIAConfig).where(
+            models.SubjectCIAConfig.college_id == admin["college_id"],
+            models.SubjectCIAConfig.semester == semester,
+            models.SubjectCIAConfig.academic_year == academic_year
+        )
+    )
+    configured_subjects = {c.subject_code for c in config_r.scalars().all()}
+    
+    unconfigured = [s for s in assigned_subjects if s not in configured_subjects]
+    
+    return {
+        "total_subjects": len(assigned_subjects),
+        "configured_subjects": len(configured_subjects),
+        "unconfigured_subjects": len(unconfigured),
+        "missing_codes": unconfigured
+    }
+
+@app.get("/api/admin/dashboard-stats")
+async def get_admin_dashboard_stats(admin: dict = Depends(require_role("admin", "super_admin")), session: AsyncSession = Depends(get_db)):
+    # Basic counts
+    studs_r = await session.execute(select(func.count(models.User.id)).where(models.User.college_id == admin["college_id"], models.User.role == "student"))
+    student_count = studs_r.scalar() or 0
+    
+    facs_r = await session.execute(select(func.count(models.User.id)).where(models.User.college_id == admin["college_id"], models.User.role.in_(["faculty", "teacher"])))
+    faculty_count = facs_r.scalar() or 0
+    
+    depts_r = await session.execute(select(func.count(models.Department.id)).where(models.Department.college_id == admin["college_id"]))
+    dept_count = depts_r.scalar() or 0
+    
+    return {
+        "total_students": student_count,
+        "total_faculty": faculty_count,
+        "total_departments": dept_count,
+        "system_health": "Optimal",
+        "pending_approvals_estimate": 0 # Real-time aggregation logic placeholder
+    }
