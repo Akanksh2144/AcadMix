@@ -7,6 +7,7 @@ import DashboardSkeleton from '../components/DashboardSkeleton';
 import AttendanceMarker from '../components/faculty/AttendanceMarker';
 import FacultyTimetableGrid from '../components/faculty/FacultyTimetableGrid';
 import FacultyProfile from '../components/faculty/FacultyProfile';
+import FacultyCIAMarks from '../components/faculty/FacultyCIAMarks';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -195,6 +196,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
               { id: 'attendance', label: 'Attendance' },
               { id: 'timetable', label: 'Timetable' },
               { id: 'teaching', label: 'Teaching Work' },
+              { id: 'cia', label: 'CIA Marks' },
               { id: 'profile', label: 'My Profile' },
             ].map(tab => (
               <button 
@@ -375,6 +377,14 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
             </motion.div>
             <motion.div variants={itemVariants}>
               <FacultyTimetableGrid mode={teachingMode} />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === 'cia' && (
+          <motion.div data-testid="cia-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <FacultyCIAMarks navigate={navigate} />
             </motion.div>
           </motion.div>
         )}

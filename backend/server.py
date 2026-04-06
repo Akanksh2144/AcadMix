@@ -999,6 +999,111 @@ async def get_subject_cia_template(
         "template": {"id": tmpl.id, "name": tmpl.name, "total_marks": tmpl.total_marks, "components": tmpl.components}
     }
 
+# ─── Phase 6: Faculty CIA Dashboard ───────────────────────────────────────────
+
+@app.get("/api/faculty/cia-dashboard")
+async def get_faculty_cia_dashboard(
+    user: dict = Depends(require_role("teacher", "faculty", "hod")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Get all assigned subjects with their CIA template components and per-component mark entry status.
+    Returns a list of subjects, each with template components and mark entry progress."""
+    # 1. Get faculty's subject assignments
+    assigns_r = await session.execute(
+        select(models.FacultyAssignment).where(
+            models.FacultyAssignment.teacher_id == user["id"]
+        )
+    )
+    assigns = assigns_r.scalars().all()
+    if not assigns:
+        return []
+
+    # 2. Get CIA configs for those subjects
+    subject_codes = list(set(a.subject_code for a in assigns))
+    configs_r = await session.execute(
+        select(models.SubjectCIAConfig, models.CIATemplate).join(
+            models.CIATemplate, models.SubjectCIAConfig.template_id == models.CIATemplate.id
+        ).where(
+            models.SubjectCIAConfig.college_id == user["college_id"],
+            models.SubjectCIAConfig.subject_code.in_(subject_codes)
+        )
+    )
+    config_rows = configs_r.all()
+    # Map subject_code -> (config, template)
+    config_map = {}
+    for cfg, tmpl in config_rows:
+        config_map[cfg.subject_code] = (cfg, tmpl)
+
+    # 3. Get all mark entries by this faculty for these subjects
+    marks_r = await session.execute(
+        select(models.MarkEntry).where(
+            models.MarkEntry.faculty_id == user["id"],
+            models.MarkEntry.course_id.in_(subject_codes)
+        )
+    )
+    mark_entries = marks_r.scalars().all()
+    # Map (subject_code, exam_type) -> mark_entry
+    marks_map = {}
+    for me in mark_entries:
+        marks_map[(me.course_id, me.exam_type)] = me
+
+    result = []
+    for assign in assigns:
+        subject_data = {
+            "assignment_id": assign.id,
+            "subject_code": assign.subject_code,
+            "subject_name": assign.subject_name,
+            "department": assign.department,
+            "batch": assign.batch,
+            "section": assign.section,
+            "semester": assign.semester,
+            "has_cia_template": assign.subject_code in config_map,
+        }
+
+        if assign.subject_code in config_map:
+            cfg, tmpl = config_map[assign.subject_code]
+            components_with_status = []
+            for comp in (tmpl.components or []):
+                comp_type = comp.get("type", "unknown")
+                comp_name = comp.get("name", comp_type)
+                # Check if there's a mark entry for this component type
+                entry = marks_map.get((assign.subject_code, comp_type))
+                entry_status = "not_started"
+                entry_id = None
+                student_count = 0
+                if entry:
+                    entry_status = (entry.extra_data or {}).get("status", "draft")
+                    entry_id = entry.id
+                    student_count = len((entry.extra_data or {}).get("entries", []))
+
+                components_with_status.append({
+                    "type": comp_type,
+                    "name": comp_name,
+                    "max_marks": comp.get("max_marks", 0),
+                    "count": comp.get("count"),
+                    "best_of": comp.get("best_of"),
+                    "slabs": comp.get("slabs"),
+                    "entry_status": entry_status,
+                    "entry_id": entry_id,
+                    "student_count": student_count,
+                })
+
+            subject_data["template"] = {
+                "id": tmpl.id,
+                "name": tmpl.name,
+                "total_marks": tmpl.total_marks,
+            }
+            subject_data["components"] = components_with_status
+            subject_data["is_consolidation_enabled"] = cfg.is_consolidation_enabled
+        else:
+            subject_data["template"] = None
+            subject_data["components"] = []
+            subject_data["is_consolidation_enabled"] = False
+
+        result.append(subject_data)
+
+    return result
+
 # ─── Phase 2: Academic Calendar (Admin/Nodal Officer) ─────────────────────────
 
 @app.post("/api/admin/academic-calendars")

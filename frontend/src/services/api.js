@@ -191,6 +191,8 @@ export const facultyPanelAPI = {
   updateTeachingRecord: (id, data) => api.patch(`/api/faculty/teaching-records/${id}`, data),
   getProfile: () => api.get('/api/faculty/profile'),
   updateProfile: (data) => api.put('/api/faculty/profile', data),
+  ciaDashboard: () => api.get('/api/faculty/cia-dashboard'),
+  getSubjectCIA: (subjectCode, academicYear) => api.get(`/api/subjects/${subjectCode}/cia-template`, { params: { academic_year: academicYear } }),
 };
 
 export const attendanceAPI = {
