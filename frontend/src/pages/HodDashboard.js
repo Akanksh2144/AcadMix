@@ -946,8 +946,8 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
               { id: "quizzes", label: "Quizzes" },
               { id: "faculty", label: "Faculty Management" },
               { id: "results", label: "Student Management" },
-              { id: "class-in-charge", label: "Class In-Charge" },
               { id: "mentors", label: "Mentors" },
+              { id: "class-in-charge", label: "Class In-Charge" },
               { id: "progression", label: "Student Progression" },
               { id: "leave-approvals", label: "Leave Approvals" },
             ].map((tab) => (

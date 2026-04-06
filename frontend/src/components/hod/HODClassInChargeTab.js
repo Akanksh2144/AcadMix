@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import api, { facultyAPI, hodPhase2API } from '../../services/api';
+import api, { facultyAPI, hodAssignmentsAPI } from '../../services/api';
 import AssignmentCardGrid from './AssignmentCardGrid';
 
 
@@ -20,7 +20,7 @@ const HODClassInChargeTab = () => {
       const [secRes, facRes, assignRes] = await Promise.all([
         api.get('/api/sections'), // Get sections logic from server
         facultyAPI.teachers(),
-        hodPhase2API.getClassInCharges()
+        hodAssignmentsAPI.getClassInCharges()
       ]);
       
       // The API returns sections, we need to map them such that they have title and subtitles.
@@ -50,7 +50,7 @@ const HODClassInChargeTab = () => {
 
   const handleAssign = async (sectionItem, facultyId) => {
     try {
-      await hodPhase2API.createClassInCharge({
+      await hodAssignmentsAPI.createClassInCharge({
         faculty_ids: [facultyId],
         department: sectionItem.department,
         batch: sectionItem.batch,
@@ -66,7 +66,7 @@ const HODClassInChargeTab = () => {
 
   const handleRemove = async (assignmentId) => {
     try {
-      await hodPhase2API.deleteClassInCharge(assignmentId);
+      await hodAssignmentsAPI.deleteClassInCharge(assignmentId);
       toast.success('Assignment removed');
       fetchData();
     } catch (err) {
@@ -79,8 +79,7 @@ const HODClassInChargeTab = () => {
     const target = 1; // Assuming target is at least 1 class in-charge per section
     return {
       count,
-      target,
-      statusColor: count >= target ? "bg-green-500" : "bg-red-400"
+      target
     };
   };
 

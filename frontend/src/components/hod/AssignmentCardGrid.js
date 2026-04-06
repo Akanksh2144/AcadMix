@@ -35,7 +35,8 @@ const AssignmentCardGrid = ({
             }
             return a[itemMatchKey] === (item.id || item[subtitleKey])
         });
-        const { count, target, statusColor } = completionFn(item, itemAssignments);
+        const { count, target } = completionFn(item, itemAssignments);
+        const statusColor = count >= target ? "bg-emerald-500" : "bg-rose-500";
 
         const itemId = item.id || item[subtitleKey] || (item.batch + item.section);
 

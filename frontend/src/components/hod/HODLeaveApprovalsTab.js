@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import api, { hodPhase2API } from '../../services/api';
+import api, { hodLeaveAPI } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, X } from '@phosphor-icons/react';
 
@@ -33,7 +33,7 @@ const HODLeaveApprovalsTab = () => {
   const handleReview = async (leaveId, action, isCancelReview = false) => {
     try {
       if (isCancelReview) {
-        await hodPhase2API.reviewCancellation(leaveId, { action, remarks: `Processed by HOD` });
+        await hodLeaveAPI.reviewCancellation(leaveId, { action, remarks: `Processed by HOD` });
         toast.success(`Cancellation ${action}d`);
       } else {
         await api.put(`/api/hod/leave/${leaveId}/review`, { action, remarks: `Processed by HOD` });

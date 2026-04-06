@@ -278,7 +278,7 @@ export const adminPhase1API = {
 };
 
 // Phase 2: HOD Dashboard Governance
-export const hodPhase2API = {
+export const hodAssignmentsAPI = {
   // Assignments
   getClassInCharges: () => api.get('/api/hod/assignments/class-in-charge'),
   createClassInCharge: (data) => api.post('/api/hod/assignments/class-in-charge', data),
@@ -287,12 +287,16 @@ export const hodPhase2API = {
   getMentors: () => api.get('/api/hod/assignments/mentors'),
   createMentors: (data) => api.post('/api/hod/assignments/mentors', data),
   deactivateMentor: (id) => api.delete(`/api/hod/assignments/mentors/${id}`),
+};
 
+export const hodProgressionAPI = {
   // Progression
   getProgression: (studentId) => api.get(`/api/faculty/students/${studentId}/progression`),
   createProgression: (data) => api.post('/api/hod/progression', data),
   deleteProgression: (id) => api.delete(`/api/hod/progression/${id}`),
+};
 
+export const hodLeaveAPI = {
   // Leave Cancellation
   requestCancellation: (leaveId, partialDates) => api.patch(`/api/leave/${leaveId}/cancel`, partialDates || {}),
   reviewCancellation: (leaveId, data) => api.patch(`/api/hod/leave/${leaveId}/review-cancellation`, data),

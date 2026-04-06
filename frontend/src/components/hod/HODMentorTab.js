@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import api, { hodPhase2API, facultyAPI, studentsAPI } from '../../services/api';
+import api, { hodAssignmentsAPI, facultyAPI, studentsAPI } from '../../services/api';
 import AssignmentCardGrid from './AssignmentCardGrid';
 
 const HODMentorTab = ({ departmentId }) => {
@@ -21,7 +21,7 @@ const HODMentorTab = ({ departmentId }) => {
       const [studRes, facRes, assignRes] = await Promise.all([
         studentsAPI.search('', departmentId), 
         facultyAPI.teachers(),
-        hodPhase2API.getMentors()
+        hodAssignmentsAPI.getMentors()
       ]);
       
       const formattedStudents = studRes.data.map(s => ({
@@ -47,7 +47,7 @@ const HODMentorTab = ({ departmentId }) => {
 
   const handleAssign = async (studentItem, facultyId) => {
     try {
-      await hodPhase2API.createMentors({
+      await hodAssignmentsAPI.createMentors({
         faculty_id: facultyId,
         student_ids: [studentItem.id]
       });
@@ -60,7 +60,7 @@ const HODMentorTab = ({ departmentId }) => {
 
   const handleRemove = async (assignmentId) => {
     try {
-      await hodPhase2API.deactivateMentor(assignmentId);
+      await hodAssignmentsAPI.deactivateMentor(assignmentId);
       toast.success('Mentor session deactivated');
       fetchData();
     } catch (err) {
@@ -73,8 +73,7 @@ const HODMentorTab = ({ departmentId }) => {
     const target = 1; 
     return {
       count,
-      target,
-      statusColor: count >= target ? "bg-green-500" : "bg-red-400"
+      target
     };
   };
 
