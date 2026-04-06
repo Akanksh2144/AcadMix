@@ -395,6 +395,7 @@ class AttendanceRecord(Base, SoftDeleteMixin):
     marked_at      = Column(DateTime(timezone=True), server_default=func.now())
     is_late_entry  = Column(Boolean, nullable=False, server_default='false')
     remarks        = Column(String, nullable=True)
+    source         = Column(String, nullable=False, server_default="faculty_manual") # faculty_manual, system_leave, late_entry
 
     __table_args__ = (
         Index("ix_attendance_student_subject", "student_id", "subject_code", "date"),
@@ -415,11 +416,12 @@ class LeaveRequest(Base, SoftDeleteMixin):
     to_date         = Column(DateTime(timezone=True), nullable=False)
     reason          = Column(String, nullable=False)
     document_url    = Column(String, nullable=True)       # medical certificate, etc.
-    status          = Column(String, nullable=False, server_default="pending")   # pending, approved, rejected
+    status          = Column(String, nullable=False, server_default="pending")   # pending, approved, rejected, cancellation_requested, cancelled, partially_cancelled
     reviewed_by     = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     reviewed_at     = Column(DateTime(timezone=True), nullable=True)
     review_remarks  = Column(String, nullable=True)
     affected_slots  = Column(JSONB, nullable=True)        # period_slot_ids auto-detected on approval
+    cancellation_meta = Column(JSONB, nullable=True)      # Stores {"cancel_from": "...", "cancel_to": "..."} for partial cancellations
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
@@ -507,4 +509,57 @@ class TeachingRecord(Base, SoftDeleteMixin):
     __table_args__ = (
         UniqueConstraint("faculty_id", "period_slot_id", "date", name="uq_teaching_record"),
         Index("ix_teaching_record_faculty_date", "faculty_id", "date"),
+    )
+
+# ─── Phase 7: HOD Governance & Mentorship ────────────────────────────────────
+
+class ClassInCharge(Base, SoftDeleteMixin):
+    __tablename__ = "class_in_charges"
+    id            = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id    = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    faculty_id    = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    department    = Column(String, nullable=False)
+    batch         = Column(String, nullable=False)
+    section       = Column(String, nullable=False)
+    semester      = Column(Integer, nullable=False)
+    academic_year = Column(String, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("faculty_id", "department", "batch", "section", "semester", "academic_year", name="uq_class_in_charge"),
+        Index("ix_cic_dept_batch_sec", "department", "batch", "section", "academic_year")
+    )
+
+class MentorAssignment(Base, SoftDeleteMixin):
+    __tablename__ = "mentor_assignments"
+    id            = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id    = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    faculty_id    = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    student_id    = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    academic_year = Column(String, nullable=False)
+    is_active     = Column(Boolean, nullable=False, server_default='true')
+
+    __table_args__ = (
+        Index("ix_mentor_student_year_active", "student_id", "academic_year", unique=True, postgresql_where=(is_active == True)),
+    )
+
+class StudentProgression(Base, SoftDeleteMixin):
+    """
+    Stores NAAC-required progression data.
+    progression_type must be one of: higher_studies, competitive_exam, co_curricular, employment
+    - co_curricular dict shape: event (str), level (str), position (str), remarks (str), upload (str option)
+    - employment dict shape: company (str), designation (str), package (str)
+    - competitive_exam dict shape: exam (str), score (float), percentile (float)
+    - higher_studies dict shape: transition (str), institution (str), program (str)
+    """
+    __tablename__ = "student_progressions"
+    id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id       = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    student_id       = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    academic_year    = Column(String, nullable=False)
+    progression_type = Column(String, nullable=False)
+    details          = Column(JSONB, nullable=False)
+    created_at       = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_progression_student_type", "student_id", "progression_type"),
     )

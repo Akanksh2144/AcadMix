@@ -276,4 +276,26 @@ export const adminPhase1API = {
   toggleConsolidation: (id) => api.put(`/api/admin/cia-config/${id}/enable-consolidation`),
 };
 
+// Phase 2: HOD Dashboard Governance
+export const hodPhase2API = {
+  // Assignments
+  getClassInCharges: () => api.get('/api/hod/assignments/class-in-charge'),
+  createClassInCharge: (data) => api.post('/api/hod/assignments/class-in-charge', data),
+  deleteClassInCharge: (id) => api.delete(`/api/hod/assignments/class-in-charge/${id}`),
+  
+  getMentors: () => api.get('/api/hod/assignments/mentors'),
+  createMentors: (data) => api.post('/api/hod/assignments/mentors', data),
+  deactivateMentor: (id) => api.delete(`/api/hod/assignments/mentors/${id}`),
+
+  // Progression
+  getProgression: (studentId) => api.get(`/api/faculty/students/${studentId}/progression`),
+  createProgression: (data) => api.post('/api/hod/progression', data),
+  deleteProgression: (id) => api.delete(`/api/hod/progression/${id}`),
+
+  // Leave Cancellation
+  requestCancellation: (leaveId, partialDates) => api.patch(`/api/leave/${leaveId}/cancel`, partialDates || {}),
+  reviewCancellation: (leaveId, data) => api.patch(`/api/hod/leave/${leaveId}/review-cancellation`, data),
+};
+
+
 export default api;

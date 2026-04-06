@@ -435,6 +435,26 @@ class LeaveReview(BaseModel):
     action: str = Field(..., pattern="^(approve|reject)$")
     remarks: Optional[str] = None
 
+class LeaveCancelRequest(BaseModel):
+    cancel_from: Optional[str] = None # "YYYY-MM-DD"
+    cancel_to: Optional[str] = None   # "YYYY-MM-DD"
+
+class ClassInChargeCreate(BaseModel):
+    faculty_ids: List[str]
+    department: str
+    batch: str
+    section: str
+    semester: int = Field(..., ge=1, le=8)
+
+class MentorAssignmentCreate(BaseModel):
+    faculty_id: str
+    student_ids: List[str]
+
+class StudentProgressionCreate(BaseModel):
+    student_id: str
+    progression_type: str = Field(..., pattern="^(higher_studies|competitive_exam|co_curricular|employment)$")
+    details: dict
+
 class SubstituteAssign(BaseModel):
     faculty_id: str
 
@@ -1981,6 +2001,57 @@ async def apply_leave(req: LeaveApply, user: dict = Depends(get_current_user), s
     await session.refresh(leave)
     return {"id": leave.id, "message": "Leave request submitted"}
 
+@app.patch("/api/leave/{leave_id}/cancel")
+async def cancel_leave(leave_id: str, req: LeaveCancelRequest, user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    leave_r = await session.execute(
+        select(models.LeaveRequest).where(
+            models.LeaveRequest.id == leave_id,
+            models.LeaveRequest.applicant_id == user["id"]
+        )
+    )
+    leave = leave_r.scalars().first()
+    if not leave:
+        raise HTTPException(status_code=404, detail="Leave request not found")
+        
+    if leave.status == "pending":
+        leave.status = "cancelled"
+        await log_audit(session, user["id"], "leave_request", "cancel_pending", {"leave_id": leave.id})
+        await session.commit()
+        return {"message": "Pending leave cancelled successfully"}
+        
+    if leave.status != "approved":
+        raise HTTPException(status_code=400, detail="Only approved or pending leaves can be cancelled")
+        
+    # Validation for partial cancellation dates
+    if req.cancel_from or req.cancel_to:
+        if not req.cancel_from or not req.cancel_to:
+            raise HTTPException(status_code=400, detail="Both cancel_from and cancel_to are required for partial cancellation")
+        try:
+            cancel_from_dt = datetime.strptime(req.cancel_from, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            cancel_to_dt = datetime.strptime(req.cancel_to, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format, use YYYY-MM-DD")
+            
+        if cancel_from_dt < leave.from_date or cancel_to_dt > leave.to_date or cancel_from_dt > cancel_to_dt:
+            raise HTTPException(status_code=400, detail="Cancellation dates must be valid and fall within the originally approved leave period")
+            
+        # Check if the entire request is in the past (already completed)
+        if cancel_to_dt.date() < datetime.now(timezone.utc).date() and leave.to_date.date() < datetime.now(timezone.utc).date():
+             raise HTTPException(status_code=400, detail="Cannot cancel a leave that has already been fully completed")
+
+        leave.status = "partially_cancelled"
+        leave.cancellation_meta = {"cancel_from": req.cancel_from, "cancel_to": req.cancel_to}
+    else:
+        # Full cancellation of an approved leave
+        if leave.to_date.date() < datetime.now(timezone.utc).date():
+             raise HTTPException(status_code=400, detail="Cannot cancel a leave that has already been fully completed")
+        leave.status = "cancellation_requested"
+        leave.cancellation_meta = None
+
+    await log_audit(session, user["id"], "leave_request", "request_cancellation", {"leave_id": leave.id, "partial": bool(req.cancel_from)})
+    await session.commit()
+    return {"message": "Cancellation request submitted for HOD approval"}
+
 @app.get("/api/leave/my")
 async def get_my_leaves(user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
     result = await session.execute(
@@ -2096,6 +2167,78 @@ async def review_leave(leave_id: str, req: LeaveReview, user: dict = Depends(req
     await log_audit(session, user["id"], "leave_request", req.action, {"leave_id": leave.id})
     await session.commit()
     return {"message": f"Leave {req.action}d", "affected_slots": len(affected_slot_ids)}
+
+@app.patch("/api/hod/leave/{leave_id}/review-cancellation")
+async def review_leave_cancellation(leave_id: str, req: LeaveReview, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
+    leave_r = await session.execute(
+        select(models.LeaveRequest).where(
+            models.LeaveRequest.id == leave_id,
+            models.LeaveRequest.college_id == user["college_id"]
+        )
+    )
+    leave = leave_r.scalars().first()
+    if not leave:
+        raise HTTPException(status_code=404, detail="Leave request not found")
+        
+    if leave.status not in ["cancellation_requested", "partially_cancelled"]:
+        raise HTTPException(status_code=400, detail="Leave does not have a pending cancellation request")
+
+    if req.action == "reject":
+        # Revert status to approved
+        leave.status = "approved"
+        leave.review_remarks = f"Cancellation Rejected: {req.remarks or ''}"
+        leave.cancellation_meta = None
+        await log_audit(session, user["id"], "leave_request", "reject_cancellation", {"leave_id": leave.id})
+        await session.commit()
+        return {"message": "Cancellation rejected. Leave remains approved."}
+        
+    # Action is approve
+    old_status = leave.status
+    leave.status = "cancelled" if old_status == "cancellation_requested" else "approved" # if partial, rest is still approved
+    
+    # Define the range to cancel
+    cancel_from = leave.from_date
+    cancel_to = leave.to_date
+    if old_status == "partially_cancelled" and leave.cancellation_meta:
+        cancel_from = datetime.strptime(leave.cancellation_meta.get("cancel_from"), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        cancel_to = datetime.strptime(leave.cancellation_meta.get("cancel_to"), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+
+    # 1. Faculty Free Period / PeriodSlot Reversal
+    if leave.applicant_role in ["teacher", "faculty"] and leave.affected_slots:
+        # We need to reclaim slots that fall within the cancelled range.
+        slots_to_reclaim = []
+        slots_r = await session.execute(
+            select(models.PeriodSlot).where(
+                models.PeriodSlot.id.in_(leave.affected_slots),
+                models.PeriodSlot.college_id == user["college_id"]
+            )
+        )
+        for slot in slots_r.scalars().all():
+            if slot.slot_type == "released":
+                slot.faculty_id = slot.original_faculty_id
+                slot.slot_type = "regular"
+                slots_to_reclaim.append(slot.id)
+                # Remove from affected
+                if slot.id in leave.affected_slots:
+                    leave.affected_slots.remove(slot.id)
+                    
+    # 2. Student Attendance Record (system_leave) Deletion
+    if leave.applicant_role == "student":
+        # Delete AttendanceRecord where source='system_leave' between cancel_from and cancel_to
+        await session.execute(
+            delete(models.AttendanceRecord).where(
+                models.AttendanceRecord.student_id == leave.applicant_id,
+                models.AttendanceRecord.college_id == user["college_id"],
+                models.AttendanceRecord.source == "system_leave",
+                models.AttendanceRecord.date >= cancel_from.date(),
+                models.AttendanceRecord.date <= cancel_to.date()
+            )
+        )
+
+    leave.review_remarks = f"Cancellation Approved: {req.remarks or ''}"
+    await log_audit(session, user["id"], "leave_request", "approve_cancellation", {"leave_id": leave.id})
+    await session.commit()
+    return {"message": "Cancellation approved successfully"}
 
 @app.get("/api/hod/free-periods")
 async def get_free_period_pool(user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
@@ -4530,6 +4673,183 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
         return {"error": "Code runner service error", "exit_code": -1, "success": False}
     except Exception as e:
         return {"error": str(e), "exit_code": -1, "success": False}
+
+# ─── Phase 7: HOD Governance & Mentorship ────────────────────────────────────
+
+@app.get("/api/hod/assignments/class-in-charge")
+async def get_class_in_charges(user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(
+        select(models.ClassInCharge, models.User).join(
+            models.User, models.ClassInCharge.faculty_id == models.User.id
+        ).where(
+            models.ClassInCharge.college_id == user["college_id"]
+        )
+    )
+    return [{
+        "id": c.id, "faculty_id": c.faculty_id, "faculty_name": u.name,
+        "department": c.department, "batch": c.batch, "section": c.section, "semester": c.semester, "academic_year": c.academic_year
+    } for c, u in result.all()]
+
+@app.post("/api/hod/assignments/class-in-charge")
+async def create_class_in_charge(req: ClassInChargeCreate, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
+    created = []
+    academic_year = await get_current_academic_year(session, user["college_id"])
+    for fac_id in req.faculty_ids:
+        cic = models.ClassInCharge(
+            college_id=user["college_id"],
+            faculty_id=fac_id,
+            department=req.department,
+            batch=req.batch,
+            section=req.section,
+            semester=req.semester,
+            academic_year=academic_year
+        )
+        session.add(cic)
+        created.append(cic)
+    try:
+        await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=400, detail="Assignment conflicts with an existing assignment or invalid data.")
+    return {"message": f"{len(created)} class in-charges assigned"}
+
+@app.delete("/api/hod/assignments/class-in-charge/{assignment_id}")
+async def delete_class_in_charge(assignment_id: str, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
+    await session.execute(delete(models.ClassInCharge).where(
+        models.ClassInCharge.id == assignment_id, models.ClassInCharge.college_id == user["college_id"]
+    ))
+    await session.commit()
+    return {"message": "Assignment deleted"}
+
+@app.get("/api/hod/assignments/mentors")
+async def get_mentor_assignments(user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(
+        select(models.MentorAssignment, models.User).join(
+            models.User, models.MentorAssignment.student_id == models.User.id
+        ).where(
+            models.MentorAssignment.college_id == user["college_id"],
+            models.MentorAssignment.is_active == True
+        )
+    )
+    
+    assignments = result.all()
+    if not assignments: return []
+    
+    faculty_ids = {m.faculty_id for m, _ in assignments}
+    fac_result = await session.execute(select(models.User.id, models.User.name).where(models.User.id.in_(faculty_ids)))
+    faculty_names = {u_id: name for u_id, name in fac_result.all()}
+    
+    return [{
+        "id": m.id, "faculty_id": m.faculty_id, "faculty_name": faculty_names.get(m.faculty_id, "Unknown"),
+        "student_id": m.student_id, "student_name": s.name, "academic_year": m.academic_year
+    } for m, s in assignments]
+
+@app.post("/api/hod/assignments/mentors")
+async def create_mentor_assignments(req: MentorAssignmentCreate, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
+    academic_year = await get_current_academic_year(session, user["college_id"])
+    created = 0
+    for stud_id in req.student_ids:
+        existing_r = await session.execute(select(models.MentorAssignment).where(
+            models.MentorAssignment.college_id == user["college_id"],
+            models.MentorAssignment.student_id == stud_id,
+            models.MentorAssignment.academic_year == academic_year,
+            models.MentorAssignment.is_active == True
+        ))
+        if existing_r.scalars().first():
+            continue 
+        
+        m = models.MentorAssignment(
+            college_id=user["college_id"],
+            faculty_id=req.faculty_id,
+            student_id=stud_id,
+            academic_year=academic_year,
+            is_active=True
+        )
+        session.add(m)
+        created += 1
+    
+    await session.commit()
+    return {"message": f"{created} students assigned to mentor"}
+
+@app.delete("/api/hod/assignments/mentors/{assignment_id}")
+async def deactivate_mentor_assignment(assignment_id: str, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
+    r = await session.execute(select(models.MentorAssignment).where(
+        models.MentorAssignment.id == assignment_id, models.MentorAssignment.college_id == user["college_id"]
+    ))
+    m = r.scalars().first()
+    if not m:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    m.is_active = False
+    await session.commit()
+    return {"message": "Assignment deactivated"}
+
+@app.get("/api/faculty/students/{student_id}/progression")
+async def get_student_progression(student_id: str, user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    if user["role"] not in ["hod", "teacher", "faculty", "admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    academic_year = await get_current_academic_year(session, user["college_id"])
+    
+    if user["role"] in ["teacher", "faculty"]:
+        m_r = await session.execute(select(models.MentorAssignment).where(
+            models.MentorAssignment.faculty_id == user["id"],
+            models.MentorAssignment.student_id == student_id,
+            models.MentorAssignment.academic_year == academic_year,
+            models.MentorAssignment.is_active == True
+        ))
+        is_mentor = m_r.scalars().first() is not None
+        
+        stud_r = await session.execute(select(models.User).where(models.User.id == student_id))
+        stud = stud_r.scalars().first()
+        is_cic = False
+        if stud and stud.profile_data:
+            c_r = await session.execute(select(models.ClassInCharge).where(
+                models.ClassInCharge.faculty_id == user["id"],
+                models.ClassInCharge.academic_year == academic_year,
+                models.ClassInCharge.department == stud.profile_data.get("department"),
+                models.ClassInCharge.batch == stud.profile_data.get("batch"),
+                models.ClassInCharge.section == stud.profile_data.get("section")
+            ))
+            is_cic = c_r.scalars().first() is not None
+            
+        if not (is_mentor or is_cic):
+            raise HTTPException(status_code=403, detail="Not authorized to view this student's progression data")
+            
+    p_r = await session.execute(select(models.StudentProgression).where(
+        models.StudentProgression.student_id == student_id,
+        models.StudentProgression.college_id == user["college_id"]
+    ).order_by(models.StudentProgression.created_at.desc()))
+    
+    return [{
+        "id": p.id,
+        "academic_year": p.academic_year,
+        "progression_type": p.progression_type,
+        "details": p.details,
+        "created_at": p.created_at.isoformat()
+    } for p in p_r.scalars().all()]
+    
+@app.post("/api/hod/progression")
+async def create_progression(req: StudentProgressionCreate, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
+    academic_year = await get_current_academic_year(session, user["college_id"])
+    prog = models.StudentProgression(
+        college_id=user["college_id"],
+        student_id=req.student_id,
+        academic_year=academic_year,
+        progression_type=req.progression_type,
+        details=req.details
+    )
+    session.add(prog)
+    await session.commit()
+    await session.refresh(prog)
+    return {"id": prog.id, "message": "Progression record created"}
+
+@app.delete("/api/hod/progression/{prog_id}")
+async def delete_progression(prog_id: str, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
+    await session.execute(delete(models.StudentProgression).where(
+        models.StudentProgression.id == prog_id, models.StudentProgression.college_id == user["college_id"]
+    ))
+    await session.commit()
+    return {"message": "Progression record deleted"}
 
 @app.on_event("startup")
 async def startup():

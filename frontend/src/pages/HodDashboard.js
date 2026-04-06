@@ -35,6 +35,10 @@ import AtRiskAlerts from "../components/hod/AtRiskAlerts";
 import AnalyticsDashboard from "../components/hod/AnalyticsDashboard";
 import ExportReports from "../components/hod/ExportReports";
 import FacultyActivityLog from "../components/hod/FacultyActivityLog";
+import HODClassInChargeTab from "../components/hod/HODClassInChargeTab";
+import HODMentorTab from "../components/hod/HODMentorTab";
+import HODProgressionTab from "../components/hod/HODProgressionTab";
+import HODLeaveApprovalsTab from "../components/hod/HODLeaveApprovalsTab";
 import { useTheme } from "../contexts/ThemeContext";
 import DashboardSkeleton from "../components/DashboardSkeleton";
 
@@ -941,6 +945,10 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
               { id: "quizzes", label: "Quizzes" },
               { id: "faculty", label: "Faculty Management" },
               { id: "results", label: "Student Management" },
+              { id: "class-in-charge", label: "Class In-Charge" },
+              { id: "mentors", label: "Mentors" },
+              { id: "progression", label: "Student Progression" },
+              { id: "leave-approvals", label: "Leave Approvals" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1938,6 +1946,30 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
         {activeTab === "activity-log" && (
           <div data-testid="activity-log-content">
             <FacultyActivityLog submissions={submissions} />
+          </div>
+        )}
+
+        {activeTab === "class-in-charge" && (
+          <div data-testid="class-in-charge-content">
+            <HODClassInChargeTab />
+          </div>
+        )}
+
+        {activeTab === "mentors" && (
+          <div data-testid="mentors-content">
+            <HODMentorTab departmentId={user?.scope?.department} />
+          </div>
+        )}
+
+        {activeTab === "progression" && (
+          <div data-testid="progression-content">
+            <HODProgressionTab departmentId={user?.scope?.department} />
+          </div>
+        )}
+
+        {activeTab === "leave-approvals" && (
+          <div data-testid="leave-approvals-content">
+            <HODLeaveApprovalsTab />
           </div>
         )}
 
