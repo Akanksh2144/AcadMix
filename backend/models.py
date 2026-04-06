@@ -198,6 +198,11 @@ class FacultyAssignment(Base, SoftDeleteMixin):
     batch = Column(String, nullable=False)
     section = Column(String, nullable=False)
     semester = Column(Integer, nullable=False, default=1)
+    # Phase 1 enhancements
+    academic_year = Column(String, nullable=True, server_default="2024-25")  # e.g. "2024-25"
+    credits = Column(Integer, nullable=True)
+    hours_per_week = Column(Integer, nullable=True)
+    is_lab = Column(Boolean, nullable=False, server_default='false')
 
     __table_args__ = (
         Index("ix_fac_assign_t_c", "teacher_id", "college_id"),
@@ -252,3 +257,67 @@ class ChallengeProgress(Base, SoftDeleteMixin):
     status = Column(String, nullable=False) # "completed"
     language_used = Column(String, nullable=False)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+# ─── Phase 1: Permission Layer ───────────────────────────────────────────────
+
+class UserPermission(Base, SoftDeleteMixin):
+    """Admin-configurable permission flags per user. Separate from role.
+    The `flags` JSONB column stores boolean/value gates set by admin:
+      e.g. { "can_create_timetable": true, "is_subject_expert": false, ... }
+    """
+    __tablename__ = "user_permissions"
+    id         = Column(String, primary_key=True, index=True, default=generate_uuid)
+    user_id    = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    flags      = Column(JSONB, nullable=False, server_default='{}')
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    __table_args__ = (
+        Index("ix_user_permissions_user_college", "user_id", "college_id"),
+    )
+
+# ─── Phase 1: CIA Template Engine ────────────────────────────────────────────
+
+class CIATemplate(Base, SoftDeleteMixin):
+    """Defines what a CIA assessment consists of.
+    Components JSONB supports 9 types: test, assignment, attendance,
+    practical, seminar, mini_project, viva, case_study, group_discussion.
+    Example:
+      [{"type":"test","name":"Test 1","max_marks":10,"count":2,"best_of":2},
+       {"type":"attendance","name":"Attendance","max_marks":5,
+        "slabs":[{"min_pct":75,"max_pct":79,"marks":3},{"min_pct":80,"max_pct":89,"marks":4}]}]
+    """
+    __tablename__ = "cia_templates"
+    id          = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id  = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    name        = Column(String, nullable=False)        # e.g. "CSE Internal Assessment"
+    description = Column(String, nullable=True)
+    total_marks = Column(Integer, nullable=False)       # e.g. 25
+    components  = Column(JSONB, nullable=False)
+    created_at  = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at  = Column(DateTime(timezone=True), onupdate=func.now())
+
+    __table_args__ = (
+        Index("ix_cia_templates_college", "college_id"),
+    )
+
+class SubjectCIAConfig(Base, SoftDeleteMixin):
+    """Assigns a CIATemplate to a specific subject/semester/year.
+    The Nodal Officer (admin) sets is_consolidation_enabled to true
+    to allow faculty to submit consolidated CIA marks for that subject.
+    """
+    __tablename__ = "subject_cia_configs"
+    id                       = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id               = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    subject_code             = Column(String, nullable=False)
+    subject_name             = Column(String, nullable=True)
+    academic_year            = Column(String, nullable=False)   # e.g. "2024-25"
+    semester                 = Column(Integer, nullable=False)
+    template_id              = Column(String, ForeignKey("cia_templates.id", ondelete="RESTRICT"), nullable=False)
+    is_consolidation_enabled = Column(Boolean, nullable=False, server_default='false')
+    created_at               = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at               = Column(DateTime(timezone=True), onupdate=func.now())
+
+    __table_args__ = (
+        Index("ix_cia_config_subject_year", "subject_code", "academic_year", "college_id"),
+    )

@@ -86,7 +86,7 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["Content-Type", "Authorization", "ngrok-skip-browser-warning"],
     max_age=3600,
 )
 
@@ -304,6 +304,37 @@ class FacultyAssignment(BaseModel):
     batch: str
     section: str
     semester: int = 1
+    academic_year: str = "2024-25"
+    credits: Optional[int] = None
+    hours_per_week: Optional[int] = None
+    is_lab: bool = False
+
+class SubjectAllocationUpdate(BaseModel):
+    credits: Optional[int] = None
+    hours_per_week: Optional[int] = None
+    is_lab: Optional[bool] = None
+
+class PermissionFlagsUpdate(BaseModel):
+    flags: dict  # e.g. {"can_create_timetable": true, "is_subject_expert": false}
+
+class CIATemplateCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=200)
+    description: Optional[str] = None
+    total_marks: int = Field(..., ge=1, le=200)
+    components: list  # list of component dicts
+
+class CIATemplateUpdate(BaseModel):
+    name: Optional[str] = Field(None, max_length=200)
+    description: Optional[str] = None
+    total_marks: Optional[int] = Field(None, ge=1, le=200)
+    components: Optional[list] = None
+
+class SubjectCIAConfigCreate(BaseModel):
+    subject_code: str
+    subject_name: Optional[str] = None
+    academic_year: str = "2024-25"
+    semester: int = Field(..., ge=1, le=8)
+    template_id: str
 
 class MarkEntryItem(BaseModel):
     student_id: str
@@ -431,8 +462,29 @@ async def register(req: RegisterRequest, response: Response):
     raise HTTPException(status_code=403, detail="Self-registration is disabled. Please contact your college administrator.")
 
 @app.get("/api/auth/me")
-async def get_me(user: dict = Depends(get_current_user)):
-    return user
+async def get_me(user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    # Fetch UserPermission flags from DB (source of truth for admin-set gates)
+    perm_r = await session.execute(
+        select(models.UserPermission).where(models.UserPermission.user_id == user["id"])
+    )
+    perm_row = perm_r.scalars().first()
+    permission_flags = perm_row.flags if perm_row else {}
+
+    # Build data scope from FacultyAssignment (for faculty/hod)
+    scope = {}
+    if user["role"] in ("teacher", "faculty", "hod"):
+        assigns_r = await session.execute(
+            select(models.FacultyAssignment).where(
+                models.FacultyAssignment.teacher_id == user["id"]
+            )
+        )
+        assigns = assigns_r.scalars().all()
+        if assigns:
+            scope["subject_codes"] = list({a.subject_code for a in assigns})
+            scope["batch_ids"] = list({a.batch for a in assigns})
+            scope["department"] = assigns[0].department
+
+    return {**user, "permissions": permission_flags, "scope": scope}
 
 @app.post("/api/auth/logout")
 async def logout(request: Request, response: Response):
@@ -483,6 +535,365 @@ async def refresh_access_token(request: Request, response: Response):
         raise HTTPException(status_code=401, detail="Refresh token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
+# ─── Phase 1: Permission Management ─────────────────────────────────────────
+
+@app.get("/api/admin/users/{user_id}/permissions")
+async def get_user_permissions(user_id: str, user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
+    """Get the permission flags for a specific user."""
+    perm_r = await session.execute(
+        select(models.UserPermission).where(models.UserPermission.user_id == user_id)
+    )
+    row = perm_r.scalars().first()
+    return {"user_id": user_id, "flags": row.flags if row else {}}
+
+@app.put("/api/admin/users/{user_id}/permissions")
+async def set_user_permissions(user_id: str, req: PermissionFlagsUpdate, user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
+    """Create or fully replace the permission flags for a user."""
+    # Verify target user exists and belongs to same college
+    target_r = await session.execute(
+        select(models.User).where(models.User.id == user_id, models.User.college_id == user["college_id"])
+    )
+    if not target_r.scalars().first():
+        raise HTTPException(status_code=404, detail="User not found")
+
+    perm_r = await session.execute(
+        select(models.UserPermission).where(models.UserPermission.user_id == user_id)
+    )
+    row = perm_r.scalars().first()
+    if row:
+        row.flags = req.flags
+    else:
+        row = models.UserPermission(user_id=user_id, college_id=user["college_id"], flags=req.flags)
+        session.add(row)
+    await log_audit(session, user["id"], "user_permissions", "update", {"target_user": user_id, "flags": req.flags})
+    await session.commit()
+    return {"message": "Permissions updated", "flags": req.flags}
+
+@app.patch("/api/admin/users/{user_id}/permissions")
+async def patch_user_permissions(user_id: str, req: PermissionFlagsUpdate, user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
+    """Merge new flags into existing ones (non-destructive toggle)."""
+    target_r = await session.execute(
+        select(models.User).where(models.User.id == user_id, models.User.college_id == user["college_id"])
+    )
+    if not target_r.scalars().first():
+        raise HTTPException(status_code=404, detail="User not found")
+
+    perm_r = await session.execute(
+        select(models.UserPermission).where(models.UserPermission.user_id == user_id)
+    )
+    row = perm_r.scalars().first()
+    if row:
+        merged = {**(row.flags or {}), **req.flags}
+        row.flags = merged
+    else:
+        row = models.UserPermission(user_id=user_id, college_id=user["college_id"], flags=req.flags)
+        session.add(row)
+    await session.commit()
+    return {"message": "Permissions merged", "flags": row.flags}
+
+@app.get("/api/admin/permissions/summary")
+async def permissions_summary(user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
+    """List all users with their permission flags for the admin panel."""
+    result = await session.execute(
+        select(models.User, models.UserPermission)
+        .outerjoin(models.UserPermission, models.User.id == models.UserPermission.user_id)
+        .where(models.User.college_id == user["college_id"])
+    )
+    rows = result.all()
+    return [
+        {"id": u.id, "name": u.name, "role": u.role, "email": u.email,
+         "flags": p.flags if p else {}}
+        for u, p in rows
+    ]
+
+# ─── Phase 1: Subject Allocation (HOD) ───────────────────────────────────────
+
+@app.post("/api/hod/subject-allocation")
+async def create_subject_allocation(req: FacultyAssignment, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
+    """HOD assigns a faculty member to a subject + batch + section."""
+    # Verify teacher exists in same college
+    teacher_r = await session.execute(
+        select(models.User).where(models.User.id == req.teacher_id, models.User.college_id == user["college_id"])
+    )
+    if not teacher_r.scalars().first():
+        raise HTTPException(status_code=404, detail="Teacher not found in this college")
+
+    new_assign = models.FacultyAssignment(
+        college_id=user["college_id"],
+        teacher_id=req.teacher_id,
+        subject_code=req.subject_code,
+        subject_name=req.subject_name,
+        department=req.department,
+        batch=req.batch,
+        section=req.section,
+        semester=req.semester,
+        academic_year=req.academic_year,
+        credits=req.credits,
+        hours_per_week=req.hours_per_week,
+        is_lab=req.is_lab,
+    )
+    session.add(new_assign)
+    await log_audit(session, user["id"], "subject_allocation", "create",
+                    {"subject": req.subject_code, "teacher": req.teacher_id})
+    await session.commit()
+    await session.refresh(new_assign)
+    return {"id": new_assign.id, "message": "Allocation created"}
+
+@app.get("/api/hod/subject-allocation")
+async def list_subject_allocations(
+    academic_year: Optional[str] = None,
+    semester: Optional[int] = None,
+    user: dict = Depends(require_role("hod", "admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    """HOD views the full subject allocation matrix for their college."""
+    stmt = select(models.FacultyAssignment).where(
+        models.FacultyAssignment.college_id == user["college_id"]
+    )
+    if academic_year:
+        stmt = stmt.where(models.FacultyAssignment.academic_year == academic_year)
+    if semester:
+        stmt = stmt.where(models.FacultyAssignment.semester == semester)
+    result = await session.execute(stmt)
+    assigns = result.scalars().all()
+    return [
+        {"id": a.id, "teacher_id": a.teacher_id, "subject_code": a.subject_code,
+         "subject_name": a.subject_name, "department": a.department, "batch": a.batch,
+         "section": a.section, "semester": a.semester, "academic_year": a.academic_year,
+         "credits": a.credits, "hours_per_week": a.hours_per_week, "is_lab": a.is_lab}
+        for a in assigns
+    ]
+
+@app.delete("/api/hod/subject-allocation/{assignment_id}")
+async def delete_subject_allocation(assignment_id: str, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
+    """Remove a subject allocation."""
+    result = await session.execute(
+        select(models.FacultyAssignment).where(
+            models.FacultyAssignment.id == assignment_id,
+            models.FacultyAssignment.college_id == user["college_id"]
+        )
+    )
+    row = result.scalars().first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Allocation not found")
+    row.is_deleted = True
+    await session.commit()
+    return {"message": "Allocation removed"}
+
+@app.get("/api/faculty/my-subjects")
+async def get_my_subjects(
+    academic_year: Optional[str] = None,
+    user: dict = Depends(require_role("teacher", "faculty", "hod")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Faculty sees their own allocated subjects for the semester."""
+    stmt = select(models.FacultyAssignment).where(
+        models.FacultyAssignment.teacher_id == user["id"]
+    )
+    if academic_year:
+        stmt = stmt.where(models.FacultyAssignment.academic_year == academic_year)
+    result = await session.execute(stmt.order_by(models.FacultyAssignment.semester))
+    assigns = result.scalars().all()
+    return [
+        {"id": a.id, "subject_code": a.subject_code, "subject_name": a.subject_name,
+         "batch": a.batch, "section": a.section, "semester": a.semester,
+         "academic_year": a.academic_year, "credits": a.credits, "is_lab": a.is_lab}
+        for a in assigns
+    ]
+
+# ─── Phase 1: CIA Template Engine (Admin / Nodal Officer) ────────────────────
+
+@app.post("/api/admin/cia-templates")
+async def create_cia_template(req: CIATemplateCreate, user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
+    """Create a new CIA assessment template."""
+    # Validate total_marks matches sum of component max_marks
+    comp_sum = sum(c.get("max_marks", 0) for c in req.components)
+    if comp_sum != req.total_marks:
+        raise HTTPException(status_code=400, detail=f"Component max_marks sum ({comp_sum}) must equal total_marks ({req.total_marks})")
+
+    tmpl = models.CIATemplate(
+        college_id=user["college_id"],
+        name=req.name,
+        description=req.description,
+        total_marks=req.total_marks,
+        components=req.components,
+    )
+    session.add(tmpl)
+    await log_audit(session, user["id"], "cia_template", "create", {"name": req.name})
+    await session.commit()
+    await session.refresh(tmpl)
+    return {"id": tmpl.id, "name": tmpl.name, "total_marks": tmpl.total_marks, "message": "Template created"}
+
+@app.get("/api/admin/cia-templates")
+async def list_cia_templates(user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(
+        select(models.CIATemplate).where(models.CIATemplate.college_id == user["college_id"])
+    )
+    tmpls = result.scalars().all()
+    return [{"id": t.id, "name": t.name, "description": t.description,
+             "total_marks": t.total_marks, "components": t.components,
+             "created_at": t.created_at.isoformat() if t.created_at else None}
+            for t in tmpls]
+
+@app.put("/api/admin/cia-templates/{template_id}")
+async def update_cia_template(template_id: str, req: CIATemplateUpdate, user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(
+        select(models.CIATemplate).where(
+            models.CIATemplate.id == template_id,
+            models.CIATemplate.college_id == user["college_id"]
+        )
+    )
+    tmpl = result.scalars().first()
+    if not tmpl:
+        raise HTTPException(status_code=404, detail="Template not found")
+
+    if req.name is not None: tmpl.name = req.name
+    if req.description is not None: tmpl.description = req.description
+    if req.total_marks is not None: tmpl.total_marks = req.total_marks
+    if req.components is not None:
+        comp_sum = sum(c.get("max_marks", 0) for c in req.components)
+        if comp_sum != (req.total_marks or tmpl.total_marks):
+            raise HTTPException(status_code=400, detail=f"Component max_marks sum ({comp_sum}) must equal total_marks")
+        tmpl.components = req.components
+
+    await session.commit()
+    return {"message": "Template updated"}
+
+@app.delete("/api/admin/cia-templates/{template_id}")
+async def delete_cia_template(template_id: str, user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(
+        select(models.CIATemplate).where(
+            models.CIATemplate.id == template_id,
+            models.CIATemplate.college_id == user["college_id"]
+        )
+    )
+    tmpl = result.scalars().first()
+    if not tmpl:
+        raise HTTPException(status_code=404, detail="Template not found")
+    # Check if any SubjectCIAConfig references this template
+    ref_r = await session.execute(
+        select(models.SubjectCIAConfig).where(models.SubjectCIAConfig.template_id == template_id)
+    )
+    if ref_r.scalars().first():
+        raise HTTPException(status_code=400, detail="Template is in use by a subject config. Remove config first.")
+    tmpl.is_deleted = True
+    await session.commit()
+    return {"message": "Template deleted"}
+
+@app.post("/api/admin/cia-config")
+async def create_cia_config(req: SubjectCIAConfigCreate, user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
+    """Assign a CIA template to a subject for a given semester + academic year."""
+    # Verify template exists
+    tmpl_r = await session.execute(
+        select(models.CIATemplate).where(
+            models.CIATemplate.id == req.template_id,
+            models.CIATemplate.college_id == user["college_id"]
+        )
+    )
+    if not tmpl_r.scalars().first():
+        raise HTTPException(status_code=404, detail="CIA template not found")
+
+    # Prevent duplicate config for same subject + year + semester
+    dup_r = await session.execute(
+        select(models.SubjectCIAConfig).where(
+            models.SubjectCIAConfig.college_id == user["college_id"],
+            models.SubjectCIAConfig.subject_code == req.subject_code,
+            models.SubjectCIAConfig.academic_year == req.academic_year,
+            models.SubjectCIAConfig.semester == req.semester,
+        )
+    )
+    if dup_r.scalars().first():
+        raise HTTPException(status_code=400, detail="CIA config already exists for this subject/year/semester")
+
+    cfg = models.SubjectCIAConfig(
+        college_id=user["college_id"],
+        subject_code=req.subject_code,
+        subject_name=req.subject_name,
+        academic_year=req.academic_year,
+        semester=req.semester,
+        template_id=req.template_id,
+    )
+    session.add(cfg)
+    await session.commit()
+    await session.refresh(cfg)
+    return {"id": cfg.id, "message": "CIA config created"}
+
+@app.get("/api/admin/cia-config")
+async def list_cia_configs(
+    academic_year: Optional[str] = None,
+    semester: Optional[int] = None,
+    user: dict = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    stmt = select(models.SubjectCIAConfig).where(
+        models.SubjectCIAConfig.college_id == user["college_id"]
+    )
+    if academic_year:
+        stmt = stmt.where(models.SubjectCIAConfig.academic_year == academic_year)
+    if semester:
+        stmt = stmt.where(models.SubjectCIAConfig.semester == semester)
+    result = await session.execute(stmt)
+    cfgs = result.scalars().all()
+    return [
+        {"id": c.id, "subject_code": c.subject_code, "subject_name": c.subject_name,
+         "academic_year": c.academic_year, "semester": c.semester,
+         "template_id": c.template_id, "is_consolidation_enabled": c.is_consolidation_enabled}
+        for c in cfgs
+    ]
+
+@app.put("/api/admin/cia-config/{config_id}/enable-consolidation")
+async def toggle_cia_consolidation(
+    config_id: str,
+    enabled: bool = True,
+    user: dict = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Nodal Officer gate: enable/disable consolidated mark entry for a subject."""
+    result = await session.execute(
+        select(models.SubjectCIAConfig).where(
+            models.SubjectCIAConfig.id == config_id,
+            models.SubjectCIAConfig.college_id == user["college_id"]
+        )
+    )
+    cfg = result.scalars().first()
+    if not cfg:
+        raise HTTPException(status_code=404, detail="CIA config not found")
+    cfg.is_consolidation_enabled = enabled
+    await log_audit(session, user["id"], "cia_config", "toggle_consolidation",
+                    {"config_id": config_id, "enabled": enabled})
+    await session.commit()
+    return {"message": f"Consolidation {'enabled' if enabled else 'disabled'}", "subject": cfg.subject_code}
+
+@app.get("/api/subjects/{subject_code}/cia-template")
+async def get_subject_cia_template(
+    subject_code: str,
+    academic_year: str = "2024-25",
+    semester: Optional[int] = None,
+    user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
+):
+    """Get the active CIA template for a subject (used by faculty and students)."""
+    stmt = select(models.SubjectCIAConfig, models.CIATemplate).join(
+        models.CIATemplate, models.SubjectCIAConfig.template_id == models.CIATemplate.id
+    ).where(
+        models.SubjectCIAConfig.college_id == user["college_id"],
+        models.SubjectCIAConfig.subject_code == subject_code,
+        models.SubjectCIAConfig.academic_year == academic_year,
+    )
+    if semester:
+        stmt = stmt.where(models.SubjectCIAConfig.semester == semester)
+    result = await session.execute(stmt)
+    row = result.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="No CIA template configured for this subject")
+    cfg, tmpl = row
+    return {
+        "subject_code": cfg.subject_code, "subject_name": cfg.subject_name,
+        "academic_year": cfg.academic_year, "semester": cfg.semester,
+        "is_consolidation_enabled": cfg.is_consolidation_enabled,
+        "template": {"id": tmpl.id, "name": tmpl.name, "total_marks": tmpl.total_marks, "components": tmpl.components}
+    }
+
 # ─── User Routes ────────────────────────────────────────────────────────────
 @app.get("/api/users")
 async def list_users(
