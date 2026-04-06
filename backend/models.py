@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Boolean, Index
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Boolean, Index, UniqueConstraint, Date
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 import uuid
@@ -320,4 +320,84 @@ class SubjectCIAConfig(Base, SoftDeleteMixin):
 
     __table_args__ = (
         Index("ix_cia_config_subject_year", "subject_code", "academic_year", "college_id"),
+    )
+
+# ─── Phase 2: Timetable System ───────────────────────────────────────────────
+
+class AcademicCalendar(Base, SoftDeleteMixin):
+    """Defines the start/end dates and events for a semester.
+    Used as the reference for timetable validity and holiday detection.
+    'events' JSONB: [{"date": "2024-12-25", "name": "Christmas", "type": "holiday"}]
+    """
+    __tablename__ = "academic_calendars"
+    id            = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id    = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    academic_year = Column(String, nullable=False)       # "2024-25"
+    semester      = Column(Integer, nullable=False)      # 1-8
+    start_date    = Column(Date, nullable=False)
+    end_date      = Column(Date, nullable=False)
+    working_days  = Column(JSONB, nullable=True)         # ["MON","TUE","WED","THU","FRI"]
+    events        = Column(JSONB, nullable=True)         # holidays, exam weeks
+    created_at    = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_acad_cal_college_year", "college_id", "academic_year", "semester"),
+    )
+
+class PeriodSlot(Base, SoftDeleteMixin):
+    """A single timetable slot: one period, one day, one batch+section.
+    HOD creates these; attendance records reference them.
+    slot_type: regular | lab | free | released | substitute | holiday
+    'released' = faculty on approved leave; available in the free-period pool.
+    'substitute' = re-assigned to another faculty after release.
+    """
+    __tablename__ = "period_slots"
+    id            = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id    = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    department_id = Column(String, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False)
+    batch         = Column(String, nullable=False)       # "2022-26"
+    section       = Column(String, nullable=False)       # "A"
+    semester      = Column(Integer, nullable=False)
+    academic_year = Column(String, nullable=False)
+    day           = Column(String, nullable=False)       # "MON", "TUE", "WED", "THU", "FRI"
+    period_no     = Column(Integer, nullable=False)      # 1-8
+    start_time    = Column(String, nullable=False)       # "09:00"
+    end_time      = Column(String, nullable=False)       # "09:50"
+    subject_code  = Column(String, nullable=True)
+    subject_name  = Column(String, nullable=True)
+    faculty_id    = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    slot_type     = Column(String, nullable=False, server_default="regular")
+    original_faculty_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)  # for substitute tracking
+
+    __table_args__ = (
+        Index("ix_period_slot_batch_day", "batch", "section", "day", "academic_year"),
+        Index("ix_period_slot_faculty", "faculty_id", "day", "academic_year"),
+        Index("ix_period_slot_college_dept", "college_id", "department_id"),
+    )
+
+# ─── Phase 2: Attendance System ──────────────────────────────────────────────
+
+class AttendanceRecord(Base, SoftDeleteMixin):
+    """One attendance record per student per period slot per date.
+    status: present | absent | od | medical | late
+    is_late_entry: True if marked > 3 hours after period end_time (needs HOD approval).
+    The unique constraint prevents double-marking for the same slot+student+date.
+    """
+    __tablename__ = "attendance_records"
+    id             = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id     = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    period_slot_id = Column(String, ForeignKey("period_slots.id", ondelete="RESTRICT"), nullable=False)
+    date           = Column(Date, nullable=False)
+    faculty_id     = Column(String, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
+    student_id     = Column(String, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
+    subject_code   = Column(String, nullable=False)
+    status         = Column(String, nullable=False)      # present | absent | od | medical | late
+    marked_at      = Column(DateTime(timezone=True), server_default=func.now())
+    is_late_entry  = Column(Boolean, nullable=False, server_default='false')
+    remarks        = Column(String, nullable=True)
+
+    __table_args__ = (
+        Index("ix_attendance_student_subject", "student_id", "subject_code", "date"),
+        Index("ix_attendance_faculty_date", "faculty_id", "date"),
+        UniqueConstraint("student_id", "period_slot_id", "date", name="uq_attendance_entry"),
     )

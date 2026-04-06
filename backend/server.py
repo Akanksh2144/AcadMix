@@ -388,6 +388,43 @@ class ChallengeSubmit(BaseModel):
 class ViolationReport(BaseModel):
     violation_type: str = "tab_switch"  # tab_switch, fullscreen_exit, window_blur
 
+class AcademicCalendarCreate(BaseModel):
+    academic_year: str = "2024-25"
+    semester: int = Field(..., ge=1, le=8)
+    start_date: str   # "YYYY-MM-DD"
+    end_date: str
+    working_days: Optional[list] = ["MON", "TUE", "WED", "THU", "FRI"]
+    events: Optional[list] = []
+
+class PeriodSlotCreate(BaseModel):
+    department_id: str
+    batch: str
+    section: str
+    semester: int = Field(..., ge=1, le=8)
+    academic_year: str = "2024-25"
+    day: str          # MON, TUE, WED, THU, FRI
+    period_no: int = Field(..., ge=1, le=10)
+    start_time: str   # "09:00"
+    end_time: str     # "09:50"
+    subject_code: Optional[str] = None
+    subject_name: Optional[str] = None
+    faculty_id: Optional[str] = None
+    slot_type: str = "regular"
+
+class BulkSlotsUpsert(BaseModel):
+    slots: List[PeriodSlotCreate]  # up to an entire week of slots at once
+
+class AttendanceMarkItem(BaseModel):
+    student_id: str
+    status: str = Field(..., pattern="^(present|absent|od|medical|late)$")
+    remarks: Optional[str] = None
+
+class AttendanceMarkBatch(BaseModel):
+    period_slot_id: str
+    date: str          # "YYYY-MM-DD"
+    entries: List[AttendanceMarkItem]
+
+
 async def log_audit(session: AsyncSession, user_id: str, resource: str, action: str, details: dict = None):
     log_entry = models.AuditLog(
         user_id=user_id,
@@ -893,6 +930,385 @@ async def get_subject_cia_template(
         "is_consolidation_enabled": cfg.is_consolidation_enabled,
         "template": {"id": tmpl.id, "name": tmpl.name, "total_marks": tmpl.total_marks, "components": tmpl.components}
     }
+
+# ─── Phase 2: Academic Calendar (Admin/Nodal Officer) ─────────────────────────
+
+@app.post("/api/admin/academic-calendars")
+async def create_academic_calendar(req: AcademicCalendarCreate, user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
+    try:
+        start_dt = datetime.strptime(req.start_date, "%Y-%m-%d").date()
+        end_dt = datetime.strptime(req.end_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Dates must be in YYYY-MM-DD format")
+
+    if end_dt <= start_dt:
+        raise HTTPException(status_code=400, detail="end_date must be after start_date")
+
+    # Prevent overlap for same semester
+    dup_r = await session.execute(
+        select(models.AcademicCalendar).where(
+            models.AcademicCalendar.college_id == user["college_id"],
+            models.AcademicCalendar.academic_year == req.academic_year,
+            models.AcademicCalendar.semester == req.semester
+        )
+    )
+    if dup_r.scalars().first():
+        raise HTTPException(status_code=400, detail="Calendar already exists for this year and semester")
+
+    cal = models.AcademicCalendar(
+        college_id=user["college_id"],
+        academic_year=req.academic_year,
+        semester=req.semester,
+        start_date=start_dt,
+        end_date=end_dt,
+        working_days=req.working_days,
+        events=req.events
+    )
+    session.add(cal)
+    await session.commit()
+    await session.refresh(cal)
+    return {"id": cal.id, "message": "Academic calendar created"}
+
+@app.get("/api/academic-calendars")
+async def list_academic_calendars(academic_year: Optional[str] = None, user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    stmt = select(models.AcademicCalendar).where(models.AcademicCalendar.college_id == user["college_id"])
+    if academic_year:
+        stmt = stmt.where(models.AcademicCalendar.academic_year == academic_year)
+    result = await session.execute(stmt)
+    cals = result.scalars().all()
+    return [{
+        "id": c.id, "academic_year": c.academic_year, "semester": c.semester,
+        "start_date": c.start_date.isoformat(), "end_date": c.end_date.isoformat(),
+        "working_days": c.working_days, "events": c.events
+    } for c in cals]
+
+# ─── Phase 2: Timetable / Period Slots (HOD, Faculty, Student) ───────────────
+
+@app.put("/api/hod/timetable/slots")
+async def upsert_timetable_slots(req: BulkSlotsUpsert, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
+    """Bulk upsert period slots (usually representing a weekly template)."""
+    if not req.slots:
+        return {"message": "No slots provided"}
+
+    updated_count = 0
+    created_count = 0
+
+    for slot_data in req.slots:
+        # Check if slot already exists for this exact coordinates
+        exist_r = await session.execute(
+            select(models.PeriodSlot).where(
+                models.PeriodSlot.college_id == user["college_id"],
+                models.PeriodSlot.department_id == slot_data.department_id,
+                models.PeriodSlot.batch == slot_data.batch,
+                models.PeriodSlot.section == slot_data.section,
+                models.PeriodSlot.academic_year == slot_data.academic_year,
+                models.PeriodSlot.day == slot_data.day,
+                models.PeriodSlot.period_no == slot_data.period_no
+            )
+        )
+        existing = exist_r.scalars().first()
+
+        if existing:
+            existing.semester = slot_data.semester
+            existing.start_time = slot_data.start_time
+            existing.end_time = slot_data.end_time
+            existing.subject_code = slot_data.subject_code
+            existing.subject_name = slot_data.subject_name
+            existing.faculty_id = slot_data.faculty_id
+            existing.slot_type = slot_data.slot_type
+            updated_count += 1
+        else:
+            new_slot = models.PeriodSlot(
+                college_id=user["college_id"],
+                department_id=slot_data.department_id,
+                batch=slot_data.batch,
+                section=slot_data.section,
+                semester=slot_data.semester,
+                academic_year=slot_data.academic_year,
+                day=slot_data.day,
+                period_no=slot_data.period_no,
+                start_time=slot_data.start_time,
+                end_time=slot_data.end_time,
+                subject_code=slot_data.subject_code,
+                subject_name=slot_data.subject_name,
+                faculty_id=slot_data.faculty_id,
+                slot_type=slot_data.slot_type
+            )
+            session.add(new_slot)
+            created_count += 1
+
+    await session.commit()
+    return {"message": f"Slots saved: {created_count} created, {updated_count} updated."}
+
+@app.get("/api/hod/timetable")
+async def get_department_timetable(
+    department_id: str,
+    batch: str,
+    section: str,
+    academic_year: str,
+    user: dict = Depends(require_role("hod", "admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Get the weekly timetable grid for a specific batch/section."""
+    result = await session.execute(
+        select(models.PeriodSlot).where(
+            models.PeriodSlot.college_id == user["college_id"],
+            models.PeriodSlot.department_id == department_id,
+            models.PeriodSlot.batch == batch,
+            models.PeriodSlot.section == section,
+            models.PeriodSlot.academic_year == academic_year
+        )
+    )
+    slots = result.scalars().all()
+    return [{
+        "id": s.id, "day": s.day, "period_no": s.period_no, "start_time": s.start_time, "end_time": s.end_time,
+        "subject_code": s.subject_code, "subject_name": s.subject_name,
+        "faculty_id": s.faculty_id, "slot_type": s.slot_type
+    } for s in slots]
+
+@app.get("/api/faculty/timetable/today")
+async def get_faculty_today_timetable(user: dict = Depends(require_role("teacher", "faculty", "hod")), session: AsyncSession = Depends(get_db)):
+    """Get today's periods for the logged-in faculty."""
+    today = datetime.now()
+    # Map Python weekday() (0=Mon, 6=Sun) to our DB day strings ("MON", "TUE"...)
+    days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+    current_day = days[today.weekday()]
+
+    # Assuming current academic year is 2024-25 for now, should be dynamic in production based on AcademicCalendar
+    current_academic_year = "2024-25"
+
+    result = await session.execute(
+        select(models.PeriodSlot).where(
+            models.PeriodSlot.faculty_id == user["id"],
+            models.PeriodSlot.day == current_day,
+            models.PeriodSlot.academic_year == current_academic_year
+        ).order_by(models.PeriodSlot.period_no)
+    )
+    slots = result.scalars().all()
+    return [{
+        "id": s.id, "period_no": s.period_no, "start_time": s.start_time, "end_time": s.end_time,
+        "batch": s.batch, "section": s.section, "department_id": s.department_id,
+        "subject_code": s.subject_code, "subject_name": s.subject_name, "slot_type": s.slot_type
+    } for s in slots]
+
+@app.get("/api/student/timetable")
+async def get_student_timetable(user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
+    """Get the weekly timetable for the logged-in student."""
+    # Since courses aren't fully seeded, we use profile_data for batch/section
+    department = user.get("department")
+    batch = user.get("batch")
+    section = user.get("section")
+    
+    if not all([department, batch, section]):
+        return []
+
+    # Requires looking up the department_id by code/name
+    dept_r = await session.execute(
+        select(models.Department).where(
+            models.Department.college_id == user["college_id"],
+            (models.Department.code == department) | (models.Department.name == department)
+        )
+    )
+    dept = dept_r.scalars().first()
+    if not dept:
+        return []
+
+    current_academic_year = "2024-25" # placeholder
+
+    result = await session.execute(
+        select(models.PeriodSlot).where(
+            models.PeriodSlot.department_id == dept.id,
+            models.PeriodSlot.batch == batch,
+            models.PeriodSlot.section == section,
+            models.PeriodSlot.academic_year == current_academic_year
+        )
+    )
+    slots = result.scalars().all()
+    
+    # Needs faculty names. Could join, but fetching in Python is okay for small sets.
+    faculty_ids = list(set([s.faculty_id for s in slots if s.faculty_id]))
+    faculty_map = {}
+    if faculty_ids:
+        fac_r = await session.execute(select(models.User.id, models.User.name).where(models.User.id.in_(faculty_ids)))
+        faculty_map = {f.id: f.name for f in fac_r.all()}
+
+    return [{
+        "id": s.id, "day": s.day, "period_no": s.period_no, "start_time": s.start_time, "end_time": s.end_time,
+        "subject_code": s.subject_code, "subject_name": s.subject_name,
+        "faculty_id": s.faculty_id, "faculty_name": faculty_map.get(s.faculty_id, "Unknown"), "slot_type": s.slot_type
+    } for s in slots]
+
+# ─── Phase 2: Attendance System ──────────────────────────────────────────────
+
+@app.get("/api/faculty/attendance/today")
+async def get_today_attendance_status(user: dict = Depends(require_role("teacher", "faculty", "hod")), session: AsyncSession = Depends(get_db)):
+    """Get today's slots for faculty and indicate if attendance is marked."""
+    today = datetime.now()
+    days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+    current_day = days[today.weekday()]
+    current_date = today.date()
+    current_academic_year = "2024-25"
+
+    slots_r = await session.execute(
+        select(models.PeriodSlot).where(
+            models.PeriodSlot.faculty_id == user["id"],
+            models.PeriodSlot.day == current_day,
+            models.PeriodSlot.academic_year == current_academic_year
+        ).order_by(models.PeriodSlot.period_no)
+    )
+    slots = slots_r.scalars().all()
+
+    if not slots:
+        return []
+
+    slot_ids = [s.id for s in slots]
+    
+    # Find which slots have attendance records for today
+    att_r = await session.execute(
+        select(models.AttendanceRecord.period_slot_id, func.count(models.AttendanceRecord.id))
+        .where(
+            models.AttendanceRecord.period_slot_id.in_(slot_ids),
+            models.AttendanceRecord.date == current_date
+        )
+        .group_by(models.AttendanceRecord.period_slot_id)
+    )
+    marked_counts = {row.period_slot_id: row.count for row in att_r.all()}
+
+    return [{
+        "slot": {
+            "id": s.id, "period_no": s.period_no, "start_time": s.start_time, "end_time": s.end_time,
+            "batch": s.batch, "section": s.section, "subject_code": s.subject_code, "subject_name": s.subject_name
+        },
+        "is_marked": s.id in marked_counts,
+        "recorded_count": marked_counts.get(s.id, 0)
+    } for s in slots]
+
+@app.post("/api/faculty/attendance/mark")
+async def mark_attendance_batch(req: AttendanceMarkBatch, user: dict = Depends(require_role("teacher", "faculty", "hod")), session: AsyncSession = Depends(get_db)):
+    """Mark attendance for an entire class for a specific period slot."""
+    try:
+        mark_date = datetime.strptime(req.date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format")
+
+    slot_r = await session.execute(
+        select(models.PeriodSlot).where(
+            models.PeriodSlot.id == req.period_slot_id,
+            models.PeriodSlot.college_id == user["college_id"]
+        )
+    )
+    slot = slot_r.scalars().first()
+    if not slot:
+        raise HTTPException(status_code=404, detail="Period slot not found")
+
+    if slot.faculty_id != user["id"]:
+        raise HTTPException(status_code=403, detail="You are not assigned to this period slot")
+
+    # 3-hour window enforcement
+    now = datetime.now()
+    try:
+        period_end_time = datetime.strptime(slot.end_time, "%H:%M").time()
+        # Combine mark_date and period_end_time to get a full datetime
+        period_end_dt = datetime.combine(mark_date, period_end_time)
+        delta_hours = (now - period_end_dt).total_seconds() / 3600
+        is_late_entry = delta_hours > 3
+    except Exception:
+        is_late_entry = False
+
+    # Check for existing records to prevent duplicates
+    # Alternatively we could use a postgres ON CONFLICT DO UPDATE, 
+    # but since we want to handle the batch cleanly, let's delete existing for this slot+date
+    await session.execute(
+        delete(models.AttendanceRecord).where(
+            models.AttendanceRecord.period_slot_id == slot.id,
+            models.AttendanceRecord.date == mark_date
+        )
+    )
+
+    records = [
+        models.AttendanceRecord(
+            college_id=user["college_id"],
+            period_slot_id=slot.id,
+            date=mark_date,
+            faculty_id=user["id"],
+            student_id=entry.student_id,
+            subject_code=slot.subject_code,
+            status=entry.status,
+            is_late_entry=is_late_entry,
+            remarks=entry.remarks
+        )
+        for entry in req.entries
+    ]
+    session.add_all(records)
+    await log_audit(session, user["id"], "attendance", "mark_batch", 
+                    {"slot_id": slot.id, "date": req.date, "is_late": is_late_entry, "count": len(records)})
+    await session.commit()
+    
+    return {"message": f"Successfully marked attendance for {len(records)} students", "is_late_entry": is_late_entry}
+
+@app.get("/api/student/attendance")
+async def get_student_consolidated_attendance(user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
+    """Consolidated attendance across all subjects for a student."""
+    # Using raw SQL equivalent for calculating present percentages per subject
+    stmt = text("""
+        SELECT 
+            subject_code,
+            COUNT(*) FILTER (WHERE status = 'present' OR status = 'od') AS present_count,
+            COUNT(*) AS total_count
+        FROM attendance_records
+        WHERE student_id = :student_id AND is_deleted = false
+        GROUP BY subject_code
+    """)
+    result = await session.execute(stmt, {"student_id": user["id"]})
+    rows = result.all()
+    
+    response = []
+    for row in rows:
+        pct = round(row.present_count * 100.0 / row.total_count, 1) if row.total_count > 0 else 0
+        response.append({
+            "subject_code": row.subject_code,
+            "present_count": row.present_count,
+            "total_count": row.total_count,
+            "percentage": pct
+        })
+    return response
+
+@app.get("/api/hod/attendance/defaulters")
+async def get_attendance_defaulters(
+    threshold: float = 75.0,
+    academic_year: Optional[str] = None,
+    user: dict = Depends(require_role("hod", "admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Get list of students below the attendance threshold."""
+    stmt = text("""
+        SELECT 
+            student_id,
+            u.name as student_name,
+            u.profile_data->>'batch' as batch,
+            subject_code,
+            ROUND((COUNT(*) FILTER (WHERE status = 'present' OR status = 'od') * 100.0 / COUNT(*))::numeric, 1) as percentage
+        FROM attendance_records ar
+        JOIN users u ON ar.student_id = u.id
+        WHERE ar.college_id = :college_id AND ar.is_deleted = false
+        GROUP BY student_id, u.name, u.profile_data->>'batch', subject_code
+        HAVING (COUNT(*) FILTER (WHERE status = 'present' OR status = 'od') * 100.0 / COUNT(*)) < :threshold
+        ORDER BY batch, student_name, subject_code
+    """)
+    
+    # We aren't filtering by department here directly due to the complex join on profile_data
+    # This could be refined later with a proper Student table or strict JSONB filtering
+    result = await session.execute(stmt, {"college_id": user["college_id"], "threshold": threshold})
+    rows = result.all()
+    
+    return [{
+        "student_id": r.student_id,
+        "name": r.student_name,
+        "batch": r.batch,
+        "subject_code": r.subject_code,
+        "percentage": float(r.percentage) if r.percentage is not None else 0.0
+    } for r in rows]
+
 
 # ─── User Routes ────────────────────────────────────────────────────────────
 @app.get("/api/users")
