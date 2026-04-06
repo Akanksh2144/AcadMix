@@ -11,6 +11,13 @@ const api = axios.create({
 
 // Store token for non-cookie auth
 let authToken = null;
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+const onRefreshed = (newToken) => {
+  refreshSubscribers.forEach(cb => cb(newToken));
+  refreshSubscribers = [];
+};
 
 api.interceptors.request.use((config) => {
   if (authToken) {
@@ -18,6 +25,46 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Response interceptor: attempt silent refresh on 401
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/api/auth/')) {
+      originalRequest._retry = true;
+      
+      if (!isRefreshing) {
+        isRefreshing = true;
+        try {
+          const { data } = await api.post('/api/auth/refresh');
+          if (data.access_token) {
+            authToken = data.access_token;
+            localStorage.setItem('auth_token', data.access_token);
+            onRefreshed(data.access_token);
+          }
+        } catch {
+          // Refresh failed — force logout
+          authToken = null;
+          localStorage.removeItem('auth_token');
+          refreshSubscribers = [];
+          isRefreshing = false;
+          return Promise.reject(error);
+        }
+        isRefreshing = false;
+      }
+
+      // Queue this request until refresh resolves
+      return new Promise((resolve) => {
+        refreshSubscribers.push((newToken) => {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          resolve(api(originalRequest));
+        });
+      });
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const setAuthToken = (token) => {
   authToken = token;

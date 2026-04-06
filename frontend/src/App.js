@@ -49,16 +49,25 @@ function App() {
 
   const checkAuth = useCallback(async () => {
     const savedToken = localStorage.getItem('auth_token');
-    if (savedToken) setAuthToken(savedToken);
+    if (!savedToken) {
+      setLoading(false);
+      return;
+    }
+    setAuthToken(savedToken);
     try {
       const { data } = await authAPI.me();
       setUser(data);
       setCurrentPage((prev) => prev === 'login' ? (ROLE_DASHBOARD[data.role] || 'login') : prev);
-    } catch {
-      clearAuthToken();
-      localStorage.removeItem('auth_token');
-      setUser(null);
-      setCurrentPage('login');
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 401 || status === 403) {
+        // Token is genuinely invalid — clear auth
+        clearAuthToken();
+        localStorage.removeItem('auth_token');
+        setUser(null);
+        setCurrentPage('login');
+      }
+      // For network errors / 500s, keep user on current page (session might still be valid)
     }
     setLoading(false);
   }, []);

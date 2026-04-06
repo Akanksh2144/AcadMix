@@ -111,7 +111,7 @@ import uuid
 
 class TokenBlacklistConfig:
     USE_BLACKLIST = os.getenv("USE_TOKEN_BLACKLIST", "false").lower() == "true"
-    ACCESS_TOKEN_TTL_MINUTES = 15
+    ACCESS_TOKEN_TTL_MINUTES = 1440  # 24 hours — frontend has no refresh flow yet
     REFRESH_TOKEN_TTL_DAYS = 7
     BLACKLIST_CHECK_REDIS = True
 
