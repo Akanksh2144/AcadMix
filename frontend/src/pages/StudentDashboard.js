@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Trophy, ChartLine, Fire, BookOpen, Calendar, Target, SignOut, Terminal, ArrowRight, GraduationCap, Play, Medal, Lightning, Warning, Bell, Exam, Briefcase, Sun, Moon } from '@phosphor-icons/react';
+import { Clock, Trophy, ChartLine, Fire, BookOpen, Calendar, Target, SignOut, Terminal, ArrowRight, GraduationCap, Play, Medal, Lightning, Warning, Bell, Exam, Briefcase, Sun, Moon, CalendarDots, Chalkboard, UserCircle, ListBullets } from '@phosphor-icons/react';
 import { analyticsAPI } from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 import Lottie from 'lottie-react';
 import { searchEmptyAnimation, sleepAnimation } from '../assets/lottieAnimations';
+import StudentAttendance from '../components/student/StudentAttendance';
+import StudentCIAMarks from '../components/student/StudentCIAMarks';
+import StudentTimetable from '../components/student/StudentTimetable';
+import StudentProfile from '../components/student/StudentProfile';
+import StudentAcademicCalendar from '../components/student/StudentAcademicCalendar';
+import StudentSubjects from '../components/student/StudentSubjects';
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -71,6 +77,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const { isDark, toggle: toggleTheme } = useTheme();
 
   const notifKey = `acadmix_last_notif_${user?.id || 'default'}`;
@@ -207,13 +214,13 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
                 </button>
               </div>
             )}
-            <div className="hidden sm:flex items-center gap-2 bg-slate-50 dark:bg-white/5 rounded-2xl px-4 py-2">
+            <button onClick={() => setShowProfile(true)} className="hidden sm:flex items-center gap-2 bg-slate-50 dark:bg-white/5 rounded-2xl px-4 py-2 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer">
               <GraduationCap size={18} weight="duotone" className="text-indigo-500" />
               <div className="text-right">
                 <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{user?.name}</p>
                 <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{user?.college_id} • {user?.department} • {user?.section}</p>
               </div>
-            </div>
+            </button>
             <button data-testid="logout-button" onClick={onLogout} className="p-2.5 rounded-full bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500 transition-colors" aria-label="Sign out">
               <SignOut size={20} weight="duotone" />
             </button>
@@ -252,8 +259,11 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
           <div className="flex items-center gap-1.5 bg-white dark:bg-[#1A202C]/60 backdrop-blur-md border border-slate-200 dark:border-slate-700/80 rounded-2xl p-1.5 shadow-sm w-fit min-w-full sm:min-w-0">
             {[
               { id: 'overview', label: 'Overview' }, 
-              { id: 'timetable', label: 'My Timetable' },
-              { id: 'attendance', label: 'Attendance Record' }
+              { id: 'attendance', label: 'Attendance' },
+              { id: 'cia-marks', label: 'CIA Marks' },
+              { id: 'timetable', label: 'Timetable' },
+              { id: 'subjects', label: 'Subjects' },
+              { id: 'calendar', label: 'Calendar' },
             ].map(tab => (
               <button 
                 key={tab.id} 
@@ -516,25 +526,20 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
         </motion.div>
         )}
 
-        {activeTab === 'timetable' && (
-          <motion.div data-testid="timetable-content" variants={containerVariants} initial="hidden" animate="show">
-            <motion.div variants={itemVariants} className="soft-card p-12 text-center text-slate-500">
-              <Calendar size={48} weight="duotone" className="mx-auto mb-4 opacity-50" />
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Student Timetable</h3>
-              <p>Your class schedule will appear here.</p>
-            </motion.div>
-          </motion.div>
-        )}
+        {activeTab === 'attendance' && <StudentAttendance />}
 
-        {activeTab === 'attendance' && (
-          <motion.div data-testid="attendance-content" variants={containerVariants} initial="hidden" animate="show">
-            <motion.div variants={itemVariants} className="soft-card p-12 text-center text-slate-500">
-              <Clock size={48} weight="duotone" className="mx-auto mb-4 opacity-50" />
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Attendance Record</h3>
-              <p>Your daily attendance details will appear here.</p>
-            </motion.div>
-          </motion.div>
-        )}
+        {activeTab === 'cia-marks' && <StudentCIAMarks />}
+
+        {activeTab === 'timetable' && <StudentTimetable />}
+
+        {activeTab === 'subjects' && <StudentSubjects />}
+
+        {activeTab === 'calendar' && <StudentAcademicCalendar />}
+
+        {/* Profile Overlay */}
+        <AnimatePresence>
+          {showProfile && <StudentProfile user={user} onClose={() => setShowProfile(false)} />}
+        </AnimatePresence>
 
       </div>
     </div>

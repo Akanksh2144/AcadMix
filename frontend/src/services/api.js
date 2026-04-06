@@ -5,8 +5,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL || '';
 const api = axios.create({
   baseURL: API_URL,
   headers: { 
-    'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': '69420'
+    'Content-Type': 'application/json'
   },
 });
 
@@ -162,6 +161,16 @@ export const analyticsAPI = {
 // Placements
 export const placementsAPI = {
   studentPlacements: () => api.get('/api/placements/student'),
+};
+
+// Student Panel (DHTE spec)
+export const studentAPI = {
+  attendanceDetail: (params) => api.get('/api/student/attendance/detail', { params }),
+  ciaMarks: (params) => api.get('/api/student/cia-marks', { params }),
+  academicCalendar: () => api.get('/api/student/academic-calendar'),
+  subjects: () => api.get('/api/student/subjects'),
+  hallTicket: (semester, academic_year) => api.get('/api/student/hall-ticket', { params: { semester, academic_year } }),
+  myRegistrations: () => api.get('/api/student/my-registrations'),
 };
 
 // Timetable (HOD & Faculty)

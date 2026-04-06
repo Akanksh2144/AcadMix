@@ -1334,6 +1334,199 @@ async def get_student_consolidated_attendance(user: dict = Depends(require_role(
         })
     return response
 
+@app.get("/api/student/attendance/detail")
+async def get_student_attendance_detail(
+    subject_code: Optional[str] = None,
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Per-date, per-period attendance records for the student calendar view."""
+    params = {"student_id": user["id"]}
+    where_clauses = ["ar.student_id = :student_id", "ar.is_deleted = false"]
+    
+    if subject_code:
+        where_clauses.append("ar.subject_code = :subject_code")
+        params["subject_code"] = subject_code
+    if month and year:
+        where_clauses.append("EXTRACT(MONTH FROM ar.date) = :month")
+        where_clauses.append("EXTRACT(YEAR FROM ar.date) = :year")
+        params["month"] = month
+        params["year"] = year
+
+    where_sql = " AND ".join(where_clauses)
+    stmt = text(f"""
+        SELECT 
+            ar.date, ar.subject_code, ar.status, ar.remarks,
+            ps.period_no, ps.start_time, ps.end_time, ps.subject_name
+        FROM attendance_records ar
+        JOIN period_slots ps ON ar.period_slot_id = ps.id
+        WHERE {where_sql}
+        ORDER BY ar.date DESC, ps.period_no ASC
+    """)
+    result = await session.execute(stmt, params)
+    rows = result.all()
+
+    return [{
+        "date": str(r.date),
+        "subject_code": r.subject_code,
+        "subject_name": r.subject_name,
+        "period_no": r.period_no,
+        "start_time": r.start_time,
+        "end_time": r.end_time,
+        "status": r.status,
+        "remarks": r.remarks
+    } for r in rows]
+
+@app.get("/api/student/cia-marks")
+async def get_student_cia_marks(
+    semester: Optional[int] = None,
+    academic_year: Optional[str] = None,
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Component-wise CIA marks breakdown for the student."""
+    # Get mark entries for this student
+    stmt = select(models.MarkEntry).where(
+        models.MarkEntry.student_id == user["id"],
+        models.MarkEntry.is_deleted == False
+    )
+    result = await session.execute(stmt)
+    entries = result.scalars().all()
+
+    # Get CIA configs for context
+    cfg_stmt = select(models.SubjectCIAConfig).where(
+        models.SubjectCIAConfig.college_id == user["college_id"],
+        models.SubjectCIAConfig.is_deleted == False
+    )
+    if semester:
+        cfg_stmt = cfg_stmt.where(models.SubjectCIAConfig.semester == semester)
+    if academic_year:
+        cfg_stmt = cfg_stmt.where(models.SubjectCIAConfig.academic_year == academic_year)
+    cfg_result = await session.execute(cfg_stmt)
+    configs = cfg_result.scalars().all()
+
+    # Get templates for component details
+    template_ids = list(set(c.template_id for c in configs))
+    tpl_map = {}
+    if template_ids:
+        tpl_r = await session.execute(
+            select(models.CIATemplate).where(models.CIATemplate.id.in_(template_ids))
+        )
+        tpl_map = {t.id: t for t in tpl_r.scalars().all()}
+
+    # Build subject-wise response
+    subject_map = {}
+    for cfg in configs:
+        tpl = tpl_map.get(cfg.template_id)
+        components = (tpl.components if tpl else []) or []
+        
+        # Find student marks for this subject
+        subj_entries = [e for e in entries if e.course_id == cfg.subject_code]
+        component_marks = []
+        total_obtained = 0
+        total_max = 0
+        
+        for comp in components:
+            entry = next((e for e in subj_entries if e.exam_type == comp.get("type", "")), None)
+            obtained = entry.marks_obtained if entry else None
+            max_m = comp.get("max_marks", 0)
+            component_marks.append({
+                "name": comp.get("name", comp.get("type", "")),
+                "type": comp.get("type", ""),
+                "max_marks": max_m,
+                "marks_obtained": obtained
+            })
+            if obtained is not None:
+                total_obtained += obtained
+            total_max += max_m
+        
+        subject_map[cfg.subject_code] = {
+            "subject_code": cfg.subject_code,
+            "subject_name": cfg.subject_name or cfg.subject_code,
+            "semester": cfg.semester,
+            "academic_year": cfg.academic_year,
+            "components": component_marks,
+            "total_cia": round(total_obtained, 1),
+            "total_max": total_max
+        }
+
+    return list(subject_map.values())
+
+@app.get("/api/student/academic-calendar")
+async def get_student_academic_calendar(
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Get the academic calendar with events for the student's college."""
+    result = await session.execute(
+        select(models.AcademicCalendar).where(
+            models.AcademicCalendar.college_id == user["college_id"],
+            models.AcademicCalendar.is_deleted == False
+        ).order_by(models.AcademicCalendar.start_date.desc())
+    )
+    calendars = result.scalars().all()
+    return [{
+        "id": c.id,
+        "academic_year": c.academic_year,
+        "semester": c.semester,
+        "start_date": str(c.start_date),
+        "end_date": str(c.end_date),
+        "working_days": c.working_days or [],
+        "events": c.events or []
+    } for c in calendars]
+
+@app.get("/api/student/subjects")
+async def get_student_subjects(
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Get registered subjects with faculty details for the student."""
+    # Get the student's course registrations
+    regs_r = await session.execute(
+        select(models.CourseRegistration).where(
+            models.CourseRegistration.student_id == user["id"],
+            models.CourseRegistration.is_deleted == False
+        ).order_by(models.CourseRegistration.semester)
+    )
+    regs = regs_r.scalars().all()
+
+    # Find faculty assignments for matched subjects
+    subject_codes = list(set(r.subject_code for r in regs))
+    fac_map = {}
+    if subject_codes:
+        fac_r = await session.execute(
+            select(models.FacultyAssignment, models.User).join(
+                models.User, models.FacultyAssignment.teacher_id == models.User.id
+            ).where(
+                models.FacultyAssignment.college_id == user["college_id"],
+                models.FacultyAssignment.subject_code.in_(subject_codes),
+                models.FacultyAssignment.is_deleted == False
+            )
+        )
+        for fa, u in fac_r.all():
+            fac_map[fa.subject_code] = {
+                "faculty_name": u.name,
+                "credits": fa.credits,
+                "hours_per_week": fa.hours_per_week,
+                "is_lab": fa.is_lab,
+                "subject_name": fa.subject_name
+            }
+
+    return [{
+        "subject_code": r.subject_code,
+        "subject_name": fac_map.get(r.subject_code, {}).get("subject_name", r.subject_code),
+        "semester": r.semester,
+        "academic_year": r.academic_year,
+        "status": r.status,
+        "is_arrear": r.is_arrear,
+        "faculty_name": fac_map.get(r.subject_code, {}).get("faculty_name", "—"),
+        "credits": fac_map.get(r.subject_code, {}).get("credits"),
+        "hours_per_week": fac_map.get(r.subject_code, {}).get("hours_per_week"),
+        "is_lab": fac_map.get(r.subject_code, {}).get("is_lab", False)
+    } for r in regs]
+
 @app.get("/api/hod/attendance/defaulters")
 async def get_attendance_defaulters(
     threshold: float = 75.0,
