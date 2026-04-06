@@ -14,6 +14,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 # bson removed — MongoDB is archived
 from fastapi import FastAPI, HTTPException, Request, Response, Depends, Query, UploadFile, File, Form
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 # certifi removed — was for MongoDB TLS
@@ -26,6 +27,17 @@ from sqlalchemy import or_, and_, delete, update, func, text, desc
 from sqlalchemy.orm import selectinload
 from database import get_db
 import models
+
+DEFAULT_GRADE_SCALE = [
+    {"min_pct": 90, "grade": "O", "points": 10},
+    {"min_pct": 80, "grade": "A+", "points": 9},
+    {"min_pct": 70, "grade": "A", "points": 8},
+    {"min_pct": 60, "grade": "B+", "points": 7},
+    {"min_pct": 50, "grade": "B", "points": 6},
+    {"min_pct": 45, "grade": "C", "points": 5},
+    {"min_pct": 40, "grade": "D", "points": 4},
+    {"min_pct": 0, "grade": "F", "points": 0}
+]
 # tenant.py archived to backend/legacy/ — functions inlined or removed below
 
 import sentry_sdk
@@ -379,6 +391,33 @@ class AnnouncementCreate(BaseModel):
     message: str
     priority: str = "info"  # info, warning, urgent
     visibility: str = "all"  # all, faculty, students
+
+class CollegeSettingsUpdate(BaseModel):
+    settings: dict
+
+class ExamScheduleCreate(BaseModel):
+    department_id: str
+    batch: str
+    semester: int
+    academic_year: str
+    subject_code: str
+    subject_name: str
+    exam_date: str  # YYYY-MM-DD
+    session: str    # FN or AN
+    exam_time: str
+    document_url: Optional[str] = None
+
+class ExamScheduleUpdate(BaseModel):
+    department_id: Optional[str] = None
+    batch: Optional[str] = None
+    semester: Optional[int] = None
+    academic_year: Optional[str] = None
+    subject_code: Optional[str] = None
+    subject_name: Optional[str] = None
+    exam_date: Optional[str] = None
+    session: Optional[str] = None
+    exam_time: Optional[str] = None
+    document_url: Optional[str] = None
 
 class ChallengeSubmit(BaseModel):
     challenge_id: str
@@ -2517,9 +2556,166 @@ async def generate_hall_tickets(semester: int, academic_year: str, user: dict = 
     
     return {"message": "Hall tickets generation triggered successfully. Students can now download them."}
 
-@app.get("/api/student/hall-ticket")
+# ─── Exam Cell & Student: Schedules and Hall Tickets ─────────────────────────
+
+@app.get("/api/examcell/settings")
+async def get_college_settings(user: dict = Depends(require_role("exam_cell", "admin")), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(select(models.College).where(models.College.id == user["college_id"]))
+    college = result.scalars().first()
+    return {"settings": college.settings if college and college.settings else {}}
+
+@app.put("/api/examcell/settings")
+async def update_college_settings(req: CollegeSettingsUpdate, user: dict = Depends(require_role("exam_cell", "admin")), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(select(models.College).where(models.College.id == user["college_id"]))
+    college = result.scalars().first()
+    if not college:
+        raise HTTPException(status_code=404, detail="College not found")
+        
+    college.settings = req.settings
+    await log_audit(session, user["id"], "examcell_settings", "update", {})
+    await session.commit()
+    return {"message": "Settings updated successfully", "settings": college.settings}
+
+@app.post("/api/examcell/schedule")
+async def create_exam_schedule(req: ExamScheduleCreate, user: dict = Depends(require_role("exam_cell", "admin")), session: AsyncSession = Depends(get_db)):
+    try:
+        dt = datetime.strptime(req.exam_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="exam_date must be YYYY-MM-DD")
+        
+    sched = models.ExamSchedule(
+        college_id=user["college_id"],
+        department_id=req.department_id,
+        batch=req.batch,
+        semester=req.semester,
+        academic_year=req.academic_year,
+        subject_code=req.subject_code,
+        subject_name=req.subject_name,
+        exam_date=dt,
+        session=req.session,
+        exam_time=req.exam_time,
+        document_url=req.document_url,
+        created_by=user["id"]
+    )
+    session.add(sched)
+    await session.commit()
+    await session.refresh(sched)
+    return sched
+
+@app.get("/api/examcell/schedule")
+async def get_exam_schedules(department_id: Optional[str] = None, batch: Optional[str] = None, semester: Optional[int] = None, user: dict = Depends(require_role("exam_cell", "admin")), session: AsyncSession = Depends(get_db)):
+    stmt = select(models.ExamSchedule).where(models.ExamSchedule.college_id == user["college_id"])
+    if department_id:
+        stmt = stmt.where(models.ExamSchedule.department_id == department_id)
+    if batch:
+        stmt = stmt.where(models.ExamSchedule.batch == batch)
+    if semester:
+        stmt = stmt.where(models.ExamSchedule.semester == semester)
+        
+    result = await session.execute(stmt.order_by(models.ExamSchedule.exam_date.desc()))
+    return result.scalars().all()
+
+@app.put("/api/examcell/schedule/{id}/publish")
+async def toggle_exam_schedule_publish(id: str, published: bool = Query(..., description="Set to true to publish, false to unpublish"), user: dict = Depends(require_role("exam_cell", "admin")), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(select(models.ExamSchedule).where(models.ExamSchedule.id == id, models.ExamSchedule.college_id == user["college_id"]))
+    sched = result.scalars().first()
+    if not sched:
+        raise HTTPException(status_code=404, detail="Exam schedule not found")
+        
+    sched.is_published = published
+    await session.commit()
+    return {"message": f"Schedule {'published' if published else 'unpublished'}"}
+
+@app.delete("/api/examcell/schedule/{id}")
+async def delete_exam_schedule(id: str, user: dict = Depends(require_role("exam_cell", "admin")), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(select(models.ExamSchedule).where(models.ExamSchedule.id == id, models.ExamSchedule.college_id == user["college_id"]))
+    sched = result.scalars().first()
+    if not sched:
+        raise HTTPException(status_code=404, detail="Exam schedule not found")
+    
+    await session.delete(sched)
+    await session.commit()
+    return {"message": "Exam schedule deleted"}
+
+@app.get("/api/student/exam-schedule")
+async def get_student_exam_schedule(user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
+    profile = user.get("profile_data") or {}
+    dept_str = profile.get("department", "")
+    batch_str = profile.get("batch", "")
+    
+    dept_r = await session.execute(
+        select(models.Department).where(
+            models.Department.college_id == user["college_id"],
+            or_(models.Department.code == dept_str, models.Department.name == dept_str)
+        )
+    )
+    dept = dept_r.scalars().first()
+    if not dept:
+        return []
+
+    stmt = select(models.ExamSchedule).where(
+        models.ExamSchedule.college_id == user["college_id"],
+        models.ExamSchedule.department_id == dept.id,
+        models.ExamSchedule.batch == batch_str,
+        models.ExamSchedule.is_published == True
+    ).order_by(models.ExamSchedule.exam_date.asc())
+    
+    result = await session.execute(stmt)
+    return result.scalars().all()
+
+@app.get("/api/examcell/dashboard-stats")
+async def get_examcell_dashboard_stats(user: dict = Depends(require_role("exam_cell", "admin")), session: AsyncSession = Depends(get_db)):
+    """
+    Dashboard Stats definitions:
+    - Schedules: Published versus unpublished entries in the ExamSchedule model for the tenant.
+    - Hall Tickets (generated): A hall ticket is considered "generated" when a student has an 
+      approved CourseRegistration AND a published ExamSchedule exists for that specific semester/year.
+    """
+    sched_r = await session.execute(
+        select(models.ExamSchedule.is_published, func.count(models.ExamSchedule.id))
+        .where(models.ExamSchedule.college_id == user["college_id"])
+        .group_by(models.ExamSchedule.is_published)
+    )
+    sched_counts = {str(k): v for k, v in sched_r.all()}
+    
+    regs_r = await session.execute(
+        select(func.count(models.CourseRegistration.id)).where(
+            models.CourseRegistration.college_id == user["college_id"],
+            models.CourseRegistration.status == "approved"
+        )
+    )
+    total_approved = regs_r.scalar() or 0
+    
+    # Single SQL aggregation to avoid multiple roundtrips and Python loops for resolution
+    gen_stmt = select(func.count(models.CourseRegistration.id.distinct())).join(
+        models.ExamSchedule,
+        and_(
+            models.CourseRegistration.college_id == models.ExamSchedule.college_id,
+            models.CourseRegistration.semester == models.ExamSchedule.semester,
+            models.CourseRegistration.academic_year == models.ExamSchedule.academic_year,
+            models.ExamSchedule.is_published == True
+        )
+    ).where(
+        models.CourseRegistration.college_id == user["college_id"],
+        models.CourseRegistration.status == "approved"
+    )
+    
+    gen_r = await session.execute(gen_stmt)
+    total_generated = gen_r.scalar() or 0
+        
+    return {
+        "schedules": {
+            "published": int(sched_counts.get("True", 0)),
+            "unpublished": int(sched_counts.get("False", 0))
+        },
+        "hall_tickets": {
+            "total_approved": total_approved,
+            "generated": total_generated
+        }
+    }
+
+@app.get("/api/student/hall-ticket", response_class=HTMLResponse)
 async def get_hall_ticket(semester: int, academic_year: str, user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
-    # Verify they have approved registrations for this semester
     regs_r = await session.execute(
         select(models.CourseRegistration).where(
             models.CourseRegistration.student_id == user["id"],
@@ -2533,20 +2729,134 @@ async def get_hall_ticket(semester: int, academic_year: str, user: dict = Depend
     if not regs:
         raise HTTPException(status_code=404, detail="No approved registrations found for this semester. Hall ticket unavailable.")
         
-    # In a full system, this would return a PDF file via StreamingResponse or a URL.
-    # We return the JSON representation of their hall ticket for the frontend to render.
-    return {
-        "student_name": user["name"],
-        "student_id": user["id"],
-        "department": user.get("department", ""),
-        "semester": semester,
-        "academic_year": academic_year,
-        "subjects": [
-            {"code": r.subject_code, "is_arrear": r.is_arrear} for r in regs
-        ]
-    }
+    profile = user.get("profile_data") or {}
+    dept_str = profile.get("department", "")
+    batch_str = profile.get("batch", "")
+    
+    dept_r = await session.execute(
+        select(models.Department).where(
+            models.Department.college_id == user["college_id"],
+            or_(models.Department.code == dept_str, models.Department.name == dept_str)
+        )
+    )
+    dept = dept_r.scalars().first()
+    dept_id = dept.id if dept else ""
+    
+    scheds = []
+    if dept_id:
+        sched_r = await session.execute(
+            select(models.ExamSchedule).where(
+                models.ExamSchedule.college_id == user["college_id"],
+                models.ExamSchedule.department_id == dept_id,
+                models.ExamSchedule.batch == batch_str,
+                models.ExamSchedule.semester == semester,
+                models.ExamSchedule.academic_year == academic_year,
+                models.ExamSchedule.is_published == True
+            )
+        )
+        scheds = sched_r.scalars().all()
+    
+    sched_map = { s.subject_code: s for s in scheds }
+    
+    photo_url = profile.get("photo_url")
+    if photo_url:
+        photo_html = f'<img src="{photo_url}" alt="Student Photo" style="width:100px; height:120px; object-fit:cover; border: 1px solid #ccc;">'
+    else:
+        initials = "".join([n[0] for n in user["name"].split() if n])[:2].upper()
+        photo_html = f'<div style="width:100px; height:120px; border: 1px solid #ccc; display:flex; align-items:center; justify-content:center; background:#eee; font-size:32px; font-weight:bold; color:#888;">{initials}</div>'
+
+    rows = ""
+    for r in regs:
+        s = sched_map.get(r.subject_code)
+        dt = s.exam_date.strftime("%d-%b-%Y") if s and s.exam_date else "TBA"
+        session_text = f"{s.session} ({s.exam_time})" if s else "TBA"
+        hall = s.document_url if s and s.document_url else "Check Notice Board"
+        
+        rows += f"""
+        <tr>
+            <td style="padding:8px; border:1px solid #ddd;">{r.subject_code}</td>
+            <td style="padding:8px; border:1px solid #ddd;">{s.subject_name if s else "Subject"}</td>
+            <td style="padding:8px; border:1px solid #ddd; text-align:center;">{"Arrear" if r.is_arrear else "Regular"}</td>
+            <td style="padding:8px; border:1px solid #ddd; text-align:center;">{dt}</td>
+            <td style="padding:8px; border:1px solid #ddd; text-align:center;">{session_text}</td>
+            <td style="padding:8px; border:1px solid #ddd; text-align:center;">{hall}</td>
+        </tr>
+        """
+        
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Hall Ticket - {user['name']}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }}
+            .header {{ text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }}
+            .header h1 {{ margin: 0; font-size: 24px; text-transform: uppercase; }}
+            .header p {{ margin: 5px 0 0 0; font-size: 16px; color: #666; }}
+            .student-info {{ display: flex; justify-content: space-between; margin-bottom: 30px; }}
+            .info-grid {{ display: grid; grid-template-columns: 120px 1fr; gap: 10px; }}
+            .info-label {{ font-weight: bold; }}
+            table {{ width: 100%; border-collapse: collapse; margin-bottom: 30px; }}
+            th {{ background: #f4f4f4; padding: 10px; border: 1px solid #ddd; text-align: center; }}
+            .footer {{ display: flex; justify-content: space-between; margin-top: 50px; text-align: center; }}
+            .signature-box {{ width: 200px; padding-top: 50px; border-top: 1px solid #333; }}
+            @media print {{
+                .no-print {{ display: none; }}
+                body {{ padding: 0; }}
+            }}
+            .print-btn {{ display: block; margin: 20px auto; padding: 10px 20px; background: #007BFF; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 16px; }}
+            .print-btn:hover {{ background: #0056b3; }}
+        </style>
+    </head>
+    <body>
+        <div class="no-print" style="text-align:center;">
+            <button class="print-btn" onclick="window.print()">Print Hall Ticket</button>
+        </div>
+        
+        <div class="header">
+            <h1>Hall Ticket</h1>
+            <p>End Semester Examination - {academic_year}</p>
+        </div>
+        
+        <div class="student-info">
+            <div class="info-grid">
+                <div class="info-label">Name:</div><div>{user['name']}</div>
+                <div class="info-label">Reg No:</div><div>{profile.get("college_id", user["id"])}</div>
+                <div class="info-label">Department:</div><div>{dept_str}</div>
+                <div class="info-label">Semester:</div><div>{semester}</div>
+            </div>
+            <div class="photo">
+                {photo_html}
+            </div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Subject Code</th>
+                    <th>Subject Name</th>
+                    <th>Type</th>
+                    <th>Date</th>
+                    <th>Session</th>
+                    <th>Hall / Room Allocation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows}
+            </tbody>
+        </table>
+        
+        <div class="footer">
+            <div class="signature-box">Signature of Student</div>
+            <div class="signature-box">Controller of Examinations</div>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html)
 
 # ─── Phase 5: NAAC Institutional Data ───────────────────────────────────────
+
 
 @app.get("/api/principal/institution-profile")
 async def get_institution_profile(user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
@@ -4044,6 +4354,13 @@ async def publish_results(entry_id: str, user: dict = Depends(require_role("exam
     semester = int(metadata.get("semester", 1))
     max_marks = float(metadata.get("max_marks", 100))
     
+    college_r = await session.execute(
+        select(models.College).where(models.College.id == user["college_id"])
+    )
+    college = college_r.scalars().first()
+    college_settings = college.settings if college and college.settings else {}
+    grade_scale = college_settings.get("grade_scale") or DEFAULT_GRADE_SCALE
+    
     semester_grades = []
     for student_entry in entries:
         student_id = student_entry.get("student_id")
@@ -4051,14 +4368,11 @@ async def publish_results(entry_id: str, user: dict = Depends(require_role("exam
         pct = (marks / max_marks) * 100 if max_marks > 0 else 0
         
         # Calculate grade from percentage dynamically
-        if pct >= 90: grade = "O"
-        elif pct >= 80: grade = "A+"
-        elif pct >= 70: grade = "A"
-        elif pct >= 60: grade = "B+"
-        elif pct >= 50: grade = "B"
-        elif pct >= 45: grade = "C"
-        elif pct >= 40: grade = "D"
-        else: grade = "F"
+        grade = "F"
+        for boundary in sorted(grade_scale, key=lambda x: x.get("min_pct", 0), reverse=True):
+            if pct >= boundary.get("min_pct", 0):
+                grade = boundary.get("grade", "F")
+                break
         
         if not student_id:
             continue

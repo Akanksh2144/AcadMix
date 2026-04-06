@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Boolean, Index, UniqueConstraint, Date
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Boolean, Index, UniqueConstraint, Date, CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 import uuid
@@ -14,10 +14,22 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 class College(Base, SoftDeleteMixin):
+    """
+    settings JSONB shape:
+    {
+      "grade_scale": [
+        {"min_pct": 90, "grade": "O", "points": 10},
+        {"min_pct": 80, "grade": "A+", "points": 9},
+        ...
+        {"min_pct": 0, "grade": "F", "points": 0}
+      ]
+    }
+    """
     __tablename__ = "colleges"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
     name = Column(String, nullable=False)
     domain = Column(String, nullable=True)
+    settings = Column(JSONB, nullable=False, server_default='{}')
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Department(Base, SoftDeleteMixin):
@@ -468,6 +480,28 @@ class CourseRegistration(Base, SoftDeleteMixin):
     )
 
 # ─── Phase 5: NAAC Institutional Data ──────────────────────────────────────
+
+class ExamSchedule(Base, SoftDeleteMixin):
+    __tablename__ = "exam_schedules"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    department_id = Column(String, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False)
+    batch = Column(String, nullable=False)
+    semester = Column(Integer, nullable=False)
+    academic_year = Column(String, nullable=False)
+    subject_code = Column(String, nullable=False)
+    subject_name = Column(String, nullable=False)
+    exam_date = Column(Date, nullable=False)
+    session = Column(String, nullable=False) # Handled by check constraint below
+    exam_time = Column(String, nullable=False)
+    is_published = Column(Boolean, nullable=False, server_default='false')
+    document_url = Column(String, nullable=True)
+    created_by = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("session IN ('FN', 'AN')", name="ck_exam_session"),
+        Index("ix_exam_sched_college_dept_batch", "college_id", "department_id", "batch"),
+    )
 
 class InstitutionProfile(Base, SoftDeleteMixin):
     __tablename__ = "institution_profiles"
