@@ -426,3 +426,42 @@ class LeaveRequest(Base, SoftDeleteMixin):
         Index("ix_leave_applicant_status", "applicant_id", "status"),
         Index("ix_leave_college_status", "college_id", "status"),
     )
+
+# ─── Phase 4: Course Registration System ───────────────────────────────────
+
+class RegistrationWindow(Base, SoftDeleteMixin):
+    __tablename__ = "registration_windows"
+    id            = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id    = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    semester      = Column(Integer, nullable=False)
+    academic_year = Column(String, nullable=False)
+    open_at       = Column(DateTime(timezone=True), nullable=False)
+    close_at      = Column(DateTime(timezone=True), nullable=False)
+    is_active     = Column(Boolean, nullable=False, server_default='false')     # Exam Cell toggles
+    created_by    = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at    = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_reg_window_college_status", "college_id", "is_active"),
+    )
+
+class CourseRegistration(Base, SoftDeleteMixin):
+    __tablename__ = "course_registrations"
+    id            = Column(String, primary_key=True, index=True, default=generate_uuid)
+    student_id    = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    college_id    = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    subject_code  = Column(String, nullable=False)
+    semester      = Column(Integer, nullable=False)
+    academic_year = Column(String, nullable=False)
+    is_arrear     = Column(Boolean, nullable=False, server_default='false')
+    status        = Column(String, nullable=False, server_default="registered")  # registered, approved, rejected
+    registered_at = Column(DateTime(timezone=True), server_default=func.now())
+    reviewed_at   = Column(DateTime(timezone=True), nullable=True)
+    reviewed_by   = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    
+    __table_args__ = (
+        UniqueConstraint("student_id", "subject_code", "academic_year", name="uq_course_reg"),
+        Index("ix_course_reg_student_semester", "student_id", "academic_year", "semester"),
+        Index("ix_course_reg_college_status", "college_id", "status"),
+    )
+
