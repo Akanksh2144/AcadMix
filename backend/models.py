@@ -313,7 +313,7 @@ class SubjectCIAConfig(Base, SoftDeleteMixin):
     subject_name             = Column(String, nullable=True)
     academic_year            = Column(String, nullable=False)   # e.g. "2024-25"
     semester                 = Column(Integer, nullable=False)
-    template_id              = Column(String, ForeignKey("cia_templates.id", ondelete="RESTRICT"), nullable=False)
+    template_id              = Column(String, ForeignKey("cia_templates.id"), nullable=False)
     is_consolidation_enabled = Column(Boolean, nullable=False, server_default='false')
     created_at               = Column(DateTime(timezone=True), server_default=func.now())
     updated_at               = Column(DateTime(timezone=True), onupdate=func.now())

@@ -22,7 +22,7 @@ import csv
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import or_, and_, delete, update
+from sqlalchemy import or_, and_, delete, update, func, text, desc
 from sqlalchemy.orm import selectinload
 from database import get_db
 import models
@@ -86,7 +86,7 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "ngrok-skip-browser-warning"],
+    allow_headers=["Content-Type", "Authorization"],
     max_age=3600,
 )
 
@@ -513,8 +513,8 @@ async def login(req: LoginRequest, response: Response, request: Request, session
     tid = user.college_id or ""
     access = create_access_token(user.id, user.role, tid, perms)
     refresh = create_refresh_token(user.id)
-    response.set_cookie("access_token", access, httponly=True, secure=False, samesite="lax", max_age=86400)
-    response.set_cookie("refresh_token", refresh, httponly=True, secure=False, samesite="lax", max_age=604800)
+    response.set_cookie("access_token", access, httponly=True, secure=True, samesite="lax", max_age=86400)
+    response.set_cookie("refresh_token", refresh, httponly=True, secure=True, samesite="lax", max_age=604800)
 
     user_out = {
         "id": user.id,
@@ -599,7 +599,7 @@ async def refresh_access_token(request: Request, response: Response):
                 raise HTTPException(status_code=401, detail="User not found")
                 
         new_access = create_access_token(user_id, user.role, user.college_id)
-        response.set_cookie("access_token", new_access, httponly=True, secure=False, samesite="lax", max_age=900)
+        response.set_cookie("access_token", new_access, httponly=True, secure=True, samesite="lax", max_age=900)
         
         return {"access_token": new_access, "expires_in": 900}
         
@@ -1028,20 +1028,31 @@ async def upsert_timetable_slots(req: BulkSlotsUpsert, user: dict = Depends(requ
     updated_count = 0
     created_count = 0
 
-    for slot_data in req.slots:
-        # Check if slot already exists for this exact coordinates
+    coords = set((s.department_id, s.batch, s.section, s.academic_year) for s in req.slots)
+    conditions = [
+        and_(
+            models.PeriodSlot.department_id == c[0],
+            models.PeriodSlot.batch == c[1],
+            models.PeriodSlot.section == c[2],
+            models.PeriodSlot.academic_year == c[3]
+        ) for c in coords
+    ]
+    
+    existing_map = {}
+    if conditions:
         exist_r = await session.execute(
             select(models.PeriodSlot).where(
                 models.PeriodSlot.college_id == user["college_id"],
-                models.PeriodSlot.department_id == slot_data.department_id,
-                models.PeriodSlot.batch == slot_data.batch,
-                models.PeriodSlot.section == slot_data.section,
-                models.PeriodSlot.academic_year == slot_data.academic_year,
-                models.PeriodSlot.day == slot_data.day,
-                models.PeriodSlot.period_no == slot_data.period_no
+                or_(*conditions)
             )
         )
-        existing = exist_r.scalars().first()
+        for s in exist_r.scalars().all():
+            key = (s.department_id, s.batch, s.section, s.academic_year, s.day, s.period_no)
+            existing_map[key] = s
+
+    for slot_data in req.slots:
+        key = (slot_data.department_id, slot_data.batch, slot_data.section, slot_data.academic_year, slot_data.day, slot_data.period_no)
+        existing = existing_map.get(key)
 
         if existing:
             existing.semester = slot_data.semester
@@ -1101,16 +1112,29 @@ async def get_department_timetable(
         "faculty_id": s.faculty_id, "slot_type": s.slot_type
     } for s in slots]
 
+async def get_current_academic_year(session: AsyncSession, college_id: str) -> str:
+    today = datetime.now(timezone.utc).date()
+    result = await session.execute(
+        select(models.AcademicCalendar).where(
+            models.AcademicCalendar.college_id == college_id,
+            models.AcademicCalendar.start_date <= today,
+            models.AcademicCalendar.end_date >= today
+        )
+    )
+    calendar = result.scalars().first()
+    if not calendar:
+        raise HTTPException(status_code=400, detail="No active Academic Calendar configured for today.")
+    return calendar.academic_year
+
 @app.get("/api/faculty/timetable/today")
 async def get_faculty_today_timetable(user: dict = Depends(require_role("teacher", "faculty", "hod")), session: AsyncSession = Depends(get_db)):
     """Get today's periods for the logged-in faculty."""
-    today = datetime.now()
+    today = datetime.now(timezone.utc)
     # Map Python weekday() (0=Mon, 6=Sun) to our DB day strings ("MON", "TUE"...)
     days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
     current_day = days[today.weekday()]
 
-    # Assuming current academic year is 2024-25 for now, should be dynamic in production based on AcademicCalendar
-    current_academic_year = "2024-25"
+    current_academic_year = await get_current_academic_year(session, user.get("college_id", ""))
 
     result = await session.execute(
         select(models.PeriodSlot).where(
@@ -1148,7 +1172,7 @@ async def get_student_timetable(user: dict = Depends(require_role("student")), s
     if not dept:
         return []
 
-    current_academic_year = "2024-25" # placeholder
+    current_academic_year = await get_current_academic_year(session, user.get("college_id", ""))
 
     result = await session.execute(
         select(models.PeriodSlot).where(
@@ -1178,11 +1202,14 @@ async def get_student_timetable(user: dict = Depends(require_role("student")), s
 @app.get("/api/faculty/attendance/today")
 async def get_today_attendance_status(user: dict = Depends(require_role("teacher", "faculty", "hod")), session: AsyncSession = Depends(get_db)):
     """Get today's slots for faculty and indicate if attendance is marked."""
-    today = datetime.now()
+    today = datetime.now(timezone.utc)
     days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
     current_day = days[today.weekday()]
     current_date = today.date()
-    current_academic_year = "2024-25"
+    try:
+        current_academic_year = await get_current_academic_year(session, user.get("college_id", ""))
+    except HTTPException:
+        return []
 
     slots_r = await session.execute(
         select(models.PeriodSlot).where(
@@ -1251,13 +1278,12 @@ async def mark_attendance_batch(req: AttendanceMarkBatch, user: dict = Depends(r
         is_late_entry = False
 
     # Check for existing records to prevent duplicates
-    # Alternatively we could use a postgres ON CONFLICT DO UPDATE, 
-    # but since we want to handle the batch cleanly, let's delete existing for this slot+date
+    # Soft delete existing records for this slot+date
     await session.execute(
-        delete(models.AttendanceRecord).where(
+        update(models.AttendanceRecord).where(
             models.AttendanceRecord.period_slot_id == slot.id,
             models.AttendanceRecord.date == mark_date
-        )
+        ).values(is_deleted=True, deleted_at=func.now())
     )
 
     records = [
@@ -1325,15 +1351,19 @@ async def get_attendance_defaulters(
             ROUND((COUNT(*) FILTER (WHERE status = 'present' OR status = 'od') * 100.0 / COUNT(*))::numeric, 1) as percentage
         FROM attendance_records ar
         JOIN users u ON ar.student_id = u.id
-        WHERE ar.college_id = :college_id AND ar.is_deleted = false
+        WHERE ar.college_id = :college_id 
+          AND ar.is_deleted = false 
+          AND u.profile_data->>'department_id' = :department_id
         GROUP BY student_id, u.name, u.profile_data->>'batch', subject_code
         HAVING (COUNT(*) FILTER (WHERE status = 'present' OR status = 'od') * 100.0 / COUNT(*)) < :threshold
         ORDER BY batch, student_name, subject_code
     """)
     
-    # We aren't filtering by department here directly due to the complex join on profile_data
-    # This could be refined later with a proper Student table or strict JSONB filtering
-    result = await session.execute(stmt, {"college_id": user["college_id"], "threshold": threshold})
+    result = await session.execute(stmt, {
+        "college_id": user["college_id"], 
+        "department_id": user.get("profile_data", {}).get("department_id", ""),
+        "threshold": threshold
+    })
     rows = result.all()
     
     return [{
@@ -1439,7 +1469,7 @@ async def review_leave(leave_id: str, req: LeaveReview, user: dict = Depends(req
 
     leave.status = req.action
     leave.reviewed_by = user["id"]
-    leave.reviewed_at = datetime.now()
+    leave.reviewed_at = datetime.now(timezone.utc)
     leave.review_remarks = req.remarks
 
     # If approved and faculty, auto-release their slots
@@ -1460,12 +1490,19 @@ async def review_leave(leave_id: str, req: LeaveReview, user: dict = Depends(req
             current_date_iter += timedelta(days=1)
         
         if leave_days:
-            slots_r = await session.execute(
-                select(models.PeriodSlot).where(
-                    models.PeriodSlot.faculty_id == leave.applicant_id,
-                    models.PeriodSlot.day.in_(leave_days)
-                )
+            try:
+                current_academic_year = await get_current_academic_year(session, user.get("college_id", ""))
+            except HTTPException:
+                current_academic_year = None
+                
+            query = select(models.PeriodSlot).where(
+                models.PeriodSlot.faculty_id == leave.applicant_id,
+                models.PeriodSlot.day.in_(leave_days)
             )
+            if current_academic_year:
+                query = query.where(models.PeriodSlot.academic_year == current_academic_year)
+                
+            slots_r = await session.execute(query)
             slots = slots_r.scalars().all()
             for slot in slots:
                 slot.original_faculty_id = slot.faculty_id
@@ -1516,7 +1553,12 @@ async def assign_substitute_faculty(slot_id: str, req: SubstituteAssign, user: d
         raise HTTPException(status_code=400, detail="Slot is not in the released pool")
 
     # Verify target faculty exists
-    fac_r = await session.execute(select(models.User).where(models.User.id == req.faculty_id))
+    fac_r = await session.execute(
+        select(models.User).where(
+            models.User.id == req.faculty_id,
+            models.User.college_id == user["college_id"]
+        )
+    )
     if not fac_r.scalars().first():
         raise HTTPException(status_code=404, detail="Substitute faculty not found")
 
@@ -1622,22 +1664,24 @@ async def register_courses(req: List[CourseRegistrationSchema], user: dict = Dep
     active_windows = window_r.scalars().all()
     active_pairs = [(w.semester, w.academic_year) for w in active_windows]
     
+    # Check for duplicates using a single IN clause
+    subject_codes = [c.subject_code for c in req]
+    dup_r = await session.execute(
+        select(models.CourseRegistration.subject_code, models.CourseRegistration.academic_year)
+        .where(
+            models.CourseRegistration.student_id == user["id"],
+            models.CourseRegistration.subject_code.in_(subject_codes)
+        )
+    )
+    existing_pairs = set([(row.subject_code, row.academic_year) for row in dup_r.all()])
+
     inserted = 0
     for course_data in req:
         # Validate window is open
         if (course_data.semester, course_data.academic_year) not in active_pairs:
-            # We don't error out entirely, we just skip it or log it. Let's error to be strict.
             raise HTTPException(status_code=400, detail=f"No active registration window for semester {course_data.semester} ({course_data.academic_year})")
             
-        # Check for duplicates using Postgres ON CONFLICT or simple select
-        dup_r = await session.execute(
-            select(models.CourseRegistration).where(
-                models.CourseRegistration.student_id == user["id"],
-                models.CourseRegistration.subject_code == course_data.subject_code,
-                models.CourseRegistration.academic_year == course_data.academic_year
-            )
-        )
-        if not dup_r.scalars().first():
+        if (course_data.subject_code, course_data.academic_year) not in existing_pairs:
             reg = models.CourseRegistration(
                 student_id=user["id"],
                 college_id=user["college_id"],
@@ -1780,7 +1824,7 @@ async def get_hall_ticket(semester: int, academic_year: str, user: dict = Depend
 # ─── Phase 5: NAAC Institutional Data ───────────────────────────────────────
 
 @app.get("/api/principal/institution-profile")
-async def get_institution_profile(user: dict = Depends(require_role("principal", "admin")), session: AsyncSession = Depends(get_db)):
+async def get_institution_profile(user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
     result = await session.execute(
         select(models.InstitutionProfile).where(
             models.InstitutionProfile.college_id == user["college_id"]
@@ -1803,7 +1847,7 @@ async def get_institution_profile(user: dict = Depends(require_role("principal",
     }
 
 @app.put("/api/principal/institution-profile")
-async def update_institution_profile(req: InstitutionProfileUpdate, user: dict = Depends(require_role("principal", "admin")), session: AsyncSession = Depends(get_db)):
+async def update_institution_profile(req: InstitutionProfileUpdate, user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
     result = await session.execute(
         select(models.InstitutionProfile).where(
             models.InstitutionProfile.college_id == user["college_id"]
@@ -2988,7 +3032,7 @@ async def get_students_for_marks(department: str, batch: str, section: str, user
 async def get_mark_entry(assignment_id: str, exam_type: str, user: dict = Depends(require_role("teacher", "hod")), session: AsyncSession = Depends(get_db)):
     result = await session.execute(
         select(models.MarkEntry).where(
-            models.MarkEntry.id == assignment_id,
+            models.MarkEntry.assignment_id == assignment_id,
             models.MarkEntry.exam_type == exam_type,
             models.MarkEntry.faculty_id == user["id"],
         )
@@ -3711,6 +3755,7 @@ TIMEOUT_CONFIG = {
 @app.post("/api/code/execute")
 @limiter.limit("30/minute")
 async def execute_code(request: Request, req: CodeExecuteRequest, user: dict = Depends(get_current_user)):
+    _validate_code(req.code, req.language.lower())
     lang_timeout = TIMEOUT_CONFIG.get(req.language.lower(), 65.0)
 
     @tenacity.retry(
