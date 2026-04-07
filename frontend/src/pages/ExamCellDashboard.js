@@ -12,6 +12,7 @@ import {
   PaperPlaneTilt,
   Sun,
   Moon,
+  Bell,
 } from "@phosphor-icons/react";
 import { examCellAPI, marksAPI } from "../services/api";
 import { useTheme } from "../contexts/ThemeContext";
@@ -249,6 +250,15 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {/* Notification Bell */}
+            <div className="relative">
+              <button
+                className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors relative"
+                aria-label="Notifications"
+              >
+                <Bell size={20} weight="duotone" />
+              </button>
+            </div>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}

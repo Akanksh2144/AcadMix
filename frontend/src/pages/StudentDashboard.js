@@ -196,9 +196,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
               </AnimatePresence>
             </motion.button>
 
-            {/* Notification Bell */}
-            {dashboard?.activity?.length > 0 && (
-              <div className="relative">
+            <div className="relative">
                 <button
                   data-testid="notification-bell"
                   onClick={handleBellClick}
@@ -213,7 +211,6 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
                   )}
                 </button>
               </div>
-            )}
             <button onClick={() => setShowProfile(true)} className="hidden sm:flex items-center gap-2 bg-slate-50 dark:bg-white/5 rounded-2xl px-4 py-2 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer">
               <GraduationCap size={18} weight="duotone" className="text-indigo-500" />
               <div className="text-right">
