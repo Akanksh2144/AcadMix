@@ -659,15 +659,27 @@ class ActivityPermission(Base, SoftDeleteMixin):
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
     college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     faculty_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    activity_type = Column(String, nullable=False)
-    title = Column(String, nullable=False)
-    description = Column(String, nullable=True)
-    date = Column(Date, nullable=False)
-    venue = Column(String, nullable=True)
-    phase = Column(String, nullable=False, server_default='pre_event')
-    status = Column(String, nullable=False, server_default='pending')
-    hod_approved_by = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    report_data = Column(JSONB, nullable=True)
+    department_id = Column(String, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    activity_type = Column(String, nullable=False) # Enum: remedial, career_counselling, study_visit, seminar, sports, cultural, ncc, nss
+    phase = Column(String, nullable=False, server_default='permission') # Enum: permission, post_event
+    
+    event_title = Column(String, nullable=False)
+    event_date = Column(Date, nullable=False)
+    event_details = Column(JSONB, nullable=True)
+    
+    hod_permission_decision = Column(String, nullable=True) # pending, approved, rejected
+    hod_permission_notes = Column(String, nullable=True)
+    hod_permission_decided_at = Column(DateTime(timezone=True), nullable=True)
+    
+    hod_report_decision = Column(String, nullable=True) # pending, accepted, rejected, revision_needed
+    hod_report_notes = Column(String, nullable=True)
+    hod_report_decided_at = Column(DateTime(timezone=True), nullable=True)
+    
+    principal_noted_at = Column(DateTime(timezone=True), nullable=True)
+    principal_notes = Column(String, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class TaskAssignment(Base, SoftDeleteMixin):
     __tablename__ = "task_assignments"

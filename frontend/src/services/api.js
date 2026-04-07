@@ -382,3 +382,25 @@ export const industryAPI = {
 };
 
 export default api;
+
+export const principalAPI = {
+  dashboard: () => api.get('/principal/dashboard'),
+  attendanceCompliance: (year) => api.get('/principal/reports/attendance-compliance', { params: { academic_year: year } }),
+  academicPerformance: (semester, year) => api.get('/principal/reports/academic-performance', { params: { semester, academic_year: year } }),
+  ciaStatus: (year) => api.get('/principal/reports/cia-status', { params: { academic_year: year } }),
+  staffProfiles: () => api.get('/principal/reports/staff-profiles'),
+  infrastructure: () => api.get('/principal/infrastructure'),
+  extensionActivities: () => api.get('/principal/reports/extension-activities'),
+  institutionProfile: () => api.get('/principal/institution-profile'),
+  updateInstitutionProfile: (data) => api.put('/principal/institution-profile', data),
+  grievances: (params) => api.get('/admin/grievances', { params }),
+  reassignGrievance: (id, data) => api.put('/principal/grievances/' + id + '/reassign', data),
+  pendingLeaves: () => api.get('/principal/leave/pending'),
+  approveLeave: (id, data) => api.put('/hod/leave/' + id + '/review', data),
+  activityReports: () => api.get('/principal/activity-reports'),
+  placementPlaceholder: () => api.get('/principal/reports/placement'),
+  tasksPlaceholder: () => api.get('/principal/tasks'),
+  meetingsPlaceholder: () => api.get('/principal/meetings'),
+  annualReportExportUrl: (year) => api.defaults.baseURL + '/principal/reports/annual?academic_year=' + year,
+  calendarEvents: (data) => api.post('/principal/calendar-events', data)
+};
