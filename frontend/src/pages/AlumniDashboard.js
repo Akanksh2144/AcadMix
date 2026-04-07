@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Briefcase, GraduationCap, CalendarBlank, SignOut, Sun, Moon, Bell, Info, Medal, ChatDots, MapPin, LinkedinLogo, CheckCircle , UserCircle } } rom '@phosphor-icons/react';
+import { User, Briefcase, GraduationCap, CalendarBlank, SignOut, Sun, Moon, Bell, Info, Medal, ChatDots, MapPin, LinkedinLogo, CheckCircle, UserCircle } from '@phosphor-icons/react';
 import { alumniAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';

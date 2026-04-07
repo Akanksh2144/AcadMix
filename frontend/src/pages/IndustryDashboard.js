@@ -5,8 +5,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import { 
   SignOut, Sun, Moon, Buildings, Handshake, Briefcase, 
   ChalkboardTeacher, ProjectorScreenChart, Star, 
-  MapPin, Globe, EnvelopeSimple, Phone, CalendarBlank, ChartBar, Bell
-, UserCircle } } rom '@phosphor-icons/react';
+  MapPin, Globe, EnvelopeSimple, Phone, CalendarBlank, ChartBar, Bell, UserCircle 
+} from '@phosphor-icons/react';
 import { industryAPI, authAPI, setAuthToken } from '../services/api';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 
