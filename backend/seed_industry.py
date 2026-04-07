@@ -1,16 +1,22 @@
 import asyncio
-from database import SessionLocal, engine
+from database import AsyncSessionLocal, engine
 import models
-from server import pwd_context
+from server import hash_password
 from sqlalchemy.future import select
 
 async def main():
     async with engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
         
-    async with SessionLocal() as session:
-        # College ID from GNITC
-        college_id = "GNITC"
+    async with AsyncSessionLocal() as session:
+        # Get first college
+        college_res = await session.execute(select(models.College).limit(1))
+        college = college_res.scalars().first()
+        if not college:
+            print("No college found in DB")
+            return
+        
+        college_id = college.id
         
         # 1. Ensure College & InstitutionProfile exists (assumed they do)
         
@@ -38,9 +44,9 @@ async def main():
                 id="IND001",
                 college_id=college_id,
                 name="Aisha Sharma (TechCorp)",
-                email="aisha@techcorp.com",
+                email="IND001",
                 role="industry",
-                password_hash=pwd_context.hash("industry123"),
+                password_hash=hash_password("industry123"),
                 profile_data={
                     "company_id": company.id,
                     "company_name": "TechCorp Solutions",
@@ -89,6 +95,8 @@ async def main():
             print("Created seed Industry Project")
             
         print("\nSeed completion status: SUCCESS")
+    
+    await engine.dispose()
 
 if __name__ == "__main__":
     asyncio.run(main())
