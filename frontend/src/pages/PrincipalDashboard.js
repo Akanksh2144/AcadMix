@@ -237,6 +237,9 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
              >
                 <Bank size={20} weight="duotone" />
              </button>
+             <button onClick={onLogout} className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 transition-colors" title="Sign Out">
+               <SignOut size={20} weight="duotone" />
+             </button>
           </div>
         </div>
       </header>
