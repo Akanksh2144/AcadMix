@@ -86,6 +86,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const fetchData = async () => {
