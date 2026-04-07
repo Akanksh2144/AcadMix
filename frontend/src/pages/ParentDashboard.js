@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, GraduationCap, ChartBar, CalendarDots, ClockCountdown, Chalkboard, SignOut, Sun, Moon, FileText, ChatCircleDots, CaretDown, Warning, CheckCircle, XCircle, Clock, BookOpen, UserCircle, Download, Bell } from '@phosphor-icons/react';
 import { parentAPI, grievanceAPI } from '../services/api';
@@ -42,6 +43,7 @@ const statusColor = (status) => {
 
 const ParentDashboard = ({ navigate, user, onLogout }) => {
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('parent_tab') || 'overview');
+  const [showProfile, setShowProfile] = useState(false);
   useEffect(() => { sessionStorage.setItem('parent_tab', activeTab); }, [activeTab]);
 
   const { isDark, toggle: toggleTheme } = useTheme();
@@ -178,25 +180,29 @@ const ParentDashboard = ({ navigate, user, onLogout }) => {
                 </button>
               </div>
               <div className="max-h-80 overflow-y-auto divide-y divide-slate-50 dark:divide-white/5">
-                {notifications.slice(0, 8).map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      item.type === 'warning' ? 'bg-amber-50 dark:bg-amber-500/15' :
-                      item.type === 'error' ? 'bg-red-50 dark:bg-red-500/15' :
-                      item.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-500/15' :
-                      'bg-blue-50 dark:bg-blue-500/15'
-                    }`}>
-                      {item.type === 'warning' ? <Warning size={14} weight="duotone" className="text-amber-500" /> :
-                       item.type === 'error' ? <XCircle size={14} weight="duotone" className="text-red-500" /> :
-                       item.type === 'success' ? <CheckCircle size={14} weight="duotone" className="text-emerald-500" /> :
-                       <Bell size={14} weight="duotone" className="text-blue-500" />}
+                {(!notifications || notifications.length === 0) ? (
+                  <div className="p-8 text-center text-slate-500 text-sm">No new notifications.</div>
+                ) : (
+                  notifications.slice(0, 8).map((item, i) => (
+                    <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                        item.type === 'warning' ? 'bg-amber-50 dark:bg-amber-500/15' :
+                        item.type === 'error' ? 'bg-red-50 dark:bg-red-500/15' :
+                        item.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-500/15' :
+                        'bg-blue-50 dark:bg-blue-500/15'
+                      }`}>
+                        {item.type === 'warning' ? <Warning size={14} weight="duotone" className="text-amber-500" /> :
+                         item.type === 'error' ? <XCircle size={14} weight="duotone" className="text-red-500" /> :
+                         item.type === 'success' ? <CheckCircle size={14} weight="duotone" className="text-emerald-500" /> :
+                         <Bell size={14} weight="duotone" className="text-blue-500" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{item.title}</p>
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{item.subtitle}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{item.title}</p>
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{item.subtitle}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </motion.div>
           </>
@@ -708,7 +714,10 @@ const ParentDashboard = ({ navigate, user, onLogout }) => {
             )}
           </>
         )}
-      </div>
+        <AnimatePresence>
+        {showProfile && <UserProfileModal user={user} onClose={() => setShowProfile(false)} />}
+      </AnimatePresence>
+    </div>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Briefcase, GraduationCap, CalendarBlank, SignOut, Sun, Moon, Bell, Info, Medal, ChatDots, MapPin, LinkedinLogo, CheckCircle } from '@phosphor-icons/react';
+import { User, Briefcase, GraduationCap, CalendarBlank, SignOut, Sun, Moon, Bell, Info, Medal, ChatDots, MapPin, LinkedinLogo, CheckCircle , UserCircle } } rom '@phosphor-icons/react';
 import { alumniAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
@@ -278,6 +279,7 @@ const EventsContent = () => (
 // ─── Main Dashboard ────────────────────────────────────────────
 const AlumniDashboard = ({ navigate, user, onLogout }) => {
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('alumni_tab') || 'overview');
+  const [showProfile, setShowProfile] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   
@@ -379,7 +381,10 @@ const AlumniDashboard = ({ navigate, user, onLogout }) => {
           {activeTab === 'mentorship' && <MentorshipsContent key="mentorship" />}
           {activeTab === 'events' && <EventsContent key="events" />}
         </AnimatePresence>
-      </div>
+        <AnimatePresence>
+        {showProfile && <UserProfileModal user={user} onClose={() => setShowProfile(false)} />}
+      </AnimatePresence>
+    </div>
     </div>
   );
 };

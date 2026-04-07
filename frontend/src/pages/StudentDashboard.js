@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Trophy, ChartLine, Fire, BookOpen, Calendar, Target, SignOut, Terminal, ArrowRight, GraduationCap, Play, Medal, Lightning, Warning, Bell, Exam, Briefcase, Sun, Moon, CalendarDots, Chalkboard, UserCircle, ListBullets } from '@phosphor-icons/react';
 import { analyticsAPI } from '../services/api';
@@ -140,28 +141,32 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
                 </button>
               </div>
               <div className="max-h-80 overflow-y-auto divide-y divide-slate-50 dark:divide-white/5">
-                {(dashboard?.activity || []).slice(0, 8).map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      item.type === 'quiz_result' ? 'bg-emerald-50 dark:bg-emerald-500/15' : 'bg-indigo-50 dark:bg-indigo-500/15'
-                    }`}>
-                      {item.type === 'quiz_result' ? (
-                        <Exam size={14} weight="duotone" className="text-emerald-500" />
-                      ) : (
-                        <Bell size={14} weight="duotone" className="text-indigo-500" />
+                {(!dashboard?.activity || dashboard?.activity?.length === 0) ? (
+                  <div className="p-8 text-center text-slate-500 text-sm">No new notifications.</div>
+                ) : (
+                  (dashboard?.activity || []).slice(0, 8).map((item, i) => (
+                    <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                        item.type === 'quiz_result' ? 'bg-emerald-50 dark:bg-emerald-500/15' : 'bg-indigo-50 dark:bg-indigo-500/15'
+                      }`}>
+                        {item.type === 'quiz_result' ? (
+                          <Exam size={14} weight="duotone" className="text-emerald-500" />
+                        ) : (
+                          <Bell size={14} weight="duotone" className="text-indigo-500" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{item.title}</p>
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{item.subtitle} • {timeAgo(item.timestamp)}</p>
+                      </div>
+                      {item.score !== undefined && (
+                        <span className={`text-sm font-extrabold flex-shrink-0 ${
+                          item.score >= 60 ? 'text-emerald-600' : item.score >= 40 ? 'text-amber-600' : 'text-red-600'
+                        }`}>{item.score?.toFixed(0)}%</span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{item.title}</p>
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{item.subtitle} • {timeAgo(item.timestamp)}</p>
-                    </div>
-                    {item.score !== undefined && (
-                      <span className={`text-sm font-extrabold flex-shrink-0 ${
-                        item.score >= 60 ? 'text-emerald-600' : item.score >= 40 ? 'text-amber-600' : 'text-red-600'
-                      }`}>{item.score?.toFixed(0)}%</span>
-                    )}
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </motion.div>
           </>
@@ -211,11 +216,13 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
                   )}
                 </button>
               </div>
-            <button onClick={() => setShowProfile(true)} className="hidden sm:flex items-center gap-2 bg-slate-50 dark:bg-white/5 rounded-2xl px-4 py-2 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer">
-              <GraduationCap size={18} weight="duotone" className="text-indigo-500" />
-              <div className="text-right">
-                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{user?.name}</p>
-                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{user?.college_id} • {user?.department} • {user?.section}</p>
+            <button onClick={() => setShowProfile(true)} className="hidden sm:flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-2xl px-4 py-2 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer text-left border border-slate-100 dark:border-white/5">
+              <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
+                <GraduationCap size={18} weight="duotone" className="text-indigo-500" />
+              </div>
+              <div className="flex flex-col justify-center">
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">{user?.name}</p>
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-500 leading-tight mt-0.5">{user?.college_id} • {user?.department} • {user?.section}</p>
               </div>
             </button>
             <button data-testid="logout-button" onClick={onLogout} className="p-2.5 rounded-full bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500 transition-colors" aria-label="Sign out">

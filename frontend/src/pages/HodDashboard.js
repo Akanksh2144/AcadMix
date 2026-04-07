@@ -84,6 +84,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
   const [activeTab, setActiveTab] = useState(
     () => sessionStorage.getItem("hod_tab") || "overview",
   );
+  const [showProfile, setShowProfile] = useState(false);
   useEffect(() => {
     sessionStorage.setItem("hod_tab", activeTab);
   }, [activeTab]);

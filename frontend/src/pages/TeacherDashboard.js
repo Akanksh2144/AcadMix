@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, NotePencil, ChartLine, Users, Eye, SignOut, Clipboard, Calendar, CalendarDots, PencilLine, Bell, GraduationCap, ArrowRight, Exam, Fire, Sun, Moon, Notebook, UserCircle } from '@phosphor-icons/react';
 import { analyticsAPI } from '../services/api';
@@ -41,6 +42,7 @@ const timeAgo = (ts) => {
 
 const TeacherDashboard = ({ navigate, user, onLogout }) => {
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('teacher_tab') || 'overview');
+  const [showProfile, setShowProfile] = useState(false);
   useEffect(() => { sessionStorage.setItem('teacher_tab', activeTab); }, [activeTab]);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -163,13 +165,15 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
                 </div>
               )}
             </button>
-            <div className="hidden sm:flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 rounded-2xl px-4 py-2">
-              <GraduationCap size={18} weight="duotone" className="text-emerald-500" />
-              <div className="text-right">
-                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{user?.name}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{user?.designation || 'Assistant Professor'}</p>
+            <button onClick={() => setShowProfile(true)} className="hidden sm:flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors cursor-pointer text-left border border-slate-100 dark:border-white/5">
+              <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <GraduationCap size={18} weight="duotone" className="text-emerald-500" />
               </div>
-            </div>
+              <div className="flex flex-col justify-center">
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">{user?.name}</p>
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-400 leading-tight mt-0.5">{user?.designation || 'Assistant Professor'}</p>
+              </div>
+            </button>
             <button data-testid="logout-button" onClick={onLogout} className="p-2.5 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-colors" aria-label="Sign out">
               <SignOut size={20} weight="duotone" />
             </button>

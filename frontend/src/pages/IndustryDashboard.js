@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { 
   SignOut, Sun, Moon, Buildings, Handshake, Briefcase, 
   ChalkboardTeacher, ProjectorScreenChart, Star, 
   MapPin, Globe, EnvelopeSimple, Phone, CalendarBlank, ChartBar, Bell
-} from '@phosphor-icons/react';
+, UserCircle } } rom '@phosphor-icons/react';
 import { industryAPI, authAPI, setAuthToken } from '../services/api';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 
@@ -22,6 +23,7 @@ const staggerContainer = {
 export default function IndustryDashboard({ navigate, user, onLogout }) {
   const { isDark, toggle: toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
+  const [showProfile, setShowProfile] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);

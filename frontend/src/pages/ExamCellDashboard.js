@@ -42,6 +42,7 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
   const [activeTab, setActiveTab] = useState(
     () => sessionStorage.getItem("examcell_tab") || "overview",
   );
+  const [showProfile, setShowProfile] = useState(false);
   useEffect(() => {
     sessionStorage.setItem("examcell_tab", activeTab);
   }, [activeTab]);
@@ -282,7 +283,15 @@ const ExamCellDashboard = ({ navigate, user, onLogout }) => {
                 </motion.div>
               </AnimatePresence>
             </motion.button>
-            <span className="btn-ghost !px-4 !py-2 text-sm">{user?.name}</span>
+            <button onClick={() => setShowProfile(true)} className="hidden sm:flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-2xl px-4 py-2 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer text-left border border-slate-100 dark:border-white/5">
+              <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
+                <UserCircle size={18} weight="duotone" className="text-indigo-500" />
+              </div>
+              <div className="flex flex-col justify-center">
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">{user?.name}</p>
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-500 leading-tight mt-0.5">{user?.id || user?.role}</p>
+              </div>
+            </button>
             <button
               data-testid="logout-button"
               onClick={onLogout}
