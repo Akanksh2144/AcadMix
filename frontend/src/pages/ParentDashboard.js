@@ -258,9 +258,8 @@ const ParentDashboard = ({ navigate, user, onLogout }) => {
             )}
 
             {/* Notification Bell */}
-            {notifications.length > 0 && (
-              <div className="relative">
-                <button
+            <div className="relative">
+              <button
                   onClick={handleBellClick}
                   className="p-2.5 rounded-full bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors relative"
                   aria-label="Notifications"
@@ -273,7 +272,6 @@ const ParentDashboard = ({ navigate, user, onLogout }) => {
                   )}
                 </button>
               </div>
-            )}
 
             {/* Theme Toggle */}
             <motion.button

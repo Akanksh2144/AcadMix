@@ -4,7 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { 
   SignOut, Sun, Moon, Buildings, Handshake, Briefcase, 
   ChalkboardTeacher, ProjectorScreenChart, Star, 
-  MapPin, Globe, EnvelopeSimple, Phone, CalendarBlank, ChartBar
+  MapPin, Globe, EnvelopeSimple, Phone, CalendarBlank, ChartBar, Bell
 } from '@phosphor-icons/react';
 import { industryAPI, authAPI, setAuthToken } from '../services/api';
 import DashboardSkeleton from '../components/DashboardSkeleton';
@@ -20,10 +20,12 @@ const staggerContainer = {
 };
 
 export default function IndustryDashboard({ navigate, user, onLogout }) {
-  const { isDarkMode, toggleTheme } = useTheme();
+  const { isDark, toggle: toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const unreadCount = 0; // Placeholder for future notification fetching
 
   // Example data pieces
   const [mous, setMous] = useState([]);
@@ -64,6 +66,35 @@ export default function IndustryDashboard({ navigate, user, onLogout }) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       
+      {/* Notification overlay */}
+      <AnimatePresence>
+        {showNotifications && (
+          <>
+            <div className="fixed inset-0 z-[60]" onClick={() => setShowNotifications(false)}></div>
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              className="fixed top-16 right-4 sm:right-8 z-[61] w-80 sm:w-96 bg-white dark:bg-[#1A202C] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden"
+            >
+              <div className="px-5 py-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
+                <h4 className="font-extrabold text-slate-800 dark:text-slate-100">Notifications</h4>
+                <button
+                  onClick={() => setShowNotifications(false)}
+                  className="text-xs font-bold text-indigo-500 hover:text-indigo-600 transition-colors"
+                >
+                  Mark all as read
+                </button>
+              </div>
+              <div className="max-h-80 overflow-y-auto divide-y divide-slate-50 dark:divide-white/5">
+                 <div className="p-8 text-center text-slate-500 text-sm">No new notifications.</div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* ── Header ──────────────────────────── */}
       <header className="glass-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
@@ -80,6 +111,22 @@ export default function IndustryDashboard({ navigate, user, onLogout }) {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Notification Bell */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="p-2.5 rounded-full bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors relative"
+                aria-label="Notifications"
+              >
+                <Bell size={20} weight={showNotifications ? 'fill' : 'duotone'} />
+                {unreadCount > 0 && (
+                  <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">
+                    {Math.min(unreadCount, 9)}
+                  </div>
+                )}
+              </button>
+            </div>
+
             {/* Theme Toggle */}
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -87,7 +134,7 @@ export default function IndustryDashboard({ navigate, user, onLogout }) {
               onClick={toggleTheme}
               className="p-2.5 rounded-full bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors"
             >
-              {isDarkMode ? <Sun size={20} weight="duotone" /> : <Moon size={20} weight="duotone" />}
+              {isDark ? <Sun size={20} weight="duotone" /> : <Moon size={20} weight="duotone" />}
             </motion.button>
             {/* Logout */}
             <motion.button
@@ -135,7 +182,7 @@ export default function IndustryDashboard({ navigate, user, onLogout }) {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
+              className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === item.id 
                   ? 'bg-white dark:bg-[#1A202C] text-indigo-600 dark:text-indigo-400 shadow-sm' 
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5'
