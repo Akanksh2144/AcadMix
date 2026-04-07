@@ -1,154 +1,339 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Buildings, Briefcase, FileText, ChartLineUp, SignOut, DownloadSimple, Users, Trophy, Plus, MapPin, MapTrifold, Books, Student, CheckCircle, XCircle } from '@phosphor-icons/react';
+import { Buildings, Briefcase, FileText, ChartLineUp, SignOut, DownloadSimple, Users, Trophy, Plus, Sun, Moon, Bell, Info, BookOpen } from '@phosphor-icons/react';
 import { tpoAPI } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
+import DashboardSkeleton from '../components/DashboardSkeleton';
 
-const OverviewTab = () => {
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08 } }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+};
+
+const cardHover = {
+  scale: 1.02,
+  transition: { type: 'spring', stiffness: 400, damping: 17 }
+};
+
+// ─── Overview Tab ──────────────────────────────────────────────
+const OverviewContent = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    tpoAPI.getStats().then(res => {
-      setStats(res.data);
-      setLoading(false);
-    }).catch(e => setLoading(false));
+    tpoAPI.getStats().then(res => { setStats(res.data); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  if(loading) return <div className="p-8 text-center text-slate-400">Loading metrics...</div>;
+  if (loading) return <DashboardSkeleton />;
 
-  return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-        <div>
-          <h2 className="text-xl font-bold dark:text-white">Training & Placement Overview</h2>
-          <p className="text-sm text-slate-500">Key performance metrics and quick actions.</p>
-        </div>
-        <button onClick={async () => {
-          try {
-            const res = await tpoAPI.getStats();
-            alert("Exporting NAAC Data...");
-          } catch {}
-        }} className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-semibold">
-          <DownloadSimple weight="bold" /> Export NAAC Data
-        </button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard title="Total Students" value={stats?.total_students || 0} icon={<Users className="text-blue-500" size={24} weight="duotone"/>} />
-        <StatCard title="Companies Visited" value={stats?.companies_visited || 0} icon={<Buildings className="text-indigo-500" size={24} weight="duotone"/>} />
-        <StatCard title="Students Placed" value={stats?.students_placed || 0} icon={<Trophy className="text-amber-500" size={24} weight="duotone"/>} />
-        <StatCard title="Highest CTC" value={(stats?.highest_package || 0) + " LPA"} icon={<ChartLineUp className="text-emerald-500" size={24} weight="duotone"/>} />
-      </div>
-    </motion.div>
-  );
-};
-const StatCard = ({ title, value, icon }) => (
-  <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-4">
-    <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-xl">{icon}</div>
-    <div>
-      <p className="text-sm font-semibold tracking-wide text-slate-500">{title}</p>
-      <h3 className="text-2xl font-black dark:text-white">{value}</h3>
-    </div>
-  </div>
-);
-
-const CompaniesTab = () => {
-    const [companies, setCompanies] = useState([]);
-    useEffect(() => { tpoAPI.getCompanies().then(res => setCompanies(res.data)).catch(()=>console.log("No companies")); }, []);
-    return (
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
-            <h2 className="text-xl font-bold mb-4 dark:text-white">Active Companies</h2>
-            {companies.length === 0 ? <p className="text-slate-500">No companies registered.</p> : 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {companies.map(c => (
-                    <div key={c.id} className="p-4 border dark:border-slate-700 rounded-xl">
-                        <h3 className="font-bold text-lg dark:text-white">{c.name}</h3>
-                        <p className="text-sm text-slate-500">{c.industry}</p>
-                    </div>
-                ))}
-            </div>}
-        </div>
-    );
-};
-
-const DrivesTab = () => {
-    const [drives, setDrives] = useState([]);
-    useEffect(() => { tpoAPI.getDrives().then(res => setDrives(res.data)).catch(()=>(null)); }, []);
-    return (
-        <div className="space-y-4">
-            <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-6 rounded-2xl border dark:border-slate-700">
-                <h2 className="text-xl font-bold dark:text-white">Placement Drives</h2>
-                <button className="flex items-center gap-2 bg-indigo-500 text-white px-4 py-2 rounded-xl font-medium"><Plus/> New Drive</button>
-            </div>
-            {drives.length === 0 ? <p className="text-slate-500">No active drives.</p> : drives.map(d => (
-                <div key={d.id} className="p-6 bg-white dark:bg-slate-800 rounded-2xl border dark:border-slate-700">
-                    <div className="flex justify-between">
-                        <div>
-                            <h3 className="text-lg font-bold dark:text-white">{d.role} (₹{d.package_lpa} LPA)</h3>
-                            <p className="text-slate-500">{d.location}</p>
-                        </div>
-                        <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-bold h-fit">Active</span>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-};
-
-const AppsTab = () => {
-    return (
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border dark:border-slate-700">
-            <h2 className="text-xl font-bold mb-4 dark:text-white">Applicant Tracking System</h2>
-            <div className="p-8 text-center text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
-                <FileText size={48} className="mx-auto mb-2 opacity-50" />
-                <p>Select a Placement Drive to view and shortlist applicants.</p>
-            </div>
-        </div>
-    );
-};
-
-const TPODashboard = ({ navigate, user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState('overview');
-
-  const TABS = [
-    { id: 'overview', label: 'Overview', icon: <ChartLineUp size={20} /> },
-    { id: 'companies', label: 'Company Registry', icon: <Buildings size={20} /> },
-    { id: 'drives', label: 'Placement Drives', icon: <Briefcase size={20} /> },
-    { id: 'apps', label: 'Applications', icon: <FileText size={20} /> },
+  const metrics = [
+    { label: 'Total Students', value: stats?.total_students || 0, icon: Users, color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-500' },
+    { label: 'Companies Visited', value: stats?.companies_visited || 0, icon: Buildings, color: 'bg-sky-50 dark:bg-sky-500/15 text-sky-500' },
+    { label: 'Students Placed', value: stats?.students_placed || 0, icon: Trophy, color: 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-500' },
+    { label: 'Highest CTC', value: (stats?.highest_package || 0) + ' LPA', icon: ChartLineUp, color: 'bg-amber-50 dark:bg-amber-500/15 text-amber-500' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] flex">
-      <aside className="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 hidden md:flex flex-col">
-        <div className="p-6">
-          <h1 className="text-2xl font-black bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">T&P Center</h1>
-          <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">{user?.name || "T&P Officer"}</p>
-        </div>
-        <nav className="flex-1 px-4 space-y-2 mt-4">
-          {TABS.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all ${activeTab === tab.id ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}>
-              {tab.icon} {tab.label}
-            </button>
-          ))}
-        </nav>
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700">
-          <button onClick={onLogout} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
-            <SignOut weight="bold" /> Sign Out
-          </button>
-        </div>
-      </aside>
+    <motion.div variants={containerVariants} initial="hidden" animate="show">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {metrics.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <motion.div variants={itemVariants} whileHover={cardHover} key={i} className="stat-card">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
+                <div className={`${stat.color} p-2.5 rounded-xl`}><Icon size={20} weight="duotone" /></div>
+              </div>
+              <p className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{stat.value}</p>
+            </motion.div>
+          );
+        })}
+      </div>
 
-      <main className="flex-1 max-h-screen overflow-y-auto p-8 border-l border-white/5 dark:border-none shadow-inner">
+      <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+        <motion.div variants={itemVariants} className="soft-card p-6 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+          <h4 className="font-extrabold text-xl mb-3">Placement Season</h4>
+          <div className="space-y-2 text-sm font-medium text-white/90">
+            <p>{stats?.total_drives || 0} drives conducted</p>
+            <p>{stats?.students_placed || 0} students placed</p>
+            <p>Avg CTC: {stats?.avg_package || 0} LPA</p>
+          </div>
+        </motion.div>
+        <motion.div variants={itemVariants} className="soft-card p-6 bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+          <h4 className="font-extrabold text-xl mb-3">Top Recruiter</h4>
+          <p className="text-3xl font-extrabold mb-2">{stats?.top_company || '—'}</p>
+          <p className="text-sm font-medium text-white/90">Highest offers this season</p>
+        </motion.div>
+        <motion.div variants={itemVariants} whileHover={cardHover} className="soft-card-hover p-6 flex items-center gap-4 group cursor-pointer">
+          <div className="w-12 h-12 bg-amber-50 dark:bg-amber-500/15 rounded-xl flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+            <DownloadSimple size={24} weight="duotone" className="text-amber-500" />
+          </div>
+          <div>
+            <p className="font-extrabold text-slate-900 dark:text-white">Export NAAC Report</p>
+            <p className="text-sm font-medium text-slate-400">Download placement data as Excel</p>
+          </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// ─── Companies Tab ─────────────────────────────────────────────
+const CompaniesContent = () => {
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    tpoAPI.getCompanies().then(res => { setCompanies(res.data); setLoading(false); }).catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <DashboardSkeleton />;
+
+  return (
+    <motion.div variants={containerVariants} initial="hidden" animate="show">
+      <motion.div variants={itemVariants} className="flex items-center justify-between mb-6">
+        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Company Directory</h3>
+        <button className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold transition-colors">
+          <Plus size={18} weight="bold" /> Add Company
+        </button>
+      </motion.div>
+
+      {companies.length === 0 ? (
+        <motion.div variants={itemVariants} className="soft-card p-12 text-center">
+          <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Buildings size={36} weight="duotone" className="text-slate-400" />
+          </div>
+          <h4 className="font-bold text-lg text-slate-600 dark:text-slate-400 mb-1">No companies registered yet</h4>
+          <p className="text-sm text-slate-400">Add your first recruiting company to get started.</p>
+        </motion.div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {companies.map((c, i) => (
+            <motion.div variants={itemVariants} whileHover={cardHover} key={c.id} className="soft-card p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/15 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Buildings size={24} weight="duotone" className="text-indigo-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-extrabold text-lg text-slate-900 dark:text-white truncate">{c.name}</h4>
+                  <p className="text-sm font-medium text-slate-400 mt-0.5">{c.industry || 'Technology'}</p>
+                  {c.website && <p className="text-xs text-indigo-500 mt-1 truncate">{c.website}</p>}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+// ─── Drives Tab ────────────────────────────────────────────────
+const DrivesContent = () => {
+  const [drives, setDrives] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    tpoAPI.getDrives().then(res => { setDrives(res.data); setLoading(false); }).catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <DashboardSkeleton />;
+
+  return (
+    <motion.div variants={containerVariants} initial="hidden" animate="show">
+      <motion.div variants={itemVariants} className="flex items-center justify-between mb-6">
+        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Placement Drives</h3>
+        <button className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold transition-colors">
+          <Plus size={18} weight="bold" /> Create Drive
+        </button>
+      </motion.div>
+
+      {drives.length === 0 ? (
+        <motion.div variants={itemVariants} className="soft-card p-12 text-center">
+          <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Briefcase size={36} weight="duotone" className="text-slate-400" />
+          </div>
+          <h4 className="font-bold text-lg text-slate-600 dark:text-slate-400 mb-1">No active placement drives</h4>
+          <p className="text-sm text-slate-400">Create your first drive to start the placement process.</p>
+        </motion.div>
+      ) : (
+        <div className="space-y-4">
+          {drives.map((d, i) => (
+            <motion.div variants={itemVariants} whileHover={cardHover} key={d.id} className="soft-card p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/15 rounded-xl flex items-center justify-center">
+                    <Briefcase size={24} weight="duotone" className="text-indigo-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-lg text-slate-900 dark:text-white">{d.role || 'Role TBD'}</h4>
+                    <p className="text-sm font-medium text-slate-400">{d.location || 'Location TBD'} • ₹{d.package_lpa || '—'} LPA</p>
+                  </div>
+                </div>
+                <span className={`soft-badge ${d.status === 'open' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                  {d.status || 'Active'}
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+// ─── Applications Tab ──────────────────────────────────────────
+const ApplicationsContent = () => {
+  return (
+    <motion.div variants={containerVariants} initial="hidden" animate="show">
+      <motion.div variants={itemVariants} className="flex items-center justify-between mb-6">
+        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Applicant Tracking</h3>
+      </motion.div>
+
+      <motion.div variants={itemVariants} className="soft-card p-12 text-center">
+        <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+          <FileText size={36} weight="duotone" className="text-slate-400" />
+        </div>
+        <h4 className="font-bold text-lg text-slate-600 dark:text-slate-400 mb-1">Select a placement drive</h4>
+        <p className="text-sm text-slate-400">Choose an active drive from the Drives tab to view and shortlist applicants.</p>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// ─── Main Dashboard ────────────────────────────────────────────
+const TPODashboard = ({ navigate, user, onLogout }) => {
+  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('tpo_tab') || 'overview');
+  useEffect(() => { sessionStorage.setItem('tpo_tab', activeTab); }, [activeTab]);
+  const { isDark, toggle: toggleTheme } = useTheme();
+
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifRead, setNotifRead] = useState(false);
+  const notifications = [
+    { title: 'New Company Registered', desc: 'TCS has been added to the company directory.', time: 'Just now' },
+    { title: 'Drive Applications Open', desc: 'Infosys drive received 45 applications.', time: '1 hour ago' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
+      <header className="glass-header">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center"><Briefcase size={22} weight="duotone" className="text-white" /></div>
+              <div><h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">AcadMix</h1><p className="text-xs font-bold uppercase tracking-widest text-slate-400">Training & Placement</p></div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+                aria-label="Notifications"
+              >
+                <Bell size={20} weight={showNotifications ? "fill" : "duotone"} />
+                {!notifRead && (
+                  <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">
+                    {notifications.length}
+                  </div>
+                )}
+              </button>
+              <AnimatePresence>
+                {showNotifications && (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-[60]"
+                      onClick={() => setShowNotifications(false)}
+                    ></motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                      className="absolute top-20 right-4 sm:right-8 z-[61] w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 dark:bg-[#1A202C] dark:border-white/[0.06] overflow-hidden"
+                    >
+                      <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex w-full items-center justify-between">
+                        <h4 className="font-extrabold text-slate-800 dark:text-slate-100">Notifications</h4>
+                        <button onClick={() => { setNotifRead(true); setShowNotifications(false); }} className="text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors">Mark all as read</button>
+                      </div>
+                      <div className="max-h-80 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800">
+                        {notifications.map((item, i) => (
+                          <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer text-left">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 bg-blue-50">
+                              <Info size={14} weight="duotone" className="text-blue-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{item.title}</p>
+                              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{item.desc}</p>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-2 block">{item.time}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+              <motion.button
+                whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                onClick={toggleTheme}
+                className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+                aria-label="Toggle theme"
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div key={isDark ? 'dark' : 'light'} initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                    {isDark ? <Sun size={20} weight="duotone" /> : <Moon size={20} weight="duotone" />}
+                  </motion.div>
+                </AnimatePresence>
+              </motion.button>
+              <span className="btn-ghost !px-4 !py-2 text-sm">{user?.name || 'T&P Officer'}</span>
+              <button onClick={onLogout} className="p-2.5 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-colors" aria-label="Sign out"><SignOut size={20} weight="duotone" /></button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 20 }} className="mb-8">
+          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">Placement Cell</h2>
+          <p className="text-base font-medium text-slate-500 dark:text-slate-400">Manage companies, drives, and student placements</p>
+        </motion.div>
+
+        {/* Tabs — matching Admin/HOD pill-style */}
+        <div className="mb-8 overflow-x-auto">
+          <div className="flex items-center gap-1.5 bg-white dark:bg-[#1A202C]/60 backdrop-blur-md border border-slate-200 dark:border-slate-700/80 rounded-2xl p-1.5 shadow-sm w-fit min-w-full sm:min-w-0">
+            {[
+              { id: 'overview', label: 'Overview' },
+              { id: 'companies', label: 'Companies' },
+              { id: 'drives', label: 'Placement Drives' },
+              { id: 'applications', label: 'Applications' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3.5 py-2 rounded-[14px] text-xs font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+                  activeTab === tab.id
+                    ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md"
+                    : "text-slate-500 hover:text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab Content */}
         <AnimatePresence mode="wait">
-          <motion.div key={activeTab} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            {activeTab === 'overview' && <OverviewTab />}
-            {activeTab === 'companies' && <CompaniesTab />}
-            {activeTab === 'drives' && <DrivesTab />}
-            {activeTab === 'apps' && <AppsTab />}
-          </motion.div>
+          {activeTab === 'overview' && <OverviewContent key="overview" />}
+          {activeTab === 'companies' && <CompaniesContent key="companies" />}
+          {activeTab === 'drives' && <DrivesContent key="drives" />}
+          {activeTab === 'applications' && <ApplicationsContent key="applications" />}
         </AnimatePresence>
-      </main>
+      </div>
     </div>
   );
 };
+
 export default TPODashboard;
