@@ -704,8 +704,8 @@ async def login(req: LoginRequest, response: Response, request: Request, session
     tid = user.college_id or ""
     access = create_access_token(user.id, user.role, tid, perms)
     refresh = create_refresh_token(user.id)
-    response.set_cookie("access_token", access, httponly=True, secure=True, samesite="lax", max_age=86400)
-    response.set_cookie("refresh_token", refresh, httponly=True, secure=True, samesite="lax", max_age=604800)
+    response.set_cookie("access_token", access, httponly=True, secure=True, samesite="none", max_age=86400)
+    response.set_cookie("refresh_token", refresh, httponly=True, secure=True, samesite="none", max_age=604800)
 
     user_out = {
         "id": user.id,
@@ -790,7 +790,7 @@ async def refresh_access_token(request: Request, response: Response):
                 raise HTTPException(status_code=401, detail="User not found")
                 
         new_access = create_access_token(user_id, user.role, user.college_id)
-        response.set_cookie("access_token", new_access, httponly=True, secure=True, samesite="lax", max_age=900)
+        response.set_cookie("access_token", new_access, httponly=True, secure=True, samesite="none", max_age=900)
         
         return {"access_token": new_access, "expires_in": 900}
         
@@ -3187,7 +3187,7 @@ async def list_users(
 
 @app.get("/api/users/{user_id}")
 async def get_user(user_id: str, user: dict = Depends(require_role("admin", "teacher", "hod", "exam_cell")), session: AsyncSession = Depends(get_db)):
-    result = await session.execute(select(models.User).where(models.User.id == user_id))
+    result = await session.execute(select(models.User).where(models.User.id == user_id, models.User.college_id == user["college_id"]))
     u = result.scalars().first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
@@ -3225,7 +3225,7 @@ async def create_user(req: RegisterRequest, user: dict = Depends(require_role("a
 
 @app.delete("/api/users/{user_id}")
 async def delete_user(user_id: str, user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
-    result = await session.execute(select(models.User).where(models.User.id == user_id))
+    result = await session.execute(select(models.User).where(models.User.id == user_id, models.User.college_id == user["college_id"]))
     u = result.scalars().first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
@@ -3235,7 +3235,7 @@ async def delete_user(user_id: str, user: dict = Depends(require_role("admin")),
 
 @app.put("/api/users/{user_id}")
 async def update_user(user_id: str, req: UserUpdate, user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
-    result = await session.execute(select(models.User).where(models.User.id == user_id))
+    result = await session.execute(select(models.User).where(models.User.id == user_id, models.User.college_id == user["college_id"]))
     u = result.scalars().first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
@@ -3449,7 +3449,7 @@ async def create_quiz(req: QuizCreate, user: dict = Depends(require_permission("
 
 @app.get("/api/quizzes/{quiz_id}")
 async def get_quiz(quiz_id: str, user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
-    result = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id))
+    result = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id, models.Quiz.college_id == user["college_id"]))
     q = result.scalars().first()
     if not q:
         raise HTTPException(status_code=404, detail="Quiz not found")
@@ -3472,7 +3472,7 @@ async def get_quiz(quiz_id: str, user: dict = Depends(get_current_user), session
 
 @app.get("/api/quizzes/live/{quiz_id}")
 async def live_quiz_monitor(quiz_id: str, user: dict = Depends(require_role("teacher", "admin", "hod", "exam_cell")), session: AsyncSession = Depends(get_db)):
-    quiz_r = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id))
+    quiz_r = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id, models.Quiz.college_id == user["college_id"]))
     q = quiz_r.scalars().first()
     if not q:
         raise HTTPException(status_code=404, detail="Quiz not found")
@@ -3529,7 +3529,7 @@ async def live_quiz_monitor(quiz_id: str, user: dict = Depends(require_role("tea
 
 @app.patch("/api/quizzes/{quiz_id}")
 async def update_quiz(quiz_id: str, updates: dict, user: dict = Depends(require_role("teacher", "admin")), session: AsyncSession = Depends(get_db)):
-    result_r = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id))
+    result_r = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id, models.Quiz.college_id == user["college_id"]))
     q = result_r.scalars().first()
     if not q:
         raise HTTPException(status_code=404, detail="Quiz not found")
@@ -3546,7 +3546,7 @@ async def update_quiz(quiz_id: str, updates: dict, user: dict = Depends(require_
 
 @app.delete("/api/quizzes/{quiz_id}")
 async def delete_quiz(quiz_id: str, user: dict = Depends(require_permission("quizzes", "delete")), session: AsyncSession = Depends(get_db)):
-    result_r = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id))
+    result_r = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id, models.Quiz.college_id == user["college_id"]))
     quiz = result_r.scalars().first()
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
@@ -3557,7 +3557,7 @@ async def delete_quiz(quiz_id: str, user: dict = Depends(require_permission("qui
 
 @app.post("/api/quizzes/{quiz_id}/publish")
 async def publish_quiz(quiz_id: str, user: dict = Depends(require_permission("quizzes", "publish")), session: AsyncSession = Depends(get_db)):
-    result_r = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id))
+    result_r = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id, models.Quiz.college_id == user["college_id"]))
     quiz = result_r.scalars().first()
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
@@ -3812,7 +3812,10 @@ async def submit_attempt(attempt_id: str, request: Request, user: dict = Depends
 
 @app.get("/api/attempts/{attempt_id}/result")
 async def get_attempt_result(attempt_id: str, user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
-    result = await session.execute(select(models.QuizAttempt).where(models.QuizAttempt.id == attempt_id))
+    result = await session.execute(
+        select(models.QuizAttempt).join(models.Quiz, models.Quiz.id == models.QuizAttempt.quiz_id)
+        .where(models.QuizAttempt.id == attempt_id, models.Quiz.college_id == user["college_id"])
+    )
     attempt = result.scalars().first()
     if not attempt:
         raise HTTPException(status_code=404, detail="Attempt not found")
@@ -4075,7 +4078,7 @@ async def get_leaderboard(
             models.User.profile_data
         )
         .join(models.User, models.User.id == models.QuizAttempt.student_id)
-        .where(models.QuizAttempt.status == "submitted")
+        .where(models.QuizAttempt.status == "submitted", models.User.college_id == user["college_id"])
         .group_by(models.QuizAttempt.student_id, models.User.id)
         .order_by(desc("avg_score"))
         .offset(offset)
@@ -4111,7 +4114,7 @@ async def student_dashboard(user: dict = Depends(get_current_user), session: Asy
 
     # Active quizzes (Quiz model uses 'type' for subject, 'duration_minutes'; no status/total_marks columns)
     quizzes_r = await session.execute(
-        select(models.Quiz).order_by(models.Quiz.created_at.desc())
+        select(models.Quiz).where(models.Quiz.college_id == user["college_id"]).order_by(models.Quiz.created_at.desc())
     )
     active_quizzes_raw = quizzes_r.scalars().all()
     attempted_ids = {a.quiz_id for a in all_attempts}
@@ -4149,7 +4152,8 @@ async def student_dashboard(user: dict = Depends(get_current_user), session: Asy
     # Leaderboard rank via subquery
     all_students_r = await session.execute(
         select(models.QuizAttempt.student_id, models.QuizAttempt.final_score)
-        .where(models.QuizAttempt.status == "submitted")
+        .join(models.Quiz, models.Quiz.id == models.QuizAttempt.quiz_id)
+        .where(models.QuizAttempt.status == "submitted", models.Quiz.college_id == user["college_id"])
     )
     student_scores: dict = {}
     for row in all_students_r.all():
@@ -4212,11 +4216,11 @@ async def teacher_dashboard(user: dict = Depends(require_role("teacher", "admin"
                 "attempt_count": s.attempt_count if s else 0,
                 "avg_score": round(s.avg_score, 1) if s and s.avg_score else 0
             })
-    students_r = await session.execute(select(models.User).where(models.User.role == "student"))
+    students_r = await session.execute(select(models.User).where(models.User.role == "student", models.User.college_id == user["college_id"]))
     total_students = len(students_r.scalars().all())
     recent_r = await session.execute(
-        select(models.QuizAttempt)
-        .where(models.QuizAttempt.status == "submitted")
+        select(models.QuizAttempt).join(models.Quiz, models.Quiz.id == models.QuizAttempt.quiz_id)
+        .where(models.QuizAttempt.status == "submitted", models.Quiz.college_id == user["college_id"])
         .order_by(models.QuizAttempt.end_time.desc())
     )
     recent = recent_r.scalars().all()[:10]
@@ -4230,12 +4234,12 @@ async def teacher_dashboard(user: dict = Depends(require_role("teacher", "admin"
 async def admin_dashboard(user: dict = Depends(require_role("admin")), session: AsyncSession = Depends(get_db)):
     from sqlalchemy import func
     counts_r = await session.execute(
-        select(models.User.role, func.count(models.User.id)).group_by(models.User.role)
+        select(models.User.role, func.count(models.User.id)).where(models.User.college_id == user["college_id"]).group_by(models.User.role)
     )
     role_counts = {role: cnt for role, cnt in counts_r.all()}
-    quizzes_r = await session.execute(select(func.count(models.Quiz.id)))
+    quizzes_r = await session.execute(select(func.count(models.Quiz.id)).where(models.Quiz.college_id == user["college_id"]))
     total_quizzes = quizzes_r.scalar() or 0
-    active_r = await session.execute(select(func.count(models.Quiz.id)).where(models.Quiz.status == "active"))
+    active_r = await session.execute(select(func.count(models.Quiz.id)).where(models.Quiz.college_id == user["college_id"], models.Quiz.status == "active"))
     active_quizzes = active_r.scalar() or 0
     return {
         "total_students": role_counts.get("student", 0),
@@ -4427,7 +4431,7 @@ async def submit_marks(entry_id: str, user: dict = Depends(require_role("teacher
 @app.get("/api/marks/submissions")
 async def list_submissions(status: Optional[str] = None, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
     from sqlalchemy import func
-    stmt = select(models.MarkEntry)
+    stmt = select(models.MarkEntry).where(models.MarkEntry.college_id == user["college_id"])
     
     if status:
         stmt = stmt.where(func.jsonb_extract_path_text(models.MarkEntry.extra_data, 'status') == status)
@@ -4448,7 +4452,7 @@ async def list_submissions(status: Optional[str] = None, user: dict = Depends(re
 
 @app.post("/api/marks/review/{entry_id}")
 async def review_marks(entry_id: str, req: MarkReview, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
-    result = await session.execute(select(models.MarkEntry).where(models.MarkEntry.id == entry_id))
+    result = await session.execute(select(models.MarkEntry).where(models.MarkEntry.id == entry_id, models.MarkEntry.college_id == user["college_id"]))
     entry = result.scalars().first()
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
@@ -4466,7 +4470,7 @@ async def review_marks(entry_id: str, req: MarkReview, user: dict = Depends(requ
 # ─── Exam Cell Routes ──────────────────────────────────────────────────────
 @app.get("/api/examcell/approved-marks")
 async def get_approved_marks(user: dict = Depends(require_role("exam_cell", "admin")), session: AsyncSession = Depends(get_db)):
-    result = await session.execute(select(models.MarkEntry))
+    result = await session.execute(select(models.MarkEntry).where(models.MarkEntry.college_id == user["college_id"]))
     all_rows = result.scalars().all()
     return [{
         "id": r.id, "course_id": r.course_id, "exam_type": r.exam_type,
@@ -4606,7 +4610,7 @@ async def upload_marks_file(file: UploadFile = File(...), semester: int = Form(.
 async def publish_results(entry_id: str, user: dict = Depends(require_role("exam_cell", "admin")), session: AsyncSession = Depends(get_db)):
     result = await session.execute(
         select(models.MarkEntry)
-        .where(models.MarkEntry.id == entry_id)
+        .where(models.MarkEntry.id == entry_id, models.MarkEntry.college_id == user["college_id"])
         .with_for_update()
     )
     entry = result.scalars().first()
@@ -4774,7 +4778,7 @@ async def save_timetable_slot(req: TimetableSlot, user: dict = Depends(require_r
 
 @app.delete("/api/timetable/{slot_id}")
 async def delete_timetable_slot(slot_id: str, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
-    result = await session.execute(select(models.Timetable).where(models.Timetable.id == slot_id))
+    result = await session.execute(select(models.Timetable).where(models.Timetable.id == slot_id, models.Timetable.college_id == user["college_id"]))
     slot = result.scalars().first()
     if not slot:
         raise HTTPException(status_code=404, detail="Slot not found")
@@ -4833,7 +4837,7 @@ async def create_announcement(req: AnnouncementCreate, user: dict = Depends(requ
 
 @app.delete("/api/announcements/{announcement_id}")
 async def delete_announcement(announcement_id: str, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
-    result = await session.execute(select(models.Announcement).where(models.Announcement.id == announcement_id))
+    result = await session.execute(select(models.Announcement).where(models.Announcement.id == announcement_id, models.Announcement.college_id == user["college_id"]))
     row = result.scalars().first()
     if not row:
         raise HTTPException(status_code=404, detail="Announcement not found")
@@ -6042,7 +6046,7 @@ async def bulk_import_users(role: str, file: UploadFile = File(...), user: dict 
             email=row.get("email", f"{student_id}@student.college.edu"),
             role=role,
             college_id=user["college_id"],
-            password_hash=get_password_hash("password123"),
+            password_hash=hash_password("password123"),
             profile_data={
                 "department": row.get("department", ""),
                 "batch": row.get("batch", ""),
@@ -8215,29 +8219,6 @@ async def get_principal_placement(user: dict = Depends(require_role("principal",
         "academic_year": None
     }
 
-@app.get("/api/principal/tasks")
-async def get_principal_tasks(user: dict = Depends(require_role("principal", "admin"))):
-    return {"tasks": [], "total": 0}
-
-@app.post("/api/principal/tasks")
-async def create_principal_task(user: dict = Depends(require_role("principal", "admin"))):
-    return {"tasks": [], "total": 0}
-
-@app.put("/api/hod/tasks/{task_id}/update-status")
-async def update_hod_task_status(task_id: str, user: dict = Depends(require_role("hod", "admin"))):
-    return {"message": "Not implemented"}
-
-@app.get("/api/principal/meetings")
-async def get_principal_meetings(user: dict = Depends(require_role("principal", "admin"))):
-    return {"meetings": [], "total": 0}
-
-@app.post("/api/principal/meetings")
-async def schedule_principal_meeting(user: dict = Depends(require_role("principal", "admin"))):
-    return {"meetings": [], "total": 0}
-
-@app.put("/api/principal/meetings/{meeting_id}/minutes")
-async def update_meeting_minutes(meeting_id: str, user: dict = Depends(require_role("principal", "admin"))):
-    return {"message": "Not implemented"}
 
 # ─── Annual Report Consolidator ──────────────────────────────────────────────────
 

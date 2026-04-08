@@ -45,28 +45,35 @@ Base = declarative_base()
 import contextvars
 from sqlalchemy import event
 from sqlalchemy.orm import Session
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 tenant_context = contextvars.ContextVar("tenant_context", default=None)
 
-@event.listens_for(Session, "do_orm_execute")
+@event.listens_for(AsyncSession.sync_session_class, "do_orm_execute")
 def receive_do_orm_execute(orm_execute_state):
     college_id = tenant_context.get()
     
-    if orm_execute_state.is_select:
-        for mapper in orm_execute_state.all_mappers:
-            # 1. Soft Delete Filtering (Applies to all)
-            if hasattr(mapper.class_, "is_deleted"):
-                orm_execute_state.statement = orm_execute_state.statement.where(
-                    mapper.class_.is_deleted == False
+    if orm_execute_state.is_select and not orm_execute_state.is_relationship_load:
+        from sqlalchemy.orm import with_loader_criteria
+        
+        # Soft delete criteria (applies globally)
+        orm_execute_state.statement = orm_execute_state.statement.options(
+            with_loader_criteria(
+                Base,
+                lambda cls: cls.is_deleted == False if hasattr(cls, "is_deleted") else True,
+                include_aliases=True
+            )
+        )
+        
+        # Tenant isolation criteria
+        if college_id and college_id not in ["super_admin", "nodal_officer"]:
+            orm_execute_state.statement = orm_execute_state.statement.options(
+                with_loader_criteria(
+                    Base,
+                    lambda cls: cls.college_id == college_id if hasattr(cls, "college_id") and cls.__name__ not in ["User", "College", "CodingChallenge"] else True,
+                    include_aliases=True
                 )
-                
-            # 2. Tenant Isolation
-            if college_id and college_id not in ["super_admin", "nodal_officer"]:
-                if hasattr(mapper.class_, "college_id") and mapper.class_.__name__ not in ["User", "College", "CodingChallenge"]:
-                    orm_execute_state.statement = orm_execute_state.statement.where(
-                        mapper.class_.college_id == college_id
-                    )
+            )
 
 async def get_db():
     async with AsyncSessionLocal() as session:
