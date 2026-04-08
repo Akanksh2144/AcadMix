@@ -36,35 +36,101 @@ def setup_nodal_routes(app, require_role, get_current_user):
     # 2. Attendance Compliance
     @app.get("/api/nodal/reports/attendance-compliance")
     async def get_nodal_attendance(user=Depends(require_role("nodal_officer")), session: AsyncSession = Depends(get_db)):
-        # Dummy aggregation since actual complex queries would require joins across isolated tenants.
-        # Nodal scope extracts across the IN array.
         c_ids = await get_nodal_jurisdiction_colleges(user["id"], session)
         if not c_ids: return {"data": []}
+        # Real aggregation: count total + present attendance records per college
+        from sqlalchemy import case
+        stmt = select(
+            models.AttendanceRecord.college_id,
+            func.count(models.AttendanceRecord.id).label("total"),
+            func.sum(case((models.AttendanceRecord.status == 'present', 1), else_=0)).label("present")
+        ).where(
+            models.AttendanceRecord.college_id.in_(c_ids),
+            models.AttendanceRecord.is_deleted == False
+        ).group_by(models.AttendanceRecord.college_id)
+        att_r = await session.execute(stmt)
+        att_map = {r.college_id: {"total": r.total, "present": r.present} for r in att_r.fetchall()}
+        
         res = await session.execute(select(models.College.id, models.College.name).where(models.College.id.in_(c_ids)))
         colleges = res.fetchall()
-        
-        return {"data": [{"college_id": c.id, "college_name": c.name, "departments": [{"department": "CSE", "defaulter_count": 5, "compliance_pct": 82.5}]} for c in colleges]}
+        data = []
+        for c in colleges:
+            att = att_map.get(c.id, {"total": 0, "present": 0})
+            pct = round((att["present"] / att["total"] * 100) if att["total"] else 0, 2)
+            data.append({"college_id": c.id, "college_name": c.name, "total_records": att["total"], "present_count": att["present"], "compliance_pct": pct})
+        return {"data": data}
 
     # 3. Results Status
     @app.get("/api/nodal/reports/results-status")
     async def get_nodal_results(user=Depends(require_role("nodal_officer")), session: AsyncSession = Depends(get_db)):
         c_ids = await get_nodal_jurisdiction_colleges(user["id"], session)
+        if not c_ids: return {"data": []}
+        # Real query: count grades per college via User join
+        from sqlalchemy import case
+        stmt = select(
+            models.User.college_id,
+            func.count(models.SemesterGrade.id).label("total"),
+            func.sum(case((models.SemesterGrade.grade.notin_(['F', 'AB']), 1), else_=0)).label("passed")
+        ).join(
+            models.User, models.User.id == models.SemesterGrade.student_id
+        ).where(
+            models.User.college_id.in_(c_ids)
+        ).group_by(models.User.college_id)
+        gr_r = await session.execute(stmt)
+        gr_map = {r.college_id: {"total": r.total, "passed": r.passed} for r in gr_r.fetchall()}
+        
         res = await session.execute(select(models.College.id, models.College.name).where(models.College.id.in_(c_ids)))
-        colleges = res.fetchall()
-        return {"data": [{"college_id": c.id, "college_name": c.name, "results_published": True, "pass_percentage": 78.4, "fail_count": 12} for c in colleges]}
+        data = []
+        for c in res.fetchall():
+            g = gr_map.get(c.id, {"total": 0, "passed": 0})
+            pct = round((g["passed"] / g["total"] * 100) if g["total"] else 0, 2)
+            data.append({"college_id": c.id, "college_name": c.name, "total_grades": g["total"], "passed": g["passed"], "pass_percentage": pct})
+        return {"data": data}
 
     # 4. CIA Submission
     @app.get("/api/nodal/reports/cia-submission")
     async def get_nodal_cia_submission(user=Depends(require_role("nodal_officer")), session: AsyncSession = Depends(get_db)):
         c_ids = await get_nodal_jurisdiction_colleges(user["id"], session)
-        return {"data": [{"college_id": cid, "marks_submitted": 450, "marks_pending": 20} for cid in c_ids]}
+        if not c_ids: return {"data": []}
+        # Real: count mark entries per college via faculty_id -> User.college_id
+        stmt = select(
+            models.User.college_id,
+            func.count(models.MarkEntry.id).label("total_entries")
+        ).join(
+            models.User, models.User.id == models.MarkEntry.faculty_id
+        ).where(
+            models.User.college_id.in_(c_ids)
+        ).group_by(models.User.college_id)
+        me_r = await session.execute(stmt)
+        me_map = {r.college_id: r.total_entries for r in me_r.fetchall()}
+        
+        res = await session.execute(select(models.College.id, models.College.name).where(models.College.id.in_(c_ids)))
+        return {"data": [{"college_id": c.id, "college_name": c.name, "marks_submitted": me_map.get(c.id, 0)} for c in res.fetchall()]}
 
     # 5. Faculty Profiles
     @app.get("/api/nodal/reports/faculty-profiles")
     async def get_nodal_faculty_profiles(user=Depends(require_role("nodal_officer")), session: AsyncSession = Depends(get_db)):
         c_ids = await get_nodal_jurisdiction_colleges(user["id"], session)
-        # Assuming we check models.User where role IN pre_defined list
-        return {"data": [{"college_id": cid, "completion_rate": 95.5, "total_faculty": 100, "incomplete": 5} for cid in c_ids]}
+        if not c_ids: return {"data": []}
+        # Real: count faculty and profile completeness
+        fac_stmt = select(
+            models.User.college_id,
+            func.count(models.User.id).label("total_faculty"),
+            func.sum(func.cast(models.User.profile_data != None, models.Integer)).label("with_profile")
+        ).where(
+            models.User.college_id.in_(c_ids),
+            models.User.role.in_(["teacher", "faculty", "hod"])
+        ).group_by(models.User.college_id)
+        fr = await session.execute(fac_stmt)
+        fac_map = {r.college_id: {"total": r.total_faculty, "complete": r.with_profile or 0} for r in fr.fetchall()}
+        
+        res = await session.execute(select(models.College.id, models.College.name).where(models.College.id.in_(c_ids)))
+        data = []
+        for c in res.fetchall():
+            f = fac_map.get(c.id, {"total": 0, "complete": 0})
+            pct = round((f["complete"] / f["total"] * 100) if f["total"] else 0, 2)
+            data.append({"college_id": c.id, "college_name": c.name, "total_faculty": f["total"], "profiles_complete": f["complete"], "completion_rate": pct})
+        return {"data": data}
 
     # 6. Accreditation
     @app.get("/api/nodal/reports/accreditation")

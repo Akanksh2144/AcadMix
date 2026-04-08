@@ -761,7 +761,37 @@ class TimetableApproval(Base, SoftDeleteMixin):
     approved_by = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     approved_at = Column(DateTime(timezone=True), nullable=True)
 
+# ─── Student Feedback Module ────────────────────────────────────
+
+class CourseFeedback(Base, SoftDeleteMixin):
+    """Student feedback on courses/faculty.
+    Anonymous to faculty (only aggregates shown), identified to admin.
+    student_id stored for audit trail and duplicate prevention."""
+    __tablename__ = "course_feedback"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    faculty_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    subject_code = Column(String, nullable=False)
+    academic_year = Column(String, nullable=False)
+    semester = Column(Integer, nullable=False)
+    # Rating fields (1-5 scale)
+    content_rating = Column(Integer, nullable=False)
+    teaching_rating = Column(Integer, nullable=False)
+    engagement_rating = Column(Integer, nullable=False)
+    assessment_rating = Column(Integer, nullable=False)
+    overall_rating = Column(Integer, nullable=False)
+    comments = Column(String, nullable=True)
+    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_feedback_student_subject", "student_id", "subject_code", "academic_year", unique=True),
+    )
+
+
+
 # ─── Alumni Module ──────────────────────────────────────────────
+
 
 class AlumniJobPosting(Base, SoftDeleteMixin):
     """Job/internship referrals posted by alumni, moderated by TPO."""

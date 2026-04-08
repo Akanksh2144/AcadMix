@@ -646,6 +646,7 @@ class FacultyProfileUpdate(BaseModel):
     experience: Optional[list] = None     # [{position, institution, from_date, to_date, status}]
     research: Optional[list] = None       # [{title, journal, year, doi, status}]
     publications: Optional[list] = None   # [{title, publisher, year, isbn, status}]
+    patents: Optional[list] = None        # [{title, application_no, year, status}]
     memberships: Optional[list] = None    # [{body, membership_id, from_date, status}]
     training: Optional[list] = None       # [{program, organizer, dates, certificate_url, status}]
 
@@ -1676,6 +1677,7 @@ async def get_faculty_profile(
         "experience": profile.get("experience", []),
         "research": profile.get("research", []),
         "publications": profile.get("publications", []),
+        "patents": profile.get("patents", []),
         "memberships": profile.get("memberships", []),
         "training": profile.get("training", []),
     }
@@ -1695,7 +1697,7 @@ async def update_faculty_profile(
     updates = req.dict(exclude_unset=True)
     
     # For list sections, ensure every record has a status field
-    list_sections = ["educational", "experience", "research", "publications", "memberships", "training"]
+    list_sections = ["educational", "experience", "research", "publications", "patents", "memberships", "training"]
     for section_name in list_sections:
         if section_name in updates and updates[section_name] is not None:
             for record in updates[section_name]:
@@ -8646,6 +8648,414 @@ async def register_for_event(
     await session.commit()
     return {"id": reg.id, "message": "Registered for event"}
 
+
+# ==============================================================================
+# PHASE 2: HOD MODULE — Task Assignment, Meetings, Free Period Review
+# ==============================================================================
+
+class TaskAssignmentCreate(BaseModel):
+    assignee_id: str
+    title: str
+    description: Optional[str] = None
+    deadline: str
+    priority: Optional[str] = "medium"
+
+@app.post("/api/hod/tasks")
+async def create_hod_task(req: TaskAssignmentCreate, user: dict = Depends(require_role("hod", "principal")), session: AsyncSession = Depends(get_db)):
+    row = models.TaskAssignment(
+        college_id=user["college_id"],
+        assigner_id=user["id"],
+        assignee_id=req.assignee_id,
+        title=req.title,
+        description=req.description,
+        deadline=req.deadline,
+        priority=req.priority,
+        status="pending"
+    )
+    session.add(row)
+    await session.commit()
+    return {"message": "Task assigned", "id": row.id}
+
+@app.get("/api/hod/tasks")
+async def get_hod_tasks(user: dict = Depends(require_role("hod", "principal")), session: AsyncSession = Depends(get_db)):
+    res = await session.execute(
+        select(models.TaskAssignment).where(
+            models.TaskAssignment.college_id == user["college_id"],
+            models.TaskAssignment.assigner_id == user["id"],
+            models.TaskAssignment.is_deleted == False
+        ).order_by(models.TaskAssignment.deadline.asc())
+    )
+    tasks = res.scalars().all()
+    # Enrich with assignee names
+    if tasks:
+        ids = list(set(t.assignee_id for t in tasks))
+        name_r = await session.execute(select(models.User.id, models.User.name).where(models.User.id.in_(ids)))
+        name_map = {r[0]: r[1] for r in name_r.fetchall()}
+        return [
+            {**{c.name: getattr(t, c.name) for c in t.__table__.columns}, "assignee_name": name_map.get(t.assignee_id, "")}
+            for t in tasks
+        ]
+    return []
+
+@app.put("/api/hod/tasks/{task_id}")
+async def update_hod_task(task_id: str, req: dict = Body(...), user: dict = Depends(require_role("hod", "principal")), session: AsyncSession = Depends(get_db)):
+    r = await session.execute(select(models.TaskAssignment).where(
+        models.TaskAssignment.id == task_id, models.TaskAssignment.college_id == user["college_id"]
+    ))
+    task = r.scalars().first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    for field in ["status", "priority", "description", "deadline", "title"]:
+        if field in req:
+            setattr(task, field, req[field])
+    await session.commit()
+    return {"message": "Task updated"}
+
+@app.get("/api/faculty/my-tasks")
+async def get_my_tasks(user: dict = Depends(require_role("teacher", "hod")), session: AsyncSession = Depends(get_db)):
+    """Faculty views tasks assigned to them."""
+    res = await session.execute(
+        select(models.TaskAssignment).where(
+            models.TaskAssignment.assignee_id == user["id"],
+            models.TaskAssignment.is_deleted == False
+        ).order_by(models.TaskAssignment.deadline.asc())
+    )
+    return res.scalars().all()
+
+# --- Department Meetings ---
+
+class MeetingCreate(BaseModel):
+    department_id: str
+    date: str
+    agenda: str
+
+@app.post("/api/hod/meetings")
+async def create_meeting(req: MeetingCreate, user: dict = Depends(require_role("hod", "principal")), session: AsyncSession = Depends(get_db)):
+    row = models.DepartmentMeeting(
+        college_id=user["college_id"],
+        department_id=req.department_id,
+        organizer_id=user["id"],
+        date=req.date,
+        agenda=req.agenda
+    )
+    session.add(row)
+    await session.commit()
+    return {"message": "Meeting scheduled", "id": row.id}
+
+@app.get("/api/hod/meetings")
+async def get_hod_meetings(department_id: Optional[str] = None, user: dict = Depends(require_role("hod", "principal")), session: AsyncSession = Depends(get_db)):
+    q = select(models.DepartmentMeeting).where(
+        models.DepartmentMeeting.college_id == user["college_id"],
+        models.DepartmentMeeting.is_deleted == False
+    )
+    if department_id:
+        q = q.where(models.DepartmentMeeting.department_id == department_id)
+    res = await session.execute(q.order_by(models.DepartmentMeeting.date.desc()))
+    return res.scalars().all()
+
+@app.put("/api/hod/meetings/{meeting_id}/minutes")
+async def update_meeting_minutes(meeting_id: str, req: dict = Body(...), user: dict = Depends(require_role("hod", "principal")), session: AsyncSession = Depends(get_db)):
+    r = await session.execute(select(models.DepartmentMeeting).where(
+        models.DepartmentMeeting.id == meeting_id, models.DepartmentMeeting.college_id == user["college_id"]
+    ))
+    meeting = r.scalars().first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    meeting.minutes = req.get("minutes", "")
+    meeting.attendance_record = req.get("attendance_record")
+    await session.commit()
+    return {"message": "Minutes updated"}
+
+# --- Free Period Request Review ---
+
+@app.get("/api/hod/free-period-requests")
+async def get_pending_free_period_requests(user: dict = Depends(require_role("hod")), session: AsyncSession = Depends(get_db)):
+    res = await session.execute(
+        select(models.FreePeriodRequest).where(
+            models.FreePeriodRequest.college_id == user["college_id"],
+            models.FreePeriodRequest.status == "pending",
+            models.FreePeriodRequest.is_deleted == False
+        )
+    )
+    reqs = res.scalars().all()
+    if reqs:
+        fac_ids = list(set(r.faculty_id for r in reqs))
+        name_r = await session.execute(select(models.User.id, models.User.name).where(models.User.id.in_(fac_ids)))
+        name_map = {r[0]: r[1] for r in name_r.fetchall()}
+        return [
+            {**{c.name: getattr(r, c.name) for c in r.__table__.columns}, "faculty_name": name_map.get(r.faculty_id, "")}
+            for r in reqs
+        ]
+    return []
+
+@app.put("/api/hod/free-period-requests/{req_id}")
+async def review_free_period_request(req_id: str, req: dict = Body(...), user: dict = Depends(require_role("hod")), session: AsyncSession = Depends(get_db)):
+    r = await session.execute(select(models.FreePeriodRequest).where(
+        models.FreePeriodRequest.id == req_id, models.FreePeriodRequest.college_id == user["college_id"]
+    ))
+    fp = r.scalars().first()
+    if not fp:
+        raise HTTPException(status_code=404, detail="Request not found")
+    fp.status = req.get("status", "approved")
+    fp.processed_by = user["id"]
+    await session.commit()
+    return {"message": f"Request {fp.status}"}
+
+
+# ==============================================================================
+# PHASE 2: PRINCIPAL MODULE — Cross-Department Task & Meeting Views
+# ==============================================================================
+
+@app.get("/api/principal/tasks")
+async def get_all_tasks(status: Optional[str] = None, user: dict = Depends(require_role("principal", "admin")), session: AsyncSession = Depends(get_db)):
+    """Principal sees all task assignments across departments."""
+    q = select(models.TaskAssignment).where(
+        models.TaskAssignment.college_id == user["college_id"],
+        models.TaskAssignment.is_deleted == False
+    )
+    if status:
+        q = q.where(models.TaskAssignment.status == status)
+    res = await session.execute(q.order_by(models.TaskAssignment.deadline.asc()))
+    return res.scalars().all()
+
+@app.get("/api/principal/meetings")
+async def get_all_meetings(user: dict = Depends(require_role("principal", "admin")), session: AsyncSession = Depends(get_db)):
+    """Principal sees all department meetings across the college."""
+    res = await session.execute(
+        select(models.DepartmentMeeting).where(
+            models.DepartmentMeeting.college_id == user["college_id"],
+            models.DepartmentMeeting.is_deleted == False
+        ).order_by(models.DepartmentMeeting.date.desc())
+    )
+    return res.scalars().all()
+
+
+# ==============================================================================
+# PHASE 2: STUDENT MODULE — Scholarships + Feedback
+# ==============================================================================
+
+@app.get("/api/student/scholarships")
+async def get_available_scholarships(user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
+    """List scholarships available at the student's college."""
+    res = await session.execute(
+        select(models.Scholarship).where(
+            models.Scholarship.college_id == user["college_id"],
+            models.Scholarship.is_deleted == False
+        )
+    )
+    return res.scalars().all()
+
+class ScholarshipApplyRequest(BaseModel):
+    scholarship_id: str
+
+@app.post("/api/student/scholarships/apply")
+async def apply_scholarship(req: ScholarshipApplyRequest, user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
+    # Check if already applied
+    existing = await session.execute(
+        select(models.ScholarshipApplication).where(
+            models.ScholarshipApplication.student_id == user["id"],
+            models.ScholarshipApplication.scholarship_id == req.scholarship_id
+        )
+    )
+    if existing.scalars().first():
+        raise HTTPException(status_code=400, detail="Already applied for this scholarship")
+    app_row = models.ScholarshipApplication(
+        college_id=user["college_id"],
+        student_id=user["id"],
+        scholarship_id=req.scholarship_id,
+        status="submitted"
+    )
+    session.add(app_row)
+    await session.commit()
+    return {"message": "Scholarship application submitted", "id": app_row.id}
+
+@app.get("/api/student/scholarships/my-applications")
+async def get_my_scholarship_apps(user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
+    res = await session.execute(
+        select(models.ScholarshipApplication).where(
+            models.ScholarshipApplication.student_id == user["id"]
+        )
+    )
+    return res.scalars().all()
+
+# --- Student Feedback ---
+
+class FeedbackCreate(BaseModel):
+    faculty_id: str
+    subject_code: str
+    academic_year: str
+    semester: int
+    content_rating: int
+    teaching_rating: int
+    engagement_rating: int
+    assessment_rating: int
+    overall_rating: int
+    comments: Optional[str] = None
+
+@app.post("/api/student/feedback")
+async def submit_feedback(req: FeedbackCreate, user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
+    # Duplicate check via unique index will catch, but give a nicer error
+    existing = await session.execute(
+        select(models.CourseFeedback).where(
+            models.CourseFeedback.student_id == user["id"],
+            models.CourseFeedback.subject_code == req.subject_code,
+            models.CourseFeedback.academic_year == req.academic_year
+        )
+    )
+    if existing.scalars().first():
+        raise HTTPException(status_code=400, detail="Feedback already submitted for this subject")
+    row = models.CourseFeedback(
+        college_id=user["college_id"],
+        student_id=user["id"],
+        faculty_id=req.faculty_id,
+        subject_code=req.subject_code,
+        academic_year=req.academic_year,
+        semester=req.semester,
+        content_rating=req.content_rating,
+        teaching_rating=req.teaching_rating,
+        engagement_rating=req.engagement_rating,
+        assessment_rating=req.assessment_rating,
+        overall_rating=req.overall_rating,
+        comments=req.comments
+    )
+    session.add(row)
+    await session.commit()
+    return {"message": "Feedback submitted successfully"}
+
+@app.get("/api/student/feedback/history")
+async def get_my_feedback(user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
+    res = await session.execute(
+        select(models.CourseFeedback.subject_code, models.CourseFeedback.academic_year, models.CourseFeedback.overall_rating, models.CourseFeedback.submitted_at)
+        .where(models.CourseFeedback.student_id == user["id"])
+        .order_by(models.CourseFeedback.submitted_at.desc())
+    )
+    return [{"subject_code": r[0], "academic_year": r[1], "overall_rating": r[2], "submitted_at": r[3]} for r in res.fetchall()]
+
+@app.get("/api/faculty/feedback-summary")
+async def get_faculty_feedback_summary(user: dict = Depends(require_role("teacher", "hod")), session: AsyncSession = Depends(get_db)):
+    """Faculty sees aggregated (anonymous) feedback — averages only, no student IDs."""
+    res = await session.execute(
+        select(
+            models.CourseFeedback.subject_code,
+            models.CourseFeedback.academic_year,
+            func.count(models.CourseFeedback.id).label("response_count"),
+            func.avg(models.CourseFeedback.content_rating).label("avg_content"),
+            func.avg(models.CourseFeedback.teaching_rating).label("avg_teaching"),
+            func.avg(models.CourseFeedback.engagement_rating).label("avg_engagement"),
+            func.avg(models.CourseFeedback.assessment_rating).label("avg_assessment"),
+            func.avg(models.CourseFeedback.overall_rating).label("avg_overall"),
+        ).where(
+            models.CourseFeedback.faculty_id == user["id"]
+        ).group_by(
+            models.CourseFeedback.subject_code, models.CourseFeedback.academic_year
+        )
+    )
+    return [
+        {
+            "subject_code": r.subject_code, "academic_year": r.academic_year,
+            "response_count": r.response_count,
+            "avg_content": round(float(r.avg_content or 0), 2),
+            "avg_teaching": round(float(r.avg_teaching or 0), 2),
+            "avg_engagement": round(float(r.avg_engagement or 0), 2),
+            "avg_assessment": round(float(r.avg_assessment or 0), 2),
+            "avg_overall": round(float(r.avg_overall or 0), 2),
+        }
+        for r in res.fetchall()
+    ]
+
+@app.get("/api/admin/feedback/detailed")
+async def get_admin_feedback(faculty_id: Optional[str] = None, user: dict = Depends(require_role("admin", "principal", "hod")), session: AsyncSession = Depends(get_db)):
+    """Admin sees identified feedback with student IDs for audit."""
+    q = select(models.CourseFeedback).where(models.CourseFeedback.college_id == user["college_id"])
+    if faculty_id:
+        q = q.where(models.CourseFeedback.faculty_id == faculty_id)
+    res = await session.execute(q.order_by(models.CourseFeedback.submitted_at.desc()))
+    return res.scalars().all()
+
+
+# ==============================================================================
+# PHASE 2: PARENT MODULE — Proxy Endpoints
+# ==============================================================================
+
+async def _get_linked_student(user: dict, session: AsyncSession):
+    """Extract linked student ID from parent's profile_data."""
+    parent = (await session.execute(select(models.User).where(models.User.id == user["id"]))).scalars().first()
+    if not parent or not parent.profile_data:
+        raise HTTPException(status_code=400, detail="Parent profile not configured")
+    student_id = (parent.profile_data or {}).get("linked_student_id")
+    if not student_id:
+        raise HTTPException(status_code=400, detail="No linked student found in parent profile")
+    return student_id
+
+@app.get("/api/parent/ward-info")
+async def get_ward_info(user: dict = Depends(require_role("parent")), session: AsyncSession = Depends(get_db)):
+    student_id = await _get_linked_student(user, session)
+    student = (await session.execute(select(models.User).where(models.User.id == student_id))).scalars().first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Linked student not found")
+    return {
+        "id": student.id, "name": student.name, "email": student.email,
+        "department": (student.profile_data or {}).get("department", "N/A"),
+        "semester": (student.profile_data or {}).get("semester"),
+        "batch": (student.profile_data or {}).get("batch"),
+    }
+
+@app.get("/api/parent/attendance")
+async def get_ward_attendance(user: dict = Depends(require_role("parent")), session: AsyncSession = Depends(get_db)):
+    student_id = await _get_linked_student(user, session)
+    total = await session.scalar(
+        select(func.count(models.AttendanceRecord.id)).where(
+            models.AttendanceRecord.student_id == student_id,
+            models.AttendanceRecord.is_deleted == False
+        )
+    )
+    present = await session.scalar(
+        select(func.count(models.AttendanceRecord.id)).where(
+            models.AttendanceRecord.student_id == student_id,
+            models.AttendanceRecord.status == "present",
+            models.AttendanceRecord.is_deleted == False
+        )
+    )
+    return {
+        "total_classes": total or 0,
+        "present": present or 0,
+        "percentage": round((present / total * 100) if total else 0, 2)
+    }
+
+@app.get("/api/parent/scholarships")
+async def get_ward_scholarships(user: dict = Depends(require_role("parent")), session: AsyncSession = Depends(get_db)):
+    student_id = await _get_linked_student(user, session)
+    res = await session.execute(
+        select(models.ScholarshipApplication, models.Scholarship.name, models.Scholarship.type)
+        .join(models.Scholarship, models.Scholarship.id == models.ScholarshipApplication.scholarship_id)
+        .where(models.ScholarshipApplication.student_id == student_id)
+    )
+    return [
+        {"scholarship_name": r[1], "type": r[2], "status": r[0].status, "applied_at": r[0].applied_at}
+        for r in res.fetchall()
+    ]
+
+@app.get("/api/parent/placements")
+async def get_ward_placements(user: dict = Depends(require_role("parent")), session: AsyncSession = Depends(get_db)):
+    student_id = await _get_linked_student(user, session)
+    res = await session.execute(
+        select(models.PlacementApplication, models.PlacementDrive.drive_type, models.PlacementDrive.status.label("drive_status"))
+        .join(models.PlacementDrive, models.PlacementDrive.id == models.PlacementApplication.drive_id)
+        .where(models.PlacementApplication.student_id == student_id)
+    )
+    return [
+        {"drive_type": r[1], "drive_status": r[2], "application_status": r[0].status, "offer_details": r[0].offer_details}
+        for r in res.fetchall()
+    ]
+
+@app.get("/api/parent/grades")
+async def get_ward_grades(user: dict = Depends(require_role("parent")), session: AsyncSession = Depends(get_db)):
+    student_id = await _get_linked_student(user, session)
+    res = await session.execute(
+        select(models.SemesterGrade).where(models.SemesterGrade.student_id == student_id)
+        .order_by(models.SemesterGrade.semester)
+    )
+    return res.scalars().all()
 
 # ==============================================================================
 # EXPERT SUBJECT MODULE ROUTES
