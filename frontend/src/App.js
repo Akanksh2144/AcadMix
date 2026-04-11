@@ -35,6 +35,7 @@ const PrincipalDashboard = React.lazy(() => import('./pages/PrincipalDashboard')
 const RetiredFacultyDashboard = React.lazy(() => import('./pages/RetiredFacultyDashboard'));
 const ExpertDashboard = React.lazy(() => import('./pages/ExpertDashboard'));
 const NodalOfficerDashboard = React.lazy(() => import('./pages/NodalOfficerDashboard'));
+const FacultyProfilePage = React.lazy(() => import('./pages/FacultyProfilePage'));
 
 const ROLE_DASHBOARD = {
   student: 'student-dashboard',
@@ -151,6 +152,7 @@ function App() {
       case 'teacher-quizzes': return <TeacherQuizzes navigate={navigate} user={user} />;
       case 'quiz-calendar': return <QuizCalendar navigate={navigate} user={user} />;
       case 'quiz-summary': return <QuizSummary navigate={navigate} user={user} attemptData={selectedData} />;
+      case 'faculty-profile': return <FacultyProfilePage navigate={navigate} user={user} />;
       case 'attendance-marker': return (
         <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] py-8">
           <div className="max-w-7xl mx-auto px-4">

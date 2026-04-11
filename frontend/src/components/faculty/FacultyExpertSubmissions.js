@@ -96,7 +96,7 @@ const FacultyExpertSubmissions = () => {
                   {p.status === 'revision_requested' && p.expert_comments && <p className="text-xs text-red-500 mt-1 font-medium">Expert feedback: {p.expert_comments}</p>}
                 </div>
               </div>
-              <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${p.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : p.status === 'revision_requested' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{p.status}</span>
+              <span className={`px-3 py-1 rounded-xl text-xs font-bold uppercase ${p.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : p.status === 'revision_requested' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{p.status}</span>
             </div>
           ))}
           {papers.length === 0 && <p className="text-sm text-slate-500 text-center py-6">No question papers submitted</p>}
@@ -114,7 +114,7 @@ const FacultyExpertSubmissions = () => {
                   <p className="text-xs text-slate-500">{m.description || m.material_type}</p>
                 </div>
               </div>
-              <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${m.status === 'expert_approved' ? 'bg-emerald-100 text-emerald-700' : m.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{m.status}</span>
+              <span className={`px-3 py-1 rounded-xl text-xs font-bold uppercase ${m.status === 'expert_approved' ? 'bg-emerald-100 text-emerald-700' : m.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{m.status}</span>
             </div>
           ))}
           {materials.length === 0 && <p className="text-sm text-slate-500 text-center py-6">No study materials submitted</p>}
@@ -130,9 +130,9 @@ const FacultyExpertSubmissions = () => {
                 <div className="flex items-center gap-2"><Star weight="fill" className="text-emerald-500"/> <span className="font-extrabold text-emerald-500 text-xl">{e.overall_rating.toFixed(1)}/5.0</span></div>
               </div>
               <div className="grid grid-cols-3 gap-4 mb-2">
-                <div className="bg-white dark:bg-slate-800 p-2 rounded-lg text-center"><p className="text-xs text-slate-500">Methodology</p><p className="font-bold">{e.methodology_rating}</p></div>
-                <div className="bg-white dark:bg-slate-800 p-2 rounded-lg text-center"><p className="text-xs text-slate-500">Engagement</p><p className="font-bold">{e.engagement_rating}</p></div>
-                <div className="bg-white dark:bg-slate-800 p-2 rounded-lg text-center"><p className="text-xs text-slate-500">Assessment</p><p className="font-bold">{e.assessment_quality_rating}</p></div>
+                <div className="bg-white dark:bg-slate-800 p-2 rounded-xl text-center"><p className="text-xs text-slate-500">Methodology</p><p className="font-bold">{e.methodology_rating}</p></div>
+                <div className="bg-white dark:bg-slate-800 p-2 rounded-xl text-center"><p className="text-xs text-slate-500">Engagement</p><p className="font-bold">{e.engagement_rating}</p></div>
+                <div className="bg-white dark:bg-slate-800 p-2 rounded-xl text-center"><p className="text-xs text-slate-500">Assessment</p><p className="font-bold">{e.assessment_quality_rating}</p></div>
               </div>
               {e.comments && <p className="text-sm border-t border-slate-100 dark:border-white/5 pt-2 mt-2 font-medium text-slate-600 dark:text-slate-400">"{e.comments}"</p>}
             </div>

@@ -197,7 +197,7 @@ const FacultyProfile = () => {
                   <Icon size={16} weight="duotone" />
                   <span className="flex-1 truncate">{s.label}</span>
                   {count !== null && count > 0 && (
-                    <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${
+                    <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-xl ${
                       isActive ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                     }`}>{count}</span>
                   )}
@@ -256,13 +256,13 @@ const FacultyProfile = () => {
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400">#{idx + 1}</span>
                           {item.status && (
-                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase ${STATUS_COLORS[item.status] || STATUS_COLORS.draft}`}>
+                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-xl uppercase ${STATUS_COLORS[item.status] || STATUS_COLORS.draft}`}>
                               {item.status}
                             </span>
                           )}
                         </div>
                         <button onClick={() => removeListItem(currentSection.key, idx)}
-                          className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-red-400 hover:text-red-500 transition-colors">
+                          className="p-1.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 text-red-400 hover:text-red-500 transition-colors">
                           <Trash size={14} weight="duotone" />
                         </button>
                       </div>

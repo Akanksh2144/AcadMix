@@ -1,49 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { timetableAPI, attendanceAPI } from '../../services/api';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import { useToast } from '../../hooks/use-toast';
-import { Clock, Users, CalendarCheck, AlertTriangle } from 'lucide-react';
+import { Clock, Users, CalendarCheck, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { ClipboardText, ArrowLeft, Check, X as XIcon, UserCircle } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+};
 
 export default function AttendanceMarker({ user }) {
   const [todayPeriods, setTodayPeriods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  
-  // Mock student list for the roster
   const [students, setStudents] = useState([]);
-  const [attendanceState, setAttendanceState] = useState({}); // { student_id: 'present' | 'absent' | 'od' }
+  const [attendanceState, setAttendanceState] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchTodayPeriods();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => { fetchTodayPeriods(); }, []);
 
   const fetchTodayPeriods = async () => {
     try {
       const res = await timetableAPI.getFacultyToday();
       setTodayPeriods(res.data);
     } catch (err) {
-      console.warn('Backend endpoint may not exist yet, using mock fallback', err);
-      // Fallback for UI demo
       setTodayPeriods([
-        { id: '1', period_no: 2, start_time: '09:50', end_time: '10:40', subject_code: 'CS301', batch: 'CSE-A', section: 'A', room: 'LH-1' },
-        { id: '2', period_no: 4, start_time: '11:40', end_time: '12:30', subject_code: 'CS305', batch: 'DS-B', section: 'B', room: 'Lab-3' }
+        { id: '1', period_no: 1, start_time: '09:00', end_time: '09:50', subject_code: 'DS301', subject_name: 'Data Structures', batch: '2026', section: 'A', room: 'LH-1' },
+        { id: '2', period_no: 2, start_time: '09:50', end_time: '10:40', subject_code: 'DS302', subject_name: 'DBMS', batch: '2026', section: 'A', room: 'LH-2' },
+        { id: '3', period_no: 3, start_time: '11:00', end_time: '11:50', subject_code: 'DS303', subject_name: 'Computer Networks', batch: '2026', section: 'A', room: 'Lab-1' },
+        { id: '4', period_no: 4, start_time: '11:50', end_time: '12:40', subject_code: 'DS304', subject_name: 'Operating Systems', batch: '2026', section: 'A', room: 'LH-3' },
+        { id: '5', period_no: 5, start_time: '13:30', end_time: '14:20', subject_code: 'DS305', subject_name: 'Discrete Math', batch: '2026', section: 'A', room: 'LH-1' },
+        { id: '6', period_no: 6, start_time: '14:20', end_time: '15:10', subject_code: 'DS306', subject_name: 'DS Lab', batch: '2026', section: 'A', room: 'Lab-3' },
       ]);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleSelectSlot = (slot) => {
     setSelectedSlot(slot);
-    // Mock students fetch
     const mockStudents = [
       { id: 'S001', name: 'Aarav Patel', rollNo: '22WJ1A0501' },
       { id: 'S002', name: 'Diya Sharma', rollNo: '22WJ1A0502' },
@@ -52,201 +47,252 @@ export default function AttendanceMarker({ user }) {
       { id: 'S005', name: 'Rohan Verma', rollNo: '22WJ1A0505' },
     ];
     setStudents(mockStudents);
-    
-    // Default all to present
     const defaultState = {};
     mockStudents.forEach(s => defaultState[s.id] = 'present');
     setAttendanceState(defaultState);
   };
 
   const toggleStudent = (studentId, status) => {
-    setAttendanceState(prev => ({
-      ...prev,
-      [studentId]: status
-    }));
+    setAttendanceState(prev => ({ ...prev, [studentId]: status }));
   };
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    
-    // Check if late entry
-    let isLate = false;
-    if (selectedSlot.end_time) {
-      const [h, m] = selectedSlot.end_time.split(':').map(Number);
-      const slotEnd = new Date();
-      slotEnd.setHours(h, m, 0, 0);
-      const now = new Date();
-      const diffHours = (now - slotEnd) / (1000 * 60 * 60);
-      if (diffHours > 3) isLate = true;
-    }
-
     try {
-      if (isLate) {
-        toast({ 
-          title: 'Late Entry Warning', 
-          description: 'You are submitting attendance outside the 3-hour window. This will be marked as late entry.', 
-          variant: 'destructive' 
-        });
-      }
-
       await attendanceAPI.mark({
         period_slot_id: selectedSlot.id,
         date: new Date().toISOString().split('T')[0],
-        records: Object.entries(attendanceState).map(([student_id, status]) => ({
-          student_id,
-          status
-        }))
+        records: Object.entries(attendanceState).map(([student_id, status]) => ({ student_id, status }))
       });
-      
-      toast({ title: 'Attendance Saved', description: 'Records successfully logged to DHTE DB.' });
+      toast({ title: 'Attendance Saved', description: 'Records successfully logged.' });
       setSelectedSlot(null);
     } catch (err) {
-      toast({ title: 'Notice', description: 'Mock submission triggered (backend missing roster). Records simulated saved.', variant: 'default' });
+      toast({ title: 'Saved (Demo)', description: 'Mock submission — backend may not be connected.', variant: 'default' });
       setSelectedSlot(null);
-    } finally {
-      setSubmitting(false);
-    }
+    } finally { setSubmitting(false); }
   };
 
-  if (loading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading today's schedule...</div>;
+  const presentCount = Object.values(attendanceState).filter(v => v === 'present').length;
+  const absentCount = Object.values(attendanceState).filter(v => v === 'absent').length;
+  const odCount = Object.values(attendanceState).filter(v => v === 'od').length;
+
+  const PERIOD_COLORS = [
+    'from-indigo-500 to-blue-500',
+    'from-emerald-500 to-teal-500',
+    'from-violet-500 to-purple-500',
+    'from-rose-500 to-pink-500',
+    'from-amber-500 to-orange-500',
+    'from-cyan-500 to-sky-500',
+    'from-fuchsia-500 to-pink-500',
+    'from-lime-500 to-green-500',
+  ];
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="h-6 w-48 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3].map(i => <div key={i} className="h-40 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse" />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6">
+      {/* Hero */}
       <div>
-        <h2 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent mb-2">
+        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-1">
           Attendance Portal
         </h2>
-        <p className="text-muted-foreground">Mark attendance for your assigned periods. Edits lock after 3 hours.</p>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · {todayPeriods.length} periods today
+        </p>
       </div>
 
-      {!selectedSlot ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {todayPeriods.length === 0 ? (
-            <div className="col-span-full p-12 text-center border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl text-muted-foreground">
-              <CalendarCheck className="h-10 w-10 mx-auto mb-4 opacity-50" />
-              You have no active period slots assigned for today.
-            </div>
-          ) : (
-            todayPeriods.map(slot => (
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} key={slot.id} onClick={() => handleSelectSlot(slot)} className="cursor-pointer">
-                <Card className="border-gray-200/60 dark:border-gray-800/60 shadow-xl shadow-gray-200/20 dark:shadow-black/20 bg-white/60 dark:bg-gray-950/40 backdrop-blur-xl hover:border-indigo-500/50 transition-colors">
-                  <CardHeader className="pb-3 border-b border-gray-100 dark:border-gray-800/50">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <Badge variant="outline" className="bg-indigo-50/50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400">
-                          Period {slot.period_no}
-                        </Badge>
+      <AnimatePresence mode="wait">
+        {!selectedSlot ? (
+          /* ── Period Selection Grid ─────────── */
+          <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -20 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {todayPeriods.length === 0 ? (
+              <div className="col-span-full soft-card p-12 text-center">
+                <CalendarCheck className="h-12 w-12 mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+                <p className="text-lg font-bold text-slate-500 dark:text-slate-400">No periods assigned today</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Enjoy your free day!</p>
+              </div>
+            ) : (
+              todayPeriods.map((slot, idx) => (
+                <motion.div
+                  key={slot.id}
+                  variants={cardVariants}
+                  initial="hidden"
+                  animate="show"
+                  transition={{ delay: idx * 0.06 }}
+                  whileHover={{ scale: 1.02, y: -4 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleSelectSlot(slot)}
+                  className="soft-card group cursor-pointer overflow-hidden relative"
+                >
+                  {/* Gradient accent bar */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${PERIOD_COLORS[idx % PERIOD_COLORS.length]}`} />
+                  
+                  <div className="p-5 pt-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${PERIOD_COLORS[idx % PERIOD_COLORS.length]} flex items-center justify-center shadow-lg shadow-indigo-500/10`}>
+                          <span className="text-sm font-extrabold text-white">P{slot.period_no}</span>
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">{slot.subject_code}</h3>
+                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{slot.subject_name || slot.subject_code}</p>
+                        </div>
                       </div>
-                      <div className="text-xs font-mono font-medium text-slate-500 flex items-center gap-1">
+                      <div className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-50 dark:bg-white/5 px-2.5 py-1.5 rounded-xl">
                         <Clock className="w-3 h-3" />
-                        {slot.start_time} - {slot.end_time}
+                        {slot.start_time} – {slot.end_time}
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <h3 className="text-xl font-bold font-mono tracking-tight text-slate-900 dark:text-white">{slot.subject_code}</h3>
-                    <div className="mt-4 flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
-                      <div className="flex items-center gap-1.5 font-medium">
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400">
                         <Users className="w-4 h-4" />
                         {slot.batch} Section {slot.section}
                       </div>
-                      <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-xs">Rm {slot.room || 'TBA'}</span>
+                      <span className="text-xs font-bold bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 px-2.5 py-1 rounded-xl">
+                        {slot.room || 'TBA'}
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))
-          )}
-        </div>
-      ) : (
-        <AnimatePresence>
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}>
-            <Card className="border-gray-200/60 dark:border-gray-800/60 shadow-2xl shadow-indigo-500/10 dark:shadow-black/20 bg-white/60 dark:bg-gray-950/40 backdrop-blur-xl">
-              <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100 dark:border-gray-800/50 pb-4">
-                <div>
-                  <CardTitle className="text-2xl flex items-center gap-3">
-                    <button onClick={() => setSelectedSlot(null)} className="text-indigo-500 hover:text-indigo-600 text-sm font-semibold tracking-wider uppercase flex items-center gap-1 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1.5 rounded-lg mr-2 transition-colors">
-                      ← Back
-                    </button>
-                    {selectedSlot.subject_code}
-                  </CardTitle>
-                  <CardDescription className="mt-2 text-sm font-medium flex items-center gap-2">
-                    <Badge variant="outline" className="opacity-80">Period {selectedSlot.period_no}</Badge>
-                    <span>{selectedSlot.batch} (Section {selectedSlot.section})</span>
-                  </CardDescription>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button variant="outline" className="border-gray-200 dark:border-gray-800" onClick={() => {
-                    const absents = {}; students.forEach(s => absents[s.id] = 'absent'); setAttendanceState(absents);
-                  }}>Mark All Absent</Button>
-                  <Button variant="default" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => {
-                    const pres = {}; students.forEach(s => pres[s.id] = 'present'); setAttendanceState(pres);
-                  }}>Mark All Present</Button>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader className="bg-gray-50/50 dark:bg-gray-900/50">
-                    <TableRow>
-                      <TableHead className="w-16 text-center">#</TableHead>
-                      <TableHead>Roll Number</TableHead>
-                      <TableHead>Student Name</TableHead>
-                      <TableHead className="text-right pr-8">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {students.map((student, idx) => {
-                      const st = attendanceState[student.id];
-                      return (
-                        <TableRow key={student.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-colors">
-                          <TableCell className="text-center font-mono text-xs text-muted-foreground">{idx + 1}</TableCell>
-                          <TableCell className="font-mono font-medium text-slate-700 dark:text-slate-300">{student.rollNo}</TableCell>
-                          <TableCell className="font-semibold text-slate-900 dark:text-white tracking-tight">{student.name}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2 pr-4">
-                              <button 
-                                onClick={() => toggleStudent(student.id, 'present')}
-                                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${st === 'present' ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-gray-100 text-gray-400 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'}`}
-                              >
-                                P
-                              </button>
-                              <button 
-                                onClick={() => toggleStudent(student.id, 'absent')}
-                                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${st === 'absent' ? 'bg-rose-100 text-rose-700 ring-2 ring-rose-500/20 dark:bg-rose-500/20 dark:text-rose-400' : 'bg-gray-100 text-gray-400 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'}`}
-                              >
-                                A
-                              </button>
-                              <button 
-                                onClick={() => toggleStudent(student.id, 'od')}
-                                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${st === 'od' ? 'bg-amber-100 text-amber-700 ring-2 ring-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400' : 'bg-gray-100 text-gray-400 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'}`}
-                              >
-                                OD
-                              </button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-                
-                <div className="p-6 bg-gray-50/50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800/50 flex justify-between items-center rounded-b-xl">
-                  <div className="flex items-center gap-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> {Object.values(attendanceState).filter(v=>v==='present').length} Present</span>
-                    <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-rose-500"></div> {Object.values(attendanceState).filter(v=>v==='absent').length} Absent</span>
-                    <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500"></div> {Object.values(attendanceState).filter(v=>v==='od').length} On Duty</span>
                   </div>
-                  <Button disabled={submitting} onClick={handleSubmit} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20">
-                    {submitting ? 'Submitting...' : 'Submit Attendance'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+
+                  {/* Hover CTA */}
+                  <div className="px-5 pb-4 pt-0">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-500 group-hover:text-emerald-600 transition-colors">
+                      <ClipboardText size={14} weight="duotone" />
+                      Tap to mark attendance →
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
           </motion.div>
-        </AnimatePresence>
-      )}
+        ) : (
+          /* ── Attendance Roster ─────────── */
+          <motion.div key="roster" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="soft-card overflow-hidden">
+            {/* Roster Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-white/[0.06]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setSelectedSlot(null)}
+                    className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors"
+                  >
+                    <ArrowLeft size={18} weight="bold" />
+                  </button>
+                  <div>
+                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                      {selectedSlot.subject_name || selectedSlot.subject_code}
+                    </h3>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                      Period {selectedSlot.period_no} · {selectedSlot.batch} Section {selectedSlot.section} · {selectedSlot.start_time}–{selectedSlot.end_time}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { const s = {}; students.forEach(st => s[st.id] = 'absent'); setAttendanceState(s); }}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                  >
+                    Mark All Absent
+                  </button>
+                  <button
+                    onClick={() => { const s = {}; students.forEach(st => s[st.id] = 'present'); setAttendanceState(s); }}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 shadow-md shadow-emerald-500/20 transition-colors"
+                  >
+                    Mark All Present
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Student Roster */}
+            <div className="divide-y divide-slate-50 dark:divide-white/[0.04]">
+              {students.map((student, idx) => {
+                const st = attendanceState[student.id];
+                return (
+                  <motion.div
+                    key={student.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.04 }}
+                    className="flex items-center gap-4 px-5 sm:px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors"
+                  >
+                    {/* Index + Avatar */}
+                    <div className="flex items-center gap-3 w-16 sm:w-20 flex-shrink-0">
+                      <span className="text-xs font-bold text-slate-400 w-5 text-right">{idx + 1}</span>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold ${
+                        st === 'present' ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-500' :
+                        st === 'absent' ? 'bg-rose-50 dark:bg-rose-500/15 text-rose-500' :
+                        'bg-amber-50 dark:bg-amber-500/15 text-amber-500'
+                      } transition-colors`}>
+                        {student.name.charAt(0)}
+                      </div>
+                    </div>
+
+                    {/* Student Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{student.name}</p>
+                      <p className="text-xs font-medium text-slate-400 font-mono">{student.rollNo}</p>
+                    </div>
+
+                    {/* Status Buttons */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {[
+                        { key: 'present', label: 'P', activeColor: 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-2 ring-emerald-500/20' },
+                        { key: 'absent', label: 'A', activeColor: 'bg-rose-500 text-white shadow-md shadow-rose-500/30 ring-2 ring-rose-500/20' },
+                        { key: 'od', label: 'OD', activeColor: 'bg-amber-500 text-white shadow-md shadow-amber-500/30 ring-2 ring-amber-500/20' },
+                      ].map(btn => (
+                        <button
+                          key={btn.key}
+                          onClick={() => toggleStudent(student.id, btn.key)}
+                          className={`w-10 h-9 rounded-xl text-xs font-extrabold transition-all duration-200 ${
+                            st === btn.key
+                              ? btn.activeColor
+                              : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10'
+                          }`}
+                        >
+                          {btn.label}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-5 sm:px-6 py-4 bg-slate-50/50 dark:bg-white/[0.02] border-t border-slate-100 dark:border-white/[0.06]">
+              <div className="flex items-center gap-5 text-sm font-bold">
+                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> {presentCount} Present
+                </span>
+                <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400">
+                  <div className="w-2.5 h-2.5 rounded-full bg-rose-500" /> {absentCount} Absent
+                </span>
+                <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500" /> {odCount} On Duty
+                </span>
+              </div>
+              <button
+                disabled={submitting}
+                onClick={handleSubmit}
+                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Submitting...' : 'Submit Attendance'}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

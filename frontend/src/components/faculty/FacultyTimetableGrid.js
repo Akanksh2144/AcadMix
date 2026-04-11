@@ -200,10 +200,10 @@ const FacultyTimetableGrid = ({ mode = 'view' }) => {
 
       {/* Desktop Grid */}
       <motion.div variants={itemVariants} className="soft-card p-4 sm:p-5 overflow-x-auto hidden md:block">
-        <table className="w-full min-w-[700px]">
+        <table className="w-full table-fixed" style={{ minWidth: `${80 + periods.length * 130}px` }}>
           <thead>
             <tr>
-              <th className="text-left text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 py-3 px-2 w-20">Day</th>
+              <th className="text-left text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 py-3 px-2" style={{ width: '72px' }}>Day</th>
               {periods.map(p => (
                 <th key={p} className="text-center text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 py-3 px-1">P{p}</th>
               ))}
@@ -290,7 +290,7 @@ const FacultyTimetableGrid = ({ mode = 'view' }) => {
                   return (
                     <div key={i} onClick={() => isClickable && handleCellClick(slot, day)}
                       className={`flex items-center gap-3 p-3 rounded-xl border ${sc.bg} ${sc.border} ${isClickable ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''}`}>
-                      <div className="w-8 h-8 rounded-lg bg-white/60 dark:bg-black/20 flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-white/60 dark:bg-black/20 flex items-center justify-center flex-shrink-0">
                         <span className="text-xs font-extrabold text-slate-600 dark:text-slate-300">P{slot.period_no}</span>
                       </div>
                       <div className="flex-1 min-w-0">

@@ -38,6 +38,9 @@ const timeAgo = (ts) => {
   const diff = Date.now() - new Date(ts).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
 };
 
@@ -168,7 +171,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
                 </div>
               )}
             </button>
-            <button onClick={() => setShowProfile(true)} className="hidden sm:flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors cursor-pointer text-left border border-slate-100 dark:border-white/5">
+            <button onClick={() => navigate('faculty-profile')} className="hidden sm:flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors cursor-pointer text-left border border-slate-100 dark:border-white/5">
               <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0">
                 <GraduationCap size={18} weight="duotone" className="text-emerald-500" />
               </div>
@@ -203,7 +206,6 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
               { id: 'timetable', label: 'Timetable' },
               { id: 'teaching', label: 'Teaching Work' },
               { id: 'cia', label: 'CIA Marks' },
-              { id: 'profile', label: 'My Profile' },
               { id: 'expert', label: 'Expert Module' },
             ].map(tab => (
               <button 
@@ -211,7 +213,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 justify-center min-w-max flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id 
-                    ? "bg-white dark:bg-[#1E293B]/80 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-200/50 dark:border-white/[0.06] backdrop-blur-md"
+                    ? "bg-white dark:bg-[#1E293B]/80 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-white/[0.06] backdrop-blur-md"
                     : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5 border border-transparent"
                 }`}
               >
@@ -246,9 +248,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
         {/* ── Quick Actions ────────────────────────── */}
         <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-5 mb-6 sm:mb-8">
           {[
-            { id: 'attendance-marker', icon: Clipboard, label: 'Attendance', sub: 'Mark daily roster', colorBg: 'bg-emerald-50 dark:bg-emerald-500/15 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/25', colorText: 'text-emerald-500 dark:text-emerald-400', testId: 'attendance-marker-button' },
             { id: 'quiz-builder', icon: NotePencil, label: 'Create Quiz', sub: 'Build from scratch', colorBg: 'bg-indigo-50 dark:bg-indigo-500/15 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/25', colorText: 'text-indigo-500 dark:text-indigo-400', testId: 'create-quiz-button' },
-            { id: 'marks-entry', icon: PencilLine, label: 'Marks Entry', sub: 'Mid-term marks', colorBg: 'bg-violet-50 dark:bg-violet-500/15 group-hover:bg-violet-100 dark:group-hover:bg-violet-500/25', colorText: 'text-violet-500 dark:text-violet-400', testId: 'marks-entry-button' },
             { id: 'class-results', icon: ChartLine, label: 'View Results', sub: 'Class-wise analytics', colorBg: 'bg-sky-50 dark:bg-sky-500/15 group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25', colorText: 'text-sky-500 dark:text-sky-400', testId: 'view-all-results-button' },
             { id: 'student-management', icon: Users, label: 'Students', sub: 'Manage enrollment', colorBg: 'bg-amber-50 dark:bg-amber-500/15 group-hover:bg-amber-100 dark:group-hover:bg-amber-500/25', colorText: 'text-amber-500 dark:text-amber-400', testId: 'manage-students-button' },
             { id: 'quiz-calendar', icon: CalendarDots, label: 'Calendar', sub: 'Quiz schedule', colorBg: 'bg-rose-50 dark:bg-rose-500/15 group-hover:bg-rose-100 dark:group-hover:bg-rose-500/25', colorText: 'text-rose-500 dark:text-rose-400', testId: 'quiz-calendar-button' },
@@ -395,13 +395,6 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
           </motion.div>
         )}
 
-        {activeTab === 'profile' && (
-          <motion.div data-testid="profile-content" variants={containerVariants} initial="hidden" animate="show">
-            <motion.div variants={itemVariants}>
-              <FacultyProfile />
-            </motion.div>
-          </motion.div>
-        )}
 
         {activeTab === 'expert' && (
           <motion.div data-testid="expert-content" variants={containerVariants} initial="hidden" animate="show">

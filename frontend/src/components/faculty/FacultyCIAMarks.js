@@ -181,7 +181,7 @@ const FacultyCIAMarks = ({ navigate }) => {
                   <div className="flex items-center gap-2 mb-0.5">
                     <h3 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">{sub.subject_name}</h3>
                     {!sub.has_cia_template && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">No Template</span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-xl bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">No Template</span>
                     )}
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{sub.subject_code} • {sub.batch}/{sub.section} • Sem {sub.semester}</p>
@@ -196,7 +196,7 @@ const FacultyCIAMarks = ({ navigate }) => {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {sub.template && (
-                    <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300">
+                    <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300">
                       {sub.template.total_marks} marks
                     </span>
                   )}
@@ -244,7 +244,7 @@ const FacultyCIAMarks = ({ navigate }) => {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0">
-                                <span className={`flex items-center gap-1 text-[10px] font-extrabold px-2 py-1 rounded-lg ${statusCfg.bg} ${statusCfg.text}`}>
+                                <span className={`flex items-center gap-1 text-[10px] font-extrabold px-2 py-1 rounded-xl ${statusCfg.bg} ${statusCfg.text}`}>
                                   <StatusIcon size={10} weight="fill" /> {statusCfg.label}
                                 </span>
                                 {comp.type !== 'attendance' && (
