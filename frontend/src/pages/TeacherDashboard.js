@@ -8,8 +8,8 @@ import DashboardSkeleton from '../components/DashboardSkeleton';
 import FacultyExpertSubmissions from '../components/faculty/FacultyExpertSubmissions';
 import AttendanceMarker from '../components/faculty/AttendanceMarker';
 import FacultyTimetableGrid from '../components/faculty/FacultyTimetableGrid';
-import FacultyProfile from '../components/faculty/FacultyProfile';
 import FacultyCIAMarks from '../components/faculty/FacultyCIAMarks';
+import StudentAcademicCalendar from '../components/student/StudentAcademicCalendar';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -206,6 +206,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
               { id: 'timetable', label: 'Timetable' },
               { id: 'teaching', label: 'Teaching Work' },
               { id: 'cia', label: 'CIA Marks' },
+              { id: 'calendar', label: 'Calendar' },
               { id: 'expert', label: 'Expert Module' },
             ].map(tab => (
               <button 
@@ -395,6 +396,14 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
           </motion.div>
         )}
 
+
+        {activeTab === 'calendar' && (
+          <motion.div data-testid="calendar-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <StudentAcademicCalendar />
+            </motion.div>
+          </motion.div>
+        )}
 
         {activeTab === 'expert' && (
           <motion.div data-testid="expert-content" variants={containerVariants} initial="hidden" animate="show">

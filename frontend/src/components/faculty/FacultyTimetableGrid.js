@@ -74,6 +74,17 @@ const FacultyTimetableGrid = ({ mode = 'view' }) => {
     return nums.length > 0 ? nums : [1, 2, 3, 4, 5, 6, 7, 8];
   }, [slots]);
 
+  // Extract timing for each period from first occurrence
+  const periodTimings = useMemo(() => {
+    const map = {};
+    slots.forEach(s => {
+      if (s.period_no && s.start_time && !map[s.period_no]) {
+        map[s.period_no] = `${s.start_time}–${s.end_time}`;
+      }
+    });
+    return map;
+  }, [slots]);
+
   // Map: `${slotId}-${date}` -> record
   const recordMap = useMemo(() => {
     const m = {};
@@ -205,7 +216,12 @@ const FacultyTimetableGrid = ({ mode = 'view' }) => {
             <tr>
               <th className="text-left text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 py-3 px-2" style={{ width: '72px' }}>Day</th>
               {periods.map(p => (
-                <th key={p} className="text-center text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 py-3 px-1">P{p}</th>
+                <th key={p} className="text-center py-3 px-1">
+                  <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 block">P{p}</span>
+                  {periodTimings[p] && (
+                    <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 block mt-0.5">{periodTimings[p]}</span>
+                  )}
+                </th>
               ))}
             </tr>
           </thead>
@@ -237,10 +253,10 @@ const FacultyTimetableGrid = ({ mode = 'view' }) => {
                       <td key={p} className="py-1.5 px-1">
                         <div 
                           onClick={() => isClickable && handleCellClick(slot, day)}
-                          className={`h-[72px] rounded-xl p-2 border flex flex-col justify-between ${sc.bg} ${sc.border} ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-indigo-400 hover:ring-offset-1 dark:hover:ring-offset-[#0B0F19] transition-all' : ''}`}
+                          className={`h-[60px] rounded-xl p-2 border flex flex-col justify-between ${sc.bg} ${sc.border} ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-indigo-400 hover:ring-offset-1 dark:hover:ring-offset-[#0B0F19] transition-all' : ''}`}
                         >
                           <div>
-                            <p className={`text-xs font-extrabold truncate ${sc.text}`}>{slot.subject_name || slot.subject_code}</p>
+                            <p className={`text-xs font-extrabold truncate ${sc.text}`}>{slot.subject_code}</p>
                             <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate">{slot.batch}/{slot.section}</p>
                           </div>
                           {mode !== 'view' && (
@@ -248,11 +264,7 @@ const FacultyTimetableGrid = ({ mode = 'view' }) => {
                               {status === 'submitted' && <CheckCircle size={12} weight="fill" className="text-emerald-500" />}
                               {status === 'planned' && <Clock size={12} weight="duotone" className="text-indigo-400" />}
                               {status === 'empty' && isClickable && <PencilLine size={12} weight="duotone" className="text-slate-400" />}
-                              <span className="text-[9px] font-bold text-slate-400">{slot.start_time}</span>
                             </div>
-                          )}
-                          {mode === 'view' && (
-                            <span className="text-[9px] text-slate-400">{slot.start_time}–{slot.end_time}</span>
                           )}
                         </div>
                       </td>
@@ -294,7 +306,7 @@ const FacultyTimetableGrid = ({ mode = 'view' }) => {
                         <span className="text-xs font-extrabold text-slate-600 dark:text-slate-300">P{slot.period_no}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-bold truncate ${sc.text}`}>{slot.subject_name || slot.subject_code}</p>
+                        <p className={`text-sm font-bold truncate ${sc.text}`}>{slot.subject_code}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">{slot.start_time}–{slot.end_time} • {slot.batch}/{slot.section}</p>
                       </div>
                       {mode !== 'view' && (

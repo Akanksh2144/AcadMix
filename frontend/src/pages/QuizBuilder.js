@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash, Copy, Eye, CalendarBlank, Clock, X, WarningCircle, CaretDown, CaretUp, DownloadSimple, UploadSimple } from '@phosphor-icons/react';
+import { Plus, Trash, Copy, Eye, CalendarBlank, Clock, X, WarningCircle, CaretDown, CaretUp, DownloadSimple, UploadSimple, CalendarDots } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { facultyAPI, quizzesAPI } from '../services/api';
 import * as XLSX from 'xlsx';
 import AlertModal from '../components/AlertModal';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const QuizBuilder = ({ navigate, user }) => {
   const [quizTitle, setQuizTitle] = useState('New Quiz');
@@ -30,6 +31,8 @@ const QuizBuilder = ({ navigate, user }) => {
   const [alertModal, setAlertModal] = useState({ open: false, title: '', message: '', type: 'info', onConfirm: null });
   const showAlert = (title, message, type = 'info') => setAlertModal({ open: true, title, message, type, onConfirm: null });
   const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }));
+  const [showSchedulePopup, setShowSchedulePopup] = useState(false);
+  const [existingQuizzes, setExistingQuizzes] = useState([]);
 
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -45,6 +48,14 @@ const QuizBuilder = ({ navigate, user }) => {
       }
     };
     fetchAssignments();
+    // Fetch existing quizzes for schedule reference
+    const fetchQuizzes = async () => {
+      try {
+        const { data } = await quizzesAPI.list();
+        setExistingQuizzes(data || []);
+      } catch (e) { console.error('Could not load quizzes for schedule:', e); }
+    };
+    fetchQuizzes();
   }, []);
 
   const addQuestion = (type) => {
@@ -342,6 +353,10 @@ const QuizBuilder = ({ navigate, user }) => {
         subtitle="Quiz Builder"
         rightContent={
           <>
+            <button onClick={() => setShowSchedulePopup(true)}
+              className="btn-ghost !py-2.5 flex items-center gap-2 text-sm" title="View existing quiz schedules">
+              <CalendarDots size={18} weight="duotone" />
+            </button>
             <button onClick={() => setShowSchedule(!showSchedule)}
               className={`btn-ghost !py-2.5 flex items-center gap-2 text-sm ${showSchedule ? 'bg-amber-50 text-amber-600' : ''}`}>
               <CalendarBlank size={18} weight="duotone" /> {showSchedule ? 'Cancel Schedule' : 'Schedule'}
@@ -353,6 +368,56 @@ const QuizBuilder = ({ navigate, user }) => {
           </>
         }
       />
+
+      {/* Quiz Schedule Reference Popup */}
+      <AnimatePresence>
+        {showSchedulePopup && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm" onClick={() => setShowSchedulePopup(false)} />
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.97 }}
+              className="relative w-full max-w-lg bg-white dark:bg-[#1A202C] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 z-10 overflow-hidden max-h-[70vh] flex flex-col"
+            >
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between flex-shrink-0">
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Existing Schedules</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Quick reference for scheduling conflicts</p>
+                </div>
+                <button onClick={() => setShowSchedulePopup(false)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                  <X size={18} weight="bold" className="text-slate-400" />
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-1 px-6 py-4">
+                {existingQuizzes.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <CalendarDots size={40} weight="duotone" className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                    <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No quizzes found</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {existingQuizzes.map((quiz, i) => (
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/[0.06]">
+                        <div className={`w-2 h-8 rounded-full flex-shrink-0 ${
+                          quiz.status === 'active' ? 'bg-emerald-500' : quiz.status === 'scheduled' ? 'bg-amber-400' : 'bg-slate-300 dark:bg-slate-600'
+                        }`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{quiz.title}</p>
+                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                            {quiz.subject} · {quiz.duration_mins || 60}min · {quiz.status}
+                            {quiz.scheduled_date && ` · ${quiz.scheduled_date}`}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="soft-card p-6 mb-8">
