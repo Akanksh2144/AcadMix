@@ -13,7 +13,6 @@ import AcademicCalendar from '../components/shared/AcademicCalendar';
 import FacultyLeaveManager from '../components/faculty/FacultyLeaveManager';
 import FacultyMenteeList from '../components/faculty/FacultyMenteeList';
 import FacultyAnnouncements from '../components/faculty/FacultyAnnouncements';
-import FacultyStudentSearch from '../components/faculty/FacultyStudentSearch';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -214,7 +213,6 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
               { id: 'mentees', label: 'Mentees' },
               { id: 'calendar', label: 'Calendar' },
               { id: 'announcements', label: 'Notices' },
-              { id: 'students', label: 'Students' },
               { id: 'expert', label: 'Expert Module' },
             ].map(tab => (
               <button 
@@ -437,13 +435,6 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
           </motion.div>
         )}
 
-        {activeTab === 'students' && (
-          <motion.div data-testid="students-content" variants={containerVariants} initial="hidden" animate="show">
-            <motion.div variants={itemVariants}>
-              <FacultyStudentSearch />
-            </motion.div>
-          </motion.div>
-        )}
 
         {activeTab === 'expert' && (
           <motion.div data-testid="expert-content" variants={containerVariants} initial="hidden" animate="show">
