@@ -85,10 +85,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
     score: r.percentage,
   }));
 
-  const stats = [
-    { label: 'Total Quizzes', value: String(totalQuizzes), sub: 'created', icon: Clipboard, color: 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-500 dark:text-indigo-400', gradient: 'from-indigo-500 to-blue-500' },
-    { label: 'Active Quizzes', value: String(activeQuizzes), sub: 'live now', icon: Fire, color: 'bg-rose-50 dark:bg-rose-500/15 text-rose-500 dark:text-rose-400', gradient: 'from-rose-500 to-pink-500', onClick: () => navigate('teacher-quizzes') },
-  ];
+  const stats = [];
 
   if (initialLoading) return <DashboardSkeleton variant="teacher" />;
 
@@ -231,26 +228,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
 
         {activeTab === 'overview' && (
           <motion.div data-testid="overview-content" variants={containerVariants} initial="hidden" animate="show">
-            {/* ── Stat Cards ──────────────────────────── */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-6 mb-6 sm:mb-8">
-          {stats.map((stat, i) => {
-            const Icon = stat.icon;
-            const Wrapper = stat.onClick ? motion.button : motion.div;
-            return (
-              <Wrapper variants={itemVariants} whileHover={cardHover} key={i} onClick={stat.onClick || undefined}
-                className={`stat-card relative overflow-hidden group text-left ${stat.onClick ? 'cursor-pointer' : ''}`}
-                data-testid={`stat-card-${stat.label.toLowerCase().replace(/\s+/g, '-')}`}>
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
-                  <div className={`${stat.color} p-2 sm:p-2.5 rounded-xl`}><Icon size={18} weight="duotone" /></div>
-                </div>
-                <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{stat.value}</p>
-                <p className="text-[10px] sm:text-xs font-medium text-slate-400 mt-1">{stat.sub}</p>
-                {stat.onClick && <p className="text-[10px] font-bold text-indigo-500 mt-2 flex items-center gap-1">View all <ArrowRight size={10} weight="bold" /></p>}
-              </Wrapper>
-            );
-          })}
-            </div>
+
 
         {/* ── Quick Actions ────────────────────────── */}
         <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-5 mb-6 sm:mb-8">
@@ -276,7 +254,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
           })}
         </motion.div>
 
-        {/* ── Activity Feed + Quiz Summary ─────────── */}
+        {/* ── Activity Feed + Quizzes ─────────── */}
         <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
           {/* Recent Submissions */}
           <motion.div variants={itemVariants} className="lg:col-span-3 soft-card p-5 sm:p-6">
@@ -317,14 +295,26 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
             </div>
           </motion.div>
 
-          {/* Active Quizzes Summary */}
+          {/* Quizzes Card — consolidated */}
           <motion.div variants={itemVariants} className="lg:col-span-2 soft-card p-5 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-100">My Quizzes</h3>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-100">Quizzes</h3>
               <button onClick={() => navigate('teacher-quizzes')} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 flex items-center gap-1 transition-colors">
                 Manage <ArrowRight size={12} weight="bold" />
               </button>
             </div>
+            {/* Quick stats row */}
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-500/10 p-3 text-center">
+                <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{activeQuizzes}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-500/70 dark:text-emerald-400/60 mt-0.5">Active</p>
+              </div>
+              <div className="rounded-xl bg-indigo-50 dark:bg-indigo-500/10 p-3 text-center">
+                <p className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400">{totalQuizzes}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500/70 dark:text-indigo-400/60 mt-0.5">Total</p>
+              </div>
+            </div>
+            {/* Quiz list */}
             <div className="space-y-2">
               {myQuizzes.slice(0, 5).map((q, i) => (
                 <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer" onClick={() => navigate('teacher-quizzes')}>
