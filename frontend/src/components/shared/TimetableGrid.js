@@ -78,7 +78,7 @@ const TimetableGrid = ({ mode = 'view', fetchSlots, fetchRecords, onSavePlan, on
 
   const periods = useMemo(() => {
     const nums = [...new Set(slots.map(s => s.period_no))].sort((a, b) => a - b);
-    return nums.length > 0 ? nums : [1, 2, 3, 4, 5, 6, 7, 8];
+    return nums.length > 0 ? nums : [1, 2, 3, 4, 5, 6];
   }, [slots]);
 
   const periodTimings = useMemo(() => {
