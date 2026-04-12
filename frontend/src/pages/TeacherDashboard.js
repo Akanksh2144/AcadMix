@@ -205,12 +205,12 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
         <div className="flex overflow-x-auto gap-1 p-1 bg-slate-100/80 dark:bg-white/[0.04] rounded-xl mb-8 hide-scrollbar backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06]">
             {[
               { id: 'overview', label: 'Overview' }, 
-              { id: 'attendance', label: 'Attendance' },
               { id: 'timetable', label: 'Timetable' },
+              { id: 'attendance', label: 'Attendance' },
               { id: 'teaching', label: 'Teaching Work' },
               { id: 'cia', label: 'CIA Marks' },
-              { id: 'leave', label: 'Leave' },
               { id: 'mentees', label: 'Mentees' },
+              { id: 'leave', label: 'Leave' },
               { id: 'calendar', label: 'Calendar' },
               { id: 'announcements', label: 'Noticeboard' },
               { id: 'expert', label: 'Expert Module' },
