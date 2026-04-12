@@ -212,7 +212,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
               { id: 'leave', label: 'Leave' },
               { id: 'mentees', label: 'Mentees' },
               { id: 'calendar', label: 'Calendar' },
-              { id: 'announcements', label: 'Notices' },
+              { id: 'announcements', label: 'Noticeboard' },
               { id: 'expert', label: 'Expert Module' },
             ].map(tab => (
               <button 
