@@ -247,6 +247,7 @@ export const facultyPanelAPI = {
   updateProfile: (data) => api.put('/api/faculty/profile', data),
   ciaDashboard: () => api.get('/api/faculty/cia-dashboard'),
   getSubjectCIA: (subjectCode, academicYear) => api.get(`/api/subjects/${subjectCode}/cia-template`, { params: { academic_year: academicYear } }),
+  myMentees: () => api.get('/api/faculty/my-mentees'),
 };
 
 export const attendanceAPI = {
@@ -255,6 +256,12 @@ export const attendanceAPI = {
   getHodDefaulters: (departmentId, threshold) => api.get('/api/hod/attendance/defaulters', { params: { department_id: departmentId, threshold } }),
 };
 
+// Leave Management
+export const leaveAPI = {
+  apply: (data) => api.post('/api/leave/apply', data),
+  myLeaves: () => api.get('/api/leave/my'),
+  cancel: (leaveId, data) => api.patch(`/api/leave/${leaveId}/cancel`, data || {}),
+};
 
 // Announcements (HOD)
 export const announcementsAPI = {

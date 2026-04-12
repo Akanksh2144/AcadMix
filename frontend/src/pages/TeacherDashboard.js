@@ -10,6 +10,10 @@ import AttendanceMarker from '../components/faculty/AttendanceMarker';
 import TimetableGrid from '../components/shared/TimetableGrid';
 import FacultyCIAMarks from '../components/faculty/FacultyCIAMarks';
 import AcademicCalendar from '../components/shared/AcademicCalendar';
+import FacultyLeaveManager from '../components/faculty/FacultyLeaveManager';
+import FacultyMenteeList from '../components/faculty/FacultyMenteeList';
+import FacultyAnnouncements from '../components/faculty/FacultyAnnouncements';
+import FacultyStudentSearch from '../components/faculty/FacultyStudentSearch';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -206,7 +210,11 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
               { id: 'timetable', label: 'Timetable' },
               { id: 'teaching', label: 'Teaching Work' },
               { id: 'cia', label: 'CIA Marks' },
+              { id: 'leave', label: 'Leave' },
+              { id: 'mentees', label: 'Mentees' },
               { id: 'calendar', label: 'Calendar' },
+              { id: 'announcements', label: 'Notices' },
+              { id: 'students', label: 'Students' },
               { id: 'expert', label: 'Expert Module' },
             ].map(tab => (
               <button 
@@ -401,6 +409,38 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
           <motion.div data-testid="calendar-content" variants={containerVariants} initial="hidden" animate="show">
             <motion.div variants={itemVariants}>
               <AcademicCalendar />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === 'leave' && (
+          <motion.div data-testid="leave-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <FacultyLeaveManager />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === 'mentees' && (
+          <motion.div data-testid="mentees-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <FacultyMenteeList />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === 'announcements' && (
+          <motion.div data-testid="announcements-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <FacultyAnnouncements />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === 'students' && (
+          <motion.div data-testid="students-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <FacultyStudentSearch />
             </motion.div>
           </motion.div>
         )}
