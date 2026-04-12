@@ -253,7 +253,7 @@ const FacultyTimetableGrid = ({ mode = 'view' }) => {
                       <td key={p} className="py-1.5 px-1">
                         <div 
                           onClick={() => isClickable && handleCellClick(slot, day)}
-                          className={`h-[60px] rounded-xl p-2 border flex flex-col justify-between ${sc.bg} ${sc.border} ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-indigo-400 hover:ring-offset-1 dark:hover:ring-offset-[#0B0F19] transition-all' : ''}`}
+                          className={`h-[60px] rounded-xl p-2 border flex flex-col items-center justify-center text-center ${sc.bg} ${sc.border} ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-indigo-400 hover:ring-offset-1 dark:hover:ring-offset-[#0B0F19] transition-all' : ''}`}
                         >
                           <div>
                             <p className={`text-xs font-extrabold truncate ${sc.text}`}>{slot.subject_code}</p>
