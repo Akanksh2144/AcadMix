@@ -16,47 +16,57 @@ router = APIRouter()
 @router.get("/placements/student")
 async def student_placements(user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
     college_id = user.get("college_id", "")
-    dept = user.get("department", "")
-    email = user.get("email", "")
-    stmt = select(models.Placement).where(models.Placement.college_id == college_id)
+    # Query PlacementDrive joined with Company for company name
+    stmt = (
+        select(models.PlacementDrive, models.Company.name.label("company_name"))
+        .join(models.Company, models.PlacementDrive.company_id == models.Company.id)
+        .where(
+            models.PlacementDrive.college_id == college_id,
+            models.PlacementDrive.status.in_(["upcoming", "ongoing", "completed"]),
+        )
+    )
     result = await session.execute(stmt)
-    rows = result.scalars().all()
+    rows = result.all()
     out = []
-    for p in rows:
-        details = p.details or {}
-        candidates = details.get("candidates", [])
-        is_shortlisted = any(c.get("college_id") == college_id or c.get("email") == email for c in candidates)
-        open_dept = details.get("department", "ALL")
-        is_open = details.get("open_to_all") and open_dept in (dept, "ALL", "all", "")
-        if is_shortlisted or is_open:
-            out.append({"id": p.id, "company": p.company, "role": p.role, "package": p.package, "date": p.date, **{k: v for k, v in details.items() if k != "candidates"}})
-    out.sort(key=lambda x: x.get("drive_date", ""))
+    for drive, company_name in rows:
+        out.append({
+            "id": drive.id,
+            "company": company_name,
+            "role": drive.job_description or drive.drive_type or "",
+            "type": drive.type,
+            "status": drive.status,
+            "work_location": drive.work_location,
+        })
     return out
 
 
 @router.post("/placements")
-async def create_placement(req: dict, user: dict = Depends(require_role("admin", "hod")), session: AsyncSession = Depends(get_db)):
-    row = models.Placement(
+async def create_placement(req: dict, user: dict = Depends(require_role("admin", "hod", "tp_officer")), session: AsyncSession = Depends(get_db)):
+    row = models.PlacementDrive(
         college_id=user["college_id"],
-        company=req.get("company", ""),
-        role=req.get("role", ""),
-        package=req.get("package", ""),
-        date=req.get("date", ""),
-        details={k: v for k, v in req.items() if k not in ("company", "role", "package", "date")}
+        company_id=req.get("company_id", ""),
+        drive_type=req.get("drive_type", "on-campus"),
+        type=req.get("type", "placement"),
+        job_description=req.get("job_description", ""),
+        work_location=req.get("work_location", ""),
+        status=req.get("status", "upcoming"),
     )
-    row.details = {**(row.details or {}), "created_by": user["id"]}
     session.add(row)
     await session.commit()
     await session.refresh(row)
-    return {"id": row.id, "company": row.company, "role": row.role, "date": row.date}
+    return {"id": row.id, "status": row.status, "drive_type": row.drive_type}
 
 
 @router.get("/placements")
-async def list_placements(user: dict = Depends(require_role("admin", "hod", "teacher")), session: AsyncSession = Depends(get_db)):
-    stmt = select(models.Placement).where(models.Placement.college_id == user["college_id"])
+async def list_placements(user: dict = Depends(require_role("admin", "hod", "teacher", "tp_officer")), session: AsyncSession = Depends(get_db)):
+    stmt = (
+        select(models.PlacementDrive, models.Company.name.label("company_name"))
+        .join(models.Company, models.PlacementDrive.company_id == models.Company.id)
+        .where(models.PlacementDrive.college_id == user["college_id"])
+    )
     result = await session.execute(stmt)
-    rows = result.scalars().all()
-    return [{"id": p.id, "company": p.company, "role": p.role, "package": p.package, "date": p.date, **(p.details or {})} for p in rows]
+    rows = result.all()
+    return [{"id": d.id, "company": cn, "drive_type": d.drive_type, "type": d.type, "status": d.status, "work_location": d.work_location} for d, cn in rows]
 
 
 @router.get("/tpo/drives/{drive_id}/applicants")
