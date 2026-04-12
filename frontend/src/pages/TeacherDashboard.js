@@ -7,9 +7,9 @@ import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 import FacultyExpertSubmissions from '../components/faculty/FacultyExpertSubmissions';
 import AttendanceMarker from '../components/faculty/AttendanceMarker';
-import FacultyTimetableGrid from '../components/faculty/FacultyTimetableGrid';
+import TimetableGrid from '../components/shared/TimetableGrid';
 import FacultyCIAMarks from '../components/faculty/FacultyCIAMarks';
-import StudentAcademicCalendar from '../components/student/StudentAcademicCalendar';
+import AcademicCalendar from '../components/shared/AcademicCalendar';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -199,7 +199,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
         </motion.div>
 
         {/* Tabs */}
-        <div className="flex overflow-x-auto gap-1 p-1 bg-slate-100/80 dark:bg-white/[0.04] rounded-2xl mb-8 hide-scrollbar backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06]">
+        <div className="flex overflow-x-auto gap-1 p-1 bg-slate-100/80 dark:bg-white/[0.04] rounded-xl mb-8 hide-scrollbar backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06]">
             {[
               { id: 'overview', label: 'Overview' }, 
               { id: 'attendance', label: 'Attendance' },
@@ -212,9 +212,9 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
               <button 
                 key={tab.id} 
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 justify-center min-w-max flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
+                className={`flex-1 justify-center min-w-max flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id 
-                    ? "bg-white dark:bg-[#1E293B]/80 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-white/[0.06] backdrop-blur-md"
+                    ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm border border-emerald-200/60 dark:border-emerald-500/20"
                     : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5 border border-transparent"
                 }`}
               >
@@ -359,7 +359,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
         {activeTab === 'timetable' && (
           <motion.div data-testid="timetable-content" variants={containerVariants} initial="hidden" animate="show">
             <motion.div variants={itemVariants}>
-              <FacultyTimetableGrid mode="view" />
+              <TimetableGrid mode="view" />
             </motion.div>
           </motion.div>
         )}
@@ -367,23 +367,23 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
         {activeTab === 'teaching' && (
           <motion.div data-testid="teaching-content" variants={containerVariants} initial="hidden" animate="show">
             <motion.div variants={itemVariants} className="mb-4">
-              <div className="flex items-center gap-1.5 bg-white dark:bg-[#1A202C]/60 backdrop-blur-md border border-slate-200 dark:border-slate-700/80 rounded-2xl p-1.5 shadow-sm w-fit">
+              <div className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-white/[0.04] backdrop-blur-md border border-slate-200/50 dark:border-white/[0.06] rounded-xl p-1 shadow-sm w-fit">
                 <button onClick={() => setTeachingMode('plan')}
-                  className={`px-3.5 py-2 rounded-2xl text-xs font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 ${
-                    teachingMode === 'plan' ? 'bg-white dark:bg-[#1A202C] text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5'
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 ${
+                    teachingMode === 'plan' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm border border-emerald-200/60 dark:border-emerald-500/20' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5 border border-transparent'
                   }`}>
                   <Notebook size={14} weight="duotone" /> Teaching Plan
                 </button>
                 <button onClick={() => setTeachingMode('record')}
-                  className={`px-3.5 py-2 rounded-2xl text-xs font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 ${
-                    teachingMode === 'record' ? 'bg-white dark:bg-[#1A202C] text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5'
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 ${
+                    teachingMode === 'record' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm border border-emerald-200/60 dark:border-emerald-500/20' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5 border border-transparent'
                   }`}>
                   <PencilLine size={14} weight="duotone" /> Class Record
                 </button>
               </div>
             </motion.div>
             <motion.div variants={itemVariants}>
-              <FacultyTimetableGrid mode={teachingMode} />
+              <TimetableGrid mode={teachingMode} />
             </motion.div>
           </motion.div>
         )}
@@ -400,7 +400,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
         {activeTab === 'calendar' && (
           <motion.div data-testid="calendar-content" variants={containerVariants} initial="hidden" animate="show">
             <motion.div variants={itemVariants}>
-              <StudentAcademicCalendar />
+              <AcademicCalendar />
             </motion.div>
           </motion.div>
         )}
