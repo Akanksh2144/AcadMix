@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { CalendarDots, CaretLeft, CaretRight, Star, GraduationCap, Exam, Sun } from '@phosphor-icons/react';
-import { studentAPI } from '../../services/api';
+import api from '../../services/api';
 import Lottie from 'lottie-react';
 import { searchEmptyAnimation } from '../../assets/lottieAnimations';
 
@@ -57,7 +57,7 @@ const AcademicCalendar = ({ fetchCalendars }) => {
   useEffect(() => {
     const load = async () => {
       try {
-        const fetcher = fetchCalendars || (() => studentAPI.academicCalendar());
+        const fetcher = fetchCalendars || (() => api.get('/api/academic-calendars'));
         const { data } = await fetcher();
         if (data && data.length > 0) {
           setCalendars(data);

@@ -86,6 +86,44 @@ async def get_student_progression(
     return await svc.get_student_progression(user, student_id)
 
 
+@router.get("/faculty/my-mentees")
+async def get_my_mentees(
+    user: dict = Depends(require_role("teacher", "faculty", "hod")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Return students assigned as mentees to the current faculty."""
+    from sqlalchemy.future import select
+    from app.models.academics import MentorAssignment
+    from app.models.core import User, UserProfile
+
+    result = await session.execute(
+        select(MentorAssignment, User, UserProfile)
+        .join(User, MentorAssignment.student_id == User.id)
+        .outerjoin(UserProfile, (User.id == UserProfile.user_id) & (UserProfile.is_deleted == False))
+        .where(
+            MentorAssignment.faculty_id == user["id"],
+            MentorAssignment.college_id == user["college_id"],
+            MentorAssignment.is_active == True,
+            MentorAssignment.is_deleted == False,
+        )
+    )
+    mentees = []
+    for ma, u, up in result.all():
+        mentees.append({
+            "id": u.id,
+            "name": u.name,
+            "college_id": u.college_id,
+            "email": u.email,
+            "department": up.department if up else None,
+            "batch": up.batch if up else None,
+            "section": up.section if up else None,
+            "phone": up.phone if up else None,
+            "roll_number": up.roll_number if up else None,
+            "current_semester": up.current_semester if up else None,
+        })
+    return mentees
+
+
 @router.post("/faculty/activities")
 async def request_activity_permission(
     req: ActivityPermissionCreate,
