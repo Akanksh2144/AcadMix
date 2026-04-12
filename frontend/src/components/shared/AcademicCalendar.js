@@ -152,7 +152,7 @@ const AcademicCalendar = ({ fetchCalendars }) => {
   }
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-5">
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-4 max-w-4xl">
       {/* Semester selector */}
       {calendars.length > 1 && (
         <motion.div variants={itemVariants} className="flex items-center gap-2 overflow-x-auto">
@@ -170,26 +170,26 @@ const AcademicCalendar = ({ fetchCalendars }) => {
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Calendar */}
-        <motion.div variants={itemVariants} className="soft-card p-5 lg:col-span-2">
-          <div className="flex items-center justify-between mb-5">
-            <button onClick={prevMonth} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
-              <CaretLeft size={20} weight="bold" className="text-slate-600 dark:text-slate-300" />
+        <motion.div variants={itemVariants} className="soft-card p-4 lg:col-span-3">
+          <div className="flex items-center justify-between mb-3">
+            <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+              <CaretLeft size={16} weight="bold" className="text-slate-600 dark:text-slate-300" />
             </button>
-            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">{MONTHS[month]} {year}</h3>
-            <button onClick={nextMonth} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
-              <CaretRight size={20} weight="bold" className="text-slate-600 dark:text-slate-300" />
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">{MONTHS[month]} {year}</h3>
+            <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+              <CaretRight size={16} weight="bold" className="text-slate-600 dark:text-slate-300" />
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="grid grid-cols-7 gap-0.5 mb-1">
             {DAYS.map(d => (
-              <div key={d} className="text-center text-xs font-bold text-slate-500 dark:text-slate-400 py-1">{d}</div>
+              <div key={d} className="text-center text-[10px] font-bold text-slate-500 dark:text-slate-400 py-0.5">{d}</div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5">
             {calendarDays.map((day, i) => {
               if (!day) return <div key={i} />;
               const events = dayEventsMap[day] || [];
@@ -209,7 +209,7 @@ const AcademicCalendar = ({ fetchCalendars }) => {
 
               return (
                 <button key={i} onClick={() => setSelectedDay(day === selectedDay ? null : day)}
-                  className={`aspect-square rounded-xl flex flex-col items-center justify-center text-sm font-bold transition-all duration-150 ${cellBg} ${
+                  className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold transition-all duration-150 ${cellBg} ${
                     isSelected ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-[#0B0F19]' : ''
                   } ${isToday ? 'border-2 border-indigo-400' : 'border border-transparent'} hover:opacity-80`}
                 >
@@ -220,7 +220,7 @@ const AcademicCalendar = ({ fetchCalendars }) => {
                     <div className="flex gap-0.5 mt-0.5">
                       {events.slice(0, 3).map((e, ei) => {
                         const cfg = EVENT_TYPES[e.type] || EVENT_TYPES.event;
-                        return <span key={ei} className={`w-1.5 h-1.5 rounded-full ${cfg.color}`}></span>;
+                        return <span key={ei} className={`w-1 h-1 rounded-full ${cfg.color}`}></span>;
                       })}
                     </div>
                   )}
@@ -230,9 +230,9 @@ const AcademicCalendar = ({ fetchCalendars }) => {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-3 mt-4 text-xs font-bold text-slate-500 dark:text-slate-400 flex-wrap">
+          <div className="flex items-center gap-2.5 mt-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 flex-wrap">
             {Object.entries(EVENT_TYPES).slice(0, 4).map(([key, cfg]) => (
-              <span key={key} className="flex items-center gap-1.5"><span className={`w-2.5 h-2.5 rounded-full ${cfg.color}`}></span>{cfg.label}</span>
+              <span key={key} className="flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${cfg.color}`}></span>{cfg.label}</span>
             ))}
           </div>
 
@@ -259,7 +259,7 @@ const AcademicCalendar = ({ fetchCalendars }) => {
         </motion.div>
 
         {/* Upcoming Events Sidebar */}
-        <motion.div variants={itemVariants} className="soft-card p-5">
+        <motion.div variants={itemVariants} className="soft-card p-4 lg:col-span-2">
           <h4 className="text-sm font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4">Upcoming</h4>
           {upcomingEvents.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">No upcoming events</p>
