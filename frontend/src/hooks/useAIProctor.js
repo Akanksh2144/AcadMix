@@ -191,40 +191,10 @@ const useAIProctor = ({ videoRef, audioStream, onViolation, onSnapshot, enabled 
 
 
   // ────────────────────────────────────────────────────────────
-  //  MODULE 4: Object Detection (MediaPipe ObjectDetector)
+  //  MODULE 4: Object Detection — DISABLED
+  //  EfficientDet-Lite0 is too weak for reliable phone/book
+  //  detection at webcam angles. Re-enable with a better model.
   // ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!enabled || !isModelLoaded) return;
-    let cancelled = false;
-
-    const loadObjectDetector = async () => {
-      try {
-        const vision = await import('@mediapipe/tasks-vision');
-        const fileset = await vision.FilesetResolver.forVisionTasks(
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
-        );
-        const detector = await vision.ObjectDetector.createFromOptions(fileset, {
-          baseOptions: {
-            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite',
-            delegate: 'GPU',
-          },
-          runningMode: 'IMAGE',
-          maxResults: 5,
-          scoreThreshold: 0.2,
-        });
-        if (!cancelled) {
-          objectDetectorRef.current = detector;
-          setAiModules(prev => ({ ...prev, objects: true }));
-        }
-      } catch (err) {
-        console.warn('[AI Proctor] ObjectDetector load failed (non-critical):', err);
-      }
-    };
-
-    // Load objects detector with a slight delay to not compete with face model
-    const timer = setTimeout(loadObjectDetector, 3000);
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [enabled, isModelLoaded]);
 
 
   // ────────────────────────────────────────────────────────────
@@ -432,35 +402,6 @@ const useAIProctor = ({ videoRef, audioStream, onViolation, onSnapshot, enabled 
   }, [videoRef]);
 
 
-  // ────────────────────────────────────────────────────────────
-  //  DETECTION LOOP: Object Detection
-  // ────────────────────────────────────────────────────────────
-  const runObjectDetection = useCallback(() => {
-    const detector = objectDetectorRef.current;
-    const video = videoRef?.current;
-    if (!detector || !video || video.readyState < 2) return;
-    if (startTimeRef.current && Date.now() - startTimeRef.current < CONFIG.GRACE_PERIOD_MS) return;
-
-    try {
-      const result = detector.detect(video);
-      const detections = result.detections || [];
-
-      // Debug: log detection results
-      console.log(`[AI Proctor] Object scan: ${detections.length} objects found`, detections.length > 0 ? detections.map(d => 
-        `${d.categories?.[0]?.categoryName} (${(d.categories?.[0]?.score * 100).toFixed(0)}%)`
-      ) : '');
-
-      for (const det of detections) {
-        const name = (det.categories?.[0]?.categoryName || '').toLowerCase();
-        const score = det.categories?.[0]?.score || 0;
-        if (CONFIG.SUSPICIOUS_OBJECTS.includes(name) && score > 0.25) {
-          onViolationRef.current?.(`suspicious_object_${name.replace(/\s+/g, '_')}`);
-        }
-      }
-    } catch (err) {
-      // Silently handle
-    }
-  }, [videoRef]);
 
 
   // ────────────────────────────────────────────────────────────
@@ -521,7 +462,6 @@ const useAIProctor = ({ videoRef, audioStream, onViolation, onSnapshot, enabled 
     if (!isModelLoaded || !enabled) return;
 
     faceIntervalRef.current = setInterval(runFaceDetection, CONFIG.FACE_INTERVAL_MS);
-    objectIntervalRef.current = setInterval(runObjectDetection, CONFIG.OBJECT_INTERVAL_MS);
     snapshotIntervalRef.current = setInterval(captureSnapshot, CONFIG.SNAPSHOT_INTERVAL_MS);
 
     return () => {
