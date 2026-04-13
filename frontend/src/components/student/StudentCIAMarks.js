@@ -17,7 +17,14 @@ const StudentCIAMarks = () => {
     const load = async () => {
       try {
         const { data } = await studentAPI.ciaMarks({});
-        setMarks(data);
+        // Normalize: ensure each subject has components array and numeric totals
+        const safe = (Array.isArray(data) ? data : []).map(s => ({
+          ...s,
+          components: Array.isArray(s.components) ? s.components : [],
+          total_cia: s.total_cia ?? 0,
+          total_max: s.total_max ?? 0,
+        }));
+        setMarks(safe);
       } catch (e) { console.error(e); }
       setLoading(false);
     };
