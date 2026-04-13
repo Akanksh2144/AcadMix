@@ -109,9 +109,6 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
   }, []);
 
   const stats = [
-    { label: 'Avg Quiz Score', value: dashboard?.avg_score ? `${dashboard.avg_score}%` : '-', sub: dashboard?.total_quizzes ? `across ${dashboard.total_quizzes} quizzes` : 'no quizzes yet', icon: Target, color: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', gradient: 'from-emerald-500 to-teal-500' },
-    { label: 'Quizzes Taken', value: dashboard?.total_quizzes || 0, sub: 'completed', icon: BookOpen, color: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400', gradient: 'from-indigo-500 to-blue-500' },
-    { label: 'Active Quizzes', value: dashboard?.upcoming_quizzes?.length || 0, sub: 'available now', icon: Fire, color: 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400', gradient: 'from-rose-500 to-pink-500', onClick: () => navigate('available-quizzes') },
     { label: 'Campus Drives', value: dashboard?.active_drives || 0, sub: 'open for applications', icon: Briefcase, color: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400', gradient: 'from-purple-500 to-fuchsia-500', onClick: () => navigate('placements') },
   ];
 
@@ -286,7 +283,8 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
 
         {activeTab === 'overview' && (
           <motion.div data-testid="overview-content" variants={containerVariants} initial="hidden" animate="show">
-        {/* ── Stat Cards (Spring Physics) ───────────────── */}
+        {/* ── Stat Card ───────────────── */}
+        {stats.length > 0 && (
         <motion.div
           variants={containerVariants} initial="hidden" animate="show"
           className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8"
@@ -313,6 +311,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
             );
           })}
         </motion.div>
+        )}
 
         {/* ── Quick Access (Spring Stagger) ─────────────── */}
         <motion.div
@@ -320,7 +319,6 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
           className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6 sm:mb-8"
         >
           {[
-            { id: 'quiz-results', icon: BookOpen, label: 'Quiz Results', sub: 'View all attempts', iconBg: 'bg-indigo-50 dark:bg-indigo-500/10 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20', iconText: 'text-indigo-500', testId: 'view-all-quizzes-button' },
             { id: 'semester-results', icon: Calendar, label: 'Semester Results', sub: 'Check your grades', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-semester-results-button' },
             { id: 'analytics', icon: ChartLine, label: 'Analytics', sub: 'Track performance', iconBg: 'bg-amber-50 dark:bg-amber-500/10 group-hover:bg-amber-100 dark:group-hover:bg-amber-500/20', iconText: 'text-amber-500', testId: 'view-analytics-button' },
             { id: 'code-playground', icon: Terminal, label: 'Code Playground', sub: 'Practice coding', iconBg: 'bg-purple-50 dark:bg-purple-500/10 group-hover:bg-purple-100 dark:group-hover:bg-purple-500/20', iconText: 'text-purple-500', testId: 'view-code-playground-button' },
@@ -491,42 +489,60 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
             )}
           </motion.div>
 
-          {/* Leaderboard CTA */}
-          <motion.div variants={itemVariants} whileHover={cardHover}
-            className="soft-card-hover p-5 sm:p-6 bg-gradient-to-br from-indigo-500/80 to-purple-600/80 dark:from-indigo-600/30 dark:to-purple-700/30 !border-transparent dark:!border-indigo-500/20 text-white flex flex-col justify-between transition-all duration-300"
-          >
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <Trophy size={28} weight="duotone" />
-                <div>
-                  <h3 className="font-extrabold text-lg sm:text-xl">Leaderboard</h3>
-                  <p className="text-xs sm:text-sm font-medium text-white/70">See where you stand</p>
-                </div>
+          {/* Quizzes Card — consolidated */}
+          <motion.div variants={itemVariants} className="soft-card p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Exam size={20} weight="duotone" className="text-indigo-500" />
+                <h3 className="text-lg font-bold tracking-tight text-slate-800 dark:text-white">Quizzes</h3>
               </div>
-              {dashboard?.rank && (
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-white/70">Your Position</p>
-                      <p className="text-4xl font-extrabold">#{dashboard.rank}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-white/70">Total Students</p>
-                      <p className="text-2xl font-extrabold">{dashboard.total_students}</p>
-                    </div>
-                  </div>
-                  {dashboard.rank <= 3 && (
-                    <div className="mt-3 flex items-center gap-2 text-sm font-bold text-amber-300">
-                      <Trophy size={16} weight="fill" />
-                      {dashboard.rank === 1 ? 'You\'re #1! 🏆' : dashboard.rank === 2 ? 'Almost there! 🥈' : 'Top 3! 🥉'}
-                    </div>
-                  )}
-                </div>
-              )}
+              <button onClick={() => navigate('quiz-results')} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 flex items-center gap-1 transition-colors">
+                All Results <ArrowRight size={12} weight="bold" />
+              </button>
             </div>
-            <button data-testid="view-leaderboard-button" onClick={() => navigate('leaderboard')} className="w-full py-3 bg-white/20 backdrop-blur-sm rounded-xl font-bold text-sm hover:bg-white/30 transition-colors mt-auto">
-              View Full Leaderboard
-            </button>
+            {/* Quick stats row */}
+            <div className="grid grid-cols-3 gap-2 mb-5">
+              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-500/10 p-3 text-center">
+                <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{dashboard?.avg_score ? `${dashboard.avg_score}%` : '-'}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-500/70 dark:text-emerald-400/60 mt-0.5">Avg Score</p>
+              </div>
+              <div className="rounded-xl bg-indigo-50 dark:bg-indigo-500/10 p-3 text-center">
+                <p className="text-lg font-extrabold text-indigo-600 dark:text-indigo-400">{dashboard?.total_quizzes || 0}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500/70 dark:text-indigo-400/60 mt-0.5">Taken</p>
+              </div>
+              <div className="rounded-xl bg-rose-50 dark:bg-rose-500/10 p-3 text-center cursor-pointer" onClick={() => navigate('available-quizzes')}>
+                <p className="text-lg font-extrabold text-rose-600 dark:text-rose-400">{dashboard?.upcoming_quizzes?.length || 0}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-rose-500/70 dark:text-rose-400/60 mt-0.5">Active</p>
+              </div>
+            </div>
+            {/* Recent quizzes list */}
+            {dashboard?.upcoming_quizzes?.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Available Now</p>
+                {dashboard.upcoming_quizzes.slice(0, 4).map((q, i) => {
+                  const deadline = getDeadlineInfo(q);
+                  return (
+                    <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer" onClick={() => navigate('available-quizzes')}>
+                      <div className="w-2 h-2 rounded-full flex-shrink-0 bg-emerald-500" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{q.title}</p>
+                        <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">{q.duration_minutes || q.duration}min</p>
+                      </div>
+                      {deadline && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          deadline.urgent ? 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                        }`}>{deadline.text}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No active quizzes</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Check back later for new quizzes</p>
+              </div>
+            )}
           </motion.div>
         </motion.div>
         </motion.div>
