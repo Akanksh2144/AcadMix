@@ -256,12 +256,12 @@ async def start_attempt(quiz_id: str, request: Request, user: dict = Depends(get
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
 
-    # Check for existing submitted attempt (no reattempt)
+    # Check for existing finished attempt (no reattempt)
     existing_r = await session.execute(
         select(models.QuizAttempt).where(
             models.QuizAttempt.quiz_id == quiz_id,
             models.QuizAttempt.student_id == user["id"],
-            models.QuizAttempt.status == "submitted"
+            models.QuizAttempt.status.in_(["submitted", "completed"])
         )
     )
     if existing_r.scalars().first():
