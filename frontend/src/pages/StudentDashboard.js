@@ -632,7 +632,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
               </div>
               <div className="space-y-2">
                 {(dashboard?.upcoming_quizzes || []).map((q, i) => (
-                  <div key={i} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer" onClick={() => navigate('available-quizzes')}>
+                  <div key={i} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer" onClick={() => navigate('quiz-attempt', { id: q.id, title: q.title })}>
                     <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${q.status === 'active' ? 'bg-emerald-500' : 'bg-amber-400'}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{q.title}</p>
@@ -649,6 +649,11 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
                   </div>
                 )}
               </div>
+              {dashboard?.upcoming_quizzes?.length > 0 && (
+                <button onClick={() => navigate('available-quizzes')} className="w-full mt-4 pt-4 border-t border-slate-100 dark:border-white/5 text-xs font-bold text-indigo-500 hover:text-indigo-600 transition-colors flex items-center justify-center gap-1">
+                  View all quizzes <ArrowRight size={12} weight="bold" />
+                </button>
+              )}
             </motion.div>
           </motion.div>
         )}
