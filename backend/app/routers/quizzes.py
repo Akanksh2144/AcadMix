@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from database import get_db
 from app.core.security import get_current_user
 from app.core.security import require_role
-from app.core.deps import require_permission
+from app.core.security import require_permission
 from app.core.audit import log_audit
 from app import models
 import app.schemas as server_schemas
