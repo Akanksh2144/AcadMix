@@ -210,7 +210,7 @@ const useAIProctor = ({ videoRef, audioStream, onViolation, onSnapshot, enabled 
           },
           runningMode: 'IMAGE',
           maxResults: 5,
-          scoreThreshold: 0.4,
+          scoreThreshold: 0.2,
         });
         if (!cancelled) {
           objectDetectorRef.current = detector;
@@ -445,9 +445,17 @@ const useAIProctor = ({ videoRef, audioStream, onViolation, onSnapshot, enabled 
       const result = detector.detect(video);
       const detections = result.detections || [];
 
+      // Debug: log all detected objects
+      if (detections.length > 0) {
+        console.log('[AI Proctor] Objects detected:', detections.map(d => 
+          `${d.categories?.[0]?.categoryName} (${(d.categories?.[0]?.score * 100).toFixed(0)}%)`
+        ));
+      }
+
       for (const det of detections) {
         const name = (det.categories?.[0]?.categoryName || '').toLowerCase();
-        if (CONFIG.SUSPICIOUS_OBJECTS.includes(name)) {
+        const score = det.categories?.[0]?.score || 0;
+        if (CONFIG.SUSPICIOUS_OBJECTS.includes(name) && score > 0.25) {
           onViolationRef.current?.(`suspicious_object_${name.replace(/\s+/g, '_')}`);
         }
       }
