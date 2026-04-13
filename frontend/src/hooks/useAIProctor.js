@@ -164,7 +164,7 @@ const useAIProctor = ({ videoRef, onViolation, onSnapshot, enabled = false }) =>
         );
         const landmarker = await vision.FaceLandmarker.createFromOptions(fileset, {
           baseOptions: {
-            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.tflite',
+            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
             delegate: 'GPU',
           },
           runningMode: 'IMAGE',
@@ -205,7 +205,7 @@ const useAIProctor = ({ videoRef, onViolation, onSnapshot, enabled = false }) =>
         );
         const detector = await vision.ObjectDetector.createFromOptions(fileset, {
           baseOptions: {
-            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/latest/efficientdet_lite0.tflite',
+            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite',
             delegate: 'GPU',
           },
           runningMode: 'IMAGE',
