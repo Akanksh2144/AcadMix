@@ -82,6 +82,37 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
   const [showProfile, setShowProfile] = useState(false);
   const { isDark, toggle: toggleTheme } = useTheme();
 
+  // Tab badge (dot) state — persisted per user in localStorage
+  const badgeKey = (tab) => `acadmix_tab_seen_${tab}_${user?.id || 'default'}`;
+  const [seenTabs, setSeenTabs] = useState(() => ({
+    quizzes: localStorage.getItem(badgeKey('quizzes')) === 'true',
+    fees: localStorage.getItem(badgeKey('fees')) === 'true',
+  }));
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    if (tabId === 'quizzes' || tabId === 'fees') {
+      setSeenTabs(prev => ({ ...prev, [tabId]: true }));
+      localStorage.setItem(badgeKey(tabId), 'true');
+    }
+  };
+
+  // Reset badge when new data arrives (active quizzes change)
+  useEffect(() => {
+    if (!dashboard) return;
+    const quizCount = dashboard.upcoming_quizzes?.length || 0;
+    const storedQuizCount = localStorage.getItem(`acadmix_quiz_count_${user?.id || 'default'}`);
+    if (storedQuizCount !== String(quizCount)) {
+      setSeenTabs(prev => ({ ...prev, quizzes: false }));
+      localStorage.setItem(badgeKey('quizzes'), 'false');
+      localStorage.setItem(`acadmix_quiz_count_${user?.id || 'default'}`, String(quizCount));
+    }
+  }, [dashboard]);
+
+  // Badge visibility: show dot if tab has content AND hasn't been seen
+  const showQuizBadge = !seenTabs.quizzes && (dashboard?.upcoming_quizzes?.length > 0 || dashboard?.in_progress?.length > 0);
+  const showFeesBadge = !seenTabs.fees && (dashboard?.pending_fees > 0 || dashboard?.fee_due);
+
   const notifKey = `acadmix_last_notif_${user?.id || 'default'}`;
   const [lastReadTime, setLastReadTime] = useState(() => localStorage.getItem(notifKey) || '1970-01-01T00:00:00.000Z');
   
@@ -271,19 +302,25 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
               { id: 'subjects', label: 'Subjects' },
               { id: 'calendar', label: 'Calendar' },
               { id: 'fees', label: 'Fees & Payments' },
-            ].map(tab => (
+            ].map(tab => {
+              const hasBadge = (tab.id === 'quizzes' && showQuizBadge) || (tab.id === 'fees' && showFeesBadge);
+              return (
               <button 
                 key={tab.id} 
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap border border-transparent ${
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap border border-transparent relative ${
                   activeTab === tab.id 
                     ? 'bg-white dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 shadow-sm dark:border-indigo-500/25' 
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/[0.04]'
                 }`}
               >
                 {tab.label}
+                {hasBadge && (
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse flex-shrink-0" />
+                )}
               </button>
-            ))}
+              );
+            })}
           </div>
 
         {activeTab === 'overview' && (
