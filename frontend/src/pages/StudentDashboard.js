@@ -83,7 +83,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
   const { isDark, toggle: toggleTheme } = useTheme();
 
   // Tab badge (dot) state — persisted per user in localStorage
-  const badgeKey = (tab) => `acadmix_tab_seen_${tab}_${user?.id || 'default'}`;
+  const badgeKey = useCallback((tab) => `acadmix_tab_seen_${tab}_${user?.id || 'default'}`, [user?.id]);
   const [seenTabs, setSeenTabs] = useState(() => ({
     quizzes: localStorage.getItem(badgeKey('quizzes')) === 'true',
     fees: localStorage.getItem(badgeKey('fees')) === 'true',
