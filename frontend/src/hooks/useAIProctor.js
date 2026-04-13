@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { FaceDetector, FilesetResolver } from '@mediapipe/tasks-vision';
 
 // ── Configuration ────────────────────────────────────
 const DETECTION_INTERVAL_MS = 2000;        // Run detection every 2s
@@ -33,13 +32,14 @@ const useAIProctor = ({ videoRef, onViolation, enabled = false }) => {
   // Keep callback ref fresh without re-triggering effects
   useEffect(() => { onViolationRef.current = onViolation; }, [onViolation]);
 
-  // ── Load MediaPipe FaceDetector model ──
+  // ── Load MediaPipe FaceDetector model (dynamic import) ──
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
 
     const loadModel = async () => {
       try {
+        const { FaceDetector, FilesetResolver } = await import('@mediapipe/tasks-vision');
         const vision = await FilesetResolver.forVisionTasks(
           'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
         );
