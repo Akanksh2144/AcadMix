@@ -51,6 +51,17 @@ let webpackConfig = {
         ],
       };
 
+      // Suppress source-map-loader warnings for @mediapipe (ships without .map files)
+      const sourceMapRule = webpackConfig.module.rules.find(
+        (rule) => rule.enforce === 'pre' && rule.use && rule.use.some && rule.use.some((u) => u.loader && u.loader.includes('source-map-loader'))
+      );
+      if (sourceMapRule) {
+        sourceMapRule.exclude = [
+          ...(sourceMapRule.exclude || []),
+          /@mediapipe/,
+        ];
+      }
+
       // Add health check plugin to webpack if enabled
       if (config.enableHealthCheck && healthPluginInstance) {
         webpackConfig.plugins.push(healthPluginInstance);

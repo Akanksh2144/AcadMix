@@ -107,7 +107,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
       localStorage.setItem(badgeKey('quizzes'), 'false');
       localStorage.setItem(`acadmix_quiz_count_${user?.id || 'default'}`, String(quizCount));
     }
-  }, [dashboard]);
+  }, [dashboard, badgeKey, user?.id]);
 
   // Badge visibility: show dot if tab has content AND hasn't been seen
   const showQuizBadge = !seenTabs.quizzes && (dashboard?.upcoming_quizzes?.length > 0 || dashboard?.in_progress?.length > 0);

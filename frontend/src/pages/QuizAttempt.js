@@ -328,6 +328,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
         await api.post(`/api/attempts/${attempt.id}/violation`, { violation_type: type });
       } catch {}
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attempt]);
 
   // ── Enter fullscreen ──

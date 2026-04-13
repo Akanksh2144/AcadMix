@@ -475,19 +475,22 @@ const useAIProctor = ({ videoRef, audioStream, onViolation, onSnapshot, enabled 
   //  Cleanup on unmount
   // ────────────────────────────────────────────────────────────
   useEffect(() => {
+    const landmarker = landmarkerRef.current;
+    const objectDetector = objectDetectorRef.current;
+    const audioContext = audioContextRef.current;
     return () => {
       [faceIntervalRef, objectIntervalRef, snapshotIntervalRef].forEach(ref => {
         if (ref.current) clearInterval(ref.current);
       });
-      if (landmarkerRef.current) {
-        try { landmarkerRef.current.close(); } catch {}
+      if (landmarker) {
+        try { landmarker.close(); } catch {}
       }
-      if (objectDetectorRef.current) {
-        try { objectDetectorRef.current.close(); } catch {}
+      if (objectDetector) {
+        try { objectDetector.close(); } catch {}
       }
       // Don't stop audio tracks — parent owns the stream
-      if (audioContextRef.current) {
-        audioContextRef.current.close().catch(() => {});
+      if (audioContext) {
+        audioContext.close().catch(() => {});
       }
     };
   }, []);
