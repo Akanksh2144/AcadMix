@@ -264,6 +264,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
         <div className="flex overflow-x-auto gap-1 p-1.5 bg-slate-100 dark:bg-white/[0.04] rounded-xl mb-8 hide-scrollbar">
             {[
               { id: 'overview', label: 'Overview' }, 
+              { id: 'quizzes', label: 'Quizzes' },
               { id: 'attendance', label: 'Attendance' },
               { id: 'cia-marks', label: 'CIA Marks' },
               { id: 'timetable', label: 'Timetable' },
@@ -383,59 +384,11 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
           )}
         </AnimatePresence>
 
-        {/* ── Bottom Grid: Quizzes + Weak Topics + Activity + Leaderboard ── */}
+        {/* ── Bottom Grid: Topic Mastery + Activity + Leaderboard ── */}
         <motion.div
           variants={containerVariants} initial="hidden" animate="show"
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8"
         >
-          {/* Quizzes Card — consolidated */}
-          <motion.div variants={itemVariants} className="soft-card p-5 sm:p-6">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <Exam size={20} weight="duotone" className="text-indigo-500" />
-                <h3 className="text-lg font-bold tracking-tight text-slate-800 dark:text-white">Quizzes</h3>
-              </div>
-              <button onClick={() => navigate('available-quizzes')} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 flex items-center gap-1 transition-colors">
-                View all <ArrowRight size={12} weight="bold" />
-              </button>
-            </div>
-            {/* Quick stats row */}
-            <div className="grid grid-cols-3 gap-2.5 mb-5">
-              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-500/10 p-3 text-center">
-                <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{avgScore}</p>
-                <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-500/70 dark:text-emerald-400/60 mt-0.5">Avg Score</p>
-              </div>
-              <div className="rounded-xl bg-indigo-50 dark:bg-indigo-500/10 p-3 text-center">
-                <p className="text-lg font-extrabold text-indigo-600 dark:text-indigo-400">{quizzesTaken}</p>
-                <p className="text-[9px] font-bold uppercase tracking-widest text-indigo-500/70 dark:text-indigo-400/60 mt-0.5">Taken</p>
-              </div>
-              <div className="rounded-xl bg-rose-50 dark:bg-rose-500/10 p-3 text-center">
-                <p className="text-lg font-extrabold text-rose-600 dark:text-rose-400">{activeQuizzes}</p>
-                <p className="text-[9px] font-bold uppercase tracking-widest text-rose-500/70 dark:text-rose-400/60 mt-0.5">Active</p>
-              </div>
-            </div>
-            {/* Available quizzes list */}
-            <div className="space-y-2">
-              {(dashboard?.upcoming_quizzes || []).slice(0, 4).map((q, i) => (
-                <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer" onClick={() => navigate('available-quizzes')}>
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                    q.status === 'active' ? 'bg-emerald-500' : q.status === 'scheduled' ? 'bg-amber-400' : 'bg-slate-300 dark:bg-slate-600'
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{q.title}</p>
-                    <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">{q.duration_minutes || q.duration || '--'}min · {q.total_marks || '--'} marks</p>
-                  </div>
-                </div>
-              ))}
-              {(!dashboard?.upcoming_quizzes || dashboard.upcoming_quizzes.length === 0) && (
-                <div className="py-6 text-center">
-                  <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No active quizzes</p>
-                  <button onClick={() => navigate('quiz-results')} className="mt-2 text-xs font-bold text-indigo-500 hover:text-indigo-600 transition-colors">View past results →</button>
-                </div>
-              )}
-            </div>
-          </motion.div>
-
           {/* Topic Mastery */}
           <motion.div variants={itemVariants} className="soft-card p-5 sm:p-6">
             <div className="flex items-center gap-2 mb-5">
@@ -581,6 +534,90 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
           </motion.div>
         </motion.div>
         </motion.div>
+        )}
+
+        {activeTab === 'quizzes' && (
+          <motion.div data-testid="quizzes-content" variants={containerVariants} initial="hidden" animate="show">
+            {/* Stats row */}
+            <motion.div variants={itemVariants} className="grid grid-cols-3 gap-3 sm:gap-5 mb-6">
+              <div className="soft-card p-4 sm:p-5 text-center">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Avg Score</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">{avgScore}</p>
+              </div>
+              <div className="soft-card p-4 sm:p-5 text-center">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Quizzes Taken</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">{quizzesTaken}</p>
+              </div>
+              <div className="soft-card p-4 sm:p-5 text-center">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Active</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-rose-600 dark:text-rose-400">{activeQuizzes}</p>
+              </div>
+            </motion.div>
+
+            {/* Quick actions */}
+            <motion.div variants={itemVariants} className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+              <motion.button whileHover={cardHover} onClick={() => navigate('available-quizzes')} className="soft-card-hover p-4 text-left flex items-center gap-3 group">
+                <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center"><Fire size={20} weight="duotone" className="text-rose-500" /></div>
+                <div><p className="font-bold text-sm text-slate-900 dark:text-white">Available Quizzes</p><p className="text-xs text-slate-500">Take a quiz</p></div>
+              </motion.button>
+              <motion.button whileHover={cardHover} onClick={() => navigate('quiz-results')} className="soft-card-hover p-4 text-left flex items-center gap-3 group">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center"><BookOpen size={20} weight="duotone" className="text-indigo-500" /></div>
+                <div><p className="font-bold text-sm text-slate-900 dark:text-white">Past Results</p><p className="text-xs text-slate-500">View attempts</p></div>
+              </motion.button>
+              <motion.button whileHover={cardHover} onClick={() => navigate('analytics')} className="soft-card-hover p-4 text-left flex items-center gap-3 group">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center"><ChartLine size={20} weight="duotone" className="text-amber-500" /></div>
+                <div><p className="font-bold text-sm text-slate-900 dark:text-white">Analytics</p><p className="text-xs text-slate-500">Performance trends</p></div>
+              </motion.button>
+            </motion.div>
+
+            {/* Continue in progress */}
+            {dashboard?.in_progress?.length > 0 && (
+              <motion.div variants={itemVariants} className="mb-6">
+                <h3 className="text-base font-extrabold text-slate-800 dark:text-white mb-3">Continue Where You Left Off</h3>
+                <div className="space-y-3">
+                  {dashboard.in_progress.map((attempt) => (
+                    <motion.div key={attempt.id} whileHover={{ x: 4 }} className="soft-card p-4 flex items-center justify-between gap-3 border-l-4 border-amber-400">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 bg-amber-50 dark:bg-amber-500/10 rounded-xl flex items-center justify-center flex-shrink-0"><Play size={18} weight="fill" className="text-amber-500" /></div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{attempt.quiz_title || 'Untitled Quiz'}</p>
+                          <p className="text-xs text-slate-500">{attempt.quiz_subject} · {(attempt.answers || []).filter(a => a !== null).length}/{attempt.total_questions} answered</p>
+                        </div>
+                      </div>
+                      <button onClick={() => navigate('quiz-attempt', { id: attempt.quiz_id, title: attempt.quiz_title })} className="btn-primary !px-4 !py-2 text-sm flex items-center gap-1.5 flex-shrink-0">Resume <ArrowRight size={14} weight="bold" /></button>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Available quizzes list */}
+            <motion.div variants={itemVariants} className="soft-card p-5 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-extrabold text-base text-slate-800 dark:text-white">Available Quizzes</h3>
+                <span className="text-xs font-bold text-slate-500">{activeQuizzes} available</span>
+              </div>
+              <div className="space-y-2">
+                {(dashboard?.upcoming_quizzes || []).map((q, i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer" onClick={() => navigate('available-quizzes')}>
+                    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${q.status === 'active' ? 'bg-emerald-500' : 'bg-amber-400'}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{q.title}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{q.duration_minutes || q.duration || '--'} min · {q.total_marks || '--'} marks · {q.type || 'mcq'}</p>
+                    </div>
+                    <ArrowRight size={14} weight="bold" className="text-slate-400 flex-shrink-0" />
+                  </div>
+                ))}
+                {(!dashboard?.upcoming_quizzes || dashboard.upcoming_quizzes.length === 0) && (
+                  <div className="py-8 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3"><Exam size={22} weight="duotone" className="text-slate-400" /></div>
+                    <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No quizzes available right now</p>
+                    <p className="text-xs text-slate-400 mt-1">Check back later or view your past results</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
         )}
 
         {activeTab === 'attendance' && <StudentAttendance />}
