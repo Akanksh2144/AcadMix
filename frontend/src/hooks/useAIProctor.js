@@ -160,7 +160,7 @@ const useAIProctor = ({ videoRef, audioStream, onViolation, onSnapshot, enabled 
       try {
         const vision = await import('@mediapipe/tasks-vision');
         const fileset = await vision.FilesetResolver.forVisionTasks(
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm'
         );
         const landmarker = await vision.FaceLandmarker.createFromOptions(fileset, {
           baseOptions: {
