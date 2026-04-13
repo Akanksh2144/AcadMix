@@ -8,7 +8,7 @@ import { Switch } from '../ui/switch';
 import { Input } from '../ui/input';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui/card';
 import { useToast } from '../../hooks/use-toast';
-import { Search, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { MagnifyingGlass, ShieldWarning, CheckCircle } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
 
 const PERMISSION_DEFINITIONS = [
@@ -52,7 +52,7 @@ export default function UserPermissionsManager() {
       toast({ 
         title: 'Permission Updated', 
         description: `Flag '${flagKey}' updated successfully`,
-        icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+        icon: <CheckCircle size={16} weight="duotone" className="text-emerald-500" />
       });
     } catch (err) {
       // Revert on error
@@ -80,7 +80,7 @@ export default function UserPermissionsManager() {
         </div>
         
         <div className="relative w-full md:w-72">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <MagnifyingGlass size={16} className="absolute left-2.5 top-2.5 text-muted-foreground" />
           <Input
             placeholder="Search users or roles..."
             className="pl-8 bg-white/50 dark:bg-gray-950/50 backdrop-blur-sm border-gray-200 dark:border-gray-800"
@@ -93,7 +93,7 @@ export default function UserPermissionsManager() {
       <Card className="border-gray-200/60 dark:border-gray-800/60 shadow-xl shadow-gray-200/20 dark:shadow-black/20 bg-white/60 dark:bg-gray-950/40 backdrop-blur-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ShieldAlert className="h-5 w-5 text-indigo-500" />
+            <ShieldWarning size={20} weight="duotone" className="text-indigo-500" />
             Active Overrides
           </CardTitle>
           <CardDescription>Changes apply instantly but require the user to refresh their session.</CardDescription>

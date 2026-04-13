@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { timetableAPI, attendanceAPI } from '../../services/api';
 import { useToast } from '../../hooks/use-toast';
-import { Clock, Users, CalendarCheck, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { ClipboardText, ArrowLeft, Check, X as XIcon, UserCircle } from '@phosphor-icons/react';
+import { ClipboardText, ArrowLeft, Check, X as XIcon, UserCircle, CalendarCheck, Clock, Users } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const cardVariants = {
@@ -116,7 +115,7 @@ export default function AttendanceMarker({ user }) {
           <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -20 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {todayPeriods.length === 0 ? (
               <div className="col-span-full soft-card p-12 text-center">
-                <CalendarCheck className="h-12 w-12 mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+                <CalendarCheck size={48} weight="duotone" className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
                 <p className="text-lg font-bold text-slate-500 dark:text-slate-400">No periods assigned today</p>
                 <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Enjoy your free day!</p>
               </div>
@@ -148,14 +147,14 @@ export default function AttendanceMarker({ user }) {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-50 dark:bg-white/5 px-2.5 py-1.5 rounded-xl">
-                        <Clock className="w-3 h-3" />
+                        <Clock size={12} weight="bold" />
                         {slot.start_time} – {slot.end_time}
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400">
-                        <Users className="w-4 h-4" />
+                        <Users size={16} weight="duotone" />
                         {slot.batch} Section {slot.section}
                       </div>
                       <span className="text-xs font-bold bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 px-2.5 py-1 rounded-xl">

@@ -9,7 +9,7 @@ import { Label } from '../ui/label';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useToast } from '../../hooks/use-toast';
-import { Plus, Trash2, Save, LayoutTemplate, Briefcase } from 'lucide-react';
+import { Plus, Trash, FloppyDisk, Layout, Briefcase } from '@phosphor-icons/react';
 
 const COMPONENT_TYPES = ['test', 'assignment', 'attendance', 'practical', 'seminar', 'mini_project', 'viva'];
 
@@ -135,7 +135,7 @@ export default function CIATemplateBuilder() {
         <Card className="border-gray-200/60 dark:border-gray-800/60 bg-white/60 dark:bg-gray-950/40 backdrop-blur-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <LayoutTemplate className="h-5 w-5 text-emerald-500" />
+              <Layout size={20} weight="duotone" className="text-emerald-500" />
               Template Builder
             </CardTitle>
             <CardDescription>Construct a new component-based assessment template.</CardDescription>
@@ -156,7 +156,7 @@ export default function CIATemplateBuilder() {
               <div className="flex justify-between items-center">
                 <Label>Components</Label>
                 <Button variant="outline" size="sm" onClick={addComponent}>
-                  <Plus className="h-4 w-4 mr-2" /> Add Component
+                  <Plus size={16} weight="bold" className="mr-2" /> Add Component
                 </Button>
               </div>
               
@@ -168,7 +168,7 @@ export default function CIATemplateBuilder() {
                     className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 text-red-500 h-6 w-6"
                     onClick={() => removeComponent(idx)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash size={16} weight="duotone" />
                   </Button>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -209,7 +209,7 @@ export default function CIATemplateBuilder() {
           </CardContent>
           <CardFooter>
             <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleSaveTemplate}>
-              <Save className="h-4 w-4 mr-2" /> Save Template
+              <FloppyDisk size={16} weight="duotone" className="mr-2" /> Save Template
             </Button>
           </CardFooter>
         </Card>
@@ -219,7 +219,7 @@ export default function CIATemplateBuilder() {
           <Card className="border-gray-200/60 dark:border-gray-800/60">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-blue-500" />
+                <Briefcase size={20} weight="duotone" className="text-blue-500" />
                 Assign to Subject
               </CardTitle>
             </CardHeader>
