@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Clock, Warning, Camera, CheckCircle, XCircle, Play, Code, ArrowsOut, CameraSlash, ShieldWarning, LockSimple, Eraser, BookmarkSimple, X, PaperPlaneTilt, Eye, Question } from '@phosphor-icons/react';
+import { Clock, Warning, Camera, CheckCircle, XCircle, Play, Code, ArrowsOut, CameraSlash, ShieldWarning, LockSimple, Eraser, BookmarkSimple, X, PaperPlaneTilt, Eye, Question, Brain, UserFocus } from '@phosphor-icons/react';
 import { attemptsAPI, quizzesAPI } from '../services/api';
 import { toast } from 'sonner';
 import Editor from '@monaco-editor/react';
 import api from '../services/api';
 import AlertModal from '../components/AlertModal';
+import useAIProctor from '../hooks/useAIProctor';
 
 const MOBILE_WIDTH = 768;
 
@@ -293,11 +294,21 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
   const showAlert = (title, message, type = 'info', onClose = null) => setAlertModal({ open: true, title, message, type, onClose });
   const closeAlert = () => { const cb = alertModal.onClose; setAlertModal(prev => ({ ...prev, open: false })); if (cb) cb(); };
 
+  // ── Violation type labels ──
+  const VIOLATION_LABELS = {
+    tab_switch: 'Tab Switch',
+    fullscreen_exit: 'Fullscreen Exit',
+    window_blur: 'Window Blur',
+    no_face_detected: '🤖 No Face Detected',
+    multiple_faces: '🤖 Multiple Faces',
+    face_too_far: '🤖 Face Too Far',
+  };
+
   // ── Report violation to backend ──
   const reportViolation = useCallback(async (type) => {
     violationRef.current += 1;
     setViolations(violationRef.current);
-    setWarningType(type === 'tab_switch' ? 'Tab Switch' : type === 'fullscreen_exit' ? 'Fullscreen Exit' : 'Window Blur');
+    setWarningType(VIOLATION_LABELS[type] || type);
     setShowWarning(true);
     setTimeout(() => setShowWarning(false), 4000);
     if (attempt?.id) {
@@ -376,6 +387,13 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     startWebcam();
     return () => { if (stream) stream.getTracks().forEach(t => t.stop()); };
   }, [attempt]);
+
+  // ── AI Proctoring ──
+  const { isModelLoaded: aiReady, detectionStatus: aiStatus, faceCount } = useAIProctor({
+    videoRef,
+    onViolation: reportViolation,
+    enabled: webcamActive && !!attempt,
+  });
 
   // ── Init quiz ──
   useEffect(() => {
@@ -581,6 +599,28 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
             <div className="hidden sm:flex bg-emerald-50 dark:bg-emerald-500/15 px-4 py-2 rounded-2xl items-center gap-2" data-testid="proctoring-status">
               <Camera size={18} weight="duotone" className="text-emerald-500" />
               <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{webcamActive ? 'Cam On' : webcamError ? 'No Cam' : '...'}</span>
+            </div>
+            <div className={`hidden sm:flex px-4 py-2 rounded-2xl items-center gap-2 ${
+              aiStatus === 'monitoring' ? 'bg-indigo-50 dark:bg-indigo-500/15' :
+              aiStatus === 'grace' ? 'bg-amber-50 dark:bg-amber-500/15' :
+              aiStatus === 'error' ? 'bg-red-50 dark:bg-red-500/15' :
+              'bg-slate-100 dark:bg-slate-800'
+            }`} data-testid="ai-proctor-status">
+              <Brain size={18} weight="duotone" className={`${
+                aiStatus === 'monitoring' ? 'text-indigo-500' :
+                aiStatus === 'grace' ? 'text-amber-500' :
+                aiStatus === 'error' ? 'text-red-500' : 'text-slate-400'
+              }`} />
+              <span className={`text-sm font-bold ${
+                aiStatus === 'monitoring' ? 'text-indigo-600 dark:text-indigo-400' :
+                aiStatus === 'grace' ? 'text-amber-600 dark:text-amber-400' :
+                aiStatus === 'error' ? 'text-red-600 dark:text-red-400' :
+                'text-slate-400'
+              }`}>
+                {aiStatus === 'monitoring' ? `AI · ${faceCount} face${faceCount !== 1 ? 's' : ''}` :
+                 aiStatus === 'grace' ? 'AI · Starting' :
+                 aiStatus === 'error' ? 'AI · Off' : 'AI · Loading'}
+              </span>
             </div>
           </div>
         </div>
