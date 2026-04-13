@@ -51,7 +51,7 @@ async def whatsapp_verify(request: Request):
     token = request.query_params.get("hub.verify_token")
     challenge = request.query_params.get("hub.challenge")
     
-    if mode == "subscribe" and token == "acadmix_interview_token":
+    if mode == "subscribe" and token == settings.WHATSAPP_VERIFY_TOKEN:
         return int(challenge)
     raise HTTPException(status_code=403, detail="Forbidden")
 

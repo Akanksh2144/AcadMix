@@ -386,3 +386,39 @@ class InspectionResponse(Base, SoftDeleteMixin):
     response_date = Column(DateTime(timezone=True), server_default=func.now())
 
 
+# ─── Expert & Nodal Officer Models (DHTE compliance) ───────────────────────
+
+
+class ExpertAssignment(Base, SoftDeleteMixin):
+    """Tracks subject expert assignments. Used by expert.py for
+    question paper review, study material review, and teaching evaluations."""
+    __tablename__ = "expert_assignments"
+    id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id       = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    expert_user_id   = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    subject_code     = Column(String, nullable=False)
+    department_id    = Column(String, ForeignKey("departments.id", ondelete="CASCADE"), nullable=True)
+    academic_year    = Column(String, nullable=True)
+    assigned_by      = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    is_active        = Column(Boolean, nullable=False, server_default=text('true'))
+    created_at       = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("expert_user_id", "subject_code", "academic_year", name="uq_expert_subject_year"),
+        Index("ix_expert_assign_user", "expert_user_id", "is_active"),
+    )
+
+
+class NodalOfficerJurisdiction(Base, SoftDeleteMixin):
+    """Maps nodal officers to their jurisdictional colleges.
+    Used by nodal_service.py for multi-college oversight queries."""
+    __tablename__ = "nodal_officer_jurisdictions"
+    id                 = Column(String, primary_key=True, index=True, default=generate_uuid)
+    nodal_officer_id   = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    college_id         = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    is_active          = Column(Boolean, nullable=False, server_default=text('true'))
+    assigned_at        = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("nodal_officer_id", "college_id", name="uq_nodal_college"),
+    )

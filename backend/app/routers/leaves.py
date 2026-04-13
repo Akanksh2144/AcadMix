@@ -113,7 +113,7 @@ async def review_leave_route(
     leave = await svc.get_leave(leave_id, college_id=user["college_id"])
     b_acad_year = None
     try:
-        from server import get_current_academic_year
+        from app.core.utils import get_current_academic_year
         b_acad_year = await get_current_academic_year(svc.session, user["college_id"])
     except Exception:
         pass

@@ -7,8 +7,8 @@ from typing import List, Dict, Any
 
 from app.models.administration import StudentFeeInvoice, FeePayment
 
-RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "rzp_test_dummykey_acadmix")
-RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "dummysecret_acadmixtesting")
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
 
 class FeesService:
     def __init__(self, db: AsyncSession):

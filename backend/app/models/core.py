@@ -109,6 +109,7 @@ class UserProfile(Base, SoftDeleteMixin):
     
     telemetry_strikes = Column(Integer, nullable=False, server_default=text('0'))
     acad_tokens = Column(Float, nullable=False, server_default=text('0.0'))
+    extra_data = Column(JSONB, nullable=True, server_default='{}')  # Extensible: notification_preferences, entitlements, etc.
 
     user = relationship("User", back_populates="profile")
 

@@ -21,7 +21,7 @@ async def get_today_attendance_status(
 ):
     b_acad_year = None
     try:
-        from server import get_current_academic_year
+        from app.core.utils import get_current_academic_year
         b_acad_year = await get_current_academic_year(svc.session, user["college_id"])
     except Exception:
         pass

@@ -26,7 +26,11 @@ class Settings(BaseSettings):
 
     # External Integrations
     LLM_REVIEW_MODEL: str = "gemini/gemini-3.1-flash-lite-preview"
-    WHATSAPP_APP_SECRET: str = "dummy_secret_for_interview"
+    INTERVIEW_LLM_MODEL: str = "gemini/gemini-2.5-flash"
+    GEMINI_API_KEY: str = ""
+    MOCK_INTERVIEW_MONTHLY_QUOTA: int = 5
+    WHATSAPP_APP_SECRET: str = ""  # Must be set via env var in production
+    WHATSAPP_VERIFY_TOKEN: str = ""  # Must be set via env var in production
 
     class Config:
         env_file = ".env"

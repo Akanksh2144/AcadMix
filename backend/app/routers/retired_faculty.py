@@ -103,13 +103,16 @@ async def update_retired_faculty_entitlements(
     rf = result.scalars().first()
     if not rf:
         raise HTTPException(status_code=404, detail="Retired faculty not found")
-    pd = rf.profile_data or {}
-    pd["entitlements"] = req.get("entitlements", pd.get("entitlements", {}))
-    rf.profile_data = pd
-    from sqlalchemy.orm.attributes import flag_modified
-    flag_modified(rf, "profile_data")
+    # Write entitlements to UserProfile.extra_data (profile_data is read-only property)
+    if rf.profile:
+        extra = rf.profile.extra_data or {}
+        extra["entitlements"] = req.get("entitlements", extra.get("entitlements", {}))
+        rf.profile.extra_data = extra
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(rf.profile, "extra_data")
     await session.commit()
-    return {"message": "Entitlements updated", "entitlements": pd["entitlements"]}
+    entitlements = (rf.profile.extra_data or {}).get("entitlements", {}) if rf.profile else {}
+    return {"message": "Entitlements updated", "entitlements": entitlements}
 
 
 @router.get("/retired-faculty/dashboard")

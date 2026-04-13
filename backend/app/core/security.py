@@ -158,10 +158,6 @@ def require_permission(module: str, action: str):
         perms = user.get("permissions", {})
         module_perms = perms.get(module, [])
         if action not in module_perms:
-            role = user.get("role")
-            if module == "quizzes" and role in ["teacher"]: return user
-            if module == "marks" and role in ["teacher", "exam_cell", "hod"]: return user
-            if module == "placements" and role in ["hod", "admin"]: return user
             raise HTTPException(status_code=403, detail=f"Insufficient permissions: requires {module}.{action}")
         return user
     return check

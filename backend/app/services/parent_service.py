@@ -3,6 +3,7 @@ Parent Service — logic and aggregations for the Parent portal domain.
 Encapsulates ward validations, academic trackers, attendance generation, and progress report HTML views.
 """
 
+import html as html_mod
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -336,7 +337,14 @@ class ParentService:
 
         college_r = await self.db.execute(select(models.College).where(models.College.id == cid))
         college = college_r.scalars().first()
-        college_name = college.name if college else "Institution"
+        college_name = html_mod.escape(college.name) if college else "Institution"
+
+        # Escape all user-controlled values to prevent XSS in rendered HTML
+        safe_student_name = html_mod.escape(student.name or "")
+        safe_student_email = html_mod.escape(student.email or "")
+        safe_department = html_mod.escape(pd.get('department', '-'))
+        safe_batch = html_mod.escape(pd.get('batch', '-'))
+        safe_section = html_mod.escape(pd.get('section', '-'))
 
         att_r = await self.db.execute(text("""
             SELECT subject_code,
@@ -417,7 +425,7 @@ class ParentService:
         html = f"""<!DOCTYPE html>
         <html>
         <head>
-        <title>Progress Report — {student.name}</title>
+        <title>Progress Report — {safe_student_name}</title>
         <style>
         @media print {{ body {{ margin: 0; }} @page {{ size: A4; margin: 15mm; }} }}
         body {{ font-family: 'Segoe UI', sans-serif; color: #1e293b; max-width: 800px; margin: 0 auto; padding: 20px; }}
@@ -445,11 +453,11 @@ class ParentService:
         </div>
 
         <div class="info-grid">
-        <span><strong>Student Name:</strong> {student.name}</span>
-        <span><strong>Roll No:</strong> {student.email}</span>
-        <span><strong>Department:</strong> {pd.get('department', '-')}</span>
-        <span><strong>Batch:</strong> {pd.get('batch', '-')}</span>
-        <span><strong>Section:</strong> {pd.get('section', '-')}</span>
+        <span><strong>Student Name:</strong> {safe_student_name}</span>
+        <span><strong>Roll No:</strong> {safe_student_email}</span>
+        <span><strong>Department:</strong> {safe_department}</span>
+        <span><strong>Batch:</strong> {safe_batch}</span>
+        <span><strong>Section:</strong> {safe_section}</span>
         <span><strong>Overall Attendance:</strong> <span class="overall">{overall_att}%</span></span>
         </div>
 
@@ -484,11 +492,13 @@ class ParentService:
         u = await self.db.get(models.User, parent_id)
         if not u:
             raise ResourceNotFoundError("User", parent_id)
-        pd = u.profile_data or {}
-        pd["notification_preferences"] = prefs
-        u.profile_data = pd
-        from sqlalchemy.orm.attributes import flag_modified
-        flag_modified(u, "profile_data")
+        # Write to UserProfile.extra_data JSONB column (not the read-only profile_data property)
+        if u.profile:
+            extra = u.profile.extra_data or {}
+            extra["notification_preferences"] = prefs
+            u.profile.extra_data = extra
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(u.profile, "extra_data")
         await self.db.commit()
 
     async def _get_linked_student(self, college_id: str, parent_id: str) -> str:
