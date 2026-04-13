@@ -37,8 +37,8 @@ const CONFIG = {
   TYPING_BURST_CHARS: 8,         // Characters in burst
   TYPING_BURST_WINDOW_MS: 100,   // Time window for burst
 
-  // Suspicious objects (COCO class names)
-  SUSPICIOUS_OBJECTS: ['cell phone', 'book', 'laptop', 'remote'],
+  // Suspicious objects (COCO class names — include common variations)
+  SUSPICIOUS_OBJECTS: ['cell phone', 'book', 'laptop', 'remote', 'tablet', 'monitor', 'tv', 'mouse', 'keyboard'],
 };
 
 // ── FaceLandmarker key landmark indices ──────────────────────
@@ -445,12 +445,10 @@ const useAIProctor = ({ videoRef, audioStream, onViolation, onSnapshot, enabled 
       const result = detector.detect(video);
       const detections = result.detections || [];
 
-      // Debug: log all detected objects
-      if (detections.length > 0) {
-        console.log('[AI Proctor] Objects detected:', detections.map(d => 
-          `${d.categories?.[0]?.categoryName} (${(d.categories?.[0]?.score * 100).toFixed(0)}%)`
-        ));
-      }
+      // Debug: log detection results
+      console.log(`[AI Proctor] Object scan: ${detections.length} objects found`, detections.length > 0 ? detections.map(d => 
+        `${d.categories?.[0]?.categoryName} (${(d.categories?.[0]?.score * 100).toFixed(0)}%)`
+      ) : '');
 
       for (const det of detections) {
         const name = (det.categories?.[0]?.categoryName || '').toLowerCase();
