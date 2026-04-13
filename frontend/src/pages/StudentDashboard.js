@@ -108,6 +108,10 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
     fetchData();
   }, []);
 
+  const quizzesTaken = dashboard?.total_quizzes || 0;
+  const activeQuizzes = dashboard?.upcoming_quizzes?.length || 0;
+  const avgScore = dashboard?.avg_score ? `${dashboard.avg_score}%` : '-';
+
   const stats = [
     { label: 'Campus Drives', value: dashboard?.active_drives || 0, sub: 'open for applications', icon: Briefcase, color: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400', gradient: 'from-purple-500 to-fuchsia-500', onClick: () => navigate('placements') },
   ];
@@ -283,7 +287,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
 
         {activeTab === 'overview' && (
           <motion.div data-testid="overview-content" variants={containerVariants} initial="hidden" animate="show">
-        {/* ── Stat Card ───────────────── */}
+        {/* ── Stat Cards ───────────────── */}
         {stats.length > 0 && (
         <motion.div
           variants={containerVariants} initial="hidden" animate="show"
@@ -319,6 +323,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
           className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6 sm:mb-8"
         >
           {[
+            { id: 'quiz-results', icon: BookOpen, label: 'Quiz Results', sub: 'View all attempts', iconBg: 'bg-indigo-50 dark:bg-indigo-500/10 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20', iconText: 'text-indigo-500', testId: 'view-all-quizzes-button' },
             { id: 'semester-results', icon: Calendar, label: 'Semester Results', sub: 'Check your grades', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-semester-results-button' },
             { id: 'analytics', icon: ChartLine, label: 'Analytics', sub: 'Track performance', iconBg: 'bg-amber-50 dark:bg-amber-500/10 group-hover:bg-amber-100 dark:group-hover:bg-amber-500/20', iconText: 'text-amber-500', testId: 'view-analytics-button' },
             { id: 'code-playground', icon: Terminal, label: 'Code Playground', sub: 'Practice coding', iconBg: 'bg-purple-50 dark:bg-purple-500/10 group-hover:bg-purple-100 dark:group-hover:bg-purple-500/20', iconText: 'text-purple-500', testId: 'view-code-playground-button' },
@@ -378,12 +383,60 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
           )}
         </AnimatePresence>
 
-        {/* ── Bottom Grid: Topics + Activity + Quizzes + Leaderboard ── */}
+        {/* ── Bottom Grid: Quizzes + Weak Topics + Activity + Leaderboard ── */}
         <motion.div
           variants={containerVariants} initial="hidden" animate="show"
           className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8"
         >
-          {/* Weak Topics */}
+          {/* Quizzes Card — consolidated */}
+          <motion.div variants={itemVariants} className="soft-card p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Exam size={20} weight="duotone" className="text-indigo-500" />
+                <h3 className="text-lg font-bold tracking-tight text-slate-800 dark:text-white">Quizzes</h3>
+              </div>
+              <button onClick={() => navigate('available-quizzes')} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 flex items-center gap-1 transition-colors">
+                View all <ArrowRight size={12} weight="bold" />
+              </button>
+            </div>
+            {/* Quick stats row */}
+            <div className="grid grid-cols-3 gap-2.5 mb-5">
+              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-500/10 p-3 text-center">
+                <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{avgScore}</p>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-500/70 dark:text-emerald-400/60 mt-0.5">Avg Score</p>
+              </div>
+              <div className="rounded-xl bg-indigo-50 dark:bg-indigo-500/10 p-3 text-center">
+                <p className="text-lg font-extrabold text-indigo-600 dark:text-indigo-400">{quizzesTaken}</p>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-indigo-500/70 dark:text-indigo-400/60 mt-0.5">Taken</p>
+              </div>
+              <div className="rounded-xl bg-rose-50 dark:bg-rose-500/10 p-3 text-center">
+                <p className="text-lg font-extrabold text-rose-600 dark:text-rose-400">{activeQuizzes}</p>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-rose-500/70 dark:text-rose-400/60 mt-0.5">Active</p>
+              </div>
+            </div>
+            {/* Available quizzes list */}
+            <div className="space-y-2">
+              {(dashboard?.upcoming_quizzes || []).slice(0, 4).map((q, i) => (
+                <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer" onClick={() => navigate('available-quizzes')}>
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                    q.status === 'active' ? 'bg-emerald-500' : q.status === 'scheduled' ? 'bg-amber-400' : 'bg-slate-300 dark:bg-slate-600'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{q.title}</p>
+                    <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">{q.duration_minutes || q.duration || '--'}min · {q.total_marks || '--'} marks</p>
+                  </div>
+                </div>
+              ))}
+              {(!dashboard?.upcoming_quizzes || dashboard.upcoming_quizzes.length === 0) && (
+                <div className="py-6 text-center">
+                  <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No active quizzes</p>
+                  <button onClick={() => navigate('quiz-results')} className="mt-2 text-xs font-bold text-indigo-500 hover:text-indigo-600 transition-colors">View past results →</button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Topic Mastery */}
           <motion.div variants={itemVariants} className="soft-card p-5 sm:p-6">
             <div className="flex items-center gap-2 mb-5">
               <Warning size={20} weight="duotone" className="text-amber-500" />
@@ -485,62 +538,6 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
                 <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No activity yet</p>
                 <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Your quiz activity will show up here</p>
                 <button onClick={() => navigate('available-quizzes')} className="mt-3 text-xs font-bold text-indigo-500 hover:text-indigo-600 flex items-center gap-1 mx-auto">Get started <ArrowRight size={10} weight="bold" /></button>
-              </div>
-            )}
-          </motion.div>
-
-          {/* Quizzes Card — consolidated */}
-          <motion.div variants={itemVariants} className="soft-card p-5 sm:p-6">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <Exam size={20} weight="duotone" className="text-indigo-500" />
-                <h3 className="text-lg font-bold tracking-tight text-slate-800 dark:text-white">Quizzes</h3>
-              </div>
-              <button onClick={() => navigate('quiz-results')} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 flex items-center gap-1 transition-colors">
-                All Results <ArrowRight size={12} weight="bold" />
-              </button>
-            </div>
-            {/* Quick stats row */}
-            <div className="grid grid-cols-3 gap-2 mb-5">
-              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-500/10 p-3 text-center">
-                <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{dashboard?.avg_score ? `${dashboard.avg_score}%` : '-'}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-500/70 dark:text-emerald-400/60 mt-0.5">Avg Score</p>
-              </div>
-              <div className="rounded-xl bg-indigo-50 dark:bg-indigo-500/10 p-3 text-center">
-                <p className="text-lg font-extrabold text-indigo-600 dark:text-indigo-400">{dashboard?.total_quizzes || 0}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500/70 dark:text-indigo-400/60 mt-0.5">Taken</p>
-              </div>
-              <div className="rounded-xl bg-rose-50 dark:bg-rose-500/10 p-3 text-center cursor-pointer" onClick={() => navigate('available-quizzes')}>
-                <p className="text-lg font-extrabold text-rose-600 dark:text-rose-400">{dashboard?.upcoming_quizzes?.length || 0}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-rose-500/70 dark:text-rose-400/60 mt-0.5">Active</p>
-              </div>
-            </div>
-            {/* Recent quizzes list */}
-            {dashboard?.upcoming_quizzes?.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Available Now</p>
-                {dashboard.upcoming_quizzes.slice(0, 4).map((q, i) => {
-                  const deadline = getDeadlineInfo(q);
-                  return (
-                    <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer" onClick={() => navigate('available-quizzes')}>
-                      <div className="w-2 h-2 rounded-full flex-shrink-0 bg-emerald-500" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{q.title}</p>
-                        <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">{q.duration_minutes || q.duration}min</p>
-                      </div>
-                      {deadline && (
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          deadline.urgent ? 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                        }`}>{deadline.text}</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No active quizzes</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Check back later for new quizzes</p>
               </div>
             )}
           </motion.div>
