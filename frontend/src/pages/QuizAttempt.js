@@ -302,6 +302,17 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     no_face_detected: '🤖 No Face Detected',
     multiple_faces: '🤖 Multiple Faces',
     face_too_far: '🤖 Face Too Far',
+    looking_away: '👁️ Looking Away',
+    identity_mismatch: '⚠️ Identity Mismatch',
+    voice_detected: '🎙️ Voice Detected',
+    suspicious_object_cell_phone: '📱 Phone Detected',
+    suspicious_object_book: '📚 Book Detected',
+    suspicious_object_laptop: '💻 Second Device',
+    suspicious_object_remote: '📱 Device Detected',
+    typing_burst_detected: '⌨️ Suspicious Typing',
+    screen_sharing_detected: '📺 Screen Sharing',
+    remote_desktop_detected: '📺 Remote Desktop',
+    devtools_detected: '🛠️ DevTools Open',
   };
 
   // ── Report violation to backend ──
@@ -388,10 +399,21 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     return () => { if (stream) stream.getTracks().forEach(t => t.stop()); };
   }, [attempt]);
 
-  // ── AI Proctoring ──
-  const { isModelLoaded: aiReady, detectionStatus: aiStatus, faceCount } = useAIProctor({
+  // ── AI Proctoring (Advanced) ──
+  const handleSnapshot = useCallback(async (dataUrl) => {
+    if (!attempt?.id) return;
+    try {
+      await api.post(`/api/attempts/${attempt.id}/violation`, {
+        violation_type: 'evidence_snapshot',
+        evidence: dataUrl,
+      });
+    } catch {}
+  }, [attempt]);
+
+  const { isModelLoaded: aiReady, detectionStatus: aiStatus, faceCount, gazeDirection, audioLevel, aiModules, handleKeyDown: aiKeyDown } = useAIProctor({
     videoRef,
     onViolation: reportViolation,
+    onSnapshot: handleSnapshot,
     enabled: webcamActive && !!attempt,
   });
 
@@ -552,7 +574,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
 
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300" onKeyDown={aiKeyDown}>
       {/* Fullscreen Gate */}
       {needsFullscreen && attempt && (
         <FullscreenGate onEnter={enterFullscreen} violations={violations} isReEntry={fullscreenInitialized.current} />
@@ -617,10 +639,14 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
                 aiStatus === 'error' ? 'text-red-600 dark:text-red-400' :
                 'text-slate-400'
               }`}>
-                {aiStatus === 'monitoring' ? `AI · ${faceCount} face${faceCount !== 1 ? 's' : ''}` :
-                 aiStatus === 'grace' ? 'AI · Starting' :
-                 aiStatus === 'error' ? 'AI · Off' : 'AI · Loading'}
+                {aiStatus === 'monitoring'
+                  ? `AI · ${Object.values(aiModules).filter(Boolean).length} modules`
+                  : aiStatus === 'grace' ? 'AI · Starting'
+                  : aiStatus === 'error' ? 'AI · Off' : 'AI · Loading'}
               </span>
+              {aiStatus === 'monitoring' && gazeDirection !== 'center' && (
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" title={`Gaze: ${gazeDirection}`} />
+              )}
             </div>
           </div>
         </div>
