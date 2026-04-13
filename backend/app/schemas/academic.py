@@ -167,6 +167,3 @@ class ExpertAssignRequest(BaseModel):
     academic_year: str
     department_id: Optional[str] = None
 
-
-class CollegeSettingsUpdate(BaseModel):
-    settings: dict

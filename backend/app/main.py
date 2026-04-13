@@ -139,7 +139,11 @@ async def _seed_db():
             )
             if not dept_r.scalars().first():
                 session.add(models.Department(college_id=college.id, name=dept["name"], code=dept["code"]))
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            logger.info("[startup] Department seed race detected. Another worker handled it.")
         logger.info("[startup] Default departments ensured for %s", college_name)
 
         # 3. Upsert Admin user with real college FK
@@ -224,7 +228,6 @@ app.add_middleware(
 
 # ─── Rate Limiter ─────────────────────────────────────────────────────────────
 from app.core.limiter import limiter
-app.state.limiter = limiter
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 

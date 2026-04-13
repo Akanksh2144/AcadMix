@@ -163,74 +163,87 @@ class PrincipalService:
         return data
 
     async def get_attendance_compliance(self, college_id: str, academic_year: str) -> List[Dict[str, Any]]:
-        # Defaulters (<75%) grouped by department
+        # Defaulters (<75%) grouped by department — uses attendance_records, not dead profile_data column
         defaulters_stmt = text('''
             SELECT 
-                user_profiles.department AS department,
-                COUNT(u.id) AS total_students,
+                up.department AS department,
+                COUNT(DISTINCT u.id) AS total_students,
                 SUM(CASE WHEN 
-                    (CAST(user_profiles.telemetry_strikes AS FLOAT) / 
-                     NULLIF(CAST(u.profile_data->>'total_classes_held' AS FLOAT), 0)) < 0.75 
+                    COALESCE(att.present_count, 0)::float / NULLIF(COALESCE(att.total_count, 0)::float, 0) < 0.75 
                 THEN 1 ELSE 0 END) AS defaulters_count
             FROM users u
+            JOIN user_profiles up ON up.user_id = u.id
+            LEFT JOIN LATERAL (
+                SELECT 
+                    COUNT(*) FILTER (WHERE ar.status IN ('present', 'od')) AS present_count,
+                    COUNT(*) AS total_count
+                FROM attendance_records ar
+                WHERE ar.student_id = u.id AND ar.is_deleted = false
+            ) att ON true
             WHERE u.college_id = :college_id AND u.role = 'student'
-            GROUP BY user_profiles.department
+            GROUP BY up.department
         ''')
-        
+
         defaulters_r = await self.db.execute(defaulters_stmt, {"college_id": college_id})
         dept_defaulters = {}
         for row in defaulters_r:
             dept = row.department or "Unknown"
             dept_defaulters[dept] = {
                 "total_students": row.total_students,
-                "defaulters_count": row.defaulters_count,
-                "compliance_rate": round(100 - ((row.defaulters_count or 0)/(row.total_students or 1)* 100), 2)
+                "defaulters_count": row.defaulters_count or 0,
+                "compliance_rate": round(100 - ((row.defaulters_count or 0) / (row.total_students or 1) * 100), 2),
             }
-            
+
+        # Unmarked slots — use department name via JOIN for consistent keys
         unmarked_stmt = text('''
             SELECT 
-                ps.department_id as department,
+                d.name as department,
                 COUNT(ps.id) as unmarked_slots
             FROM period_slots ps
+            JOIN departments d ON d.id = ps.department_id
             LEFT JOIN attendance_records ar ON ar.period_slot_id = ps.id AND ar.is_deleted = false
             WHERE ps.college_id = :college_id AND ps.academic_year = :academic_year AND ar.id IS NULL AND ps.is_deleted = false
-            GROUP BY ps.department_id
+            GROUP BY d.name
         ''')
         unmarked_r = await self.db.execute(unmarked_stmt, {"college_id": college_id, "academic_year": academic_year})
         unmarked_slots = {row.department: row.unmarked_slots for row in unmarked_r}
-            
+
         all_depts = set(list(dept_defaulters.keys()) + list(unmarked_slots.keys()))
         final_data = []
         for dept in all_depts:
             final_data.append({
-                "department_id": dept,
+                "department": dept,
                 "student_attendance": dept_defaulters.get(dept, {"total_students": 0, "defaulters_count": 0, "compliance_rate": 0}),
-                "unmarked_faculty_slots": unmarked_slots.get(dept, 0)
+                "unmarked_faculty_slots": unmarked_slots.get(dept, 0),
             })
-            
+
         return final_data
 
     async def get_staff_profiles_status(self, college_id: str) -> List[Dict[str, Any]]:
+        """Faculty profile completeness by department. Uses user_profiles.department (not dead profile_data column)."""
         stmt = text('''
             SELECT 
-                profile_data->>'department' as department,
+                up.department as department,
                 COUNT(*) as total_faculty,
                 SUM(CASE WHEN 
-                    jsonb_typeof(profile_data->'educational') = 'array' AND jsonb_array_length(profile_data->'educational') > 0
-                    AND profile_data ? 'experience'
+                    up.phone IS NOT NULL
+                    AND up.extra_data IS NOT NULL
+                    AND jsonb_typeof(up.extra_data->'educational') = 'array'
+                    AND jsonb_array_length(up.extra_data->'educational') > 0
                 THEN 1 ELSE 0 END) as complete_profiles
-            FROM users
-            WHERE college_id = :college_id AND role IN ('teacher', 'faculty', 'hod')
-            GROUP BY profile_data->>'department'
+            FROM users u
+            JOIN user_profiles up ON up.user_id = u.id
+            WHERE u.college_id = :college_id AND u.role IN ('teacher', 'faculty', 'hod')
+            GROUP BY up.department
         ''')
-        
+
         rows = await self.db.execute(stmt, {"college_id": college_id})
         return [{
-            "department_id": r.department or "Unknown",
+            "department": r.department or "Unknown",
             "total_faculty": r.total_faculty,
             "complete_profiles": r.complete_profiles,
             "incomplete_profiles": r.total_faculty - r.complete_profiles,
-            "completeness_percentage": round((r.complete_profiles / r.total_faculty * 100) if r.total_faculty > 0 else 0)
+            "completeness_percentage": round((r.complete_profiles / r.total_faculty * 100) if r.total_faculty > 0 else 0),
         } for r in rows]
 
     async def get_extension_activities(self, college_id: str) -> List[Dict[str, Any]]:

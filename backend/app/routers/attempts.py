@@ -68,7 +68,10 @@ async def submit_answer(attempt_id: str, req: AnswerSubmit, request: Request, us
 
 @router.post("/attempts/{attempt_id}/violation")
 async def log_violation(attempt_id: str, req: ViolationReport = ViolationReport(), user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
-    result = await session.execute(select(models.QuizAttempt).where(models.QuizAttempt.id == attempt_id))
+    result = await session.execute(
+        select(models.QuizAttempt).join(models.Quiz, models.Quiz.id == models.QuizAttempt.quiz_id)
+        .where(models.QuizAttempt.id == attempt_id, models.Quiz.college_id == user["college_id"])
+    )
     attempt = result.scalars().first()
     if not attempt:
         raise HTTPException(status_code=404, detail="Attempt not found")
@@ -204,7 +207,13 @@ async def get_attempt_result(attempt_id: str, user: dict = Depends(get_current_u
 
 @router.get("/attempts")
 async def list_attempts(quiz_id: Optional[str] = None, user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
-    stmt = select(models.QuizAttempt).where(models.QuizAttempt.status == "submitted")
+    # JOIN Quiz to enforce tenant isolation — QuizAttempt has no college_id column
+    stmt = select(models.QuizAttempt).join(
+        models.Quiz, models.Quiz.id == models.QuizAttempt.quiz_id
+    ).where(
+        models.QuizAttempt.status == "submitted",
+        models.Quiz.college_id == user["college_id"],
+    )
     if user["role"] == "student":
         stmt = stmt.where(models.QuizAttempt.student_id == user["id"])
     if quiz_id:

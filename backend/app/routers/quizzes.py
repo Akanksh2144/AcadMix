@@ -178,10 +178,22 @@ async def update_quiz(quiz_id: str, updates: dict, user: dict = Depends(require_
     if "subject" in updates: q.type = updates["subject"]
     if "status" in updates: q.status = updates["status"]
     if "duration_mins" in updates: q.duration_minutes = updates["duration_mins"]
-    if "total_marks" in updates: q.total_marks = updates["total_marks"]
     if "questions" in updates:
-        q.questions = updates["questions"]
-        q.total_marks = sum(qu.get("marks", 0) for qu in updates["questions"])
+        # Questions live in the Question table — delete existing and recreate
+        existing_q = await session.execute(select(models.Question).where(models.Question.quiz_id == q.id))
+        for eq in existing_q.scalars().all():
+            await session.delete(eq)
+        total_marks = 0
+        for qu in updates["questions"]:
+            question = models.Question(
+                quiz_id=q.id,
+                type=qu.get("type", "mcq"),
+                marks=qu.get("marks", 1),
+                points=qu.get("points", 1),
+                content=qu,
+            )
+            session.add(question)
+            total_marks += qu.get("marks", 0)
     await session.commit()
     return {"id": q.id, "title": q.title, "status": q.status, "subject": q.type}
 
@@ -215,7 +227,7 @@ async def extend_quiz_time(quiz_id: str, body: dict = {}, user: dict = Depends(r
     mins = int(body.get("mins", 10)) if body else 10
     if mins < 1 or mins > 300:
         raise HTTPException(status_code=400, detail="Minutes must be between 1 and 300")
-    result_r = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id))
+    result_r = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id, models.Quiz.college_id == user["college_id"]))
     quiz = result_r.scalars().first()
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
@@ -226,7 +238,7 @@ async def extend_quiz_time(quiz_id: str, body: dict = {}, user: dict = Depends(r
 
 @router.post("/quizzes/{quiz_id}/end")
 async def end_quiz_now(quiz_id: str, user: dict = Depends(require_role("teacher", "admin", "hod")), session: AsyncSession = Depends(get_db)):
-    quiz_r = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id))
+    quiz_r = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id, models.Quiz.college_id == user["college_id"]))
     quiz = quiz_r.scalars().first()
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
@@ -251,7 +263,7 @@ async def end_quiz_now(quiz_id: str, user: dict = Depends(require_role("teacher"
 @router.post("/quizzes/{quiz_id}/start")
 @limiter.limit("5/minute")
 async def start_attempt(quiz_id: str, request: Request, user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
-    result = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id))
+    result = await session.execute(select(models.Quiz).where(models.Quiz.id == quiz_id, models.Quiz.college_id == user["college_id"]))
     quiz = result.scalars().first()
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")

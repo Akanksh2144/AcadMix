@@ -5,7 +5,8 @@ from app.routers import (
     quizzes, timetable, teaching_records, registrations, hall_tickets, placements, alumni, expert, 
     principal, grievances, tasks, retired_faculty, sections, roles, assignments, calendars, 
     exam_cell_core, student_core, hod_core, faculty_core, admin_core, attempts, results, analytics, 
-    leaderboard, dashboards, marks_extra, timetable_extra, announcements, challenges, industry, tpo, fees, webhooks
+    leaderboard, dashboards, marks_extra, timetable_extra, announcements, challenges, industry, tpo, fees, webhooks,
+    interview, resume
 )
 from app.routers import nodal_routes
 
@@ -25,6 +26,8 @@ api_router.include_router(results.router, tags=["results"])
 api_router.include_router(attempts.router, tags=["attempts"])
 api_router.include_router(tpo.router, tags=["tpo"])
 api_router.include_router(fees.router, tags=["fees"])
+api_router.include_router(interview.router, tags=["interview_warroom"])
+api_router.include_router(resume.router, tags=["interview_warroom"])
 api_router.include_router(tasks.router, tags=["tasks"])
 api_router.include_router(admin_core.router, tags=["admin_core"])
 api_router.include_router(faculty_core.router, tags=["faculty_core"])

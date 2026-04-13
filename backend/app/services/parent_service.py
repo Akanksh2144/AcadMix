@@ -398,26 +398,29 @@ class ParentService:
             
             grade_html += f"<tr><td>Semester {sem}</td><td>-</td><td>{sgpa}</td><td>{cgpa}</td><td>{sem_credits}</td><td>{arrears}</td></tr>"
 
-        from sqlalchemy import String
-        entries_stmt = select(models.MarkSubmission).where(
+        # CIA marks via normalized MarkSubmissionEntry (replaces broken JSONB string-matching)
+        cia_stmt = select(
+            models.MarkSubmissionEntry.marks_obtained,
+            models.MarkSubmission.subject_code,
+        ).join(
+            models.MarkSubmission, models.MarkSubmissionEntry.submission_id == models.MarkSubmission.id
+        ).where(
+            models.MarkSubmissionEntry.student_id == student_id,
             models.MarkSubmission.college_id == cid,
-            models.MarkSubmission.is_deleted == False
-        ).where(models.MarkSubmission.extra_data.cast(String).ilike(f'%"{student_id}"%'))
-        entries_r = await self.db.execute(entries_stmt)
-        entries = entries_r.scalars().all()
-        
+            models.MarkSubmission.status == "approved",
+            models.MarkSubmission.is_deleted == False,
+        )
+        cia_r = await self.db.execute(cia_stmt)
+        cia_rows = cia_r.all()
+
         cia_subjects = {}
-        for e in entries:
-            if not e.extra_data or e.extra_data.get("status") != "approved": continue
-            
-            student_mark = next((float(bulk.get("marks", 0)) for bulk in e.extra_data.get("entries", []) if bulk.get("student_id") == student_id), None)
-            
-            if student_mark is not None:
-                if e.course_id not in cia_subjects:
-                    cia_subjects[e.course_id] = {"obtained": 0, "count": 0}
-                cia_subjects[e.course_id]["obtained"] += student_mark
-                cia_subjects[e.course_id]["count"] += 1
-                
+        for row in cia_rows:
+            subj = row.subject_code
+            if subj not in cia_subjects:
+                cia_subjects[subj] = {"obtained": 0, "count": 0}
+            cia_subjects[subj]["obtained"] += float(row.marks_obtained or 0)
+            cia_subjects[subj]["count"] += 1
+
         cia_html = ""
         for subj, data in cia_subjects.items():
             cia_html += f"<tr><td>{subj}</td><td>{round(data['obtained'], 1)}</td><td>{data['count']} components</td></tr>"

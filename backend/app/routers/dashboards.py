@@ -178,7 +178,9 @@ async def hod_dashboard(user: dict = Depends(require_role("hod", "admin")), sess
         )
     )
     assignments_r = await session.execute(
-        select(func.count(models.FacultyAssignment.id))
+        select(func.count(models.FacultyAssignment.id)).where(
+            models.FacultyAssignment.college_id == user["college_id"]
+        )
     )
     # Pending/approved from relational status column
     mark_subs_r = await session.execute(
@@ -207,7 +209,9 @@ async def exam_cell_dashboard(user: dict = Depends(require_role("exam_cell", "ad
     )
     all_entries = mark_subs_r.scalars().all()
     approved = sum(1 for e in all_entries if e.status == "approved")
-    sem_r = await session.execute(select(models.SemesterGrade))
+    sem_r = await session.execute(
+        select(models.SemesterGrade).where(models.SemesterGrade.college_id == user["college_id"])
+    )
     all_grades = sem_r.scalars().all()
     return {
         "total_approved_midterms": approved,

@@ -12,7 +12,13 @@ from app import models
 from app.models.core import UserProfile
 from app.core.audit import log_audit
 
+
 class MarksService:
+    """Rewritten to use ONLY the normalized MarkSubmission + MarkSubmissionEntry schema.
+    All references to phantom 'extra_data' and 'course_id' columns have been replaced
+    with the real columns: status, assignment_id, component_id, subject_code,
+    reviewed_by, reviewed_at, review_remarks."""
+
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -29,32 +35,47 @@ class MarksService:
         students = result.scalars().all()
         return [{"id": s.id, "name": s.name, "email": s.email, **(s.profile_data or {})} for s in students]
 
-    async def get_entry(self, assignment_id: str, exam_type: str, component_id: Optional[str], user: dict) -> Dict[str, Any]:
-        result = await self.session.execute(
-            select(models.MarkSubmission).where(
-                func.jsonb_extract_path_text(models.MarkSubmission.extra_data, 'assignment_id') == assignment_id,
-                models.MarkSubmission.exam_type == exam_type,
-                models.MarkSubmission.faculty_id == user["id"],
-            )
+    async def get_entry(self, assignment_id: str, exam_type: str, component_id: Optional[str], user: dict) -> Optional[Dict[str, Any]]:
+        """Fetch a mark submission by assignment_id + exam_type, optionally filtered by component_id."""
+        stmt = select(models.MarkSubmission).where(
+            models.MarkSubmission.assignment_id == assignment_id,
+            models.MarkSubmission.exam_type == exam_type,
+            models.MarkSubmission.faculty_id == user["id"],
         )
-        entries = result.scalars().all()
-        entry = None
         if component_id:
-            for e in entries:
-                if (e.extra_data or {}).get("component_id") == component_id:
-                    entry = e
-                    break
-        else:
-            entry = entries[0] if entries else None
-            
+            stmt = stmt.where(models.MarkSubmission.component_id == component_id)
+
+        result = await self.session.execute(stmt)
+        entry = result.scalars().first()
+
         if not entry:
             return None
-        return {"id": entry.id, "course_id": entry.course_id, "exam_type": entry.exam_type,
-                "max_marks": entry.max_marks, "status": (entry.extra_data or {}).get("status", "draft"),
-                "entries": (entry.extra_data or {}).get("entries", [])}
+
+        # Fetch individual student entries from MarkSubmissionEntry
+        entries_r = await self.session.execute(
+            select(models.MarkSubmissionEntry).where(
+                models.MarkSubmissionEntry.submission_id == entry.id
+            )
+        )
+        student_entries = [
+            {"student_id": e.student_id, "marks_obtained": e.marks_obtained, "status": e.status}
+            for e in entries_r.scalars().all()
+        ]
+
+        return {
+            "id": entry.id,
+            "subject_code": entry.subject_code,
+            "exam_type": entry.exam_type,
+            "max_marks": entry.max_marks,
+            "status": entry.status or "draft",
+            "entries": student_entries,
+        }
 
     async def save_entry(self, req, user: dict) -> Dict[str, Any]:
+        """Save or update a mark submission. Single-write to normalized schema only."""
         entries_data = [e.dict() for e in req.entries]
+
+        # Verify the faculty assignment exists
         assign_r = await self.session.execute(
             select(models.FacultyAssignment).where(
                 models.FacultyAssignment.id == req.assignment_id
@@ -63,59 +84,28 @@ class MarksService:
         assignment = assign_r.scalars().first()
         if not assignment:
             raise ResourceNotFoundError("FacultyAssignment", req.assignment_id)
-            
-        existing_r = await self.session.execute(
-            select(models.MarkSubmission).where(
-                models.MarkSubmission.course_id == assignment.subject_code,
-                models.MarkSubmission.exam_type == req.exam_type,
-                models.MarkSubmission.faculty_id == user["id"],
-            )
-        )
-        entries = existing_r.scalars().all()
-        existing = None
-        for e in entries:
-            if (e.extra_data or {}).get("component_id") == req.component_id:
-                existing = e
-                break
-                
-        current_status = (existing.extra_data or {}).get("status", "draft")
-        if current_status == "approved":
-            if not req.revision_reason or not req.revision_reason.strip():
-                raise InputValidationError("Revision reason is required to edit approved marks")
-        if current_status == "submitted":
-            raise InputValidationError("Cannot edit submitted marks. Wait for approval or rejection.")
-            
-        # Write to legacy MarkEntry
-        if existing:
-            existing.extra_data = {**(existing.extra_data or {}), "entries": entries_data,
-                              "status": "draft", "max_marks": req.max_marks, "component_id": req.component_id}
-            existing.max_marks = req.max_marks
-            entry_id = existing.id
-        else:
-            row = models.MarkSubmission(
-                student_id=None,
-                course_id=assignment.subject_code,
-                faculty_id=user["id"],
-                exam_type=req.exam_type,
-                max_marks=req.max_marks,
-                college_id=user["college_id"],
-                extra_data={"entries": entries_data, "assignment_id": req.assignment_id, "status": "draft", "component_id": req.component_id}
-            )
-            self.session.add(row)
-            await self.session.flush()
-            entry_id = row.id
 
-        # Dual-Write: Normalized Schema (MarkSubmission)
-        sub_r = await self.session.execute(
+        # Find existing submission for this assignment + exam_type + component
+        existing_r = await self.session.execute(
             select(models.MarkSubmission).where(
                 models.MarkSubmission.assignment_id == req.assignment_id,
                 models.MarkSubmission.exam_type == req.exam_type,
-                models.MarkSubmission.component_id == req.component_id
+                models.MarkSubmission.component_id == req.component_id,
             )
         )
-        submission = sub_r.scalars().first()
-        
-        if not submission:
+        submission = existing_r.scalars().first()
+
+        if submission:
+            # Check status guards
+            if submission.status == "approved":
+                if not req.revision_reason or not req.revision_reason.strip():
+                    raise InputValidationError("Revision reason is required to edit approved marks")
+            if submission.status == "submitted":
+                raise InputValidationError("Cannot edit submitted marks. Wait for approval or rejection.")
+
+            submission.max_marks = req.max_marks
+            submission.status = "draft"
+        else:
             submission = models.MarkSubmission(
                 college_id=user["college_id"],
                 faculty_id=user["id"],
@@ -125,14 +115,11 @@ class MarksService:
                 component_id=req.component_id,
                 max_marks=req.max_marks,
                 semester=assignment.semester,
-                status="draft"
+                status="draft",
             )
             self.session.add(submission)
             await self.session.flush()
-        else:
-            submission.max_marks = req.max_marks
-            submission.status = "draft"
-            
+
         # Upsert MarkSubmissionEntries
         existing_entries_r = await self.session.execute(
             select(models.MarkSubmissionEntry).where(
@@ -140,7 +127,7 @@ class MarksService:
             )
         )
         existing_entries = {e.student_id: e for e in existing_entries_r.scalars().all()}
-        
+
         for e in entries_data:
             student_id = e.get("student_id")
             if not student_id:
@@ -155,259 +142,217 @@ class MarksService:
                     submission_id=submission.id,
                     student_id=student_id,
                     marks_obtained=marks_obtained,
-                    status=status
+                    status=status,
                 )
                 self.session.add(mse)
 
-        await log_audit(self.session, user["id"], "mark_entry", "update" if existing else "create", {"course_id": assignment.subject_code})
+        await log_audit(self.session, user["id"], "mark_entry", "update" if existing_r.scalars().first is not None else "create", {"subject_code": assignment.subject_code})
         await self.session.commit()
-        return {"id": entry_id, "status": "draft", "entries": entries_data}
+        return {"id": submission.id, "status": "draft", "entries": entries_data}
 
     async def submit_entry(self, entry_id: str, user: dict) -> Dict[str, str]:
+        """Faculty submits marks for HOD review."""
         entry_r = await self.session.execute(
             select(models.MarkSubmission).where(
                 models.MarkSubmission.id == entry_id,
-                models.MarkSubmission.college_id == user["college_id"]
+                models.MarkSubmission.college_id == user["college_id"],
             )
         )
         entry = entry_r.scalars().first()
         if not entry:
-             raise ResourceNotFoundError("MarkEntry", entry_id)
+            raise ResourceNotFoundError("MarkSubmission", entry_id)
         if entry.faculty_id != user["id"]:
-             raise AuthorizationError("Unauthorized mark entry")
-             
-        current_status = (entry.extra_data or {}).get("status", "draft")
-        if current_status == "approved":
-             raise InputValidationError("Already approved")
-             
-        entry.extra_data = {**(entry.extra_data or {}), "status": "submitted"}
-        
-        assignment_id = (entry.extra_data or {}).get("assignment_id")
-        component_id = (entry.extra_data or {}).get("component_id")
-        if assignment_id:
-            sub_r = await self.session.execute(
-                select(models.MarkSubmission).where(
-                    models.MarkSubmission.assignment_id == assignment_id,
-                    models.MarkSubmission.exam_type == entry.exam_type,
-                    models.MarkSubmission.component_id == component_id
-                )
-            )
-            sub = sub_r.scalars().first()
-            if sub:
-                sub.status = "submitted"
-                sub.submitted_at = datetime.now(timezone.utc)
-                
+            raise AuthorizationError("Unauthorized mark entry")
+
+        if entry.status == "approved":
+            raise InputValidationError("Already approved")
+
+        entry.status = "submitted"
+        entry.submitted_at = datetime.now(timezone.utc)
+
         await log_audit(self.session, user["id"], "mark_entry", "submit_for_review", {"entry_id": entry_id})
         await self.session.commit()
         return {"message": "Marks submitted for review"}
 
     async def review_entry(self, entry_id: str, req, user: dict) -> Dict[str, str]:
+        """HOD reviews (approves/rejects) submitted marks."""
         entry_r = await self.session.execute(
             select(models.MarkSubmission).where(
                 models.MarkSubmission.id == entry_id,
-                models.MarkSubmission.college_id == user["college_id"]
+                models.MarkSubmission.college_id == user["college_id"],
             )
         )
         entry = entry_r.scalars().first()
         if not entry:
-            raise ResourceNotFoundError("MarkEntry", entry_id)
-            
-        current_status = (entry.extra_data or {}).get("status", "draft")
-        if current_status != "submitted":
+            raise ResourceNotFoundError("MarkSubmission", entry_id)
+
+        if entry.status != "submitted":
             raise InputValidationError("Marks not submitted for review")
-            
-        entry.extra_data = {
-            **(entry.extra_data or {}), 
-            "status": req.status, 
-            "review_remarks": req.remarks,
-            "reviewed_by": user["id"],
-            "reviewed_at": datetime.now(timezone.utc).isoformat()
-        }
-        
-        assignment_id = (entry.extra_data or {}).get("assignment_id")
-        component_id = (entry.extra_data or {}).get("component_id")
-        if assignment_id:
-            sub_r = await self.session.execute(
-                select(models.MarkSubmission).where(
-                    models.MarkSubmission.assignment_id == assignment_id,
-                    models.MarkSubmission.exam_type == entry.exam_type,
-                    models.MarkSubmission.component_id == component_id
-                )
-            )
-            sub = sub_r.scalars().first()
-            if sub:
-                sub.status = req.status
-                sub.reviewed_by = user["id"]
-                sub.reviewed_at = datetime.now(timezone.utc)
-                sub.review_remarks = req.remarks
-                
+
+        entry.status = req.status
+        entry.reviewed_by = user["id"]
+        entry.reviewed_at = datetime.now(timezone.utc)
+        entry.review_remarks = req.remarks
+
         await log_audit(self.session, user["id"], "mark_entry", f"review_{req.status}", {"entry_id": entry_id})
         await self.session.commit()
         return {"message": f"Marks {req.status}"}
 
     async def get_approved_marks(self, college_id: str) -> List[Dict[str, Any]]:
+        """Exam cell: list all approved mark submissions for this college."""
         result = await self.session.execute(
             select(models.MarkSubmission).where(
-                models.MarkSubmission.college_id == college_id
-            ).order_by(models.MarkSubmission.created_at.desc())
+                models.MarkSubmission.college_id == college_id,
+                models.MarkSubmission.status == "approved",
+            ).order_by(models.MarkSubmission.reviewed_at.desc())
         )
-        entries = result.scalars().all()
-        approved = [e for e in entries if (e.extra_data or {}).get("status") == "approved"]
-        
-        assigned_ids = list(set((e.extra_data or {}).get("assignment_id") for e in approved if (e.extra_data or {}).get("assignment_id")))
+        approved = result.scalars().all()
+
+        # Batch-fetch faculty assignments and faculty users
+        assign_ids = list(set(e.assignment_id for e in approved if e.assignment_id))
         assign_map = {}
-        if assigned_ids:
-            assign_r = await self.session.execute(select(models.FacultyAssignment).where(models.FacultyAssignment.id.in_(assigned_ids)))
+        if assign_ids:
+            assign_r = await self.session.execute(
+                select(models.FacultyAssignment).where(models.FacultyAssignment.id.in_(assign_ids))
+            )
             assign_map = {a.id: a for a in assign_r.scalars().all()}
-            
+
         fac_ids = list(set(e.faculty_id for e in approved))
         fac_map = {}
         if fac_ids:
-            fac_r = await self.session.execute(select(models.User).outerjoin(UserProfile, models.User.id == UserProfile.user_id).where(models.User.id.in_(fac_ids)))
+            fac_r = await self.session.execute(
+                select(models.User).where(models.User.id.in_(fac_ids))
+            )
             fac_map = {u.id: u for u in fac_r.scalars().all()}
-            
+
         return [{
-            "id": e.id, "subject_code": e.course_id, "exam_type": e.exam_type,
-            "component_id": (e.extra_data or {}).get("component_id"),
-            "faculty_name": fac_map.get(e.faculty_id).name if e.faculty_id in fac_map else "Unknown",
-            "batch": assign_map.get((e.extra_data or {}).get("assignment_id")).batch if (e.extra_data or {}).get("assignment_id") in assign_map else "",
-            "section": assign_map.get((e.extra_data or {}).get("assignment_id")).section if (e.extra_data or {}).get("assignment_id") in assign_map else "",
-            "semester": assign_map.get((e.extra_data or {}).get("assignment_id")).semester if (e.extra_data or {}).get("assignment_id") in assign_map else "",
-            "max_marks": e.max_marks, "reviewed_at": (e.extra_data or {}).get("reviewed_at")
+            "id": e.id,
+            "subject_code": e.subject_code,
+            "exam_type": e.exam_type,
+            "component_id": e.component_id,
+            "faculty_name": fac_map[e.faculty_id].name if e.faculty_id in fac_map else "Unknown",
+            "batch": assign_map[e.assignment_id].batch if e.assignment_id in assign_map else "",
+            "section": assign_map[e.assignment_id].section if e.assignment_id in assign_map else "",
+            "semester": assign_map[e.assignment_id].semester if e.assignment_id in assign_map else "",
+            "max_marks": e.max_marks,
+            "reviewed_at": e.reviewed_at.isoformat() if e.reviewed_at else None,
         } for e in approved]
 
     async def upload_marks(self, file: UploadFile, semester: int, subject_code: str, exam_type: str, user: dict, max_marks: float) -> Dict[str, Any]:
-        MAX_FILE_SIZE = 5 * 1024 * 1024 # 5 MB threshold
+        """CSV upload path for marks. Writes directly to normalized schema."""
+        MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB threshold
         if file.size and file.size > MAX_FILE_SIZE:
             raise PayloadTooLargeError("File too large. Maximum allowed size is 5MB for CSV marks ingress.")
-            
+
         content = await file.read(MAX_FILE_SIZE + 1)
         if len(content) > MAX_FILE_SIZE:
             raise PayloadTooLargeError("File too large. Maximum allowed size is 5MB for CSV marks ingress.")
-            
+
         try:
-            decoded = content.decode('utf-8')
+            decoded = content.decode("utf-8")
         except UnicodeDecodeError:
             raise InputValidationError("Invalid file encoding")
-            
+
         reader = csv.DictReader(io.StringIO(decoded))
-        if not set(['roll_number', 'marks_obtained', 'status']).issubset(set(reader.fieldnames or [])):
+        if not set(["roll_number", "marks_obtained", "status"]).issubset(set(reader.fieldnames or [])):
             raise InputValidationError("Missing required columns: roll_number, marks_obtained, status")
-            
+
         parsed_entries = []
         for row in reader:
             try:
-                marks = float(row['marks_obtained']) if row['marks_obtained'] else 0.0
+                marks = float(row["marks_obtained"]) if row["marks_obtained"] else 0.0
                 parsed_entries.append({
-                    "roll_number": row['roll_number'].strip(),
+                    "roll_number": row["roll_number"].strip(),
                     "marks_obtained": marks,
-                    "status": row.get('status', 'present').lower()
+                    "status": row.get("status", "present").lower(),
                 })
             except Exception as e:
                 raise InputValidationError(f"Invalid data in row for student {row.get('roll_number')}: {str(e)}")
-            
+
         if not parsed_entries:
             raise InputValidationError("No valid data found in CSV")
-            
-        existing_r = await self.session.execute(
-            select(models.MarkSubmission).where(
-                models.MarkSubmission.course_id == subject_code,
-                models.MarkSubmission.exam_type == exam_type,
-                models.MarkSubmission.faculty_id == user["id"],
-                models.MarkSubmission.college_id == user["college_id"]
-            )
-        )
-        existing = existing_r.scalars().first()
-        
-        if existing:
-            current_status = (existing.extra_data or {}).get("status", "draft")
-            if current_status in ["approved", "submitted"]:
-                raise InputValidationError(f"Cannot overwrite marks in {current_status} status")
-            existing.extra_data = {**(existing.extra_data or {}), "entries": parsed_entries, "status": "draft", "max_marks": max_marks}
-            existing.max_marks = max_marks
-        else:
-            me = models.MarkSubmission(
-                course_id=subject_code, faculty_id=user["id"], exam_type=exam_type,
-                max_marks=max_marks, college_id=user["college_id"],
-                extra_data={"entries": parsed_entries, "status": "draft"}
-            )
-            self.session.add(me)
-            
-        # Write to MarkSubmission / MarkSubmissionEntry
+
+        # Find matching faculty assignment
         assignment_r = await self.session.execute(
             select(models.FacultyAssignment).where(
                 models.FacultyAssignment.teacher_id == user["id"],
                 models.FacultyAssignment.subject_code == subject_code,
-                models.FacultyAssignment.college_id == user["college_id"]
+                models.FacultyAssignment.college_id == user["college_id"],
             )
         )
         assignment = assignment_r.scalars().first()
-        
-        if assignment:
-            sub_r = await self.session.execute(
-                select(models.MarkSubmission).where(
-                    models.MarkSubmission.assignment_id == assignment.id,
-                    models.MarkSubmission.exam_type == exam_type
-                )
+        if not assignment:
+            raise ResourceNotFoundError("FacultyAssignment", f"{subject_code} for current user")
+
+        # Find or create MarkSubmission
+        sub_r = await self.session.execute(
+            select(models.MarkSubmission).where(
+                models.MarkSubmission.assignment_id == assignment.id,
+                models.MarkSubmission.exam_type == exam_type,
+                models.MarkSubmission.college_id == user["college_id"],
             )
-            submission = sub_r.scalars().first()
-            if not submission:
-                submission = models.MarkSubmission(
-                    college_id=user["college_id"],
-                    faculty_id=user["id"],
-                    assignment_id=assignment.id,
-                    subject_code=subject_code,
-                    exam_type=exam_type,
-                    max_marks=max_marks,
-                    semester=assignment.semester,
-                    status="draft"
-                )
-                self.session.add(submission)
-                await self.session.flush()
+        )
+        submission = sub_r.scalars().first()
+
+        if submission:
+            if submission.status in ["approved", "submitted"]:
+                raise InputValidationError(f"Cannot overwrite marks in {submission.status} status")
+            submission.max_marks = max_marks
+            submission.status = "draft"
+        else:
+            submission = models.MarkSubmission(
+                college_id=user["college_id"],
+                faculty_id=user["id"],
+                assignment_id=assignment.id,
+                subject_code=subject_code,
+                exam_type=exam_type,
+                max_marks=max_marks,
+                semester=assignment.semester,
+                status="draft",
+            )
+            self.session.add(submission)
+            await self.session.flush()
+
+        # Resolve roll numbers to student IDs
+        roll_nos = [p["roll_number"] for p in parsed_entries if p.get("roll_number")]
+        users_r = await self.session.execute(
+            select(models.User.id, UserProfile.roll_number)
+            .join(UserProfile, models.User.id == UserProfile.user_id)
+            .where(
+                models.User.college_id == user["college_id"],
+                UserProfile.roll_number.in_(roll_nos),
+            )
+        )
+        users_map = {row.roll_number: row.id for row in users_r.all()}
+
+        # Load existing entries for upsert
+        ex_mse_r = await self.session.execute(
+            select(models.MarkSubmissionEntry).where(
+                models.MarkSubmissionEntry.submission_id == submission.id
+            )
+        )
+        ex_mse = {e.student_id: e for e in ex_mse_r.scalars().all()}
+
+        for p in parsed_entries:
+            stud_id = users_map.get(p["roll_number"])
+            if not stud_id:
+                continue
+            if stud_id in ex_mse:
+                ex_mse[stud_id].marks_obtained = p["marks_obtained"]
+                ex_mse[stud_id].status = p["status"]
             else:
-                submission.max_marks = max_marks
-                submission.status = "draft"
-                
-            # Upsert Entries
-            ex_mse_r = await self.session.execute(
-                select(models.MarkSubmissionEntry).where(
-                    models.MarkSubmissionEntry.submission_id == submission.id
-                )
-            )
-            ex_mse = {e.student_id: e for e in ex_mse_r.scalars().all()}
-            
-            # Map roll_number correctly from JSONB profile
-            roll_nos = [p["roll_number"].strip() for p in parsed_entries if p.get("roll_number")]
-            users_r = await self.session.execute(
-                select(models.User).outerjoin(UserProfile, models.User.id == UserProfile.user_id).where(
-                    models.User.college_id == user["college_id"],
-                    UserProfile.roll_number.in_(roll_nos)
-                )
-            )
-            users_map = {u.profile_data.get('roll_number'): u.id for u in users_r.scalars().all() if u.profile_data and u.profile_data.get('roll_number')}
-            
-            for p in parsed_entries:
-                roll = p["roll_number"]
-                stud_id = users_map.get(roll)
-                if not stud_id:
-                    continue
-                marks_obtained = p["marks_obtained"]
-                status = p["status"]
-                if stud_id in ex_mse:
-                    ex_mse[stud_id].marks_obtained = marks_obtained
-                    ex_mse[stud_id].status = status
-                else:
-                    self.session.add(models.MarkSubmissionEntry(
-                        submission_id=submission.id,
-                        student_id=stud_id,
-                        marks_obtained=marks_obtained,
-                        status=status
-                    ))
+                self.session.add(models.MarkSubmissionEntry(
+                    submission_id=submission.id,
+                    student_id=stud_id,
+                    marks_obtained=p["marks_obtained"],
+                    status=p["status"],
+                ))
 
         await self.session.commit()
         return {"message": f"Uploaded {len(parsed_entries)} entries successfully."}
 
     async def get_student_cia(self, student_id: str, college_id: str, semester: Optional[int] = None, academic_year: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Fetch approved CIA marks for a student via normalized MarkSubmissionEntry."""
         stmt = select(
             models.MarkSubmissionEntry, models.MarkSubmission
         ).join(
@@ -416,42 +361,46 @@ class MarksService:
             models.MarkSubmissionEntry.student_id == student_id,
             models.MarkSubmission.college_id == college_id,
             models.MarkSubmission.status == "approved",
-            models.MarkSubmission.is_deleted == False
+            models.MarkSubmission.is_deleted == False,
         )
         if semester:
             stmt = stmt.where(models.MarkSubmission.semester == semester)
-            
+
         result = await self.session.execute(stmt)
         rows = result.all()
-        
-        response = []
-        for mse, sub in rows:
-            response.append({
-                "subject_code": sub.subject_code,
-                "exam_type": sub.exam_type,
-                "component_id": sub.component_id,
-                "marks_obtained": mse.marks_obtained,
-                "max_marks": sub.max_marks,
-                "status": mse.status,
-                "date_recorded": str(sub.published_at or sub.reviewed_at or sub.created_at)
-            })
-            
-        return response
+
+        return [{
+            "subject_code": sub.subject_code,
+            "exam_type": sub.exam_type,
+            "component_id": sub.component_id,
+            "marks_obtained": mse.marks_obtained,
+            "max_marks": sub.max_marks,
+            "status": mse.status,
+            "date_recorded": str(sub.published_at or sub.reviewed_at or sub.created_at),
+        } for mse, sub in rows]
 
     async def get_status_report(self, user: dict, department: Optional[str] = None, academic_year: Optional[str] = None) -> List[Dict[str, Any]]:
+        """HOD/Admin: CIA submission status report, optionally filtered by department."""
         stmt = select(models.MarkSubmission, models.User).join(
             models.User, models.MarkSubmission.faculty_id == models.User.id
         ).where(
-            models.MarkSubmission.college_id == user["college_id"]
+            models.MarkSubmission.college_id == user["college_id"],
         )
         if department:
-            stmt = stmt.where(UserProfile.department == department)
-            
+            # Must JOIN UserProfile to filter by department
+            stmt = stmt.outerjoin(UserProfile, models.User.id == UserProfile.user_id).where(
+                UserProfile.department == department
+            )
+
         result = await self.session.execute(stmt.order_by(models.MarkSubmission.created_at.desc()))
         entries = result.all()
-        
+
         return [{
-            "id": e.id, "subject_code": e.course_id, "exam_type": e.exam_type,
-            "faculty_name": u.name, "status": (e.extra_data or {}).get("status", "draft"),
-            "max_marks": e.max_marks, "created_at": str(e.created_at)
+            "id": e.id,
+            "subject_code": e.subject_code,
+            "exam_type": e.exam_type,
+            "faculty_name": u.name,
+            "status": e.status or "draft",
+            "max_marks": e.max_marks,
+            "created_at": str(e.created_at),
         } for e, u in entries]

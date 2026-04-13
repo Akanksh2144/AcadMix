@@ -49,8 +49,8 @@ async def student_analytics(student_id: str, user: dict = Depends(get_current_us
 
 @router.get("/analytics/teacher/class-results")
 async def class_results_analytics(user: dict = Depends(require_role("teacher", "hod", "exam_cell", "admin")), session: AsyncSession = Depends(get_db)):
-    # Fetch faculty assignments from the dedicated table
-    stmt = select(models.FacultyAssignment)
+    # Fetch faculty assignments scoped to college
+    stmt = select(models.FacultyAssignment).where(models.FacultyAssignment.college_id == user["college_id"])
     if user["role"] == "teacher":
         stmt = stmt.where(models.FacultyAssignment.teacher_id == user["id"])
     result = await session.execute(stmt)
@@ -71,9 +71,10 @@ async def class_results_analytics(user: dict = Depends(require_role("teacher", "
         class_details[class_key] = {"totalStudents": 0, "department": a.department,
                                     "batch": str(a.batch), "section": str(a.section)}
 
-    # Quiz results from QuizAttempt
+    # Quiz results scoped by college — JOIN Quiz for tenant isolation
     attempts_r = await session.execute(
-        select(models.QuizAttempt).where(models.QuizAttempt.status == "submitted")
+        select(models.QuizAttempt).join(models.Quiz, models.Quiz.id == models.QuizAttempt.quiz_id)
+        .where(models.QuizAttempt.status == "submitted", models.Quiz.college_id == user["college_id"])
     )
     all_attempts = attempts_r.scalars().all()
     quiz_results: dict = {}
