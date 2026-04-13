@@ -378,10 +378,10 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
           )}
         </AnimatePresence>
 
-        {/* ── Bottom Grid: Weak Topics + Activity + Leaderboard ── */}
+        {/* ── Bottom Grid: Topics + Activity + Quizzes + Leaderboard ── */}
         <motion.div
           variants={containerVariants} initial="hidden" animate="show"
-          className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8"
         >
           {/* Weak Topics */}
           <motion.div variants={itemVariants} className="soft-card p-5 sm:p-6">
@@ -543,6 +543,44 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Check back later for new quizzes</p>
               </div>
             )}
+          </motion.div>
+
+          {/* Leaderboard CTA */}
+          <motion.div variants={itemVariants} whileHover={cardHover}
+            className="soft-card-hover p-5 sm:p-6 bg-gradient-to-br from-indigo-500/80 to-purple-600/80 dark:from-indigo-600/30 dark:to-purple-700/30 !border-transparent dark:!border-indigo-500/20 text-white flex flex-col justify-between transition-all duration-300"
+          >
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Trophy size={28} weight="duotone" />
+                <div>
+                  <h3 className="font-extrabold text-lg sm:text-xl">Leaderboard</h3>
+                  <p className="text-xs sm:text-sm font-medium text-white/70">See where you stand</p>
+                </div>
+              </div>
+              {dashboard?.rank && (
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-white/70">Your Position</p>
+                      <p className="text-4xl font-extrabold">#{dashboard.rank}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-white/70">Total Students</p>
+                      <p className="text-2xl font-extrabold">{dashboard.total_students}</p>
+                    </div>
+                  </div>
+                  {dashboard.rank <= 3 && (
+                    <div className="mt-3 flex items-center gap-2 text-sm font-bold text-amber-300">
+                      <Trophy size={16} weight="fill" />
+                      {dashboard.rank === 1 ? 'You\'re #1! 🏆' : dashboard.rank === 2 ? 'Almost there! 🥈' : 'Top 3! 🥉'}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <button data-testid="view-leaderboard-button" onClick={() => navigate('leaderboard')} className="w-full py-3 bg-white/20 backdrop-blur-sm rounded-xl font-bold text-sm hover:bg-white/30 transition-colors mt-auto">
+              View Full Leaderboard
+            </button>
           </motion.div>
         </motion.div>
         </motion.div>
