@@ -466,10 +466,9 @@ const useAIProctor = ({ videoRef, audioStream, onViolation, onSnapshot, enabled 
 
     return () => {
       if (faceIntervalRef.current) clearInterval(faceIntervalRef.current);
-      if (objectIntervalRef.current) clearInterval(objectIntervalRef.current);
       if (snapshotIntervalRef.current) clearInterval(snapshotIntervalRef.current);
     };
-  }, [isModelLoaded, enabled, runFaceDetection, runObjectDetection, captureSnapshot]);
+  }, [isModelLoaded, enabled, runFaceDetection, captureSnapshot]);
 
 
   // ────────────────────────────────────────────────────────────
