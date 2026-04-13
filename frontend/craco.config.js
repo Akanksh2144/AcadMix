@@ -63,7 +63,8 @@ let webpackConfig = {
               return name.includes('source-map-loader');
             });
             if (hasSourceMap) {
-              r.exclude = [...(r.exclude || []), /@mediapipe/];
+              const existing = r.exclude ? (Array.isArray(r.exclude) ? r.exclude : [r.exclude]) : [];
+              r.exclude = [...existing, /@mediapipe/];
             }
           }
         }
