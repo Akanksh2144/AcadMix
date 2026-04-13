@@ -288,10 +288,12 @@ async def start_attempt(quiz_id: str, request: Request, user: dict = Depends(get
         final_score=0,
     )
     session.add(attempt)
+    await session.flush()
+    att_id = attempt.id
+    att_start = attempt.start_time
     await session.commit()
-    await session.refresh(attempt)
-    return {"id": attempt.id, "quiz_id": attempt.quiz_id, "student_id": attempt.student_id,
-            "status": attempt.status, "start_time": attempt.start_time.isoformat()}
+    return {"id": att_id, "quiz_id": quiz_id, "student_id": user["id"],
+            "status": "in_progress", "start_time": att_start.isoformat()}
 
 @router.post("/quizzes/attempts/{attempt_id}/telemetry/violation")
 async def log_telemetry_violation(attempt_id: str, payload: dict = {}, user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
