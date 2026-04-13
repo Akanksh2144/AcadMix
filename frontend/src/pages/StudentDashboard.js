@@ -592,11 +592,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
             </motion.div>
 
             {/* Quick actions */}
-            <motion.div variants={itemVariants} className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
-              <motion.button whileHover={cardHover} onClick={() => navigate('available-quizzes')} className="soft-card-hover p-4 text-left flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center"><Fire size={20} weight="duotone" className="text-rose-500" /></div>
-                <div><p className="font-bold text-sm text-slate-900 dark:text-white">Available Quizzes</p><p className="text-xs text-slate-500">Take a quiz</p></div>
-              </motion.button>
+            <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
               <motion.button whileHover={cardHover} onClick={() => navigate('quiz-results')} className="soft-card-hover p-4 text-left flex items-center gap-3 group">
                 <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center"><BookOpen size={20} weight="duotone" className="text-indigo-500" /></div>
                 <div><p className="font-bold text-sm text-slate-900 dark:text-white">Past Results</p><p className="text-xs text-slate-500">View attempts</p></div>
