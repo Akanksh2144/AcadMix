@@ -109,7 +109,7 @@ function embeddingDistance(a, b) {
 // ══════════════════════════════════════════════════════════════
 //  Main Hook
 // ══════════════════════════════════════════════════════════════
-const useAIProctor = ({ videoRef, onViolation, onSnapshot, enabled = false }) => {
+const useAIProctor = ({ videoRef, audioStream, onViolation, onSnapshot, enabled = false }) => {
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [detectionStatus, setDetectionStatus] = useState('initializing');
   const [faceCount, setFaceCount] = useState(0);
@@ -229,40 +229,37 @@ const useAIProctor = ({ videoRef, onViolation, onSnapshot, enabled = false }) =>
 
   // ────────────────────────────────────────────────────────────
   //  MODULE 5: Audio Monitoring (Web Audio API)
+  //  Uses audio stream provided by parent (requested with webcam)
   // ────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!enabled || !isModelLoaded) return;
-    let cancelled = false;
+    if (!enabled || !isModelLoaded || !audioStream) return;
 
-    const startAudio = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
+    try {
+      // Extract audio tracks from the provided stream
+      const audioTracks = audioStream.getAudioTracks();
+      if (!audioTracks.length) return;
 
-        audioStreamRef.current = stream;
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        audioContextRef.current = ctx;
+      const audioOnlyStream = new MediaStream(audioTracks);
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      audioContextRef.current = ctx;
 
-        const source = ctx.createMediaStreamSource(stream);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 256;
-        analyser.smoothingTimeConstant = 0.8;
-        source.connect(analyser);
-        analyserRef.current = analyser;
+      const source = ctx.createMediaStreamSource(audioOnlyStream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+      analyserRef.current = analyser;
 
-        setAiModules(prev => ({ ...prev, audio: true }));
-      } catch (err) {
-        console.warn('[AI Proctor] Audio access denied (non-critical):', err);
-      }
-    };
+      setAiModules(prev => ({ ...prev, audio: true }));
+    } catch (err) {
+      console.warn('[AI Proctor] Audio setup failed (non-critical):', err);
+    }
 
-    startAudio();
     return () => {
-      cancelled = true;
-      if (audioStreamRef.current) audioStreamRef.current.getTracks().forEach(t => t.stop());
+      // Don't stop the audio tracks — parent owns the stream
       if (audioContextRef.current) audioContextRef.current.close().catch(() => {});
     };
-  }, [enabled, isModelLoaded]);
+  }, [enabled, isModelLoaded, audioStream]);
 
 
   // ────────────────────────────────────────────────────────────
@@ -543,9 +540,7 @@ const useAIProctor = ({ videoRef, onViolation, onSnapshot, enabled = false }) =>
       if (objectDetectorRef.current) {
         try { objectDetectorRef.current.close(); } catch {}
       }
-      if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach(t => t.stop());
-      }
+      // Don't stop audio tracks — parent owns the stream
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(() => {});
       }

@@ -287,6 +287,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
   const [webcamActive, setWebcamActive] = useState(false);
   const [webcamError, setWebcamError] = useState(false);
   const videoRef = useRef(null);
+  const audioStreamRef = useRef(null);
   const violationRef = useRef(0);
   const fullscreenInitialized = useRef(false);
   const isSubmittingRef = useRef(false);
@@ -384,18 +385,31 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     return () => document.removeEventListener('fullscreenchange', handler);
   }, [attempt, reportViolation]);
 
-  // ── Webcam ──
+  // ── Webcam + Mic (request both together before fullscreen) ──
   useEffect(() => {
     if (!attempt) return;
     let stream = null;
-    const startWebcam = async () => {
+    const startMedia = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 }, audio: false });
+        // Request video + audio together so the permission dialog
+        // appears BEFORE fullscreen (avoids fullscreen exit violation)
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 320, height: 240 },
+          audio: true,
+        });
         if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); }
+        audioStreamRef.current = stream;
         setWebcamActive(true);
-      } catch { setWebcamError(true); }
+      } catch (err) {
+        // If audio fails, try video-only
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 }, audio: false });
+          if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); }
+          setWebcamActive(true);
+        } catch { setWebcamError(true); }
+      }
     };
-    startWebcam();
+    startMedia();
     return () => { if (stream) stream.getTracks().forEach(t => t.stop()); };
   }, [attempt]);
 
@@ -412,6 +426,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
 
   const { isModelLoaded: aiReady, detectionStatus: aiStatus, faceCount, gazeDirection, audioLevel, aiModules, handleKeyDown: aiKeyDown } = useAIProctor({
     videoRef,
+    audioStream: audioStreamRef.current,
     onViolation: reportViolation,
     onSnapshot: handleSnapshot,
     enabled: webcamActive && !!attempt,
