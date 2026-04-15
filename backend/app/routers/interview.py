@@ -363,7 +363,11 @@ async def end_interview(
     user: dict = Depends(require_role("student")),
     session: AsyncSession = Depends(get_db)
 ):
-    """End the interview session and generate comprehensive AI feedback + scoring."""
+    """End the interview session and queue AI feedback generation.
+    
+    Returns immediately with status='scoring'. Frontend polls GET /interview/{id}
+    until status changes to 'completed' (typically 5-15 seconds).
+    """
     stmt = select(models.MockInterview).where(
         models.MockInterview.id == interview_id,
         models.MockInterview.student_id == user["id"],
@@ -375,66 +379,61 @@ async def end_interview(
     if not interview:
         raise HTTPException(status_code=404, detail="Interview session not found or already completed")
 
-    now = datetime.now(timezone.utc)
-    duration = int((now - interview.created_at.replace(tzinfo=timezone.utc)).total_seconds()) if interview.created_at else 0
+    # Mark as scoring (intermediate state)
+    interview.status = "scoring"
 
-    # Build transcript for evaluation
-    transcript_lines = []
-    for msg in (interview.conversation or []):
-        role_label = "Interviewer" if msg["role"] == "assistant" else "Candidate"
-        transcript_lines.append(f"{role_label}: {msg['content']}")
-    transcript = "\n\n".join(transcript_lines)
-
-    # Ask AI for comprehensive feedback
-    eval_messages = [
-        {"role": "system", "content": FEEDBACK_SYSTEM_PROMPT},
-        {"role": "user", "content": f"Here is the complete interview transcript for a {interview.interview_type} interview targeting a {interview.target_role} role:\n\n{transcript}"},
-    ]
-
-    feedback_raw = await _call_llm(eval_messages, json_mode=True)
-
-    # Parse the JSON feedback
+    # Dispatch feedback generation to background worker
     try:
-        feedback = json.loads(feedback_raw)
-    except json.JSONDecodeError:
-        # Fallback: try to extract JSON from the response
-        import re
-        json_match = re.search(r'\{.*\}', feedback_raw, re.DOTALL)
-        if json_match:
-            feedback = json.loads(json_match.group())
-        else:
-            feedback = {
-                "overall_score": 50,
-                "scores": {},
-                "per_question": [],
-                "strengths": [],
-                "weaknesses": [],
-                "improvement_tips": ["Review the transcript and practice the topics discussed."],
-                "overall_comment": "Interview completed. Detailed AI feedback was not available.",
-            }
+        from arq.connections import ArqRedis, create_pool, RedisSettings
+        pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
+        await pool.enqueue_job(
+            "generate_interview_feedback_task",
+            interview_id,
+            user["college_id"],
+        )
+        await pool.close()
+        logger.info("Interview feedback queued for background processing: %s", interview_id)
+    except Exception as e:
+        # Fallback: if ARQ is unavailable, generate inline (blocking)
+        logger.warning("ARQ unavailable, generating feedback inline: %s", e)
+        from app.routers.interview import _call_llm
+        
+        now = datetime.now(timezone.utc)
+        duration = int((now - interview.created_at.replace(tzinfo=timezone.utc)).total_seconds()) if interview.created_at else 0
 
-    overall_score = feedback.get("overall_score", 50)
-    scores = feedback.get("scores", {})
+        transcript_lines = []
+        for msg in (interview.conversation or []):
+            role_label = "Interviewer" if msg["role"] == "assistant" else "Candidate"
+            transcript_lines.append(f"{role_label}: {msg['content']}")
+        transcript = "\n\n".join(transcript_lines)
 
-    # Update interview record
-    interview.status = "completed"
-    interview.completed_at = now
-    interview.duration_seconds = duration
-    interview.ai_feedback = feedback
-    interview.scores = scores
-    interview.overall_score = overall_score
+        eval_messages = [
+            {"role": "system", "content": FEEDBACK_SYSTEM_PROMPT},
+            {"role": "user", "content": f"Transcript for {interview.interview_type} interview:\n\n{transcript}"},
+        ]
+        feedback_raw = await _call_llm(eval_messages, json_mode=True)
+        try:
+            feedback = json.loads(feedback_raw)
+        except json.JSONDecodeError:
+            feedback = {"overall_score": 50, "scores": {}, "overall_comment": "Feedback parsing failed."}
 
-    from sqlalchemy.orm.attributes import flag_modified
-    flag_modified(interview, "ai_feedback")
-    flag_modified(interview, "scores")
+        interview.status = "completed"
+        interview.completed_at = now
+        interview.duration_seconds = duration
+        interview.ai_feedback = feedback
+        interview.scores = feedback.get("scores", {})
+        interview.overall_score = feedback.get("overall_score", 50)
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(interview, "ai_feedback")
+        flag_modified(interview, "scores")
 
     return {
         "interview_id": interview.id,
-        "overall_score": overall_score,
-        "scores": scores,
-        "feedback": feedback,
-        "duration_seconds": duration,
+        "status": interview.status,
         "question_count": interview.question_count,
+        "message": "Feedback is being generated. Poll GET /interview/{id} for results." if interview.status == "scoring" else "Feedback ready.",
+        "overall_score": interview.overall_score,
+        "feedback": interview.ai_feedback,
     }
 
 

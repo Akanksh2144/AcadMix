@@ -520,6 +520,11 @@ app.add_middleware(
 from app.core.response import RequestIdMiddleware  # noqa: E402
 app.add_middleware(RequestIdMiddleware)
 
+# ─── Prometheus Metrics ───────────────────────────────────────────────────────
+from app.core.metrics import PrometheusMiddleware, metrics_endpoint  # noqa: E402
+app.add_middleware(PrometheusMiddleware)
+app.add_route("/metrics", metrics_endpoint)
+
 # ─── Tenant Middleware ──────────────────────────────────────────────────────────
 from app.core.tenant_middleware import TenantMiddleware  # noqa: E402
 app.add_middleware(TenantMiddleware)

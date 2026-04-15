@@ -23,6 +23,97 @@ async def process_ai_review_task(ctx, req_json: dict):
         return {"status": "failed", "error": str(e)}
 
 
+async def generate_interview_feedback_task(ctx, interview_id: str, college_id: str):
+    """
+    ARQ Task: Generate comprehensive AI feedback for a completed interview.
+    
+    This is the heaviest LLM call in the platform (full transcript analysis).
+    Offloaded from the API worker so /interview/{id}/end returns instantly.
+    Frontend polls GET /interview/{id} until feedback.status == 'completed'.
+    """
+    import json
+    import logging
+    from database import admin_session_ctx
+    from sqlalchemy import select, text
+    from app import models
+    from app.core.config import settings
+
+    logger = logging.getLogger("acadmix.worker.interview")
+    logger.info("[interview-feedback] Processing interview=%s", interview_id)
+
+    async with admin_session_ctx() as session:
+        stmt = select(models.MockInterview).where(
+            models.MockInterview.id == interview_id,
+            models.MockInterview.college_id == college_id,
+        )
+        result = await session.execute(stmt)
+        interview = result.scalars().first()
+
+        if not interview:
+            logger.error("[interview-feedback] Interview not found: %s", interview_id)
+            return {"status": "failed", "error": "Interview not found"}
+
+        # Build transcript
+        transcript_lines = []
+        for msg in (interview.conversation or []):
+            role_label = "Interviewer" if msg["role"] == "assistant" else "Candidate"
+            transcript_lines.append(f"{role_label}: {msg['content']}")
+        transcript = "\n\n".join(transcript_lines)
+
+        # Call LLM for feedback
+        try:
+            import litellm
+            litellm.api_key = settings.GEMINI_API_KEY
+
+            FEEDBACK_PROMPT = """You are an expert interview coach. Analyze this transcript and return JSON:
+{"overall_score": <0-100>, "scores": {"technical_depth": <0-100>, "communication": <0-100>, "problem_solving": <0-100>, "confidence": <0-100>, "clarity": <0-100>, "domain_knowledge": <0-100>}, "per_question": [{"question": "", "rating": "strong|average|needs_work", "feedback": ""}], "strengths": [], "weaknesses": [], "improvement_tips": [], "overall_comment": ""}
+Return ONLY valid JSON."""
+
+            response = await litellm.acompletion(
+                model=settings.INTERVIEW_LLM_MODEL,
+                messages=[
+                    {"role": "system", "content": FEEDBACK_PROMPT},
+                    {"role": "user", "content": f"Transcript:\n\n{transcript}"},
+                ],
+                temperature=0.5,
+                max_tokens=3000,
+                response_format={"type": "json_object"},
+            )
+            feedback_raw = response.choices[0].message.content.strip()
+            feedback = json.loads(feedback_raw)
+        except Exception as e:
+            logger.error("[interview-feedback] LLM failed: %s", e)
+            feedback = {
+                "overall_score": 50,
+                "scores": {},
+                "per_question": [],
+                "strengths": [],
+                "weaknesses": [],
+                "improvement_tips": ["Review the transcript and practice."],
+                "overall_comment": "AI feedback generation failed. Please try again.",
+            }
+
+        # Update interview record
+        from datetime import datetime, timezone
+        from sqlalchemy.orm.attributes import flag_modified
+
+        now = datetime.now(timezone.utc)
+        duration = int((now - interview.created_at.replace(tzinfo=timezone.utc)).total_seconds()) if interview.created_at else 0
+
+        interview.status = "completed"
+        interview.completed_at = now
+        interview.duration_seconds = duration
+        interview.ai_feedback = feedback
+        interview.scores = feedback.get("scores", {})
+        interview.overall_score = feedback.get("overall_score", 50)
+        flag_modified(interview, "ai_feedback")
+        flag_modified(interview, "scores")
+
+        await session.commit()
+        logger.info("[interview-feedback] Completed interview=%s score=%s", interview_id, interview.overall_score)
+        return {"status": "completed", "score": interview.overall_score}
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # HOSTEL MODULE — Background Workers
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -606,6 +697,7 @@ async def expire_library_reservations(ctx):
 class WorkerSettings:
     functions = [
         process_ai_review_task,
+        generate_interview_feedback_task,
         # WhatsApp on-demand tasks
         process_gatepass_approval_request,
         process_vending_receipt,
