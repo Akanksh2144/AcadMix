@@ -1,12 +1,64 @@
-from datetime import datetime, timezone
-from fastapi import APIRouter
+"""
+Health check endpoints for liveness and readiness probes.
 
-from app.schemas import *
+- GET /health          → Lightweight liveness probe (k8s/Fly.io)
+- GET /health/ready    → Deep readiness: DB + Redis connectivity  
+- GET /health/db       → Pool metrics + RLS shadow status
+- GET /health/test-sentry → Intentional crash to verify Sentry
+"""
+from datetime import datetime, timezone
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+
+from database import get_db
+from app.core.config import settings
+
 router = APIRouter()
+
 
 @router.get("/")
 async def health():
+    """Lightweight liveness probe — no external dependencies."""
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
+@router.get("/ready")
+async def readiness(session: AsyncSession = Depends(get_db)):
+    """Deep readiness probe — verifies DB and Redis connectivity.
+    
+    Use this for container orchestration readiness gates and 
+    deployment health checks (Fly.io, Railway, k8s).
+    """
+    checks = {}
+
+    # Database connectivity
+    try:
+        await session.execute(text("SELECT 1"))
+        checks["database"] = "ok"
+    except Exception as e:
+        checks["database"] = f"error: {type(e).__name__}"
+
+    # Redis connectivity
+    try:
+        if settings.REDIS_URL:
+            import redis.asyncio as aioredis
+            r = aioredis.from_url(settings.REDIS_URL, socket_connect_timeout=2)
+            await r.ping()
+            await r.aclose()
+            checks["redis"] = "ok"
+        else:
+            checks["redis"] = "not_configured"
+    except Exception as e:
+        checks["redis"] = f"error: {type(e).__name__}"
+
+    all_ok = all(v == "ok" for v in checks.values() if v != "not_configured")
+
+    return {
+        "status": "ready" if all_ok else "degraded",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "checks": checks,
+    }
 
 
 @router.get("/db")

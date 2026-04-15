@@ -81,14 +81,18 @@ def _scrub_pii(event, hint):
 
 sentry_dsn = settings.SENTRY_DSN
 if sentry_dsn:
+    _env = os.getenv("ENVIRONMENT", "development")
+    _traces_rate = 0.2 if _env == "production" else 1.0
     sentry_sdk.init(
         dsn=sentry_dsn,
         enable_tracing=True,
-        traces_sample_rate=1.0,
+        traces_sample_rate=_traces_rate,
         send_default_pii=False,
         before_send=_scrub_pii,
         integrations=[FastApiIntegration()],
+        environment=_env,
     )
+    logger.info("Sentry initialized (env=%s, traces=%.0f%%)", _env, _traces_rate * 100)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -512,7 +516,11 @@ app.add_middleware(
     max_age=3600,
 )
 
-# ─── Tenant Middleware ────────────────────────────────────────────────────────
+# ─── Request ID Correlation ───────────────────────────────────────────────────────
+from app.core.response import RequestIdMiddleware  # noqa: E402
+app.add_middleware(RequestIdMiddleware)
+
+# ─── Tenant Middleware ──────────────────────────────────────────────────────────
 from app.core.tenant_middleware import TenantMiddleware  # noqa: E402
 app.add_middleware(TenantMiddleware)
 
@@ -521,12 +529,16 @@ from app.core.limiter import limiter
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# ─── Domain Exception Handler ────────────────────────────────────────────────
+# ─── Domain Exception Handler ────────────────────────────────────────────────────
 @app.exception_handler(DomainException)
 async def domain_exception_handler(request: Request, exc: DomainException):
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.message, "details": exc.details},
+        content={
+            "data": None,
+            "error": exc.message,
+            "meta": {"details": exc.details} if exc.details else {},
+        },
     )
 
 # ─── API Router ───────────────────────────────────────────────────────────────
