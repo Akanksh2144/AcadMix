@@ -6,6 +6,14 @@ from app.core.config import settings
 # The API keys should be available in the environment matching litellm's expected format (e.g. GEMINI_API_KEY).
 DEFAULT_MODEL = "gemini/gemini-2.5-flash"
 
+def route_ami_message(message: str, has_code: bool) -> str:
+    complex_signals = ["debug", "why is", "wrong", "error", "optimize", 
+                       "time complexity", "not working", "fix", "trace"]
+    
+    if has_code or any(s in message.lower() for s in complex_signals):
+        return "groq/llama-3.3-70b-versatile"   # Tier 2
+    return "groq/llama-3.1-8b-instant"          # Tier 1
+
 from typing import AsyncGenerator, List, Dict
 
 import re
@@ -15,7 +23,7 @@ async def generate_code_review(code: str, language: str, output: str, error: str
     """
     Calls an LLM to generate a strict JSON code review, defending against prompt injections.
     """
-    model = settings.LLM_REVIEW_MODEL
+    model = "groq/llama-3.3-70b-versatile"
     
     # We now assume 'code' has ALREADY been pre-scrubbed by ast_parser BEFORE entering the queue.
     stripped_code = code
@@ -46,6 +54,7 @@ async def generate_code_review(code: str, language: str, output: str, error: str
     try:
         response = await litellm.acompletion(
             model=model,
+            fallbacks=["gemini/gemini-2.0-flash-lite"],
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
@@ -70,17 +79,23 @@ async def generate_coach_stream(messages: List[Dict[str, str]], current_code: st
     """
     Calls an LLM as a Socratic AI Coach, streaming the response.
     """
-    model = settings.LLM_REVIEW_MODEL
+    last_user_msg = ""
+    if messages and messages[-1]["role"] == "user":
+        last_user_msg = messages[-1]["content"]
+
+    has_code = bool(current_code and current_code.strip())
+    model = route_ami_message(last_user_msg, has_code)
     
     system_prompt = (
         "You are 'Ami', an expert Socratic programming tutor. "
         "Your job is to guide the student towards solving the problem themselves. "
-        "Strict rules:\\n"
-        "1. NEVER give the student the full code answer.\\n"
-        "2. If they ask for the answer, politely refuse and provide a strategic hint instead.\\n"
-        "3. Keep your responses very concise, friendly, and easy to read. Use markdown.\\n"
-        "4. Focus entirely on the immediate obstacle or logic flaw they are facing.\\n"
-        "5. UI Rules: If you ask the student multiple questions to guide them, YOU MUST format them as clear, separate bullet points on their own lines."
+        "Strict rules:\n"
+        "1. NEVER give the student the full code answer.\n"
+        "2. If they ask for the answer, politely refuse and provide a strategic hint instead.\n"
+        "3. Keep your responses very concise, friendly, and easy to read. Use markdown.\n"
+        "4. Focus entirely on the immediate obstacle or logic flaw they are facing.\n"
+        "5. UI Rules: If you ask the student multiple questions to guide them, YOU MUST format them as clear, separate bullet points on their own lines.\n"
+        "6. Do not discuss your underlying model or technology."
     )
 
     # We append the current code state to the most recent user message to ensure the AI knows what they are looking at
@@ -110,6 +125,7 @@ async def generate_coach_stream(messages: List[Dict[str, str]], current_code: st
     try:
         response = await litellm.acompletion(
             model=model,
+            fallbacks=["gemini/gemini-2.0-flash-lite"],
             messages=llm_messages,
             temperature=0.5,
             max_tokens=500,

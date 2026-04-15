@@ -469,7 +469,10 @@ async def lifespan(app: FastAPI):
     max_retries = 5
     for attempt in range(1, max_retries + 1):
         try:
-            await _seed_db()
+            if settings.SEED_ON_STARTUP:
+                await _seed_db()
+            else:
+                logger.info("[startup] SEED_ON_STARTUP=False — bypassing database seed step.")
             break
         except Exception as e:
             if attempt == max_retries:

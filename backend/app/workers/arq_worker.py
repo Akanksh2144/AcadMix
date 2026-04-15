@@ -691,6 +691,60 @@ async def expire_library_reservations(ctx):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# LEADERBOARD — Scheduled Cron Jobs
+# ═══════════════════════════════════════════════════════════════════════════════
+
+async def compute_leaderboard_ranks(ctx):
+    """Every 5 minutes — Pre-compute student ranks for fast dashboard loading."""
+    from database import admin_session_ctx
+    from app import models
+    from sqlalchemy import select, text
+    import logging
+    logger = logging.getLogger("acadmix.leaderboard_cron")
+
+    try:
+        async with admin_session_ctx() as session:
+            # Recreate rankings completely for all colleges
+            await session.execute(text("TRUNCATE TABLE student_rankings"))
+            
+            students_r = await session.execute(
+                select(models.QuizAttempt.student_id, models.Quiz
+Attempt.final_score, models.Quiz.college_id)
+                .join(models.Quiz, models.Quiz.id == models.QuizAttempt.quiz_id)
+                .where(models.QuizAttempt.status == "submitted")
+            )
+            
+            scores_by_college = {}
+            for student_id, score, college_id in students_r.all():
+                if college_id not in scores_by_college:
+                    scores_by_college[college_id] = {}
+                scores_by_college[college_id].setdefault(student_id, []).append(score or 0)
+                
+            insert_batch = []
+            for college_id, student_scores in scores_by_college.items():
+                ranked = sorted(
+                    [(sid, sum(sc)/len(sc) if sc else 0) for sid, sc in student_scores.items()],
+                    key=lambda x: x[1], reverse=True
+                )
+                total = len(ranked)
+                for rank, (sid, avg) in enumerate(ranked, 1):
+                    insert_batch.append({
+                        "college_id": college_id,
+                        "student_id": sid,
+                        "rank": rank,
+                        "total_students": total,
+                        "avg_score": round(avg, 1)
+                    })
+            
+            if insert_batch:
+                from sqlalchemy import insert
+                await session.execute(insert(models.StudentRanking), insert_batch)
+                await session.commit()
+                logger.info("[leaderboard-cron] Computed ranks for %d students across %d colleges", len(insert_batch), len(scores_by_college))
+    except Exception as e:
+        logger.error("[leaderboard-cron] Ranking calculation failed: %s", e)
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # WORKER SETTINGS
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -727,6 +781,8 @@ class WorkerSettings:
         # Library
         cron(calculate_overdue_fines, hour=0, minute=5),                        # 12:05 AM daily
         cron(expire_library_reservations, minute={0, 30}),                      # every 30 min
+        # Analytics
+        cron(compute_leaderboard_ranks, minute=set(range(0, 60, 5))),           # every 5 min
     ]
 
     redis_settings = "redis://localhost:6379"  # Bound to local dev container config

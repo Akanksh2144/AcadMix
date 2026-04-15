@@ -9,14 +9,21 @@ def generate_uuid():
 
 from app.models.core import SoftDeleteMixin
 
-class AuditLog(Base, SoftDeleteMixin):
+class AuditLog(Base):
     __tablename__ = "audit_logs"
+    
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    resource = Column(String, nullable=False)
-    action = Column(String, nullable=False)
-    details = Column(JSONB, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    college_id = Column(String, nullable=False, index=True) # Tenant isolation
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    action = Column(String, nullable=False, index=True)
+    resource_type = Column(String, nullable=False)
+    resource_id = Column(String, nullable=False, index=True)
+    status = Column(String, nullable=False)
+    old_value = Column(JSONB, nullable=True)
+    new_value = Column(JSONB, nullable=True)
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
 
 class RLSShadowLog(Base):

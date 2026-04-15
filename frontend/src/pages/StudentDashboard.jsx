@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Trophy, ChartLine, Fire, BookOpen, Calendar, Target, SignOut, Terminal, ArrowRight, GraduationCap, Play, Medal, Lightning, Warning, Bell, Exam, Briefcase, Sun, Moon, CalendarDots, Chalkboard, UserCircle, ListBullets, Microphone, House, FileText, Toolbox, Bus } from '@phosphor-icons/react';
-import { analyticsAPI, interviewAPI, resumeAPI } from '../services/api';
+import { analyticsAPI, interviewAPI, resumeAPI, notificationsAPI } from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
@@ -84,6 +84,67 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const { isDark, toggle: toggleTheme } = useTheme();
+  const [realNotifs, setRealNotifs] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch real notifications from API
+  useEffect(() => {
+    const fetchNotifs = () => {
+      notificationsAPI.getAll({ limit: 10 }).then(res => {
+        setRealNotifs(res.data.data || []);
+        setUnreadCount(res.data.unread_count || 0);
+      }).catch(() => {});
+    };
+    fetchNotifs();
+    const interval = setInterval(fetchNotifs, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // WebSocket for instant notifications
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const wsBase = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000').replace(/^http/, 'ws');
+    let ws;
+    let reconnectTimer;
+    const connect = () => {
+      try {
+        ws = new WebSocket(`${wsBase}/ws/notifications?token=${token}`);
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'notification') {
+              setRealNotifs(prev => [{
+                id: data.entity_id || Date.now().toString(),
+                title: data.title,
+                message: data.message,
+                type: data.type,
+                is_read: false,
+                created_at: new Date().toISOString(),
+              }, ...prev].slice(0, 10));
+              setUnreadCount(prev => prev + 1);
+            }
+          } catch (_) {}
+        };
+        ws.onclose = () => { reconnectTimer = setTimeout(connect, 5000); };
+        ws.onerror = () => { ws.close(); };
+      } catch (_) {}
+    };
+    connect();
+    return () => { clearTimeout(reconnectTimer); if (ws) { ws.onclose = null; ws.close(); } };
+  }, []);
+
+  const handleBellClick = () => {
+    setShowNotifications(!showNotifications);
+  };
+
+  const handleMarkAllRead = () => {
+    notificationsAPI.markAllRead().then(() => {
+      setUnreadCount(0);
+      setRealNotifs(prev => prev.map(n => ({ ...n, is_read: true })));
+      setShowNotifications(false);
+    }).catch(() => {});
+  };
 
   // Tab badge (dot) state — persisted per user in localStorage
   const badgeKey = useCallback((tab) => `acadmix_tab_seen_${tab}_${user?.id || 'default'}`, [user?.id]);
@@ -115,21 +176,6 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
   // Badge visibility: show dot if tab has content AND hasn't been seen
   const showQuizBadge = !seenTabs.quizzes && (dashboard?.upcoming_quizzes?.length > 0 || dashboard?.in_progress?.length > 0);
   const showFeesBadge = !seenTabs.fees && (dashboard?.pending_fees > 0 || dashboard?.fee_due);
-
-  const notifKey = `acadmix_last_notif_${user?.id || 'default'}`;
-  const [lastReadTime, setLastReadTime] = useState(() => localStorage.getItem(notifKey) || '1970-01-01T00:00:00.000Z');
-  
-  const handleBellClick = () => {
-    setShowNotifications(!showNotifications);
-    if (!showNotifications && dashboard?.activity?.length > 0) {
-      // Mark as read by storing the latest timestamp
-      const latestTs = dashboard.activity[0].timestamp || new Date().toISOString();
-      setLastReadTime(latestTs);
-      localStorage.setItem(notifKey, latestTs);
-    }
-  };
-
-  const unreadCount = dashboard?.activity?.filter(a => new Date(a.timestamp) > new Date(lastReadTime)).length || 0;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -173,37 +219,31 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
             >
               <div className="px-5 py-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
                 <h4 className="font-extrabold text-slate-800 dark:text-slate-100">Notifications</h4>
-                <button
-                  onClick={() => { const now = new Date().toISOString(); setLastReadTime(now); localStorage.setItem(notifKey, now); setShowNotifications(false); }}
-                  className="text-xs font-bold text-indigo-500 hover:text-indigo-600 transition-colors"
-                >
+                <button onClick={handleMarkAllRead} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 transition-colors">
                   Mark all as read
                 </button>
               </div>
               <div className="max-h-80 overflow-y-auto divide-y divide-slate-50 dark:divide-white/5">
-                {(!dashboard?.activity || dashboard?.activity?.length === 0) ? (
+                {realNotifs.length === 0 ? (
                   <div className="p-8 text-center text-slate-500 text-sm">No new notifications.</div>
                 ) : (
-                  (dashboard?.activity || []).slice(0, 8).map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                  realNotifs.slice(0, 8).map((n, i) => (
+                    <div key={n.id || i} className={`flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${!n.is_read ? 'bg-indigo-50/30 dark:bg-indigo-500/5' : ''}`}>
                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                        item.type === 'quiz_result' ? 'bg-emerald-50 dark:bg-emerald-500/15' : 'bg-indigo-50 dark:bg-indigo-500/15'
+                        n.type === 'placement' ? 'bg-indigo-50 dark:bg-indigo-500/15' : 'bg-emerald-50 dark:bg-emerald-500/15'
                       }`}>
-                        {item.type === 'quiz_result' ? (
-                          <Exam size={14} weight="duotone" className="text-emerald-500" />
+                        {n.type === 'placement' ? (
+                          <Briefcase size={14} weight="duotone" className="text-indigo-500" />
                         ) : (
-                          <Bell size={14} weight="duotone" className="text-indigo-500" />
+                          <Bell size={14} weight="duotone" className="text-emerald-500" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{item.title}</p>
-                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{item.subtitle} • {timeAgo(item.timestamp)}</p>
+                        <p className={`text-sm font-bold truncate ${!n.is_read ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>{n.title}</p>
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{n.message}</p>
+                        <p className="text-[10px] font-semibold text-slate-400 mt-1">{timeAgo(n.created_at)}</p>
                       </div>
-                      {item.score !== undefined && (
-                        <span className={`text-sm font-extrabold flex-shrink-0 ${
-                          item.score >= 60 ? 'text-emerald-600' : item.score >= 40 ? 'text-amber-600' : 'text-red-600'
-                        }`}>{item.score?.toFixed(0)}%</span>
-                      )}
+                      {!n.is_read && <span className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 mt-2" />}
                     </div>
                   ))
                 )}

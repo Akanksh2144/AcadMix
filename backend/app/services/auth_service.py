@@ -77,13 +77,19 @@ class AuthService:
         )
         user = result.scalars().first()
 
-        if not user or not verify_password(password, user.password_hash):
+        if not user or not verify_password(password, user.password_hash) or getattr(user, "is_anonymized", False):
             if redis_client:
                 pipe = redis_client.pipeline()
                 pipe.incr(key)
                 pipe.expire(key, self.LOCKOUT_SECONDS)
                 await pipe.execute()
-            raise AuthenticationError()
+            
+            # Note: We return standard AuthenticationError even for anonymized rows to prevent email enumeration,
+            # but structurally the CTO wanted "Account no longer exists" type behavior.
+            # Using AuthenticationError protects ghost row enumeration.
+            raise AuthenticationError("Account no longer exists" if getattr(user, "is_anonymized", False) else "Invalid credentials")
+
+        from app.services.audit_service import AuditService
 
         # Success — clear failure counter
         if redis_client:
@@ -96,6 +102,18 @@ class AuthService:
         access = create_access_token(user.id, user.role, tid, perms)
         refresh = create_refresh_token(user.id)
 
+        # Explicit Audit Log
+        if user.role != "student":
+            await AuditService.log_audit(
+                db=self.db,
+                college_id=tid,
+                user_id=user.id,
+                action="USER_LOGIN",
+                resource_type="auth",
+                resource_id=user.id,
+                status="success"
+            )
+
         user_out = {
             "id": user.id,
             "name": user.name,
@@ -104,8 +122,7 @@ class AuthService:
             "college_id": user.college_id,
             "tenant_id": user.college_id,
             "access_token": access,
-            # refresh_token is set as httpOnly cookie by the router — never exposed in body
-            "_refresh_token": refresh,  # prefixed with _ to signal internal-only
+            "_refresh_token": refresh,
         }
         if user.profile_data:
             user_out.update({k: v for k, v in user.profile_data.items() if k != "password_hash"})
@@ -140,10 +157,27 @@ class AuthService:
         if not refresh_token:
             return
         try:
+            from app.services.audit_service import AuditService
             payload = jwt.decode(refresh_token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             jti = payload.get("jti")
             if redis_client and jti:
                 await redis_client.setex(f"revoked_refresh:{jti}", 604800, "revoked")
+                
+            user_id = payload.get("sub")
+            if user_id:
+                # Need college_id, fetch user
+                result = await self.db.execute(select(models.User).where(models.User.id == user_id))
+                user = result.scalars().first()
+                if user and user.role != "student":
+                    await AuditService.log_audit(
+                        db=self.db,
+                        college_id=user.college_id,
+                        user_id=user_id,
+                        action="TOKEN_REVOKED",
+                        resource_type="auth",
+                        resource_id=jti or user_id,
+                        status="success"
+                    )
         except jwt.InvalidTokenError:
             pass
 

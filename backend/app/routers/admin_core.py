@@ -133,3 +133,31 @@ async def get_consultancy_report(
     svc: AdminService = Depends(get_admin_service)
 ):
     return await svc.get_consultancy_report(user["college_id"])
+
+
+@router.get("/admin/export")
+async def export_college_data(
+    admin: dict = Depends(require_role("admin", "principal", "super_admin")),
+    svc: AdminService = Depends(get_admin_service)
+):
+    """
+    Export all college data as a structured Zip file. Unblocks enterprise offboarding deals.
+    """
+    return await svc.export_college_data(admin["college_id"])
+
+
+def get_gdpr_service(session: AsyncSession = Depends(get_db)):
+    from app.services.gdpr_service import GDPRService
+    return GDPRService(session)
+
+@router.delete("/admin/gdpr-forget/{target_user_id}")
+async def anonymize_user_data(
+    target_user_id: str,
+    admin: dict = Depends(require_role("admin", "super_admin")),
+    gdpr_svc: "GDPRService" = Depends(get_gdpr_service)
+):
+    """
+    Executes GDPR Right to Erasure cryptographic scrub on a user's PII.
+    """
+    await gdpr_svc.anonymize_user(admin["college_id"], target_user_id)
+    return {"message": "User PII successfully anonymized while preserving aggregate references."}

@@ -64,7 +64,7 @@ AsyncSessionLocal = async_sessionmaker(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 admin_engine = create_async_engine(
-    DATABASE_URL,
+    os.getenv("ADMIN_DATABASE_URL") or DATABASE_URL,
     echo=False,
     poolclass=NullPool,
     connect_args={
@@ -173,7 +173,7 @@ def receive_do_orm_execute(orm_execute_state):
 # Values: "off" (default), "log", "log_and_warn"
 # ═══════════════════════════════════════════════════════════════════════════════
 
-RLS_SHADOW_MODE = os.getenv("RLS_SHADOW_MODE", "log")
+RLS_SHADOW_MODE = os.getenv("RLS_SHADOW_MODE", "off")
 
 # Circuit breaker: stop logging after this many unresolved violations to
 # prevent runaway table growth in production.

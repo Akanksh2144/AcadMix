@@ -69,6 +69,10 @@ class User(Base, SoftDeleteMixin):
     password_hash = Column(String, nullable=False)
     name = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # GDPR Right to Erasure
+    is_anonymized = Column(Boolean, nullable=False, server_default=text('false'))
+    anonymized_at = Column(DateTime(timezone=True), nullable=True)
 
     profile = relationship("UserProfile", back_populates="user", lazy="joined", uselist=False)
 

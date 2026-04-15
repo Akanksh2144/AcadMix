@@ -117,6 +117,19 @@ class FeesService:
             if payment:
                 payment.status = "success"
                 payment.transaction_reference = f"{order_id}::{payload.get('razorpay_payment_id')}"
+                
+                from app.services.audit_service import AuditService
+                await AuditService.log_audit(
+                    db=self.db,
+                    college_id=college_id,
+                    user_id=student_id,  # student_id acts as user_id here
+                    action="FEE_RECORDED",
+                    resource_type="fees",
+                    resource_id=str(payment.id),
+                    new_value={"amount": payment.amount_paid, "status": "success", "invoice_id": payment.invoice_id},
+                    status="success"
+                )
+                
                 await self.db.commit()
                 return True
                 
@@ -127,6 +140,7 @@ class FeesService:
         return False
 
     async def create_invoice_bulk(self, college_id: str, invoices_data: List[dict]):
+        from app.services.audit_service import AuditService
         created = 0
         for data in invoices_data:
             inv = StudentFeeInvoice(
@@ -140,6 +154,20 @@ class FeesService:
             )
             self.db.add(inv)
             created += 1
+        
+        await self.db.commit()
+        
+        # We assume the caller represents an admin, user_id is not provided in bulk so we use system default or college_id
+        await AuditService.log_audit(
+            db=self.db,
+            college_id=college_id,
+            user_id="system_or_admin",
+            action="FEE_CREATED",
+            resource_type="fees",
+            resource_id="bulk_create",
+            new_value={"count": created},
+            status="success"
+        )
         await self.db.commit()
         return created
 

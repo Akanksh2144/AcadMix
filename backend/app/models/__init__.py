@@ -10,5 +10,6 @@ from app.models.iot import BusRoute, BusLocation, VendingMachine, VendingTransac
 from app.models.audit import AuditLog, RLSShadowLog
 from app.models.library import Book, BookCopy, LibraryTransaction, LibraryFine, LibraryReservation
 from app.models.visitors import Visitor, VisitRecord
+from app.models.notifications import Notification, PushSubscription
 
 

@@ -148,15 +148,25 @@ class SemesterGrade(Base, SoftDeleteMixin):
     college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
     student_id = Column(String, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
     semester = Column(Integer, nullable=False)
-    # NOTE: course_id is intentionally NOT a FK. The courses table is empty and not seeded.
-    # Using a plain string to store subject codes (e.g. "22PC0DS17"). Do not re-add FK.
     course_id = Column(String, nullable=False)
     grade = Column(String, nullable=False)
     credits_earned = Column(Integer, nullable=False)
 
     __table_args__ = (
         Index("ix_sem_grades_s_s", "student_id", "semester"),
+        Index("ix_sem_grades_college_student", "college_id", "student_id", "semester"),
     )
+
+class StudentRanking(Base):
+    """Precomputed leaderboard rankings to avoid live dashoboard aggregation."""
+    __tablename__ = "student_rankings"
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), primary_key=True)
+    student_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    rank = Column(Integer, nullable=False)
+    total_students = Column(Integer, nullable=False)
+    avg_score = Column(Float, nullable=False)
+    computed_at = Column(DateTime(timezone=True), server_default=func.now())
+
 
 
 class CIATemplate(Base, SoftDeleteMixin):

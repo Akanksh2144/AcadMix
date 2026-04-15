@@ -32,7 +32,7 @@ export function useWebSocket(path, { enabled = true, onMessage } = {}) {
     }
 
     // Build WebSocket URL
-    const backendUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
     const wsBase = backendUrl.replace(/^http/, 'ws');
     const url = `${wsBase}/api/v1${path}?token=${token}`;
 

@@ -148,7 +148,8 @@ class MarksService:
                 )
                 self.session.add(mse)
 
-        await log_audit(self.session, user["id"], "mark_entry", "update" if existing_r.scalars().first is not None else "create", {"subject_code": assignment.subject_code})
+        from app.services.audit_service import AuditService
+        
         await self.session.commit()
         return {"id": submission.id, "status": "draft", "entries": entries_data}
 
@@ -172,7 +173,12 @@ class MarksService:
         entry.status = "submitted"
         entry.submitted_at = datetime.now(timezone.utc)
 
-        await log_audit(self.session, user["id"], "mark_entry", "submit_for_review", {"entry_id": entry_id})
+        from app.services.audit_service import AuditService
+        await AuditService.log_audit(
+            db=self.session, college_id=user["college_id"], user_id=user["id"],
+            action="GRADE_UPDATE", resource_type="marks", resource_id=entry_id,
+            new_value={"status": "submitted"}, status="success"
+        )
         await self.session.commit()
         return {"message": "Marks submitted for review"}
 
@@ -196,7 +202,13 @@ class MarksService:
         entry.reviewed_at = datetime.now(timezone.utc)
         entry.review_remarks = req.remarks
 
-        await log_audit(self.session, user["id"], "mark_entry", f"review_{req.action}", {"entry_id": entry_id})
+        from app.services.audit_service import AuditService
+        await AuditService.log_audit(
+            db=self.session, college_id=user["college_id"], user_id=user["id"],
+            action="GRADE_UPDATE" if req.action != "approved" else "RESULT_PUBLISHED",
+            resource_type="marks", resource_id=entry_id,
+            new_value={"status": req.action, "remarks": req.remarks}, status="success"
+        )
         await self.session.commit()
         return {"message": f"Marks {req.action}"}
 

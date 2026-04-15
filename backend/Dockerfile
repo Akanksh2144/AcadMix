@@ -23,5 +23,5 @@ ENV PORT=8000
 ENV WEB_CONCURRENCY=4
 ENV LOG_LEVEL=info
 
-# Production entrypoint — multi-worker via Gunicorn
-CMD ["gunicorn", "app.main:app", "-c", "gunicorn.conf.py"]
+# Production entrypoint — direct Uvicorn (managed by Fly.io)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--proxy-headers"]

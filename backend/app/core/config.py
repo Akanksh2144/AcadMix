@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/acadmix?prepared_statement_cache_size=0"
+    ADMIN_DATABASE_URL: str = "" # Set in prod for direct PgBouncer bypass migrations
 
     # External Services
     REDIS_URL: str = "redis://localhost:6379"
@@ -21,14 +22,16 @@ class Settings(BaseSettings):
 
     # Admin Defaults
     ADMIN_COLLEGE_ID: str = "A001"
-    ADMIN_PASSWORD: str = ""  # MUST be set via env var. Empty = admin account creation skipped.
+    ADMIN_PASSWORD: str # MUST be set via env var. Pydantic raises if missing.
     COLLEGE_NAME: str = "Guru Nanak Institutions Technical Campus"
+    SEED_ON_STARTUP: bool = False # Set True ONLY in dev/staging to seed database on startup
     SEED_DEMO_USERS: bool = False  # Set True ONLY in dev/staging to seed quick-login test accounts
 
     # External Integrations
     LLM_REVIEW_MODEL: str = "gemini/gemini-3.1-flash-lite-preview"
     INTERVIEW_LLM_MODEL: str = "gemini/gemini-2.5-flash"
     GEMINI_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
     MOCK_INTERVIEW_MONTHLY_QUOTA: int = 5
     WHATSAPP_APP_SECRET: str = ""  # Must be set via env var in production
     WHATSAPP_VERIFY_TOKEN: str = ""  # Must be set via env var in production

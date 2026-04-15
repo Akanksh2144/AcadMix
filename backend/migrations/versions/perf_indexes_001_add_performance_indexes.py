@@ -62,7 +62,7 @@ def upgrade():
     op.create_index(
         'ix_timetable_dept_batch_day',
         'timetables',
-        ['college_id', 'department_id', 'batch', 'day_of_week'],
+        ['college_id', 'department_id', 'semester', 'day'],
         postgresql_where="is_deleted = false",
     )
 

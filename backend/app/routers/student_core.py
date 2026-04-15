@@ -93,6 +93,37 @@ async def get_eligible_student_drives(user: dict = Depends(require_role("student
     return await service.get_eligible_drives(user)
 
 
+@router.get("/student/placement-drives")
+async def get_student_placement_drives(user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
+    """Returns placement drives the student is registered for — used by the calendar."""
+    from sqlalchemy import func as sa_func
+    stmt = (
+        select(models.PlacementDrive, models.Company)
+        .join(models.PlacementApplication, models.PlacementApplication.drive_id == models.PlacementDrive.id)
+        .join(models.Company, models.Company.id == models.PlacementDrive.company_id)
+        .where(
+            models.PlacementApplication.student_id == user["id"],
+            models.PlacementApplication.college_id == user["college_id"],
+            models.PlacementApplication.is_deleted == False,
+            models.PlacementDrive.is_deleted == False,
+        )
+        .order_by(models.PlacementDrive.drive_date.desc().nulls_last())
+    )
+    result = await session.execute(stmt)
+    return [
+        {
+            "id": d.id,
+            "company_name": c.name,
+            "role_title": d.role_title,
+            "package_lpa": d.package_lpa,
+            "drive_date": d.drive_date.isoformat() if d.drive_date else None,
+            "drive_type": d.drive_type,
+            "status": d.status,
+            "work_location": d.work_location,
+        }
+        for d, c in result.all()
+    ]
+
 @router.post("/student/drives/{drive_id}/apply")
 async def apply_for_placement_drive(drive_id: str, user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
     service = StudentService(session)

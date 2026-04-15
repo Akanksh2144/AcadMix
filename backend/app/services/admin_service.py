@@ -260,3 +260,67 @@ class AdminService:
         g.assigned_to = data.get("assigned_to", user_id)
         await self.db.commit()
         return g.status
+
+    # ── Enterprise Data Export (Offboarding) ────────────────────────────────
+
+    async def export_college_data(self, college_id: str):
+        """
+        Dumps core tenant data into a structured zip file containing JSON lines or JSON blocks.
+        Used for enterprise offboarding / compliance.
+        """
+        import io
+        import zipfile
+        import json
+        from fastapi.responses import StreamingResponse
+
+        async def fetch_table_json(table_model, name: str) -> bytes:
+            # Note: For massive tables, you'd want server-side cursors.
+            # For POC / typical B2B scale, an async fetch over mapped tables works for core entities.
+            stmt = select(table_model).where(table_model.college_id == college_id)
+            result = await self.db.execute(stmt)
+            rows = result.scalars().all()
+            
+            # Serialize rows
+            data = []
+            for row in rows:
+                row_dict = {}
+                for column in row.__table__.columns:
+                    val = getattr(row, column.name)
+                    # Convert datetimes / UUIDs to strings
+                    row_dict[column.name] = str(val) if val is not None else None
+                data.append(row_dict)
+            return json.dumps(data, indent=2).encode('utf-8')
+
+        # In-memory zip
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+            # Dump Users
+            users_bytes = await fetch_table_json(models.User, "users")
+            zip_file.writestr("users.json", users_bytes)
+            
+            # Dump Departments
+            depts_bytes = await fetch_table_json(models.Department, "departments")
+            zip_file.writestr("departments.json", depts_bytes)
+
+            try:
+                # Dump Marks if available
+                marks_bytes = await fetch_table_json(models.Marks, "marks")
+                zip_file.writestr("marks.json", marks_bytes)
+            except Exception:
+                pass
+
+            try:
+                # Dump Grievances
+                gr_bytes = await fetch_table_json(models.Grievance, "grievances")
+                zip_file.writestr("grievances.json", gr_bytes)
+            except Exception:
+                pass
+                
+        zip_buffer.seek(0)
+        
+        headers = {
+            "Content-Disposition": "attachment; filename=college_data_export.zip",
+            "Content-Type": "application/zip"
+        }
+        return StreamingResponse(iter([zip_buffer.getvalue()]), headers=headers)
+

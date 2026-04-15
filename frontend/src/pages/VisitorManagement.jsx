@@ -327,9 +327,10 @@ export default function VisitorManagement({ navigate, user, onLogout, gateType: 
         navigate={navigate}
         user={user}
         onLogout={onLogout}
+        hideBack={isSecurityRole || isWardenRole}
       />
 
-      <div className="max-w-6xl mx-auto px-4 pb-12 pt-6">
+      <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-6">
         {/* Alerts */}
         {error && (
           <div className="mb-4 p-4 rounded-xl bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-medium animate-fade-in-up">
@@ -478,7 +479,7 @@ export default function VisitorManagement({ navigate, user, onLogout, gateType: 
                     <p className="text-slate-500 font-medium">No visitors currently in campus</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 stagger-children">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 stagger-children">
                     {activeVisitors.map(v => (
                       <div key={v.id} className="soft-card p-4 border-l-4 border-indigo-500">
                         <div className="flex items-start justify-between">

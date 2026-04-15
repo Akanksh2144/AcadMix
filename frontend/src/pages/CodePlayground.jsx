@@ -219,7 +219,7 @@ const CodePlayground = ({ navigate, user }) => {
     try {
       const isError = output && output.startsWith('Error:');
       const token = localStorage.getItem('auth_token');
-      const url = `${process.env.REACT_APP_BACKEND_URL || ''}/api/code/coach`;
+      const url = `${import.meta.env.VITE_BACKEND_URL || ''}/api/code/coach`;
 
       const res = await fetch(url, {
         method: 'POST',
@@ -293,7 +293,7 @@ const CodePlayground = ({ navigate, user }) => {
     try {
       const isError = run.rawOutput && run.rawOutput.startsWith('Error:');
       const token = localStorage.getItem('auth_token');
-      const url = `${process.env.REACT_APP_BACKEND_URL || ''}/api/code/review`;
+      const url = `${import.meta.env.VITE_BACKEND_URL || ''}/api/code/review`;
 
       const res = await fetch(url, {
         method: 'POST',
@@ -331,7 +331,7 @@ const CodePlayground = ({ navigate, user }) => {
           await new Promise(resolve => setTimeout(resolve, delay));
           attempts++;
           
-          const statusRes = await fetch(`${process.env.REACT_APP_BACKEND_URL || ''}/api/code/review_status/${taskId}`, {
+          const statusRes = await fetch(`${import.meta.env.VITE_BACKEND_URL || ''}/api/code/review_status/${taskId}`, {
               headers: { ...(token && { 'Authorization': `Bearer ${token}` }) }
           });
           if (!statusRes.ok) continue;

@@ -59,19 +59,16 @@ async def student_dashboard(user: dict = Depends(get_current_user), session: Asy
         "date": a.end_time.strftime("%b %d") if a.end_time else ""
     } for i, a in enumerate(reversed(all_attempts[:15]))]
 
-    # Leaderboard rank via subquery
-    all_students_r = await session.execute(
-        select(models.QuizAttempt.student_id, models.QuizAttempt.final_score)
-        .join(models.Quiz, models.Quiz.id == models.QuizAttempt.quiz_id)
-        .where(models.QuizAttempt.status == "submitted", models.Quiz.college_id == user["college_id"])
+    # Leaderboard rank via precomputed table
+    rank_r = await session.execute(
+        select(models.StudentRanking).where(
+            models.StudentRanking.student_id == user["id"],
+            models.StudentRanking.college_id == user["college_id"]
+        )
     )
-    student_scores: dict = {}
-    for row in all_students_r.all():
-        sid, sc = row[0], row[1] or 0
-        student_scores.setdefault(sid, []).append(sc)
-    ranked = sorted(student_scores.items(), key=lambda x: sum(x[1]) / len(x[1]) if x[1] else 0, reverse=True)
-    rank = next((i + 1 for i, (sid, _) in enumerate(ranked) if sid == user["id"]), None)
-    total_students = len(ranked)
+    ranking = rank_r.scalars().first()
+    rank = ranking.rank if ranking else None
+    total_students = ranking.total_students if ranking else 0
 
     recent_results = [{
         "id": a.id, "quiz_id": a.quiz_id,
@@ -99,6 +96,7 @@ async def student_dashboard(user: dict = Depends(get_current_user), session: Asy
 
 @router.get("/dashboard/teacher")
 async def teacher_dashboard(user: dict = Depends(require_role("teacher", "admin")), session: AsyncSession = Depends(get_db)):
+    from sqlalchemy import func
     quizzes_r = await session.execute(
         select(models.Quiz)
         .where(models.Quiz.faculty_id == user["id"])
@@ -109,7 +107,6 @@ async def teacher_dashboard(user: dict = Depends(require_role("teacher", "admin"
     
     if my_quizzes:
         quiz_ids = [q.id for q in my_quizzes]
-        from sqlalchemy import func
         stats_r = await session.execute(
             select(
                 models.QuizAttempt.quiz_id,
@@ -127,14 +124,20 @@ async def teacher_dashboard(user: dict = Depends(require_role("teacher", "admin"
                 "attempt_count": s.attempt_count if s else 0,
                 "avg_score": round(s.avg_score, 1) if s and s.avg_score else 0
             })
-    students_r = await session.execute(select(models.User).where(models.User.role == "student", models.User.college_id == user["college_id"]))
-    total_students = len(students_r.scalars().all())
+    
+    students_r = await session.execute(
+        select(func.count(models.User.id))
+        .where(models.User.role == "student", models.User.college_id == user["college_id"])
+    )
+    total_students = students_r.scalar() or 0
+    
     recent_r = await session.execute(
         select(models.QuizAttempt).join(models.Quiz, models.Quiz.id == models.QuizAttempt.quiz_id)
         .where(models.QuizAttempt.status == "submitted", models.Quiz.college_id == user["college_id"])
         .order_by(models.QuizAttempt.end_time.desc())
+        .limit(10)
     )
-    recent = recent_r.scalars().all()[:10]
+    recent = recent_r.scalars().all()
     return {
         "quizzes": quiz_list, "total_students": total_students,
         "recent_submissions": [{"id": r.id, "quiz_id": r.quiz_id, "student_id": r.student_id,
@@ -182,41 +185,65 @@ async def hod_dashboard(user: dict = Depends(require_role("hod", "admin")), sess
             models.FacultyAssignment.college_id == user["college_id"]
         )
     )
-    # Pending/approved from relational status column
-    mark_subs_r = await session.execute(
-        select(models.MarkSubmission).where(models.MarkSubmission.college_id == user["college_id"])
+    
+    pending_r = await session.execute(
+        select(func.count(models.MarkSubmission.id)).where(
+            models.MarkSubmission.college_id == user["college_id"],
+            models.MarkSubmission.status == "submitted"
+        )
     )
-    all_subs = mark_subs_r.scalars().all()
-    pending = sum(1 for e in all_subs if e.status == "submitted")
-    approved = sum(1 for e in all_subs if e.status == "approved")
+    approved_r = await session.execute(
+        select(func.count(models.MarkSubmission.id)).where(
+            models.MarkSubmission.college_id == user["college_id"],
+            models.MarkSubmission.status == "approved"
+        )
+    )
+    
+    recent_r = await session.execute(
+        select(models.MarkSubmission)
+        .where(models.MarkSubmission.college_id == user["college_id"])
+        .order_by(models.MarkSubmission.submitted_at.desc().nulls_last())
+        .limit(15)
+    )
+    all_subs = recent_r.scalars().all()
+    
     recent = [{
         "id": e.id, "course_id": e.subject_code, "exam_type": e.exam_type,
         "status": e.status or "draft", "activity_type": "marks_review"
-    } for e in all_subs[-15:]]
+    } for e in all_subs]
+    
     return {
         "total_teachers": teachers_r.scalar() or 0,
         "total_students": students_r.scalar() or 0,
         "total_assignments": assignments_r.scalar() or 0,
-        "pending_reviews": pending, "approved_count": approved,
+        "pending_reviews": pending_r.scalar() or 0, 
+        "approved_count": approved_r.scalar() or 0,
         "recent_submissions": recent
     }
 
 
 @router.get("/dashboard/exam_cell")
 async def exam_cell_dashboard(user: dict = Depends(require_role("exam_cell", "admin")), session: AsyncSession = Depends(get_db)):
-    mark_subs_r = await session.execute(
-        select(models.MarkSubmission).where(models.MarkSubmission.college_id == user["college_id"])
+    from sqlalchemy import func
+    approved_r = await session.execute(
+        select(func.count(models.MarkSubmission.id)).where(
+            models.MarkSubmission.college_id == user["college_id"],
+            models.MarkSubmission.status == "approved"
+        )
     )
-    all_entries = mark_subs_r.scalars().all()
-    approved = sum(1 for e in all_entries if e.status == "approved")
-    sem_r = await session.execute(
-        select(models.SemesterGrade).where(models.SemesterGrade.college_id == user["college_id"])
+    approved = approved_r.scalar() or 0
+    
+    grade_count_r = await session.execute(
+        select(func.count(models.SemesterGrade.id)).where(
+            models.SemesterGrade.college_id == user["college_id"]
+        )
     )
-    all_grades = sem_r.scalars().all()
+    total_grades = grade_count_r.scalar() or 0
+    
     return {
         "total_approved_midterms": approved,
-        "total_endterm": len(all_grades),
-        "total_published": len(all_grades),
+        "total_endterm": total_grades,
+        "total_published": total_grades,
         "total_draft": 0,
         "recent_entries": []
     }

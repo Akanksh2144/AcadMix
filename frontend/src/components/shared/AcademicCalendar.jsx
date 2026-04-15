@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDots, CaretLeft, CaretRight, Star, GraduationCap, Exam, Sun } from '@phosphor-icons/react';
+import { CalendarDots, CaretLeft, CaretRight, Star, GraduationCap, Exam, Sun, Briefcase } from '@phosphor-icons/react';
 import api from '../../services/api';
 import Lottie from 'lottie-react';
 import { searchEmptyAnimation } from '../../assets/lottieAnimations';
@@ -12,6 +12,7 @@ const EVENT_TYPES = {
   holiday:    { label: 'Holiday',      color: 'bg-red-500',     text: 'text-red-600 dark:text-red-400',    bg: 'bg-red-50 dark:bg-red-500/10',     icon: Sun },
   exam:       { label: 'Exam',         color: 'bg-blue-500',    text: 'text-blue-600 dark:text-blue-400',  bg: 'bg-blue-50 dark:bg-blue-500/10',   icon: Exam },
   event:      { label: 'Event',        color: 'bg-purple-500',  text: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-500/10', icon: Star },
+  placement:  { label: 'Placement',    color: 'bg-indigo-500',  text: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', icon: Briefcase },
   semester_start: { label: 'Sem Start', color: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', icon: GraduationCap },
   semester_end:   { label: 'Sem End',   color: 'bg-amber-500',   text: 'text-amber-600 dark:text-amber-400',   bg: 'bg-amber-50 dark:bg-amber-500/10',   icon: GraduationCap },
 };
@@ -69,12 +70,21 @@ const AcademicCalendar = ({ fetchCalendars }) => {
         setCalendars(DEMO_CALENDAR);
         setSelectedCal(DEMO_CALENDAR[0]);
       }
+      // Also fetch placement drives the student is registered for
+      try {
+        const { data } = await api.get('/api/student/placement-drives');
+        if (data && data.length > 0) {
+          setPlacementDrives(data);
+        }
+      } catch (_) {}
       setLoading(false);
     };
     load();
   }, [fetchCalendars]);
 
-  // All events from all calendars
+  const [placementDrives, setPlacementDrives] = useState([]);
+
+  // All events from all calendars + placement drives
   const allEvents = useMemo(() => {
     const events = [];
     calendars.forEach(cal => {
@@ -84,8 +94,18 @@ const AcademicCalendar = ({ fetchCalendars }) => {
       events.push({ date: cal.start_date, name: `Semester ${cal.semester} Begins`, type: 'semester_start', semester: cal.semester });
       events.push({ date: cal.end_date, name: `Semester ${cal.semester} Ends`, type: 'semester_end', semester: cal.semester });
     });
+    // Inject placement drives as calendar events
+    placementDrives.forEach(d => {
+      if (d.drive_date) {
+        events.push({
+          date: d.drive_date.split('T')[0],
+          name: `${d.company_name || 'Company'} — ${d.role_title || 'Drive'}`,
+          type: 'placement',
+        });
+      }
+    });
     return events;
-  }, [calendars]);
+  }, [calendars, placementDrives]);
 
   const dayEventsMap = useMemo(() => {
     const map = {};
@@ -201,17 +221,19 @@ const AcademicCalendar = ({ fetchCalendars }) => {
               const hasHoliday = events.some(e => e.type === 'holiday');
               const hasExam = events.some(e => e.type === 'exam');
               const hasEvent = events.some(e => e.type === 'event');
+              const hasPlacement = events.some(e => e.type === 'placement');
 
               let cellBg = isWorkingDay ? 'bg-white dark:bg-white/5' : 'bg-slate-50 dark:bg-slate-800/30';
               if (hasHoliday) cellBg = 'bg-red-50 dark:bg-red-500/10';
               else if (hasExam) cellBg = 'bg-blue-50 dark:bg-blue-500/10';
+              else if (hasPlacement) cellBg = 'bg-indigo-50 dark:bg-indigo-500/10';
               else if (hasEvent) cellBg = 'bg-purple-50 dark:bg-purple-500/10';
 
               return (
                 <button key={i} onClick={() => setSelectedDay(day === selectedDay ? null : day)}
-                  className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold transition-all duration-150 ${cellBg} ${
-                    isSelected ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-[#0B0F19]' : ''
-                  } ${isToday ? 'border-2 border-indigo-400' : 'border border-transparent'} hover:opacity-80`}
+                  className={`aspect-square rounded-2xl flex flex-col items-center justify-center text-xs font-bold transition-all duration-200 ${cellBg} ${
+                    isSelected ? 'z-10 ring-2 ring-indigo-500/70 shadow-md shadow-indigo-500/15' : ''
+                  } ${isToday ? 'ring-2 ring-indigo-400/50' : ''} hover:brightness-95 dark:hover:brightness-110`}
                 >
                   <span className={`${hasHoliday ? 'text-red-700 dark:text-red-300' : hasExam ? 'text-blue-700 dark:text-blue-300' : !isWorkingDay ? 'text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'}`}>
                     {day}
@@ -231,7 +253,7 @@ const AcademicCalendar = ({ fetchCalendars }) => {
 
           {/* Legend */}
           <div className="flex items-center gap-2.5 mt-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 flex-wrap">
-            {Object.entries(EVENT_TYPES).slice(0, 4).map(([key, cfg]) => (
+            {Object.entries(EVENT_TYPES).slice(0, 5).map(([key, cfg]) => (
               <span key={key} className="flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${cfg.color}`}></span>{cfg.label}</span>
             ))}
           </div>

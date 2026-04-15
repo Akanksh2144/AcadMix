@@ -28,15 +28,21 @@ class PlacementDrive(Base, SoftDeleteMixin):
     status = Column(String, nullable=False, default="upcoming")
     drive_type = Column(String, nullable=False)
     type = Column(String, nullable=False, default="placement")
+    role_title = Column(String, nullable=True)           # e.g. "SDE-1", "Analyst"
     job_description = Column(String, nullable=True)
+    package_lpa = Column(Float, nullable=True)            # CTC in LPA
+    drive_date = Column(DateTime(timezone=True), nullable=True)  # scheduled date
+    min_cgpa = Column(Float, nullable=True)               # minimum CGPA requirement
     bond_period = Column(String, nullable=True)
     work_location = Column(String, nullable=True)
     stipend = Column(Float, nullable=True)
     duration_weeks = Column(Integer, nullable=True)
     is_mandatory = Column(Boolean, nullable=True)
     eligibility_criteria = Column(JSONB, nullable=True)
+    eligible_departments = Column(JSONB, nullable=True)   # ["CSE", "ECE", ...]
     linked_quiz_id = Column(String, ForeignKey("quizzes.id", ondelete="SET NULL"), nullable=True)
     quiz_threshold = Column(Float, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class PlacementApplication(Base, SoftDeleteMixin):

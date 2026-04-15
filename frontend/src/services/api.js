@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || '';
+const API_URL = import.meta.env.VITE_BACKEND_URL || '';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -345,6 +345,17 @@ export const tpoAPI = {
   logResult: (id, data) => api.put(`/api/tpo/drives/${id}/results`, data),
   selectCandidate: (id, data) => api.put(`/api/tpo/drives/${id}/select`, data),
   getStats: () => api.get('/api/tpo/statistics'),
+  previewExcel: (driveId, formData) => api.post(`/api/tpo/drives/${driveId}/preview-excel`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  uploadStudents: (driveId, formData) => api.post(`/api/tpo/drives/${driveId}/upload-students`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+};
+
+// Notifications — In-App + Browser Push
+export const notificationsAPI = {
+  getAll: (params = {}) => api.get('/api/notifications', { params }),
+  markRead: (id) => api.put(`/api/notifications/${id}/read`),
+  markAllRead: () => api.put('/api/notifications/read-all'),
+  subscribePush: (subscription) => api.post('/api/notifications/subscribe', subscription),
+  unsubscribePush: (endpoint) => api.post('/api/notifications/unsubscribe', { endpoint }),
 };
 
 export const alumniAPI = {
