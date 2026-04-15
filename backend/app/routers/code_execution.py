@@ -247,8 +247,13 @@ async def get_review_status(task_id: str, request: Request, user: dict = Depends
 async def request_code_coach(request: Request, req: CoachMessageRequest, user: dict = Depends(get_current_user)):
     await _validate_code(req.code, req.language.lower())
     
-    # Optional logic to enforce context size: we take last 6 messages
-    recent_messages = req.messages[-6:]
+    # Smart history window: simple concept Qs need 3 turns, complex debugging needs 6
+    from app.services.ai_service import route_ami_message, TIER1_MODEL
+    last_msg = req.messages[-1]["content"] if req.messages else ""
+    has_code = bool(req.code and req.code.strip())
+    tier = route_ami_message(last_msg, has_code)
+    history_depth = 3 if tier == TIER1_MODEL else 6
+    recent_messages = req.messages[-history_depth:]
     
     return StreamingResponse(
         generate_coach_stream(

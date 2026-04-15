@@ -82,7 +82,7 @@ def _scrub_pii(event, hint):
 sentry_dsn = settings.SENTRY_DSN
 if sentry_dsn:
     _env = os.getenv("ENVIRONMENT", "development")
-    _traces_rate = 0.2 if _env == "production" else 1.0
+    _traces_rate = 0.02 if _env == "production" else 1.0
     sentry_sdk.init(
         dsn=sentry_dsn,
         enable_tracing=True,

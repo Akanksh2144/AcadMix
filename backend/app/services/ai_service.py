@@ -1,29 +1,66 @@
 import litellm
 import os
+import hashlib
+import logging
 from app.core.config import settings
 
 # Using litellm to abstract the provider choice (Google Gemini / OpenAI / Anthropics)
 # The API keys should be available in the environment matching litellm's expected format (e.g. GEMINI_API_KEY).
 DEFAULT_MODEL = "gemini/gemini-2.5-flash"
 
+logger = logging.getLogger("acadmix.ai_service")
+
+TIER1_MODEL = "groq/llama-3.1-8b-instant"
+TIER2_MODEL = "groq/llama-3.3-70b-versatile"
+
 def route_ami_message(message: str, has_code: bool) -> str:
     complex_signals = ["debug", "why is", "wrong", "error", "optimize", 
                        "time complexity", "not working", "fix", "trace"]
     
     if has_code or any(s in message.lower() for s in complex_signals):
-        return "groq/llama-3.3-70b-versatile"   # Tier 2
-    return "groq/llama-3.1-8b-instant"          # Tier 1
+        return TIER2_MODEL   # Tier 2
+    return TIER1_MODEL       # Tier 1
 
 from typing import AsyncGenerator, List, Dict
 
 import re
 import json
 
+# ─── Redis Review Cache ──────────────────────────────────────────────────────
+
+async def _get_review_cache_redis():
+    """Lazy-import the shared Redis pool from wa_state_machine."""
+    try:
+        from app.services.wa_state_machine import get_redis
+        return await get_redis()
+    except Exception:
+        return None
+
+def _review_cache_key(code: str, language: str) -> str:
+    """SHA-256 hash of (code + language) for cache deduplication."""
+    digest = hashlib.sha256(f"{language}:{code}".encode()).hexdigest()
+    return f"review_cache:{digest}"
+
+REVIEW_CACHE_TTL = 3600  # 1 hour
+
 async def generate_code_review(code: str, language: str, output: str, error: str, execution_time_ms: float = None, memory_usage_mb: float = None) -> dict:
     """
     Calls an LLM to generate a strict JSON code review, defending against prompt injections.
+    Uses Redis SHA-256 cache (1h TTL) to deduplicate identical submissions.
     """
-    model = "groq/llama-3.3-70b-versatile"
+    model = TIER2_MODEL
+    
+    # ── Cache lookup ──────────────────────────────────────────────────────
+    cache_key = _review_cache_key(code, language)
+    r = await _get_review_cache_redis()
+    if r:
+        try:
+            cached = await r.get(cache_key)
+            if cached:
+                logger.info("Review cache HIT for %s", cache_key[:40])
+                return json.loads(cached)
+        except Exception:
+            pass  # Redis down — proceed without cache
     
     # We now assume 'code' has ALREADY been pre-scrubbed by ast_parser BEFORE entering the queue.
     stripped_code = code
@@ -65,9 +102,19 @@ async def generate_code_review(code: str, language: str, output: str, error: str
             timeout=15.0
         )
         content = response.choices[0].message.content
-        return json.loads(content)
+        result = json.loads(content)
+        
+        # ── Cache write ───────────────────────────────────────────────────
+        if r:
+            try:
+                await r.set(cache_key, json.dumps(result), ex=REVIEW_CACHE_TTL)
+                logger.info("Review cache SET for %s", cache_key[:40])
+            except Exception:
+                pass  # Redis down — skip cache write
+        
+        return result
     except Exception as e:
-        print(f"LLM AI Review Error: {e}")
+        logger.error("LLM AI Review Error: %s", e)
         return {
             "time_complexity": "N/A",
             "space_complexity": "N/A",
