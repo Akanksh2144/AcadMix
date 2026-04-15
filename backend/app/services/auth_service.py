@@ -104,7 +104,8 @@ class AuthService:
             "college_id": user.college_id,
             "tenant_id": user.college_id,
             "access_token": access,
-            "refresh_token": refresh,
+            # refresh_token is set as httpOnly cookie by the router — never exposed in body
+            "_refresh_token": refresh,  # prefixed with _ to signal internal-only
         }
         if user.profile_data:
             user_out.update({k: v for k, v in user.profile_data.items() if k != "password_hash"})

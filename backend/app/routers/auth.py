@@ -2,15 +2,31 @@
 Auth Router — thin HTTP layer delegating to AuthService.
 """
 
-from fastapi import APIRouter, Depends, Request, Response
+import logging
+from fastapi import APIRouter, Depends, Request, Response, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from app.core.security import get_current_user
 from app.services.auth_service import AuthService
+from app.core.config import settings
 
+logger = logging.getLogger("acadmix.auth")
 router = APIRouter()
+
+
+def _verify_origin(request: Request):
+    """CSRF protection: verify Origin header matches allowed CORS origins.
+    Non-browser clients (curl, Postman, mobile) won't send Origin — those are safe.
+    """
+    origin = request.headers.get("origin") or ""
+    if not origin:
+        return  # Non-browser client — no CSRF risk
+    allowed = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+    if not any(origin.startswith(a) for a in allowed):
+        logger.warning("CSRF: rejected request from origin=%s", origin)
+        raise HTTPException(status_code=403, detail="Origin not allowed")
 
 
 class LoginRequest(BaseModel):
@@ -31,12 +47,13 @@ class RegisterRequest(BaseModel):
 
 
 @router.post("/login")
-async def login(req: LoginRequest, response: Response, session: AsyncSession = Depends(get_db)):
+async def login(req: LoginRequest, request: Request, response: Response, session: AsyncSession = Depends(get_db)):
+    _verify_origin(request)
     svc = AuthService(session)
     result = await svc.login(req.college_id, req.password)
 
-    response.set_cookie("access_token", result["access_token"], httponly=True, secure=True, samesite="none", max_age=86400)
-    response.set_cookie("refresh_token", result["refresh_token"], httponly=True, secure=True, samesite="none", max_age=604800)
+    response.set_cookie("access_token", result["access_token"], httponly=True, secure=True, samesite="lax", max_age=1800)
+    response.set_cookie("refresh_token", result.pop("_refresh_token"), httponly=True, secure=True, samesite="lax", max_age=604800, path="/api/auth")
     return result
 
 
@@ -54,10 +71,11 @@ async def get_me(user: dict = Depends(get_current_user), session: AsyncSession =
 
 @router.post("/logout")
 async def logout(request: Request, response: Response, session: AsyncSession = Depends(get_db)):
+    _verify_origin(request)
     svc = AuthService(session)
     await svc.logout(request.cookies.get("refresh_token"))
     response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
+    response.delete_cookie("refresh_token", path="/api/auth")
     return {"message": "Logged out"}
 
 
@@ -65,5 +83,5 @@ async def logout(request: Request, response: Response, session: AsyncSession = D
 async def refresh_access_token(request: Request, response: Response, session: AsyncSession = Depends(get_db)):
     svc = AuthService(session)
     result = await svc.refresh(request.cookies.get("refresh_token"))
-    response.set_cookie("access_token", result["access_token"], httponly=True, secure=True, samesite="none", max_age=900)
+    response.set_cookie("access_token", result["access_token"], httponly=True, secure=True, samesite="lax", max_age=1800)
     return result

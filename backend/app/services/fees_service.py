@@ -1,14 +1,14 @@
 import razorpay
-import os
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Dict, Any
 
 from app.models.administration import StudentFeeInvoice, FeePayment
+from app.core.config import settings
 
-RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
-RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
+RAZORPAY_KEY_ID = settings.RAZORPAY_KEY_ID
+RAZORPAY_KEY_SECRET = settings.RAZORPAY_KEY_SECRET
 
 class FeesService:
     def __init__(self, db: AsyncSession):

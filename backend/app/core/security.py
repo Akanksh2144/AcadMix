@@ -29,7 +29,7 @@ redis_client = aioredis.from_url(redis_url) if redis_url else None
 
 class TokenBlacklistConfig:
     USE_BLACKLIST = os.getenv("USE_TOKEN_BLACKLIST", "false").lower() == "true"
-    ACCESS_TOKEN_TTL_MINUTES = 1440  # 24 hours
+    ACCESS_TOKEN_TTL_MINUTES = 30   # 30 min — frontend refresh interceptor handles renewal
     REFRESH_TOKEN_TTL_DAYS = 7
     BLACKLIST_CHECK_REDIS = True
 
@@ -141,7 +141,7 @@ async def get_current_user(request: Request, session: AsyncSession = Depends(get
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError as e:
-        print(f"JWT Error: {e}")
+        logger.warning("Invalid JWT token presented: %s", type(e).__name__)
         raise HTTPException(status_code=401, detail="Invalid token")
     except Exception as e:
         # Log full exception server-side but redact details from client response

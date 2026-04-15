@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     TRANSPORT_DELAY_THRESHOLD_MIN: int = 5  # Delay alert threshold (minutes)
     FIREBASE_CREDENTIALS_PATH: str = ""     # Path to firebase-credentials.json (empty = mock mode)
 
+    # Payments (Razorpay)
+    RAZORPAY_KEY_ID: str = ""               # Razorpay key ID (empty = payments disabled)
+    RAZORPAY_KEY_SECRET: str = ""           # Razorpay key secret
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
