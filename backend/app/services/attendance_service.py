@@ -180,7 +180,7 @@ class AttendanceService:
               AND ar.is_deleted = false 
               AND u.profile_data->>'department_id' = :department_id
             GROUP BY student_id, u.name, u.profile_data->>'batch', subject_code
-            HAVING (COUNT(*) FILTER (WHERE status = 'present' OR status = 'od') * 100.0 / COUNT(*)) < :threshold
+            HAVING COUNT(*) > 0 AND (COUNT(*) FILTER (WHERE status = 'present' OR status = 'od') * 100.0 / COUNT(*)) < :threshold
             ORDER BY batch, student_name, subject_code
         """)
         

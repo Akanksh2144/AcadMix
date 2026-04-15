@@ -300,18 +300,22 @@ class ExamCellService:
         if not entry:
             raise ResourceNotFoundError("MarkEntry", entry_id)
             
-        current_status = (entry.extra_data or {}).get("status", "draft")
-        if current_status != "approved":
-            raise BusinessLogicError(f"Only approved marks can be published (current: {current_status})")
+        if entry.status != "approved":
+            raise BusinessLogicError(f"Only approved marks can be published (current: {entry.status})")
             
-        entries = (entry.extra_data or {}).get("entries", [])
-        if not entries:
+        # Fetch student marks from normalized MarkSubmissionEntry table
+        entries_r = await self.db.execute(
+            select(models.MarkSubmissionEntry).where(
+                models.MarkSubmissionEntry.submission_id == entry_id
+            )
+        )
+        student_entries = entries_r.scalars().all()
+        if not student_entries:
             raise BusinessLogicError("No student marks found in entry")
             
-        metadata = entry.extra_data or {}
-        subject_code = entry.course_id
-        semester = int(metadata.get("semester", 1))
-        max_marks = float(metadata.get("max_marks", 100))
+        subject_code = entry.subject_code
+        semester = entry.semester
+        max_marks = float(entry.max_marks)
         
         college_r = await self.db.execute(
             select(models.College).where(models.College.id == college_id)
@@ -320,10 +324,17 @@ class ExamCellService:
         college_settings = college.settings if college and college.settings else {}
         grade_scale = college_settings.get("grade_scale") or DEFAULT_GRADE_SCALE
         
+        # Look up credits from the faculty assignment
+        credits_assigned = 3  # fallback default
+        if entry.assignment_id:
+            ass_r = await self.db.execute(select(models.FacultyAssignment).where(models.FacultyAssignment.id == entry.assignment_id))
+            ass = ass_r.scalars().first()
+            if ass and ass.credits:
+                credits_assigned = ass.credits
+
         semester_grades = []
-        for student_entry in entries:
-            student_id = student_entry.get("student_id")
-            marks = float(student_entry.get("marks", 0.0))
+        for se in student_entries:
+            marks = float(se.marks_obtained or 0)
             pct = (marks / max_marks) * 100 if max_marks > 0 else 0
             
             grade = "F"
@@ -332,12 +343,12 @@ class ExamCellService:
                     grade = boundary.get("grade", "F")
                     break
             
-            if not student_id:
+            if not se.student_id:
                 continue
                 
             existing = await self.db.execute(
                 select(models.SemesterGrade).where(
-                    models.SemesterGrade.student_id == student_id,
+                    models.SemesterGrade.student_id == se.student_id,
                     models.SemesterGrade.semester == semester,
                     models.SemesterGrade.course_id == subject_code
                 )
@@ -345,16 +356,8 @@ class ExamCellService:
             if existing.scalars().first():
                 continue
                 
-            credits_assigned = 3
-            assignment_id = metadata.get("assignment_id")
-            if assignment_id:
-                ass_r = await self.db.execute(select(models.FacultyAssignment).where(models.FacultyAssignment.id == assignment_id))
-                ass = ass_r.scalars().first()
-                if ass:
-                    credits_assigned = ass.credits
-                    
             semester_grades.append(models.SemesterGrade(
-                student_id=student_id,
+                student_id=se.student_id,
                 semester=semester,
                 course_id=subject_code,
                 grade=grade,
@@ -364,15 +367,11 @@ class ExamCellService:
         if semester_grades:
             self.db.add_all(semester_grades)
 
-        entry.extra_data = {
-            **(entry.extra_data or {}),
-            "status": "published",
-            "published_at": datetime.now(timezone.utc).isoformat(),
-            "published_by": user_id
-        }
+        entry.status = "published"
+        entry.published_at = datetime.now(timezone.utc)
         
         await log_audit(self.db, user_id, "mark_entry", "publish", {
-            "entry_id": entry_id, "course_id": subject_code, 
+            "entry_id": entry_id, "subject_code": subject_code, 
             "student_count": len(semester_grades)
         })
         await self.db.commit()
@@ -382,3 +381,4 @@ class ExamCellService:
             "entry_id": entry_id,
             "published_count": len(semester_grades)
         }
+

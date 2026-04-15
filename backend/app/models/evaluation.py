@@ -167,6 +167,7 @@ class CIATemplate(Base, SoftDeleteMixin):
     name        = Column(String, nullable=False)        # e.g. "CSE Internal Assessment"
     description = Column(String, nullable=True)
     total_marks = Column(Integer, nullable=False)       # e.g. 25
+    components  = Column(JSONB, nullable=False, server_default='[]')  # Re-added: service layer still uses JSONB for component definitions
     created_at  = Column(DateTime(timezone=True), server_default=func.now())
     updated_at  = Column(DateTime(timezone=True), onupdate=func.now())
 

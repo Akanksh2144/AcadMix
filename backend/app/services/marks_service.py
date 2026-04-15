@@ -75,10 +75,12 @@ class MarksService:
         """Save or update a mark submission. Single-write to normalized schema only."""
         entries_data = [e.dict() for e in req.entries]
 
-        # Verify the faculty assignment exists
+        # Verify the faculty assignment exists and belongs to this user/college
         assign_r = await self.session.execute(
             select(models.FacultyAssignment).where(
-                models.FacultyAssignment.id == req.assignment_id
+                models.FacultyAssignment.id == req.assignment_id,
+                models.FacultyAssignment.college_id == user["college_id"],
+                models.FacultyAssignment.teacher_id == user["id"],
             )
         )
         assignment = assign_r.scalars().first()
@@ -189,14 +191,14 @@ class MarksService:
         if entry.status != "submitted":
             raise InputValidationError("Marks not submitted for review")
 
-        entry.status = req.status
+        entry.status = req.action
         entry.reviewed_by = user["id"]
         entry.reviewed_at = datetime.now(timezone.utc)
         entry.review_remarks = req.remarks
 
-        await log_audit(self.session, user["id"], "mark_entry", f"review_{req.status}", {"entry_id": entry_id})
+        await log_audit(self.session, user["id"], "mark_entry", f"review_{req.action}", {"entry_id": entry_id})
         await self.session.commit()
-        return {"message": f"Marks {req.status}"}
+        return {"message": f"Marks {req.action}"}
 
     async def get_approved_marks(self, college_id: str) -> List[Dict[str, Any]]:
         """Exam cell: list all approved mark submissions for this college."""

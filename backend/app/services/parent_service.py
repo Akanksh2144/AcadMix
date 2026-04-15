@@ -79,14 +79,38 @@ class ParentService:
         )
         regs = regs_r.scalars().all()
 
+        # Group grades by semester and compute SGPA/CGPA
+        from collections import defaultdict
+        sem_grades = defaultdict(list)
+        for g in grades:
+            sem_grades[g.semester].append(g)
+
+        semester_summaries = []
+        cumulative_points = 0
+        cumulative_credits = 0
+        for sem in sorted(sem_grades.keys()):
+            sem_list = sem_grades[sem]
+            sem_points = sum(grade_to_points(g.grade) * g.credits_earned for g in sem_list)
+            sem_credits = sum(g.credits_earned for g in sem_list)
+            arrears = sum(1 for g in sem_list if g.grade in ["U", "F"])
+            sgpa = round(sem_points / sem_credits, 2) if sem_credits > 0 else 0
+
+            cumulative_points += sem_points
+            cumulative_credits += sem_credits
+            cgpa = round(cumulative_points / cumulative_credits, 2) if cumulative_credits > 0 else 0
+
+            semester_summaries.append({
+                "semester": sem,
+                "sgpa": sgpa, "cgpa": cgpa,
+                "total_credits": sem_credits, "earned_credits": sem_credits,
+                "arrear_count": arrears,
+                "subjects": [{"course_id": g.course_id, "grade": g.grade, "credits": g.credits_earned} for g in sem_list]
+            })
+
         return {
             "student_name": student.name,
             "profile": student.profile_data,
-            "semester_grades": [{
-                "semester": g.semester, "academic_year": g.academic_year,
-                "sgpa": g.sgpa, "cgpa": g.cgpa, "total_credits": g.total_credits,
-                "earned_credits": g.earned_credits, "arrear_count": g.arrear_count
-            } for g in grades],
+            "semester_grades": semester_summaries,
             "current_registrations": [{
                 "subject_code": r.subject_code, "subject_name": r.subject_name,
                 "semester": r.semester, "academic_year": r.academic_year,

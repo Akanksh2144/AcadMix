@@ -45,7 +45,10 @@ class FacultyService:
         if not u:
             raise ResourceNotFoundError("User", user_id)
             
-        profile = dict(u.profile_data or {})
+        if not u.profile:
+            raise ResourceNotFoundError("UserProfile", user_id)
+            
+        extra = dict(u.profile.extra_data or {})
         
         # Ensure status field on list collections
         list_sections = ["educational", "experience", "research", "publications", "patents", "memberships", "training"]
@@ -55,9 +58,9 @@ class FacultyService:
                     if isinstance(record, dict) and "status" not in record:
                         record["status"] = "draft"
         
-        profile.update(updates)
-        u.profile_data = profile
-        flag_modified(u, "profile_data")
+        extra.update(updates)
+        u.profile.extra_data = extra
+        flag_modified(u.profile, "extra_data")
         
         await self.db.commit()
 
@@ -177,13 +180,13 @@ class FacultyService:
         row = models.ActivityPermission(
             college_id=college_id,
             faculty_id=faculty_id,
+            department_id=data["department_id"],
             activity_type=data["activity_type"],
-            title=data["title"],
-            description=data.get("description"),
-            date=data.get("date"),
-            venue=data.get("venue"),
-            phase="pre_event",
-            status="pending"
+            event_title=data["title"],
+            event_date=data.get("date"),
+            event_details={"description": data.get("description"), "venue": data.get("venue")},
+            phase="permission",
+            hod_permission_decision="pending"
         )
         self.db.add(row)
         await self.db.commit()

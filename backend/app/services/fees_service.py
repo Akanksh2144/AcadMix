@@ -103,13 +103,15 @@ class FeesService:
                 }
             )
             
-            # Signature valid, fetch the pending order based on order_id
+            # Signature valid, fetch the pending order based on order_id — scoped to this student
             order_id = payload.get('razorpay_order_id')
             query = await self.db.execute(
                 select(FeePayment).where(
                     FeePayment.transaction_reference == order_id,
+                    FeePayment.student_id == student_id,
+                    FeePayment.college_id == college_id,
                     FeePayment.status == "pending"
-                )
+                ).with_for_update()
             )
             payment = query.scalars().first()
             if payment:

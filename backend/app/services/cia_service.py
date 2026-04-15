@@ -188,10 +188,10 @@ class CIAService:
         marks_r = await self.session.execute(
             select(models.MarkSubmission).where(
                 models.MarkSubmission.faculty_id == user["id"],
-                models.MarkSubmission.course_id.in_(subject_codes)
+                models.MarkSubmission.subject_code.in_(subject_codes)
             )
         )
-        marks_map = {(me.course_id, me.exam_type): me for me in marks_r.scalars().all()}
+        marks_map = {(me.subject_code, me.exam_type): me for me in marks_r.scalars().all()}
 
         result = []
         for assign in assigns:
@@ -217,9 +217,8 @@ class CIAService:
                     entry_id = None
                     student_count = 0
                     if entry:
-                        entry_status = (entry.extra_data or {}).get("status", "draft")
+                        entry_status = entry.status or "draft"
                         entry_id = entry.id
-                        student_count = len((entry.extra_data or {}).get("entries", []))
 
                     components_with_status.append({
                         "type": comp_type,

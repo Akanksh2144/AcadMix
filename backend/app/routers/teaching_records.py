@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import text
 from typing import List, Optional
+from datetime import datetime, timezone
+
+VALID_METHODOLOGIES = ["Lecture", "Demo", "Lab", "Discussion", "Tutorial"]
 
 from database import get_db
 from app.core.security import get_current_user

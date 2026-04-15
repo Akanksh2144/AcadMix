@@ -75,9 +75,11 @@ class AdminService:
         records[record_index]["status"] = "approved" if action == "approve" else "rejected"
         records[record_index]["remarks"] = remarks
         
-        pd[section] = records
-        target.profile_data = pd
-        flag_modified(target, "profile_data")
+        if target.profile:
+            extra = dict(target.profile.extra_data or {})
+            extra[section] = records
+            target.profile.extra_data = extra
+            flag_modified(target.profile, "extra_data")
         await self.db.commit()
 
     # ── Report Generation (NAAC logic) ───────────────────────────────────────

@@ -79,8 +79,10 @@ class AuthService:
 
         if not user or not verify_password(password, user.password_hash):
             if redis_client:
-                redis_client.incr(key)
-                redis_client.expire(key, self.LOCKOUT_SECONDS)
+                pipe = redis_client.pipeline()
+                pipe.incr(key)
+                pipe.expire(key, self.LOCKOUT_SECONDS)
+                pipe.execute()
             raise AuthenticationError()
 
         # Success — clear failure counter

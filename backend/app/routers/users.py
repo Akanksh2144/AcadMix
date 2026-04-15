@@ -28,6 +28,16 @@ async def get_user_permissions(
     user: dict = Depends(require_role("admin")),
     session: AsyncSession = Depends(get_db),
 ):
+    # Verify target user belongs to the same college
+    target_r = await session.execute(
+        select(models.User).where(
+            models.User.id == user_id,
+            models.User.college_id == user["college_id"],
+        )
+    )
+    if not target_r.scalars().first():
+        raise HTTPException(status_code=404, detail="User not found")
+
     perm_r = await session.execute(
         select(models.UserPermission).where(models.UserPermission.user_id == user_id)
     )

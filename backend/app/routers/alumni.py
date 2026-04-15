@@ -49,9 +49,12 @@ async def batch_graduate(
         if not dry_run:
             u.role = "alumni"
             # Flag for verification
-            new_pd = pd.copy()
-            new_pd["is_profile_verified"] = False
-            u.profile_data = new_pd
+            if u.profile:
+                extra = dict(u.profile.extra_data or {})
+                extra["is_profile_verified"] = False
+                u.profile.extra_data = extra
+                from sqlalchemy.orm.attributes import flag_modified
+                flag_modified(u.profile, "extra_data")
             session.add(u)
     
     if not dry_run:
@@ -94,8 +97,12 @@ async def verify_alumni_profile(
         raise HTTPException(status_code=404, detail="Alumni not found")
         
     pd = alumni.profile_data or {}
-    pd["is_profile_verified"] = (action == "approve")
-    alumni.profile_data = pd
+    if alumni.profile:
+        extra = dict(alumni.profile.extra_data or {})
+        extra["is_profile_verified"] = (action == "approve")
+        alumni.profile.extra_data = extra
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(alumni.profile, "extra_data")
     
     await session.commit()
     return {"message": f"Profile {'verified' if action == 'approve' else 'rejected'}"}
@@ -230,11 +237,14 @@ async def update_alumni_profile(
     session: AsyncSession = Depends(get_db)
 ):
     u = await session.get(models.User, user["id"])
-    pd = u.profile_data or {}
-    pd.update(profile_update)
-    u.profile_data = pd
+    if u.profile:
+        extra = dict(u.profile.extra_data or {})
+        extra.update(profile_update)
+        u.profile.extra_data = extra
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(u.profile, "extra_data")
     await session.commit()
-    return {"message": "Profile updated", "profile": pd}
+    return {"message": "Profile updated", "profile": u.profile_data}
 
 
 @router.get("/alumni/directory")

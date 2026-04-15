@@ -167,7 +167,7 @@ async def _log_rls_violations(violations: list[dict]):
 
     async with AdminSessionLocal() as admin_session:
         try:
-            from models import RLSShadowLog
+            from app.models.audit import RLSShadowLog
 
             for v in violations[:_SHADOW_MAX_PER_QUERY]:
                 admin_session.add(RLSShadowLog(**v))

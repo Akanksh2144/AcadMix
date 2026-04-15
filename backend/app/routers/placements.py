@@ -77,7 +77,8 @@ async def list_placements(user: dict = Depends(require_role("admin", "hod", "tea
 async def get_drive_applicants(drive_id: str, user: dict = Depends(require_role("tp_officer", "admin", "super_admin")), session: AsyncSession = Depends(get_db)):
     stmt = select(models.PlacementApplication).where(
         models.PlacementApplication.drive_id == drive_id,
-        models.PlacementApplication.college_id == user["college_id"]
+        models.PlacementApplication.college_id == user["college_id"],
+        models.PlacementApplication.is_deleted == False
     )
     res = await session.execute(stmt)
     return res.scalars().all()

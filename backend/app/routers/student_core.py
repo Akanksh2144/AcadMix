@@ -109,7 +109,11 @@ async def withdraw_application(drive_id: str, user: dict = Depends(require_role(
 
 @router.get("/student/applications")
 async def get_student_application_history(user: dict = Depends(require_role("student")), session: AsyncSession = Depends(get_db)):
-    stmt = select(models.PlacementApplication).where(models.PlacementApplication.student_id == user["id"])
+    stmt = select(models.PlacementApplication).where(
+        models.PlacementApplication.student_id == user["id"],
+        models.PlacementApplication.college_id == user["college_id"],
+        models.PlacementApplication.is_deleted == False
+    )
     res = await session.execute(stmt)
     return res.scalars().all()
 
