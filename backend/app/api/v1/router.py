@@ -7,7 +7,7 @@ from app.routers import (
     exam_cell_core, student_core, hod_core, faculty_core, admin_core, attempts, results, analytics, 
     leaderboard, dashboards, marks_extra, timetable_extra, announcements, challenges, industry, tpo, fees, webhooks,
     interview, resume, hostel, career_tools, iot_webhooks, transport, transport_admin, library,
-    visitors,
+    visitors, websocket,
 )
 from app.routers import nodal_routes
 
@@ -56,11 +56,12 @@ api_router.include_router(quizzes.router, tags=["quizzes"])
 api_router.include_router(departments.router, tags=["departments"])
 api_router.include_router(users.router, tags=["users"])
 api_router.include_router(parents.router, tags=["parents"])
-api_router.include_router(health.router, tags=["health"])
+api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(leaves.router, tags=["leaves"])
 api_router.include_router(attendance.router, tags=["attendance"])
 api_router.include_router(cia.router, tags=["cia"])
 api_router.include_router(marks.router, tags=["marks"])
+api_router.include_router(websocket.router, tags=["websocket"])
 
 # Sub-prefixes — these routers use relative paths, so we add auth/code here
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
