@@ -32,6 +32,16 @@ class Settings(BaseSettings):
     INTERVIEW_LLM_MODEL: str = "gemini/gemini-2.5-flash"
     GEMINI_API_KEY: str = ""
     GROQ_API_KEY: str = ""
+    
+    # Self-Hosted vLLM (Phase 2 — activate at 10K+ students)
+    # Set VLLM_BASE_URL to enable self-hosted inference (e.g. "https://gpu.acadmix.internal/v1")
+    # When empty, all routing stays on Groq API (Phase 1 behavior)
+    VLLM_BASE_URL: str = ""              # vLLM OpenAI-compatible endpoint
+    VLLM_API_KEY: str = "dummy"          # vLLM doesn't require auth, but LiteLLM needs a value
+    VLLM_MODEL_SMALL: str = "meta-llama/Llama-3.2-3B-Instruct"    # Tier 1 — concepts
+    VLLM_MODEL_LARGE: str = "meta-llama/Llama-3.3-70B-Instruct-AWQ"  # Tier 2 — debugging/code
+    VLLM_HEALTH_CHECK_INTERVAL: int = 30  # Seconds between GPU health pings
+    
     MOCK_INTERVIEW_MONTHLY_QUOTA: int = 5
     WHATSAPP_APP_SECRET: str = ""  # Must be set via env var in production
     WHATSAPP_VERIFY_TOKEN: str = ""  # Must be set via env var in production

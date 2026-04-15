@@ -91,6 +91,46 @@ async def health_db():
         },
     }
 
+@router.get("/gpu")
+async def health_gpu():
+    """GPU inference server status — Phase 2 self-hosted vLLM monitoring.
+
+    Returns:
+        - phase: 1 (Groq only) or 2 (self-hosted active)
+        - gpu_healthy: whether vLLM responded to /health within last interval
+        - routing: which models are currently being used for Tier 1 / Tier 2
+        - fallback: Groq models configured as hot standby
+    """
+    from app.services.ai_service import (
+        gpu_health, get_tier1_model, get_tier2_model,
+        GROQ_TIER1, GROQ_TIER2, GEMINI_FALLBACK
+    )
+
+    is_phase2 = gpu_health.is_enabled
+    is_healthy = gpu_health.is_healthy
+
+    return {
+        "status": "healthy" if (not is_phase2 or is_healthy) else "degraded",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "phase": 2 if is_phase2 else 1,
+        "vllm": {
+            "configured": is_phase2,
+            "base_url": settings.VLLM_BASE_URL or None,
+            "healthy": is_healthy,
+            "health_check_interval_s": settings.VLLM_HEALTH_CHECK_INTERVAL,
+        },
+        "routing": {
+            "tier1_model": get_tier1_model(),
+            "tier2_model": get_tier2_model(),
+            "tier3_model": settings.INTERVIEW_LLM_MODEL,
+        },
+        "fallback": {
+            "groq_tier1": GROQ_TIER1,
+            "groq_tier2": GROQ_TIER2,
+            "gemini_last_resort": GEMINI_FALLBACK,
+        },
+    }
+
 
 @router.get("/test-sentry")
 async def test_sentry():

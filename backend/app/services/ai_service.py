@@ -1,32 +1,232 @@
+"""
+AcadMix AI Service — Hybrid LLM Router with Self-Hosted vLLM Support
+
+Architecture (3 tiers):
+    Tier 1 — Simple concept Qs    → vLLM small model (self-hosted) or Groq 8B
+    Tier 2 — Complex debug/code   → vLLM large model (self-hosted) or Groq 70B
+    Tier 3 — Interviews/Resume    → Gemini 2.5 Flash (unchanged, in interview.py/resume.py)
+
+Phase 1 (current < 10K students):  VLLM_BASE_URL=""  → all traffic goes to Groq
+Phase 2 (10K+ students):           VLLM_BASE_URL="https://gpu.acadmix.internal/v1"
+                                   → self-hosted primary, Groq as hot fallback
+
+The GPU health checker runs a lightweight /health ping every 30s. If the GPU
+server goes down, the router automatically degrades to Groq within one interval.
+Groq API key must ALWAYS remain configured as the hot standby.
+"""
+
 import litellm
 import os
 import hashlib
 import logging
-from app.core.config import settings
-
-# Using litellm to abstract the provider choice (Google Gemini / OpenAI / Anthropics)
-# The API keys should be available in the environment matching litellm's expected format (e.g. GEMINI_API_KEY).
-DEFAULT_MODEL = "gemini/gemini-2.5-flash"
-
-logger = logging.getLogger("acadmix.ai_service")
-
-TIER1_MODEL = "groq/llama-3.1-8b-instant"
-TIER2_MODEL = "groq/llama-3.3-70b-versatile"
-
-def route_ami_message(message: str, has_code: bool) -> str:
-    complex_signals = ["debug", "why is", "wrong", "error", "optimize", 
-                       "time complexity", "not working", "fix", "trace"]
-    
-    if has_code or any(s in message.lower() for s in complex_signals):
-        return TIER2_MODEL   # Tier 2
-    return TIER1_MODEL       # Tier 1
-
+import time
+import asyncio
 from typing import AsyncGenerator, List, Dict
 
 import re
 import json
 
-# ─── Redis Review Cache ──────────────────────────────────────────────────────
+from app.core.config import settings
+
+logger = logging.getLogger("acadmix.ai_service")
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MODEL CONSTANTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Groq API models (Phase 1 — always available as fallback)
+GROQ_TIER1 = "groq/llama-3.1-8b-instant"
+GROQ_TIER2 = "groq/llama-3.3-70b-versatile"
+
+# Gemini fallback (last resort if Groq also rate-limits)
+GEMINI_FALLBACK = "gemini/gemini-2.0-flash-lite"
+
+# Gemini premium (interviews only — not routed through this service)
+DEFAULT_MODEL = "gemini/gemini-2.5-flash"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# GPU HEALTH CHECKER — Background probe for self-hosted vLLM
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class GPUHealthChecker:
+    """
+    Lightweight async health monitor for self-hosted vLLM.
+    
+    Runs a /health GET every `check_interval` seconds. If the GPU server
+    is unreachable or returns non-200, `is_healthy` flips to False and
+    the router degrades to Groq automatically.
+    
+    vLLM exposes GET /health natively — no custom endpoint needed.
+    """
+    
+    def __init__(self):
+        self._healthy: bool = False
+        self._last_check: float = 0
+        self._check_interval: int = settings.VLLM_HEALTH_CHECK_INTERVAL
+        self._enabled: bool = bool(settings.VLLM_BASE_URL)
+        self._lock = asyncio.Lock()
+        self._task = None
+    
+    @property
+    def is_healthy(self) -> bool:
+        """True if the GPU server responded 200 within the last check interval."""
+        if not self._enabled:
+            return False
+        return self._healthy
+    
+    @property
+    def is_enabled(self) -> bool:
+        """True if VLLM_BASE_URL is configured (Phase 2 active)."""
+        return self._enabled
+    
+    async def _probe(self) -> bool:
+        """Single health probe against the vLLM /health endpoint."""
+        import httpx
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(f"{settings.VLLM_BASE_URL}/health")
+                return resp.status_code == 200
+        except Exception as e:
+            logger.warning("GPU health probe failed: %s", e)
+            return False
+    
+    async def check_now(self) -> bool:
+        """Force an immediate health check (debounced to avoid stampede)."""
+        now = time.monotonic()
+        if now - self._last_check < 5:  # debounce: max 1 probe per 5s
+            return self._healthy
+        
+        async with self._lock:
+            self._healthy = await self._probe()
+            self._last_check = time.monotonic()
+            if self._healthy:
+                logger.debug("GPU health: HEALTHY")
+            else:
+                logger.warning("GPU health: UNHEALTHY — routing to Groq fallback")
+            return self._healthy
+    
+    async def start_background_loop(self):
+        """Start the periodic health check loop. Call once at app startup."""
+        if not self._enabled:
+            logger.info("vLLM not configured (VLLM_BASE_URL empty) — GPU health checker disabled")
+            return
+        
+        logger.info(
+            "GPU health checker started: %s/health every %ds",
+            settings.VLLM_BASE_URL, self._check_interval
+        )
+        
+        async def _loop():
+            while True:
+                await self.check_now()
+                await asyncio.sleep(self._check_interval)
+        
+        self._task = asyncio.create_task(_loop())
+    
+    def stop(self):
+        """Cancel the background health check task."""
+        if self._task:
+            self._task.cancel()
+            self._task = None
+
+
+# Global singleton — initialized at module load, background loop started at app startup
+gpu_health = GPUHealthChecker()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SMART ROUTER — Routes by task complexity + GPU availability
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _vllm_model(model_name: str) -> str:
+    """Format a self-hosted vLLM model for LiteLLM's openai/ provider prefix."""
+    return f"openai/{model_name}"
+
+
+def get_tier1_model() -> str:
+    """
+    Get the Tier 1 model (simple concepts).
+    
+    Priority: self-hosted vLLM small → Groq 8B → Gemini fallback
+    """
+    if gpu_health.is_healthy:
+        return _vllm_model(settings.VLLM_MODEL_SMALL)
+    return GROQ_TIER1
+
+
+def get_tier2_model() -> str:
+    """
+    Get the Tier 2 model (complex debugging / code analysis).
+    
+    Priority: self-hosted vLLM large → Groq 70B → Gemini fallback
+    """
+    if gpu_health.is_healthy:
+        return _vllm_model(settings.VLLM_MODEL_LARGE)
+    return GROQ_TIER2
+
+
+def get_fallbacks_for(primary: str) -> list:
+    """
+    Build the fallback chain for a given primary model.
+    
+    Self-hosted → Groq → Gemini
+    Groq → Gemini
+    """
+    fallbacks = []
+    if primary.startswith("openai/"):
+        # Self-hosted primary — Groq is first fallback
+        fallbacks.append(GROQ_TIER2 if "70B" in primary or "70b" in primary else GROQ_TIER1)
+    fallbacks.append(GEMINI_FALLBACK)
+    return fallbacks
+
+
+# Exported constants for backward compatibility (used in code_execution.py)
+TIER1_MODEL = GROQ_TIER1
+TIER2_MODEL = GROQ_TIER2
+
+
+def route_ami_message(message: str, has_code: bool) -> str:
+    """
+    Classify a student message into Tier 1 (simple) or Tier 2 (complex).
+    Returns the appropriate model string based on GPU availability.
+    """
+    complex_signals = ["debug", "why is", "wrong", "error", "optimize", 
+                       "time complexity", "not working", "fix", "trace",
+                       "segfault", "runtime", "TLE", "MLE", "heap", "stack overflow"]
+    
+    if has_code or any(s in message.lower() for s in complex_signals):
+        return get_tier2_model()
+    return get_tier1_model()
+
+
+def _configure_vllm_for_litellm():
+    """
+    Register the self-hosted vLLM endpoint with LiteLLM at startup.
+    
+    LiteLLM treats openai/ prefix as OpenAI-compatible — vLLM exposes
+    exactly this API. We just need to set the base URL and API key.
+    """
+    if not settings.VLLM_BASE_URL:
+        return
+    
+    os.environ["OPENAI_API_BASE"] = settings.VLLM_BASE_URL
+    os.environ["OPENAI_API_KEY"] = settings.VLLM_API_KEY
+    
+    logger.info(
+        "vLLM registered with LiteLLM: base=%s, small=%s, large=%s",
+        settings.VLLM_BASE_URL,
+        settings.VLLM_MODEL_SMALL,
+        settings.VLLM_MODEL_LARGE,
+    )
+
+# Run registration at import time
+_configure_vllm_for_litellm()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# REDIS REVIEW CACHE — SHA-256 deduplication (1h TTL)
+# ═══════════════════════════════════════════════════════════════════════════════
 
 async def _get_review_cache_redis():
     """Lazy-import the shared Redis pool from wa_state_machine."""
@@ -43,12 +243,18 @@ def _review_cache_key(code: str, language: str) -> str:
 
 REVIEW_CACHE_TTL = 3600  # 1 hour
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CODE REVIEW — Tier 2 (complex) with Redis cache
+# ═══════════════════════════════════════════════════════════════════════════════
+
 async def generate_code_review(code: str, language: str, output: str, error: str, execution_time_ms: float = None, memory_usage_mb: float = None) -> dict:
     """
     Calls an LLM to generate a strict JSON code review, defending against prompt injections.
     Uses Redis SHA-256 cache (1h TTL) to deduplicate identical submissions.
     """
-    model = TIER2_MODEL
+    model = get_tier2_model()
+    fallbacks = get_fallbacks_for(model)
     
     # ── Cache lookup ──────────────────────────────────────────────────────
     cache_key = _review_cache_key(code, language)
@@ -91,7 +297,7 @@ async def generate_code_review(code: str, language: str, output: str, error: str
     try:
         response = await litellm.acompletion(
             model=model,
-            fallbacks=["gemini/gemini-2.0-flash-lite"],
+            fallbacks=fallbacks,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
@@ -122,6 +328,11 @@ async def generate_code_review(code: str, language: str, output: str, error: str
             "suggested_improvements": [str(e)[:100]]
         }
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# AMI COACH — Streaming Socratic tutor (Tier 1 or Tier 2)
+# ═══════════════════════════════════════════════════════════════════════════════
+
 async def generate_coach_stream(messages: List[Dict[str, str]], current_code: str, language: str, output: str = "", error: str = "", challenge_title: str = None, challenge_description: str = None) -> AsyncGenerator[str, None]:
     """
     Calls an LLM as a Socratic AI Coach, streaming the response.
@@ -132,6 +343,7 @@ async def generate_coach_stream(messages: List[Dict[str, str]], current_code: st
 
     has_code = bool(current_code and current_code.strip())
     model = route_ami_message(last_user_msg, has_code)
+    fallbacks = get_fallbacks_for(model)
     
     system_prompt = (
         "You are 'Ami', an expert Socratic programming tutor. "
@@ -172,7 +384,7 @@ async def generate_coach_stream(messages: List[Dict[str, str]], current_code: st
     try:
         response = await litellm.acompletion(
             model=model,
-            fallbacks=["gemini/gemini-2.0-flash-lite"],
+            fallbacks=fallbacks,
             messages=llm_messages,
             temperature=0.5,
             max_tokens=500,
@@ -192,7 +404,5 @@ async def generate_coach_stream(messages: List[Dict[str, str]], current_code: st
                     previous_text += content
                     yield content
     except Exception as e:
-        print(f"LLM AI Coach Error: {e}")
-        yield "\\n\\n*Coach service is currently unavailable. Please try again.*"
-
-
+        logger.error("LLM AI Coach Error: %s", e)
+        yield "\n\n*Coach service is currently unavailable. Please try again.*"

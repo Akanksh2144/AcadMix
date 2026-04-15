@@ -481,8 +481,16 @@ async def lifespan(app: FastAPI):
             wait = 2 ** attempt
             logger.warning("[startup] DB connection failed (attempt %d/%d), retrying in %ds... (%s)", attempt, max_retries, wait, e)
             await asyncio.sleep(wait)
+    
+    # ── GPU Health Checker (Phase 2 — self-hosted vLLM) ───────────────────
+    from app.services.ai_service import gpu_health
+    await gpu_health.start_background_loop()
+    
     yield
     # ── Shutdown cleanup ──────────────────────────────────────────────────
+    # Stop GPU health checker
+    gpu_health.stop()
+    logger.info("[shutdown] GPU health checker stopped")
     # Close global HTTP clients to prevent connection leaks
     try:
         from app.routers.code_execution import _http_client as code_http
