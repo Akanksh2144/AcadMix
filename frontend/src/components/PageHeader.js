@@ -25,6 +25,9 @@ const PageHeader = ({ navigate, user, onLogout, title, subtitle, backTo, rightCo
     student: 'student-dashboard', teacher: 'teacher-dashboard', admin: 'admin-dashboard',
     hod: 'hod-dashboard', exam_cell: 'examcell-dashboard', tpo: 'tpo-dashboard',
     parent: 'parent-dashboard', alumni: 'alumni-dashboard', principal: 'principal-dashboard',
+    warden: 'warden-dashboard',
+    librarian: 'librarian-dashboard',
+    security: 'security-dashboard',
   }[user?.role] || 'student-dashboard';
 
   const goBack = backTo || defaultBack;

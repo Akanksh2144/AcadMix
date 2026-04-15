@@ -10,7 +10,7 @@ from typing import Optional
 
 from database import get_db
 from app.core.security import require_role
-from app.schemas.academic import CollegeSettingsUpdate
+from app.schemas.users import CollegeSettingsUpdate
 from app.schemas.evaluation import ExamScheduleCreate, EndtermEntry
 from app.services.examcell_service import ExamCellService
 

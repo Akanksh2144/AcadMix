@@ -39,9 +39,9 @@ This is a **production-ready full-stack college quiz and results management plat
                                                 │
                                                 ↓
                                          ┌──────────────┐
-                                         │  MongoDB     │
-                                         │              │
-                                         │ 7 Collections│
+                                         │ PostgreSQL   │
+                                         │   (RLS)      │
+                                         │ SQLAlchemy   │
                                          └──────────────┘
 ```
 
@@ -56,14 +56,15 @@ This is a **production-ready full-stack college quiz and results management plat
 | | Axios | 1.14.0 | HTTP Client |
 | | Monaco Editor | 4.7.0 | Code Editor |
 | | Recharts | 3.8.1 | Data Visualization |
-| **Backend** | FastAPI | 0.110.1 | API Framework |
-| | Motor | 3.3.1 | Async MongoDB Driver |
+| **Backend** | FastAPI | 0.115.x | API Framework |
+| | SQLAlchemy | 2.x | Async ORM |
+| | asyncpg | Latest | PostgreSQL Async Driver |
 | | Pydantic | 2.12.5 | Data Validation |
 | | bcrypt | 4.1.3 | Password Hashing |
 | | PyJWT | 2.12.1 | JWT Tokens |
 | | openpyxl | 3.1.5 | Excel Processing |
 | | pandas | 3.0.1 | Data Processing |
-| **Database** | MongoDB | Latest | NoSQL Database |
+| **Database** | PostgreSQL | 15+ | Relational DB with RLS |
 | **Build** | CRACO | 7.1.0 | CRA Configuration |
 | | Yarn | 1.22.22 | Package Manager |
 
@@ -245,14 +246,15 @@ Total Files: ~100+
 
 ### Schema Quality: **8/10**
 
-**Collections (7 total):**
-1. `users` - User accounts
-2. `quizzes` - Quiz definitions
-3. `quiz_attempts` - Student attempts
-4. `semester_results` - Academic results
-5. `faculty_assignments` - Teacher-subject mapping
-6. `mark_entries` - Mid-term marks workflow
-7. `endterm_entries` - End-term marks
+**Tables (50+):**
+1. `users` - User accounts (14+ roles)
+2. `colleges` / `departments` - Multi-tenant structure
+3. `quizzes` / `questions` / `options` - Quiz definitions
+4. `quiz_attempts` / `quiz_answers` - Student attempts
+5. `semester_grades` - Academic results
+6. `faculty_assignments` - Teacher-subject mapping
+7. `mark_submissions` / `mark_submission_entries` - Marks workflow
+8. `coding_challenges` / `challenge_progress` - Code playground
 
 **Strengths:**
 - ✅ Clear separation of concerns
@@ -267,13 +269,13 @@ Total Files: ~100+
 - ⚠️ Missing migration system
 - ⚠️ No data archival strategy
 
-**Recommended Indexes:**
-```javascript
-db.users.createIndex({ college_id: 1 }, { unique: true })
-db.users.createIndex({ email: 1 })
-db.quizzes.createIndex({ status: 1, created_by: 1 })
-db.quiz_attempts.createIndex({ quiz_id: 1, student_id: 1 })
-db.semester_results.createIndex({ student_id: 1, semester: 1 })
+**Recommended Indexes (already implemented):**
+```sql
+-- Compound indexes on high-traffic tables
+CREATE INDEX ix_quiz_attempts_q_s_s ON quiz_attempts(quiz_id, student_id, status);
+CREATE INDEX ix_mark_sub_fac_course_exam ON mark_submissions(faculty_id, subject_code, exam_type);
+CREATE INDEX ix_attendance_student_subject ON attendance(student_id, subject_code, date);
+CREATE INDEX ix_sem_grades_s_s ON semester_grades(student_id, semester);
 ```
 
 ---
@@ -403,7 +405,7 @@ useEffect(() => {
 ### Backend Performance: **7/10**
 
 **Optimizations:**
-- ✅ Async MongoDB operations
+- ✅ Async PostgreSQL operations (SQLAlchemy async)
 - ✅ Query limits (.to_list(100))
 - ✅ Field projection ({ password_hash: 0 })
 - ⚠️ No caching layer (Redis)
@@ -670,7 +672,7 @@ try {
 1. Set production environment variables
 2. Set secure JWT_SECRET (rotate regularly)
 3. Enable HTTPS
-4. Configure MongoDB replica set
+4. Configure PostgreSQL with RLS policies + PgBouncer
 5. Set up file storage for uploads
 6. Configure email service (future notifications)
 7. Add reverse proxy (nginx)
@@ -844,7 +846,7 @@ This is a **high-quality, production-ready application** with room for improveme
 
 **Skills Demonstrated:**
 1. Full-stack development (React + FastAPI)
-2. MongoDB schema design
+2. PostgreSQL schema design with RLS
 3. JWT authentication
 4. Role-based access control
 5. File processing (Excel/CSV)

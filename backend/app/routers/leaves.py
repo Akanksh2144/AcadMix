@@ -6,6 +6,7 @@ from typing import Optional
 from database import get_db
 from app import models
 from app.core.security import get_current_user, require_role
+from app.core.pagination import PaginatedParams, paginated_response
 from app.services.leave_service import LeaveService
 
 # We'll need to define the schema imports locally or redefine them.
@@ -45,22 +46,14 @@ async def cancel_leave(
 @router.get("/leave/my")
 async def get_my_leaves(
     user: dict = Depends(require_role("student", "teacher", "faculty", "hod", "principal", "admin", "exam_cell", "super_admin")), 
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
+    params: PaginatedParams = Depends(),
 ):
-    result = await session.execute(
-        select(models.LeaveRequest).where(
-            models.LeaveRequest.applicant_id == user["id"],
-            models.LeaveRequest.college_id == user["college_id"]
-        ).order_by(models.LeaveRequest.created_at.desc())
-    )
-    leaves = result.scalars().all()
-    return [{
-        "id": l.id, "leave_type": l.leave_type,
-        "from_date": l.from_date.isoformat(), "to_date": l.to_date.isoformat(),
-        "reason": l.reason, "status": l.status,
-        "reviewed_at": l.reviewed_at.isoformat() if l.reviewed_at else None,
-        "review_remarks": l.review_remarks
-    } for l in leaves]
+    query = select(models.LeaveRequest).where(
+        models.LeaveRequest.applicant_id == user["id"],
+        models.LeaveRequest.college_id == user["college_id"]
+    ).order_by(models.LeaveRequest.created_at.desc())
+    return await paginated_response(session, query, params)
 
 @router.get("/hod/leave/pending")
 async def get_pending_faculty_leaves(

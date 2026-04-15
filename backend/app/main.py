@@ -147,42 +147,45 @@ async def _seed_db():
         logger.info("[startup] Default departments ensured for %s", college_name)
 
         # 3. Upsert Admin user with real college FK
-        result = await session.execute(
-            select(models.User).where(
-                models.User.email == "admin@gni.edu"
-            )
-        )
-        existing = result.scalars().first()
-        if not existing:
-            admin = models.User(
-                name="GNI Admin",
-                email="admin@gni.edu",
-                password_hash=hash_password(admin_pwd),
-                role="admin",
-                college_id=college.id,
-            )
-            try:
-                session.add(admin)
-                await session.flush()
-                
-                admin_profile = models.UserProfile(
-                    user_id=admin.id,
-                    college_id=college.id,
-                    department="Administration",
-                )
-                session.add(admin_profile)
-                await session.commit()
-                logger.info("[startup] Admin user 'admin@gni.edu' seeded with college_id=%s", college.id)
-            except IntegrityError:
-                await session.rollback()
-                logger.info("[startup] Admin 'admin@gni.edu' was seeded by another worker. Skipping.")
+        if not admin_pwd:
+            logger.warning("[startup] ADMIN_PASSWORD is empty — skipping admin user seed. Set it via env var.")
         else:
-            if existing.college_id is None:
-                existing.college_id = college.id
-                await session.commit()
-                logger.info("[startup] Fixed admin college_id: None → %s", college.id)
+            result = await session.execute(
+                select(models.User).where(
+                    models.User.email == "admin@gni.edu"
+                )
+            )
+            existing = result.scalars().first()
+            if not existing:
+                admin = models.User(
+                    name="GNI Admin",
+                    email="admin@gni.edu",
+                    password_hash=hash_password(admin_pwd),
+                    role="admin",
+                    college_id=college.id,
+                )
+                try:
+                    session.add(admin)
+                    await session.flush()
+
+                    admin_profile = models.UserProfile(
+                        user_id=admin.id,
+                        college_id=college.id,
+                        department="Administration",
+                    )
+                    session.add(admin_profile)
+                    await session.commit()
+                    logger.info("[startup] Admin user 'admin@gni.edu' seeded with college_id=%s", college.id)
+                except IntegrityError:
+                    await session.rollback()
+                    logger.info("[startup] Admin 'admin@gni.edu' was seeded by another worker. Skipping.")
             else:
-                logger.info("[startup] Admin 'admin@gni.edu' already exists. Skipping seed.")
+                if existing.college_id is None:
+                    existing.college_id = college.id
+                    await session.commit()
+                    logger.info("[startup] Fixed admin college_id: None → %s", college.id)
+                else:
+                    logger.info("[startup] Admin 'admin@gni.edu' already exists. Skipping seed.")
 
         # 4. Seed default Room Templates (global — available to all colleges)
         from app.models.hostel import RoomTemplate
@@ -244,206 +247,215 @@ async def _seed_db():
                 await session.rollback()
                 logger.info("[startup] Room template seed race detected. Another worker handled it.")
 
-        # 5. Seed Warden user for quick-login demo
-        warden_r = await session.execute(
-            select(models.User).where(models.User.email == "WARDEN001")
-        )
-        if not warden_r.scalars().first():
-            warden = models.User(
-                name="Rajesh Kumar",
-                email="WARDEN001",
-                password_hash=hash_password("warden123"),
-                role="warden",
-                college_id=college.id,
-            )
-            try:
-                session.add(warden)
-                await session.flush()
-                warden_profile = models.UserProfile(
-                    user_id=warden.id,
-                    college_id=college.id,
-                    department="Hostel Administration",
-                )
-                session.add(warden_profile)
-                await session.commit()
-                logger.info("[startup] Warden user 'WARDEN001' seeded with college_id=%s", college.id)
-            except IntegrityError:
-                await session.rollback()
-                logger.info("[startup] Warden 'WARDEN001' was seeded by another worker. Skipping.")
+        # ── Demo / Quick-Login Users ──────────────────────────────────────────
+        # These are ONLY created when SEED_DEMO_USERS=true (dev/staging).
+        # In production, this flag must remain False to prevent trivial-password
+        # test accounts from existing.
+        if not settings.SEED_DEMO_USERS:
+            logger.info("[startup] SEED_DEMO_USERS=false — skipping demo account seeding.")
         else:
-            logger.info("[startup] Warden 'WARDEN001' already exists. Skipping seed.")
+            logger.warning("[startup] SEED_DEMO_USERS=true — seeding demo accounts. DO NOT use in production!")
 
-        # 6. Seed mock Hostels, Rooms & Beds for testing
-        from app.models.hostel import Hostel, Room, Bed
-        hostel_check = await session.execute(
-            select(Hostel).where(Hostel.college_id == college.id).limit(1)
-        )
-        if not hostel_check.scalars().first():
-            # Re-fetch warden
-            warden_q = await session.execute(
+            # 5. Seed Warden user for quick-login demo
+            warden_r = await session.execute(
                 select(models.User).where(models.User.email == "WARDEN001")
             )
-            warden_user = warden_q.scalars().first()
-            warden_id = warden_user.id if warden_user else None
-
-            # Fetch templates for bed layout
-            tpl_q = await session.execute(
-                select(RoomTemplate).where(RoomTemplate.college_id == None).order_by(RoomTemplate.total_capacity)
-            )
-            all_templates = tpl_q.scalars().all()
-            tpl_2 = next((t for t in all_templates if t.total_capacity == 2), None)
-            tpl_4 = next((t for t in all_templates if t.total_capacity == 4), None)
-            tpl_6 = next((t for t in all_templates if t.total_capacity == 6), None)
-
-            mock_hostels = [
-                {"name": "Boys Block-A", "gender_type": "male", "total_floors": 3, "template": tpl_4},
-                {"name": "Girls Block-B", "gender_type": "female", "total_floors": 2, "template": tpl_2},
-            ]
-
-            total_beds_created = 0
-            for h_data in mock_hostels:
-                tpl = h_data["template"]
-                if not tpl:
-                    continue
-
-                hostel = Hostel(
+            if not warden_r.scalars().first():
+                warden = models.User(
+                    name="Rajesh Kumar",
+                    email="WARDEN001",
+                    password_hash=hash_password("warden123"),
+                    role="warden",
                     college_id=college.id,
-                    name=h_data["name"],
-                    gender_type=h_data["gender_type"],
-                    total_floors=h_data["total_floors"],
-                    warden_id=warden_id,
                 )
-                session.add(hostel)
-                await session.flush()
+                try:
+                    session.add(warden)
+                    await session.flush()
+                    warden_profile = models.UserProfile(
+                        user_id=warden.id,
+                        college_id=college.id,
+                        department="Hostel Administration",
+                    )
+                    session.add(warden_profile)
+                    await session.commit()
+                    logger.info("[startup] Warden user 'WARDEN001' seeded with college_id=%s", college.id)
+                except IntegrityError:
+                    await session.rollback()
+                    logger.info("[startup] Warden 'WARDEN001' was seeded by another worker. Skipping.")
+            else:
+                logger.info("[startup] Warden 'WARDEN001' already exists. Skipping seed.")
 
-                beds_in_hostel = 0
-                for floor_num in range(1, h_data["total_floors"] + 1):
-                    for room_idx in range(1, 4):  # 3 rooms per floor
-                        room_number = f"{h_data['name'][0]}{floor_num}{room_idx:02d}"  # B101, B102, G101...
-                        room = Room(
-                            college_id=college.id,
-                            hostel_id=hostel.id,
-                            template_id=tpl.id,
-                            room_number=room_number,
-                            floor=floor_num,
-                            capacity=tpl.total_capacity,
-                        )
-                        session.add(room)
-                        await session.flush()
+            # 6. Seed mock Hostels, Rooms & Beds for testing
+            from app.models.hostel import Hostel, Room, Bed
+            hostel_check = await session.execute(
+                select(Hostel).where(Hostel.college_id == college.id).limit(1)
+            )
+            if not hostel_check.scalars().first():
+                # Re-fetch warden
+                warden_q = await session.execute(
+                    select(models.User).where(models.User.email == "WARDEN001")
+                )
+                warden_user = warden_q.scalars().first()
+                warden_id = warden_user.id if warden_user else None
 
-                        for bed_def in tpl.bed_layout:
-                            bed = Bed(
+                # Fetch templates for bed layout
+                tpl_q = await session.execute(
+                    select(RoomTemplate).where(RoomTemplate.college_id == None).order_by(RoomTemplate.total_capacity)
+                )
+                all_templates = tpl_q.scalars().all()
+                tpl_2 = next((t for t in all_templates if t.total_capacity == 2), None)
+                tpl_4 = next((t for t in all_templates if t.total_capacity == 4), None)
+                tpl_6 = next((t for t in all_templates if t.total_capacity == 6), None)
+
+                mock_hostels = [
+                    {"name": "Boys Block-A", "gender_type": "male", "total_floors": 3, "template": tpl_4},
+                    {"name": "Girls Block-B", "gender_type": "female", "total_floors": 2, "template": tpl_2},
+                ]
+
+                total_beds_created = 0
+                for h_data in mock_hostels:
+                    tpl = h_data["template"]
+                    if not tpl:
+                        continue
+
+                    hostel = Hostel(
+                        college_id=college.id,
+                        name=h_data["name"],
+                        gender_type=h_data["gender_type"],
+                        total_floors=h_data["total_floors"],
+                        warden_id=warden_id,
+                    )
+                    session.add(hostel)
+                    await session.flush()
+
+                    beds_in_hostel = 0
+                    for floor_num in range(1, h_data["total_floors"] + 1):
+                        for room_idx in range(1, 4):  # 3 rooms per floor
+                            room_number = f"{h_data['name'][0]}{floor_num}{room_idx:02d}"  # B101, B102, G101...
+                            room = Room(
                                 college_id=college.id,
-                                room_id=room.id,
-                                bed_identifier=bed_def["identifier"],
-                                grid_row=bed_def["row"],
-                                grid_col=bed_def["col"],
-                                category=bed_def.get("category", "Standard"),
-                                is_premium=bed_def.get("is_premium", False),
-                                selection_fee=bed_def.get("base_fee", 0.0),
-                                status="AVAILABLE",
+                                hostel_id=hostel.id,
+                                template_id=tpl.id,
+                                room_number=room_number,
+                                floor=floor_num,
+                                capacity=tpl.total_capacity,
                             )
-                            session.add(bed)
-                            beds_in_hostel += 1
+                            session.add(room)
+                            await session.flush()
 
-                hostel.total_capacity = beds_in_hostel
-                total_beds_created += beds_in_hostel
+                            for bed_def in tpl.bed_layout:
+                                bed = Bed(
+                                    college_id=college.id,
+                                    room_id=room.id,
+                                    bed_identifier=bed_def["identifier"],
+                                    grid_row=bed_def["row"],
+                                    grid_col=bed_def["col"],
+                                    category=bed_def.get("category", "Standard"),
+                                    is_premium=bed_def.get("is_premium", False),
+                                    selection_fee=bed_def.get("base_fee", 0.0),
+                                    status="AVAILABLE",
+                                )
+                                session.add(bed)
+                                beds_in_hostel += 1
 
-            try:
-                await session.commit()
-                logger.info("[startup] Seeded %d mock hostels with %d total beds", len(mock_hostels), total_beds_created)
-            except IntegrityError:
-                await session.rollback()
-                logger.info("[startup] Mock hostel seed race detected. Skipping.")
-        else:
-            logger.info("[startup] Hostels already exist. Skipping mock seed.")
+                    hostel.total_capacity = beds_in_hostel
+                    total_beds_created += beds_in_hostel
 
-        # 7. Seed Transport Admin user for quick-login demo
-        transport_r = await session.execute(
-            select(models.User).where(models.User.email == "TRANSPORT001")
-        )
-        if not transport_r.scalars().first():
-            transport_user = models.User(
-                name="Suresh Reddy",
-                email="TRANSPORT001",
-                password_hash=hash_password("transport123"),
-                role="transport_admin",
-                college_id=college.id,
+                try:
+                    await session.commit()
+                    logger.info("[startup] Seeded %d mock hostels with %d total beds", len(mock_hostels), total_beds_created)
+                except IntegrityError:
+                    await session.rollback()
+                    logger.info("[startup] Mock hostel seed race detected. Skipping.")
+            else:
+                logger.info("[startup] Hostels already exist. Skipping mock seed.")
+
+            # 7. Seed Transport Admin user for quick-login demo
+            transport_r = await session.execute(
+                select(models.User).where(models.User.email == "TRANSPORT001")
             )
-            try:
-                session.add(transport_user)
-                await session.flush()
-                transport_profile = models.UserProfile(
-                    user_id=transport_user.id,
+            if not transport_r.scalars().first():
+                transport_user = models.User(
+                    name="Suresh Reddy",
+                    email="TRANSPORT001",
+                    password_hash=hash_password("transport123"),
+                    role="transport_admin",
                     college_id=college.id,
-                    department="Transport Administration",
                 )
-                session.add(transport_profile)
-                await session.commit()
-                logger.info("[startup] Transport Admin user 'TRANSPORT001' seeded with college_id=%s", college.id)
-            except IntegrityError:
-                await session.rollback()
-                logger.info("[startup] Transport Admin 'TRANSPORT001' was seeded by another worker. Skipping.")
-        else:
-            logger.info("[startup] Transport Admin 'TRANSPORT001' already exists. Skipping seed.")
+                try:
+                    session.add(transport_user)
+                    await session.flush()
+                    transport_profile = models.UserProfile(
+                        user_id=transport_user.id,
+                        college_id=college.id,
+                        department="Transport Administration",
+                    )
+                    session.add(transport_profile)
+                    await session.commit()
+                    logger.info("[startup] Transport Admin user 'TRANSPORT001' seeded with college_id=%s", college.id)
+                except IntegrityError:
+                    await session.rollback()
+                    logger.info("[startup] Transport Admin 'TRANSPORT001' was seeded by another worker. Skipping.")
+            else:
+                logger.info("[startup] Transport Admin 'TRANSPORT001' already exists. Skipping seed.")
 
-        # 8. Seed Librarian user for quick-login demo
-        librarian_r = await session.execute(
-            select(models.User).where(models.User.email == "LIBRARIAN001")
-        )
-        if not librarian_r.scalars().first():
-            librarian_user = models.User(
-                name="Meena Sharma",
-                email="LIBRARIAN001",
-                password_hash=hash_password("librarian123"),
-                role="librarian",
-                college_id=college.id,
+            # 8. Seed Librarian user for quick-login demo
+            librarian_r = await session.execute(
+                select(models.User).where(models.User.email == "LIBRARIAN001")
             )
-            try:
-                session.add(librarian_user)
-                await session.flush()
-                librarian_profile = models.UserProfile(
-                    user_id=librarian_user.id,
+            if not librarian_r.scalars().first():
+                librarian_user = models.User(
+                    name="Meena Sharma",
+                    email="LIBRARIAN001",
+                    password_hash=hash_password("librarian123"),
+                    role="librarian",
                     college_id=college.id,
-                    department="Library",
                 )
-                session.add(librarian_profile)
-                await session.commit()
-                logger.info("[startup] Librarian user 'LIBRARIAN001' seeded with college_id=%s", college.id)
-            except IntegrityError:
-                await session.rollback()
-                logger.info("[startup] Librarian 'LIBRARIAN001' was seeded by another worker. Skipping.")
-        else:
-            logger.info("[startup] Librarian 'LIBRARIAN001' already exists. Skipping seed.")
+                try:
+                    session.add(librarian_user)
+                    await session.flush()
+                    librarian_profile = models.UserProfile(
+                        user_id=librarian_user.id,
+                        college_id=college.id,
+                        department="Library",
+                    )
+                    session.add(librarian_profile)
+                    await session.commit()
+                    logger.info("[startup] Librarian user 'LIBRARIAN001' seeded with college_id=%s", college.id)
+                except IntegrityError:
+                    await session.rollback()
+                    logger.info("[startup] Librarian 'LIBRARIAN001' was seeded by another worker. Skipping.")
+            else:
+                logger.info("[startup] Librarian 'LIBRARIAN001' already exists. Skipping seed.")
 
-        # 9. Seed Security Guard user for quick-login demo
-        security_r = await session.execute(
-            select(models.User).where(models.User.email == "SECURITY001")
-        )
-        if not security_r.scalars().first():
-            security_user = models.User(
-                name="Ravi Shankar",
-                email="SECURITY001",
-                password_hash=hash_password("security123"),
-                role="security",
-                college_id=college.id,
+            # 9. Seed Security Guard user for quick-login demo
+            security_r = await session.execute(
+                select(models.User).where(models.User.email == "SECURITY001")
             )
-            try:
-                session.add(security_user)
-                await session.flush()
-                security_profile = models.UserProfile(
-                    user_id=security_user.id,
+            if not security_r.scalars().first():
+                security_user = models.User(
+                    name="Ravi Shankar",
+                    email="SECURITY001",
+                    password_hash=hash_password("security123"),
+                    role="security",
                     college_id=college.id,
-                    department="Campus Security",
                 )
-                session.add(security_profile)
-                await session.commit()
-                logger.info("[startup] Security user 'SECURITY001' seeded with college_id=%s", college.id)
-            except IntegrityError:
-                await session.rollback()
-                logger.info("[startup] Security 'SECURITY001' was seeded by another worker. Skipping.")
-        else:
-            logger.info("[startup] Security 'SECURITY001' already exists. Skipping seed.")
+                try:
+                    session.add(security_user)
+                    await session.flush()
+                    security_profile = models.UserProfile(
+                        user_id=security_user.id,
+                        college_id=college.id,
+                        department="Campus Security",
+                    )
+                    session.add(security_profile)
+                    await session.commit()
+                    logger.info("[startup] Security user 'SECURITY001' seeded with college_id=%s", college.id)
+                except IntegrityError:
+                    await session.rollback()
+                    logger.info("[startup] Security 'SECURITY001' was seeded by another worker. Skipping.")
+            else:
+                logger.info("[startup] Security 'SECURITY001' already exists. Skipping seed.")
 
 
 @asynccontextmanager
@@ -519,4 +531,7 @@ async def domain_exception_handler(request: Request, exc: DomainException):
 
 # ─── API Router ───────────────────────────────────────────────────────────────
 from app.api.v1.router import api_router  # noqa: E402
+
+# Mount at /api/v1 (canonical) + /api (backwards-compatible alias)
+app.include_router(api_router, prefix="/api/v1")
 app.include_router(api_router, prefix="/api")

@@ -75,13 +75,11 @@ REACT_APP_BACKEND_URL=
 
 ### Backend .env
 ```env
-MONGO_URL=mongodb://localhost:27017
-DB_NAME=quizportal
+DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/acadmix
+REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-super-secret-jwt-key-change-in-production-12345
 FRONTEND_URL=http://localhost:3000
 CORS_ORIGINS=*
-ADMIN_COLLEGE_ID=A001
-ADMIN_PASSWORD=admin123
 ```
 
 ---
@@ -137,7 +135,7 @@ All features are operational:
 ```bash
 backend    RUNNING   (FastAPI on :8001)
 frontend   RUNNING   (React on :3000)
-mongodb    RUNNING   (MongoDB on :27017)
+postgres   RUNNING   (PostgreSQL on :5432)
 ```
 
 ---

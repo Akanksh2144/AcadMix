@@ -7,6 +7,7 @@ from typing import List, Optional
 from database import get_db
 from app.core.security import get_current_user
 from app.core.security import require_role
+from app.core.pagination import PaginatedParams, paginated_response
 from app import models
 import app.schemas as server_schemas
 from app.schemas import *
@@ -37,15 +38,14 @@ async def submit_grievance(
 @router.get("/grievances/my")
 async def my_grievances(
     user: dict = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
+    params: PaginatedParams = Depends(),
 ):
-    result = await session.execute(
-        select(models.Grievance).where(
-            models.Grievance.submitted_by == user["id"],
-            models.Grievance.is_deleted == False
-        ).order_by(models.Grievance.created_at.desc())
-    )
-    return result.scalars().all()
+    query = select(models.Grievance).where(
+        models.Grievance.submitted_by == user["id"],
+        models.Grievance.is_deleted == False
+    ).order_by(models.Grievance.created_at.desc())
+    return await paginated_response(session, query, params)
 
 
 @router.post("/student/feedback")
@@ -123,10 +123,15 @@ async def get_faculty_feedback_summary(user: dict = Depends(require_role("teache
 
 
 @router.get("/admin/feedback/detailed")
-async def get_admin_feedback(faculty_id: Optional[str] = None, user: dict = Depends(require_role("admin", "principal", "hod")), session: AsyncSession = Depends(get_db)):
+async def get_admin_feedback(
+    faculty_id: Optional[str] = None,
+    user: dict = Depends(require_role("admin", "principal", "hod")),
+    session: AsyncSession = Depends(get_db),
+    params: PaginatedParams = Depends(),
+):
     """Admin sees identified feedback with student IDs for audit."""
     q = select(models.CourseFeedback).where(models.CourseFeedback.college_id == user["college_id"])
     if faculty_id:
         q = q.where(models.CourseFeedback.faculty_id == faculty_id)
-    res = await session.execute(q.order_by(models.CourseFeedback.submitted_at.desc()))
-    return res.scalars().all()
+    q = q.order_by(models.CourseFeedback.submitted_at.desc())
+    return await paginated_response(session, q, params)

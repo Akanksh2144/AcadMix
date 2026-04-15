@@ -22,7 +22,22 @@ router = APIRouter()
 
 # ─── ATS Scoring Prompt ──────────────────────────────────────────────────────
 
-ATS_SCORING_PROMPT = """You are an expert ATS (Applicant Tracking System) resume analyzer. Analyze the following resume text and score it for ATS compatibility.
+# Fixed weights for computing the overall ATS score server-side.
+# This prevents the LLM from inventing a different aggregation each time.
+SECTION_WEIGHTS = {
+    "contact_info": 0.08,
+    "professional_summary": 0.12,
+    "work_experience": 0.25,
+    "education": 0.10,
+    "skills": 0.18,
+    "projects": 0.12,
+    "certifications": 0.05,
+    "formatting": 0.10,
+}
+
+ATS_SCORING_PROMPT = """You are a STRICT ATS (Applicant Tracking System) resume analyzer. You must evaluate this resume SPECIFICALLY for the TARGET ROLE below. Every section score must reflect how well that section serves a candidate applying for THIS EXACT ROLE — not how good the section is in general.
+
+CRITICAL RULE: The same resume MUST score DIFFERENTLY for different target roles. A machine learning resume should score HIGH for "ML Engineer" but LOW for "Data Analyst" if it lacks core data analyst skills (Excel, SQL reporting, Tableau, etc.). Do NOT give high scores just because content exists — it must be RELEVANT to the target role.
 
 {jd_section}
 
@@ -31,9 +46,8 @@ TARGET ROLE: {target_role}
 RESUME TEXT:
 {resume_text}
 
-Provide your analysis in the following strict JSON format:
+Return your analysis in the following strict JSON format:
 {{
-  "ats_score": <number 0-100>,
   "section_scores": {{
     "contact_info": <number 0-100>,
     "professional_summary": <number 0-100>,
@@ -47,26 +61,81 @@ Provide your analysis in the following strict JSON format:
   "keywords_found": ["<keyword1>", "<keyword2>", ...],
   "keywords_missing": ["<keyword1>", "<keyword2>", ...],
   "improvement_tips": [
-    "<specific actionable tip 1>",
-    "<specific actionable tip 2>",
-    "<specific actionable tip 3>",
-    "<specific actionable tip 4>",
-    "<specific actionable tip 5>"
+    "<specific actionable tip mentioning the target role>",
+    "<specific actionable tip mentioning the target role>",
+    "<specific actionable tip mentioning the target role>",
+    "<specific actionable tip mentioning the target role>",
+    "<specific actionable tip mentioning the target role>"
   ],
-  "summary": "<2-3 sentence overall assessment>"
+  "summary": "<2-3 sentence assessment that explicitly references the target role>"
 }}
 
-SCORING GUIDELINES:
-- Contact Info: Does it have name, phone, email, LinkedIn, location?
-- Professional Summary: Is there a clear objective/summary tailored to the role?
-- Work Experience: Are achievements quantified? Action verbs used? Relevant to role?
-- Education: Is it clearly listed with GPA/CGPA, institution, dates?
-- Skills: Are they relevant to the target role? Are they specific (not generic)?
-- Projects: Are they described with tech stack, impact, and outcomes?
-- Certifications: Are there relevant certifications for the target role?
-- Formatting: Is the resume well-structured, consistent, and ATS-parseable (no tables/images)?
+IMPORTANT: Do NOT include an "ats_score" field. The overall score will be computed separately.
 
-For keywords: Compare against standard keywords expected for the target role in job descriptions.
+SCORING RULES — you MUST follow these strictly. Be HARSH, not generous. Real ATS systems reject 75%% of resumes.
+
+1. contact_info (0-100) — role-independent:
+   - 100: Full name + phone + email + LinkedIn URL + city/location
+   - 80: Name + phone + email + one of (LinkedIn or location)
+   - 60: Name + phone + email only
+   - 40: Missing phone or email
+   - 0: No contact information found
+
+2. professional_summary (0-100) — MUST reference the target role:
+   - 100: 2-4 sentence summary that explicitly names "{target_role}", mentions relevant experience duration, and lists 3+ role-specific skills
+   - 70: Summary mentions the target role or closely related role, with some relevant skills
+   - 50: Generic summary present but does NOT mention "{target_role}" or related role at all
+   - 25: Only has an objective statement or one-liner
+   - 0: No summary or objective section found
+
+3. work_experience (0-100) — MUST be relevant to "{target_role}":
+   - 100: 2+ roles directly relevant to "{target_role}" with quantified achievements, action verbs, and dates
+   - 75: 1-2 roles relevant to "{target_role}" with some quantified achievements
+   - 50: Has work experience but in unrelated fields (transferable skills only)
+   - 25: Has work experience completely irrelevant to "{target_role}"
+   - 0: No work experience section found at all
+
+4. education (0-100) — role-independent:
+   - 100: Relevant degree + institution + graduation date + GPA/CGPA all clearly listed
+   - 80: Degree + institution + graduation date (missing GPA)
+   - 60: Only degree and institution listed
+   - 30: Incomplete education info
+   - 0: No education section found
+
+5. skills (0-100) — THIS IS THE MOST ROLE-SENSITIVE SECTION:
+   First, identify the top 15 keywords/skills that a real recruiter would expect for "{target_role}".
+   Then count how many of those 15 the resume actually contains.
+   - Score = (matched_count / 15) * 100, rounded to nearest 10
+   - Example: If resume has 6 out of 15 expected "{target_role}" skills → score = 40
+   - Having many skills that are IRRELEVANT to "{target_role}" does NOT increase this score
+   - Generic skills like "problem-solving" or "teamwork" do NOT count toward the match
+
+6. projects (0-100) — MUST be relevant to "{target_role}":
+   - 100: 3+ projects directly demonstrating "{target_role}" competencies, with tech stack and outcomes
+   - 75: 2-3 projects, at least 2 are relevant to "{target_role}"
+   - 50: Projects exist but only 1 is somewhat relevant to "{target_role}"
+   - 25: Projects exist but are in a completely different domain than "{target_role}"
+   - 0: No projects section found
+
+7. certifications (0-100) — MUST be relevant to "{target_role}":
+   - 100: 2+ certifications directly relevant to "{target_role}" with issuing authority
+   - 75: 1 certification relevant to "{target_role}"
+   - 50: Certifications exist but not directly for "{target_role}"
+   - 25: Only general coursework or unrelated certifications
+   - 0: No certifications section found
+
+8. formatting (0-100) — role-independent:
+   - 100: Clean single-column layout, consistent fonts, clear section headings, proper date formatting, 1-2 pages, uses standard ATS-friendly section names
+   - 80: Good structure with minor inconsistencies
+   - 60: Acceptable but has issues (inconsistent spacing, non-standard section names)
+   - 30: Poor structure, hard to parse
+   - 0: Uses tables/images/graphics that break ATS parsing
+
+KEYWORD RULES:
+- keywords_found: ONLY list skills/keywords from the resume that are genuinely relevant to "{target_role}"
+- keywords_missing: List the most important keywords for "{target_role}" that are NOT in the resume. These should be skills a recruiter would search for.
+- A skill can appear in the resume but still be in keywords_missing if it's not relevant to "{target_role}"
+
 Return ONLY valid JSON, no markdown, no explanation outside the JSON."""
 
 
@@ -113,7 +182,7 @@ async def _call_llm(messages: list, json_mode: bool = False) -> str:
     kwargs = {
         "model": settings.INTERVIEW_LLM_MODEL,
         "messages": messages,
-        "temperature": 0.3,
+        "temperature": 0,          # deterministic — same input always yields same output
         "max_tokens": 4096,
     }
     if json_mode:
@@ -265,10 +334,28 @@ async def _run_ats_scoring(resume: models.ResumeScore, session: AsyncSession) ->
     # Fallback
     if analysis is None:
         logger.warning("LLM returned unparseable JSON for ATS scoring. Raw (first 500): %s", raw[:500])
-        analysis = {"ats_score": 50, "section_scores": {}, "keywords_found": [], "keywords_missing": [], "improvement_tips": ["Could not parse AI response. Please try again."], "summary": "Analysis could not be completed. Please retry."}
+        analysis = {"section_scores": {}, "keywords_found": [], "keywords_missing": [], "improvement_tips": ["Ami could not fully analyze this resume. Please try re-scoring."], "summary": "Analysis could not be completed. Please retry scoring."}
 
-    resume.ats_score = analysis.get("ats_score", 50)
-    resume.section_scores = analysis.get("section_scores", {})
+    section_scores = analysis.get("section_scores", {})
+
+    # ── Compute overall ATS score server-side using fixed weights ──
+    # This is the key fix: the LLM only scores individual sections,
+    # the overall score is always a deterministic weighted average.
+    weighted_sum = 0.0
+    weight_total = 0.0
+    for section, weight in SECTION_WEIGHTS.items():
+        score = section_scores.get(section)
+        if score is not None:
+            weighted_sum += score * weight
+            weight_total += weight
+
+    if weight_total > 0:
+        computed_ats_score = round(weighted_sum / weight_total)
+    else:
+        computed_ats_score = 50  # fallback
+
+    resume.ats_score = computed_ats_score
+    resume.section_scores = section_scores
     resume.keywords_found = analysis.get("keywords_found", [])
     resume.keywords_missing = analysis.get("keywords_missing", [])
     resume.improvement_tips = analysis.get("improvement_tips", [])

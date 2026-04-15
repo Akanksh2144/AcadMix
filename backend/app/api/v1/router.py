@@ -6,7 +6,8 @@ from app.routers import (
     principal, grievances, tasks, retired_faculty, sections, roles, assignments, calendars, 
     exam_cell_core, student_core, hod_core, faculty_core, admin_core, attempts, results, analytics, 
     leaderboard, dashboards, marks_extra, timetable_extra, announcements, challenges, industry, tpo, fees, webhooks,
-    interview, resume
+    interview, resume, hostel, career_tools, iot_webhooks, transport, transport_admin, library,
+    visitors,
 )
 from app.routers import nodal_routes
 
@@ -28,6 +29,9 @@ api_router.include_router(tpo.router, tags=["tpo"])
 api_router.include_router(fees.router, tags=["fees"])
 api_router.include_router(interview.router, tags=["interview_warroom"])
 api_router.include_router(resume.router, tags=["interview_warroom"])
+api_router.include_router(hostel.router, tags=["hostel"])
+api_router.include_router(library.router, tags=["library"])
+api_router.include_router(career_tools.router, tags=["career_toolkit"])
 api_router.include_router(tasks.router, tags=["tasks"])
 api_router.include_router(admin_core.router, tags=["admin_core"])
 api_router.include_router(faculty_core.router, tags=["faculty_core"])
@@ -62,6 +66,10 @@ api_router.include_router(marks.router, tags=["marks"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(code_execution.router, prefix="/code", tags=["code"])
 api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
+api_router.include_router(iot_webhooks.router, tags=["iot"])
+api_router.include_router(transport.router, tags=["transport"])
+api_router.include_router(transport_admin.router, tags=["transport-admin"])
+api_router.include_router(visitors.router, tags=["visitors"])
 
 # Nodal Router (historical top-level route, now safely namespaced if possible, keeping legacy /api scope mostly)
 api_router.include_router(nodal_routes.nodal_router, tags=["nodal_officer"])

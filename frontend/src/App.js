@@ -36,6 +36,16 @@ const RetiredFacultyDashboard = React.lazy(() => import('./pages/RetiredFacultyD
 const ExpertDashboard = React.lazy(() => import('./pages/ExpertDashboard'));
 const NodalOfficerDashboard = React.lazy(() => import('./pages/NodalOfficerDashboard'));
 const FacultyProfilePage = React.lazy(() => import('./pages/FacultyProfilePage'));
+const InterviewWarRoom = React.lazy(() => import('./pages/InterviewWarRoom'));
+const AIInterviewSession = React.lazy(() => import('./pages/AIInterviewSession'));
+const HostelBooking = React.lazy(() => import('./pages/HostelBooking'));
+const WardenDashboard = React.lazy(() => import('./pages/WardenDashboard'));
+const ResumeATSScorer = React.lazy(() => import('./pages/ResumeATSScorer'));
+const CareerToolkit = React.lazy(() => import('./pages/CareerToolkit'));
+const TransportAdminDashboard = React.lazy(() => import('./pages/TransportAdminDashboard'));
+const LibrarianDashboard = React.lazy(() => import('./pages/LibrarianDashboard'));
+const SecurityDashboard = React.lazy(() => import('./pages/SecurityDashboard'));
+const VisitorManagement = React.lazy(() => import('./pages/VisitorManagement'));
 
 const ROLE_DASHBOARD = {
   student: 'student-dashboard',
@@ -51,6 +61,10 @@ const ROLE_DASHBOARD = {
   principal: 'principal-dashboard',
   retired_faculty: 'retired-faculty-dashboard',
   expert: 'expert-dashboard',
+  warden: 'warden-dashboard',
+  transport_admin: 'transport-admin-dashboard',
+  librarian: 'librarian-dashboard',
+  security: 'security-dashboard',
 };
 
 function App() {
@@ -153,6 +167,8 @@ function App() {
       case 'quiz-calendar': return <QuizCalendar navigate={navigate} user={user} />;
       case 'quiz-summary': return <QuizSummary navigate={navigate} user={user} attemptData={selectedData} />;
       case 'faculty-profile': return <FacultyProfilePage navigate={navigate} user={user} />;
+      case 'interview-warroom': return <InterviewWarRoom navigate={navigate} user={user} />;
+      case 'ai-interview-session': return <AIInterviewSession navigate={navigate} user={user} quizData={selectedData} />;
       case 'attendance-marker': return (
         <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] py-8">
           <div className="max-w-7xl mx-auto px-4">
@@ -169,6 +185,14 @@ function App() {
       case 'retired-faculty-dashboard': return <RetiredFacultyDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
       case 'expert-dashboard': return <ExpertDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
       case 'nodal-officer-dashboard': return <NodalOfficerDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
+      case 'warden-dashboard': return <WardenDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
+      case 'hostel-booking': return <HostelBooking navigate={navigate} user={user} />;
+      case 'resume-ats-scorer': return <ResumeATSScorer navigate={navigate} user={user} />;
+      case 'career-toolkit': return <CareerToolkit navigate={navigate} user={user} />;
+      case 'transport-admin-dashboard': return <TransportAdminDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
+      case 'librarian-dashboard': return <LibrarianDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
+      case 'security-dashboard': return <VisitorManagement navigate={navigate} user={user} onLogout={handleLogout} />;
+      case 'visitor-management': return <VisitorManagement navigate={navigate} user={user} onLogout={handleLogout} gateType={selectedData?.gateType} />;
       default: return <LoginPage onLogin={handleLogin} />;
     }
   };

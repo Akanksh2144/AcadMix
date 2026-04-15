@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GraduationCap, UserCircle, Lock, Eye, EyeSlash, PaperPlaneTilt, Sun, Moon } from '@phosphor-icons/react';
 import { authAPI, formatApiError } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTenant } from '../contexts/TenantContext';
 import * as Sentry from '@sentry/react';
 
 const containerVariants = {
@@ -22,6 +23,8 @@ const LoginPage = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { isDark, toggle: toggleTheme } = useTheme();
+  const tenant = useTenant();
+  const showQuickLogin = tenant.isDemo || tenant.isLocalDev;
 
   const quickLoginRoles = [
     { role: 'Student', collegeId: '22WJ8A6745', password: '22WJ8A6745', color: 'bg-teal-500 hover:bg-teal-600', icon: '🎓' },
@@ -36,6 +39,10 @@ const LoginPage = ({ onLogin }) => {
     { role: 'Principal', collegeId: 'PRIN001', password: 'teacher123', color: 'bg-fuchsia-500 hover:bg-fuchsia-600', icon: '🏫' },
     { role: 'Retired Faculty', collegeId: 'RF001', password: 'retired123', color: 'bg-lime-600 hover:bg-lime-700', icon: '🎖️' },
     { role: 'Expert', collegeId: 'EXP001', password: 'expert123', color: 'bg-amber-600 hover:bg-amber-700', icon: '🧠' },
+    { role: 'Warden', collegeId: 'WARDEN001', password: 'warden123', color: 'bg-pink-500 hover:bg-pink-600', icon: '🏨' },
+    { role: 'Transport', collegeId: 'TRANSPORT001', password: 'transport123', color: 'bg-emerald-600 hover:bg-emerald-700', icon: '🚌' },
+    { role: 'Librarian', collegeId: 'LIBRARIAN001', password: 'librarian123', color: 'bg-sky-600 hover:bg-sky-700', icon: '📚' },
+    { role: 'Security', collegeId: 'SECURITY001', password: 'security123', color: 'bg-stone-600 hover:bg-stone-700', icon: '🛡️' },
   ];
 
   const handleSubmit = async (e) => {
@@ -86,8 +93,17 @@ const LoginPage = ({ onLogin }) => {
             >
               <GraduationCap size={36} weight="duotone" className="text-white" />
             </motion.div>
-            <h1 className="text-5xl font-extrabold tracking-tight mb-4">Welcome to<br/>AcadMix</h1>
-            <p className="text-lg font-medium leading-relaxed text-white/80">Your complete college quiz and results management system</p>
+            <h1 className="text-5xl font-extrabold tracking-tight mb-4">Welcome to<br/>{tenant.tenantName || 'AcadMix'}</h1>
+            <p className="text-lg font-medium leading-relaxed text-white/80">
+              {tenant.tenantSlug
+                ? 'Your complete college management portal'
+                : 'Your complete college quiz and results management system'}
+            </p>
+            {tenant.tenantSlug && (
+              <div className="mt-3 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-1.5 text-xs font-bold tracking-wide text-white/70">
+                Powered by AcadMix
+              </div>
+            )}
           </div>
           <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-4">
             {['Take Proctored Quizzes', 'Track Your Performance', 'View Semester Results'].map((text, i) => (
@@ -187,13 +203,14 @@ const LoginPage = ({ onLogin }) => {
               </motion.button>
             </form>
 
+            {showQuickLogin && (
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-slate-200 dark:border-white/10"></div>
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-white dark:bg-[#1A202C] px-3 text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Quick Login</span>
+                  <span className="bg-white dark:bg-[#1A202C] px-3 text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Quick Login{tenant.isDemo ? ' (Demo)' : ''}</span>
                 </div>
               </div>
 
@@ -217,6 +234,7 @@ const LoginPage = ({ onLogin }) => {
 
               <p className="mt-4 text-xs text-center font-medium text-slate-400 dark:text-slate-500">Click any role to login instantly</p>
             </div>
+            )}
           </div>
         </motion.div>
       </div>

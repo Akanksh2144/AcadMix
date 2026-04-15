@@ -4,7 +4,7 @@
 
 **Repository**: Quiz-and-results  
 **Type**: Full-stack College Quiz Platform & Results Portal  
-**Tech Stack**: React + FastAPI + MongoDB  
+**Tech Stack**: React + FastAPI + PostgreSQL (SQLAlchemy Async)  
 **Design Philosophy**: Smooth, rounded, pastel aesthetic - calm and approachable
 
 ---
@@ -301,28 +301,37 @@ if user["role"] not in roles:
     raise HTTPException(status_code=403, detail="Insufficient permissions")
 ```
 
-#### MongoDB Patterns
+#### SQLAlchemy Async Patterns
 ```python
+from sqlalchemy.future import select
+from database import get_db
+
 # Find one
-user = await db.users.find_one({"college_id": college_id})
+result = await session.execute(
+    select(models.User).where(models.User.college_id == college_id)
+)
+user = result.scalars().first()
 
 # Insert
-result = await db.users.insert_one(doc)
+new_user = models.User(name="John", role="student")
+session.add(new_user)
+await session.commit()
 
 # Update
-await db.users.update_one(
-    {"_id": ObjectId(user_id)}, 
-    {"$set": {"name": new_name}}
-)
+user.name = new_name
+await session.commit()
 
-# Delete
-await db.users.delete_one({"_id": ObjectId(user_id)})
+# Delete (soft-delete)
+user.is_deleted = True
+await session.commit()
 
 # List with filter
-users = await db.users.find(query).sort("created_at", -1).to_list(100)
-
-# Serialize before returning
-return [serialize_doc(u) for u in users]
+result = await session.execute(
+    select(models.User).where(models.User.role == "student")
+    .order_by(models.User.created_at.desc())
+    .limit(100)
+)
+users = result.scalars().all()
 ```
 
 #### Pydantic Models
@@ -337,24 +346,19 @@ class ResourceCreate(BaseModel):
 
 ### Helper Functions
 ```python
-# ObjectId to string conversion
-def serialize_doc(doc):
-    if doc is None:
-        return None
-    doc["id"] = str(doc.pop("_id"))
-    for k, v in doc.items():
-        if isinstance(v, ObjectId):
-            doc[k] = str(v)
-        elif isinstance(v, datetime):
-            doc[k] = v.isoformat()
-    return doc
+# Password hashing (via passlib)
+from passlib.context import CryptContext
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Password hashing
 def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    return pwd_context.hash(password)
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+    return pwd_context.verify(plain, hashed)
+
+# Tenant context (RLS)
+from database import tenant_context
+tenant_context.set(user["college_id"])  # Set in middleware
 ```
 
 ---
@@ -490,14 +494,16 @@ if (loading) {
 
 ### Backend (requirements.txt)
 ```txt
-fastapi==0.110.1
-motor==3.3.1 (MongoDB async driver)
+fastapi==0.115.x
+sqlalchemy[asyncio]==2.x (Async ORM)
+asyncpg (PostgreSQL async driver)
+alembic (migrations)
 bcrypt==4.1.3
 PyJWT==2.12.1
 python-dotenv==1.2.2
 python-multipart==0.0.22
-openpyxl==3.1.5 (Excel files)
-pandas==3.0.1
+arq (async task queue)
+redis (caching)
 ```
 
 ---
@@ -506,13 +512,11 @@ pandas==3.0.1
 
 ### Backend (.env)
 ```env
-MONGO_URL=mongodb://localhost:27017
-DB_NAME=quizportal
+DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/acadmix
+REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-secret-key-here
 FRONTEND_URL=http://localhost:3000
 CORS_ORIGINS=*
-ADMIN_COLLEGE_ID=A001
-ADMIN_PASSWORD=admin123
 ```
 
 ### Frontend (.env)
@@ -531,7 +535,7 @@ REACT_APP_BACKEND_URL=http://localhost:8001
 - ✅ Use Phosphor icons in duotone weight
 - ✅ Apply generous spacing (p-6, gap-6, py-8)
 - ✅ Use `async/await` for all async operations
-- ✅ Serialize MongoDB docs before returning
+- ✅ Use Pydantic response models for serialization
 - ✅ Use `useEffect` cleanup for subscriptions
 - ✅ Handle loading and error states
 - ✅ Use `try-catch` in async functions

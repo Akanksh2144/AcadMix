@@ -17,12 +17,13 @@ A comprehensive College Quiz & Results Management Platform for managing quizzes,
 ### Backend
 - **FastAPI** - Modern Python web framework
 - **Python 3.x** - Programming language
-- **PyMongo/Motor** - MongoDB async driver
+- **SQLAlchemy 2.x** - Async ORM (create_async_engine)
+- **Alembic** - Database migrations
 - **JWT (JSON Web Tokens)** - Authentication
 
 ### Database
-- **MongoDB** - NoSQL database
-- Collections: users, quizzes, marks, faculty_assignments, mark_entries, etc.
+- **PostgreSQL** - Relational database with Row-Level Security (RLS)
+- Tables: users, quizzes, quiz_attempts, mark_submissions, faculty_assignments, etc.
 
 ### Infrastructure
 - **Kubernetes** - Container orchestration
@@ -33,7 +34,8 @@ A comprehensive College Quiz & Results Management Platform for managing quizzes,
 ### Environment
 - Frontend: React dev server on port 3000
 - Backend: FastAPI on port 8001
-- MongoDB: Local instance via MONGO_URL
+- PostgreSQL: Via DATABASE_URL (Supabase or local)
+- Redis: Via REDIS_URL (ARQ worker queue + caching)
 - Hot reload enabled for both frontend & backend
 
 ---
@@ -537,107 +539,82 @@ Student Dashboard → Click Quiz → Answer questions → Submit → View Result
 
 ## 🗂️ Database Schema
 
-### Users Collection
-```javascript
-{
-  id: "user_uuid",
-  email: "user@example.com",
-  hashed_password: "...",
-  role: "student|teacher|hod|exam_cell|admin",
-  name: "John Doe",
-  college: "GNITC",
-  college_id: "22WJ8A6745",
-  department: "DS",
-  designation: "Assistant Professor",  // For faculty
-  batch: "2024",  // For students
-  section: "DS-1"  // For students
-}
+### Users Table (PostgreSQL)
+```sql
+CREATE TABLE users (
+  id          TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  college_id  TEXT REFERENCES colleges(id),
+  email       TEXT UNIQUE,
+  hashed_password TEXT NOT NULL,
+  role        TEXT NOT NULL,  -- student|teacher|hod|exam_cell|admin|...
+  name        TEXT NOT NULL,
+  department_id TEXT REFERENCES departments(id),
+  is_deleted  BOOLEAN DEFAULT false,
+  created_at  TIMESTAMPTZ DEFAULT now()
+);
 ```
 
-### Faculty Assignments Collection
-```javascript
-{
-  id: "assignment_uuid",
-  teacher_id: "teacher_uuid",
-  subject_code: "22ET301",
-  subject_name: "Data Structures",
-  department: "DS",
-  batch: "2024",
-  section: "DS-1",
-  semester: 3
-}
+### Faculty Assignments Table
+```sql
+CREATE TABLE faculty_assignments (
+  id           TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  college_id   TEXT REFERENCES colleges(id),
+  teacher_id   TEXT REFERENCES users(id),
+  subject_code TEXT NOT NULL,
+  subject_name TEXT,
+  batch        TEXT,
+  section      TEXT,
+  semester     INTEGER
+);
 ```
 
-### Mark Entries Collection
-```javascript
-{
-  id: "entry_uuid",
-  assignment_id: "assignment_uuid",
-  teacher_id: "teacher_uuid",
-  teacher_name: "Prof. John",
-  subject_code: "22ET301",
-  subject_name: "Data Structures",
-  department: "DS",
-  batch: "2024",
-  section: "DS-1",
-  exam_type: "mid1|mid2",
-  semester: 3,
-  max_marks: 30,
-  entries: [
-    {
-      student_id: "student_uuid",
-      college_id: "22WJ8A6745",
-      student_name: "Student Name",
-      marks: 25,
-      remarks: ""
-    }
-  ],
-  status: "draft|submitted|approved|rejected",
-  revision_history: [
-    {
-      revised_at: "2024-01-15T10:30:00Z",
-      revised_by: "teacher_uuid",
-      reviser_name: "Prof. John",
-      reason: "Calculation error correction",
-      previous_status: "approved"
-    }
-  ],
-  created_at: "2024-01-10T08:00:00Z",
-  updated_at: "2024-01-15T10:30:00Z"
-}
+### Mark Submissions & Entries Tables
+```sql
+CREATE TABLE mark_submissions (
+  id            TEXT PRIMARY KEY,
+  college_id    TEXT REFERENCES colleges(id),
+  faculty_id    TEXT REFERENCES users(id),
+  assignment_id TEXT REFERENCES faculty_assignments(id),
+  subject_code  TEXT NOT NULL,
+  exam_type     TEXT NOT NULL,
+  max_marks     FLOAT NOT NULL,
+  status        TEXT DEFAULT 'draft',
+  submitted_at  TIMESTAMPTZ,
+  reviewed_by   TEXT REFERENCES users(id)
+);
+
+CREATE TABLE mark_submission_entries (
+  id             TEXT PRIMARY KEY,
+  college_id     TEXT REFERENCES colleges(id),
+  submission_id  TEXT REFERENCES mark_submissions(id) ON DELETE CASCADE,
+  student_id     TEXT REFERENCES users(id),
+  marks_obtained FLOAT NOT NULL,
+  UNIQUE(submission_id, student_id)
+);
 ```
 
-### Quizzes Collection
-```javascript
-{
-  id: "quiz_uuid",
-  title: "Data Structures Quiz",
-  subject_code: "22ET301",
-  department: "DS",
-  batch: "2024",
-  section: "DS-1",
-  semester: 3,
-  duration_mins: 60,
-  total_marks: 100,
-  questions: [
-    {
-      id: 1,
-      type: "mcq-single|mcq-multiple|short|coding",
-      text: "Question text",
-      options: ["A", "B", "C", "D"],  // For MCQs
-      correctAnswer: 1,  // For mcq-single
-      correctAnswers: [0, 2],  // For mcq-multiple
-      language: "python",  // For coding
-      testCases: "...",  // For coding
-      marks: 2
-    }
-  ],
-  scheduledDate: "2024-01-20",  // If scheduled
-  scheduledTime: "14:30",  // If scheduled
-  status: "draft|scheduled|published",
-  created_at: "2024-01-10T08:00:00Z",
-  created_by: "teacher_uuid"
-}
+### Quizzes & Questions Tables
+```sql
+CREATE TABLE quizzes (
+  id               TEXT PRIMARY KEY,
+  college_id       TEXT REFERENCES colleges(id),
+  faculty_id       TEXT REFERENCES users(id),
+  title            TEXT NOT NULL,
+  duration_minutes INTEGER NOT NULL,
+  type             TEXT NOT NULL,
+  status           TEXT DEFAULT 'draft',
+  total_marks      FLOAT DEFAULT 0.0,
+  created_at       TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE questions (
+  id         TEXT PRIMARY KEY,
+  college_id TEXT REFERENCES colleges(id),
+  quiz_id    TEXT REFERENCES quizzes(id) ON DELETE CASCADE,
+  type       TEXT NOT NULL,
+  marks      FLOAT NOT NULL,
+  content    JSONB NOT NULL
+);
 ```
 
 ---
@@ -648,8 +625,8 @@ Student Dashboard → Click Quiz → Answer questions → Submit → View Result
 
 **Backend (.env):**
 ```
-MONGO_URL=mongodb://localhost:27017/
-DB_NAME=quiz_portal
+DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/acadmix
+REDIS_URL=redis://localhost:6379
 JWT_SECRET_KEY=...
 ```
 
@@ -690,13 +667,16 @@ REACT_APP_BACKEND_URL=
 ### Backend (requirements.txt)
 - fastapi
 - uvicorn
-- motor (MongoDB async driver)
-- pymongo
+- sqlalchemy[asyncio] (Async ORM)
+- asyncpg (PostgreSQL async driver)
+- alembic (migrations)
 - python-jose (JWT)
 - passlib (password hashing)
 - bcrypt
 - python-multipart
 - pydantic
+- arq (async task queue)
+- redis (caching + ARQ broker)
 
 ---
 
@@ -794,7 +774,7 @@ This is a **production-ready, full-stack College Quiz & Results Management Platf
 - Role-based access control
 - Tier-based data visibility
 
-**Tech Stack:** React 19 + FastAPI + MongoDB + JWT Auth  
-**Architecture:** Kubernetes + Nginx + Supervisor  
+**Tech Stack:** React 19 + FastAPI + PostgreSQL (RLS) + SQLAlchemy + JWT Auth  
+**Architecture:** Kubernetes + Nginx + PgBouncer + ARQ Workers  
 **Design:** Tailwind CSS + Phosphor Icons + Recharts  
 **Status:** ✅ Production-Ready

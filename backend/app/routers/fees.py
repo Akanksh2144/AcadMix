@@ -7,7 +7,7 @@ from database import get_db
 from app.core.security import require_role
 from app.services.fees_service import FeesService
 from app import models
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 router = APIRouter()
 
@@ -59,7 +59,7 @@ async def get_payment_history(
 
 class CreateOrderPayload(BaseModel):
     invoice_id: str
-    amount_to_pay: float
+    amount_to_pay: float = Field(..., gt=0, le=1_000_000, description="Amount must be positive (max 10 lakh)")
 
 @router.post("/fees/create-order")
 async def create_fee_order(

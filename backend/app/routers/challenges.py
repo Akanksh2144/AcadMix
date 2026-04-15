@@ -33,21 +33,31 @@ router = APIRouter()
 
 @router.get("/challenges")
 async def get_challenges(page: int = 1, limit: int = 20, difficulty: str = "", topic: str = "", session: AsyncSession = Depends(get_db)):
-    stmt = select(models.CodingChallenge)
+    from sqlalchemy import func as sa_func
+
+    # Build base filter
+    base_filter = select(models.CodingChallenge)
     if difficulty:
-        stmt = stmt.where(models.CodingChallenge.difficulty == difficulty)
-    
-    result = await session.execute(stmt)
-    all_challenges = result.scalars().all()
+        base_filter = base_filter.where(models.CodingChallenge.difficulty == difficulty)
     if topic:
-        all_challenges = [c for c in all_challenges if topic in (c.topics or [])]
-        
-    start = (page - 1) * limit
-    page_data = all_challenges[start : start + limit]
-    
+        # JSONB containment: topics column contains the given topic string
+        base_filter = base_filter.where(
+            models.CodingChallenge.topics.contains([topic])
+        )
+
+    # Count query (uses same filters, no LIMIT)
+    count_stmt = select(sa_func.count()).select_from(base_filter.subquery())
+    total = (await session.execute(count_stmt)).scalar() or 0
+
+    # Paginated data query — push LIMIT/OFFSET to SQL
+    offset = (page - 1) * limit
+    data_stmt = base_filter.order_by(models.CodingChallenge.created_at.desc()).offset(offset).limit(limit)
+    result = await session.execute(data_stmt)
+    page_data = result.scalars().all()
+
     return {
         "data": [{"id": c.id, "title": c.title, "description": c.description, "difficulty": c.difficulty, "topics": c.topics, "language_support": c.language_support} for c in page_data],
-        "total": len(all_challenges),
+        "total": total,
         "page": page,
         "limit": limit
     }

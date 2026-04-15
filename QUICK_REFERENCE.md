@@ -196,30 +196,34 @@ class ResourceCreate(BaseModel):
     tags: List[str] = []
 ```
 
-### MongoDB CRUD
+### SQLAlchemy Async CRUD
 ```python
+from sqlalchemy.future import select
+
 # Create
-doc = {"name": "Test", "created_at": datetime.now(timezone.utc)}
-result = await db.collection.insert_one(doc)
-doc["_id"] = result.inserted_id
+obj = models.User(name="Test", role="student")
+session.add(obj)
+await session.commit()
 
 # Read One
-item = await db.collection.find_one({"_id": ObjectId(id)})
+result = await session.execute(
+    select(models.User).where(models.User.id == id)
+)
+item = result.scalars().first()
 
 # Read Many
-items = await db.collection.find(query).sort("created_at", -1).to_list(100)
+result = await session.execute(
+    select(models.User).order_by(models.User.created_at.desc()).limit(100)
+)
+items = result.scalars().all()
 
 # Update
-await db.collection.update_one(
-    {"_id": ObjectId(id)},
-    {"$set": {"name": "New Name"}}
-)
+item.name = "New Name"
+await session.commit()
 
-# Delete
-await db.collection.delete_one({"_id": ObjectId(id)})
-
-# Always serialize before returning
-return serialize_doc(item)
+# Soft Delete
+item.is_deleted = True
+await session.commit()
 ```
 
 ### Error Handling
@@ -374,14 +378,14 @@ const createItem = async () => {
 
 ## 🗄️ Database Collections
 
-```javascript
-users              // User accounts
-quizzes            // Quiz definitions
-quiz_attempts      // Student attempts
-semester_results   // Academic results
-faculty_assignments // Teacher assignments
-mark_entries       // Mid-term marks
-endterm_entries    // End-term marks
+```sql
+users                    -- User accounts (with RLS)
+quizzes                  -- Quiz definitions
+quiz_attempts            -- Student attempts
+semester_grades          -- Academic results
+faculty_assignments      -- Teacher assignments
+mark_submissions         -- Mid-term marks workflow
+mark_submission_entries  -- Individual student marks
 ```
 
 ---
@@ -528,10 +532,10 @@ cd backend
 pip install -r requirements.txt
 uvicorn server:app --reload --port 8001
 
-# MongoDB
-mongosh             # Connect to local MongoDB
-use quizportal      # Switch to database
-db.users.find()     # Query users
+# PostgreSQL
+psql -U postgres acadmix   # Connect to local PostgreSQL
+\dt                        # List tables
+SELECT * FROM users;       # Query users
 ```
 
 ---
@@ -611,8 +615,8 @@ async def test_endpoint():
 
 ### Backend (.env)
 ```env
-MONGO_URL=mongodb://localhost:27017
-DB_NAME=quizportal
+DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/acadmix
+REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-secret-key-here
 FRONTEND_URL=http://localhost:3000
 CORS_ORIGINS=*

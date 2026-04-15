@@ -1,5 +1,6 @@
 import ast as _ast
 import re as _re
+import asyncio
 import httpx
 import tenacity
 from fastapi import APIRouter, Depends, HTTPException, Request, File
@@ -116,13 +117,14 @@ def _validate_code_ast(code: str, language: str):
     if validator.violations:
         raise HTTPException(status_code=400, detail=f"Code blocked: {'; '.join(validator.violations[:3])}")
 
-def _validate_code(code: str, language: str):
+async def _validate_code(code: str, language: str):
     patterns = _BLOCKED_PATTERNS.get(language, [])
     for pattern in patterns:
         match = _re.search(pattern, code)
         if match:
             raise HTTPException(status_code=400, detail=f"Blocked: '{match.group()}' is not allowed.")
-    _validate_code_ast(code, language)
+    # Offload CPU-bound AST parsing to a thread to avoid blocking the event loop
+    await asyncio.to_thread(_validate_code_ast, code, language)
 
 TIMEOUT_CONFIG = {
     "python": 15.0,
@@ -136,7 +138,7 @@ TIMEOUT_CONFIG = {
 @router.post("/execute")
 @limiter.limit("30/minute")
 async def execute_code(request: Request, req: CodeExecuteRequest, user: dict = Depends(get_current_user)):
-    _validate_code(req.code, req.language.lower())
+    await _validate_code(req.code, req.language.lower())
     lang_timeout = TIMEOUT_CONFIG.get(req.language.lower(), 65.0)
 
     @tenacity.retry(
@@ -186,12 +188,12 @@ async def get_arq_pool():
 @router.post("/review")
 @limiter.limit("10/minute")
 async def request_code_review(request: Request, req: CodeReviewRequest, user: dict = Depends(get_current_user)):
-    _validate_code(req.code, req.language.lower())
+    await _validate_code(req.code, req.language.lower())
     
-    # 1. MATHEMATICAL AST PARSING (ANTI-INJECTION)
-    scrubbed_code = strip_comments_advanced(req.code, req.language)
+    # 1. MATHEMATICAL AST PARSING (ANTI-INJECTION) — offloaded to thread
+    scrubbed_code = await asyncio.to_thread(strip_comments_advanced, req.code, req.language)
     
-    # 2. ENQUEUE JOB LOCALLY OR VIA REDIS (ARQ PURE ASYNC)
+    # 2. ENQUEUE JOB VIA REDIS (ARQ PURE ASYNC)
     job_payload = {
         "code": scrubbed_code,
         "language": req.language,
@@ -202,18 +204,22 @@ async def request_code_review(request: Request, req: CodeReviewRequest, user: di
     }
     
     try:
-        # Direct synchronous execution — fast and reliable.
-        # For production with ARQ workers, re-enable the queue path.
-        review_json = await generate_code_review(**job_payload)
-        return {"task_id": "sync-fallback", "status": "completed", "review": review_json}
-    except Exception as e:
-        print(f"AI Review Error: {e}")
-        return {"task_id": "sync-fallback", "status": "completed", "review": {
-            "time_complexity": "N/A",
-            "space_complexity": "N/A",
-            "logic_summary": "AI Review service is currently unavailable.",
-            "suggested_improvements": [str(e)[:200]]
-        }}
+        pool = await get_arq_pool()
+        job = await pool.enqueue_job("process_ai_review_task", job_payload)
+        return {"task_id": job.job_id, "status": "queued"}
+    except Exception:
+        # Fallback to synchronous execution if ARQ/Redis is unavailable
+        try:
+            review_json = await generate_code_review(**job_payload)
+            return {"task_id": "sync-fallback", "status": "completed", "review": review_json}
+        except Exception as e:
+            print(f"AI Review Error: {e}")
+            return {"task_id": "sync-fallback", "status": "completed", "review": {
+                "time_complexity": "N/A",
+                "space_complexity": "N/A",
+                "logic_summary": "AI Review service is currently unavailable.",
+                "suggested_improvements": [str(e)[:200]]
+            }}
 
 @router.get("/review_status/{task_id}")
 async def get_review_status(task_id: str, request: Request, user: dict = Depends(get_current_user)):
@@ -239,7 +245,7 @@ async def get_review_status(task_id: str, request: Request, user: dict = Depends
 @router.post("/coach")
 @limiter.limit("20/minute")
 async def request_code_coach(request: Request, req: CoachMessageRequest, user: dict = Depends(get_current_user)):
-    _validate_code(req.code, req.language.lower())
+    await _validate_code(req.code, req.language.lower())
     
     # Optional logic to enforce context size: we take last 6 messages
     recent_messages = req.messages[-6:]

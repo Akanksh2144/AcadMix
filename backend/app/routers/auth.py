@@ -55,7 +55,7 @@ async def get_me(user: dict = Depends(get_current_user), session: AsyncSession =
 @router.post("/logout")
 async def logout(request: Request, response: Response, session: AsyncSession = Depends(get_db)):
     svc = AuthService(session)
-    svc.logout(request.cookies.get("refresh_token"))
+    await svc.logout(request.cookies.get("refresh_token"))
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
     return {"message": "Logged out"}

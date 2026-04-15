@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Trophy, ChartLine, Fire, BookOpen, Calendar, Target, SignOut, Terminal, ArrowRight, GraduationCap, Play, Medal, Lightning, Warning, Bell, Exam, Briefcase, Sun, Moon, CalendarDots, Chalkboard, UserCircle, ListBullets } from '@phosphor-icons/react';
-import { analyticsAPI } from '../services/api';
+import { Clock, Trophy, ChartLine, Fire, BookOpen, Calendar, Target, SignOut, Terminal, ArrowRight, GraduationCap, Play, Medal, Lightning, Warning, Bell, Exam, Briefcase, Sun, Moon, CalendarDots, Chalkboard, UserCircle, ListBullets, Microphone, House, FileText, Toolbox, Bus } from '@phosphor-icons/react';
+import { analyticsAPI, interviewAPI, resumeAPI } from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
@@ -15,6 +15,7 @@ import StudentProfile from '../components/student/StudentProfile';
 import StudentAcademicCalendar from '../components/student/StudentAcademicCalendar';
 import StudentSubjects from '../components/student/StudentSubjects';
 import FeePaymentModule from '../components/student/FeePaymentModule';
+import StudentTransport from '../components/student/StudentTransport';
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -77,6 +78,8 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('student_tab') || 'overview');
   useEffect(() => { sessionStorage.setItem('student_tab', activeTab); }, [activeTab]);
   const [dashboard, setDashboard] = useState(null);
+  const [interviewQuota, setInterviewQuota] = useState(null);
+  const [latestAtsScore, setLatestAtsScore] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -137,6 +140,8 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
       setLoading(false);
     };
     fetchData();
+    interviewAPI.getQuota().then(res => setInterviewQuota(res.data)).catch(() => {});
+    resumeAPI.latest().then(res => { if (res.data?.ats_score != null) setLatestAtsScore(res.data.ats_score); }).catch(() => {});
   }, []);
 
   const quizzesTaken = dashboard?.total_quizzes || 0;
@@ -145,6 +150,8 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
 
   const stats = [
     { label: 'Campus Drives', value: dashboard?.active_drives || 0, sub: 'open for applications', icon: Briefcase, color: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400', gradient: 'from-purple-500 to-fuchsia-500', onClick: () => navigate('placements') },
+    { label: 'Interview Prep', value: interviewQuota?.used || 0, sub: 'sessions this month', icon: Microphone, color: 'bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400', gradient: 'from-teal-500 to-cyan-500', onClick: () => navigate('interview-warroom') },
+    { label: 'Resume Score', value: latestAtsScore != null ? latestAtsScore : '—', sub: 'ATS compatibility', icon: FileText, color: 'bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400', gradient: 'from-cyan-500 to-blue-500', onClick: () => navigate('resume-ats-scorer') },
   ];
 
   /* ── Skeleton screen while loading ─────────────────────── */
@@ -301,6 +308,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
               { id: 'timetable', label: 'Timetable' },
               { id: 'subjects', label: 'Subjects' },
               { id: 'calendar', label: 'Calendar' },
+              { id: 'transport', label: 'Transport' },
               { id: 'fees', label: 'Fees & Payments' },
             ].map(tab => {
               const hasBadge = (tab.id === 'quizzes' && showQuizBadge) || (tab.id === 'fees' && showFeesBadge);
@@ -365,11 +373,15 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
             { id: 'semester-results', icon: Calendar, label: 'Semester Results', sub: 'Check your grades', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-semester-results-button' },
             { id: 'analytics', icon: ChartLine, label: 'Analytics', sub: 'Track performance', iconBg: 'bg-amber-50 dark:bg-amber-500/10 group-hover:bg-amber-100 dark:group-hover:bg-amber-500/20', iconText: 'text-amber-500', testId: 'view-analytics-button' },
             { id: 'code-playground', icon: Terminal, label: 'Code Playground', sub: 'Practice coding', iconBg: 'bg-purple-50 dark:bg-purple-500/10 group-hover:bg-purple-100 dark:group-hover:bg-purple-500/20', iconText: 'text-purple-500', testId: 'view-code-playground-button' },
+            { id: 'hostel-booking', icon: House, label: 'Hostel Booking', sub: 'Book your bed', iconBg: 'bg-pink-50 dark:bg-pink-500/10 group-hover:bg-pink-100 dark:group-hover:bg-pink-500/20', iconText: 'text-pink-500', testId: 'view-hostel-booking-button' },
+            { id: 'transport', label: 'Bus Tracker', sub: 'Track your bus', icon: Bus, iconBg: 'bg-emerald-50 dark:bg-emerald-500/10 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/20', iconText: 'text-emerald-500', testId: 'view-transport-button', isTab: true },
+            { id: 'career-toolkit', icon: Toolbox, label: 'Career Toolkit', sub: '8 AI career tools', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-career-toolkit-button' },
+
           ].map((item) => {
             const Icon = item.icon;
             return (
               <motion.button key={item.id} variants={itemVariants} whileHover={cardHover} whileTap={{ scale: 0.97 }}
-                data-testid={item.testId} onClick={() => navigate(item.id)}
+                data-testid={item.testId} onClick={() => item.isTab ? handleTabChange(item.id) : navigate(item.id)}
                 className="soft-card-hover p-4 sm:p-6 text-left flex items-center gap-3 sm:gap-4 group"
               >
                 <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-colors ${item.iconBg}`}>
@@ -593,11 +605,11 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
 
             {/* Quick actions */}
             <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
-              <motion.button whileHover={cardHover} onClick={() => navigate('quiz-results')} className="soft-card-hover p-4 text-left flex items-center gap-3 group">
+              <motion.button whileHover={cardHover} onClick={() => navigate('quiz-results')} className="soft-card-hover p-4 flex items-center justify-center gap-3 group">
                 <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center"><BookOpen size={20} weight="duotone" className="text-indigo-500" /></div>
                 <div><p className="font-bold text-sm text-slate-900 dark:text-white">Past Results</p><p className="text-xs text-slate-500">View attempts</p></div>
               </motion.button>
-              <motion.button whileHover={cardHover} onClick={() => navigate('analytics')} className="soft-card-hover p-4 text-left flex items-center gap-3 group">
+              <motion.button whileHover={cardHover} onClick={() => navigate('analytics')} className="soft-card-hover p-4 flex items-center justify-center gap-3 group">
                 <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center"><ChartLine size={20} weight="duotone" className="text-amber-500" /></div>
                 <div><p className="font-bold text-sm text-slate-900 dark:text-white">Analytics</p><p className="text-xs text-slate-500">Performance trends</p></div>
               </motion.button>
@@ -668,7 +680,10 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
 
         {activeTab === 'calendar' && <StudentAcademicCalendar />}
 
+        {activeTab === 'transport' && <StudentTransport />}
+
         {activeTab === 'fees' && <FeePaymentModule user={user} />}
+
 
         {/* Profile Overlay */}
         <AnimatePresence>

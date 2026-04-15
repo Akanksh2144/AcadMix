@@ -10,6 +10,7 @@ import openpyxl
 from database import get_db
 from app.core.security import get_current_user
 from app.core.security import require_role
+from app.core.pagination import PaginatedParams, paginated_response
 from app import models
 import app.schemas as server_schemas
 from app.schemas import *
@@ -74,14 +75,18 @@ async def list_placements(user: dict = Depends(require_role("admin", "hod", "tea
 
 
 @router.get("/tpo/drives/{drive_id}/applicants")
-async def get_drive_applicants(drive_id: str, user: dict = Depends(require_role("tp_officer", "admin", "super_admin")), session: AsyncSession = Depends(get_db)):
-    stmt = select(models.PlacementApplication).where(
+async def get_drive_applicants(
+    drive_id: str,
+    user: dict = Depends(require_role("tp_officer", "admin", "super_admin")),
+    session: AsyncSession = Depends(get_db),
+    params: PaginatedParams = Depends(),
+):
+    query = select(models.PlacementApplication).where(
         models.PlacementApplication.drive_id == drive_id,
         models.PlacementApplication.college_id == user["college_id"],
         models.PlacementApplication.is_deleted == False
     )
-    res = await session.execute(stmt)
-    return res.scalars().all()
+    return await paginated_response(session, query, params)
 
 
 @router.put("/tpo/drives/{drive_id}/shortlist")
@@ -223,11 +228,11 @@ async def export_tpo_statistics(user: dict = Depends(require_role("tp_officer", 
 @router.get("/tpo/alumni-jobs")
 async def get_tpo_alumni_jobs(
     user: dict = Depends(require_role("tpo", "tp_officer", "admin")),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
+    params: PaginatedParams = Depends(),
 ):
-    stmt = select(models.AlumniJobPosting).where(models.AlumniJobPosting.college_id == user["college_id"])
-    jobs = (await session.execute(stmt)).scalars().all()
-    return jobs
+    query = select(models.AlumniJobPosting).where(models.AlumniJobPosting.college_id == user["college_id"])
+    return await paginated_response(session, query, params)
 
 
 @router.put("/tpo/alumni-jobs/{job_id}/moderate")

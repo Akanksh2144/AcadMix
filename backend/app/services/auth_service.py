@@ -61,7 +61,7 @@ class AuthService:
 
         # Rate-limit check
         if redis_client:
-            failures = redis_client.get(key)
+            failures = await redis_client.get(key)
             if failures and int(failures) >= self.MAX_LOGIN_FAILURES:
                 raise RateLimitedError()
 
@@ -82,12 +82,12 @@ class AuthService:
                 pipe = redis_client.pipeline()
                 pipe.incr(key)
                 pipe.expire(key, self.LOCKOUT_SECONDS)
-                pipe.execute()
+                await pipe.execute()
             raise AuthenticationError()
 
         # Success — clear failure counter
         if redis_client:
-            redis_client.delete(key)
+            await redis_client.delete(key)
 
         # Build permissions from role table
         perms = await self._resolve_role_permissions(user)
@@ -134,7 +134,7 @@ class AuthService:
 
         return {**user, "permissions": permission_flags, "scope": scope}
 
-    def logout(self, refresh_token: Optional[str]) -> None:
+    async def logout(self, refresh_token: Optional[str]) -> None:
         """Blacklist a refresh token if Redis is available."""
         if not refresh_token:
             return
@@ -142,7 +142,7 @@ class AuthService:
             payload = jwt.decode(refresh_token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             jti = payload.get("jti")
             if redis_client and jti:
-                redis_client.setex(f"revoked_refresh:{jti}", 604800, "revoked")
+                await redis_client.setex(f"revoked_refresh:{jti}", 604800, "revoked")
         except jwt.InvalidTokenError:
             pass
 
@@ -164,7 +164,7 @@ class AuthService:
                 raise AuthenticationError("Invalid token type")
 
             jti = payload.get("jti")
-            if redis_client and redis_client.exists(f"revoked_refresh:{jti}"):
+            if redis_client and await redis_client.exists(f"revoked_refresh:{jti}"):
                 raise AuthenticationError("Refresh token revoked")
 
             user_id = payload["sub"]

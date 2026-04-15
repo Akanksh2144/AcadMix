@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import "./index.css";
 import App from "./App";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { TenantProvider } from "./contexts/TenantContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,10 +40,11 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
-
+      <TenantProvider>
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
+      </TenantProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 );

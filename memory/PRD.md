@@ -5,7 +5,7 @@ Build a full-stack cross-platform College Quiz Platform & Results Portal with ro
 
 ## Tech Stack
 - **Frontend**: React + TailwindCSS + Shadcn UI + Recharts + Monaco Editor
-- **Backend**: FastAPI + MongoDB (Motor async driver)
+- **Backend**: FastAPI + PostgreSQL (SQLAlchemy async + Alembic migrations)
 - **Auth**: JWT (Bearer token)
 - **Design**: "Smooth, rounded" light aesthetic
 
@@ -32,7 +32,7 @@ Build a full-stack cross-platform College Quiz Platform & Results Portal with ro
 ### Phase 1 - MVP (Complete)
 - [x] React frontend with all page routing
 - [x] "Smooth, rounded" design aesthetic
-- [x] FastAPI + MongoDB backend
+- [x] FastAPI + PostgreSQL backend (SQLAlchemy async ORM)
 - [x] JWT Authentication (login, session persistence)
 - [x] Student Dashboard with stats, active quizzes, recent results
 - [x] Teacher Dashboard with quiz management + marks entry card
@@ -98,11 +98,11 @@ Build a full-stack cross-platform College Quiz Platform & Results Portal with ro
 - `GET /api/dashboard/hod` - HOD dashboard stats
 - `GET /api/dashboard/exam_cell` - Exam Cell dashboard stats
 
-## DB Collections
-- `users` - User accounts (student, teacher, hod, exam_cell, admin)
-- `quizzes` - Quiz definitions with questions
-- `quiz_attempts` - Student quiz attempts and results
-- `semester_results` - Semester academic results
+## DB Tables (PostgreSQL with RLS)
+- `users` - User accounts (14+ roles)
+- `quizzes` / `questions` / `options` - Quiz definitions
+- `quiz_attempts` / `quiz_answers` - Student quiz attempts and results
+- `semester_grades` - Semester academic results
 - `faculty_assignments` - Teacher-subject-class mappings
-- `mark_entries` - Mid-term marks (draft/submitted/approved/rejected)
-- `endterm_entries` - End-term marks (draft/published)
+- `mark_submissions` / `mark_submission_entries` - Marks workflow
+- `colleges` / `departments` - Multi-tenant structure

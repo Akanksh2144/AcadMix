@@ -1,8 +1,9 @@
 import os
+import logging
 import bcrypt
 import jwt
 import uuid
-import redis
+import redis.asyncio as aioredis
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Any
 
@@ -14,6 +15,8 @@ from database import get_db, tenant_context
 from app import models
 from app.core.config import settings
 
+logger = logging.getLogger("acadmix.security")
+
 # ─── Configuration ────────────────────────────────────────────────────────────
 
 JWT_SECRET = settings.JWT_SECRET
@@ -22,7 +25,7 @@ if not JWT_SECRET:
 JWT_ALGORITHM = settings.JWT_ALGORITHM
 
 redis_url = settings.REDIS_URL
-redis_client = redis.from_url(redis_url) if redis_url else None
+redis_client = aioredis.from_url(redis_url) if redis_url else None
 
 class TokenBlacklistConfig:
     USE_BLACKLIST = os.getenv("USE_TOKEN_BLACKLIST", "false").lower() == "true"
@@ -75,7 +78,7 @@ async def get_current_user(request: Request, session: AsyncSession = Depends(get
             
         if TokenBlacklistConfig.USE_BLACKLIST and redis_client:
             jti = payload.get("jti")
-            if jti and redis_client.exists(f"revoked_access:{jti}"):
+            if jti and await redis_client.exists(f"revoked_access:{jti}"):
                 raise HTTPException(status_code=401, detail="Token revoked")
         
         result = await session.execute(select(models.User).where(models.User.id == payload["sub"]))
@@ -111,13 +114,18 @@ async def get_current_user(request: Request, session: AsyncSession = Depends(get
         import json
         from sqlalchemy import text
         
-        # Set JWT claims as Postgres GUC variables for future RLS policy evaluation.
-        # NOTE: We intentionally do NOT downgrade the role to 'authenticated' yet
-        # because RLS policies + GRANT privileges are not fully deployed.
-        # The ORM-level tenant filter (database.py receive_do_orm_execute) still
-        # provides application-level isolation.
+        # Set GUC variables for RLS policy evaluation.
+        # app.college_id → used by tenant_isolation policies on all tables
+        # request.jwt.claims → legacy Supabase-style claims (kept for compatibility)
+        college_id_str = user_dict.get("college_id", "")
+        if college_id_str:
+            await session.execute(
+                text("SELECT set_config('app.college_id', :cid, true)"),
+                {"cid": college_id_str},
+            )
+        
         jwt_claims = json.dumps({
-            "college_id": user_dict.get("college_id", ""),
+            "college_id": college_id_str,
             "role": user.role,
             "sub": user.id
         })
@@ -136,10 +144,9 @@ async def get_current_user(request: Request, session: AsyncSession = Depends(get
         print(f"JWT Error: {e}")
         raise HTTPException(status_code=401, detail="Invalid token")
     except Exception as e:
-        print(f"Internal Server Error during token validation: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Internal Server Error during token validation: {e}")
+        # Log full exception server-side but redact details from client response
+        logger.exception("Internal error during token validation")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 def require_role(*roles):
     async def check(request: Request, session: AsyncSession = Depends(get_db)):

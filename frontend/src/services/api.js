@@ -15,6 +15,21 @@ let authToken = null;
 let isRefreshing = false;
 let refreshSubscribers = [];
 
+/**
+ * Detect tenant slug from the current hostname.
+ * e.g., "demo.acadmix.org" → "demo", "localhost" → null
+ */
+function detectTenantSlug() {
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return null;
+  if (hostname.endsWith('.localhost')) return hostname.replace('.localhost', '');
+  const parts = hostname.split('.');
+  if (parts.length >= 3 && parts[0] !== 'www') return parts[0];
+  return null;
+}
+
+const tenantSlug = detectTenantSlug();
+
 const onRefreshed = (newToken) => {
   refreshSubscribers.forEach(cb => cb(newToken));
   refreshSubscribers = [];
@@ -23,6 +38,10 @@ const onRefreshed = (newToken) => {
 api.interceptors.request.use((config) => {
   if (authToken) {
     config.headers.Authorization = `Bearer ${authToken}`;
+  }
+  // Inject tenant header for multi-tenant routing
+  if (tenantSlug) {
+    config.headers['X-Tenant'] = tenantSlug;
   }
   return config;
 });
@@ -473,3 +492,160 @@ export const feesAPI = {
   bulkGenerateInvoices: (data) => api.post('/api/admin/fees/invoices/bulk', data),
 };
 
+// Interview War Room — AI Mock Interviews
+export const interviewAPI = {
+  getQuota: () => api.get('/api/interview/quota'),
+  start: (data) => api.post('/api/interview/start', data),
+  sendMessage: (id, data) => api.post(`/api/interview/${id}/message`, data),
+  end: (id) => api.post(`/api/interview/${id}/end`),
+  history: () => api.get('/api/interview/history'),
+  get: (id) => api.get(`/api/interview/${id}`),
+  readiness: () => api.get('/api/interview/readiness'),
+};
+
+// Interview War Room — Resume ATS Scoring
+export const resumeAPI = {
+  upload: (formData) => api.post('/api/resume/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  score: (id, data) => api.post(`/api/resume/${id}/score`, data),
+  history: () => api.get('/api/resume/history'),
+  latest: () => api.get('/api/resume/latest'),
+};
+
+// Career Toolkit — AI-Powered Career Prep Tools
+export const careerAPI = {
+  coverLetter: (data) => api.post('/api/career/cover-letter', data),
+  analyzeJD: (data) => api.post('/api/career/jd-analyze', data),
+  coldEmail: (data) => api.post('/api/career/cold-email', data),
+  skillGap: (data) => api.post('/api/career/skill-gap', data),
+  hrQuestions: (data) => api.post('/api/career/hr-questions', data),
+  dsaRecommend: (data) => api.post('/api/career/dsa-recommend', data),
+  careerPaths: (data) => api.post('/api/career/career-paths', data),
+  companyIntel: () => api.get('/api/career/company-intel'),
+};
+
+// Hostel Management — Sleeper Bus Bed Booking
+export const hostelAPI = {
+  // Student booking funnel
+  getAvailableHostels: () => api.get('/api/hostel/available'),
+  getFloors: (hostelId) => api.get(`/api/hostel/buildings/${hostelId}/floors`),
+  getRoomGrid: (roomId) => api.get(`/api/hostel/rooms/${roomId}/grid`),
+  lockBed: (data) => api.post('/api/hostel/beds/lock', data),
+  confirmBooking: (data) => api.post('/api/hostel/beds/confirm', data),
+  getMyAllocation: () => api.get('/api/hostel/my-allocation'),
+
+  // Gatepasses
+  applyGatepass: (data) => api.post('/api/hostel/gatepasses/apply', data),
+  myGatepasses: () => api.get('/api/hostel/gatepasses/my'),
+
+  // Warden/Admin — Buildings
+  getBuildings: () => api.get('/api/hostel/buildings'),
+  createBuilding: (data) => api.post('/api/hostel/buildings', data),
+  getRooms: (hostelId, floor) => api.get(`/api/hostel/buildings/${hostelId}/rooms`, { params: floor != null ? { floor } : {} }),
+  bulkCreateRooms: (hostelId, data) => api.post(`/api/hostel/buildings/${hostelId}/rooms/bulk`, data),
+
+  // Warden/Admin — Templates
+  getTemplates: () => api.get('/api/hostel/templates'),
+  createTemplate: (data) => api.post('/api/hostel/templates', data),
+
+  // Warden/Admin — Beds
+  getBedGrid: (roomId) => api.get(`/api/hostel/rooms/${roomId}/grid`),
+  togglePremium: (roomId, bedId, data) => api.patch(`/api/hostel/rooms/${roomId}/beds/${bedId}/toggle-premium`, data),
+  setBedStatus: (roomId, bedId, data) => api.patch(`/api/hostel/rooms/${roomId}/beds/${bedId}/status`, data),
+
+  // Warden — Gatepasses
+  getPendingGatepasses: (hostelId) => api.get('/api/hostel/gatepasses/pending', { params: { hostel_id: hostelId } }),
+  reviewGatepass: (id, data) => api.put(`/api/hostel/gatepasses/${id}/review`, data),
+
+  // Warden Dashboard
+  wardenDashboard: () => api.get('/api/hostel/warden/dashboard'),
+};
+
+// Transport Management — Bus Tracking & Enrollment
+export const transportAPI = {
+  // Student
+  routes: () => api.get('/api/transport/routes'),
+  enroll: (data) => api.post('/api/transport/enroll', data),
+  myEnrollment: () => api.get('/api/transport/my-enrollment'),
+  liveStatus: (routeId) => api.get(`/api/transport/live/${routeId}`),
+  busStatus: (routeId) => api.get(`/api/transport/status/${routeId}`),
+  busPass: () => api.get('/api/transport/pass'),
+  tripHistory: () => api.get('/api/transport/history'),
+
+  // Admin — Fleet
+  adminRoutes: () => api.get('/api/admin/transport/routes'),
+  createRoute: (data) => api.post('/api/admin/transport/routes', data),
+  updateRoute: (id, data) => api.put(`/api/admin/transport/routes/${id}`, data),
+  assignDriver: (data) => api.post('/api/admin/transport/assign-driver', data),
+  dashboard: () => api.get('/api/admin/transport/dashboard'),
+  trips: (params) => api.get('/api/admin/transport/trips', { params }),
+
+  // Admin — Trip Control
+  startTrip: (data) => api.post('/api/admin/transport/start-trip', data),
+  endTrip: (data) => api.post('/api/admin/transport/end-trip', data),
+  clearStop: (data) => api.post('/api/admin/transport/clear-stop', data),
+  scanBoarding: (data) => api.post('/api/admin/transport/scan-boarding', data),
+
+  // Admin — Devices
+  devices: () => api.get('/api/admin/transport/devices'),
+  registerDevice: (data) => api.post('/api/admin/transport/devices', data),
+
+  // Simulator
+  simStart: (data) => api.post('/api/transport/simulate/start', data),
+  simAdvance: (data) => api.post('/api/transport/simulate/advance', data),
+  simEnd: (data) => api.post('/api/transport/simulate/end', data),
+};
+
+// Library Management
+export const libraryAPI = {
+  // Search & Detail
+  search: (q, params = {}) => api.get('/api/library/search', { params: { q, ...params } }),
+  bookDetail: (id) => api.get(`/api/library/books/${id}`),
+
+  // Catalog (Librarian/Admin)
+  addBook: (data) => api.post('/api/library/books', data),
+  updateBook: (id, data) => api.put(`/api/library/books/${id}`, data),
+  addCopies: (bookId, copies) => api.post(`/api/library/books/${bookId}/copies`, { copies }),
+
+  // Checkout / Return
+  checkout: (data) => api.post('/api/library/checkout', data),
+  returnBook: (data) => api.post('/api/library/return', data),
+  renew: (data) => api.post('/api/library/renew', data),
+  kioskScan: (data) => api.post('/api/library/kiosk/scan', data),
+
+  // Reservations
+  reserve: (bookId) => api.post('/api/library/reserve', { book_id: bookId }),
+  myAccount: () => api.get('/api/library/my-account'),
+
+  // Fines
+  payFine: (fineId, payVia) => api.post(`/api/library/fines/${fineId}/pay`, { fine_id: fineId, pay_via: payVia }),
+
+  // Dashboard
+  dashboard: () => api.get('/api/library/dashboard'),
+};
+
+// Visitor Management — Campus & Hostel Visitor Tracking
+export const visitorAPI = {
+  // Dashboard
+  dashboard: (params = {}) => api.get('/api/visitors/dashboard', { params }),
+
+  // Search
+  search: (q) => api.get('/api/visitors/search', { params: { q } }),
+
+  // Check-in / Check-out
+  checkIn: (data) => api.post('/api/visitors/check-in', data),
+  checkInPreApproved: (visitId, badgeNumber) => api.post(`/api/visitors/${visitId}/check-in`, null, { params: badgeNumber ? { badge_number: badgeNumber } : {} }),
+  checkOut: (data) => api.post('/api/visitors/check-out', data),
+
+  // Pre-approve
+  preApprove: (data) => api.post('/api/visitors/pre-approve', data),
+
+  // Approve / Reject
+  review: (visitId, data) => api.put(`/api/visitors/${visitId}/review`, data),
+
+  // Queries
+  getActive: (params = {}) => api.get('/api/visitors/active', { params }),
+  getPending: (params = {}) => api.get('/api/visitors/pending', { params }),
+  getPreApproved: (params = {}) => api.get('/api/visitors/pre-approved', { params }),
+  getMyExpected: () => api.get('/api/visitors/my-expected'),
+  getLog: (params = {}) => api.get('/api/visitors/log', { params }),
+};

@@ -5,8 +5,9 @@ from datetime import datetime, timezone
 class AnnouncementCreate(BaseModel):
     title: str
     message: str
-    priority: str = "info"  # info, warning, urgent
+    priority: str = "info"  # info, warning, urgent, critical
     visibility: str = "all"  # all, faculty, students
+    category: Optional[str] = None  # holiday, half_day, emergency, exam, event (triggers WA broadcast)
 
 
 class AttendanceMarkItem(BaseModel):

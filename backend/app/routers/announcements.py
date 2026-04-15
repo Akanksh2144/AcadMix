@@ -51,6 +51,7 @@ async def create_announcement(req: AnnouncementCreate, user: dict = Depends(requ
         priority=req.priority,
         details={
             "visibility": req.visibility,
+            "category": req.category or "",
             "department": user.get("department", ""),
             "posted_by": user["name"],
             "posted_by_id": user["id"]
@@ -59,6 +60,25 @@ async def create_announcement(req: AnnouncementCreate, user: dict = Depends(requ
     session.add(row)
     await session.commit()
     await session.refresh(row)
+
+    # 🔔 Trigger WhatsApp broadcast for urgent/critical or categorized announcements
+    try:
+        details = row.details or {}
+        category = details.get("category", "")
+        should_broadcast = (
+            row.priority in ("urgent", "critical") or
+            category in ("holiday", "half_day", "emergency")
+        )
+        if should_broadcast:
+            from arq import create_pool
+            from arq.connections import RedisSettings
+            from app.core.config import settings as app_settings
+            redis = await create_pool(RedisSettings.from_dsn(app_settings.REDIS_URL))
+            await redis.enqueue_job("broadcast_college_alert_task", user["college_id"], row.id)
+    except Exception as e:
+        import logging
+        logging.getLogger("acadmix.announcements").warning("Failed to enqueue WA broadcast: %s", e)
+
     return {"id": row.id, "title": row.title, "message": row.message, "priority": row.priority}
 
 

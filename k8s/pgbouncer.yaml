@@ -1,0 +1,130 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# PgBouncer — Connection Pooler for AcadMix Production
+#
+# PURPOSE: Prevents "thundering herd" connection exhaustion when Kubernetes
+#          scales FastAPI pods during exam spikes. Without PgBouncer,
+#          40 pods × 50 connections = 2,000 direct DB connections → crash.
+#          With PgBouncer: 5,000 client connections multiplexed into 50 real
+#          PostgreSQL connections.
+#
+# USAGE:
+#   1. Deploy this manifest: kubectl apply -f k8s/pgbouncer.yaml
+#   2. Set PGBOUNCER_ENABLED=true in FastAPI pod env
+#   3. Point DATABASE_URL to pgbouncer-service:5432 instead of postgres directly
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgbouncer-config
+  namespace: acadmix
+data:
+  pgbouncer.ini: |
+    [databases]
+    acadmix = host=${POSTGRES_HOST} port=5432 dbname=acadmix
+
+    [pgbouncer]
+    listen_addr = 0.0.0.0
+    listen_port = 5432
+    auth_type = md5
+    auth_file = /etc/pgbouncer/userlist.txt
+
+    # Transaction pooling: releases server connection after each transaction.
+    # Required for SQLAlchemy SET LOCAL (RLS GUC variables are tx-scoped).
+    pool_mode = transaction
+
+    # Production pool sizing
+    default_pool_size = 50        # Real PostgreSQL connections per database
+    max_client_conn = 5000        # Max connections from all FastAPI pods combined
+    min_pool_size = 10            # Keep 10 warmed connections ready
+    reserve_pool_size = 5         # Emergency reserve for admin queries
+    reserve_pool_timeout = 3      # Seconds before reserve pool kicks in
+
+    # Timeouts
+    server_lifetime = 600         # Recycle server connections every 10 min
+    server_idle_timeout = 300     # Close idle server connections after 5 min
+    client_idle_timeout = 0       # Never timeout idle clients (K8s manages lifecycle)
+    query_timeout = 30            # Kill queries running longer than 30s
+    query_wait_timeout = 10       # Max wait for a server connection
+
+    # Logging
+    log_connections = 0
+    log_disconnections = 0
+    log_pooler_errors = 1
+    stats_period = 60
+
+    # Security
+    server_tls_sslmode = prefer
+    ignore_startup_parameters = extra_float_digits,options
+
+  userlist.txt: |
+    "postgres" "md5_password_hash_here"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgbouncer
+  namespace: acadmix
+  labels:
+    app: pgbouncer
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pgbouncer
+  template:
+    metadata:
+      labels:
+        app: pgbouncer
+    spec:
+      containers:
+        - name: pgbouncer
+          image: edoburu/pgbouncer:1.22.1
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: pgbouncer-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /etc/pgbouncer/pgbouncer.ini
+              subPath: pgbouncer.ini
+            - name: config
+              mountPath: /etc/pgbouncer/userlist.txt
+              subPath: userlist.txt
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 3
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: pgbouncer-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgbouncer-service
+  namespace: acadmix
+spec:
+  selector:
+    app: pgbouncer
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP

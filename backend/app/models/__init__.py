@@ -5,6 +5,10 @@ from app.models.evaluation import Quiz, Question, Option, QuizAttempt, QuizAnswe
 from app.models.administration import FacultyAssignment, Announcement, AttendanceRecord, LeaveRequest, InstitutionProfile, StudentFeeInvoice, FeePayment, ActivityPermission, TaskAssignment, DepartmentMeeting, OutOfCampusPermission, FreePeriodRequest, Scholarship, ScholarshipApplication, CourseFeedback, Grievance, MOU, CurriculumFeedback, DHCircular, CircularAcknowledgment, DHSubmissionRequirement, DHSubmissionRecord, InspectionRecord, InspectionResponse, ExpertAssignment, NodalOfficerJurisdiction
 from app.models.alumni_industry import Company, PlacementDrive, PlacementApplication, AlumniJobPosting, AlumniMentorship, AlumniEvent, AlumniEventRegistration, AlumniGuestLecture, AlumniContribution, AlumniAchievement, AlumniFeedback, IndustryProject, IndustryProjectApplication, EmployerFeedback, RetiredFacultyAdvisory, RetiredFacultyResearch, ConsultancyEngagement
 from app.models.interview_prep import MockInterview, ResumeScore
+from app.models.hostel import RoomTemplate, Hostel, Room, Bed, Allocation, GatePass
+from app.models.iot import BusRoute, BusLocation, VendingMachine, VendingTransaction, RewardPointLog, AIS140Device, TransportEnrollment, Trip, TripSummary, TransportAttendance
 from app.models.audit import AuditLog, RLSShadowLog
+from app.models.library import Book, BookCopy, LibraryTransaction, LibraryFine, LibraryReservation
+from app.models.visitors import Visitor, VisitRecord
 
 

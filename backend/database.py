@@ -22,13 +22,21 @@ from sqlalchemy.pool import NullPool
 # TENANT ENGINE — used by all FastAPI request handlers.
 # The after_begin hook downgrades from 'postgres' to 'authenticated' and sets
 # Postgres GUC variables so that future CREATE POLICY rules can reference them.
+#
+# Pool sizing strategy:
+#   - With PgBouncer (production): small pool (5/10) — PgBouncer multiplexes.
+#   - Without PgBouncer (dev/staging): larger pool (20/30) — direct connections.
 # ═══════════════════════════════════════════════════════════════════════════════
+
+_PGBOUNCER_MODE = os.getenv("PGBOUNCER_ENABLED", "false").lower() == "true"
+_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "5" if _PGBOUNCER_MODE else "20"))
+_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "10" if _PGBOUNCER_MODE else "30"))
 
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
-    pool_size=20,
-    max_overflow=30,
+    pool_size=_POOL_SIZE,
+    max_overflow=_MAX_OVERFLOW,
     pool_timeout=10,
     pool_recycle=600,
     pool_pre_ping=True,
@@ -80,13 +88,36 @@ Base = declarative_base()
 tenant_context = contextvars.ContextVar("tenant_context", default=None)
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# TENANT GUC HOOK — fires on every new transaction in the tenant engine.
-# Sets Postgres session variables for RLS policy evaluation.
+# TENANT GUC HOOK — sets PostgreSQL GUC variables for RLS policy evaluation.
+#
+# Every tenant session sets:
+#   app.college_id  → matched by CREATE POLICY ... USING (college_id = current_setting('app.college_id'))
+#
+# Every admin session sets:
+#   app.rls_bypass  → matched by superuser_bypass policy
+#
+# These are SET LOCAL — scoped to the current transaction only.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-# Legacy Python-Level GUC listener was removed. 
-# Tenant isolation is now completely delegated to the PostgreSQL Kernel via Supabase JWTs.
+async def _set_tenant_guc(session: AsyncSession, college_id: str | None):
+    """Set the app.college_id GUC variable for RLS policy evaluation.
+
+    Uses SET LOCAL so the value is automatically cleared when the
+    transaction ends (commit or rollback).
+    """
+    if college_id:
+        await session.execute(
+            text("SELECT set_config('app.college_id', :cid, true)"),
+            {"cid": str(college_id)},
+        )
+
+
+async def _set_admin_bypass(session: AsyncSession):
+    """Set the app.rls_bypass GUC so admin sessions pass through FORCE RLS."""
+    await session.execute(
+        text("SELECT set_config('app.rls_bypass', 'true', true)")
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -292,9 +323,15 @@ async def get_db():
     on any unhandled exception it auto-rolls-back.  Existing
     ``await session.commit()`` calls within service methods become
     safe no-ops inside the managed transaction scope.
+
+    RLS enforcement: sets app.college_id GUC from the contextvars
+    tenant_context so PostgreSQL policies can isolate rows.
     """
     async with AsyncSessionLocal() as session:
         async with session.begin():
+            # Set RLS GUC from Python-level tenant context
+            college_id = tenant_context.get()
+            await _set_tenant_guc(session, college_id)
             yield session
 
 
@@ -307,6 +344,7 @@ async def get_admin_db():
     async with AdminSessionLocal() as session:
         session.info["_admin_bypass"] = True
         async with session.begin():
+            await _set_admin_bypass(session)
             yield session
 
 
@@ -322,8 +360,29 @@ async def admin_session_ctx():
     """
     async with AdminSessionLocal() as session:
         session.info["_admin_bypass"] = True
+        await _set_admin_bypass(session)
         try:
             yield session
         except Exception:
             await session.rollback()
             raise
+
+
+def get_pool_status() -> dict:
+    """Return connection pool metrics for the /health/db endpoint.
+
+    Safe to call from any async context — reads pool counters
+    without acquiring a connection.
+    """
+    pool = engine.pool
+    return {
+        "pool_size": pool.size(),
+        "checked_in": pool.checkedin(),
+        "checked_out": pool.checkedout(),
+        "overflow": pool.overflow(),
+        "max_overflow": _MAX_OVERFLOW,
+        "pgbouncer_enabled": _PGBOUNCER_MODE,
+        "rls_shadow_mode": RLS_SHADOW_MODE,
+        "rls_shadow_violations": _shadow_violation_count,
+        "rls_circuit_open": _shadow_circuit_open,
+    }

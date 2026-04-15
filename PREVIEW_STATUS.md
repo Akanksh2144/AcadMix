@@ -12,7 +12,7 @@
 |---------|--------|------|---------|
 | **Frontend** | ✅ RUNNING | 3000 | React app compiled successfully |
 | **Backend** | ✅ RUNNING | 8001 | FastAPI + Uvicorn |
-| **MongoDB** | ✅ RUNNING | 27017 | Database ready |
+| **PostgreSQL** | ✅ RUNNING | 5432 | Database ready |
 | **Nginx Proxy** | ✅ RUNNING | 80/443 | Reverse proxy active |
 
 ---
@@ -159,13 +159,13 @@ The application features a **beautiful soft, rounded design**:
 
 ## 📊 Database Contents
 
-**MongoDB Database**: `quizportal`
+**PostgreSQL Database**: `acadmix`
 
-**Collections populated**:
-- ✅ `users` (9 users)
-- ✅ `quizzes` (3 sample quizzes)
-- ✅ `semester_results` (3 semesters for student 22WJ8A6745)
-- ✅ `faculty_assignments` (Ready for HOD management)
+**Tables populated**:
+- ✅ `users` (seeded across all roles)
+- ✅ `quizzes` (sample quizzes)
+- ✅ `semester_grades` (multi-semester data)
+- ✅ `faculty_assignments` (teacher-subject mappings)
 
 ---
 
@@ -241,8 +241,8 @@ tail -f /var/log/supervisor/backend.err.log
 # Frontend logs
 tail -f /var/log/supervisor/frontend.out.log
 
-# MongoDB logs
-tail -f /var/log/mongodb.out.log
+# PostgreSQL logs
+tail -f /var/log/postgresql/postgresql.log
 ```
 
 ### Restart Services
@@ -349,7 +349,7 @@ curl -X POST http://localhost:8001/api/auth/login \
 
 ## ✅ Verification Checklist
 
-- [x] MongoDB running
+- [x] PostgreSQL running
 - [x] Backend API running (port 8001)
 - [x] Frontend compiled (port 3000)
 - [x] Seed data created
