@@ -1,0 +1,113 @@
+##############################################################################
+# FastAPI Deployment — AcadMix Backend
+#
+# Key configuration:
+#   - PGBOUNCER_ENABLED=true so SQLAlchemy uses the smaller pool (5/10)
+#     rather than direct-to-Postgres pool (20/30).
+#   - Readiness/liveness probes on /api/health.
+#   - Resource limits tuned for ~4 pods under normal load, scaling to 8
+#     via the HPA defined in hpa.yaml.
+##############################################################################
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acadmix-backend
+  labels:
+    app: acadmix-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: acadmix-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: acadmix-backend
+    spec:
+      containers:
+        - name: backend
+          image: acadmix/backend:latest
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8000"
+            - name: ENVIRONMENT
+              value: "production"
+            # ── Critical: tells database.py to use small pool behind PgBouncer ──
+            - name: PGBOUNCER_ENABLED
+              value: "true"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: acadmix-secrets
+                  key: DATABASE_URL
+            - name: ADMIN_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: acadmix-secrets
+                  key: ADMIN_DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: acadmix-secrets
+                  key: REDIS_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: acadmix-secrets
+                  key: JWT_SECRET
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: acadmix-secrets
+                  key: ADMIN_PASSWORD
+            - name: SEED_DEMO_USERS
+              value: "false"
+            - name: DEBUG_MODE
+              value: "false"
+            - name: RLS_SHADOW_MODE
+              value: "log"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acadmix-backend
+spec:
+  selector:
+    app: acadmix-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+  type: ClusterIP

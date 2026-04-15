@@ -1,0 +1,49 @@
+##############################################################################
+# HPA — Horizontal Pod Autoscaler for AcadMix Backend
+#
+# Results day scenario (3,000–4,000 concurrent students):
+#   - Scale up at 60% CPU to pre-empt saturation, not react to it.
+#   - minReplicas=3 ensures baseline availability.
+#   - maxReplicas=10 caps cost; with PgBouncer each pod only uses 5+10
+#     connections, so 10 pods = ~150 PgBouncer client connections, well
+#     within the 5,000 max_client_conn configured in pgbouncer.yaml.
+#   - scaleDown stabilizes for 5 min to avoid thrashing during burst reads.
+##############################################################################
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: acadmix-backend-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: acadmix-backend
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 75
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120

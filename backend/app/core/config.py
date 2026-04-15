@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     # External Integrations
     LLM_REVIEW_MODEL: str = "gemini/gemini-3.1-flash-lite-preview"
     INTERVIEW_LLM_MODEL: str = "gemini/gemini-2.5-flash"
+    RESUME_LLM_MODEL: str = "gemini/gemini-2.0-flash-lite"   # Cheaper model for ATS scoring & career tools
     GEMINI_API_KEY: str = ""
     GROQ_API_KEY: str = ""
     

@@ -12,14 +12,47 @@ from app.schemas import *
 
 router = APIRouter()
 
+# Roles allowed to read student results
+_RESULTS_READ_ROLES = frozenset({
+    "student", "teacher", "hod", "exam_cell",
+    "admin", "super_admin", "principal", "parent",
+    "nodal_officer",
+})
+
+
 @router.get("/results/semester/{student_id}")
 async def get_semester_results(student_id: str, user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    # ── Role guard: only privileged roles may read results ────────────────
+    if user["role"] not in _RESULTS_READ_ROLES:
+        raise HTTPException(status_code=403, detail="Your role is not authorized to view results")
+
+    # Students can only view their own results
     if user["role"] == "student" and user["id"] != student_id:
         raise HTTPException(status_code=403, detail="Not authorized")
+
+    # Parents can only view results of their linked children
+    if user["role"] == "parent":
+        link = await session.execute(
+            select(models.ParentStudentLink).where(
+                models.ParentStudentLink.parent_id == user["id"],
+                models.ParentStudentLink.student_id == student_id,
+            )
+        )
+        if not link.scalars().first():
+            raise HTTPException(status_code=403, detail="Not authorized to view this student's results")
+
     import json
     from app.core.security import redis_client
 
-    cache_key = f"result:{user['college_id']}:{student_id}:all"
+    # ── Resolve the student's actual college_id for cache consistency ─────
+    student_row = await session.execute(
+        select(models.User.college_id).where(models.User.id == student_id)
+    )
+    student_college_id = student_row.scalar_one_or_none()
+    if not student_college_id:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    cache_key = f"result:{student_college_id}:{student_id}:all"
     if redis_client:
         cached = await redis_client.get(cache_key)
         if cached:
@@ -49,6 +82,12 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
 
 @router.post("/results/semester")
 async def create_semester_result(req: SemesterResultCreate, user: dict = Depends(require_role("teacher", "admin")), session: AsyncSession = Depends(get_db)):
+    # Resolve the target student's college_id for correct cache invalidation
+    student_row = await session.execute(
+        select(models.User.college_id).where(models.User.id == req.student_id)
+    )
+    student_college_id = student_row.scalar_one_or_none() or user["college_id"]
+
     for subj in req.subjects:
         row = models.SemesterGrade(
             student_id=req.student_id,
@@ -62,6 +101,6 @@ async def create_semester_result(req: SemesterResultCreate, user: dict = Depends
     
     from app.core.security import redis_client
     if redis_client:
-        await redis_client.delete(f"result:{user['college_id']}:{req.student_id}:all")
+        await redis_client.delete(f"result:{student_college_id}:{req.student_id}:all")
         
     return {"message": "Semester result saved", "semester": req.semester, "student_id": req.student_id}

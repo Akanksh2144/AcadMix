@@ -17,20 +17,11 @@
 
 ---
 
-## 🔑 Test Credentials (Seed Data Created)
+## 🔑 Test Credentials
 
-All users are created and ready to use:
-
-| Role | College ID | Password | Email |
-|------|------------|----------|-------|
-| **Admin** | A001 | admin123 | admin@quizportal.edu |
-| **Teacher 1** | T001 | teacher123 | sarah.j@quizportal.edu |
-| **Teacher 2** | T002 | teacher123 | ravi.k@quizportal.edu |
-| **HOD** | HOD001 | hod123 | venkat.hod@quizportal.edu |
-| **Exam Cell** | EC001 | exam123 | examcell@quizportal.edu |
-| **Student 1** | 22WJ8A6745 | student123 | akanksh@quizportal.edu |
-| **Student 2** | S2024101 | student123 | priya@quizportal.edu |
-| **Student 3** | S2024045 | student123 | amit@quizportal.edu |
+> ⚠️ **REDACTED** — Test credentials are managed via environment variables.
+> See `.env.example` for the seed user schema.
+> Run with `SEED_DEMO_USERS=true` and `ADMIN_PASSWORD` set to create test accounts.
 
 ---
 
@@ -65,8 +56,8 @@ All users are created and ready to use:
 Click here: **https://repo-analyzer-208.preview.emergentagent.com**
 
 ### 2. Login as Admin
-- **College ID**: A001
-- **Password**: admin123
+- **College ID**: (see `.env.example`)
+- **Password**: (set via `ADMIN_PASSWORD` env var)
 
 ### 3. Explore Different Roles
 Log out and login with different credentials to see role-specific dashboards.
@@ -125,28 +116,16 @@ The application features a **beautiful soft, rounded design**:
 ## 🧪 Testing the Application
 
 ### Test Quiz Flow (as Student)
-1. Login as: **22WJ8A6745** / **student123**
+1. Login with student credentials from `.env.example`
 2. Click on "Available Quizzes"
 3. Select "Data Structures - Arrays & Linked Lists"
 4. Complete the quiz
 5. View results and analytics
 
 ### Test Marks Workflow
-1. **As Teacher (T001)**:
-   - Go to Marks Entry
-   - Select a subject
-   - Enter marks for students
-   - Submit for approval
-
-2. **As HOD (HOD001)**:
-   - Go to Mark Reviews
-   - Review submitted marks
-   - Approve or reject with remarks
-
-3. **As Exam Cell (EC001)**:
-   - View approved marks
-   - Upload end-term marks
-   - Publish final results
+1. **As Teacher**: Go to Marks Entry → Enter marks → Submit for approval
+2. **As HOD**: Go to Mark Reviews → Approve or reject with remarks
+3. **As Exam Cell**: View approved marks → Upload end-term → Publish
 
 ### Test Code Playground
 1. Login as student
@@ -317,10 +296,10 @@ tail -f /var/log/supervisor/backend.err.log
 # Test API
 curl http://localhost:8001/api/health
 
-# Login as admin
+# Login (use credentials from .env.example)
 curl -X POST http://localhost:8001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"college_id":"A001","password":"admin123"}'
+  -d '{"college_id":"<YOUR_ID>","password":"<YOUR_PASSWORD>"}'
 ```
 
 ---

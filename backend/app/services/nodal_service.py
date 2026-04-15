@@ -111,10 +111,18 @@ class NodalService:
         c_ids = await self.get_nodal_jurisdiction_colleges(nodal_officer_id)
         if not c_ids: return []
         
+        from app.models.core import UserProfile
         fac_stmt = select(
             models.User.college_id,
             func.count(models.User.id).label("total_faculty"),
-            func.sum(func.cast(models.User.profile_data != None, models.Integer)).label("with_profile")
+            func.sum(
+                case(
+                    (UserProfile.phone != None, 1),
+                    else_=0
+                )
+            ).label("with_profile"),
+        ).outerjoin(
+            UserProfile, UserProfile.user_id == models.User.id,
         ).where(
             models.User.college_id.in_(c_ids),
             models.User.role.in_(["teacher", "faculty", "hod"])

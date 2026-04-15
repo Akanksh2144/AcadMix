@@ -123,14 +123,11 @@ async def get_extension_activities(
 
 @router.get("/principal/reports/placement")
 async def get_principal_placement(
-    user: dict = Depends(require_role("principal", "admin"))
+    academic_year: Optional[str] = None,
+    user: dict = Depends(require_role("principal", "admin")),
+    svc: PrincipalService = Depends(get_principal_service)
 ):
-    return {
-        "total_placed": 0,
-        "average_ctc": 0,
-        "department_breakdown": [],
-        "academic_year": None
-    }
+    return await svc.get_placement_report(user["college_id"], academic_year)
 
 
 @router.get("/principal/reports/annual")

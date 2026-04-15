@@ -412,12 +412,10 @@ A comprehensive College Quiz & Results Management Platform for managing quizzes,
 - **Exam Cell** - Upload end-term marks, publish results
 - **Admin** - Full system access, analytics, user management
 
-### Quick Login Buttons (Testing)
-- Admin: A001 / admin123
-- Teacher: T001 / teacher123
-- Student: 22WJ8A6745 / student123
-- HOD: HOD001 / hod123
-- Exam Cell: EC001 / exam123
+### Quick Login Buttons (Development Only)
+> ⚠️ **Test credentials are configured via environment variables and `.env.example`.**  
+> Do NOT commit real passwords to version control.  
+> See `.env.example` for the seed user schema.
 
 ---
 
@@ -750,13 +748,9 @@ REACT_APP_BACKEND_URL=
 
 ## 📝 Testing Credentials
 
-```
-Admin:      A001 / admin123
-Teacher:    T001 / teacher123
-Student:    22WJ8A6745 / student123
-HOD:        HOD001 / hod123
-Exam Cell:  EC001 / exam123
-```
+> ⚠️ **REDACTED** — Test credentials are now managed via environment variables.  
+> See `.env.example` for the seed user schema.  
+> Run `SEED_DEMO_USERS=true` with `ADMIN_PASSWORD` set to seed dev users on first boot.
 
 ---
 

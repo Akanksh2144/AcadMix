@@ -25,7 +25,7 @@ async def _call_llm(messages: list, json_mode: bool = False, temperature: float 
     litellm.api_key = settings.GEMINI_API_KEY
 
     kwargs = {
-        "model": settings.INTERVIEW_LLM_MODEL,
+        "model": settings.RESUME_LLM_MODEL,
         "messages": messages,
         "temperature": temperature,
         "max_tokens": max_tokens,

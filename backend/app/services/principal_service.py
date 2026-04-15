@@ -263,11 +263,71 @@ class PrincipalService:
             profile = prof_r.scalars().first()
             return profile.extension_activities if profile and profile.extension_activities else []
 
+    async def get_placement_report(self, college_id: str, academic_year: Optional[str] = None) -> Dict[str, Any]:
+        """Aggregate real placement data from placement_applications + placement_drives."""
+        from app.models.core import UserProfile
+
+        # Base filters
+        filters = [
+            models.PlacementApplication.college_id == college_id,
+            models.PlacementApplication.status == "placed",
+            models.PlacementApplication.is_deleted == False,
+        ]
+
+        # Total placed + average CTC
+        summary_stmt = select(
+            func.count(models.PlacementApplication.id).label("total_placed"),
+            func.avg(models.PlacementDrive.package_lpa).label("average_ctc"),
+        ).join(
+            models.PlacementDrive,
+            models.PlacementDrive.id == models.PlacementApplication.drive_id,
+        ).where(*filters)
+
+        summary = (await self.db.execute(summary_stmt)).first()
+        total_placed = summary.total_placed if summary else 0
+        average_ctc = round(float(summary.average_ctc or 0), 2)
+
+        # Department breakdown via user_profiles
+        dept_stmt = select(
+            UserProfile.department.label("department"),
+            func.count(models.PlacementApplication.id).label("placed"),
+            func.avg(models.PlacementDrive.package_lpa).label("avg_ctc"),
+            func.max(models.PlacementDrive.package_lpa).label("max_ctc"),
+        ).join(
+            models.User,
+            models.User.id == models.PlacementApplication.student_id,
+        ).join(
+            UserProfile,
+            UserProfile.user_id == models.User.id,
+        ).join(
+            models.PlacementDrive,
+            models.PlacementDrive.id == models.PlacementApplication.drive_id,
+        ).where(*filters).group_by(UserProfile.department)
+
+        dept_rows = (await self.db.execute(dept_stmt)).all()
+        department_breakdown = [
+            {
+                "department": r.department or "Unknown",
+                "placed_count": r.placed,
+                "avg_ctc_lpa": round(float(r.avg_ctc or 0), 2),
+                "max_ctc_lpa": round(float(r.max_ctc or 0), 2),
+            }
+            for r in dept_rows
+        ]
+
+        return {
+            "total_placed": total_placed,
+            "average_ctc": average_ctc,
+            "department_breakdown": department_breakdown,
+            "academic_year": academic_year,
+        }
+
     async def get_annual_consolidation(self, user: Dict[str, Any], academic_year: str) -> Dict[str, Any]:
         college_id = user["college_id"]
         attendance = await self.get_attendance_compliance(college_id, academic_year)
         infra = (await self.get_institution_profile(college_id)).get("infrastructure", {})
         extension = await self.get_extension_activities(college_id)
+        placement = await self.get_placement_report(college_id, academic_year)
         
         # CIA via MarksService
         cia_svc = MarksService(self.db)
@@ -280,12 +340,7 @@ class PrincipalService:
             "cia_status": cia,
             "infrastructure": infra,
             "extension_activities": extension,
-            "placement_overview": {
-                "total_placed": 0, 
-                "average_ctc": 0, 
-                "department_breakdown": [], 
-                "academic_year": None
-            }
+            "placement_overview": placement,
         }
 
     # ── Utility & Reassignments ──────────────────────────────────────────────

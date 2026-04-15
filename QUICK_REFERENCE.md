@@ -401,13 +401,8 @@ exam_cell    // Upload end-term marks, publish results
 ```
 
 ### Test Credentials
-```
-Admin:     A001 / admin123
-Teacher:   T001 / teacher123
-Student:   22WJ8A6745 / student123
-HOD:       HOD001 / hod123
-Exam Cell: EC001 / exam123
-```
+> ⚠️ **REDACTED** — See `.env.example` for seed user schema.
+> Run with `SEED_DEMO_USERS=true` to create test accounts on first boot.
 
 ---
 
