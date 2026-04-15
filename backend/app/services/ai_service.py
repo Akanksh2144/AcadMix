@@ -39,7 +39,7 @@ GROQ_TIER1 = "groq/llama-3.1-8b-instant"
 GROQ_TIER2 = "groq/llama-3.3-70b-versatile"
 
 # Gemini fallback (last resort if Groq also rate-limits)
-GEMINI_FALLBACK = "gemini/gemini-2.0-flash-lite"
+GEMINI_FALLBACK = os.environ.get("LLM_REVIEW_MODEL", "gemini/gemini-2.5-flash")
 
 # Gemini premium (interviews only — not routed through this service)
 DEFAULT_MODEL = "gemini/gemini-2.5-flash"
@@ -195,7 +195,7 @@ def route_ami_message(message: str, has_code: bool) -> str:
                        "time complexity", "not working", "fix", "trace",
                        "segfault", "runtime", "TLE", "MLE", "heap", "stack overflow"]
     
-    if has_code or any(s in message.lower() for s in complex_signals):
+    if any(s in message.lower() for s in complex_signals):
         return get_tier2_model()
     return get_tier1_model()
 

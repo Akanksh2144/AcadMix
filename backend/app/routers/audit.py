@@ -5,19 +5,18 @@ from pydantic import ValidationError
 from typing import List, Optional
 from datetime import datetime
 
-from app.database import get_db
+from database import get_db
 from app.models.audit import AuditLog
 from app.schemas.audit import AuditLogResponse, AuditExportQuery
 from app.services.audit_service import AuditService
 from app.core.security import get_current_user
-from app.models.user import User
 
 router = APIRouter()
 
 @router.get("/logs", response_model=List[AuditLogResponse])
 async def get_audit_logs(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     action: Optional[str] = None
@@ -26,10 +25,10 @@ async def get_audit_logs(
     Retrieve paginated audit logs for the current tenant.
     Only accessible by Admin and Principal roles.
     """
-    if current_user.role not in ["admin", "principal"]:
+    if current_user["role"] not in ["admin", "principal"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
-    stmt = select(AuditLog).where(AuditLog.college_id == current_user.college_id)
+    stmt = select(AuditLog).where(AuditLog.college_id == current_user["college_id"])
     if action:
         stmt = stmt.where(AuditLog.action == action)
     
@@ -41,7 +40,7 @@ async def get_audit_logs(
 @router.get("/export")
 async def export_audit_logs(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     action: Optional[str] = None,
@@ -52,7 +51,7 @@ async def export_audit_logs(
     Stream a CSV export of filtered audit logs.
     Only accessible by Admin and Principal roles.
     """
-    if current_user.role not in ["admin", "principal"]:
+    if current_user["role"] not in ["admin", "principal"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
     query = AuditExportQuery(
@@ -63,4 +62,4 @@ async def export_audit_logs(
         status=status_filter
     )
 
-    return await AuditService.export_audit_logs(db=db, college_id=current_user.college_id, query=query)
+    return await AuditService.export_audit_logs(db=db, college_id=current_user["college_id"], query=query)

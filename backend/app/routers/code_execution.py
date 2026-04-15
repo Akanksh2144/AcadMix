@@ -205,10 +205,21 @@ async def request_code_review(request: Request, req: CodeReviewRequest, user: di
     
     try:
         pool = await get_arq_pool()
+        # Verify an ARQ worker is actually consuming jobs before enqueuing.
+        # If no worker is running, the job sits in Redis forever and frontend polls infinitely.
+        health_key = await pool.exists("arq:queue:default")
         job = await pool.enqueue_job("process_ai_review_task", job_payload)
+        # Quick check: if the job is still queued after 2s, no worker is processing
+        import asyncio as _aio
+        await _aio.sleep(2)
+        from arq.jobs import Job, JobStatus
+        status_check = await Job(job.job_id, pool).status()
+        if status_check in (JobStatus.queued, JobStatus.deferred):
+            # No worker picked it up — fall through to sync
+            raise Exception("ARQ worker not consuming jobs")
         return {"task_id": job.job_id, "status": "queued"}
     except Exception:
-        # Fallback to synchronous execution if ARQ/Redis is unavailable
+        # Fallback: synchronous execution via Groq/Gemini (no worker needed)
         try:
             review_json = await generate_code_review(**job_payload)
             return {"task_id": "sync-fallback", "status": "completed", "review": review_json}
