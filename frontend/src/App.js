@@ -1,8 +1,15 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AlertModal from './components/AlertModal';
 import PageTransition from './components/PageTransition';
+import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 import { authAPI, setAuthToken, clearAuthToken } from './services/api';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Lazy-loaded pages (code-split per route)
+// ═══════════════════════════════════════════════════════════════════════════════
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const StudentDashboard = React.lazy(() => import('./pages/StudentDashboard'));
 const TeacherDashboard = React.lazy(() => import('./pages/TeacherDashboard'));
@@ -47,36 +54,372 @@ const LibrarianDashboard = React.lazy(() => import('./pages/LibrarianDashboard')
 const SecurityDashboard = React.lazy(() => import('./pages/SecurityDashboard'));
 const VisitorManagement = React.lazy(() => import('./pages/VisitorManagement'));
 
-const ROLE_DASHBOARD = {
-  student: 'student-dashboard',
-  teacher: 'teacher-dashboard',
-  admin: 'admin-dashboard',
-  hod: 'hod-dashboard',
-  exam_cell: 'examcell-dashboard',
-  nodal_officer: 'nodal-officer-dashboard',
-  tp_officer: 'tpo-dashboard',
-  alumni: 'alumni-dashboard',
-  parent: 'parent-dashboard',
-  industry: 'industry-dashboard',
-  principal: 'principal-dashboard',
-  retired_faculty: 'retired-faculty-dashboard',
-  expert: 'expert-dashboard',
-  warden: 'warden-dashboard',
-  transport_admin: 'transport-admin-dashboard',
-  librarian: 'librarian-dashboard',
-  security: 'security-dashboard',
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Route Configuration
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Maps old page-name strings to URL paths.
+ * This enables backwards compatibility — existing navigate('page-name') calls
+ * in child components continue to work via the compatibility bridge below.
+ */
+const PAGE_TO_PATH = {
+  'login': '/login',
+  'student-dashboard': '/student',
+  'teacher-dashboard': '/teacher',
+  'admin-dashboard': '/admin',
+  'hod-dashboard': '/hod',
+  'examcell-dashboard': '/exam-cell',
+  'nodal-officer-dashboard': '/nodal-officer',
+  'tpo-dashboard': '/tpo',
+  'alumni-dashboard': '/alumni',
+  'parent-dashboard': '/parent',
+  'industry-dashboard': '/industry',
+  'principal-dashboard': '/principal',
+  'retired-faculty-dashboard': '/retired-faculty',
+  'expert-dashboard': '/expert',
+  'warden-dashboard': '/warden',
+  'transport-admin-dashboard': '/transport-admin',
+  'librarian-dashboard': '/librarian',
+  'security-dashboard': '/security',
+  'quiz-attempt': '/quiz/attempt',
+  'quiz-results': '/quiz/results',
+  'semester-results': '/results/semester',
+  'analytics': '/analytics',
+  'leaderboard': '/leaderboard',
+  'quiz-builder': '/quiz/builder',
+  'live-monitor': '/quiz/monitor',
+  'user-management': '/admin/users',
+  'code-playground': '/code',
+  'marks-entry': '/marks/entry',
+  'student-management': '/admin/students',
+  'class-results': '/results/class',
+  'available-quizzes': '/quizzes',
+  'placements': '/placements',
+  'teacher-quizzes': '/teacher/quizzes',
+  'quiz-calendar': '/quiz/calendar',
+  'quiz-summary': '/quiz/summary',
+  'faculty-profile': '/faculty/profile',
+  'interview-warroom': '/interview',
+  'ai-interview-session': '/interview/session',
+  'attendance-marker': '/attendance/mark',
+  'hostel-booking': '/hostel',
+  'resume-ats-scorer': '/resume-scorer',
+  'career-toolkit': '/career',
+  'visitor-management': '/visitors',
 };
 
-function App() {
-  const [currentPage, setCurrentPage] = useState(() => sessionStorage.getItem('acadmix_page') || 'login');
+const ROLE_DASHBOARD = {
+  student: '/student',
+  teacher: '/teacher',
+  admin: '/admin',
+  hod: '/hod',
+  exam_cell: '/exam-cell',
+  nodal_officer: '/nodal-officer',
+  tp_officer: '/tpo',
+  alumni: '/alumni',
+  parent: '/parent',
+  industry: '/industry',
+  principal: '/principal',
+  retired_faculty: '/retired-faculty',
+  expert: '/expert',
+  warden: '/warden',
+  transport_admin: '/transport-admin',
+  librarian: '/librarian',
+  security: '/security',
+};
 
-  useEffect(() => {
-    sessionStorage.setItem('acadmix_page', currentPage);
-  }, [currentPage]);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Compatibility Bridge — navigate('page-name', data) → useNavigate()
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Creates a compatibility wrapper that translates old-style navigate('page-name')
+ * calls into React Router navigation. This allows all existing page components
+ * to work without changing their internal navigate() calls.
+ */
+function useCompatNavigate() {
+  const routerNavigate = useNavigate();
+
+  return useCallback((pageName, data = null) => {
+    const path = PAGE_TO_PATH[pageName] || `/${pageName}`;
+    routerNavigate(path, { state: data });
+  }, [routerNavigate]);
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Auth Guard
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function ProtectedRoute({ children, user, allowedRoles }) {
+  if (!user) return <Navigate to="/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    const dashPath = ROLE_DASHBOARD[user.role] || '/login';
+    return <Navigate to={dashPath} replace />;
+  }
+  return <ErrorBoundary>{children}</ErrorBoundary>;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// React Query Client
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,       // 30s before refetch
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Loading Spinner
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-[#0B0F19]">
+    <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// App Routes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function AppRoutes({ user, onLogin, onLogout }) {
+  const navigate = useCompatNavigate();
+  const location = useLocation();
+  const selectedData = location.state;
+
+  return (
+    <Routes>
+      {/* ── Auth ──────────────────────────────────────────────────── */}
+      <Route path="/login" element={
+        user ? <Navigate to={ROLE_DASHBOARD[user.role] || '/student'} replace />
+             : <LoginPage onLogin={onLogin} />
+      } />
+
+      {/* ── Role Dashboards ──────────────────────────────────────── */}
+      <Route path="/student" element={
+        <ProtectedRoute user={user} allowedRoles={['student']}>
+          <StudentDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/teacher" element={
+        <ProtectedRoute user={user} allowedRoles={['teacher']}>
+          <TeacherDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin" element={
+        <ProtectedRoute user={user} allowedRoles={['admin']}>
+          <AdminDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/hod" element={
+        <ProtectedRoute user={user} allowedRoles={['hod']}>
+          <HodDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/exam-cell" element={
+        <ProtectedRoute user={user} allowedRoles={['exam_cell']}>
+          <ExamCellDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/tpo" element={
+        <ProtectedRoute user={user} allowedRoles={['tp_officer']}>
+          <TPODashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni" element={
+        <ProtectedRoute user={user} allowedRoles={['alumni']}>
+          <AlumniDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/parent" element={
+        <ProtectedRoute user={user} allowedRoles={['parent']}>
+          <ParentDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/industry" element={
+        <ProtectedRoute user={user} allowedRoles={['industry']}>
+          <IndustryDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/principal" element={
+        <ProtectedRoute user={user} allowedRoles={['principal']}>
+          <PrincipalDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/retired-faculty" element={
+        <ProtectedRoute user={user} allowedRoles={['retired_faculty']}>
+          <RetiredFacultyDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/expert" element={
+        <ProtectedRoute user={user} allowedRoles={['expert']}>
+          <ExpertDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/nodal-officer" element={
+        <ProtectedRoute user={user} allowedRoles={['nodal_officer']}>
+          <NodalOfficerDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/warden" element={
+        <ProtectedRoute user={user} allowedRoles={['warden']}>
+          <WardenDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/transport-admin" element={
+        <ProtectedRoute user={user} allowedRoles={['transport_admin', 'admin']}>
+          <TransportAdminDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/librarian" element={
+        <ProtectedRoute user={user} allowedRoles={['librarian']}>
+          <LibrarianDashboard navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/security" element={
+        <ProtectedRoute user={user} allowedRoles={['security']}>
+          <VisitorManagement navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+
+      {/* ── Quiz Routes ──────────────────────────────────────────── */}
+      <Route path="/quiz/attempt" element={
+        <ProtectedRoute user={user}><QuizAttempt quizData={selectedData} navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/quiz/results" element={
+        <ProtectedRoute user={user}><QuizResults navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/quiz/builder" element={
+        <ProtectedRoute user={user} allowedRoles={['teacher', 'hod', 'admin']}>
+          <QuizBuilder navigate={navigate} user={user} editQuiz={selectedData} />
+        </ProtectedRoute>
+      } />
+      <Route path="/quiz/monitor" element={
+        <ProtectedRoute user={user} allowedRoles={['teacher', 'hod', 'admin']}>
+          <LiveMonitor quiz={selectedData} navigate={navigate} user={user} />
+        </ProtectedRoute>
+      } />
+      <Route path="/quiz/calendar" element={
+        <ProtectedRoute user={user}><QuizCalendar navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/quiz/summary" element={
+        <ProtectedRoute user={user}><QuizSummary navigate={navigate} user={user} attemptData={selectedData} /></ProtectedRoute>
+      } />
+      <Route path="/quizzes" element={
+        <ProtectedRoute user={user}><AvailableQuizzes navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/teacher/quizzes" element={
+        <ProtectedRoute user={user} allowedRoles={['teacher', 'hod']}>
+          <TeacherQuizzes navigate={navigate} user={user} />
+        </ProtectedRoute>
+      } />
+
+      {/* ── Academic Routes ──────────────────────────────────────── */}
+      <Route path="/marks/entry" element={
+        <ProtectedRoute user={user} allowedRoles={['teacher', 'hod', 'admin']}>
+          <MarksEntry navigate={navigate} user={user} preselectedAssignment={selectedData} />
+        </ProtectedRoute>
+      } />
+      <Route path="/results/semester" element={
+        <ProtectedRoute user={user}><SemesterResults navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/results/class" element={
+        <ProtectedRoute user={user}><ClassResults navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/analytics" element={
+        <ProtectedRoute user={user}><Analytics navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/leaderboard" element={
+        <ProtectedRoute user={user}><Leaderboard navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/attendance/mark" element={
+        <ProtectedRoute user={user} allowedRoles={['teacher', 'hod']}>
+          <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] py-8">
+            <div className="max-w-7xl mx-auto px-4">
+              <button onClick={() => navigate('teacher-dashboard')} className="mb-4 text-indigo-500 font-bold hover:underline">← Back to Dashboard</button>
+              <AttendanceMarker user={user} />
+            </div>
+          </div>
+        </ProtectedRoute>
+      } />
+
+      {/* ── Admin Routes ─────────────────────────────────────────── */}
+      <Route path="/admin/users" element={
+        <ProtectedRoute user={user} allowedRoles={['admin']}>
+          <UserManagement navigate={navigate} user={user} />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/students" element={
+        <ProtectedRoute user={user} allowedRoles={['admin', 'hod']}>
+          <StudentManagement navigate={navigate} user={user} />
+        </ProtectedRoute>
+      } />
+
+      {/* ── Career & Interview Routes ────────────────────────────── */}
+      <Route path="/interview" element={
+        <ProtectedRoute user={user}><InterviewWarRoom navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/interview/session" element={
+        <ProtectedRoute user={user}><AIInterviewSession navigate={navigate} user={user} quizData={selectedData} /></ProtectedRoute>
+      } />
+      <Route path="/resume-scorer" element={
+        <ProtectedRoute user={user}><ResumeATSScorer navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/career" element={
+        <ProtectedRoute user={user}><CareerToolkit navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/placements" element={
+        <ProtectedRoute user={user}><Placements navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+
+      {/* ── Campus Life Routes ───────────────────────────────────── */}
+      <Route path="/hostel" element={
+        <ProtectedRoute user={user}><HostelBooking navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/visitors" element={
+        <ProtectedRoute user={user}><VisitorManagement navigate={navigate} user={user} onLogout={onLogout} gateType={selectedData?.gateType} /></ProtectedRoute>
+      } />
+
+      {/* ── Shared Routes ────────────────────────────────────────── */}
+      <Route path="/code" element={
+        <ProtectedRoute user={user}><CodePlayground navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/faculty/profile" element={
+        <ProtectedRoute user={user}><FacultyProfilePage navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+
+      {/* ── Fallback ─────────────────────────────────────────────── */}
+      <Route path="*" element={
+        user ? <Navigate to={ROLE_DASHBOARD[user.role] || '/student'} replace />
+             : <Navigate to="/login" replace />
+      } />
+    </Routes>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Main App Component
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function AppShell() {
   const [user, setUser] = useState(null);
-  const [selectedData, setSelectedData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const routerNavigate = useNavigate();
+  const location = useLocation();
 
   const checkAuth = useCallback(async () => {
     const savedToken = localStorage.getItem('auth_token');
@@ -88,20 +431,21 @@ function App() {
     try {
       const { data } = await authAPI.me();
       setUser(data);
-      setCurrentPage((prev) => prev === 'login' ? (ROLE_DASHBOARD[data.role] || 'login') : prev);
+      // If we're on /login and already authenticated, redirect to dashboard
+      if (location.pathname === '/login' || location.pathname === '/') {
+        routerNavigate(ROLE_DASHBOARD[data.role] || '/student', { replace: true });
+      }
     } catch (err) {
       const status = err.response?.status;
       if (status === 401 || status === 403) {
-        // Token is genuinely invalid — clear auth
         clearAuthToken();
         localStorage.removeItem('auth_token');
         setUser(null);
-        setCurrentPage('login');
+        routerNavigate('/login', { replace: true });
       }
-      // For network errors / 500s, keep user on current page (session might still be valid)
     }
     setLoading(false);
-  }, []);
+  }, [routerNavigate, location.pathname]);
 
   useEffect(() => { checkAuth(); }, [checkAuth]);
 
@@ -111,7 +455,7 @@ function App() {
       setAuthToken(userData.access_token);
       localStorage.setItem('auth_token', userData.access_token);
     }
-    setCurrentPage(ROLE_DASHBOARD[userData.role] || 'login');
+    routerNavigate(ROLE_DASHBOARD[userData.role] || '/student', { replace: true });
   };
 
   const handleLogout = () => setShowLogoutModal(true);
@@ -122,12 +466,7 @@ function App() {
     setUser(null);
     clearAuthToken();
     localStorage.removeItem('auth_token');
-    setCurrentPage('login');
-  };
-
-  const navigate = (page, data = null) => {
-    setCurrentPage(page);
-    if (data) setSelectedData(data);
+    routerNavigate('/login', { replace: true });
   };
 
   if (loading) {
@@ -141,71 +480,11 @@ function App() {
     );
   }
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'login': return <LoginPage onLogin={handleLogin} />;
-      case 'student-dashboard': return <StudentDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'teacher-dashboard': return <TeacherDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'admin-dashboard': return <AdminDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'hod-dashboard': return <HodDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'examcell-dashboard': return <ExamCellDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'quiz-attempt': return <QuizAttempt quizData={selectedData} navigate={navigate} user={user} />;
-      case 'quiz-results': return <QuizResults navigate={navigate} user={user} />;
-      case 'semester-results': return <SemesterResults navigate={navigate} user={user} />;
-      case 'analytics': return <Analytics navigate={navigate} user={user} />;
-      case 'leaderboard': return <Leaderboard navigate={navigate} user={user} />;
-      case 'quiz-builder': return <QuizBuilder navigate={navigate} user={user} editQuiz={selectedData} />;
-      case 'live-monitor': return <LiveMonitor quiz={selectedData} navigate={navigate} user={user} />;
-      case 'user-management': return <UserManagement navigate={navigate} user={user} />;
-      case 'code-playground': return <CodePlayground navigate={navigate} user={user} />;
-      case 'marks-entry': return <MarksEntry navigate={navigate} user={user} preselectedAssignment={selectedData} />;
-      case 'student-management': return <StudentManagement navigate={navigate} user={user} />;
-      case 'class-results': return <ClassResults navigate={navigate} user={user} />;
-      case 'available-quizzes': return <AvailableQuizzes navigate={navigate} user={user} />;
-      case 'placements': return <Placements navigate={navigate} user={user} />;
-      case 'teacher-quizzes': return <TeacherQuizzes navigate={navigate} user={user} />;
-      case 'quiz-calendar': return <QuizCalendar navigate={navigate} user={user} />;
-      case 'quiz-summary': return <QuizSummary navigate={navigate} user={user} attemptData={selectedData} />;
-      case 'faculty-profile': return <FacultyProfilePage navigate={navigate} user={user} />;
-      case 'interview-warroom': return <InterviewWarRoom navigate={navigate} user={user} />;
-      case 'ai-interview-session': return <AIInterviewSession navigate={navigate} user={user} quizData={selectedData} />;
-      case 'attendance-marker': return (
-        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] py-8">
-          <div className="max-w-7xl mx-auto px-4">
-            <button onClick={() => navigate('teacher-dashboard')} className="mb-4 text-indigo-500 font-bold hover:underline">← Back to Dashboard</button>
-            <AttendanceMarker user={user} />
-          </div>
-        </div>
-      );
-      case 'tpo-dashboard': return <TPODashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'alumni-dashboard': return <AlumniDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'parent-dashboard': return <ParentDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'industry-dashboard': return <IndustryDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'principal-dashboard': return <PrincipalDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'retired-faculty-dashboard': return <RetiredFacultyDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'expert-dashboard': return <ExpertDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'nodal-officer-dashboard': return <NodalOfficerDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'warden-dashboard': return <WardenDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'hostel-booking': return <HostelBooking navigate={navigate} user={user} />;
-      case 'resume-ats-scorer': return <ResumeATSScorer navigate={navigate} user={user} />;
-      case 'career-toolkit': return <CareerToolkit navigate={navigate} user={user} />;
-      case 'transport-admin-dashboard': return <TransportAdminDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'librarian-dashboard': return <LibrarianDashboard navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'security-dashboard': return <VisitorManagement navigate={navigate} user={user} onLogout={handleLogout} />;
-      case 'visitor-management': return <VisitorManagement navigate={navigate} user={user} onLogout={handleLogout} gateType={selectedData?.gateType} />;
-      default: return <LoginPage onLogin={handleLogin} />;
-    }
-  };
-
   return (
     <div className="App">
-      <PageTransition pageKey={currentPage}>
-        <Suspense fallback={
-          <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-[#0B0F19]">
-             <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        }>
-          {renderPage()}
+      <PageTransition pageKey={location.pathname}>
+        <Suspense fallback={<LoadingSpinner />}>
+          <AppRoutes user={user} onLogin={handleLogin} onLogout={handleLogout} />
         </Suspense>
       </PageTransition>
       <AlertModal
@@ -219,6 +498,21 @@ function App() {
         onCancel={() => setShowLogoutModal(false)}
       />
     </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// App Wrapper (provides Router + QueryClient context)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AppShell />
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 
