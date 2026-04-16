@@ -52,8 +52,12 @@ from app.core.limiter import limiter
 @limiter.limit("5/minute")
 async def login(req: LoginRequest, request: Request, response: Response, session: AsyncSession = Depends(get_db)):
     _verify_origin(request)
+    
+    tenant = getattr(request.state, "tenant", None)
+    tenant_college_id = tenant.college_id if tenant else None
+    
     svc = AuthService(session)
-    result = await svc.login(req.college_id, req.password)
+    result = await svc.login(req.college_id, req.password, tenant_college_id)
 
     response.set_cookie("access_token", result["access_token"], httponly=True, secure=True, samesite="lax", max_age=1800)
     response.set_cookie("refresh_token", result.pop("_refresh_token"), httponly=True, secure=True, samesite="lax", max_age=604800, path="/api/auth")

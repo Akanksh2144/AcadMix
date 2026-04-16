@@ -46,7 +46,7 @@ class AuthService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def login(self, college_id: str, password: str) -> Dict[str, Any]:
+    async def login(self, username: str, password: str, tenant_college_id: Optional[str] = None) -> Dict[str, Any]:
         """Authenticate a user and return token data + user profile.
 
         Returns:
@@ -56,7 +56,9 @@ class AuthService:
             RateLimitedError: Too many failed attempts.
             AuthenticationError: Invalid credentials.
         """
-        normalized = college_id.strip().upper()
+        import logging
+        logger = logging.getLogger("acadmix.security")
+        normalized = username.strip().upper()
         key = f"login_failures:{normalized}"
 
         # Rate-limit check
@@ -65,7 +67,7 @@ class AuthService:
             if failures and int(failures) >= self.MAX_LOGIN_FAILURES:
                 raise RateLimitedError()
 
-        # Lookup user (case-insensitive for both roll_number and email)
+        # Lookup user (case-insensitive for both roll_number and email) globally first
         from sqlalchemy import func
         result = await self.db.execute(
             select(models.User)
@@ -77,6 +79,18 @@ class AuthService:
         )
         user = result.scalars().first()
 
+        # Check tenant scope bypass impersonation (P0 Hardening)
+        if user and tenant_college_id and user.college_id and user.role != "super_admin":
+            if str(user.college_id) != str(tenant_college_id):
+                # We caught a cross-tenant login attempt. Log and fail silently.
+                logger.warning(
+                    f"CROSS-TENANT IMPERSONATION ATTEMPT "
+                    f"username='{username}', "
+                    f"attempted_college_id='{tenant_college_id}', "
+                    f"resolved_college_id='{user.college_id}'"
+                )
+                user = None  # Neutralize user to force typical authentication failure
+
         if not user or not verify_password(password, user.password_hash) or getattr(user, "is_anonymized", False):
             if redis_client:
                 pipe = redis_client.pipeline()
@@ -84,9 +98,6 @@ class AuthService:
                 pipe.expire(key, self.LOCKOUT_SECONDS)
                 await pipe.execute()
             
-            # Note: We return standard AuthenticationError even for anonymized rows to prevent email enumeration,
-            # but structurally the CTO wanted "Account no longer exists" type behavior.
-            # Using AuthenticationError protects ghost row enumeration.
             raise AuthenticationError("Account no longer exists" if getattr(user, "is_anonymized", False) else "Invalid credentials")
 
         from app.services.audit_service import AuditService

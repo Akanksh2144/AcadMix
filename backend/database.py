@@ -111,6 +111,8 @@ async def _set_tenant_guc(session: AsyncSession, college_id: str | None):
             text("SELECT set_config('app.college_id', :cid, true)"),
             {"cid": str(college_id)},
         )
+    # Impersonate 'authenticated' role to trigger Row Level Security bounds.
+    await session.execute(text("SET LOCAL ROLE authenticated;"))
 
 
 async def _set_admin_bypass(session: AsyncSession):
