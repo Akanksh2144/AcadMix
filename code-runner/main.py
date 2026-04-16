@@ -5,7 +5,7 @@ import tempfile
 import re
 import sys
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
 
 app = FastAPI(title="AcadeMix Code Runner")
@@ -147,7 +147,11 @@ def _run_compile(cmd, wall_timeout=60, cpu_seconds=60, cwd=None):
 
 
 @app.post("/run")
-def run_code(req: ExecuteRequest):
+def run_code(req: ExecuteRequest, x_internal_token: str = Header(None)):
+    expected_token = os.environ.get("CODE_RUNNER_TOKEN", "acadmix_dev_runner_token_8x19z")
+    if not x_internal_token or x_internal_token != expected_token:
+        raise HTTPException(status_code=403, detail="Forbidden: Invalid Internal Token")
+        
     if len(req.code) > 15000: # Increased from 10k for heavy stress tests
         raise HTTPException(status_code=400, detail="Code too long")
     lang = req.language.lower()

@@ -151,7 +151,8 @@ async def execute_code(request: Request, req: CodeExecuteRequest, user: dict = D
         resp = await _http_client.post(
             f"{settings.CODE_RUNNER_URL}/run",
             json={"language": req.language, "code": req.code, "test_input": req.test_input},
-            timeout=lang_timeout
+            timeout=lang_timeout,
+            headers={"X-Internal-Token": settings.CODE_RUNNER_TOKEN}
         )
         if resp.status_code == 400:
             raise HTTPException(status_code=400, detail=resp.json().get("detail", "Error"))

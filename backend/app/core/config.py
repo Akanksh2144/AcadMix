@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     DEBUG_MODE: bool = False  # Must be explicitly enabled via env var in dev
     CORS_ORIGINS: str = ""
     CODE_RUNNER_URL: str = "https://acadmix-code-runner.fly.dev"
+    CODE_RUNNER_TOKEN: str = "acadmix_dev_runner_token_8x19z"
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/acadmix?prepared_statement_cache_size=0"
