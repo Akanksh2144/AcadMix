@@ -31,12 +31,7 @@ const SemesterResults = ({ navigate, user }) => {
     return 'bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400';
   };
 
-  const getMidMarks = (subject) => {
-    if (subject.mid1_marks !== undefined) return { m1: subject.mid1_marks, m2: subject.mid2_marks };
-    const base = { 'O': 27, 'A+': 24, 'A': 21, 'B+': 18, 'B': 15, 'C': 12, 'F': 8 }[subject.grade] || 20;
-    const variation = (subject.code || subject.name || '').length % 3;
-    return { m1: Math.min(30, base + variation), m2: Math.min(30, base + (variation === 1 ? -1 : 1)) };
-  };
+
 
   if (loading) return <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300 flex items-center justify-center"><div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>;
 
@@ -162,11 +157,11 @@ const SemesterResults = ({ navigate, user }) => {
               <div className="flex gap-4">
                 <div className="flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 text-center border border-slate-100 dark:border-slate-700/50">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Mid 1</p>
-                  <p className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">{getMidMarks(selectedSubject).m1} <span className="text-sm font-medium text-slate-400">/ 30</span></p>
+                  <p className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">{selectedSubject.mid1_marks != null ? selectedSubject.mid1_marks : '—'} <span className="text-sm font-medium text-slate-400">/ {selectedSubject.mid1_max || 30}</span></p>
                 </div>
                 <div className="flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 text-center border border-slate-100 dark:border-slate-700/50">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Mid 2</p>
-                  <p className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">{getMidMarks(selectedSubject).m2} <span className="text-sm font-medium text-slate-400">/ 30</span></p>
+                  <p className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">{selectedSubject.mid2_marks != null ? selectedSubject.mid2_marks : '—'} <span className="text-sm font-medium text-slate-400">/ {selectedSubject.mid2_max || 30}</span></p>
                 </div>
               </div>
               

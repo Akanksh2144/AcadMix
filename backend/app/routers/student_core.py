@@ -52,37 +52,103 @@ async def student_profile(student_id: str, user: dict = Depends(require_role("ho
     student = student_r.scalars().first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
+
+    # ── Grade → grade-point mapping ──────────────────────────────────────
+    _GRADE_POINTS = {
+        "O": 10, "A+": 9, "A": 8, "B+": 7, "B": 6,
+        "C": 5, "D": 4, "F": 0, "AB": 0,
+    }
+
+    # ── Semester grades with subject name via LEFT JOIN courses ───────────
+    from sqlalchemy import and_
     semesters_r = await session.execute(
-        select(models.SemesterGrade)
+        select(
+            models.SemesterGrade,
+            models.Course.name.label("course_name"),
+            models.Course.subject_code.label("course_subject_code"),
+        )
+        .outerjoin(
+            models.Course,
+            and_(
+                models.Course.subject_code == models.SemesterGrade.course_id,
+                models.Course.college_id == user["college_id"],
+            )
+        )
         .where(models.SemesterGrade.student_id == student_id)
         .order_by(models.SemesterGrade.semester.asc())
     )
     from collections import defaultdict
     sem_map = defaultdict(list)
-    for row in semesters_r.scalars().all():
-        sem_map[row.semester].append({"course_id": row.course_id, "grade": row.grade, "credits": row.credits_earned})
-    semesters = [{"semester": sem, "subjects": subjs} for sem, subjs in sorted(sem_map.items())]
+    for grade_row, course_name, course_subject_code in semesters_r.all():
+        sem_map[grade_row.semester].append({
+            "name": course_name or grade_row.course_id,
+            "code": course_subject_code or grade_row.course_id,
+            "credits": grade_row.credits_earned,
+            "grade": grade_row.grade,
+            "status": "PASS" if grade_row.grade not in ("F", "AB") else "FAIL",
+        })
+
+    # Compute SGPA per semester, cumulative CGPA
+    all_cumulative = []
+    semesters = []
+    for sem, subjects in sorted(sem_map.items()):
+        total_credits = sum(s["credits"] for s in subjects)
+        sgpa = round(sum(_GRADE_POINTS.get(s["grade"], 0) * s["credits"] for s in subjects) / total_credits, 2) if total_credits > 0 else 0
+        all_cumulative.extend(subjects)
+        total_cum = sum(s["credits"] for s in all_cumulative)
+        cgpa = round(sum(_GRADE_POINTS.get(s["grade"], 0) * s["credits"] for s in all_cumulative) / total_cum, 2) if total_cum > 0 else 0
+        semesters.append({"semester": sem, "sgpa": sgpa, "cgpa": cgpa, "subjects": subjects})
+
+    # ── Quiz attempts with title via JOIN Quiz ───────────────────────────
     attempts_r = await session.execute(
-        select(models.QuizAttempt)
+        select(models.QuizAttempt, models.Quiz.title, models.Quiz.total_marks)
+        .join(models.Quiz, models.Quiz.id == models.QuizAttempt.quiz_id)
         .where(models.QuizAttempt.student_id == student_id, models.QuizAttempt.status == "submitted")
         .order_by(models.QuizAttempt.end_time.desc())
     )
-    attempts = attempts_r.scalars().all()
+    attempts = attempts_r.all()
+
+    # ── Mid-term marks with subject name ─────────────────────────────────
     marks_r = await session.execute(
         select(models.MarkSubmissionEntry, models.MarkSubmission)
         .join(models.MarkSubmission, models.MarkSubmission.id == models.MarkSubmissionEntry.submission_id)
-        .where(models.MarkSubmissionEntry.student_id == student_id)
+        .where(
+            models.MarkSubmissionEntry.student_id == student_id,
+            models.MarkSubmission.exam_type.in_(["mid1", "mid2"]),
+            models.MarkSubmission.status.in_(["approved", "published"]),
+        )
     )
     marks_rows = marks_r.all()
+
+    # Resolve subject_code → subject_name via FacultyAssignment (same college)
+    subject_codes = list({sub.subject_code for _, sub in marks_rows})
+    subj_name_map = {}
+    if subject_codes:
+        fa_r = await session.execute(
+            select(models.FacultyAssignment.subject_code, models.FacultyAssignment.subject_name)
+            .where(
+                models.FacultyAssignment.college_id == user["college_id"],
+                models.FacultyAssignment.subject_code.in_(subject_codes),
+            )
+            .distinct(models.FacultyAssignment.subject_code)
+        )
+        for code, name in fa_r.all():
+            subj_name_map[code] = name
+
     mid_marks = [{
-        "course_id": sub.subject_code, "exam_type": sub.exam_type,
-        "marks_obtained": entry.marks_obtained, "max_marks": sub.max_marks
+        "subject_name": subj_name_map.get(sub.subject_code, sub.subject_code),
+        "subject_code": sub.subject_code,
+        "exam_type": sub.exam_type,
+        "marks": entry.marks_obtained,
+        "max_marks": sub.max_marks
     } for entry, sub in marks_rows]
+
     return {
         "student": {"id": student.id, "name": student.name, "email": student.email, **(student.profile_data or {})},
         "semesters": semesters,
-        "quiz_attempts": [{"quiz_id": a.quiz_id, "score": a.final_score, "percentage": a.final_score,
-                           "submitted_at": a.end_time.isoformat() if a.end_time else ""} for a in attempts[:10]],
+        "quiz_attempts": [{"quiz_id": a.quiz_id, "quiz_title": title or "Untitled Quiz", "score": a.final_score, "total": total or 0,
+                           "percentage": round((a.final_score / total * 100), 1) if total else 0,
+                           "submitted_at": a.end_time.isoformat() if a.end_time else ""} for a, title, total in attempts[:10]],
         "mid_marks": mid_marks
     }
 
