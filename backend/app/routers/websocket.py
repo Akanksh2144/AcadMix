@@ -9,9 +9,10 @@ Channels:
 Authentication: Pass JWT token as ?token= query parameter.
 Scaling: Uses Redis pub/sub for multi-process broadcasting.
 """
+import asyncio
 import json
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from app.core.security import JWT_SECRET, JWT_ALGORITHM
@@ -20,21 +21,35 @@ import jwt
 router = APIRouter()
 logger = logging.getLogger("acadmix.ws")
 
+# Redis pub/sub channel name used by all workers
+_REDIS_WS_CHANNEL = "acadmix:ws:broadcast"
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Connection Manager (with Redis pub/sub for multi-process scaling)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class ConnectionManager:
-    """Manages WebSocket connections per channel.
-    
-    In a single-process setup, this handles all connections in-memory.
-    For multi-process (Gunicorn), add Redis pub/sub adapter.
+    """Manages WebSocket connections per channel with Redis pub/sub relay.
+
+    In-process `active` dict tracks connections owned by THIS worker.
+    All broadcast calls are routed through Redis pub/sub so every
+    Gunicorn/Uvicorn worker receives the message and pushes it to
+    its locally-connected clients.
+
+    The Redis subscriber is initialized once at application startup
+    via `start_subscriber()` — called from the FastAPI lifespan
+    handler in main.py — NOT lazily on first connection. This avoids
+    the race condition where a worker with zero WS connections misses
+    broadcasts entirely.
     """
 
     def __init__(self):
         self.active: Dict[str, List[WebSocket]] = {}
+        self._subscriber_task: Optional[asyncio.Task] = None
         self._redis_pubsub = None
+
+    # ── Local connection tracking ────────────────────────────────────────
 
     async def connect(self, channel: str, ws: WebSocket):
         await ws.accept()
@@ -49,17 +64,96 @@ class ConnectionManager:
                 del self.active[channel]
         logger.info("[ws] Client disconnected from channel: %s", channel)
 
+    # ── Broadcast (Redis-aware) ──────────────────────────────────────────
+
     async def broadcast(self, channel: str, data: dict):
-        """Send data to all connections on a channel."""
-        dead = []
+        """Publish to Redis pub/sub so ALL workers relay the message.
+
+        Falls back to local-only delivery if Redis is unavailable.
+        """
+        message = json.dumps({"channel": channel, "data": data})
+
+        try:
+            from app.core.security import redis_client
+            if redis_client:
+                await redis_client.publish(_REDIS_WS_CHANNEL, message)
+                return
+        except Exception as e:
+            logger.warning("[ws] Redis publish failed, falling back to local: %s", e)
+
+        # Fallback: local-only (single-worker mode / Redis down)
+        await self._deliver_local(channel, data)
+
+    async def _deliver_local(self, channel: str, data: dict):
+        """Push data to all WebSocket connections on this worker for `channel`."""
+        dead: List[WebSocket] = []
         for ws in self.active.get(channel, []):
             try:
                 await ws.send_json(data)
             except Exception:
                 dead.append(ws)
-        # Clean up dead connections
         for ws in dead:
             self.disconnect(channel, ws)
+
+    # ── Redis Subscriber (started once at lifespan startup) ──────────────
+
+    async def start_subscriber(self):
+        """Start the background Redis subscriber task.
+
+        Must be called from the FastAPI lifespan context manager so
+        every worker — even those with zero WebSocket connections —
+        is subscribed from the moment the process starts.
+        """
+        try:
+            from app.core.security import redis_client
+            if not redis_client:
+                logger.info("[ws] No Redis client — pub/sub disabled (single-worker mode)")
+                return
+
+            self._redis_pubsub = redis_client.pubsub()
+            await self._redis_pubsub.subscribe(_REDIS_WS_CHANNEL)
+            self._subscriber_task = asyncio.create_task(self._subscriber_loop())
+            logger.info("[ws] Redis pub/sub subscriber started on channel: %s", _REDIS_WS_CHANNEL)
+        except Exception as e:
+            logger.error("[ws] Failed to start Redis subscriber: %s", e)
+
+    async def _subscriber_loop(self):
+        """Infinite loop reading messages from Redis pub/sub.
+
+        Each received message is dispatched to _deliver_local()
+        which pushes it to WebSocket clients connected to THIS worker.
+        """
+        try:
+            async for raw_message in self._redis_pubsub.listen():
+                if raw_message["type"] != "message":
+                    continue
+                try:
+                    payload = json.loads(raw_message["data"])
+                    channel = payload["channel"]
+                    data = payload["data"]
+                    await self._deliver_local(channel, data)
+                except (json.JSONDecodeError, KeyError) as e:
+                    logger.warning("[ws] Malformed pub/sub message: %s", e)
+        except asyncio.CancelledError:
+            logger.info("[ws] Redis subscriber loop cancelled")
+        except Exception as e:
+            logger.error("[ws] Redis subscriber loop crashed: %s", e)
+
+    async def stop_subscriber(self):
+        """Gracefully shut down the Redis subscriber.
+
+        Called from the lifespan shutdown phase.
+        """
+        if self._subscriber_task and not self._subscriber_task.done():
+            self._subscriber_task.cancel()
+            try:
+                await self._subscriber_task
+            except asyncio.CancelledError:
+                pass
+        if self._redis_pubsub:
+            await self._redis_pubsub.unsubscribe(_REDIS_WS_CHANNEL)
+            await self._redis_pubsub.close()
+        logger.info("[ws] Redis subscriber stopped")
 
     def get_connection_count(self, channel: str = None) -> int:
         if channel:

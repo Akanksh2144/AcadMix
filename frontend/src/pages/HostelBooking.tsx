@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { hostelAPI } from '../services/api';
 import PageHeader from '../components/PageHeader';
+import DashboardSkeleton from '../components/DashboardSkeleton';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ICONS (inline SVG to avoid heavy dependency)
@@ -419,9 +420,7 @@ export default function HostelBooking({ navigate, user }) {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 stagger-children">
-                {[1, 2, 3, 4].map(i => <div key={i} className="h-40 skeleton-shimmer rounded-2xl" />)}
-              </div>
+              <DashboardSkeleton variant="content-cards" />
             ) : hostels.length === 0 ? (
               <div className="text-center py-16 soft-card">
                 <p className="text-6xl mb-4">🏗️</p>
@@ -473,9 +472,7 @@ export default function HostelBooking({ navigate, user }) {
             </div>
 
             {loading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map(i => <div key={i} className="h-16 skeleton-shimmer rounded-xl" />)}
-              </div>
+              <DashboardSkeleton variant="content-list" />
             ) : Object.keys(floors).length === 0 ? (
               <div className="text-center py-12 soft-card">
                 <p className="text-4xl mb-3">🚧</p>
@@ -550,7 +547,7 @@ export default function HostelBooking({ navigate, user }) {
             </div>
 
             {loading ? (
-              <div className="h-64 skeleton-shimmer rounded-2xl" />
+              <DashboardSkeleton variant="content-cards" />
             ) : gridData ? (
               <>
                 <BedGrid

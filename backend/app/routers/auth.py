@@ -46,7 +46,10 @@ class RegisterRequest(BaseModel):
     section: str = Field("", max_length=20)
 
 
+from app.core.limiter import limiter
+
 @router.post("/login")
+@limiter.limit("5/minute")
 async def login(req: LoginRequest, request: Request, response: Response, session: AsyncSession = Depends(get_db)):
     _verify_origin(request)
     svc = AuthService(session)
@@ -80,6 +83,7 @@ async def logout(request: Request, response: Response, session: AsyncSession = D
 
 
 @router.post("/refresh")
+@limiter.limit("5/minute")
 async def refresh_access_token(request: Request, response: Response, session: AsyncSession = Depends(get_db)):
     svc = AuthService(session)
     result = await svc.refresh(request.cookies.get("refresh_token"))

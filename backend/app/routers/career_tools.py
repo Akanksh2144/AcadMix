@@ -22,10 +22,35 @@ router = APIRouter()
 
 async def _call_llm(messages: list, json_mode: bool = False, temperature: float = 0.3, max_tokens: int = 4096) -> str:
     import litellm
-    litellm.api_key = settings.GEMINI_API_KEY
+    import hashlib
+    from app.services.ai_service import get_tier1_model
 
+    litellm.api_key = settings.GEMINI_API_KEY
+    model = get_tier1_model()
+
+    # ── Cache Lookup (Lever 4) ──────────────────────────────────────────────────
+    try:
+        from app.services.wa_state_machine import get_redis
+        r = await get_redis()
+    except Exception:
+        r = None
+
+    cache_key = ""
+    if r:
+        payload = json.dumps(messages, sort_keys=True)
+        digest = hashlib.sha256(f"{model}:{payload}".encode()).hexdigest()
+        cache_key = f"career_cache:{digest}"
+        try:
+            cached = await r.get(cache_key)
+            if cached:
+                logger.info("Career tool cache HIT for %s", cache_key[:40])
+                return cached
+        except Exception:
+            pass
+
+    # ── LLM Call (Lever 6) ──────────────────────────────────────────────────────
     kwargs = {
-        "model": settings.RESUME_LLM_MODEL,
+        "model": model,
         "messages": messages,
         "temperature": temperature,
         "max_tokens": max_tokens,
@@ -35,7 +60,16 @@ async def _call_llm(messages: list, json_mode: bool = False, temperature: float 
 
     try:
         response = await litellm.acompletion(**kwargs)
-        return response.choices[0].message.content.strip()
+        content = response.choices[0].message.content.strip()
+        
+        # ── Cache Write (24h TTL)
+        if r and cache_key:
+            try:
+                await r.set(cache_key, content, ex=86400)
+            except Exception:
+                pass
+                
+        return content
     except Exception as e:
         logger.error("Career tools LLM call failed: %s", e)
         raise HTTPException(status_code=502, detail="AI service temporarily unavailable")

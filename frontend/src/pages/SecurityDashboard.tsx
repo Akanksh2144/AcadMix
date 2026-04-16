@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { visitorAPI } from '../services/api';
 import PageHeader from '../components/PageHeader';
+import DashboardSkeleton from '../components/DashboardSkeleton';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECURITY DASHBOARD — Main gate security guard's landing page
@@ -73,9 +74,7 @@ export default function SecurityDashboard({ navigate, user, onLogout }) {
 
         {/* Stats */}
         {loading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stagger-children">
-            {[1,2,3,4].map(i => <div key={i} className="h-28 skeleton-shimmer rounded-2xl" />)}
-          </div>
+          <DashboardSkeleton variant="content-cards" />
         ) : stats && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stagger-children">
             <div className="stat-card" style={{ '--stat-accent': '#6366f1', '--stat-accent-end': '#8b5cf6' }}>

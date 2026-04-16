@@ -485,9 +485,20 @@ async def lifespan(app: FastAPI):
     # ── GPU Health Checker (Phase 2 — self-hosted vLLM) ───────────────────
     from app.services.ai_service import gpu_health
     await gpu_health.start_background_loop()
+
+    # ── WebSocket Redis Pub/Sub Subscriber ────────────────────────────────
+    # Must start here (at worker boot), NOT lazily on first WS connection.
+    # This ensures every Gunicorn/Uvicorn worker subscribes to Redis
+    # immediately, so broadcasts reach all workers even if some have zero
+    # WebSocket clients connected at the time of the broadcast.
+    from app.routers.websocket import manager as ws_manager
+    await ws_manager.start_subscriber()
     
     yield
     # ── Shutdown cleanup ──────────────────────────────────────────────────
+    # Stop WebSocket Redis subscriber
+    await ws_manager.stop_subscriber()
+    logger.info("[shutdown] WebSocket Redis subscriber stopped")
     # Stop GPU health checker
     gpu_health.stop()
     logger.info("[shutdown] GPU health checker stopped")

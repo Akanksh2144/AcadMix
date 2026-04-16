@@ -6,6 +6,7 @@ import {
 } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { libraryAPI } from '../services/api';
+import DashboardSkeleton from '../components/DashboardSkeleton';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // LIBRARIAN DASHBOARD — Full library management interface
@@ -173,9 +174,7 @@ export default function LibrarianDashboard({ navigate, user, onLogout }) {
         {activeTab === 'overview' && (
           <div className="animate-fade-in-up">
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
-                {[1, 2, 3, 4].map(i => <div key={i} className="h-28 skeleton-shimmer rounded-2xl" />)}
-              </div>
+              <DashboardSkeleton variant="content-cards" />
             ) : stats ? (
               <>
                 {/* Stat cards */}

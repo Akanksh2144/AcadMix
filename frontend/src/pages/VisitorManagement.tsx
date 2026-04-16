@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { visitorAPI } from '../services/api';
 import PageHeader from '../components/PageHeader';
+import DashboardSkeleton from '../components/DashboardSkeleton';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VISITOR MANAGEMENT — Full campus & hostel visitor tracking
@@ -391,9 +392,7 @@ export default function VisitorManagement({ navigate, user, onLogout, gateType: 
         {activeTab === 'dashboard' && (
           <div className="animate-fade-in-up">
             {loading ? (
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 stagger-children">
-                {[1,2,3,4,5].map(i => <div key={i} className="h-28 skeleton-shimmer rounded-2xl" />)}
-              </div>
+              <DashboardSkeleton variant="content-cards" />
             ) : stats && (
               <>
                 {/* Live indicator */}

@@ -99,7 +99,7 @@ async def _call_llm(messages: list, model: str = None, json_mode: bool = False) 
         "model": model or settings.INTERVIEW_LLM_MODEL,
         "messages": messages,
         "temperature": 0.7,
-        "max_tokens": 2048,
+        "max_tokens": max_tokens,
     }
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
@@ -314,7 +314,10 @@ async def send_message(
 
     # Build system prompt with updated question count
     company_context = f" at {interview.target_company}" if interview.target_company else ""
-    resume_section = f"CANDIDATE RESUME:\n{interview.resume_context}" if interview.resume_context else "No resume provided."
+    if q_number == 1:
+        resume_section = f"CANDIDATE RESUME:\n{interview.resume_context}" if interview.resume_context else "No resume provided."
+    else:
+        resume_section = "CANDIDATE RESUME: [Previously provided. Probe deeper into their responses.]"
 
     system_prompt = INTERVIEW_SYSTEM_PROMPT.format(
         interview_type=interview.interview_type,
@@ -325,9 +328,9 @@ async def send_message(
         resume_section=resume_section,
     )
 
-    # Build LLM messages from conversation history
+    # Build LLM messages from conversation history (optimized: system + last 4 turns)
     llm_messages = [{"role": "system", "content": system_prompt}]
-    for msg in conversation:
+    for msg in conversation[-4:]:
         llm_messages.append({"role": msg["role"], "content": msg["content"]})
 
     # Get AI response (non-streaming for DB storage, return SSE to client)
@@ -411,7 +414,7 @@ async def end_interview(
             {"role": "system", "content": FEEDBACK_SYSTEM_PROMPT},
             {"role": "user", "content": f"Transcript for {interview.interview_type} interview:\n\n{transcript}"},
         ]
-        feedback_raw = await _call_llm(eval_messages, json_mode=True)
+        feedback_raw = await _call_llm(eval_messages, json_mode=True, max_tokens=2048)
         try:
             feedback = json.loads(feedback_raw)
         except json.JSONDecodeError:

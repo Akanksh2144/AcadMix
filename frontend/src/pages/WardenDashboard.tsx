@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { hostelAPI } from '../services/api';
 import PageHeader from '../components/PageHeader';
+import DashboardSkeleton from '../components/DashboardSkeleton';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // WARDEN DASHBOARD — Building management + gatepass approvals
@@ -170,9 +171,7 @@ export default function WardenDashboard({ navigate, user, onLogout }) {
         {activeTab === 'overview' && (
           <div className="animate-fade-in-up">
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
-                {[1, 2, 3, 4].map(i => <div key={i} className="h-28 skeleton-shimmer rounded-2xl" />)}
-              </div>
+              <DashboardSkeleton variant="content-cards" />
             ) : dashboard ? (
               <>
                 {/* Stat cards */}
