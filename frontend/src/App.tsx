@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Toast } from '@capacitor/toast';
+import { Capacitor } from '@capacitor/core';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AlertModal from './components/AlertModal';
@@ -55,6 +58,7 @@ const SecurityDashboard = React.lazy(() => import('./pages/SecurityDashboard'));
 const VisitorManagement = React.lazy(() => import('./pages/VisitorManagement'));
 
 
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Route Configuration
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -108,6 +112,7 @@ const PAGE_TO_PATH = {
   'resume-ats-scorer': '/resume-scorer',
   'career-toolkit': '/career',
   'visitor-management': '/visitors',
+
 };
 
 const ROLE_DASHBOARD = {
@@ -392,7 +397,6 @@ function AppRoutes({ user, onLogin, onLogout }) {
         <ProtectedRoute user={user}><VisitorManagement navigate={navigate} user={user} onLogout={onLogout} gateType={selectedData?.gateType} /></ProtectedRoute>
       } />
 
-      {/* ── Shared Routes ────────────────────────────────────────── */}
       <Route path="/code" element={
         <ProtectedRoute user={user}><CodePlayground navigate={navigate} user={user} /></ProtectedRoute>
       } />
@@ -420,16 +424,66 @@ function AppShell() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const routerNavigate = useNavigate();
   const location = useLocation();
+  const locationRef = useRef(location.pathname);
+
+  useEffect(() => {
+    locationRef.current = location.pathname;
+  }, [location.pathname]);
+
+  // Handle Hardware Back Button naitvely inside Capacitor
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let lastBackPressTime = 0;
+    
+    const listener = CapacitorApp.addListener('backButton', () => {
+      const path = locationRef.current;
+      const isRoot = Object.values(ROLE_DASHBOARD).includes(path) || path === '/login' || path === '/';
+
+      if (!isRoot) {
+        // We are deep in the app. Just navigate back.
+        routerNavigate(-1);
+        return;
+      }
+
+      // We are at the root dashboard
+      const now = new Date().getTime();
+      if (now - lastBackPressTime < 2000) {
+        CapacitorApp.exitApp();
+      } else {
+        lastBackPressTime = now;
+        Toast.show({
+          text: 'Tap back again to exit',
+          duration: 'short',
+          position: 'bottom'
+        });
+      }
+    });
+
+    return () => {
+      listener.then(handle => handle.remove());
+    };
+  }, [routerNavigate]);
 
   const checkAuth = useCallback(async () => {
     const savedToken = localStorage.getItem('auth_token');
+    const cachedUser = localStorage.getItem('auth_user');
+    
     if (!savedToken) {
       setLoading(false);
       return;
     }
     setAuthToken(savedToken);
+    
+    // OPTIMISTIC RENDER: Render app completely instantly while validating in background
+    if (cachedUser) {
+      try { setUser(JSON.parse(cachedUser)); } catch(e) {}
+      setLoading(false);
+    }
+    
     try {
       const { data } = await authAPI.me();
+      localStorage.setItem('auth_user', JSON.stringify(data));
       setUser(data);
       // If we're on /login and already authenticated, redirect to dashboard
       if (location.pathname === '/login' || location.pathname === '/') {
@@ -440,6 +494,7 @@ function AppShell() {
       if (status === 401 || status === 403) {
         clearAuthToken();
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
         setUser(null);
         routerNavigate('/login', { replace: true });
       }
@@ -451,6 +506,7 @@ function AppShell() {
 
   const handleLogin = (userData) => {
     setUser(userData);
+    localStorage.setItem('auth_user', JSON.stringify(userData));
     if (userData.access_token) {
       setAuthToken(userData.access_token);
       localStorage.setItem('auth_token', userData.access_token);
@@ -462,10 +518,11 @@ function AppShell() {
 
   const confirmLogout = async () => {
     setShowLogoutModal(false);
-    try { await authAPI.logout(); } catch {}
-    setUser(null);
+    try { await authAPI.logout(); } catch(e) {}
     clearAuthToken();
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+    setUser(null);
     routerNavigate('/login', { replace: true });
   };
 

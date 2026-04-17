@@ -92,7 +92,9 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
   const [analyticsTab, setAnalyticsTab] = useState("quiz");
   const [showExportPanel, setShowExportPanel] = useState(false);
   const [facultySubView, setFacultySubView] = useState("assignments");
-  const [dashboard, setDashboard] = useState(null);
+  const [dashboard, setDashboard] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cache_hod_dash')) || null; } catch { return null; }
+  });
   const [alertModal, setAlertModal] = useState({
     open: false,
     title: "",
@@ -165,6 +167,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
       if (activeTab === "overview") {
         const { data } = await examCellAPI.hodDashboard();
         setDashboard(data);
+        localStorage.setItem('cache_hod_dash', JSON.stringify(data));
       }
       if (activeTab === "faculty" || activeTab === "overview") {
         const [a, t] = await Promise.all([

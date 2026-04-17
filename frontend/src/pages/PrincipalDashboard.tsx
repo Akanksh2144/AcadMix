@@ -67,7 +67,9 @@ const getGreeting = () => {
 
 const PrincipalDashboard = ({ navigate, user, onLogout }) => {
   const [activeTab, setActiveTab] = useState("overview");
-  const [dashboard, setDashboard] = useState(null);
+  const [dashboard, setDashboard] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cache_principal_dash')) || null; } catch { return null; }
+  });
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const { isDark, toggle: toggleTheme } = useTheme();
@@ -136,6 +138,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
       if (activeTab === "overview") {
         const { data } = await principalAPI.dashboard();
         setDashboard(data);
+        localStorage.setItem('cache_principal_dash', JSON.stringify(data));
       }
       if (activeTab === "leaves") {
         const { data } = await principalAPI.pendingLeaves();
