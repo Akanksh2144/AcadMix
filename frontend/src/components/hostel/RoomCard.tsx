@@ -19,7 +19,7 @@ export default function RoomCard({ room, onSelect, isSelected }: RoomCardProps) 
   const fillingFast = room.available_count > 0 && room.available_count <= 2;
   const hasPremium = room.premium_count > 0;
   const occupancyPct = room.capacity > 0 ? Math.round((bookedCount / room.capacity) * 100) : 0;
-  const isAC = room.metadata?.ac;
+  const isAC = room.meta_data?.ac;
 
   return (
     <motion.button

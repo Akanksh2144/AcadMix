@@ -47,7 +47,7 @@ class RoomTemplate(Base, SoftDeleteMixin):
     grid_rows      = Column(Integer, nullable=False)
     grid_cols      = Column(Integer, nullable=False)
     bed_layout     = Column(JSONB, nullable=False)  # Array of bed definitions
-    metadata       = Column(JSONB, nullable=True, server_default=text("'{}'"))  # room_decorators, etc.
+    meta_data      = Column(JSONB, nullable=True, server_default=text("'{}'"))  # room_decorators, etc.
     created_at     = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -64,7 +64,7 @@ class Hostel(Base, SoftDeleteMixin):
     total_capacity = Column(Integer, nullable=False, server_default=text('0'))
     gender_type    = Column(String, nullable=False, server_default="coed")  # male, female, coed
     total_floors   = Column(Integer, nullable=False, server_default=text('1'))
-    metadata       = Column(JSONB, nullable=True, server_default=text("'{}'"))  # floor_layout per floor
+    meta_data      = Column(JSONB, nullable=True, server_default=text("'{}'"))  # floor_layout per floor
     created_at     = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
@@ -86,7 +86,7 @@ class Room(Base, SoftDeleteMixin):
     room_number    = Column(String, nullable=False)
     floor          = Column(Integer, nullable=False, server_default=text('1'))
     capacity       = Column(Integer, nullable=False, server_default=text('0'))
-    metadata       = Column(JSONB, nullable=True, server_default=text("'{}'"))  # ac, attached_bathroom, amenities, wing
+    meta_data      = Column(JSONB, nullable=True, server_default=text("'{}'"))  # ac, attached_bathroom, amenities, wing
 
     __table_args__ = (
         UniqueConstraint("hostel_id", "room_number", name="uq_hostel_room_number"),

@@ -14,7 +14,7 @@ interface AdminTemplateBuilderProps {
     grid_rows: number;
     grid_cols: number;
     beds: BedLayoutItem[];
-    metadata: { room_decorators: RoomDecorators };
+    meta_data: { room_decorators: RoomDecorators };
   }) => void;
   saving: boolean;
 }
@@ -92,7 +92,7 @@ export default function AdminTemplateBuilder({ onSave, saving }: AdminTemplateBu
       grid_rows: rows,
       grid_cols: cols,
       beds,
-      metadata: {
+      meta_data: {
         room_decorators: {
           window_wall: windowWall,
           door_position: doorPosition,

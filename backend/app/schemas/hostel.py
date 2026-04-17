@@ -29,7 +29,7 @@ class RoomTemplateCreate(BaseModel):
     grid_rows: int
     grid_cols: int
     beds: List[BedLayoutItem]
-    metadata: Optional[dict] = None  # room_decorators, etc.
+    meta_data: Optional[dict] = None  # room_decorators, etc.
 
 
 class RoomTemplateResponse(BaseModel):
@@ -39,7 +39,7 @@ class RoomTemplateResponse(BaseModel):
     grid_rows: int
     grid_cols: int
     bed_layout: list
-    metadata: Optional[dict] = None
+    meta_data: Optional[dict] = None
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -51,7 +51,7 @@ class HostelCreate(BaseModel):
     gender_type: str = Field("coed", pattern="^(male|female|coed)$")
     total_floors: int = 1
     warden_id: Optional[str] = None
-    metadata: Optional[dict] = None  # floor_layout per floor
+    meta_data: Optional[dict] = None  # floor_layout per floor
 
 
 class HostelResponse(BaseModel):
@@ -92,7 +92,7 @@ class RoomSummary(BaseModel):
     available_count: int = 0
     premium_count: int = 0
     template_name: Optional[str] = None
-    metadata: Optional[dict] = None  # ac, bathroom, amenities, wing
+    meta_data: Optional[dict] = None  # ac, bathroom, amenities, wing
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -117,7 +117,7 @@ class RoomGridResponse(BaseModel):
     grid_rows: int
     grid_cols: int
     beds: List[BedGridItem]
-    metadata: Optional[dict] = None  # room_decorators from template
+    meta_data: Optional[dict] = None  # room_decorators from template
 
 
 class BedLockRequest(BaseModel):

@@ -33,7 +33,7 @@ export default function FloorPlanView({
   const [moreOpen, setMoreOpen] = useState(false);
 
   // Get floor layout from hostel metadata (if available)
-  const floorLayout = hostel.metadata?.floor_layout?.[String(currentFloor)];
+  const floorLayout = hostel.meta_data?.floor_layout?.[String(currentFloor)];
 
   // Room count per floor for the floor switcher
   const roomCountPerFloor = useMemo(() => {
@@ -66,19 +66,19 @@ export default function FloorPlanView({
 
       // AC filter
       if (filters.ac !== null) {
-        const roomAC = r.metadata?.ac ?? false;
+        const roomAC = r.meta_data?.ac ?? false;
         if (filters.ac !== roomAC) return false;
       }
 
       // Attached bathroom
       if (filters.attachedBathroom !== null) {
-        const hasBathroom = r.metadata?.attached_bathroom ?? false;
+        const hasBathroom = r.meta_data?.attached_bathroom ?? false;
         if (filters.attachedBathroom !== hasBathroom) return false;
       }
 
       // Amenities
       if (filters.amenities.length > 0) {
-        const roomAmenities = r.metadata?.amenities || [];
+        const roomAmenities = r.meta_data?.amenities || [];
         const hasAll = filters.amenities.every(a =>
           roomAmenities.some(ra => ra.toLowerCase().includes(a.toLowerCase()))
         );

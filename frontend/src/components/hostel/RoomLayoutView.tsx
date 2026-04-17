@@ -92,7 +92,7 @@ export default function RoomLayoutView({
     setSelectedBed(null);
   }, []);
 
-  const decorators = gridData.metadata?.room_decorators;
+  const decorators = gridData.meta_data?.room_decorators;
 
   if (loading) {
     return (

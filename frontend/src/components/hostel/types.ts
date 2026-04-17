@@ -11,7 +11,7 @@ export interface HostelBuilding {
   available_beds: number;
   premium_beds: number;
   total_beds: number;
-  metadata?: HostelMetadata;
+  meta_data?: HostelMetadata;
 }
 
 export interface HostelMetadata {
@@ -33,7 +33,7 @@ export interface RoomSummary {
   available_count: number;
   premium_count: number;
   template_name?: string;
-  metadata?: RoomMetadata;
+  meta_data?: RoomMetadata;
 }
 
 export interface RoomMetadata {
@@ -70,7 +70,7 @@ export interface RoomGridData {
   grid_rows: number;
   grid_cols: number;
   beds: BedGridItem[];
-  metadata?: RoomMetadata;
+  meta_data?: RoomMetadata;
 }
 
 export interface BedLockData {
@@ -108,7 +108,7 @@ export interface TemplateData {
   grid_rows: number;
   grid_cols: number;
   bed_layout: BedLayoutItem[];
-  metadata?: RoomMetadata;
+  meta_data?: RoomMetadata;
   is_global?: boolean;
 }
 

@@ -25,21 +25,21 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Add metadata JSONB column to hostel tables."""
+    """Add meta_data JSONB column to hostel tables."""
     op.add_column('room_templates', sa.Column(
-        'metadata',
+        'meta_data',
         postgresql.JSONB(astext_type=sa.Text()),
         server_default='{}',
         nullable=True,
     ))
     op.add_column('hostels', sa.Column(
-        'metadata',
+        'meta_data',
         postgresql.JSONB(astext_type=sa.Text()),
         server_default='{}',
         nullable=True,
     ))
     op.add_column('rooms', sa.Column(
-        'metadata',
+        'meta_data',
         postgresql.JSONB(astext_type=sa.Text()),
         server_default='{}',
         nullable=True,
@@ -47,7 +47,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Remove metadata columns."""
-    op.drop_column('rooms', 'metadata')
-    op.drop_column('hostels', 'metadata')
-    op.drop_column('room_templates', 'metadata')
+    """Remove meta_data columns."""
+    op.drop_column('rooms', 'meta_data')
+    op.drop_column('hostels', 'meta_data')
+    op.drop_column('room_templates', 'meta_data')
