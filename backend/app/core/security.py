@@ -24,8 +24,29 @@ if not JWT_SECRET:
     raise ValueError("JWT_SECRET environment variable must be set!")
 JWT_ALGORITHM = settings.JWT_ALGORITHM
 
+import asyncio
+import time
+
 redis_url = settings.REDIS_URL
-redis_client = aioredis.from_url(redis_url) if redis_url else None
+redis_client = aioredis.from_url(redis_url, socket_connect_timeout=0.1, socket_timeout=0.2, retry_on_timeout=False, max_connections=10) if redis_url else None
+
+_REDIS_AVAILABLE = True
+_LAST_REDIS_FAIL = 0
+
+async def safe_redis_call(coro, timeout: float = 0.5):
+    """Circuit breaker wrapper for all Redis operations to prevent cascading timeouts."""
+    global _REDIS_AVAILABLE, _LAST_REDIS_FAIL
+    if not _REDIS_AVAILABLE:
+        if time.time() - _LAST_REDIS_FAIL < 60:
+            raise Exception("Redis circuit breaker open")
+    try:
+        res = await asyncio.wait_for(coro, timeout=timeout)
+        _REDIS_AVAILABLE = True
+        return res
+    except Exception as e:
+        _REDIS_AVAILABLE = False
+        _LAST_REDIS_FAIL = time.time()
+        raise e
 
 class TokenBlacklistConfig:
     USE_BLACKLIST = os.getenv("USE_TOKEN_BLACKLIST", "true").lower() == "true"
@@ -78,8 +99,21 @@ async def get_current_user(request: Request, session: AsyncSession = Depends(get
             
         if TokenBlacklistConfig.USE_BLACKLIST and redis_client:
             jti = payload.get("jti")
-            if jti and await redis_client.exists(f"revoked_access:{jti}"):
-                raise HTTPException(status_code=401, detail="Token revoked")
+            try:
+                if jti and await safe_redis_call(redis_client.exists(f"revoked_access:{jti}")):
+                    raise HTTPException(status_code=401, detail="Token revoked")
+            except HTTPException:
+                raise
+            except Exception:
+                pass # Bypass blacklist check if Redis is degraded
+        
+        from sqlalchemy import text
+        jwt_college_id = payload.get("tenant_id") or payload.get("college_id")
+        if jwt_college_id:
+            await session.execute(
+                text("SELECT set_config('app.college_id', :cid, true)"),
+                {"cid": jwt_college_id},
+            )
         
         result = await session.execute(select(models.User).where(models.User.id == payload["sub"]))
         user = result.scalars().first()

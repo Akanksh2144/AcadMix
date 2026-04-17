@@ -21,11 +21,11 @@ import {
   Calendar,
   WarningOctagon,
   ChartBar,
-  Download,
-  Sun,
   Moon,
+  Sparkle
 } from "@phosphor-icons/react";
-import { facultyAPI, examCellAPI, marksAPI } from "../services/api";
+import { facultyAPI, examCellAPI, marksAPI, insightsAPI } from "../services/api";
+import InsightsChat from "../components/insights/InsightsChat";
 import { StudentResultsSearch } from "../components/StudentResultsSearch";
 import AlertModal from "../components/AlertModal";
 import WorkloadMatrix from "../components/hod/WorkloadMatrix";
@@ -113,6 +113,12 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
   const [teachers, setTeachers] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Insights State
+  const [pins, setPins] = useState([]);
+  const [activePinData, setActivePinData] = useState(null);
+  const [pinLoading, setPinLoading] = useState(false);
+
   const [initialLoading, setInitialLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const { isDark, toggle: toggleTheme } = useTheme();
@@ -171,6 +177,10 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
       if (activeTab === "review") {
         const { data } = await marksAPI.submissions();
         setSubmissions(data);
+      }
+      if (activeTab === "insights") {
+        const { data } = await insightsAPI.getPins();
+        setPins(data);
       }
     } catch (err) {
       console.error("HOD Dashboard fetch error:", err);
@@ -297,6 +307,32 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
       timestamp: r.published_at || r.submitted_at || r.created_at,
       status: r.status,
     }));
+
+  const executePin = async (pin) => {
+    setPinLoading(true);
+    setActivePinData(null);
+    try {
+      const response = await insightsAPI.query({
+        message: pin.nl_query || "Pinned Query",
+        cached_sql: pin.cached_sql,
+        session_history: []
+      });
+      setActivePinData(response.data);
+    } catch (err) {
+      alert("Failed to load pin data");
+    }
+    setPinLoading(false);
+  };
+
+  const deletePin = async (id) => {
+    try {
+      await insightsAPI.deletePin(id);
+      setPins(pins.filter(p => p.id !== id));
+      setActivePinData(null);
+    } catch (err) {
+      alert("Failed to delete pin");
+    }
+  };
 
   const stats = [
         {
@@ -487,7 +523,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={toggleTheme}
-              className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors hidden sm:block"
+              className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
               aria-label="Toggle theme"
             >
               <AnimatePresence mode="wait" initial={false}>
@@ -613,6 +649,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
               { id: "class-in-charge", label: "Class In-Charge" },
               { id: "progression", label: "Student Progression" },
               { id: "leave-approvals", label: "Leave Approvals" },
+              { id: "insights", label: "AI Insights", icon: Sparkle },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1703,6 +1740,14 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
             </div>
           </div>
         )}
+
+        {/* ─── AI Insights Tab ─── */}
+        {activeTab === "insights" && (
+            <motion.div key="insights-tab" className="h-full">
+                <InsightsChat user={user} />
+            </motion.div>
+        )}
+
       </div>
       <AlertModal
         open={alertModal.open}

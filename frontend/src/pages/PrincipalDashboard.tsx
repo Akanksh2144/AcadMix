@@ -17,9 +17,13 @@ import {
   ClipboardText,
   CalendarCheck,
   NotePencil,
-  Briefcase
+  Briefcase,
+  Sparkle,
+  Trash,
+  Info
 } from "@phosphor-icons/react";
-import { principalAPI, authAPI, setAuthToken } from "../services/api";
+import { principalAPI, authAPI, setAuthToken, insightsAPI, notificationsAPI } from "../services/api";
+import InsightsChat from "../components/insights/InsightsChat";
 import { useTheme } from "../contexts/ThemeContext";
 import DashboardSkeleton from "../components/DashboardSkeleton";
 import UserProfileModal from "../components/UserProfileModal";
@@ -80,9 +84,45 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
   const [institutionProfile, setInstitutionProfile] = useState(null);
   const [expandedCompliance, setExpandedCompliance] = useState("attendance"); // attendance, staff, grievances, activities
 
+  // Insights State
+  const [pins, setPins] = useState([]);
+  const [activePinData, setActivePinData] = useState(null);
+  const [pinLoading, setPinLoading] = useState(false);
+
   // Academic Year Settings
   const currentAcademicYear = "2023-2024";
   const currentSemester = 3;
+
+  // Real notifications
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    notificationsAPI.getAll({ limit: 10 }).then(res => {
+      setNotifications(res.data.data || []);
+      setUnreadCount(res.data.unread_count || 0);
+    }).catch(() => {});
+  }, []);
+
+  const handleMarkAllRead = () => {
+    notificationsAPI.markAllRead().then(() => {
+      setUnreadCount(0);
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setShowNotifications(false);
+    });
+  };
+
+  const formatTime = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const now = new Date();
+    const diff = Math.floor((now - d) / 60000);
+    if (diff < 1) return 'Just now';
+    if (diff < 60) return `${diff}m ago`;
+    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  };
 
   useEffect(() => {
     fetchData();
@@ -125,6 +165,10 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
         const { data } = await principalAPI.institutionProfile();
         setInstitutionProfile(data || { recognitions: [], infrastructure: {}, mous: [] });
       }
+      if (activeTab === "insights") {
+        const { data } = await insightsAPI.getPins();
+        setPins(data);
+      }
     } catch (err) {
       console.error(err);
       setFetchError("Failed to fetch dashboard data. Access might be restricted.");
@@ -144,6 +188,32 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
       fetchData(); // refresh leaves
     } catch (err) {
       alert("Failed to review leave: " + (err.response?.data?.detail || err.message));
+    }
+  };
+
+  const executePin = async (pin) => {
+    setPinLoading(true);
+    setActivePinData(null);
+    try {
+      const response = await insightsAPI.query({
+        message: pin.nl_query || "Pinned Query",
+        cached_sql: pin.cached_sql,
+        session_history: []
+      });
+      setActivePinData(response.data);
+    } catch (err) {
+      alert("Failed to load pin data");
+    }
+    setPinLoading(false);
+  };
+
+  const deletePin = async (id) => {
+    try {
+      await insightsAPI.deletePin(id);
+      setPins(pins.filter(p => p.id !== id));
+      setActivePinData(null);
+    } catch (err) {
+      alert("Failed to delete pin");
     }
   };
 
@@ -210,11 +280,61 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Notification Bell */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors relative"
+                aria-label="Notifications"
+              >
+                <Bell size={20} weight={showNotifications ? "fill" : "duotone"} />
+                {unreadCount > 0 && (
+                  <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-rose-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </div>
+                )}
+              </button>
+            </div>
+            <AnimatePresence>
+              {showNotifications && (
+                <>
+                  <div className="fixed inset-0 z-[60]" onClick={() => setShowNotifications(false)}></div>
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                    className="fixed top-16 right-4 sm:right-8 z-[61] w-80 sm:w-96 bg-white dark:bg-[#1A202C] rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden"
+                  >
+                    <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <h4 className="font-extrabold text-slate-800 dark:text-slate-100">Notifications</h4>
+                      <button onClick={handleMarkAllRead} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 transition-colors">Mark all as read</button>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/50">
+                      {notifications.length === 0 ? (
+                        <div className="px-5 py-8 text-center text-sm text-slate-400">No notifications yet</div>
+                      ) : notifications.map((item) => (
+                        <div key={item.id} className={`flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${!item.is_read ? 'bg-indigo-50/30 dark:bg-indigo-500/5' : ''}`}>
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${item.type === 'alert' ? 'bg-rose-50 dark:bg-rose-500/15' : 'bg-indigo-50 dark:bg-indigo-500/15'}`}>
+                            <Info size={14} weight="duotone" className={item.type === 'alert' ? 'text-rose-500' : 'text-indigo-500'} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{item.title}</p>
+                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{item.message}</p>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1.5 block">{formatTime(item.created_at)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={toggleTheme}
-              className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors hidden sm:block"
+              className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
             >
               {isDark ? <Sun size={20} weight="duotone" /> : <Moon size={20} weight="duotone" />}
             </motion.button>
@@ -275,6 +395,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
               { id: "compliance", label: "Compliance & Governance", icon: CheckCircle },
               { id: "academics", label: "Academic Performance", icon: ChartLineUp },
               { id: "institution", label: "Institution Profile", icon: Buildings },
+              { id: "insights", label: "AI Insights", icon: Sparkle },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -608,6 +729,13 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                 </div>
             )}
 
+            {/* ─── AI Insights Tab ─── */}
+            {activeTab === "insights" && (
+                <motion.div key="insights-tab" variants={containerVariants} initial="hidden" animate="show" exit="hidden">
+                    <InsightsChat user={user} />
+                </motion.div>
+            )}
+
           </motion.div>
         </AnimatePresence>
       </div>
@@ -616,4 +744,3 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
 };
 
 export default PrincipalDashboard;
-

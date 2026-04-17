@@ -8,13 +8,13 @@ import jwt
 from typing import Dict, Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
 from app import models
 from app.core.security import (
     verify_password,
     create_access_token,
     create_refresh_token,
     redis_client,
+    safe_redis_call,
     JWT_SECRET,
     JWT_ALGORITHM,
 )
@@ -56,6 +56,7 @@ class AuthService:
             RateLimitedError: Too many failed attempts.
             AuthenticationError: Invalid credentials.
         """
+        print(f"DEBUG LOGIN INPUT: user={username}, password={password}, tenant_college_id={tenant_college_id}")
         import logging
         logger = logging.getLogger("acadmix.security")
         normalized = username.strip().upper()
@@ -63,26 +64,41 @@ class AuthService:
 
         # Rate-limit check
         if redis_client:
-            failures = await redis_client.get(key)
-            if failures and int(failures) >= self.MAX_LOGIN_FAILURES:
-                raise RateLimitedError()
+            try:
+                failures = await safe_redis_call(redis_client.get(key))
+                if failures and int(failures) >= self.MAX_LOGIN_FAILURES:
+                    raise RateLimitedError()
+            except RateLimitedError:
+                raise
+            except Exception as e:
+                logger.warning(
+                    f"redis_unavailable_brute_force_check_skipped: "
+                    f"username='{username}', error='{e}'. Monitoring bypassed."
+                )
 
         # Lookup user (case-insensitive for both roll_number and email) globally first
         from sqlalchemy import func
-        result = await self.db.execute(
-            select(models.User)
-            .outerjoin(models.UserProfile)
-            .where(
-                (models.UserProfile.roll_number == normalized)
-                | (func.upper(models.User.email) == normalized)
+        from database import AdminSessionLocal
+        
+        async with AdminSessionLocal() as admin_session:
+            result = await admin_session.execute(
+                select(models.User)
+                .outerjoin(models.UserProfile)
+                .where(
+                    (models.UserProfile.roll_number == normalized)
+                    | (func.upper(models.User.email) == normalized)
+                )
             )
-        )
-        user = result.scalars().first()
+            user = result.scalars().first()
+            if user:
+                admin_session.expunge_all()
+        print(f"DEBUG LOGIN LOOKUP: user found={user is not None}, tenant_college_id={tenant_college_id}")
 
         # Check tenant scope bypass impersonation (P0 Hardening)
         if user and tenant_college_id and user.college_id and user.role != "super_admin":
             if str(user.college_id) != str(tenant_college_id):
                 # We caught a cross-tenant login attempt. Log and fail silently.
+                print(f"DEBUG CROSS-TENANT IMPERSONATION ATTEMPT: username='{username}', attempted_college_id='{tenant_college_id}', resolved_college_id='{user.college_id}'")
                 logger.warning(
                     f"CROSS-TENANT IMPERSONATION ATTEMPT "
                     f"username='{username}', "
@@ -93,10 +109,13 @@ class AuthService:
 
         if not user or not verify_password(password, user.password_hash) or getattr(user, "is_anonymized", False):
             if redis_client:
-                pipe = redis_client.pipeline()
-                pipe.incr(key)
-                pipe.expire(key, self.LOCKOUT_SECONDS)
-                await pipe.execute()
+                try:
+                    pipe = redis_client.pipeline()
+                    pipe.incr(key)
+                    pipe.expire(key, self.LOCKOUT_SECONDS)
+                    await safe_redis_call(pipe.execute())
+                except Exception as e:
+                    logger.warning(f"Redis increment bypass due to error: {e}")
             
             raise AuthenticationError("Account no longer exists" if getattr(user, "is_anonymized", False) else "Invalid credentials")
 
@@ -104,7 +123,10 @@ class AuthService:
 
         # Success — clear failure counter
         if redis_client:
-            await redis_client.delete(key)
+            try:
+                await safe_redis_call(redis_client.delete(key))
+            except Exception as e:
+                pass
 
         # Build permissions from role table
         perms = await self._resolve_role_permissions(user)
@@ -172,7 +194,10 @@ class AuthService:
             payload = jwt.decode(refresh_token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             jti = payload.get("jti")
             if redis_client and jti:
-                await redis_client.setex(f"revoked_refresh:{jti}", 604800, "revoked")
+                try:
+                    await safe_redis_call(redis_client.setex(f"revoked_refresh:{jti}", 604800, "revoked"))
+                except Exception:
+                    pass
                 
             user_id = payload.get("sub")
             if user_id:
@@ -210,8 +235,13 @@ class AuthService:
                 raise AuthenticationError("Invalid token type")
 
             jti = payload.get("jti")
-            if redis_client and await redis_client.exists(f"revoked_refresh:{jti}"):
-                raise AuthenticationError("Refresh token revoked")
+            try:
+                if redis_client and await safe_redis_call(redis_client.exists(f"revoked_refresh:{jti}")):
+                    raise AuthenticationError("Refresh token revoked")
+            except AuthenticationError:
+                raise
+            except Exception:
+                pass # Circuit breaker open, bypass check
 
             user_id = payload["sub"]
             result = await self.db.execute(
