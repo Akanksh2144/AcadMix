@@ -15,6 +15,7 @@ import StudentAcademicCalendar from '../components/student/StudentAcademicCalend
 import StudentSubjects from '../components/student/StudentSubjects';
 import FeePaymentModule from '../components/student/FeePaymentModule';
 import StudentTransport from '../components/student/StudentTransport';
+import { useIsModuleVisible } from '../hooks/useCollegeModules';
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -72,7 +73,8 @@ const cardHover = {
   transition: { type: 'spring', stiffness: 400, damping: 17 }
 };
 
-const StudentDashboard = ({ navigate, user, onLogout }) => {
+const StudentDashboard = ({ navigate, user, onLogout }: any) => {
+  const isHostelVisible = useIsModuleVisible("hostel");
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('student_tab') || 'overview');
   useEffect(() => { sessionStorage.setItem('student_tab', activeTab); }, [activeTab]);
   const [dashboard, setDashboard] = useState(null);
@@ -411,11 +413,11 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
             { id: 'semester-results', icon: Calendar, label: 'Semester Results', sub: 'Check your grades', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-semester-results-button' },
             { id: 'analytics', icon: ChartLine, label: 'Analytics', sub: 'Track performance', iconBg: 'bg-amber-50 dark:bg-amber-500/10 group-hover:bg-amber-100 dark:group-hover:bg-amber-500/20', iconText: 'text-amber-500', testId: 'view-analytics-button' },
             { id: 'code-playground', icon: Terminal, label: 'Code Playground', sub: 'Practice coding', iconBg: 'bg-purple-50 dark:bg-purple-500/10 group-hover:bg-purple-100 dark:group-hover:bg-purple-500/20', iconText: 'text-purple-500', testId: 'view-code-playground-button' },
-            { id: 'hostel-booking', icon: House, label: 'Hostel Booking', sub: 'Book your bed', iconBg: 'bg-pink-50 dark:bg-pink-500/10 group-hover:bg-pink-100 dark:group-hover:bg-pink-500/20', iconText: 'text-pink-500', testId: 'view-hostel-booking-button' },
+            isHostelVisible ? { id: 'hostel-booking', icon: House, label: 'Hostel Booking', sub: 'Book your bed', iconBg: 'bg-pink-50 dark:bg-pink-500/10 group-hover:bg-pink-100 dark:group-hover:bg-pink-500/20', iconText: 'text-pink-500', testId: 'view-hostel-booking-button' } : null,
             { id: 'transport', label: 'Bus Tracker', sub: 'Track your bus', icon: Bus, iconBg: 'bg-emerald-50 dark:bg-emerald-500/10 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/20', iconText: 'text-emerald-500', testId: 'view-transport-button', isTab: true },
             { id: 'career-toolkit', icon: Toolbox, label: 'Career Toolkit', sub: '8 AI career tools', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-career-toolkit-button' },
 
-          ].map((item) => {
+          ].filter(Boolean).map((item: any) => {
             const Icon = item.icon;
             return (
               <motion.button key={item.id} variants={itemVariants} whileHover={cardHover} whileTap={{ scale: 0.97 }}

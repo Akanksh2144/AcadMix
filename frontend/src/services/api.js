@@ -41,7 +41,8 @@ const onRefreshed = (newToken) => {
 };
 
 api.interceptors.request.use((config) => {
-  if (authToken) {
+  const isPublicRoute = config.url && config.url.includes('/pre-enroll/');
+  if (authToken && !isPublicRoute) {
     config.headers.Authorization = `Bearer ${authToken}`;
   }
   // Inject tenant header for multi-tenant routing
