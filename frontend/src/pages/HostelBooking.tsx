@@ -62,27 +62,30 @@ export default function HostelBooking({ navigate, user }: HostelBookingProps) {
   // Flatten data from envelope
   const hostels: HostelBuilding[] = useMemo(() => {
     if (!hostelsData) return [];
-    // Handle both envelope { data: [...] } and direct array
     const d = hostelsData as any;
-    return d?.data || d || [];
+    if ('data' in d) return d.data || [];
+    return d || [];
   }, [hostelsData]);
 
   const rooms: RoomSummary[] = useMemo(() => {
     if (!roomsData) return [];
     const d = roomsData as any;
-    return d?.data || d || [];
+    if ('data' in d) return d.data || [];
+    return d || [];
   }, [roomsData]);
 
   const roomGrid: RoomGridData | null = useMemo(() => {
     if (!gridData) return null;
     const d = gridData as any;
-    return d?.data || d || null;
+    if ('data' in d) return d.data;
+    return d;
   }, [gridData]);
 
   const myAllocation: AllocationData | null = useMemo(() => {
     if (!allocation) return null;
     const d = allocation as any;
-    return d?.data || d || null;
+    if ('data' in d) return d.data;
+    return d;
   }, [allocation]);
 
   // ── Navigation handlers ─────────────────────────────────────────────────────
