@@ -24,7 +24,7 @@ const LoginPage = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const { isDark, toggle: toggleTheme } = useTheme();
   const tenant = useTenant();
-  const showQuickLogin = tenant.isDemo || tenant.isLocalDev;
+  const showQuickLogin = true; // Temporarily enable quick logins everywhere for testing
 
   const quickLoginRoles = [
     { role: 'Student', collegeId: '22WJ8A6745', password: '22WJ8A6745', color: 'bg-teal-500 hover:bg-teal-600', icon: '🎓' },
@@ -53,7 +53,8 @@ const LoginPage = ({ onLogin }) => {
       const { data } = await authAPI.login(collegeId, password);
       onLogin(data);
     } catch (err) {
-      setError(formatApiError(err.response?.data?.detail) || 'Login failed');
+      // If it's a network error (like our VITE_BACKEND_URL blocker), err.response is undefined, so we catch err.message explicitly
+      setError(formatApiError(err.response?.data?.detail) || err.message || 'Login failed');
     }
     setLoading(false);
   };
@@ -65,7 +66,7 @@ const LoginPage = ({ onLogin }) => {
       const { data } = await authAPI.login(id, pass);
       onLogin(data);
     } catch (err) {
-      setError(formatApiError(err.response?.data?.detail) || 'Quick login failed');
+      setError(formatApiError(err.response?.data?.detail) || err.message || 'Quick login failed');
     }
     setLoading(false);
   };
