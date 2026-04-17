@@ -22,6 +22,24 @@ export class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    // ── VITE CHUNK LOAD ERROR AUTO-RECOVERY ──
+    // When a new version is deployed, old chunks 404. Auto-reload to fetch the new index.html.
+    const isChunkError = error?.message?.includes('Failed to fetch dynamically imported module') || 
+                         error?.name === 'ChunkLoadError';
+    
+    if (isChunkError) {
+      const hasReloaded = sessionStorage.getItem('chunk_error_reloaded');
+      if (!hasReloaded) {
+        console.warn('ChunkLoadError detected: Auto-reloading to fetch latest deployment...');
+        sessionStorage.setItem('chunk_error_reloaded', 'true');
+        window.location.reload();
+        return;
+      }
+    } else {
+      // Clear flag on successful mount of healthy components
+      sessionStorage.removeItem('chunk_error_reloaded');
+    }
+
     this.setState({ errorInfo });
     // Report to Sentry
     if (window.Sentry?.captureException) {
@@ -33,10 +51,17 @@ export class ErrorBoundary extends React.Component {
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
+    sessionStorage.removeItem('chunk_error_reloaded');
+    // If it is a chunk error and they manually click Try Again, a simple state reset won't work.
+    if (this.state.error?.message?.includes('Failed to fetch dynamically imported module')) {
+      window.location.reload();
+    } else {
+      this.setState({ hasError: false, error: null, errorInfo: null });
+    }
   };
 
   handleGoHome = () => {
+    sessionStorage.removeItem('chunk_error_reloaded');
     this.setState({ hasError: false, error: null, errorInfo: null });
     window.location.href = '/';
   };
