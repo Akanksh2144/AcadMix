@@ -62,6 +62,7 @@ async def _resolve_tenant_from_db(slug: str) -> dict | None:
         from app.models.core import College
 
         # Match by domain (slug == domain prefix) or by name (case-insensitive)
+        # Fix: local dev slug 'gnitc' needs to match 'gnitc.ac.in'
         result = await session.execute(
             select(College).where(
                 College.is_deleted == False,
@@ -69,6 +70,7 @@ async def _resolve_tenant_from_db(slug: str) -> dict | None:
                     (func.lower(College.domain) == slug)
                     | (func.lower(College.name) == slug)
                     | (func.lower(College.domain) == f"{slug}.acadmix.org")
+                    | (func.lower(College.domain).startswith(f"{slug}."))
                 ),
             )
         )
@@ -167,8 +169,15 @@ class TenantMiddleware(BaseHTTPMiddleware):
             # No tenant header — single-tenant / local dev mode
             request.state.tenant = None
 
-        response = await call_next(request)
-        return response
+        try:
+            response = await call_next(request)
+            return response
+        except RuntimeError as e:
+            if str(e) == 'No response returned.':
+                logger.info(f"Client disconnected during request to {request.url.path}")
+                from starlette.responses import Response
+                return Response(status_code=499)
+            raise
 
 
 def get_tenant(request: Request) -> TenantContext | None:
