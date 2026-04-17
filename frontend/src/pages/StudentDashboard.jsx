@@ -3,10 +3,9 @@ import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Trophy, ChartLine, Fire, BookOpen, Calendar, Target, SignOut, Terminal, ArrowRight, GraduationCap, Play, Medal, Lightning, Warning, Bell, Exam, Briefcase, Sun, Moon, CalendarDots, Chalkboard, UserCircle, ListBullets, Microphone, House, FileText, Toolbox, Bus } from '@phosphor-icons/react';
 import { analyticsAPI, interviewAPI, resumeAPI, notificationsAPI } from '../services/api';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
-import Lottie from 'lottie-react';
+
 import { searchEmptyAnimation, sleepAnimation } from '../assets/lottieAnimations';
 import StudentAttendance from '../components/student/StudentAttendance';
 import StudentCIAMarks from '../components/student/StudentCIAMarks';
@@ -23,6 +22,10 @@ const getGreeting = () => {
   if (hour < 17) return 'Good Afternoon';
   return 'Good Evening';
 };
+
+// Lazy load heavy components
+const WeakTopicsChart = React.lazy(() => import('../components/student/WeakTopicsChart'));
+const LazyLottie = React.lazy(() => import('../components/LazyLottie'));
 
 /* ── Time-ago helper ──────────────────────────────────── */
 const timeAgo = (ts) => {
@@ -51,12 +54,7 @@ const getDeadlineInfo = (quiz) => {
   return { text: `${days}d left`, urgent: days <= 2 };
 };
 
-/* ── Weak Topic Bar Colors ──────────────────────────────── */
-const getBarColor = (score) => {
-  if (score >= 70) return '#10b981';
-  if (score >= 45) return '#f59e0b';
-  return '#ef4444';
-};
+
 
 /* ── Framer Motion Variants ─────────────────────────────── */
 const containerVariants = {
@@ -66,7 +64,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 }, willChange: 'transform, opacity' }
 };
 
 const cardHover = {
@@ -329,7 +327,7 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
           <motion.div whileHover={cardHover} className="soft-card px-4 py-4 flex items-center gap-4 w-[calc(50%-0.375rem)] sm:w-[calc(50%-0.75rem)] md:w-auto">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-amber-400 to-orange-500 flex-shrink-0">
               <Trophy size={20} weight="fill" className="text-white sm:hidden" />
-              <Trophy size={24} weight="fill" className="text-white hidden sm:block" />
+              <Trophy size={24} weight="fill" className="text-white" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">CGPA</p>
@@ -487,36 +485,9 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
             {dashboard?.weak_topics?.length > 0 ? (
               <>
                 <div className="h-48 sm:h-52 mb-4">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={dashboard.weak_topics} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
-                      <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: isDark ? '#64748b' : '#94a3b8' }} />
-                      <YAxis type="category" dataKey="subject" width={90} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#475569', fontWeight: 600 }} />
-                      <Tooltip 
-                        cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9' }}
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            return (
-                              <div className="bg-white dark:bg-[#1A202C] rounded-xl p-3 shadow-lg shadow-indigo-500/10 dark:shadow-none border border-slate-100 dark:border-slate-800">
-                                <p className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-1.5">{label}</p>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-2.5 h-2.5 rounded-md" style={{ backgroundColor: payload[0].payload.fill || payload[0].color }}></span>
-                                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                                    Avg Score: <span className="font-bold text-slate-900 dark:text-white">{payload[0].value}%</span>
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }} 
-                      />
-                      <Bar dataKey="avg_score" radius={[0, 6, 6, 0]} barSize={20}>
-                        {dashboard.weak_topics.map((entry, i) => (
-                          <Cell key={i} fill={getBarColor(entry.avg_score)} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <React.Suspense fallback={<div className="w-full h-full flex items-center justify-center text-xs text-slate-500 font-bold bg-slate-50 dark:bg-[#1A202C]/50 rounded-xl animate-pulse">Loading Chart...</div>}>
+                    <WeakTopicsChart data={dashboard.weak_topics} isDark={isDark} />
+                  </React.Suspense>
                 </div>
                 <div className="flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-slate-400">
                   <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-red-500"></span>Needs Work</span>
@@ -527,7 +498,9 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
             ) : (
               <div className="text-center py-6">
                 <div className="w-24 h-24 mx-auto mb-3">
-                  <Lottie animationData={searchEmptyAnimation} loop autoplay />
+                  <React.Suspense fallback={<div className="w-full h-full rounded-2xl bg-indigo-50/50 dark:bg-indigo-500/10 animate-pulse"></div>}>
+                    <LazyLottie animationData={searchEmptyAnimation} loop autoplay />
+                  </React.Suspense>
                 </div>
                 <p className="text-sm font-bold text-slate-500 dark:text-slate-400">Take some quizzes first</p>
                 <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Topic analysis will appear after completing quizzes</p>
@@ -575,7 +548,9 @@ const StudentDashboard = ({ navigate, user, onLogout }) => {
             ) : (
               <div className="text-center py-6">
                 <div className="w-24 h-24 mx-auto mb-3">
-                  <Lottie animationData={sleepAnimation} loop autoplay />
+                  <React.Suspense fallback={<div className="w-full h-full rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 animate-pulse"></div>}>
+                    <LazyLottie animationData={sleepAnimation} loop autoplay />
+                  </React.Suspense>
                 </div>
                 <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No activity yet</p>
                 <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Your quiz activity will show up here</p>

@@ -23,6 +23,7 @@ import {
   Info
 } from "@phosphor-icons/react";
 import { principalAPI, authAPI, setAuthToken, insightsAPI, notificationsAPI } from "../services/api";
+import InsightsCanvas from "../components/insights/InsightsCanvas";
 import InsightsChat from "../components/insights/InsightsChat";
 import { useTheme } from "../contexts/ThemeContext";
 import DashboardSkeleton from "../components/DashboardSkeleton";
@@ -67,9 +68,7 @@ const getGreeting = () => {
 
 const PrincipalDashboard = ({ navigate, user, onLogout }) => {
   const [activeTab, setActiveTab] = useState("overview");
-  const [dashboard, setDashboard] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('cache_principal_dash')) || null; } catch { return null; }
-  });
+  const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const { isDark, toggle: toggleTheme } = useTheme();
@@ -90,6 +89,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
   const [pins, setPins] = useState([]);
   const [activePinData, setActivePinData] = useState(null);
   const [pinLoading, setPinLoading] = useState(false);
+  const [isChatting, setIsChatting] = useState(false);
 
   // Academic Year Settings
   const currentAcademicYear = "2023-2024";
@@ -138,7 +138,6 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
       if (activeTab === "overview") {
         const { data } = await principalAPI.dashboard();
         setDashboard(data);
-        localStorage.setItem('cache_principal_dash', JSON.stringify(data));
       }
       if (activeTab === "leaves") {
         const { data } = await principalAPI.pendingLeaves();
@@ -734,9 +733,73 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
 
             {/* ─── AI Insights Tab ─── */}
             {activeTab === "insights" && (
-                <motion.div key="insights-tab" variants={containerVariants} initial="hidden" animate="show" exit="hidden">
-                    <InsightsChat user={user} />
-                </motion.div>
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center mb-4">
+                       <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                           <Sparkle weight="fill" className="text-indigo-500" /> Conversational Insights
+                       </h3>
+                       <button 
+                           onClick={() => { setIsChatting(!isChatting); setActivePinData(null); }} 
+                           className="btn-primary py-2 px-4 shadow-sm text-sm"
+                       >
+                           {isChatting ? "View Pinned Dashboards" : "New Query"}
+                       </button>
+                    </div>
+
+                    {isChatting ? (
+                        <div className="bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800 flex overflow-hidden">
+                             <InsightsChat user={user} activeCollegeId={null} />
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                           <div className="md:col-span-1 space-y-3">
+                               <h4 className="font-bold text-slate-500 uppercase tracking-widest text-xs mb-3">Pinned Dashboards</h4>
+                               {pins.length === 0 ? (
+                                   <div className="p-4 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center">
+                                       <p className="text-sm text-slate-500">No pinned insights yet.</p>
+                                       <p className="text-xs text-slate-400 mt-2 hover:text-indigo-500 cursor-pointer" onClick={() => setIsChatting(true)}>Try asking a question to see magic!</p>
+                                   </div>
+                               ) : (
+                                   pins.map(pin => (
+                                       <div 
+                                          key={pin.id} 
+                                          onClick={() => executePin(pin)}
+                                          className="group p-4 bg-white dark:bg-[#1A202C] border border-slate-100 dark:border-slate-800 rounded-xl cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all truncate"
+                                       >
+                                          <div className="flex justify-between items-start">
+                                              <p className="font-bold text-sm truncate pr-2" title={pin.title}>{pin.title}</p>
+                                              <button 
+                                                  onClick={(e) => { e.stopPropagation(); deletePin(pin.id); }} 
+                                                  className="text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                              >
+                                                  <Trash size={16} />
+                                              </button>
+                                          </div>
+                                          <p className="text-xs text-slate-500 truncate mt-1" title={pin.nl_query}>"{pin.nl_query}"</p>
+                                       </div>
+                                   ))
+                               )}
+                           </div>
+                           
+                           <div className="md:col-span-3 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 min-h-[400px]">
+                               {pinLoading ? (
+                                   <div className="h-full flex flex-col items-center justify-center text-slate-500">
+                                       <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                                       <p>Running query securely...</p>
+                                   </div>
+                               ) : activePinData ? (
+                                   <InsightsCanvas result={activePinData} />
+                               ) : (
+                                   <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-60">
+                                       <Sparkle size={48} weight="duotone" className="mb-4 text-indigo-400" />
+                                       <p className="font-bold">Select a pinned insight to view data</p>
+                                       <p className="text-sm">Data is queried in real-time instantly without AI overhead.</p>
+                                   </div>
+                               )}
+                           </div>
+                        </div>
+                    )}
+                </div>
             )}
 
           </motion.div>
@@ -747,3 +810,4 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
 };
 
 export default PrincipalDashboard;
+

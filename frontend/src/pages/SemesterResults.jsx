@@ -41,7 +41,10 @@ const SemesterResults = ({ navigate, user }) => {
         navigate={navigate} user={user} title="Semester Results"
         subtitle="Academic performance & grades"
         rightContent={
-          <button data-testid="download-report-button" className="btn-primary flex items-center gap-2 text-sm"><Download size={18} weight="duotone" /> Download Report</button>
+          <button data-testid="download-report-button" className="btn-primary flex items-center justify-center p-2.5 sm:px-4 sm:py-2 gap-2 text-sm rounded-full sm:rounded-xl" title="Download Report">
+            <Download size={18} weight="duotone" /> 
+            <span className="hidden sm:inline">Download Report</span>
+          </button>
         }
       />
 

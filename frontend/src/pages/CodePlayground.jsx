@@ -312,7 +312,8 @@ const CodePlayground = ({ navigate, user }) => {
 
       if (!res.ok) throw new Error("Network Error");
 
-      const initData = await res.json();
+      const initResData = await res.json();
+      const initData = initResData.data || initResData;
       
       // Short-circuit if the backend executed synchronously (ARQ fallback)
       if (initData.status === "completed" && initData.task_id === "sync-fallback") {
@@ -336,7 +337,8 @@ const CodePlayground = ({ navigate, user }) => {
           });
           if (!statusRes.ok) continue;
           
-          const statusData = await statusRes.json();
+          const statusResData = await statusRes.json();
+          const statusData = statusResData.data || statusResData;
           if (statusData.status === "completed") {
               run.aiReview = statusData.review;
               setAiReview(statusData.review);
