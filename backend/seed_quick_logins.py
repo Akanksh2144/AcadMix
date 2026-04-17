@@ -8,7 +8,7 @@ from app.models.core import College, User, UserProfile
 from app.core.security import hash_password
 
 async def seed_quick_logins():
-    engine = create_async_engine(settings.DATABASE_URL)
+    engine = create_async_engine(settings.DATABASE_URL, connect_args={'statement_cache_size': 0})
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as db:
@@ -32,7 +32,11 @@ async def seed_quick_logins():
             {"role": "industry", "roll_number": "IND001", "password": "industry123", "email": "ind001@gni.edu", "name": "Vikram Patel"},
             {"role": "principal", "roll_number": "PRIN001", "password": "teacher123", "email": "prin001@gni.edu", "name": "Dr. Lakshmi Devi", "department": "Admin"},
             {"role": "retired_faculty", "roll_number": "RF001", "password": "retired123", "email": "rf001@gni.edu", "name": "Prof. G. Rao", "department": "DS"},
-            {"role": "expert", "roll_number": "EXP001", "password": "expert123", "email": "exp001@gni.edu", "name": "Dr. Anand Kumar", "department": "DS"}
+            {"role": "expert", "roll_number": "EXP001", "password": "expert123", "email": "exp001@gni.edu", "name": "Dr. Anand Kumar", "department": "DS"},
+            {"role": "warden", "roll_number": "WARDEN001", "password": "warden123", "email": "warden001@gni.edu", "name": "Suresh Warden", "department": "Hostel"},
+            {"role": "transport", "roll_number": "TRANSPORT001", "password": "transport123", "email": "transport001@gni.edu", "name": "Rajesh Driver", "department": "Transport"},
+            {"role": "librarian", "roll_number": "LIBRARIAN001", "password": "librarian123", "email": "librarian001@gni.edu", "name": "Geeta Library", "department": "Library"},
+            {"role": "security", "roll_number": "SECURITY001", "password": "security123", "email": "security001@gni.edu", "name": "Ram Guard", "department": "Security"}
         ]
 
         count = 0

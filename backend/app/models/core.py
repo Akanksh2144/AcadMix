@@ -152,3 +152,15 @@ class ParentStudentLink(Base, SoftDeleteMixin):
     )
 
 
+class PinnedInsight(Base, SoftDeleteMixin):
+    """Pinned NL queries that Principals/HODs keep on their dashboard."""
+    __tablename__ = "pinned_insights"
+    id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id       = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id          = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    role             = Column(String, nullable=False, server_default='PRINCIPAL')
+    title            = Column(String, nullable=False)
+    nl_query         = Column(Text, nullable=False)
+    cached_sql       = Column(Text, nullable=False)
+    chart_suggestion = Column(String, nullable=True) # e.g. bar_chart
+    created_at       = Column(DateTime(timezone=True), server_default=func.now())

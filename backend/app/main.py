@@ -482,6 +482,16 @@ async def lifespan(app: FastAPI):
             logger.warning("[startup] DB connection failed (attempt %d/%d), retrying in %ds... (%s)", attempt, max_retries, wait, e)
             await asyncio.sleep(wait)
     
+    # ── Redis Health Check ────────────────────────────────────────────────
+    import app.core.security as sec
+    if sec.redis_client:
+        try:
+            await sec.redis_client.ping()
+            logger.info("[startup] Redis connected successfully.")
+        except Exception as e:
+            logger.warning("[startup] Redis unavailable (%s). Disabling Redis globally to prevent API latency.", e)
+            sec.redis_client = None
+
     # ── GPU Health Checker (Phase 2 — self-hosted vLLM) ───────────────────
     from app.services.ai_service import gpu_health
     await gpu_health.start_background_loop()
@@ -539,8 +549,14 @@ app.add_middleware(
 )
 
 # ─── Request ID Correlation ───────────────────────────────────────────────────────
-from app.core.response import RequestIdMiddleware  # noqa: E402
+from app.core.response import RequestIdMiddleware, ResponseEnvelopeMiddleware  # noqa: E402
 app.add_middleware(RequestIdMiddleware)
+
+# ─── Response Envelope (Phase 2) ──────────────────────────────────────────────
+# Wraps flat JSON responses in {"data": <payload>, "error": null}.
+# Bucket A routers set X-Envelope-Applied header to skip wrapping.
+# Bucket C paths (health, ws, webhooks) excluded by prefix.
+app.add_middleware(ResponseEnvelopeMiddleware)
 
 # ─── Prometheus Metrics ───────────────────────────────────────────────────────
 from app.core.metrics import PrometheusMiddleware, metrics_endpoint  # noqa: E402

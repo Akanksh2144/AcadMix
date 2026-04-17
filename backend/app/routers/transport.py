@@ -10,10 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from app.core.security import require_role, get_current_user
+from app.core.response import mark_enveloped
 from app.services.transport_service import TransportService
 from app.schemas.transport import TransportEnrollRequest
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(mark_enveloped)])
 
 
 def get_svc(db: AsyncSession = Depends(get_db)):

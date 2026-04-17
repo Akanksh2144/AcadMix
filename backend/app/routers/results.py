@@ -7,7 +7,7 @@ from typing import List, Optional
 from collections import defaultdict
 
 from database import get_db
-from app.core.security import get_current_user, require_role, redis_client, safe_redis_call
+from app.core.security import get_current_user, require_role, redis_client
 from app import models
 import app.schemas as server_schemas
 from app.schemas import *
@@ -68,12 +68,9 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
 
     cache_key = f"result:{student_college_id}:{student_id}:v2"
     if redis_client:
-        try:
-            cached = await safe_redis_call(redis_client.get(cache_key))
-            if cached:
-                return json.loads(cached)
-        except Exception:
-            pass
+        cached = await redis_client.get(cache_key)
+        if cached:
+            return json.loads(cached)
 
     # ── 1. Fetch semester grades with subject name via LEFT JOIN courses ──
     grade_rows = await session.execute(
@@ -144,10 +141,7 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
         })
 
     if redis_client:
-        try:
-            await safe_redis_call(redis_client.setex(cache_key, 86400, json.dumps(response_data)))
-        except Exception:
-            pass
+        await redis_client.setex(cache_key, 86400, json.dumps(response_data))
 
     return response_data
 
@@ -171,11 +165,8 @@ async def create_semester_result(req: SemesterResultCreate, user: dict = Depends
         session.add(row)
     await session.commit()
     
-    from app.core.security import redis_client, safe_redis_call
+    from app.core.security import redis_client
     if redis_client:
-        try:
-            await safe_redis_call(redis_client.delete(f"result:{student_college_id}:{req.student_id}:v2"))
-        except Exception:
-            pass
+        await redis_client.delete(f"result:{student_college_id}:{req.student_id}:v2")
         
     return {"message": "Semester result saved", "semester": req.semester, "student_id": req.student_id}

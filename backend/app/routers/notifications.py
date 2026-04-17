@@ -8,12 +8,21 @@ from typing import Optional
 
 from database import get_db
 from app.core.security import get_current_user
+from app.core.response import mark_enveloped
 from app.models.notifications import Notification, PushSubscription
 
 router = APIRouter()
 
+# NOTE: mark_enveloped is applied per-endpoint (not router-level) because
+# GET /notifications returns {"data": [...], "unread_count": N} — an already-
+# enveloped shape that lacks "error", so the heuristic won't catch it.
+# Other endpoints (POST mark-read, push-subscribe) return flat {"success": true}
+# and ARE intentionally Bucket B (wrapped by middleware).
+# If you add a new GET endpoint that returns {"data": ...}, add
+# dependencies=[Depends(mark_enveloped)] to its decorator.
 
-@router.get("/notifications")
+
+@router.get("/notifications", dependencies=[Depends(mark_enveloped)])
 async def get_notifications(
     limit: int = 30,
     unread_only: bool = False,

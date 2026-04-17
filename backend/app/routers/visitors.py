@@ -14,13 +14,14 @@ from typing import Optional
 
 from database import get_db
 from app.core.security import require_role, get_current_user
+from app.core.response import mark_enveloped
 from app.services.visitor_service import VisitorService
 from app.schemas.visitors import (
     VisitorCreate, VisitCheckIn, VisitCheckOut,
     VisitPreApprove, VisitApprovalAction,
 )
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(mark_enveloped)])
 
 
 def get_visitor_service(session: AsyncSession = Depends(get_db)):

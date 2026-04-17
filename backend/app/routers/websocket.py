@@ -168,15 +168,36 @@ manager = ConnectionManager()
 # Auth Helper
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _authenticate_ws(token: str) -> dict:
-    """Verify JWT token for WebSocket connection. Returns payload or None."""
-    if not token:
+from fastapi import Depends, HTTPException
+from app.core.security import get_current_user
+
+@router.post("/ws/ticket")
+async def create_ws_ticket(user: dict = Depends(get_current_user)):
+    """Generate a short-lived ticket for secure WebSocket handshakes."""
+    from app.core.security import redis_client
+    import uuid
+    if not redis_client:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+        
+    ticket_id = str(uuid.uuid4())
+    await redis_client.setex(f"ws_ticket:{ticket_id}", 30, json.dumps(user))
+    return {"ticket": ticket_id}
+
+async def _authenticate_ws(ticket: str) -> dict:
+    """Verify WebSocket ticket against Redis and exchange for payload."""
+    if not ticket:
         return None
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload
-    except jwt.InvalidTokenError:
+    from app.core.security import redis_client
+    if not redis_client:
         return None
+        
+    key = f"ws_ticket:{ticket}"
+    data = await redis_client.get(key)
+    if not data:
+        return None
+        
+    await redis_client.delete(key) # Discard after single use
+    return json.loads(data)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -184,13 +205,13 @@ def _authenticate_ws(token: str) -> dict:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.websocket("/ws/transport/{route_id}")
-async def transport_ws(websocket: WebSocket, route_id: str, token: str = Query(None)):
+async def transport_ws(websocket: WebSocket, route_id: str, ticket: str = Query(None)):
     """Real-time bus location updates for a specific route.
     
     - Students/parents subscribe to receive live GPS updates
     - IoT webhook broadcasts location via `broadcast_transport_update()`
     """
-    payload = _authenticate_ws(token)
+    payload = await _authenticate_ws(ticket)
     if not payload:
         await websocket.close(code=1008, reason="Authentication required")
         return
@@ -211,7 +232,7 @@ async def transport_ws(websocket: WebSocket, route_id: str, token: str = Query(N
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.websocket("/ws/quiz/{quiz_id}/monitor")
-async def quiz_monitor_ws(websocket: WebSocket, quiz_id: str, token: str = Query(None)):
+async def quiz_monitor_ws(websocket: WebSocket, quiz_id: str, ticket: str = Query(None)):
     """Real-time quiz monitoring for teachers/HODs.
     
     Events broadcasted:
@@ -219,7 +240,7 @@ async def quiz_monitor_ws(websocket: WebSocket, quiz_id: str, token: str = Query
     - student_submitted: when a student submits
     - student_switched_tab: proctoring violation
     """
-    payload = _authenticate_ws(token)
+    payload = await _authenticate_ws(ticket)
     if not payload or payload.get("role") not in ("teacher", "hod", "admin", "principal"):
         await websocket.close(code=1008, reason="Insufficient permissions")
         return
@@ -240,14 +261,14 @@ async def quiz_monitor_ws(websocket: WebSocket, quiz_id: str, token: str = Query
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.websocket("/ws/notifications")
-async def notifications_ws(websocket: WebSocket, token: str = Query(None)):
+async def notifications_ws(websocket: WebSocket, ticket: str = Query(None)):
     """Per-user notification feed (announcements, fee reminders, etc.)."""
-    payload = _authenticate_ws(token)
+    payload = await _authenticate_ws(ticket)
     if not payload:
         await websocket.close(code=1008, reason="Authentication required")
         return
 
-    user_id = payload.get("sub")
+    user_id = payload.get("id") or payload.get("sub")
     channel = f"notifications:{user_id}"
     await manager.connect(channel, websocket)
     try:

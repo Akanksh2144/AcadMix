@@ -11,6 +11,7 @@ from typing import Optional
 
 from database import get_db
 from app.core.security import require_role, get_current_user
+from app.core.response import mark_enveloped
 from app.services.hostel_service import HostelService
 from app.schemas.hostel import (
     RoomTemplateCreate, HostelCreate, RoomCreate, BulkRoomCreate,
@@ -18,7 +19,8 @@ from app.schemas.hostel import (
     BedTogglePremium, BedSetMaintenance,
 )
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(mark_enveloped)])
+
 
 
 def get_hostel_service(session: AsyncSession = Depends(get_db)):

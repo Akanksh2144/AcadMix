@@ -25,7 +25,7 @@ from app.models import Base
 target_metadata = Base.metadata
 
 def get_url():
-    url = settings.DATABASE_URL
+    url = settings.ADMIN_DATABASE_URL or settings.DATABASE_URL
     if 'prepared_statement_cache_size=0' not in url:
         url += '&prepared_statement_cache_size=0' if '?' in url else '?prepared_statement_cache_size=0'
     return url

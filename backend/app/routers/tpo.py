@@ -11,6 +11,7 @@ import io
 
 from database import get_db
 from app.core.security import require_role
+from app.core.response import mark_enveloped
 from app.services.tpo_service import TPOService
 
 router = APIRouter()
@@ -19,7 +20,7 @@ def get_tpo_service(session: AsyncSession = Depends(get_db)):
     return TPOService(session)
 
 
-@router.get("/tpo/companies")
+@router.get("/tpo/companies", dependencies=[Depends(mark_enveloped)])
 async def get_companies(
     user: dict = Depends(require_role("tpo", "tp_officer", "admin")),
     svc: TPOService = Depends(get_tpo_service)
@@ -37,7 +38,7 @@ async def create_company(
     return {"success": True, "id": uid}
 
 
-@router.get("/tpo/drives")
+@router.get("/tpo/drives", dependencies=[Depends(mark_enveloped)])
 async def get_drives(
     user: dict = Depends(require_role("tpo", "tp_officer", "admin", "student")),
     svc: TPOService = Depends(get_tpo_service)
@@ -66,7 +67,7 @@ async def update_drive(
     return {"success": True}
 
 
-@router.get("/tpo/drives/{drive_id}/applicants")
+@router.get("/tpo/drives/{drive_id}/applicants", dependencies=[Depends(mark_enveloped)])
 async def get_applicants(
     drive_id: str,
     user: dict = Depends(require_role("tpo", "tp_officer", "admin")),

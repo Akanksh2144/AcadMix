@@ -52,16 +52,9 @@ def _get_rate_limit_key(request) -> str:
     return _get_real_ip(request)
 
 
-# Ensure Limiter doesn't hang synchronously on serverless Redis cold starts
-limiter_storage_url = redis_url
-if limiter_storage_url and "?" not in limiter_storage_url:
-    limiter_storage_url += "?socket_timeout=0.2&socket_connect_timeout=0.1&retry_on_timeout=false"
-elif limiter_storage_url:
-    limiter_storage_url += "&socket_timeout=0.2&socket_connect_timeout=0.1&retry_on_timeout=false"
-
 limiter = Limiter(
     key_func=_get_rate_limit_key,
-    storage_uri=limiter_storage_url,
+    storage_uri=redis_url,
     in_memory_fallback_enabled=True,
     swallow_errors=True
 ) if redis_url else Limiter(key_func=_get_rate_limit_key)

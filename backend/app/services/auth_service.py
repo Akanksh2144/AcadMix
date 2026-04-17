@@ -8,13 +8,13 @@ import jwt
 from typing import Dict, Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
 from app import models
 from app.core.security import (
     verify_password,
     create_access_token,
     create_refresh_token,
     redis_client,
-    safe_redis_call,
     JWT_SECRET,
     JWT_ALGORITHM,
 )
@@ -65,7 +65,7 @@ class AuthService:
         # Rate-limit check
         if redis_client:
             try:
-                failures = await safe_redis_call(redis_client.get(key))
+                failures = await redis_client.get(key)
                 if failures and int(failures) >= self.MAX_LOGIN_FAILURES:
                     raise RateLimitedError()
             except RateLimitedError:
@@ -113,7 +113,7 @@ class AuthService:
                     pipe = redis_client.pipeline()
                     pipe.incr(key)
                     pipe.expire(key, self.LOCKOUT_SECONDS)
-                    await safe_redis_call(pipe.execute())
+                    await pipe.execute()
                 except Exception as e:
                     logger.warning(f"Redis increment bypass due to error: {e}")
             
@@ -124,7 +124,7 @@ class AuthService:
         # Success — clear failure counter
         if redis_client:
             try:
-                await safe_redis_call(redis_client.delete(key))
+                await redis_client.delete(key)
             except Exception as e:
                 pass
 
@@ -194,10 +194,7 @@ class AuthService:
             payload = jwt.decode(refresh_token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             jti = payload.get("jti")
             if redis_client and jti:
-                try:
-                    await safe_redis_call(redis_client.setex(f"revoked_refresh:{jti}", 604800, "revoked"))
-                except Exception:
-                    pass
+                await redis_client.setex(f"revoked_refresh:{jti}", 604800, "revoked")
                 
             user_id = payload.get("sub")
             if user_id:
@@ -235,13 +232,8 @@ class AuthService:
                 raise AuthenticationError("Invalid token type")
 
             jti = payload.get("jti")
-            try:
-                if redis_client and await safe_redis_call(redis_client.exists(f"revoked_refresh:{jti}")):
-                    raise AuthenticationError("Refresh token revoked")
-            except AuthenticationError:
-                raise
-            except Exception:
-                pass # Circuit breaker open, bypass check
+            if redis_client and await redis_client.exists(f"revoked_refresh:{jti}"):
+                raise AuthenticationError("Refresh token revoked")
 
             user_id = payload["sub"]
             result = await self.db.execute(

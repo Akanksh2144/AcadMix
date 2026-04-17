@@ -424,3 +424,130 @@ async def generate_coach_stream(messages: List[Dict[str, str]], current_code: st
     except Exception as e:
         logger.error("LLM AI Coach Error: %s", e)
         yield "\n\n*Coach service is currently unavailable. Please try again.*"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CONVERSATIONAL INSIGHTS (ERP) — Text-to-SQL + Response formatting
+# ═══════════════════════════════════════════════════════════════════════════════
+
+async def generate_insights_sql(user_query: str, history: List[Dict[str, str]] = None, role: str = "") -> str:
+    """Uses LLM to convert a natural language query into a PostgreSQL SELECT query."""
+    model = get_tier1_model()
+    fallbacks = get_fallbacks_for(model)
+    role_upper = role.upper()
+    
+    # Base Schema for generic roles
+    students_schema = "- v_students(id, name, email, roll_number, department, section, current_semester, cgpa, graduation_year)"
+    attendance_schema = "- v_attendance(id, student_id, date, subject_code, status, is_late_entry, department, section)"
+    invoices_schema = "- v_invoices(id, student_id, fee_type, total_amount, academic_year, due_date, department, section)"
+    payments_schema = "- v_payments(id, student_id, invoice_id, amount_paid, status, transaction_date, department, section)"
+    departments_schema = "- v_departments(id, name, code, hod_user_id)"
+    
+    # Advanced Schemas
+    placements_schema = """- v_companies(id, name, sector, website)
+- v_placement_drives(id, company_id, role_title, drive_type, package_lpa, drive_date, status, min_cgpa)
+- v_placement_applications(id, drive_id, student_id, status, registered_at)"""
+    
+    exams_schema = """- v_quizzes(id, title, subject_code, department, status, total_marks)
+- v_quiz_attempts(id, quiz_id, student_id, score, status)"""
+
+    schemas = [students_schema, departments_schema]
+    constraints = []
+    
+    if role_upper == "TPO":
+        schemas.append(placements_schema)
+        # Strongly constrain TPO logic
+        constraints.append("You are querying only Placement and Student data. DO NOT attempt to query attendance or invoices.")
+    else:
+        schemas.append(attendance_schema)
+        schemas.append(invoices_schema)
+        schemas.append(payments_schema)
+        
+    if role_upper in ["EXAM_CELL", "SUPERADMIN", "PRINCIPAL", "ADMIN", "FACULTY", "HOD", "DHTE_NODAL", "INSTITUTIONAL_NODAL"]:
+        schemas.append(exams_schema)
+        
+    if role_upper in ["SUPERADMIN", "PRINCIPAL", "ADMIN", "DHTE_NODAL", "INSTITUTIONAL_NODAL"]:
+        schemas.append(placements_schema)
+        
+    schema_str = "\n".join(schemas)
+    constraint_str = "\n".join(constraints)
+    
+    schema_context = f'''
+YOU MUST ONLY QUERY FROM THESE VIEWS. Never query actual tables like 'users' or 'attendance_records'.
+{schema_str}
+
+RULES:
+1. Return ONLY valid PostgreSQL SELECT query string. NO text, NO markdown formatting, NO explanation.
+2. Assume the tables are already filtered to the user's role scope. You do not need to filter by college_id.
+3. Only use SELECT. Never use DROP, DELETE, UPDATE, INSERT.
+4. Alias columns cleanly for human reading (e.g., "u.name AS Student_Name", "p.roll_number AS Roll_Number").
+{constraint_str}
+'''
+
+    messages = [{"role": "system", "content": schema_context}]
+    if history:
+        for msg in history:
+            messages.append(msg)
+    messages.append({"role": "user", "content": f"Write a query for: {user_query}"})
+
+    try:
+        response = await litellm.acompletion(
+            model=model,
+            fallbacks=fallbacks,
+            messages=messages,
+            temperature=0.0,
+            max_tokens=600,
+            timeout=15.0
+        )
+        content = response.choices[0].message.content.strip()
+        if content.startswith("```sql"):
+            content = content[6:-3].strip()
+        elif content.startswith("```"):
+            content = content[3:-3].strip()
+        return content
+    except Exception as e:
+        logger.error("Error generating insights SQL: %s", e)
+        raise ValueError("Failed to generate database query. AI service unavailable.")
+
+async def format_insights_summary(user_query: str, data: List[dict]) -> dict:
+    """Generates a natural language summary and chart suggestion from execution results."""
+    model = get_tier1_model()
+    fallbacks = get_fallbacks_for(model)
+
+    data_sample = data[:10]
+    row_count = len(data)
+
+    system_prompt = '''
+You are a helpful assistant for college administration. 
+You are given the user's question and the data resulting from their question.
+Provide a concise, 1-2 sentence natural language summary of the results. 
+Also suggest a chart type ('bar_chart', 'pie_chart', or None) if the data is suitable for visualization.
+
+Output strictly in JSON:
+{
+  "summary": "...",
+  "chart_suggestion": "bar_chart"
+}
+'''
+    
+    user_prompt = f"Question: {user_query}\\nTotal Rows Found: {row_count}\\nData Sample: {json.dumps(data_sample)}"
+
+    try:
+         response = await litellm.acompletion(
+             model=model,
+             fallbacks=fallbacks,
+             messages=[
+                 {"role": "system", "content": system_prompt},
+                 {"role": "user", "content": user_prompt}
+             ],
+             response_format={ "type": "json_object" },
+             temperature=0.1,
+             timeout=10.0
+         )
+         result = json.loads(response.choices[0].message.content)
+         return result
+    except Exception as e:
+         logger.error("Error generating insights summary: %s", e)
+         return {
+             "summary": f"Found {row_count} records matching your query.",
+             "chart_suggestion": None
+         }

@@ -293,6 +293,7 @@ async def start_attempt(quiz_id: str, request: Request, user: dict = Depends(get
                 "status": in_progress.status, "start_time": in_progress.start_time.isoformat() if in_progress.start_time else None}
 
     attempt = models.QuizAttempt(
+        college_id=user["college_id"],
         quiz_id=quiz_id,
         student_id=user["id"],
         status="in_progress",

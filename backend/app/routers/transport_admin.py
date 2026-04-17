@@ -12,6 +12,7 @@ from typing import Optional
 
 from database import get_db
 from app.core.security import require_role
+from app.core.response import mark_enveloped
 from app.services.transport_service import TransportService
 from app.services import transport_state
 from app import models
@@ -33,7 +34,7 @@ def get_svc(db: AsyncSession = Depends(get_db)):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@router.post("/admin/transport/devices")
+@router.post("/admin/transport/devices", dependencies=[Depends(mark_enveloped)])
 async def register_device(
     payload: AIS140DeviceRegister,
     user: dict = Depends(require_role("admin", "transport_admin")),
@@ -53,7 +54,7 @@ async def register_device(
     return {"success": True, "data": {"id": device.id, "imei": device.imei}}
 
 
-@router.get("/admin/transport/devices")
+@router.get("/admin/transport/devices", dependencies=[Depends(mark_enveloped)])
 async def list_devices(
     user: dict = Depends(require_role("admin", "transport_admin")),
     db: AsyncSession = Depends(get_db),
@@ -86,7 +87,7 @@ async def list_devices(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@router.post("/admin/transport/routes")
+@router.post("/admin/transport/routes", dependencies=[Depends(mark_enveloped)])
 async def create_route(
     payload: RouteCreateRequest,
     user: dict = Depends(require_role("admin", "transport_admin")),
@@ -111,7 +112,7 @@ async def create_route(
     return {"success": True, "data": {"id": route.id, "route_number": route.route_number}}
 
 
-@router.put("/admin/transport/routes/{route_id}")
+@router.put("/admin/transport/routes/{route_id}", dependencies=[Depends(mark_enveloped)])
 async def update_route(
     route_id: str,
     payload: RouteUpdateRequest,
@@ -137,7 +138,7 @@ async def update_route(
     return {"success": True, "data": {"id": route.id}}
 
 
-@router.get("/admin/transport/routes")
+@router.get("/admin/transport/routes", dependencies=[Depends(mark_enveloped)])
 async def list_admin_routes(
     user: dict = Depends(require_role("admin", "transport_admin")),
     svc: TransportService = Depends(get_svc),
@@ -173,7 +174,7 @@ async def assign_driver(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@router.get("/admin/transport/dashboard")
+@router.get("/admin/transport/dashboard", dependencies=[Depends(mark_enveloped)])
 async def fleet_dashboard(
     user: dict = Depends(require_role("admin", "transport_admin")),
     svc: TransportService = Depends(get_svc),
@@ -182,7 +183,7 @@ async def fleet_dashboard(
     return {"data": await svc.get_fleet_dashboard(user["college_id"])}
 
 
-@router.get("/admin/transport/trips")
+@router.get("/admin/transport/trips", dependencies=[Depends(mark_enveloped)])
 async def trip_history(
     route_id: Optional[str] = Query(None),
     days: int = Query(7, ge=1, le=90),
@@ -198,7 +199,7 @@ async def trip_history(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@router.post("/admin/transport/start-trip")
+@router.post("/admin/transport/start-trip", dependencies=[Depends(mark_enveloped)])
 async def start_trip(
     payload: TripStartRequest,
     user: dict = Depends(require_role("admin", "transport_admin")),
@@ -212,7 +213,7 @@ async def start_trip(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/admin/transport/end-trip")
+@router.post("/admin/transport/end-trip", dependencies=[Depends(mark_enveloped)])
 async def end_trip(
     payload: TripEndRequest,
     user: dict = Depends(require_role("admin", "transport_admin")),
@@ -226,7 +227,7 @@ async def end_trip(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/admin/transport/clear-stop")
+@router.post("/admin/transport/clear-stop", dependencies=[Depends(mark_enveloped)])
 async def clear_stop(
     payload: ClearStopRequest,
     user: dict = Depends(require_role("admin", "transport_admin")),
@@ -240,7 +241,7 @@ async def clear_stop(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/admin/transport/scan-boarding")
+@router.post("/admin/transport/scan-boarding", dependencies=[Depends(mark_enveloped)])
 async def scan_boarding(
     payload: BoardingScanRequest,
     user: dict = Depends(require_role("admin", "transport_admin")),
@@ -259,7 +260,7 @@ async def scan_boarding(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@router.post("/transport/simulate/start")
+@router.post("/transport/simulate/start", dependencies=[Depends(mark_enveloped)])
 async def simulate_start(
     payload: TripStartRequest,
     user: dict = Depends(require_role("admin", "transport_admin")),
@@ -273,7 +274,7 @@ async def simulate_start(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/transport/simulate/advance")
+@router.post("/transport/simulate/advance", dependencies=[Depends(mark_enveloped)])
 async def simulate_advance(
     payload: SimulateAdvanceRequest,
     user: dict = Depends(require_role("admin", "transport_admin")),
@@ -296,7 +297,7 @@ async def simulate_advance(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/transport/simulate/end")
+@router.post("/transport/simulate/end", dependencies=[Depends(mark_enveloped)])
 async def simulate_end(
     payload: TripEndRequest,
     user: dict = Depends(require_role("admin", "transport_admin")),

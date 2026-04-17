@@ -9,6 +9,7 @@ from typing import List, Optional
 
 from database import get_db
 from app.core.security import require_role, get_current_user
+from app.core.response import mark_enveloped
 from app.services.nodal_service import NodalService
 
 nodal_router = APIRouter()
@@ -20,7 +21,7 @@ def get_nodal_service(session: AsyncSession = Depends(get_db)):
 
 # ── Nodal Officer Facing Endpoints ─────────────────────────────────────────
 
-@nodal_router.get("/nodal/colleges")
+@nodal_router.get("/nodal/colleges", dependencies=[Depends(mark_enveloped)])
 async def get_nodal_colleges(
     user=Depends(require_role("nodal_officer")),
     svc: NodalService = Depends(get_nodal_service)
@@ -28,7 +29,7 @@ async def get_nodal_colleges(
     return {"data": await svc.get_colleges(user["id"])}
 
 
-@nodal_router.get("/nodal/reports/attendance-compliance")
+@nodal_router.get("/nodal/reports/attendance-compliance", dependencies=[Depends(mark_enveloped)])
 async def get_nodal_attendance(
     user=Depends(require_role("nodal_officer")),
     svc: NodalService = Depends(get_nodal_service)
@@ -36,7 +37,7 @@ async def get_nodal_attendance(
     return {"data": await svc.get_attendance_compliance(user["id"])}
 
 
-@nodal_router.get("/nodal/reports/results-status")
+@nodal_router.get("/nodal/reports/results-status", dependencies=[Depends(mark_enveloped)])
 async def get_nodal_results(
     user=Depends(require_role("nodal_officer")),
     svc: NodalService = Depends(get_nodal_service)
@@ -44,7 +45,7 @@ async def get_nodal_results(
     return {"data": await svc.get_results_status(user["id"])}
 
 
-@nodal_router.get("/nodal/reports/cia-submission")
+@nodal_router.get("/nodal/reports/cia-submission", dependencies=[Depends(mark_enveloped)])
 async def get_nodal_cia_submission(
     user=Depends(require_role("nodal_officer")),
     svc: NodalService = Depends(get_nodal_service)
@@ -52,7 +53,7 @@ async def get_nodal_cia_submission(
     return {"data": await svc.get_cia_submission(user["id"])}
 
 
-@nodal_router.get("/nodal/reports/faculty-profiles")
+@nodal_router.get("/nodal/reports/faculty-profiles", dependencies=[Depends(mark_enveloped)])
 async def get_nodal_faculty_profiles(
     user=Depends(require_role("nodal_officer")),
     svc: NodalService = Depends(get_nodal_service)
@@ -60,7 +61,7 @@ async def get_nodal_faculty_profiles(
     return {"data": await svc.get_faculty_profiles(user["id"])}
 
 
-@nodal_router.get("/nodal/reports/accreditation")
+@nodal_router.get("/nodal/reports/accreditation", dependencies=[Depends(mark_enveloped)])
 async def get_nodal_accreditation(
     user=Depends(require_role("nodal_officer")),
     svc: NodalService = Depends(get_nodal_service)
@@ -68,7 +69,7 @@ async def get_nodal_accreditation(
     return {"data": await svc.get_accreditation(user["id"])}
 
 
-@nodal_router.get("/nodal/activity-reports")
+@nodal_router.get("/nodal/activity-reports", dependencies=[Depends(mark_enveloped)])
 async def get_nodal_activities(
     user=Depends(require_role("nodal_officer")),
     svc: NodalService = Depends(get_nodal_service)
@@ -109,7 +110,7 @@ async def create_circular(
     return {"success": True, "id": uid}
 
 
-@nodal_router.get("/nodal/circulars")
+@nodal_router.get("/nodal/circulars", dependencies=[Depends(mark_enveloped)])
 async def get_nodal_circulars(
     skip: int = 0,
     limit: int = 100,
@@ -137,7 +138,7 @@ async def create_sub_req(
     return {"success": True, "id": uid}
 
 
-@nodal_router.get("/nodal/submissions/status")
+@nodal_router.get("/nodal/submissions/status", dependencies=[Depends(mark_enveloped)])
 async def get_nodal_subs(
     skip: int = 0,
     limit: int = 100,
@@ -185,7 +186,7 @@ async def nodal_inspection(
     return {"success": True, "id": uid}
 
 
-@nodal_router.get("/nodal/inspections")
+@nodal_router.get("/nodal/inspections", dependencies=[Depends(mark_enveloped)])
 async def get_nodal_inspections(
     skip: int = 0,
     limit: int = 100,
@@ -208,7 +209,7 @@ async def admin_ack_circular(
     return {"success": True}
 
 
-@nodal_router.get("/admin/circulars")
+@nodal_router.get("/admin/circulars", dependencies=[Depends(mark_enveloped)])
 async def admin_get_circulars(
     request: Request,
     user=Depends(require_role("admin", "super_admin")),
@@ -217,7 +218,7 @@ async def admin_get_circulars(
     return {"data": await svc.get_admin_circulars(user["college_id"])}
 
 
-@nodal_router.get("/admin/submissions")
+@nodal_router.get("/admin/submissions", dependencies=[Depends(mark_enveloped)])
 async def admin_get_submissions(
     request: Request,
     user=Depends(require_role("admin", "super_admin")),
@@ -242,7 +243,7 @@ async def admin_submit_req(
     return {"success": True}
 
 
-@nodal_router.get("/admin/inspections")
+@nodal_router.get("/admin/inspections", dependencies=[Depends(mark_enveloped)])
 async def admin_get_inspections(
     request: Request,
     user=Depends(require_role("admin", "super_admin")),
