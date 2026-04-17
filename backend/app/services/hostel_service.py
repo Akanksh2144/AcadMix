@@ -58,6 +58,7 @@ class HostelService:
                 "grid_rows": t.grid_rows,
                 "grid_cols": t.grid_cols,
                 "bed_layout": t.bed_layout,
+                "metadata": t.metadata or {},
                 "is_global": t.college_id is None,
             }
             for t in templates
@@ -72,6 +73,7 @@ class HostelService:
             grid_rows=data["grid_rows"],
             grid_cols=data["grid_cols"],
             bed_layout=[b if isinstance(b, dict) else b.model_dump() for b in beds_data],
+            metadata=data.get("metadata") or {},
         )
         self.db.add(tpl)
         await self.db.flush()
@@ -139,6 +141,7 @@ class HostelService:
             gender_type=data.get("gender_type", "coed"),
             total_floors=data.get("total_floors", 1),
             warden_id=data.get("warden_id"),
+            metadata=data.get("metadata") or {},
         )
         self.db.add(hostel)
         await self.db.flush()
@@ -182,6 +185,7 @@ class HostelService:
                 "available_count": counts["available"],
                 "premium_count": counts["premium_available"],
                 "template_name": tpl_name,
+                "metadata": r.metadata or {},
             })
         return out
 
@@ -284,12 +288,18 @@ class HostelService:
         )
         beds = beds_q.scalars().all()
 
+        # Get template metadata for room decorators
+        tpl_metadata = {}
+        if tpl:
+            tpl_metadata = tpl.metadata or {}
+
         return {
             "room_id": room.id,
             "room_number": room.room_number,
             "hostel_name": hostel_name,
             "grid_rows": grid_rows,
             "grid_cols": grid_cols,
+            "metadata": {**(room.metadata or {}), **tpl_metadata},
             "beds": [
                 {
                     "id": b.id,

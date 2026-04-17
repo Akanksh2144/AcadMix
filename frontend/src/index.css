@@ -207,6 +207,107 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ══════════════════════════════════════════════
+   HOSTEL BOOKING — PREMIUM BED STATES
+   ══════════════════════════════════════════════ */
+
+/* Maintenance bed — diagonal red stripes */
+.bed-cell-maintenance {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(239, 68, 68, 0.06),
+    rgba(239, 68, 68, 0.06) 6px,
+    rgba(239, 68, 68, 0.02) 6px,
+    rgba(239, 68, 68, 0.02) 12px
+  );
+}
+html.dark .bed-cell-maintenance {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(239, 68, 68, 0.12),
+    rgba(239, 68, 68, 0.12) 6px,
+    rgba(239, 68, 68, 0.04) 6px,
+    rgba(239, 68, 68, 0.04) 12px
+  );
+}
+
+/* Premium available bed — subtle gold shimmer */
+.bed-cell-premium {
+  background-size: 200% 200%;
+  animation: premium-shimmer 3s ease-in-out infinite;
+}
+@keyframes premium-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Your lock — teal pulsing border */
+.bed-cell-your-lock {
+  animation: your-lock-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes your-lock-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(20, 184, 166, 0); }
+}
+
+/* Error shake animation for bed click race conditions */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Floor plan corridor styling */
+.room-corridor {
+  position: relative;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.06),
+    rgba(148, 163, 184, 0.06) 20px,
+    transparent 20px,
+    transparent 40px
+  );
+  border-top: 2px dashed rgba(148, 163, 184, 0.2);
+  border-bottom: 2px dashed rgba(148, 163, 184, 0.2);
+}
+html.dark .room-corridor {
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.03),
+    rgba(148, 163, 184, 0.03) 20px,
+    transparent 20px,
+    transparent 40px
+  );
+  border-color: rgba(148, 163, 184, 0.1);
+}
+
+/* Filling fast badge pulse */
+.filling-fast-badge {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700;
+  animation: filling-fast 2s ease-in-out infinite;
+}
+html.dark .filling-fast-badge {
+  @apply bg-amber-900/30 text-amber-400;
+}
+@keyframes filling-fast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Hide scrollbar utility */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ══════════════════════════════════════════════
    DARK MODE OVERRIDES
    ══════════════════════════════════════════════ */
 
