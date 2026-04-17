@@ -97,8 +97,20 @@ export default function FloorPlanView({
 
   // Split rooms into north/south wings based on floor layout metadata
   const { northRooms, southRooms, hasWings } = useMemo(() => {
-    if (!floorLayout) {
-      return { northRooms: filteredRooms, southRooms: [] as RoomSummary[], hasWings: false };
+    if (!floorLayout || Object.keys(floorLayout).length === 0) {
+      // Auto-generate a beautiful spatial layout by alternating rooms
+      // We use floorRooms (not filteredRooms) to maintain structural stability during filtering
+      const northSet = new Set(floorRooms.filter((_, i) => i % 2 === 0).map(r => r.id));
+      const southSet = new Set(floorRooms.filter((_, i) => i % 2 !== 0).map(r => r.id));
+      
+      const north = filteredRooms.filter(r => northSet.has(r.id));
+      const south = filteredRooms.filter(r => southSet.has(r.id));
+      
+      return { 
+        northRooms: north, 
+        southRooms: south, 
+        hasWings: floorRooms.length > 1 // Show corridor if the floor has more than 1 room
+      };
     }
 
     const northSet = new Set(floorLayout.north || []);
@@ -114,9 +126,9 @@ export default function FloorPlanView({
     return {
       northRooms: [...north, ...unassigned],
       southRooms: south,
-      hasWings: south.length > 0,
+      hasWings: (floorLayout.south && floorLayout.south.length > 0) || (floorLayout.north && floorLayout.north.length > 0),
     };
-  }, [filteredRooms, floorLayout]);
+  }, [filteredRooms, floorRooms, floorLayout]);
 
   return (
     <div className="space-y-4">
