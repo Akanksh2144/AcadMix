@@ -49,6 +49,11 @@ api.interceptors.request.use((config) => {
 // Response interceptor: unwrap envelope + attempt silent refresh on 401
 api.interceptors.response.use(
   (response) => {
+    // If Vercel mistakenly serves index.html instead of a backend API response, reject it immediately
+    if (typeof response.data === 'string' && response.data.trim().startsWith('<!doctype html>')) {
+      return Promise.reject(new Error('Received HTML instead of JSON. Ensure VITE_BACKEND_URL is set correctly in Vercel.'));
+    }
+
     // Unwrap the standard envelope: {data: <payload>, error: null} → <payload>
     // This lets all existing "res.data.xxx" patterns work transparently.
     // Bucket A responses already have {"data": ...} and set X-Envelope-Applied,
