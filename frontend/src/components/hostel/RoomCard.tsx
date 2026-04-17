@@ -56,21 +56,32 @@ export default function RoomCard({ room, onSelect, isSelected }: RoomCardProps) 
         </div>
       </div>
 
-      {/* Occupancy bar */}
-      <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mb-1.5">
-        <motion.div
-          className="h-full rounded-full"
-          initial={{ width: 0 }}
-          animate={{ width: `${occupancyPct}%` }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          style={{
-            background: occupancyPct > 80
-              ? '#ef4444'
-              : occupancyPct > 50
-              ? 'linear-gradient(90deg, #f59e0b, #ef4444)'
-              : 'linear-gradient(90deg, #10b981, #06b6d4)',
-          }}
-        />
+      {/* Mini Bed Layout grid */}
+      <div className="mb-3 mt-1.5 flex justify-center">
+        <div className={`grid gap-1.5 ${room.capacity > 3 ? 'grid-cols-2' : room.capacity === 3 ? 'grid-cols-3' : 'flex'}`}>
+          {Array.from({ length: room.capacity }).map((_, i) => {
+            const isBooked = i < bookedCount;
+            return (
+              <div
+                key={i}
+                className={`w-6 h-8 rounded shrink-0 flex flex-col items-center py-1 border shadow-sm transition-colors ${
+                  isBooked
+                    ? 'bg-slate-200 border-slate-300 dark:bg-slate-700/80 dark:border-slate-600/50'
+                    : 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
+                }`}
+              >
+                {/* Visual Pillow */}
+                <div className={`w-4 h-1.5 rounded-full ${
+                  isBooked ? 'bg-slate-300 dark:bg-slate-500' : 'bg-emerald-200 dark:bg-emerald-700/50'
+                }`} />
+                {/* Blanket indent */}
+                <div className={`w-full h-4 mt-auto rounded-b-[2px] ${
+                  isBooked ? 'bg-slate-300/50 dark:bg-slate-600/50' : 'bg-emerald-100/50 dark:bg-emerald-800/20'
+                }`} />
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Availability text */}
