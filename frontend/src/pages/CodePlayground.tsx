@@ -31,10 +31,9 @@ const CodePlayground = ({ navigate, user }) => {
   const [code, setCode] = useState(DEFAULT_TEMPLATES['python']);
   const [stdin, setStdin] = useState('');
   const [output, setOutput] = useState(null);
+  const [testResults, setTestResults] = useState([]);
   const [running, setRunning] = useState(false);
   const [execTime, setExecTime] = useState(null);
-  const [showLangMenu, setShowLangMenu] = useState(false);
-  const langMenuRef = useRef(null);
 
   // Close language dropdown on outside click
   useEffect(() => {
@@ -242,7 +241,24 @@ const CodePlayground = ({ navigate, user }) => {
         ? `Error:\n${data.error}`
         : data.output || '(no output)';
       
-      setOutput(result);
+      let rawOutput = result;
+      if (rawOutput && rawOutput.includes('___ACADMIX_SEP___')) {
+         const parts = rawOutput.split('___ACADMIX_SEP___');
+         rawOutput = rawOutput.replace(/___ACADMIX_SEP___/g, '').replace(/___ACADMIX_END___/g, '');
+         const parsedResults = userTestCases.map((tc, idx) => {
+             const actual = (parts[idx] || '').trim();
+             let passed = null;
+             if (tc.expected_output && tc.expected_output.trim() !== '') {
+                 passed = actual === tc.expected_output.trim();
+             }
+             return { actual_output: actual, passed };
+         });
+         setTestResults(parsedResults);
+      } else {
+         setTestResults([]);
+      }
+      
+      setOutput(rawOutput);
       
       setHistory(prev => [{
         language,
@@ -712,15 +728,21 @@ const CodePlayground = ({ navigate, user }) => {
                 {activeConsoleTab === 'test_cases' ? (
                   <div className="p-4 flex flex-col h-full">
                     <div className="flex items-center gap-2 mb-4 shrink-0 overflow-x-auto custom-scrollbar pb-1">
-                      {userTestCases.map((tc, idx) => (
+                      {userTestCases.map((tc, idx) => {
+                        const tr = testResults[idx];
+                        let pillClass = activeTestCaseIdx === idx ? 'bg-slate-700/80 text-white shadow-sm' : 'bg-slate-800 text-slate-400 hover:bg-slate-700/50';
+                        if (tr && tr.passed === true) pillClass = activeTestCaseIdx === idx ? 'bg-emerald-500 text-white shadow-sm' : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30';
+                        if (tr && tr.passed === false) pillClass = activeTestCaseIdx === idx ? 'bg-rose-500 text-white shadow-sm' : 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30';
+                        return (
                         <button
                           key={idx}
                           onClick={() => setActiveTestCaseIdx(idx)}
-                          className={`px-4 py-1.5 rounded-full text-sm font-bold transition-colors whitespace-nowrap ${activeTestCaseIdx === idx ? 'bg-slate-700/80 text-white shadow-sm' : 'bg-slate-800 text-slate-400 hover:bg-slate-700/50'}`}
+                          className={`px-4 py-1.5 rounded-full text-sm font-bold transition-colors whitespace-nowrap ${pillClass}`}
                         >
                           Case {idx + 1}
                         </button>
-                      ))}
+                        );
+                      })}
                       <button 
                         onClick={() => {
                           setUserTestCases([...userTestCases, { input_data: '', expected_output: '' }]);
@@ -760,13 +782,13 @@ const CodePlayground = ({ navigate, user }) => {
                             placeholder="Optional expected answer"
                           />
                         </div>
-                        {output !== null && (
+                        {testResults[activeTestCaseIdx] && (
                           <div className="flex flex-col pt-2 pb-2">
-                            <label className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-1 flex items-center gap-2">
-                              {output.includes('Error:') ? 'Runtime Error' : 'Actual Output'}
+                            <label className={`text-[11px] font-bold ${testResults[activeTestCaseIdx].passed === false ? 'text-rose-400' : 'text-indigo-400'} uppercase tracking-wider mb-1 flex items-center gap-2`}>
+                              Actual Output
                             </label>
-                            <div className={`bg-slate-950 border ${output.includes('Error:') ? 'border-red-500/30' : 'border-indigo-500/30'} outline-none font-mono text-sm ${output.includes('Error:') ? 'text-red-400' : 'text-slate-300'} rounded-xl px-4 py-3 min-h-[60px] whitespace-pre-wrap flex items-center overflow-x-auto overflow-y-auto max-h-[160px] custom-scrollbar`}>
-                               {output || '(no output)'}
+                            <div className={`bg-slate-950 border ${testResults[activeTestCaseIdx].passed === false ? 'border-rose-500/30 text-rose-400' : 'border-indigo-500/30 text-slate-300'} outline-none font-mono text-sm rounded-xl px-4 py-3 min-h-[60px] whitespace-pre-wrap flex items-center overflow-x-auto overflow-y-auto max-h-[160px] custom-scrollbar`}>
+                               {testResults[activeTestCaseIdx].actual_output || '(no output)'}
                             </div>
                           </div>
                         )}

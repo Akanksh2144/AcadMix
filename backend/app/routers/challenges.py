@@ -111,23 +111,14 @@ for idx, tc in enumerate(test_cases):
         args = parsed if isinstance(parsed, tuple) and not raw_inp.strip().startswith("build_") else (parsed,)
         
         result = solve(*args)
-        if tc.get('expected_output') is not None and tc.get('expected_output') != "":
-            expected = safe_parse(str(tc['expected_output']))
-            if result != expected:
-                print(f"Test case {{idx + 1}} failed. Expected {{expected}}, got {{result}}")
-                raise SystemExit(1)
-            else:
-                print(f"Test case {{idx + 1}} Passed! Expected: {{expected}}, Evaluated: {{result}}")
-        else:
-            print(f"Test case {{idx + 1}} evaluated to: {{result}}")
-            
+        print(result) # Exactly what the user wants to see
     except SystemExit:
-        raise
+        pass # allow clean exit
     except Exception as e:
-        print(f"Execution error on test case {{idx + 1}}: {{e}}")
-        raise SystemExit(1)
-        
-print("OK")
+        print(f"Execution Error: {{e}}")
+    finally:
+        print("___ACADMIX_SEP___")
+print("___ACADMIX_END___")
 """
 
 router = APIRouter()
