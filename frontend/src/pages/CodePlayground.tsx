@@ -284,8 +284,11 @@ const CodePlayground = ({ navigate, user }) => {
              }
              
              const tcObj = is_submit ? null : userTestCases[idx];
-             if (passed === null && tcObj && tcObj.expected_output && tcObj.expected_output.trim() !== '') {
-                 passed = actual === tcObj.expected_output.trim();
+             if (passed === null && tcObj && tcObj.expected_output !== null && tcObj.expected_output !== undefined) {
+                 const expStr = String(tcObj.expected_output).trim();
+                 if (expStr !== '') {
+                     passed = actual === expStr;
+                 }
              }
              
              return { actual_output: actual, passed, isHidden: is_submit && idx >= userTestCases.length };
