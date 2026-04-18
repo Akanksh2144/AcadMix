@@ -56,9 +56,10 @@ SCHEMA = """
         "optimal_time_complexity": { "type": "string" },
         "optimal_space_complexity": { "type": "string" },
         "common_pitfalls": { "type": "string" },
+        "real_world_applications": { "type": "string", "description": "Describe 1 or 2 real-world software engineering applications or use cases where the underlying algorithmic concept of this problem is deployed." },
         "coach_instructions": { "type": "string" }
       },
-      "required": ["optimal_time_complexity", "optimal_space_complexity", "common_pitfalls", "coach_instructions"]
+      "required": ["optimal_time_complexity", "optimal_space_complexity", "common_pitfalls", "real_world_applications", "coach_instructions"]
     }
   },
   "required": ["title", "slug", "difficulty", "description", "constraints", "optimal_solution_python", "test_cases", "problem_ai_context"]
