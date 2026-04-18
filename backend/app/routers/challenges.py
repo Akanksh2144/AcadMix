@@ -90,26 +90,26 @@ true = True
 false = False
 null = None
 
-import ast
-def safe_eval(raw_s):
+from ast import literal_eval as lx_parse
+def safe_parse(raw_s):
     s = raw_s.strip()
     if s.startswith("build_tree("):
         inner = s[s.find("(")+1:s.rfind(")")]
-        return build_tree(ast.literal_eval(inner))
+        return build_tree(lx_parse(inner))
     if s.startswith("build_linked_list("):
         inner = s[s.find("(")+1:s.rfind(")")]
-        return build_linked_list(ast.literal_eval(inner))
-    return ast.literal_eval(s)
+        return build_linked_list(lx_parse(inner))
+    return lx_parse(s)
 
 for idx, tc in enumerate(test_cases):
     try:
         raw_inp = tc['input_data']
-        parsed = safe_eval(raw_inp)
+        parsed = safe_parse(raw_inp)
         args = parsed if isinstance(parsed, tuple) and not raw_inp.strip().startswith("build_") else (parsed,)
         
         result = solve(*args)
         if tc.get('expected_output') is not None and tc.get('expected_output') != "":
-            expected = safe_eval(str(tc['expected_output']))
+            expected = safe_parse(str(tc['expected_output']))
             if result != expected:
                 print(f"Test case {{idx + 1}} failed. Expected {{expected}}, got {{result}}")
                 raise SystemExit(1)
