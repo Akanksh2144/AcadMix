@@ -745,6 +745,8 @@ const CodePlayground = ({ navigate, user }) => {
                     <div className="text-slate-500 dark:text-slate-400 italic">Code output will appear here.</div>
                  )}
               </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
