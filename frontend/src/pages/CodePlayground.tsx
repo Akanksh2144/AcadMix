@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { toast } from 'sonner';
 
@@ -1004,18 +1004,19 @@ const CodePlayground = ({ navigate, user }) => {
               </div>
               
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm focus-within:ring-1 focus-within:ring-indigo-500/30">
+                <div className="flex items-center gap-2 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-400/50 transition-all">
+                  <MagnifyingGlass size={16} className="text-slate-400" />
                   <input 
                     type="text" 
                     placeholder="Search problems or topics..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-transparent border-none outline-none focus:ring-0 text-sm font-semibold text-slate-700 dark:text-slate-300 placeholder-slate-400 w-48 sm:w-64"
+                    className="bg-transparent border-0 border-transparent focus:border-transparent outline-none focus:ring-0 text-sm font-semibold text-slate-700 dark:text-slate-300 placeholder-slate-400 w-48 sm:w-64 p-0"
                   />
                 </div>
-                <div className="flex items-center gap-2 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm focus-within:ring-0">
+                <div className="flex items-center gap-2 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
                    <Funnel size={16} className="text-slate-400" />
-                   <select className="bg-transparent border-none outline-none focus:ring-0 focus:outline-none text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer"
+                   <select className="bg-transparent border-0 border-transparent focus:border-transparent outline-none focus:ring-0 text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer p-0"
                      value={difficultyFilter} onChange={e => setDifficultyFilter(e.target.value)}>
                      <option value="">All Difficulties</option>
                      <option value="Easy">Easy</option>
