@@ -407,7 +407,7 @@ async def generate_coach_stream(messages: List[Dict[str, str]], current_code: st
             temperature=0.5,
             max_tokens=500,
             stream=True,
-            timeout=10.0
+            timeout=30.0
         )
         previous_text = ""
         async for chunk in response:
