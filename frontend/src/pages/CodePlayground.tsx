@@ -558,7 +558,6 @@ const CodePlayground = ({ navigate, user }) => {
                       }
                       const raw = String(Array.isArray(children) ? children.join('') : children || '');
                       if (/(Input|Output|Explanation)\s*:/i.test(raw)) {
-                        // Strip excessive blank lines, then split on the labels
                         const cleaned = raw.replace(/\n{2,}/g, '\n');
                         const parts = cleaned.split(/((?:Input|Output|Explanation)\s*:)/gi);
                         return (
@@ -566,6 +565,20 @@ const CodePlayground = ({ navigate, user }) => {
                             {parts.map((part, i) => {
                               if (/^(Input|Output|Explanation)\s*:$/i.test(part)) {
                                 return <strong key={i} className="font-bold text-slate-900 dark:text-slate-100">{part}</strong>;
+                              }
+                              // Semibold for Option X:, Step X:, Slot X:, Case X: labels
+                              const labeled = (part as string).replace(
+                                /^((?:Option|Step|Slot|Case)\s*\d+[^:\n]*:)/gim,
+                                '|||SEMI|||$1|||/SEMI|||'
+                              );
+                              if (labeled.includes('|||SEMI|||')) {
+                                return <span key={i}>{labeled.split(/(\|\|\|SEMI\|\|\||\|\|\|\/SEMI\|\|\|)/).map((seg, j) => {
+                                  if (seg === '|||SEMI|||' || seg === '|||/SEMI|||') return null;
+                                  // Check if previous delimiter was |||SEMI|||
+                                  const prevIdx = labeled.split(/(\|\|\|SEMI\|\|\||\|\|\|\/SEMI\|\|\|)/).indexOf(seg);
+                                  const isSemi = prevIdx > 0 && labeled.split(/(\|\|\|SEMI\|\|\||\|\|\|\/SEMI\|\|\|)/)[prevIdx - 1] === '|||SEMI|||';
+                                  return isSemi ? <strong key={j} className="font-semibold text-slate-800 dark:text-slate-200">{seg}</strong> : <span key={j}>{seg}</span>;
+                                })}</span>;
                               }
                               return <span key={i}>{part}</span>;
                             })}
@@ -598,7 +611,8 @@ const CodePlayground = ({ navigate, user }) => {
                           </summary>
                           <div className="px-5 pb-5 pt-2 text-[14px] text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-200 dark:border-slate-700/50 mx-0 mt-0 text-start bg-transparent">
                              <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
-                               p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />
+                               p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                               strong: ({node, ...props}) => <strong className="font-semibold text-slate-700 dark:text-slate-200" {...props} />,
                              }}>{value}</ReactMarkdown>
                           </div>
                         </details>
