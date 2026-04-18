@@ -27,7 +27,7 @@ const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
 const QuizBuilder = React.lazy(() => import('./pages/QuizBuilder'));
 const LiveMonitor = React.lazy(() => import('./pages/LiveMonitor'));
 const UserManagement = React.lazy(() => import('./pages/UserManagement'));
-const CodePlayground = React.lazy(() => import('./pages/CodePlayground'));
+const CodePlayground = React.lazy(() => import('./pages/CodePlayground')); // renamed to tsx, bust cache
 const MarksEntry = React.lazy(() => import('./pages/MarksEntry'));
 const StudentManagement = React.lazy(() => import('./pages/StudentManagement'));
 const ClassResults = React.lazy(() => import('./pages/ClassResults'));
