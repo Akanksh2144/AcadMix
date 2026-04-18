@@ -122,7 +122,7 @@ const CodePlayground = ({ navigate, user }) => {
   const fetchChallenges = async () => {
     setIsChallengesLoading(true);
     try {
-      const res = await api.get('/api/challenges', { params: { difficulty: difficultyFilter, limit: 100 } });
+      const res = await api.get('/challenges', { params: { difficulty: difficultyFilter, limit: 100 } });
       setChallenges(res.data.data);
     } catch(err) { console.error(err); }
     setIsChallengesLoading(false);
@@ -130,7 +130,7 @@ const CodePlayground = ({ navigate, user }) => {
   
   const fetchStats = async () => {
     try {
-      const res = await api.get('/api/challenges/stats');
+      const res = await api.get('/challenges/stats');
       setStats(res.data);
     } catch(err) { console.error(err); }
   };
@@ -153,7 +153,7 @@ const CodePlayground = ({ navigate, user }) => {
     try {
       let data = {};
       if (activeChallenge) {
-        const res = await api.post('/api/challenges/submit', {
+        const res = await api.post('/challenges/submit', {
           code,
           language,
           challenge_id: activeChallenge.id
@@ -161,7 +161,7 @@ const CodePlayground = ({ navigate, user }) => {
         data = res.data;
         if(data.success) fetchStats(); 
       } else {
-        const res = await api.post('/api/code/execute', {
+        const res = await api.post('/code/execute', {
           code,
           language,
           test_input: stdin,

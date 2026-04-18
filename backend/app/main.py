@@ -590,3 +590,4 @@ from app.api.v1.router import api_router  # noqa: E402
 # Mount at /api/v1 (canonical) + /api (backwards-compatible alias)
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(api_router, prefix="/api")
+# Touch for reload

@@ -5,10 +5,20 @@ import { transportAPI } from '../../services/api';
 
 const POLL_INTERVAL = 10000;
 
-// Wait for Mappls SDK to be available on window (loaded via index.html script tag)
+// Wait for Mappls SDK to be available on window (loaded dynamically)
 function waitForMappls(maxWait = 10000) {
   return new Promise((resolve) => {
     if (window.mappls) { resolve(window.mappls); return; }
+
+    const apiKey = import.meta.env.VITE_MAPPLS_KEY || import.meta.env.VITE_MAPPLS_API_KEY;
+    if (apiKey && !document.getElementById('mappls-sdk-script')) {
+      const script = document.createElement('script');
+      script.id = 'mappls-sdk-script';
+      script.src = `https://apis.mappls.com/advancedmaps/api/${apiKey}/map_sdk?layer=vector&v=3.0`;
+      script.async = true;
+      document.head.appendChild(script);
+    }
+
     const start = Date.now();
     const interval = setInterval(() => {
       if (window.mappls) {

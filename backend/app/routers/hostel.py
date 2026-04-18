@@ -245,6 +245,19 @@ async def review_gatepass(
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# ADMIN — Reconciliation
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/admin/hostel/reconcile-admissions")
+async def reconcile_admissions(
+    user: dict = Depends(require_role("admin")),
+    svc: HostelService = Depends(get_hostel_service),
+):
+    result = await svc.reconcile_admissions(user["college_id"])
+    return {"success": True, "data": result}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # WARDEN DASHBOARD
 # ═══════════════════════════════════════════════════════════════════════════════
 

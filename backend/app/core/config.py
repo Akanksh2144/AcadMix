@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     
     # Security
     JWT_SECRET: str
+    PRE_ENROLL_JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
 
     # Admin Defaults
@@ -29,8 +30,8 @@ class Settings(BaseSettings):
     SEED_DEMO_USERS: bool = False  # Set True ONLY in dev/staging to seed quick-login test accounts
 
     # External Integrations
-    LLM_REVIEW_MODEL: str = "gemini/gemini-3.1-flash-lite-preview"
-    INTERVIEW_LLM_MODEL: str = "gemini/gemini-2.5-flash"
+    LLM_REVIEW_MODEL: str = "gemini/gemini-2.0-flash"
+    INTERVIEW_LLM_MODEL: str = "gemini/gemini-2.0-flash"
     RESUME_LLM_MODEL: str = "gemini/gemini-2.0-flash-lite"   # Cheaper model for ATS scoring & career tools
     GEMINI_API_KEY: str = ""
     GROQ_API_KEY: str = ""

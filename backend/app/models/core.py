@@ -164,3 +164,19 @@ class PinnedInsight(Base, SoftDeleteMixin):
     cached_sql       = Column(Text, nullable=False)
     chart_suggestion = Column(String, nullable=True) # e.g. bar_chart
     created_at       = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class CollegeModule(Base, SoftDeleteMixin):
+    __tablename__ = "college_modules"
+    id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id       = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    module_name      = Column(String, nullable=False)
+    is_enabled       = Column(Boolean, nullable=False, server_default=text('false'))
+    student_visible  = Column(Boolean, nullable=False, server_default=text('false'))
+    visible_to_roles = Column(JSONB, nullable=False, server_default=text('\'["student"]\''))
+    enabled_by       = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    conditions       = Column(JSONB, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("college_id", "module_name", name="uq_college_module"),
+    )

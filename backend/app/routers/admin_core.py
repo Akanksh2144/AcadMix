@@ -161,3 +161,45 @@ async def anonymize_user_data(
     """
     await gdpr_svc.anonymize_user(admin["college_id"], target_user_id)
     return {"message": "User PII successfully anonymized while preserving aggregate references."}
+
+@router.post("/admin/hostel/reconcile-admissions")
+async def reconcile_admissions(
+    dry_run: bool = Query(False, description="Preview count before committing"),
+    admin: dict = Depends(require_role("admin", "super_admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    """
+    Batch endpoint to bridge Pre-Enrollment with Student Identity.
+    Queries all Allocations linked to an admission, checks if they have successfully
+    completed the platform onboarding (user_id is not null), and atomically 
+    transfers the allocation ownership before severing the pre-enroll admission tie.
+    """
+    from app.models.hostel import Allocation
+    from app.models.admissions import Admission
+    
+    allocations_stmt = select(Allocation).where(
+        Allocation.college_id == admin["college_id"],
+        Allocation.admission_id != None,
+        Allocation.student_id == None
+    )
+    result = await session.execute(allocations_stmt)
+    unreconciled = result.scalars().all()
+    
+    match_count = 0
+    
+    for alloc in unreconciled:
+        adm_stmt = select(Admission).where(Admission.id == alloc.admission_id)
+        adm_result = await session.execute(adm_stmt)
+        adm = adm_result.scalars().first()
+        
+        if adm and adm.user_id:
+            match_count += 1
+            if not dry_run:
+                alloc.student_id = adm.user_id
+                alloc.admission_id = None
+                
+    if not dry_run and match_count > 0:
+        await session.commit()
+    
+    msg = f"Dry-run: {match_count} matches found. No changes committed." if dry_run else f"Successfully reconciled {match_count} hostel allocations to student identities."
+    return {"message": msg, "matches": match_count, "dry_run": dry_run}

@@ -107,9 +107,11 @@ async def call_llm(messages: list, model: str = None, json_mode: bool = False, m
         "messages": messages,
         "temperature": 0.7,
         "max_tokens": max_tokens,
+        "timeout": 15.0,
     }
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
+        kwargs["timeout"] = 30.0  # Allow more time for JSON generation
 
     try:
         response = await litellm.acompletion(**kwargs)

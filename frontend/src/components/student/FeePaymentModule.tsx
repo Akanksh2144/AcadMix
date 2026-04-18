@@ -198,39 +198,70 @@ const FeePaymentModule = ({ user }) => {
           ) : (
             <div className="grid gap-4">
               {fees.map((fee) => (
-                <motion.div key={fee.invoice_id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="soft-card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-colors pointer-events-none" />
+                <motion.div 
+                  key={fee.invoice_id} 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  whileHover={{ y: -4 }}
+                  className="relative p-[1px] rounded-3xl overflow-hidden group bg-gradient-to-b from-indigo-100 to-white dark:from-indigo-500/20 dark:to-[#0B0F19] shadow-sm hover:shadow-xl transition-all duration-300"
+                >
+                  {/* Outer gradient border wrapper */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/30 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                   
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/15 flex items-center justify-center shrink-0">
-                      <CreditCard size={24} weight="duotone" className="text-indigo-500" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-extrabold text-slate-900 dark:text-white leading-tight">{fee.fee_type}</h4>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">{fee.academic_year} • {fee.description || 'Academic Invoice'}</p>
-                      
-                      {fee.status === 'pending_gateway' && (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-500/15 text-[10px] font-extrabold text-amber-600 dark:text-amber-400 mt-3">
-                          <Clock size={12} weight="bold" /> Pending via Gateway
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:items-end border-t border-slate-100 dark:border-slate-800 sm:border-0 pt-4 sm:pt-0">
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total: ₹{(fee.total_amount).toLocaleString()}</p>
-                    <div className="mb-3">
-                      <span className="text-2xl font-extrabold text-slate-900 dark:text-white">₹{(fee.amount_due).toLocaleString()}</span>
-                      <span className="text-xs font-bold text-slate-400 ml-1">DUE</span>
-                    </div>
+                  {/* Inner card body */}
+                  <div className="relative bg-white dark:bg-[#0f1423] p-5 sm:px-6 sm:py-5 rounded-[23px] flex flex-col sm:flex-row sm:items-center justify-between gap-5 sm:gap-6 h-full z-10 border border-transparent">
                     
-                    <button
-                      onClick={() => handlePayment(fee)}
-                      disabled={processingId === fee.invoice_id}
-                      className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-bold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      {processingId === fee.invoice_id ? 'Processing...' : 'Pay with Razorpay'} <ArrowRight size={16} weight="bold" />
-                    </button>
+                    {/* Magical glow blobs inside the card */}
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/15 transition-all duration-700" />
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-3xl pointer-events-none group-hover:scale-125 transition-transform duration-700 delay-100" />
+                    
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 relative z-20 w-full sm:w-auto">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-500/20 dark:to-purple-500/20 flex flex-col items-center justify-center shrink-0 shadow-inner border border-indigo-100 dark:border-indigo-500/30 relative group-hover:scale-105 transition-transform duration-300">
+                        <CreditCard size={28} weight="duotone" className="text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <div className="flex-1 mt-1 sm:mt-0">
+                        <div className="flex items-center gap-3 mb-1">
+                          <h4 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">{fee.fee_type}</h4>
+                          <span className="px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest border border-rose-100 dark:border-rose-500/20 shadow-sm shrink-0">Action Required</span>
+                        </div>
+                        <p className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center flex-wrap gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                          <span className="flex items-center gap-1.5 text-indigo-500 dark:text-indigo-400"><CalendarBlank size={14} weight="bold" /> {fee.academic_year}</span> 
+                          <span className="text-slate-300 dark:text-slate-600">•</span> 
+                          {fee.description || 'Academic Invoice'}
+                        </p>
+                        
+                        {fee.status === 'pending_gateway' && (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/15 text-xs font-extrabold text-amber-600 dark:text-amber-400 mt-2.5 border border-amber-100 dark:border-amber-500/20">
+                            <Clock size={14} weight="bold" className="animate-pulse" /> Pending via Gateway
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:items-end w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 border-t border-slate-100 dark:border-white/5 sm:border-0 relative z-20">
+                      <div className="flex flex-col items-start sm:items-end mb-4 w-full">
+                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 group-hover:text-indigo-500 transition-colors">Amount Due Target</p>
+                        <div className="flex items-baseline gap-2.5">
+                          <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-sm">₹{(fee.amount_due).toLocaleString()}</span>
+                          {fee.total_amount !== fee.amount_due && (
+                             <span className="text-xs font-bold text-slate-400 line-through opacity-60">₹{(fee.total_amount).toLocaleString()}</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => handlePayment(fee)}
+                        disabled={processingId === fee.invoice_id}
+                        className="w-full sm:w-auto relative px-6 py-2.5 sm:py-3 rounded-xl text-sm sm:text-sm font-black text-white overflow-hidden group/btn disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_8px_20px_-8px_rgba(79,70,229,0.5)] hover:shadow-[0_12px_24px_-8px_rgba(79,70,229,0.7)] transition-all"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 transition-transform duration-500 group-hover/btn:scale-[1.03]" />
+                        {/* Shine effect */}
+                        <div className="absolute top-0 right-full w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 group-hover/btn:translate-x-[200%] duration-[1500ms] ease-in-out transition-transform" />
+                        <span className="relative flex items-center justify-center gap-2 tracking-wide">
+                          {processingId === fee.invoice_id ? 'Processing...' : 'Pay Securely'} <ArrowRight size={16} weight="bold" className="group-hover/btn:translate-x-1 transition-transform" />
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               ))}

@@ -134,7 +134,8 @@ class Allocation(Base, SoftDeleteMixin):
     __tablename__ = "allocations"
     id                = Column(String, primary_key=True, index=True, default=generate_uuid)
     college_id        = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
-    student_id        = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    student_id        = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+    admission_id      = Column(String, ForeignKey("admissions.id", ondelete="SET NULL"), nullable=True)
     bed_id            = Column(String, ForeignKey("beds.id", ondelete="RESTRICT"), nullable=False)
     room_id           = Column(String, ForeignKey("rooms.id", ondelete="RESTRICT"), nullable=False)
     hostel_id         = Column(String, ForeignKey("hostels.id", ondelete="RESTRICT"), nullable=False)
@@ -147,7 +148,10 @@ class Allocation(Base, SoftDeleteMixin):
 
     __table_args__ = (
         Index("ix_alloc_student_year", "student_id", "academic_year"),
+        Index("ix_alloc_admission_year", "admission_id", "academic_year"),
         Index("ix_alloc_hostel_status", "hostel_id", "status"),
+        CheckConstraint("student_id IS NOT NULL OR admission_id IS NOT NULL", name="ck_allocation_has_owner"),
+        CheckConstraint("NOT (student_id IS NOT NULL AND admission_id IS NOT NULL)", name="ck_allocation_single_owner"),
     )
 
 

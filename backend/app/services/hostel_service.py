@@ -319,7 +319,7 @@ class HostelService:
     # BED LOCKING — Concurrency-safe via FOR UPDATE NOWAIT
     # ═══════════════════════════════════════════════════════════════════════════
 
-    async def lock_bed(self, bed_id: str, student_id: str, college_id: str) -> dict:
+    async def lock_bed(self, bed_id: str, actor_id: str, college_id: str, actor_type: str = "student") -> dict:
         """
         Atomically lock a bed for 10 minutes. Uses SELECT FOR UPDATE NOWAIT
         to fail immediately if another transaction holds the row.
@@ -345,15 +345,18 @@ class HostelService:
 
         # Check if student already has an active allocation this year
         current_year = str(datetime.now(timezone.utc).year)
-        existing = await self.db.execute(
-            select(Allocation).where(
-                Allocation.student_id == student_id,
-                Allocation.academic_year == current_year,
-                Allocation.status == "active",
-                Allocation.college_id == college_id,
-                Allocation.is_deleted == False,
-            )
+        q = select(Allocation).where(
+            Allocation.academic_year == current_year,
+            Allocation.status == "active",
+            Allocation.college_id == college_id,
+            Allocation.is_deleted == False,
         )
+        if actor_type == "student":
+            q = q.where(Allocation.student_id == actor_id)
+        else:
+            q = q.where(Allocation.admission_id == actor_id)
+            
+        existing = await self.db.execute(q)
         if existing.scalars().first():
             raise DomainException("You already have an active hostel allocation for this academic year", status_code=409)
 
@@ -363,7 +366,7 @@ class HostelService:
                 UPDATE beds SET status = 'LOCKED', locked_at = NOW(), locked_by = :sid
                 WHERE id = :bid
             """),
-            {"sid": student_id, "bid": bed_id},
+            {"sid": actor_id, "bid": bed_id},
         )
 
         expires = datetime.now(timezone.utc) + timedelta(minutes=10)
@@ -379,13 +382,13 @@ class HostelService:
             "lock_expires_at": expires.isoformat(),
         }
 
-    async def confirm_booking(self, bed_id: str, student_id: str, college_id: str, payment_reference: str = "") -> dict:
+    async def confirm_booking(self, bed_id: str, actor_id: str, college_id: str, payment_reference: str = "", actor_type: str = "student") -> dict:
         """Finalize the booking after payment is confirmed."""
         bed_q = await self.db.execute(
             select(Bed).where(
                 Bed.id == bed_id,
                 Bed.status == "LOCKED",
-                Bed.locked_by == student_id,
+                Bed.locked_by == actor_id,
                 Bed.college_id == college_id,
                 Bed.is_deleted == False,
             )
@@ -403,7 +406,8 @@ class HostelService:
         current_year = str(datetime.now(timezone.utc).year)
         allocation = Allocation(
             college_id=college_id,
-            student_id=student_id,
+            student_id=actor_id if actor_type == "student" else None,
+            admission_id=actor_id if actor_type == "admission" else None,
             bed_id=bed.id,
             room_id=bed.room_id,
             hostel_id=(await self._get_hostel_id_for_room(bed.room_id)),
@@ -594,13 +598,13 @@ class HostelService:
                 "id": h.id,
                 "name": h.name,
                 "gender_type": h.gender_type,
-                "total_beds": avail["total"],
-                "occupied": avail["booked"],
-                "available": avail["available"],
+                "total_beds": h.total_capacity,
+                "occupied": avail.get("occupied", 0),
+                "available": avail.get("available", 0),
                 "pending_gatepasses": pending,
             })
-            total_beds += avail["total"]
-            total_occupied += avail["booked"]
+            total_beds += h.total_capacity
+            total_occupied += avail.get("occupied", 0)
             total_pending += pending
 
         return {
@@ -610,6 +614,23 @@ class HostelService:
             "available": total_beds - total_occupied,
             "pending_gatepasses": total_pending,
         }
+
+    async def reconcile_admissions(self, college_id: str) -> dict:
+        """Link pending pre-enrollment allocations (admission_id) to registered Users via matching emails."""
+        stmt = text("""
+            UPDATE allocations a
+            SET student_id = u.id, admission_id = NULL
+            FROM users u
+            JOIN admissions ad ON ad.email = u.email
+            WHERE a.admission_id = ad.id
+              AND a.student_id IS NULL
+              AND a.college_id = :college_id
+              AND u.college_id = :college_id
+            RETURNING a.id
+        """)
+        result = await self.db.execute(stmt, {"college_id": college_id})
+        updated_rows = result.fetchall()
+        return {"reconciled_count": len(updated_rows)}
 
     # ═══════════════════════════════════════════════════════════════════════════
     # BED ADMIN OPERATIONS (Toggle premium / maintenance)

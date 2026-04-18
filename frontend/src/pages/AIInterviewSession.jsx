@@ -342,9 +342,21 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
       const preferred = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) || voices.find(v => v.lang.startsWith('en'));
       if (preferred) utterance.voice = preferred;
 
+      let resolved = false;
+      const safeResolve = () => {
+        if (!resolved) {
+          resolved = true;
+          setIsSpeaking(false);
+          resolve();
+        }
+      };
+
+      const fallbackMs = Math.max(3000, text.length * 80 + 2000);
+      const tt = setTimeout(safeResolve, fallbackMs);
+
       utterance.onstart = () => { setIsSpeaking(true); setOrbState('speaking'); stopListening(); };
-      utterance.onend = () => { setIsSpeaking(false); resolve(); };
-      utterance.onerror = () => { setIsSpeaking(false); resolve(); };
+      utterance.onend = () => { clearTimeout(tt); safeResolve(); };
+      utterance.onerror = () => { clearTimeout(tt); safeResolve(); };
       synthRef.current.speak(utterance);
     });
   }, [stopListening]);

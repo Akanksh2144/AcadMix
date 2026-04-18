@@ -513,7 +513,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     setRunningCode(true);
     try {
       const q = quiz.questions[questionIndex];
-      const { data } = await api.post('/api/code/execute', {
+      const { data } = await api.post('/code/execute', {
         code, language: q.language || 'python', test_input: q.test_input || '',
       });
       setCodeOutputs(prev => ({ ...prev, [questionIndex]: data.output || data.error || '(no output)' }));

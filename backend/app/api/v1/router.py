@@ -7,7 +7,7 @@ from app.routers import (
     exam_cell_core, student_core, hod_core, faculty_core, admin_core, attempts, results, analytics, 
     leaderboard, dashboards, marks_extra, timetable_extra, announcements, challenges, industry, tpo, fees, webhooks,
     interview, resume, hostel, career_tools, iot_webhooks, transport, transport_admin, library,
-    visitors, websocket, notifications, audit, insights,
+    visitors, websocket, notifications, audit, insights, pre_enroll, modules,
 )
 from app.routers import nodal_routes
 
@@ -74,6 +74,8 @@ api_router.include_router(transport_admin.router, tags=["transport-admin"])
 api_router.include_router(visitors.router, tags=["visitors"])
 api_router.include_router(notifications.router, tags=["notifications"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
+api_router.include_router(pre_enroll.router, tags=["pre_enrollment"])
+api_router.include_router(modules.router, tags=["college_modules"])
 
 # Nodal Router (historical top-level route, now safely namespaced if possible, keeping legacy /api scope mostly)
 api_router.include_router(nodal_routes.nodal_router, tags=["nodal_officer"])

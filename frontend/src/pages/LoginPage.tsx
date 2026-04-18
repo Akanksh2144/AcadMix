@@ -5,6 +5,9 @@ import { authAPI, formatApiError } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTenant } from '../contexts/TenantContext';
 import * as Sentry from '@sentry/react';
+import { Phone, Hash, Receipt } from '@phosphor-icons/react';
+import { useIsPreEnrollOpen } from '../hooks/useCollegeModules';
+import { preEnrollAPI } from '../services/api';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -22,6 +25,17 @@ const LoginPage = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Pre-enrollment flow states
+  const { data: preEnrollStatus } = useIsPreEnrollOpen();
+  const isPreEnrollActive = preEnrollStatus?.is_open ?? false;
+  const [isPreEnrollMode, setIsPreEnrollMode] = useState(false);
+  
+  const [admissionNumber, setAdmissionNumber] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [preEnrollToken, setPreEnrollToken] = useState<string | null>(null);
   const { isDark, toggle: toggleTheme } = useTheme();
   const tenant = useTenant();
   const showQuickLogin = true; // Temporarily enable quick logins everywhere for testing
@@ -49,12 +63,50 @@ const LoginPage = ({ onLogin }) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    
+    // Normal login
+    if (!isPreEnrollMode) {
+      try {
+        const { data } = await authAPI.login(collegeId, password);
+        onLogin(data);
+      } catch (err: any) {
+        setError(formatApiError(err.response?.data?.detail) || err.message || 'Login failed');
+      }
+      setLoading(false);
+      return;
+    }
+  };
+
+  // OTP Request Flow
+  const handleRequestOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!collegeId || !admissionNumber || !mobileNumber) {
+      setError("Please fill all fields");
+      return;
+    }
+    setError('');
+    setLoading(true);
     try {
-      const { data } = await authAPI.login(collegeId, password);
-      onLogin(data);
-    } catch (err) {
-      // If it's a network error (like our VITE_BACKEND_URL blocker), err.response is undefined, so we catch err.message explicitly
-      setError(formatApiError(err.response?.data?.detail) || err.message || 'Login failed');
+      await preEnrollAPI.requestOTP({ college_id: collegeId, admission_number: admissionNumber, phone_number: mobileNumber });
+      setOtpSent(true);
+    } catch (err: any) {
+      setError(formatApiError(err.response?.data?.detail) || 'Failed to send OTP');
+    }
+    setLoading(false);
+  };
+
+  // OTP Verification Flow
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const { data } = await preEnrollAPI.verifyOTP({ college_id: collegeId, admission_number: admissionNumber, phone_number: mobileNumber, otp });
+      // Store isolated token and hard-redirect to avoid polluting the core Auth User state
+      sessionStorage.setItem('pre_enroll_token', data.access_token);
+      window.location.href = "/pre-enroll/hostel";
+    } catch (err: any) {
+      setError(formatApiError(err.response?.data?.detail) || 'Invalid OTP');
     }
     setLoading(false);
   };
@@ -155,8 +207,23 @@ const LoginPage = ({ onLogin }) => {
           </div>
 
           <div className="soft-card p-8 sm:p-10">
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">Sign In</h2>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8">Enter your credentials to continue</p>
+            <div className="flex justify-between items-center mb-1">
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                {isPreEnrollMode ? "Pre-Enrollment" : "Sign In"}
+              </h2>
+              {isPreEnrollActive && (
+                 <button 
+                  type="button" 
+                  onClick={() => setIsPreEnrollMode(!isPreEnrollMode)}
+                  className="text-xs font-bold text-indigo-500 hover:text-indigo-600 bg-indigo-500/10 px-3 py-1.5 rounded-full transition-colors"
+                 >
+                   {isPreEnrollMode ? "Standard Login" : "Guest Login"}
+                 </button>
+              )}
+            </div>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8">
+              {isPreEnrollMode ? "Access hostel booking before student onboarding" : "Enter your credentials to continue"}
+            </p>
 
             <AnimatePresence>
               {error && (
@@ -172,37 +239,84 @@ const LoginPage = ({ onLogin }) => {
               )}
             </AnimatePresence>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">College ID / Roll Number</label>
-                <div className="relative">
-                  <UserCircle size={18} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  <input data-testid="college-id-input" type="text" value={collegeId} onChange={(e) => setCollegeId(e.target.value.toUpperCase())}
-                    placeholder="e.g., 22WJ8A6745, T001, A001" className="soft-input w-full pl-12 pr-4" />
+            {/* OTP VERIFICATION VIEW */}
+            {isPreEnrollMode && otpSent ? (
+              <form onSubmit={handleVerifyOTP} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Enter OTP</label>
+                  <div className="relative">
+                    <Lock size={18} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input type="text" value={otp} onChange={(e) => setOtp(e.target.value)}
+                      placeholder="6-digit OTP" className="soft-input w-full pl-12 pr-4 tracking-widest" maxLength={6} />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Password</label>
-                <div className="relative">
-                  <Lock size={18} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  <input data-testid="password-input" type={showPassword ? 'text' : 'password'} value={password}
-                    onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" className="soft-input w-full pl-12 pr-12" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" data-testid="toggle-password-visibility">
-                    {showPassword ? <EyeSlash size={20} weight="duotone" /> : <Eye size={20} weight="duotone" />}
-                  </button>
+                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.97 }} type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
+                  {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <>Verify & Access Hostel <PaperPlaneTilt size={18} weight="duotone" /></>}
+                </motion.button>
+              </form>
+            ) : isPreEnrollMode && !otpSent ? (
+              <form onSubmit={handleRequestOTP} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">College Select (ID)</label>
+                  <div className="relative">
+                    <UserCircle size={18} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input type="text" value={collegeId} onChange={(e) => setCollegeId(e.target.value.toUpperCase())}
+                      placeholder="e.g. 22WJ8A6745" className="soft-input w-full pl-12 pr-4" />
+                  </div>
                 </div>
-              </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Admission No.</label>
+                  <div className="relative">
+                    <Receipt size={18} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input type="text" value={admissionNumber} onChange={(e) => setAdmissionNumber(e.target.value)}
+                      placeholder="e.g. ADM2026102" className="soft-input w-full pl-12 pr-4" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Mobile Number</label>
+                  <div className="relative">
+                    <Phone size={18} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input type="text" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)}
+                      placeholder="Linked mobile number" className="soft-input w-full pl-12 pr-4" maxLength={10} />
+                  </div>
+                </div>
+                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.97 }} type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
+                  {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <>Send OTP <PaperPlaneTilt size={18} weight="duotone" /></>}
+                </motion.button>
+              </form>
+            ) : (
+               <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">College ID / Roll Number</label>
+                  <div className="relative">
+                    <UserCircle size={18} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input data-testid="college-id-input" type="text" value={collegeId} onChange={(e) => setCollegeId(e.target.value.toUpperCase())}
+                      placeholder="e.g., 22WJ8A6745, T001, A001" className="soft-input w-full pl-12 pr-4" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Password</label>
+                  <div className="relative">
+                    <Lock size={18} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input data-testid="password-input" type={showPassword ? 'text' : 'password'} value={password}
+                      onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" className="soft-input w-full pl-12 pr-12" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" data-testid="toggle-password-visibility">
+                      {showPassword ? <EyeSlash size={20} weight="duotone" /> : <Eye size={20} weight="duotone" />}
+                    </button>
+                  </div>
+                </div>
 
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.97 }}
-                data-testid="login-submit-button" type="submit" disabled={loading}
-                className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <>Sign In <PaperPlaneTilt size={18} weight="duotone" /></>}
-              </motion.button>
-            </form>
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.97 }}
+                  data-testid="login-submit-button" type="submit" disabled={loading}
+                  className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <>Sign In <PaperPlaneTilt size={18} weight="duotone" /></>}
+                </motion.button>
+              </form>
+            )}
 
             {showQuickLogin && (
             <div className="mt-6">

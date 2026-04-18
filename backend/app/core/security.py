@@ -61,6 +61,36 @@ def create_refresh_token(user_id: str) -> str:
         "jti": str(uuid.uuid4())
     }, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
+def verify_pre_enroll_token(token: str) -> dict:
+    """Verifies a pre-enrollment token with explicit issuer enforcement."""
+    return jwt.decode(
+        token, 
+        settings.PRE_ENROLL_JWT_SECRET, 
+        algorithms=[settings.JWT_ALGORITHM],
+        options={"require": ["iss", "type"]},
+        issuer="pre_enroll_issuer"
+    )
+
+async def get_pre_enroll_user(request: Request) -> dict:
+    """Extracts and verifies the pre-enrollment token for guest admission access."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated via Pre-Enroll token")
+    token = auth[7:]
+    try:
+        payload = verify_pre_enroll_token(token)
+        if payload.get("type") != "pre_enroll":
+            raise HTTPException(status_code=401, detail="Invalid token type")
+        return {
+            "id": payload.get("sub"), # This is the admission.id
+            "college_id": payload.get("college_id"),
+            "admission_number": payload.get("admission_number"),
+            "gender": payload.get("gender")
+        }
+    except Exception as e:
+        logger.warning(f"Failed pre-enroll token verification: {e}")
+        raise HTTPException(status_code=401, detail="Invalid or expired Pre-Enroll token")
+
 # ─── Dependencies ─────────────────────────────────────────────────────────────
 
 async def get_current_user(request: Request, session: AsyncSession = Depends(get_db)) -> dict:

@@ -14,7 +14,7 @@ import { authAPI, setAuthToken, clearAuthToken } from './services/api';
 // Lazy-loaded pages (code-split per route)
 // ═══════════════════════════════════════════════════════════════════════════════
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
-const StudentDashboard = React.lazy(() => import('./pages/StudentDashboard'));
+const StudentDashboard = React.lazy(() => import('./pages/StudentDashboard')); // Force Vite cache invalidation
 const TeacherDashboard = React.lazy(() => import('./pages/TeacherDashboard'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const HodDashboard = React.lazy(() => import('./pages/HodDashboard'));
@@ -49,6 +49,7 @@ const FacultyProfilePage = React.lazy(() => import('./pages/FacultyProfilePage')
 const InterviewWarRoom = React.lazy(() => import('./pages/InterviewWarRoom'));
 const AIInterviewSession = React.lazy(() => import('./pages/AIInterviewSession'));
 const HostelBooking = React.lazy(() => import('./pages/HostelBooking'));
+const PreEnrollBooking = React.lazy(() => import('./pages/PreEnrollBooking'));
 const WardenDashboard = React.lazy(() => import('./pages/WardenDashboard'));
 const ResumeATSScorer = React.lazy(() => import('./pages/ResumeATSScorer'));
 const CareerToolkit = React.lazy(() => import('./pages/CareerToolkit'));
@@ -211,6 +212,9 @@ function AppRoutes({ user, onLogin, onLogout }) {
         user ? <Navigate to={ROLE_DASHBOARD[user.role] || '/student'} replace />
              : <LoginPage onLogin={onLogin} />
       } />
+
+      {/* ── Pre-Enrollment ────────────────────────────────────────── */}
+      <Route path="/pre-enroll/hostel" element={<PreEnrollBooking navigate={navigate} />} />
 
       {/* ── Role Dashboards ──────────────────────────────────────── */}
       <Route path="/student" element={

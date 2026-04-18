@@ -77,7 +77,7 @@ api.interceptors.response.use(
     }
 
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/api/auth/')) {
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/')) {
       originalRequest._retry = true;
       
       if (!isRefreshing) {
@@ -688,3 +688,32 @@ export const insightsAPI = {
   createPin: (data) => api.post('/insights/pins', data),
   deletePin: (id) => api.delete(`/insights/pins/${id}`),
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PRE-ENROLLMENT API HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const preEnrollAPI = {
+  requestOTP: (data) => api.post('/pre-enroll/hostel/request-otp', data),
+  verifyOTP: (data) => api.post('/pre-enroll/hostel/verify-otp', data),
+  
+  getAvailableBuildings: (token) => api.get('/pre-enroll/hostel/available', {
+    headers: { Authorization: `Bearer ${token}` }
+  }),
+  getBuildingFloors: (id, token) => api.get(`/pre-enroll/hostel/buildings/${id}/floors`, {
+    headers: { Authorization: `Bearer ${token}` }
+  }),
+  getRoomGrid: (roomId, token) => api.get(`/pre-enroll/hostel/rooms/${roomId}/grid`, {
+    headers: { Authorization: `Bearer ${token}` }
+  }),
+  lockBed: (bedId, token) => api.post('/pre-enroll/hostel/beds/lock', { bed_id: bedId }, {
+    headers: { Authorization: `Bearer ${token}` }
+  }),
+  confirmBooking: (bedId, paymentRef, token) => api.post('/pre-enroll/hostel/beds/confirm', { bed_id: bedId, payment_reference: paymentRef }, {
+    headers: { Authorization: `Bearer ${token}` }
+  }),
+  getMyAllocation: (token) => api.get('/pre-enroll/hostel/my-allocation', {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+};
+
