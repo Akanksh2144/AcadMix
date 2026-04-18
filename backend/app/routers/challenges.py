@@ -31,7 +31,7 @@ TIMEOUT_CONFIG = {
 }
 
 def _build_python_sandbox(user_code: str, test_cases_list: list) -> str:
-    escaped_tc = json.dumps(test_cases_list)
+    escaped_tc = json.dumps(test_cases_list or [])
     return f"""
 import json
 from collections import deque
@@ -245,7 +245,7 @@ async def run_challenge(request: Request, req: ChallengeRunTest, user: dict = De
         resp = await _do_request()
         if resp.status_code == 200:
             result = resp.json()
-            return {"output": result.get("output", ""), "error": result.get("error", ""), "exit_code": result.get("exit_code", -1), "success": result.get("exit_code", -1) == 0}
+            return {"output": result.get("output") or "", "error": result.get("error", ""), "exit_code": result.get("exit_code", -1), "success": result.get("exit_code", -1) == 0}
         
         # Pass through the actual runner error correctly
         try:
@@ -269,7 +269,7 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
     lang_timeout = TIMEOUT_CONFIG.get(req.language.lower(), 60.0)
     
     if req.language.lower() == "python":
-        sandbox_code = _build_python_sandbox(req.code, challenge.test_cases)
+        sandbox_code = _build_python_sandbox(req.code, challenge.test_cases or [])
     else:
         sandbox_code = req.code # Raw passthrough for SQL or unsupported architectures
 
@@ -293,7 +293,7 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
         if resp.status_code == 200:
             result = resp.json()
             exit_code = result.get("exit_code", -1)
-            output = result.get("output", "")
+            output = result.get("output") or ""
             
             # Is success requires exit_code 0 AND the AcadMix OK marker (unless fallback language)
             is_success = exit_code == 0
