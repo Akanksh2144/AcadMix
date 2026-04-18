@@ -1172,7 +1172,7 @@ const CodePlayground = ({ navigate, user }) => {
                       <p className="font-medium text-slate-700 dark:text-slate-300 leading-relaxed text-[15px]">{aiReview.logic_summary}</p>
                     </div>
                     {aiReview.suggested_improvements && (
-                      <div className="bg-white dark:bg-[#1A202C] p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm mt-5">
+                      <div className="bg-white dark:bg-[#1A202C] p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                         <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 mb-3 tracking-widest uppercase flex items-center gap-2">
                           <CheckCircle weight="fill" className="text-emerald-500 text-base" />
                           Suggested Improvements
