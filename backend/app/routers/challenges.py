@@ -99,7 +99,10 @@ def safe_parse(raw_s):
     if s.startswith("build_linked_list("):
         inner = s[s.find("(")+1:s.rfind(")")]
         return build_linked_list(lx_parse(inner))
-    return lx_parse(s)
+    try:
+        return lx_parse(s)
+    except (ValueError, SyntaxError):
+        return raw_s
 
 for idx, tc in enumerate(test_cases):
     try:

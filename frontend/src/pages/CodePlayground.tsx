@@ -99,7 +99,7 @@ const CodePlayground = ({ navigate, user }) => {
     setShowChallengesModal(false);
     const formatPythonLiteral = (str) => {
       if (typeof str === 'string' && str.startsWith('"') && str.endsWith('"') && str.includes('\\n')) {
-        return '"""\n' + str.slice(1, -1).replace(/\\n/g, '\n') + '\n"""';
+        return str.slice(1, -1).replace(/\\n/g, '\n');
       }
       return str || '';
     };
