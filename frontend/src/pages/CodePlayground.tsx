@@ -77,6 +77,10 @@ const CodePlayground = ({ navigate, user }) => {
 
   const handleLoadChallenge = (challenge) => {
     setActiveChallenge(challenge);
+    setLanguage(challenge.language || 'python');
+    setCode(challenge.template_code || DEFAULT_TEMPLATES[challenge.language || 'python']);
+    setOutput(null);
+    setExecTime(null);
     setShowChallengesModal(false);
     if (challenge.test_cases) {
        const unhidden = challenge.test_cases.filter(tc => !tc.is_hidden).map(tc => ({
@@ -403,15 +407,6 @@ const CodePlayground = ({ navigate, user }) => {
   const handleClearOutput = () => {
     setOutput(null);
     setExecTime(null);
-  };
-
-  const handleLoadChallenge = (challenge) => {
-    setActiveChallenge(challenge);
-    setLanguage(challenge.language || 'python');
-    setCode(challenge.template_code || DEFAULT_TEMPLATES[challenge.language || 'python']);
-    setOutput(null);
-    setExecTime(null);
-    setShowChallengesModal(false);
   };
 
   const handleEditorMount = (editor) => {
