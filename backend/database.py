@@ -29,20 +29,20 @@ from sqlalchemy.pool import NullPool
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _PGBOUNCER_MODE = os.getenv("PGBOUNCER_ENABLED", "false").lower() == "true"
-_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "5" if _PGBOUNCER_MODE else "20"))
-_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "10" if _PGBOUNCER_MODE else "30"))
+_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "5" if _PGBOUNCER_MODE else "5"))
+_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "10" if _PGBOUNCER_MODE else "5"))
 
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
     pool_size=_POOL_SIZE,
     max_overflow=_MAX_OVERFLOW,
-    pool_timeout=10,
-    pool_recycle=600,
+    pool_timeout=30,
+    pool_recycle=300,
     pool_pre_ping=True,
     connect_args={
         "statement_cache_size": 0,
-        "timeout": 10,
+        "timeout": 30,
         "command_timeout": 30,
         "server_settings": {"jit": "off"},
     },
