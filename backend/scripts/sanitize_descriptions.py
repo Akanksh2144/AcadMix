@@ -72,7 +72,64 @@ def sanitize_description(desc: str) -> str:
         )
         desc = pattern.sub(rf'\n\n### {heading}\n\n', desc)
 
-    # ── Step 3: Fix code blocks where Input:/Output:/Explanation: are smashed ─
+    # ── Step 3: Strip LLM chain-of-thought self-talk from code blocks ──────
+    def strip_llm_selftalk(match):
+        block_start = match.group(0)[:match.group(0).index('\n')+1] if '\n' in match.group(0) else '```text\n'
+        block_content = match.group(0)
+        
+        # Remove lines that are LLM thinking out loud
+        selftalk_patterns = [
+            r'^\s*Wait\s*[—–-].*$',
+            r'^\s*Actually\s.*$',
+            r'^\s*Hmm[,.]?\s.*$',
+            r'^\s*Let me\s.*$',
+            r'^\s*Correct trace:.*$',
+            r'^\s*←\s*Wait.*$',
+            r'^\s*Re-verify.*$',
+            r'^\s*re-trace.*$',
+            r'^\s*Let\'s recheck.*$',
+            r'^\s*Output:\s*\d+\s*$',  # We'll handle Output separately below
+        ]
+        
+        lines = block_content.split('\n')
+        cleaned_lines = []
+        seen_output = False
+        output_lines = []
+        
+        for line in lines:
+            is_selftalk = False
+            for pat in selftalk_patterns[:-1]:  # Skip last pattern (Output)
+                if re.match(pat, line, re.IGNORECASE):
+                    is_selftalk = True
+                    break
+            
+            if is_selftalk:
+                continue
+            
+            # Track Output: lines — keep only the LAST one
+            if re.match(r'^\s*Output:\s*', line):
+                output_lines.append((len(cleaned_lines), line))
+            
+            cleaned_lines.append(line)
+        
+        # If we have multiple Output: lines, remove all but the last
+        if len(output_lines) > 1:
+            indices_to_remove = set()
+            for idx, _ in output_lines[:-1]:
+                indices_to_remove.add(idx)
+                # Also remove any value line immediately after a removed Output:
+                if idx + 1 < len(cleaned_lines) and not re.match(r'^\s*(Input|Output|Explanation)\s*:', cleaned_lines[idx + 1]):
+                    indices_to_remove.add(idx + 1)
+            cleaned_lines = [l for i, l in enumerate(cleaned_lines) if i not in indices_to_remove]
+        
+        result = '\n'.join(cleaned_lines)
+        # Clean up multiple blank lines
+        result = re.sub(r'\n{3,}', '\n\n', result)
+        return result
+
+    desc = re.sub(r'```[\s\S]*?```', strip_llm_selftalk, desc)
+
+    # ── Step 4: Fix code blocks where Input:/Output:/Explanation: are smashed ─
     def fix_code_block(match):
         block = match.group(0)
         block = re.sub(r'(?<!\n)(Output\s*:)', r'\n\1', block)
