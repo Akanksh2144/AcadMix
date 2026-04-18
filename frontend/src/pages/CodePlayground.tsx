@@ -553,28 +553,18 @@ const CodePlayground = ({ navigate, user }) => {
                       if (inline) {
                         return <code className="bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-rose-600 dark:text-rose-400 font-mono text-[13px]" {...props}>{children}</code>;
                       }
-                      
-                      let content = Array.isArray(children) ? children[0] : children;
-                      if (typeof content === 'string') {
-                        content = content.replace(/\*\*/g, '');
-                        const parts = content.split(/(Input\s*:|Output\s*:|Explanation\s*:)/g);
-                        return (
-                          <code className="font-sans leading-loose text-[14px]" {...props}>
-                            {parts.map((part, i) => {
-                               if (/^(Input|Output|Explanation)\s*:$/.test(part)) {
-                                 return <strong key={i} className="font-bold text-slate-900 dark:text-slate-100">{part}</strong>;
-                               }
-                               return part;
-                            })}
-                          </code>
-                        );
-                      }
-                      return <code className="font-sans leading-loose text-[14px]" {...props}>{children}</code>;
+                      return <code className="font-mono text-[14px]" {...props}>{children}</code>;
                     },
                     strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-slate-100" {...props} />
                   }}
                 >
-                  {activeChallenge.description?.replace(/```[\s\r\n]*(?:\*|_)*Explanation:(?:\*|_)*([\s\S]*?)(?=\n\n(?:\*|_)*Example|$)/gi, '\nExplanation : $1\n```\n\n')}
+                  {(() => {
+                    let desc = activeChallenge.description || '';
+                    desc = desc.replace(/(```[\s\S]*?)(?=\n*(?:\*\*)*\s*(?:Explanation|Output)\s*:\s*(?:\*\*)*)/gi, "$1\n```\n\n");
+                    desc = desc.replace(/(?:\n|^)\s*(?:\*\*)*(Input|Output|Explanation)\s*:(?:\*\*)*/gi, "\n\n**$1:**\n\n");
+                    desc = desc.replace(/```\s*```/g, '');
+                    return desc;
+                  })()}
                 </ReactMarkdown>
               </div>
 
@@ -615,7 +605,7 @@ const CodePlayground = ({ navigate, user }) => {
                           <div className="px-5 pb-5 pt-2 text-[14px] text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-200 dark:border-slate-700/50 mx-0 mt-0 text-start bg-transparent">
                              <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
                                p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />
-                             }}>{value}</ReactMarkdown>
+                             }}>{value.replace(/(?:\s|^)(\d+\.\s+[A-Za-z\*\#]+)/g, '\n\n$1').trim()}</ReactMarkdown>
                           </div>
                         </details>
                       );
