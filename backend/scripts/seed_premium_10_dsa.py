@@ -71,7 +71,7 @@ async def generate_problem(topic: str, difficulty: str) -> dict:
     You are an expert Computer Science professor designing coding problems for an Indian college placement platform. Your task is to generate a distinct Data Structures and Algorithms (DSA) problem about {topic}. Difficulty: {difficulty}.
 
     CRITICAL INSTRUCTIONS:
-    Campus Lore Reskinning: Frame the problem narrative around an Indian college life context (e.g., 'The Hostel Warden checking rooms', 'Mess fee calculation', 'Library fine dispute').
+    Real-World Enterprise Reskinning: Frame the problem narrative around highly diversified, modern tech-industry engineering contexts (e.g., 'Load balancing distributed microservices', 'Optimizing high-frequency trading latency', 'Anomaly detection in drone sensor telemetry', 'Real-time bipartite matching for ride-sharing apps', 'Cloud storage deduplication'). DO NOT restrict themes to academic, campus, or hostel life. Ensure massive diversity across B2B SaaS, FinTech, DeepTech, and E-commerce.
     Strict Formatting: Output the response EXACTLY matching the provided JSON schema. Do not include markdown formatting or conversational text outside the JSON object.
     Example Format: In the `description`, when writing your examples, you MUST put the 'Input', 'Output', and the 'Explanation' completely INSIDE a single triple-backtick (```) code block so they render together in the same grey UI box.
     Code: The optimal_solution_python MUST use a distinct method named 'solve'. It must return the answer.
