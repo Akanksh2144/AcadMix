@@ -320,12 +320,41 @@ class CodingChallenge(Base, SoftDeleteMixin):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class PremiumCodingChallenge(Base, SoftDeleteMixin):
+    __tablename__ = "premium_coding_challenges"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    slug = Column(String, unique=True, index=True, nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    difficulty = Column(String, nullable=False) # easy, medium, hard
+    constraints = Column(JSONB, nullable=False, server_default='[]') # array of strings
+    topics = Column(JSONB, nullable=False) # list of str
+    language_support = Column(JSONB, nullable=False) # list of str ["python"]
+    init_code = Column(JSONB, nullable=True) # mapping language -> startup script
+    optimal_solution_python = Column(String, nullable=True)
+    test_cases = Column(JSONB, nullable=True) # strict array of objects
+    problem_ai_context = Column(JSONB, nullable=True)
+    is_live = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class ChallengeProgress(Base, SoftDeleteMixin):
     __tablename__ = "challenge_progress"
     college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
     student_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     challenge_id = Column(String, ForeignKey("coding_challenges.id", ondelete="CASCADE"), nullable=False, index=True)
+    status = Column(String, nullable=False) # "completed"
+    language_used = Column(String, nullable=False)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class PremiumChallengeProgress(Base, SoftDeleteMixin):
+    __tablename__ = "premium_challenge_progress"
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    student_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    challenge_id = Column(String, ForeignKey("premium_coding_challenges.id", ondelete="CASCADE"), nullable=False, index=True)
     status = Column(String, nullable=False) # "completed"
     language_used = Column(String, nullable=False)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())

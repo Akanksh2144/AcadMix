@@ -36,13 +36,13 @@ async def get_challenges(page: int = 1, limit: int = 20, difficulty: str = "", t
     from sqlalchemy import func as sa_func
 
     # Build base filter
-    base_filter = select(models.CodingChallenge)
+    base_filter = select(models.PremiumCodingChallenge).where(models.PremiumCodingChallenge.is_live == True)
     if difficulty:
-        base_filter = base_filter.where(models.CodingChallenge.difficulty == difficulty)
+        base_filter = base_filter.where(sa_func.lower(models.PremiumCodingChallenge.difficulty) == difficulty.lower())
     if topic:
         # JSONB containment: topics column contains the given topic string
         base_filter = base_filter.where(
-            models.CodingChallenge.topics.contains([topic])
+            models.PremiumCodingChallenge.topics.contains([topic])
         )
 
     # Count query (uses same filters, no LIMIT)
@@ -51,7 +51,7 @@ async def get_challenges(page: int = 1, limit: int = 20, difficulty: str = "", t
 
     # Paginated data query — push LIMIT/OFFSET to SQL
     offset = (page - 1) * limit
-    data_stmt = base_filter.order_by(models.CodingChallenge.created_at.desc()).offset(offset).limit(limit)
+    data_stmt = base_filter.order_by(models.PremiumCodingChallenge.created_at.desc()).offset(offset).limit(limit)
     result = await session.execute(data_stmt)
     page_data = result.scalars().all()
 
@@ -65,12 +65,12 @@ async def get_challenges(page: int = 1, limit: int = 20, difficulty: str = "", t
 
 @router.get("/challenges/stats")
 async def get_challenge_stats(user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
-    stmt = select(models.CodingChallenge).join(
-        models.ChallengeProgress,
-        models.CodingChallenge.id == models.ChallengeProgress.challenge_id
+    stmt = select(models.PremiumCodingChallenge).join(
+        models.PremiumChallengeProgress,
+        models.PremiumCodingChallenge.id == models.PremiumChallengeProgress.challenge_id
     ).where(
-        models.ChallengeProgress.student_id == user["id"],
-        models.ChallengeProgress.status == "completed"
+        models.PremiumChallengeProgress.student_id == user["id"],
+        models.PremiumChallengeProgress.status == "completed"
     )
     cr = await session.execute(stmt)
     solved_challenges = cr.scalars().all()
@@ -92,7 +92,7 @@ async def get_challenge_stats(user: dict = Depends(get_current_user), session: A
 @router.post("/challenges/submit")
 @limiter.limit("30/minute")
 async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
-    cr = await session.execute(select(models.CodingChallenge).where(models.CodingChallenge.id == req.challenge_id))
+    cr = await session.execute(select(models.PremiumCodingChallenge).where(models.PremiumCodingChallenge.id == req.challenge_id))
     challenge = cr.scalars().first()
     
     if not challenge:
@@ -128,10 +128,10 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
             is_success = (exit_code == 0)
             
             if is_success:
-                pr = await session.execute(select(models.ChallengeProgress).where(models.ChallengeProgress.student_id == user["id"], models.ChallengeProgress.challenge_id == req.challenge_id))
+                pr = await session.execute(select(models.PremiumChallengeProgress).where(models.PremiumChallengeProgress.student_id == user["id"], models.PremiumChallengeProgress.challenge_id == req.challenge_id))
                 prog = pr.scalars().first()
                 if not prog:
-                    prog = models.ChallengeProgress(
+                    prog = models.PremiumChallengeProgress(
                         college_id=user.get("college_id"),
                         student_id=user["id"], 
                         challenge_id=req.challenge_id, 

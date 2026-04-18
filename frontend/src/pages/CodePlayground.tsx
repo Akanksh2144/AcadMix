@@ -123,7 +123,8 @@ const CodePlayground = ({ navigate, user }) => {
     setIsChallengesLoading(true);
     try {
       const res = await api.get('/challenges', { params: { difficulty: difficultyFilter, limit: 100 } });
-      setChallenges(res.data.data);
+      const rawData = res.data?.data || res.data;
+      setChallenges(Array.isArray(rawData?.data) ? rawData.data : Array.isArray(rawData) ? rawData : []);
     } catch(err) { console.error(err); }
     setIsChallengesLoading(false);
   };
