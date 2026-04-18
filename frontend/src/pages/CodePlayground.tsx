@@ -205,7 +205,12 @@ const CodePlayground = ({ navigate, user }) => {
 
   const handleLanguageChange = (langId) => {
     setLanguage(langId);
-    setCode(DEFAULT_TEMPLATES[langId] || '');
+    const challengeTemplate = activeChallenge?.init_code?.[langId] || activeChallenge?.template_code;
+    if (langId === (activeChallenge?.language || 'python') && challengeTemplate) {
+      setCode(challengeTemplate);
+    } else {
+      setCode(activeChallenge?.init_code?.[langId] || DEFAULT_TEMPLATES[langId] || '');
+    }
     setOutput(null);
     setExecTime(null);
     setShowLangMenu(false);

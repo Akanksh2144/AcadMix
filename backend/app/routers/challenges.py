@@ -156,6 +156,7 @@ async def get_challenges(page: int = 1, limit: int = 20, difficulty: str = "", t
             "language_support": c.language_support, "constraints": c.constraints,
             "problem_ai_context": c.problem_ai_context,
             "test_cases": safe_tc,
+            "init_code": c.init_code or {},
             "template_code": c.init_code.get("python", "") if c.init_code else None
         }
 
