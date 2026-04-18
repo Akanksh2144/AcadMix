@@ -461,7 +461,70 @@ const CodePlayground = ({ navigate, user }) => {
                 </button>
               </div>
             </div>
-            <div className="p-5 flex-1 overflow-y-auto custom-scrollbar prose prose-sm max-w-none text-slate-600 dark:text-slate-400" dangerouslySetInnerHTML={{ __html: activeChallenge.description }}></div>
+            <div className="p-6 flex-1 overflow-y-auto custom-scrollbar text-slate-700 dark:text-slate-300 space-y-8">
+              {/* Markdown Description */}
+              <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-bold prose-h1:text-xl prose-h2:text-lg prose-p:leading-relaxed prose-a:text-indigo-500">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    pre: ({node, ...props}) => (
+                      <pre className="bg-slate-50 dark:bg-[#151B2B] border-l-4 border-slate-300 dark:border-indigo-500 p-4 rounded-r-xl overflow-x-auto text-[13px] my-4 shadow-sm font-mono text-slate-800 dark:text-slate-200" {...props} />
+                    ),
+                    code: ({node, inline, ...props}) => (
+                      inline 
+                        ? <code className="bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-indigo-600 dark:text-indigo-400 font-mono text-[13px]" {...props} />
+                        : <code {...props} />
+                    ),
+                    strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-slate-100" {...props} />
+                  }}
+                >
+                  {activeChallenge.description}
+                </ReactMarkdown>
+              </div>
+
+              {/* Constraints */}
+              {activeChallenge.constraints && activeChallenge.constraints.length > 0 && (
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wider">Constraints</h3>
+                  <ul className="space-y-2.5 ml-1">
+                    {activeChallenge.constraints.map((constraint, idx) => (
+                      <li key={idx} className="text-[13px] flex items-start gap-3 text-slate-600 dark:text-slate-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 mt-1.5 shrink-0"></span>
+                        <div className="inline-block font-mono bg-slate-50 dark:bg-white/[0.03] px-2.5 py-0.5 rounded text-slate-700 dark:text-slate-300">
+                           <ReactMarkdown components={{p: ({node, ...props}) => <span {...props} />}}>{constraint}</ReactMarkdown>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Fun Facts (problem_ai_context) */}
+              {activeChallenge.problem_ai_context && Object.keys(activeChallenge.problem_ai_context).length > 0 && (
+                <div className="pt-2">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wider">Fun Facts</h3>
+                  <div className="space-y-3">
+                    {Object.entries(activeChallenge.problem_ai_context).map(([key, value], idx) => {
+                      if (!value || typeof value !== 'string') return null;
+                      const title = key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                      return (
+                        <details key={idx} className="group bg-slate-50 dark:bg-[#151B2B] rounded-xl border border-slate-100 dark:border-slate-800/50 overflow-hidden [&_summary::-webkit-details-marker]:hidden">
+                          <summary className="flex items-center justify-between px-5 py-3.5 cursor-pointer select-none">
+                            <span className="text-[13px] font-bold text-slate-700 dark:text-slate-300">{title}</span>
+                            <CaretDown size={14} className="text-slate-400 transition-transform duration-200 group-open:rotate-180" weight="bold" />
+                          </summary>
+                          <div className="px-5 pb-5 pt-1 text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800/50 mx-2 mt-1 py-3 text-start">
+                             <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                               p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />
+                             }}>{value}</ReactMarkdown>
+                          </div>
+                        </details>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Splitter / Resizer (Hidden on mobile) */}

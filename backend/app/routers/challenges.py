@@ -56,7 +56,7 @@ async def get_challenges(page: int = 1, limit: int = 20, difficulty: str = "", t
     page_data = result.scalars().all()
 
     return {
-        "data": [{"id": c.id, "title": c.title, "description": c.description, "difficulty": c.difficulty, "topics": c.topics, "language_support": c.language_support} for c in page_data],
+        "data": [{"id": c.id, "title": c.title, "description": c.description, "difficulty": c.difficulty, "topics": c.topics, "language_support": c.language_support, "constraints": c.constraints, "problem_ai_context": c.problem_ai_context} for c in page_data],
         "total": total,
         "page": page,
         "limit": limit
