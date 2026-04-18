@@ -127,27 +127,39 @@ const CodePlayground = ({ navigate, user }) => {
   
   // Resizable Pane State
   const [leftWidth, setLeftWidth] = useState(40); // Initial 40% width for left pane
+  const [topHeight, setTopHeight] = useState(66); // Initial height for top code editor pane
   const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingH, setIsDraggingH] = useState(false);
   const containerRef = useRef(null);
+  const rightPaneRef = useRef(null);
   
   useEffect(() => {
     const handleMouseMove = (e) => {
-      if (!isDragging || !containerRef.current) return;
-      const containerRect = containerRef.current.getBoundingClientRect();
-      let newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-      if (newWidth < 20) newWidth = 20;
-      if (newWidth > 80) newWidth = 80;
-      setLeftWidth(newWidth);
+      if (isDragging && containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        let newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+        if (newWidth < 20) newWidth = 20;
+        if (newWidth > 80) newWidth = 80;
+        setLeftWidth(newWidth);
+      } else if (isDraggingH && rightPaneRef.current) {
+        const rightRect = rightPaneRef.current.getBoundingClientRect();
+        let newHeight = ((e.clientY - rightRect.top) / rightRect.height) * 100;
+        if (newHeight < 20) newHeight = 20;
+        if (newHeight > 80) newHeight = 80;
+        setTopHeight(newHeight);
+      }
     };
     const handleMouseUp = () => {
       if (isDragging) setIsDragging(false);
+      if (isDraggingH) setIsDraggingH(false);
     };
     
-    if (isDragging) {
+    if (isDragging || isDraggingH) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'col-resize';
+      if (isDragging) document.body.style.cursor = 'col-resize';
+      if (isDraggingH) document.body.style.cursor = 'row-resize';
     }
     
     return () => {
@@ -156,7 +168,7 @@ const CodePlayground = ({ navigate, user }) => {
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isDragging]);
+  }, [isDragging, isDraggingH]);
 
   const editorRef = useRef(null);
 
@@ -632,9 +644,9 @@ const CodePlayground = ({ navigate, user }) => {
           </div>
 
           {/* Right Side: Code Editor (Top) & Output (Bottom) */}
-          <div style={{ width: window.innerWidth >= 1024 ? `calc(${100 - leftWidth}% - 12px)` : '100%' }} className="flex flex-col lg:h-full gap-4 lg:gap-6 relative min-h-[600px] lg:min-h-0">
+          <div style={{ width: window.innerWidth >= 1024 ? `calc(${100 - leftWidth}% - 12px)` : '100%' }} className="flex flex-col lg:h-full gap-4 lg:gap-0 relative min-h-[600px] lg:min-h-0" ref={rightPaneRef}>
             {/* Editor Container */}
-            <div className="flex-1 flex flex-col bg-white rounded-2xl dark:bg-[#1A202C] shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden min-h-[50%]">
+            <div style={{ height: window.innerWidth >= 1024 ? `calc(${topHeight}% - 12px)` : 'auto' }} className="flex-1 lg:flex-none flex flex-col bg-white rounded-2xl dark:bg-[#1A202C] shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden min-h-[400px] lg:min-h-0">
               <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700 px-4 py-2 flex items-center justify-between">
                 <div className="relative" ref={langMenuRef}>
                   <button onClick={() => setShowLangMenu(!showLangMenu)}
@@ -694,8 +706,17 @@ const CodePlayground = ({ navigate, user }) => {
               </div>
             </div>
 
+            {/* Horizontal Splitter / Resizer (Hidden on mobile) */}
+            <div 
+              className="hidden lg:flex h-6 shrink-0 flex-row justify-center items-center cursor-row-resize group z-10"
+              onMouseDown={(e) => { e.preventDefault(); setIsDraggingH(true); }}
+              title="Drag to resize panes"
+            >
+              <div className={`w-16 h-1 rounded-full transition-colors ${isDraggingH ? 'bg-indigo-50 dark:bg-indigo-500/150' : 'bg-slate-200 group-hover:bg-indigo-300'}`}></div>
+            </div>
+
             {/* Output Container */}
-            <div className="h-1/3 min-h-[220px] shrink-0 flex flex-col bg-slate-900 rounded-2xl shadow-sm overflow-hidden border border-slate-700/50">
+            <div style={{ height: window.innerWidth >= 1024 ? `calc(${100 - topHeight}% - 12px)` : 'auto' }} className="h-1/3 lg:h-auto min-h-[220px] lg:flex-none shrink-0 flex flex-col bg-slate-900 rounded-2xl shadow-sm overflow-hidden border border-slate-700/50">
               <div className="bg-slate-800/80 px-4 py-2 flex items-center justify-between border-b border-slate-700/50">
                 <div className="flex items-center gap-1">
                   <button 
