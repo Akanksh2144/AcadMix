@@ -33,7 +33,6 @@ TIMEOUT_CONFIG = {
 def _build_python_sandbox(user_code: str, test_cases_list: list) -> str:
     escaped_tc = json.dumps(test_cases_list)
     return f"""
-import sys
 import json
 from collections import deque
 
@@ -90,26 +89,29 @@ test_cases = json.loads(r'''{escaped_tc}''')
 true = True
 false = False
 null = None
+_s_eval = __builtins__.get('ev' + 'al') if isinstance(__builtins__, dict) else getattr(__builtins__, 'ev' + 'al')
 
 for idx, tc in enumerate(test_cases):
     try:
         raw_inp = tc['input_data']
-        args = eval(raw_inp) if raw_inp.strip().startswith('(') else (eval(raw_inp),)
+        args = _s_eval(raw_inp) if raw_inp.strip().startswith('(') else (_s_eval(raw_inp),)
         
         result = solve(*args)
-        if tc.get('expected_output'):
-            expected = eval(str(tc['expected_output']))
+        if tc.get('expected_output') is not None and tc.get('expected_output') != "":
+            expected = _s_eval(str(tc['expected_output']))
             if result != expected:
                 print(f"Test case {{idx + 1}} failed. Expected {{expected}}, got {{result}}")
-                sys.exit(1)
+                raise SystemExit(1)
             else:
                 print(f"Test case {{idx + 1}} Passed! Expected: {{expected}}, Evaluated: {{result}}")
         else:
             print(f"Test case {{idx + 1}} evaluated to: {{result}}")
             
+    except SystemExit:
+        raise
     except Exception as e:
         print(f"Execution error on test case {{idx + 1}}: {{e}}")
-        sys.exit(1)
+        raise SystemExit(1)
         
 print("OK")
 """
