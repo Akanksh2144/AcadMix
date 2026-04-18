@@ -258,12 +258,37 @@ async def seed_problems():
             final_db_records = []
             for r in records:
                 # Format to database model
-                init_script = "def solve(...):\n    pass"
+                init_code = {}
                 try:
-                    fn_def = r['optimal_solution_python'].split("def solve")[1].split(":")[0]
-                    init_script = f"def solve{fn_def}:\n    # Your optimal approach here\n    pass"
+                    # Parse function signature from optimal_solution_python
+                    import re as _re
+                    fn_match = _re.search(r'def solve\(([^)]*)\)', r['optimal_solution_python'])
+                    if fn_match:
+                        py_params = fn_match.group(1).strip()
+                        param_names = [p.strip().split(':')[0].split('=')[0].strip() for p in py_params.split(',') if p.strip()]
+                        
+                        # Python
+                        init_code['python'] = f"def solve({py_params}):\n    # Your optimal approach here\n    pass"
+                        
+                        # JavaScript
+                        js_params = ', '.join(param_names)
+                        init_code['javascript'] = f"function solve({js_params}) {{\n    // Your optimal approach here\n    return null;\n}}"
+                        
+                        # Java
+                        java_params = ', '.join([f'Object {p}' for p in param_names])
+                        init_code['java'] = f"class Solution {{\n    public static Object solve({java_params}) {{\n        // Your optimal approach here\n        return null;\n    }}\n}}"
+                        
+                        # C
+                        c_params = ', '.join([f'void* {p}' for p in param_names])
+                        init_code['c'] = f"#include <stdio.h>\n#include <stdlib.h>\n\nvoid* solve({c_params}) {{\n    // Your optimal approach here\n    return NULL;\n}}"
+                        
+                        # C++
+                        cpp_params = ', '.join([f'auto {p}' for p in param_names])
+                        init_code['cpp'] = f"#include <bits/stdc++.h>\nusing namespace std;\n\nauto solve({cpp_params}) {{\n    // Your optimal approach here\n    return 0;\n}}"
+                    else:
+                        init_code['python'] = "def solve():\n    # Your optimal approach here\n    pass"
                 except:
-                    pass
+                    init_code['python'] = "def solve():\n    # Your optimal approach here\n    pass"
                     
                 final_db_records.append({
                     "id": f"anthropic_{r['slug']}",
@@ -272,9 +297,9 @@ async def seed_problems():
                     "description": r['description'],
                     "difficulty": r['difficulty'],
                     "constraints": r['constraints'],
-                    "topics": [topic for (topic, _) in taxonomy], # Simplified, in real prod use AI mapping
-                    "language_support": ["python"],
-                    "init_code": {"python": init_script},
+                    "topics": [topic for (topic, _) in taxonomy],
+                    "language_support": ["python", "javascript", "java", "c", "cpp"],
+                    "init_code": init_code,
                     "optimal_solution_python": r['optimal_solution_python'],
                     "test_cases": r['test_cases'],
                     "problem_ai_context": r['problem_ai_context'],
