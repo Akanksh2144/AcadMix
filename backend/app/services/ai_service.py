@@ -303,7 +303,7 @@ async def generate_code_review(code: str, language: str, output: str, error: str
             response_format={ "type": "json_object" },
             temperature=0.1,
             max_tokens=2000,
-            timeout=15.0
+            timeout=30.0
         )
         content = response.choices[0].message.content
         result = json.loads(content)
@@ -496,7 +496,7 @@ RULES:
             messages=messages,
             temperature=0.0,
             max_tokens=600,
-            timeout=15.0
+            timeout=30.0
         )
         content = response.choices[0].message.content.strip()
         if content.startswith("```sql"):
@@ -541,7 +541,7 @@ Output strictly in JSON:
              ],
              response_format={ "type": "json_object" },
              temperature=0.1,
-             timeout=10.0
+             timeout=30.0
          )
          result = json.loads(response.choices[0].message.content)
          return result
