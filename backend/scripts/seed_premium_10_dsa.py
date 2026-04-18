@@ -267,24 +267,33 @@ async def seed_problems():
                         py_params = fn_match.group(1).strip()
                         param_names = [p.strip().split(':')[0].split('=')[0].strip() for p in py_params.split(',') if p.strip()]
                         
-                        # Python
                         init_code['python'] = f"def solve({py_params}):\n    # Your optimal approach here\n    pass"
                         
-                        # JavaScript
                         js_params = ', '.join(param_names)
                         init_code['javascript'] = f"function solve({js_params}) {{\n    // Your optimal approach here\n    return null;\n}}"
                         
-                        # Java
                         java_params = ', '.join([f'Object {p}' for p in param_names])
-                        init_code['java'] = f"class Solution {{\n    public static Object solve({java_params}) {{\n        // Your optimal approach here\n        return null;\n    }}\n}}"
+                        init_code['java'] = (
+                            f"import java.util.*;\n\nclass Solution {{\n"
+                            f"    public static Object solve({java_params}) {{\n"
+                            f"        // Your optimal approach here\n        return null;\n    }}\n\n"
+                            f"    public static void main(String[] args) {{\n"
+                            f"        // Test your solution here\n    }}\n}}"
+                        )
                         
-                        # C
-                        c_params = ', '.join([f'void* {p}' for p in param_names])
-                        init_code['c'] = f"#include <stdio.h>\n#include <stdlib.h>\n\nvoid* solve({c_params}) {{\n    // Your optimal approach here\n    return NULL;\n}}"
+                        c_params = ', '.join([f'int {p}' for p in param_names])
+                        init_code['c'] = (
+                            f"#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\n"
+                            f"int solve({c_params}) {{\n    // Your optimal approach here\n    return 0;\n}}\n\n"
+                            f"int main() {{\n    // Test your solution here\n    return 0;\n}}"
+                        )
                         
-                        # C++
-                        cpp_params = ', '.join([f'auto {p}' for p in param_names])
-                        init_code['cpp'] = f"#include <bits/stdc++.h>\nusing namespace std;\n\nauto solve({cpp_params}) {{\n    // Your optimal approach here\n    return 0;\n}}"
+                        cpp_params = ', '.join([f'int {p}' for p in param_names])
+                        init_code['cpp'] = (
+                            f"#include <bits/stdc++.h>\nusing namespace std;\n\n"
+                            f"int solve({cpp_params}) {{\n    // Your optimal approach here\n    return 0;\n}}\n\n"
+                            f"int main() {{\n    // Test your solution here\n    return 0;\n}}"
+                        )
                     else:
                         init_code['python'] = "def solve():\n    # Your optimal approach here\n    pass"
                 except:
