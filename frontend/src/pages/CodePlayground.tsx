@@ -495,7 +495,7 @@ const CodePlayground = ({ navigate, user }) => {
                     strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-slate-100" {...props} />
                   }}
                 >
-                  {activeChallenge.description?.replace(/```[\s\r\n]*(?:\*|_)*Explanation:(?:\*|_)*([\s\S]*?)(?=\n\n(?:\*|_)*Example|$)/gi, '\n\nExplanation : $1\n```\n\n')}
+                  {activeChallenge.description?.replace(/```[\s\r\n]*(?:\*|_)*Explanation:(?:\*|_)*([\s\S]*?)(?=\n\n(?:\*|_)*Example|$)/gi, '\nExplanation : $1\n```\n\n')}
                 </ReactMarkdown>
               </div>
 
@@ -524,8 +524,7 @@ const CodePlayground = ({ navigate, user }) => {
                   <h3 className="text-[15px] font-medium text-slate-900 dark:text-slate-100 mb-3 tracking-wide">Real-World Use Cases</h3>
                   <div className="bg-[#F8F9FA] dark:bg-[#1E232D] rounded-xl overflow-hidden shadow-sm">
                     {['real_world_applications'].map((key, idx) => {
-                      const value = activeChallenge.problem_ai_context[key];
-                      if (!value || typeof value !== 'string') return null;
+                      const value = activeChallenge.problem_ai_context[key] || "The underlying algorithms and mathematical principles tested in this problem are foundational structures commonly deployed in distributed systems, cryptography, memory-allocation constraints, and real-time load balancing architecture across scalable B2B architecture.";
                       
                       const title = 'Real-Time Use Cases & Applications';
                       return (
