@@ -684,7 +684,7 @@ const CodePlayground = ({ navigate, user }) => {
                   )}
                 </div>
               </div>
-              <div className="flex-1" onCopyCapture={handleCopyOrCut} onCutCapture={handleCopyOrCut} onPasteCapture={handlePasteCapture}>
+              <div className="flex-1 min-h-0 relative" onCopyCapture={handleCopyOrCut} onCutCapture={handleCopyOrCut} onPasteCapture={handlePasteCapture}>
                 <Editor
                   height="100%"
                   language={language}
