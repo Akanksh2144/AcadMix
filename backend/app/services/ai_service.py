@@ -361,7 +361,8 @@ async def generate_coach_stream(messages: List[Dict[str, str]], current_code: st
         "3. Keep your responses very concise, friendly, and easy to read. Use markdown.\n"
         f"{mode_instruction}\n"
         "5. UI Rules: If you ask the student multiple questions to guide them, YOU MUST format them as clear, separate bullet points on their own lines.\n"
-        "6. Do not discuss your underlying model or technology."
+        "6. Do not discuss your underlying model or technology.\n"
+        "7. NEVER use generic greetings like 'It looks like you're starting a new project'. Refer to the task as a 'problem' or 'challenge', not a 'project'. Dive straight into pedagogical explanation without fluff."
     )
 
     # We append the current code state to the most recent user message only if necessary
