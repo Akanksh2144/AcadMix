@@ -584,7 +584,7 @@ const CodePlayground = ({ navigate, user }) => {
               {/* Constraints */}
               {activeChallenge.constraints && activeChallenge.constraints.length > 0 && (
                 <div className="pt-2">
-                  <h3 className="text-[15px] font-medium text-slate-900 dark:text-slate-100 mb-3 tracking-wide">Constraints</h3>
+                  <h3 className="text-[16px] font-bold text-slate-900 dark:text-slate-100 mb-3 tracking-wide">Constraints</h3>
                   <ul className="list-disc list-outside pl-5 space-y-1.5">
                     {activeChallenge.constraints.map((constraint, idx) => (
                       <li key={idx} className="text-[14px] text-slate-800 dark:text-slate-300">
@@ -603,7 +603,7 @@ const CodePlayground = ({ navigate, user }) => {
               {/* Real World Applications */}
               {activeChallenge.problem_ai_context && (
                 <div className="pt-2">
-                  <h3 className="text-[15px] font-medium text-slate-900 dark:text-slate-100 mb-3 tracking-wide">Real-World Use Cases</h3>
+                  <h3 className="text-[16px] font-bold text-slate-900 dark:text-slate-100 mb-3 tracking-wide">Real-World Use Cases</h3>
                   <div className="bg-[#F8F9FA] dark:bg-[#1E232D] rounded-xl overflow-hidden shadow-sm">
                     {['real_world_applications'].map((key, idx) => {
                       const value = activeChallenge.problem_ai_context[key] || "The underlying algorithms and mathematical principles tested in this problem are foundational structures commonly deployed in distributed systems, cryptography, memory-allocation constraints, and real-time load balancing architecture across scalable B2B architecture.";
