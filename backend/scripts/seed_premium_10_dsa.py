@@ -78,7 +78,7 @@ async def generate_problem(topic: str, difficulty: str) -> dict:
     Problem AI Context Paragraphs: In `real_world_applications`, you MUST use `\n\n` to strictly separate your ideas into distinct paragraphs. Use bolding `**1. Title:**` for your list items.
     Code: The optimal_solution_python MUST use a distinct method named 'solve'. It must return the answer.
     Test Cases: Generate at least 8 test cases. You MUST generate exactly 3 test cases that have is_hidden: false. You MUST generate at least 5 additional test cases that have is_hidden: true. The hidden test cases MUST rigorously cover all edge cases (empty states, disconnected subgraphs, index bound limits, duplicate states, and constraint extremes).
-    Inputs & Memory Objects: 'input_data' will be evaluated dynamically by Python via `eval()`. If the problem involves Linked Lists or Trees, the testing sandbox natively provides `ListNode` and `TreeNode` classes, alongside `build_linked_list(arr)` and `build_tree(arr)` parsers. YOU MUST FORMAT YOUR `input_data` STRING TO EXPLICITLY CALL THESE HELPERS so the sandbox can instantiate objects instead of passing raw arrays. Example: `input_data: "build_tree([1, 2, 3, null, 4])"`. For standard arrays/primitives, just use standard literals.
+    Inputs & Memory Objects: 'input_data' will be evaluated dynamically by Python via `eval()`. If the function expects multiple arguments, pass them as comma-separated values inside parentheses (e.g. `input_data: "([1, 2, 3], 5)"` evaluates to a tuple of arguments). If the problem involves Linked Lists or Trees, the testing sandbox natively provides `ListNode` and `TreeNode` classes, alongside `build_linked_list(arr)` and `build_tree(arr)` parsers. YOU MUST FORMAT YOUR `input_data` STRING TO EXPLICITLY CALL THESE HELPERS so the sandbox can instantiate objects instead of passing raw arrays. Example: `input_data: "(build_tree([1, 2, 3, null, 4]), 5)"`. For standard arrays/primitives, just use standard literals.
     Test Case Accuracy: LLMs often fail at mental math for array indexing. For every single test case, you MUST use the 'step_by_step_trace' field to manually execute your algorithm on the 'input_data' (tracking variables, array bounds, and loop states) to mathematically guarantee the 'expected_output' matches the code's output. CRITICAL: For hidden test cases, keep the step_by_step_trace extremely brief (1 line) to conserve API tokens!
     Self-Correction: Re-verify the full length of the array or string bounds manually against your own problem constraints before finalizing the expected output. Double-check your monotonic stack bounds and prefix sum logic to prevent math bugs.
 
@@ -176,7 +176,8 @@ null = None
 for idx, tc in enumerate(test_cases):
     try:
         raw_inp = tc['input_data']
-        args = eval(raw_inp) if raw_inp.strip().startswith('(') else (eval(raw_inp),)
+        parsed = eval(raw_inp)
+        args = parsed if isinstance(parsed, tuple) and not str(raw_inp).strip().startswith('build_') else (parsed,)
             
         result = solve(*args)
         expected = eval(tc['expected_output'])
