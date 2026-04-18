@@ -556,6 +556,22 @@ const CodePlayground = ({ navigate, user }) => {
                       if (inline) {
                         return <code className="bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-rose-600 dark:text-rose-400 font-mono text-[13px]" {...props}>{children}</code>;
                       }
+                      const raw = String(Array.isArray(children) ? children.join('') : children || '');
+                      if (/(Input|Output|Explanation)\s*:/i.test(raw)) {
+                        // Strip excessive blank lines, then split on the labels
+                        const cleaned = raw.replace(/\n{2,}/g, '\n');
+                        const parts = cleaned.split(/((?:Input|Output|Explanation)\s*:)/gi);
+                        return (
+                          <code className="font-mono text-[14px] block whitespace-pre-wrap" {...props}>
+                            {parts.map((part, i) => {
+                              if (/^(Input|Output|Explanation)\s*:$/i.test(part)) {
+                                return <strong key={i} className="font-bold text-slate-900 dark:text-slate-100">{part}</strong>;
+                              }
+                              return <span key={i}>{part}</span>;
+                            })}
+                          </code>
+                        );
+                      }
                       return <code className="font-mono text-[14px]" {...props}>{children}</code>;
                     },
                     strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-slate-100" {...props} />,
