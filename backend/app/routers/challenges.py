@@ -140,8 +140,20 @@ async def get_challenges(page: int = 1, limit: int = 20, difficulty: str = "", t
     result = await session.execute(data_stmt)
     page_data = result.scalars().all()
 
+    # Expose only unhidden test cases securely to the frontend
+    def _map_challenge(c):
+        safe_tc = [tc for tc in (c.test_cases or []) if not tc.get("is_hidden", False)]
+        return {
+            "id": str(c.id), "title": c.title, "description": c.description,
+            "difficulty": c.difficulty, "topics": c.topics,
+            "language_support": c.language_support, "constraints": c.constraints,
+            "problem_ai_context": c.problem_ai_context,
+            "test_cases": safe_tc,
+            "template_code": c.template_code
+        }
+
     return {
-        "data": [{"id": c.id, "title": c.title, "description": c.description, "difficulty": c.difficulty, "topics": c.topics, "language_support": c.language_support, "constraints": c.constraints, "problem_ai_context": c.problem_ai_context} for c in page_data],
+        "data": [_map_challenge(c) for c in page_data],
         "total": total,
         "page": page,
         "limit": limit
