@@ -557,15 +557,17 @@ const CodePlayground = ({ navigate, user }) => {
                       let content = Array.isArray(children) ? children[0] : children;
                       if (typeof content === 'string') {
                         content = content.replace(/\*\*/g, '');
-                        const parts = content.split(/(Input\s*:|Output\s*:|Explanation\s*:)/g);
+                        content = content.replace(/(Output\s*:|Explanation\s*:)/g, '\n$1');
+                        const parts = content.split(/(Input\s*:|Output\s*:|Explanation\s*:)/ig);
                         if (parts.length > 1) {
                             return (
-                              <code className="font-sans leading-loose text-[14px] block flex flex-col" {...props}>
+                              <code className="font-sans leading-loose text-[14px] flex flex-col gap-1.5" {...props}>
                                 {parts.map((part, i) => {
-                                   if (/^(Input|Output|Explanation)\s*:$/.test(part)) {
-                                     return <strong key={i} className="font-bold text-slate-900 dark:text-slate-100 mt-2">{part}</strong>;
+                                   if (!part.trim()) return null;
+                                   if (/^(Input|Output|Explanation)\s*:$/i.test(part.trim())) {
+                                     return <strong key={i} className="font-bold text-[#F59E0B] dark:text-amber-500 mt-2 first:mt-0">{part.trim()}</strong>;
                                    }
-                                   return <span key={i} className="font-mono whitespace-pre-wrap">{part.trim()}</span>;
+                                   return <span key={i} className="font-mono whitespace-pre-wrap pl-2 text-slate-700 dark:text-slate-300">{part.trim()}</span>;
                                 })}
                               </code>
                             );
@@ -576,7 +578,24 @@ const CodePlayground = ({ navigate, user }) => {
                     strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-slate-100" {...props} />
                   }}
                 >
-                  {activeChallenge.description}
+                  {(() => {
+                    let desc = activeChallenge.description || '';
+                    const headingsToEnforce = [
+                        "Input Format", 
+                        "Output Format", 
+                        "Constraints", 
+                        "Example", 
+                        "Example 1", 
+                        "Example 2", 
+                        "Example 3",
+                        "Real-World Use Cases",
+                    ];
+                    headingsToEnforce.forEach(h => {
+                        const regex = new RegExp(`(^|\\n)\\s*\\**${h}:?\\**\\s*(?=\\n|$)`, "gim");
+                        desc = desc.replace(regex, `\n\n### ${h}\n\n`);
+                    });
+                    return desc;
+                  })()}
                 </ReactMarkdown>
               </div>
 
