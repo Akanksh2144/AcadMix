@@ -76,7 +76,7 @@ async def generate_problem(topic: str, difficulty: str) -> dict:
     Example Format: In the `description`, when writing your examples, you MUST put the 'Input', 'Output', and the 'Explanation' completely INSIDE a single triple-backtick (```) code block so they render together in the same grey UI box.
     Code: The optimal_solution_python MUST use a distinct method named 'solve'. It must return the answer.
     Test Cases: Generate at least 15 test cases (max 20). You MUST ensure the first 5 test cases have is_hidden: false. All remaining test cases (at least 10) MUST have is_hidden: true.
-    Inputs: 'input_data' should be evaluated dynamically. Use standard python literal evaluation limits or tuple arguments. Make it simple.
+    Inputs & Memory Objects: 'input_data' will be evaluated dynamically by Python via `eval()`. If the problem involves Linked Lists or Trees, the testing sandbox natively provides `ListNode` and `TreeNode` classes, alongside `build_linked_list(arr)` and `build_tree(arr)` parsers. YOU MUST FORMAT YOUR `input_data` STRING TO EXPLICITLY CALL THESE HELPERS so the sandbox can instantiate objects instead of passing raw arrays. Example: `input_data: "build_tree([1, 2, 3, null, 4])"`. For standard arrays/primitives, just use standard literals.
     Test Case Accuracy: LLMs often fail at mental math for array indexing. For every single test case, you MUST use the 'step_by_step_trace' field to manually execute your algorithm on the 'input_data' (tracking variables, array bounds, and loop states) to mathematically guarantee the 'expected_output' matches the code's output. CRITICAL: For hidden test cases, keep the step_by_step_trace extremely brief (1 line) to conserve API tokens!
     Self-Correction: Re-verify the full length of the array or string bounds manually against your own problem constraints before finalizing the expected output. Double-check your monotonic stack bounds and prefix sum logic to prevent math bugs.
 
@@ -111,6 +111,44 @@ def validate_code(problem_data: dict) -> bool:
     test_runner = f"""
 import sys
 import json
+from collections import deque
+
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def build_linked_list(arr):
+    if not arr: return None
+    head = ListNode(arr[0])
+    curr = head
+    for val in arr[1:]:
+        curr.next = ListNode(val)
+        curr = curr.next
+    return head
+
+def build_tree(arr):
+    if not arr: return None
+    root = TreeNode(arr[0])
+    queue = deque([root])
+    i = 1
+    while queue and i < len(arr):
+        node = queue.popleft()
+        if i < len(arr) and arr[i] is not None:
+            node.left = TreeNode(arr[i])
+            queue.append(node.left)
+        i += 1
+        if i < len(arr) and arr[i] is not None:
+            node.right = TreeNode(arr[i])
+            queue.append(node.right)
+        i += 1
+    return root
 
 {code}
 
