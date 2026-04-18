@@ -6,6 +6,7 @@ from sqlalchemy.future import select
 from typing import List, Optional
 import httpx
 import tenacity
+import json
 
 from database import get_db
 from app.core.security import get_current_user
@@ -28,6 +29,90 @@ TIMEOUT_CONFIG = {
     "java": 50.0,
     "sql": 15.0,
 }
+
+def _build_python_sandbox(user_code: str, test_cases_list: list) -> str:
+    escaped_tc = json.dumps(test_cases_list)
+    return f"""
+import sys
+import json
+from collections import deque
+
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+        
+    def __eq__(self, other):
+        if not isinstance(other, ListNode):
+            return False
+        return self.val == other.val and self.next == other.next
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+        
+    def __eq__(self, other):
+        if not isinstance(other, TreeNode):
+            return False
+        return self.val == other.val and self.left == other.left and self.right == other.right
+
+def build_linked_list(arr):
+    if not arr: return None
+    head = ListNode(arr[0])
+    curr = head
+    for val in arr[1:]:
+        curr.next = ListNode(val)
+        curr = curr.next
+    return head
+
+def build_tree(arr):
+    if not arr: return None
+    root = TreeNode(arr[0])
+    queue = deque([root])
+    i = 1
+    while queue and i < len(arr):
+        node = queue.popleft()
+        if i < len(arr) and arr[i] is not None:
+            node.left = TreeNode(arr[i])
+            queue.append(node.left)
+        i += 1
+        if i < len(arr) and arr[i] is not None:
+            node.right = TreeNode(arr[i])
+            queue.append(node.right)
+        i += 1
+    return root
+
+{user_code}
+
+test_cases = json.loads(r'''{escaped_tc}''')
+true = True
+false = False
+null = None
+
+for idx, tc in enumerate(test_cases):
+    try:
+        raw_inp = tc['input_data']
+        args = eval(raw_inp) if raw_inp.strip().startswith('(') else (eval(raw_inp),)
+        
+        result = solve(*args)
+        if tc.get('expected_output'):
+            expected = eval(str(tc['expected_output']))
+            if result != expected:
+                print(f"Test case {{idx + 1}} failed. Expected {{expected}}, got {{result}}")
+                sys.exit(1)
+            else:
+                print(f"Test case {{idx + 1}} Passed! Expected: {{expected}}, Evaluated: {{result}}")
+        else:
+            print(f"Test case {{idx + 1}} evaluated to: {{result}}")
+            
+    except Exception as e:
+        print(f"Execution error on test case {{idx + 1}}: {{e}}")
+        sys.exit(1)
+        
+print("OK")
+"""
 
 router = APIRouter()
 
@@ -89,6 +174,42 @@ async def get_challenge_stats(user: dict = Depends(get_current_user), session: A
     return {"total_solved": len(solved_challenges), "difficulty": {"Easy": easy, "Medium": medium, "Hard": hard}, "topics": topics_count}
 
 
+@router.post("/challenges/run")
+@limiter.limit("30/minute")
+async def run_challenge(request: Request, req: ChallengeRunTest, user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    lang_timeout = TIMEOUT_CONFIG.get(req.language.lower(), 15.0)
+    
+    # Standardize the dict list
+    tc_list = [tc.dict() for tc in req.test_cases]
+    if req.language.lower() == "python":
+        sandbox_code = _build_python_sandbox(req.code, tc_list)
+    else:
+        sandbox_code = req.code # Fallback to raw for untracked languages
+        
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(3),
+        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
+        retry=tenacity.retry_if_exception_type((httpx.RequestError, httpx.TimeoutException)),
+        reraise=True
+    )
+    async def _do_request():
+        return await _http_client.post(
+            f"{settings.CODE_RUNNER_URL}/run",
+            json={"language": req.language, "code": sandbox_code, "test_input": ""},
+            timeout=lang_timeout
+        )
+
+    try:
+        resp = await _do_request()
+        if resp.status_code == 200:
+            result = resp.json()
+            # In Run mode, exit_code 0 means 100% passed, exit_code 1 means some failed. 
+            # We will just pipe the stdout directly to the frontend console!
+            return {"output": result.get("output", ""), "error": result.get("error", ""), "exit_code": result.get("exit_code", -1), "success": result.get("exit_code", -1) == 0}
+        return {"error": "Code runner service error", "exit_code": -1, "success": False}
+    except Exception as e:
+        return {"error": str(e), "exit_code": -1, "success": False}
+
 @router.post("/challenges/submit")
 @limiter.limit("30/minute")
 async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
@@ -98,12 +219,12 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge not found")
         
-    init_sql_script = ""
-    # Inject the SQL datasets for DataLemur style tests
-    if req.language.lower() == "sql" and challenge.init_code:
-        init_sql_script = challenge.init_code.get("sql", "")
-        
     lang_timeout = TIMEOUT_CONFIG.get(req.language.lower(), 60.0)
+    
+    if req.language.lower() == "python":
+        sandbox_code = _build_python_sandbox(req.code, challenge.test_cases)
+    else:
+        sandbox_code = req.code # Raw passthrough for SQL or unsupported architectures
 
     @tenacity.retry(
         stop=tenacity.stop_after_attempt(3),
@@ -114,7 +235,7 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
     async def _do_request():
         return await _http_client.post(
             f"{settings.CODE_RUNNER_URL}/run",
-            json={"language": req.language, "code": req.code, "test_input": init_sql_script},
+            json={"language": req.language, "code": sandbox_code, "test_input": ""},
             timeout=lang_timeout
         )
 
@@ -124,8 +245,12 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
         if resp.status_code == 200:
             result = resp.json()
             exit_code = result.get("exit_code", -1)
+            output = result.get("output", "")
             
+            # Is success requires exit_code 0 AND stdout ending in "OK\n" (unless fallback language)
             is_success = (exit_code == 0)
+            if req.language.lower() == "python" and "OK" not in output:
+                 is_success = False
             
             if is_success:
                 pr = await session.execute(select(models.PremiumChallengeProgress).where(models.PremiumChallengeProgress.student_id == user["id"], models.PremiumChallengeProgress.challenge_id == req.challenge_id))
@@ -143,7 +268,7 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
                     prog.status = "completed"
                 await session.commit()
                 
-            return {"output": result.get("output", ""), "error": result.get("error", ""),
+            return {"output": "All Test Cases Passed Flawlessly!" if is_success else output, "error": result.get("error", ""),
                     "exit_code": exit_code, "success": is_success}
         return {"error": "Code runner service error", "exit_code": -1, "success": False}
     except Exception as e:

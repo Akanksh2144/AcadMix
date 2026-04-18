@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { toast } from 'sonner';
 
@@ -70,6 +70,24 @@ const CodePlayground = ({ navigate, user }) => {
     const saved = localStorage.getItem('acadmix_active_challenge');
     return saved ? JSON.parse(saved) : null;
   });
+
+  const [activeConsoleTab, setActiveConsoleTab] = useState('test_cases');
+  const [userTestCases, setUserTestCases] = useState([{ input_data: '', expected_output: '' }]);
+  const [activeTestCaseIdx, setActiveTestCaseIdx] = useState(0);
+
+  const handleLoadChallenge = (challenge) => {
+    setActiveChallenge(challenge);
+    setShowChallengesModal(false);
+    if (challenge.test_cases) {
+       const unhidden = challenge.test_cases.filter(tc => !tc.is_hidden).map(tc => ({
+           input_data: tc.input_data,
+           expected_output: tc.expected_output
+       }));
+       setUserTestCases(unhidden.length > 0 ? unhidden : [{ input_data: '', expected_output: '' }]);
+    }
+    setActiveTestCaseIdx(0);
+    setActiveConsoleTab('test_cases');
+  };
 
   useEffect(() => {
     if (activeChallenge) {
@@ -156,26 +174,29 @@ const CodePlayground = ({ navigate, user }) => {
     setShowLangMenu(false);
   };
 
-  const handleRun = async () => {
+  const _executeCodeHit = async (is_submit = false) => {
     if (!code.trim() || running) return;
     setRunning(true);
+    setActiveConsoleTab('results');
     setOutput(null);
     const startTime = Date.now();
     try {
       let data = {};
       if (activeChallenge) {
-        const res = await api.post('/challenges/submit', {
+        const endpoint = is_submit ? '/challenges/submit' : '/challenges/run';
+        const res = await api.post(endpoint, {
           code,
           language,
-          challenge_id: activeChallenge.id
+          challenge_id: activeChallenge.id,
+          test_cases: is_submit ? [] : userTestCases // Pass custom user test cases for Run mode
         });
         data = res.data;
-        if(data.success) fetchStats(); 
+        if(is_submit && data.success) fetchStats(); 
       } else {
         const res = await api.post('/code/execute', {
           code,
           language,
-          test_input: stdin,
+          test_input: '',
         });
         data = res.data;
       }
@@ -217,6 +238,9 @@ const CodePlayground = ({ navigate, user }) => {
     }
     setRunning(false);
   };
+  
+  const handleRun = () => _executeCodeHit(false);
+  const handleSubmit = () => _executeCodeHit(true);
 
   const handleCoachSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -591,14 +615,20 @@ const CodePlayground = ({ navigate, user }) => {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => { setCode(DEFAULT_TEMPLATES[language] || ''); setOutput(null); }} className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 dark:text-slate-400 transition-colors" title="Reset Code">
+                  <button onClick={() => { setCode(DEFAULT_TEMPLATES[language] || ''); setOutput(null); }} className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 dark:text-slate-400 transition-colors mr-2" title="Reset Code">
                     <ArrowCounterClockwise size={18} weight="duotone" />
                   </button>
 
-                  <button onClick={handleRun} disabled={running} className="btn-primary !px-4 !py-1.5 text-sm flex items-center gap-2 disabled:opacity-60 shadow-none">
-                    {running ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Play size={16} weight="fill" />}
+                  <button onClick={handleRun} disabled={running} className="bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 !px-4 !py-1.5 text-sm flex items-center gap-2 font-bold rounded-xl disabled:opacity-60 transition-colors">
+                    {running ? <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div> : <Play size={16} weight="fill" className="text-slate-500 dark:text-slate-400" />}
                     Run
                   </button>
+                  {activeChallenge && (
+                    <button onClick={handleSubmit} disabled={running} className="bg-indigo-500 hover:bg-indigo-600 text-white !px-4 !py-1.5 text-sm flex items-center gap-2 font-bold rounded-xl disabled:opacity-60 transition-colors shadow-sm shadow-indigo-500/20">
+                      {running ? <div className="w-4 h-4 border-2 border-white/50 border-t-transparent rounded-full animate-spin"></div> : <CheckCircle size={16} weight="bold" />}
+                      Submit
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="flex-1" onCopyCapture={handleCopyOrCut} onCutCapture={handleCopyOrCut} onPasteCapture={handlePasteCapture}>
@@ -624,11 +654,23 @@ const CodePlayground = ({ navigate, user }) => {
             </div>
 
             {/* Output Container */}
-            <div className="h-1/3 min-h-[200px] shrink-0 flex flex-col bg-slate-900 rounded-2xl shadow-sm overflow-hidden">
-              <div className="bg-slate-800/80 px-5 py-2.5 flex items-center justify-between border-b border-slate-700/50">
-                <div className="flex items-center gap-2 text-slate-300">
-                  <Terminal size={18} weight="duotone" />
-                  <span className="text-xs font-bold uppercase tracking-wider">Test Results</span>
+            <div className="h-1/3 min-h-[220px] shrink-0 flex flex-col bg-slate-900 rounded-2xl shadow-sm overflow-hidden border border-slate-700/50">
+              <div className="bg-slate-800/80 px-4 py-2 flex items-center justify-between border-b border-slate-700/50">
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={() => setActiveConsoleTab('test_cases')}
+                    className={`px-4 py-1.5 flex items-center gap-2 rounded-xl text-sm font-bold transition-all ${activeConsoleTab === 'test_cases' ? 'bg-indigo-500/15 text-indigo-400' : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'}`}
+                  >
+                    <CheckSquareOffset size={16} weight={activeConsoleTab === 'test_cases' ? 'fill' : 'duotone'} />
+                    Testcases
+                  </button>
+                  <button 
+                    onClick={() => setActiveConsoleTab('results')}
+                    className={`px-4 py-1.5 flex items-center gap-2 rounded-xl text-sm font-bold transition-all ${activeConsoleTab === 'results' ? 'bg-emerald-500/15 text-emerald-400' : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'}`}
+                  >
+                    <Terminal size={16} weight={activeConsoleTab === 'results' ? 'fill' : 'duotone'} />
+                    Test Results
+                  </button>
                 </div>
                  <div className="flex items-center gap-2 text-slate-400">
                    {execTime && <span className="text-xs mr-2 border-r border-slate-700 pr-4">{execTime}ms</span>}
@@ -640,13 +682,69 @@ const CodePlayground = ({ navigate, user }) => {
                  </div>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-5 custom-scrollbar text-slate-300 font-mono text-sm layout-console">
-                 {running ? (
-                    <div className="flex items-center gap-3 animate-pulse">
-                       <div className="w-2 h-4 bg-indigo-50 dark:bg-indigo-500/150 animate-bounce"></div>
-                       <span className="text-slate-400">Evaluating your solution against test cases...</span>
+              <div className="flex-1 overflow-y-auto custom-scrollbar relative bg-slate-900">
+                {activeConsoleTab === 'test_cases' ? (
+                  <div className="p-4 flex flex-col h-full">
+                    <div className="flex items-center gap-2 mb-4 shrink-0 overflow-x-auto custom-scrollbar pb-1">
+                      {userTestCases.map((tc, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setActiveTestCaseIdx(idx)}
+                          className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-colors whitespace-nowrap ${activeTestCaseIdx === idx ? 'bg-slate-700/80 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700/50'}`}
+                        >
+                          Case {idx + 1}
+                        </button>
+                      ))}
+                      <button 
+                        onClick={() => {
+                          setUserTestCases([...userTestCases, { input_data: '', expected_output: '' }]);
+                          setActiveTestCaseIdx(userTestCases.length);
+                        }}
+                        className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors" 
+                        title="Add Custom Test Case"
+                      >
+                        <Plus size={16} weight="bold" />
+                      </button>
                     </div>
-                 ) : output !== null ? (
+                    {userTestCases[activeTestCaseIdx] && (
+                      <div className="flex flex-col gap-4 flex-1">
+                        <div className="flex flex-col">
+                          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Input Data</label>
+                          <input 
+                            value={userTestCases[activeTestCaseIdx].input_data || ''}
+                            onChange={(e) => {
+                               const arr = [...userTestCases];
+                               arr[activeTestCaseIdx].input_data = e.target.value;
+                               setUserTestCases(arr);
+                            }}
+                            className="bg-slate-800 border border-slate-700/50 outline-none font-mono text-sm text-slate-300 rounded-xl px-4 py-2.5 focus:ring-1 focus:ring-indigo-500/50"
+                            placeholder="e.g. build_tree([1, 2, 3])"
+                          />
+                        </div>
+                        <div className="flex flex-col">
+                          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Expected Output (Optional)</label>
+                          <input 
+                            value={userTestCases[activeTestCaseIdx].expected_output || ''}
+                            onChange={(e) => {
+                               const arr = [...userTestCases];
+                               arr[activeTestCaseIdx].expected_output = e.target.value;
+                               setUserTestCases(arr);
+                            }}
+                            className="bg-slate-800 border border-slate-700/50 outline-none font-mono text-sm text-slate-300 rounded-xl px-4 py-2.5 focus:ring-1 focus:ring-indigo-500/50"
+                            placeholder="Optional expected answer"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-5 font-mono text-sm layout-console text-slate-300">
+                     {running ? (
+                        <div className="flex items-center gap-3 animate-pulse">
+                           <div className="w-2 h-4 bg-indigo-50 dark:bg-indigo-500/150 animate-bounce"></div>
+                           <span className="text-slate-400">Evaluating your solution against test cases...</span>
+                        </div>
+                     ) : output !== null ? (
                     <pre className="whitespace-pre-wrap">{output}</pre>
                  ) : (
                     <div className="text-slate-500 dark:text-slate-400 italic">Code output will appear here.</div>

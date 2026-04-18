@@ -125,6 +125,17 @@ class ChallengeSubmit(BaseModel):
     language: str = "python"
 
 
+class TestCaseItem(BaseModel):
+    input_data: str
+    expected_output: Optional[str] = ""
+
+class ChallengeRunTest(BaseModel):
+    challenge_id: str
+    code: str
+    language: str = "python"
+    test_cases: List[TestCaseItem] = Field(default_factory=list)
+
+
 class ViolationReport(BaseModel):
     violation_type: str = "tab_switch"  # tab_switch, fullscreen_exit, window_blur
 
