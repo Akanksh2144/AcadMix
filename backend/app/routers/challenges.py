@@ -207,7 +207,8 @@ async def run_challenge(request: Request, req: ChallengeRunTest, user: dict = De
         return await _http_client.post(
             f"{settings.CODE_RUNNER_URL}/run",
             json={"language": req.language, "code": sandbox_code, "test_input": ""},
-            timeout=lang_timeout
+            timeout=lang_timeout,
+            headers={"X-Internal-Token": settings.CODE_RUNNER_TOKEN}
         )
 
     try:
@@ -247,7 +248,8 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
         return await _http_client.post(
             f"{settings.CODE_RUNNER_URL}/run",
             json={"language": req.language, "code": sandbox_code, "test_input": ""},
-            timeout=lang_timeout
+            timeout=lang_timeout,
+            headers={"X-Internal-Token": settings.CODE_RUNNER_TOKEN}
         )
 
     try:
