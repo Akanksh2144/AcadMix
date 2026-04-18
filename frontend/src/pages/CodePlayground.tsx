@@ -72,7 +72,22 @@ const CodePlayground = ({ navigate, user }) => {
   });
 
   const [activeConsoleTab, setActiveConsoleTab] = useState('test_cases');
-  const [userTestCases, setUserTestCases] = useState([{ input_data: '', expected_output: '' }]);
+  const [userTestCases, setUserTestCases] = useState(() => {
+    const saved = localStorage.getItem('acadmix_active_challenge');
+    if (saved) {
+      try {
+        const challenge = JSON.parse(saved);
+        if (challenge.test_cases) {
+          const unhidden = challenge.test_cases.filter(tc => !tc.is_hidden).map(tc => ({
+            input_data: tc.input_data,
+            expected_output: tc.expected_output
+          }));
+          if (unhidden.length > 0) return unhidden;
+        }
+      } catch(e) {}
+    }
+    return [{ input_data: '', expected_output: '' }];
+  });
   const [activeTestCaseIdx, setActiveTestCaseIdx] = useState(0);
 
   const handleLoadChallenge = (challenge) => {
@@ -181,7 +196,7 @@ const CodePlayground = ({ navigate, user }) => {
   const _executeCodeHit = async (is_submit = false) => {
     if (!code.trim() || running) return;
     setRunning(true);
-    setActiveConsoleTab('results');
+    if (is_submit) setActiveConsoleTab('results');
     setOutput(null);
     const startTime = Date.now();
     try {
@@ -729,6 +744,16 @@ const CodePlayground = ({ navigate, user }) => {
                             placeholder="Optional expected answer"
                           />
                         </div>
+                        {output !== null && (
+                          <div className="flex flex-col pt-2 pb-2">
+                            <label className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-1 flex items-center gap-2">
+                              {output.includes('Error:') ? 'Runtime Error' : 'Actual Output'}
+                            </label>
+                            <div className={`bg-slate-950 border ${output.includes('Error:') ? 'border-red-500/30' : 'border-indigo-500/30'} outline-none font-mono text-sm ${output.includes('Error:') ? 'text-red-400' : 'text-slate-300'} rounded-xl px-4 py-3 min-h-[60px] whitespace-pre-wrap flex items-center overflow-x-auto overflow-y-auto max-h-[160px] custom-scrollbar`}>
+                               {output || '(no output)'}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
