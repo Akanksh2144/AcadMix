@@ -32,6 +32,7 @@ const CodePlayground = ({ navigate, user }) => {
   const [stdin, setStdin] = useState('');
   const [output, setOutput] = useState(null);
   const [testResults, setTestResults] = useState([]);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [running, setRunning] = useState(false);
   const [execTime, setExecTime] = useState(null);
   const [showLangMenu, setShowLangMenu] = useState(false);
@@ -262,20 +263,38 @@ const CodePlayground = ({ navigate, user }) => {
         : data.output || '(no output)';
       
       let rawOutput = result;
+      let uiSuccess = false;
       if (rawOutput && rawOutput.includes('___ACADMIX_SEP___')) {
          const parts = rawOutput.split('___ACADMIX_SEP___');
-         rawOutput = rawOutput.replace(/___ACADMIX_SEP___/g, '').replace(/___ACADMIX_END___/g, '');
-         const parsedResults = userTestCases.map((tc, idx) => {
-             const actual = (parts[idx] || '').trim();
+         uiSuccess = rawOutput.includes('___ACADMIX_OK___');
+         rawOutput = rawOutput.replace(/___ACADMIX_SEP___/g, '').replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').trim();
+         
+         const numCases = is_submit ? Math.max(0, parts.length - 1) : userTestCases.length;
+         
+         const parsedResults = Array.from({ length: numCases }).map((_, idx) => {
+             let actual = (parts[idx] || '').trim();
              let passed = null;
-             if (tc.expected_output && tc.expected_output.trim() !== '') {
-                 passed = actual === tc.expected_output.trim();
+             
+             if (actual.includes('___ACADMIX_STATUS_PASS___')) {
+                 passed = true;
+                 actual = actual.replace('___ACADMIX_STATUS_PASS___', '').trim();
+             } else if (actual.includes('___ACADMIX_STATUS_FAIL___')) {
+                 passed = false;
+                 actual = actual.replace('___ACADMIX_STATUS_FAIL___', '').trim();
              }
-             return { actual_output: actual, passed };
+             
+             const tcObj = is_submit ? null : userTestCases[idx];
+             if (passed === null && tcObj && tcObj.expected_output && tcObj.expected_output.trim() !== '') {
+                 passed = actual === tcObj.expected_output.trim();
+             }
+             
+             return { actual_output: actual, passed, isHidden: is_submit && idx >= userTestCases.length };
          });
          setTestResults(parsedResults);
+         setSubmitSuccess(uiSuccess);
       } else {
          setTestResults([]);
+         setSubmitSuccess(data.success && is_submit);
       }
       
       setOutput(rawOutput);
@@ -815,16 +834,42 @@ const CodePlayground = ({ navigate, user }) => {
                       </div>
                     )}
                   </div>
-                ) : (
+                 ) : (
                   <div className="p-5 font-mono text-sm layout-console text-slate-300">
                      {running ? (
                         <div className="flex items-center gap-3 animate-pulse">
                            <div className="w-2 h-4 bg-indigo-50 dark:bg-indigo-500/150 animate-bounce"></div>
                            <span className="text-slate-400">Evaluating your solution against test cases...</span>
                         </div>
+                     ) : submitSuccess ? (
+                         <div className="flex flex-col items-center justify-center py-6 text-emerald-400">
+                             <CheckCircle size={48} weight="fill" className="mb-2" />
+                             <h3 className="text-lg font-bold text-emerald-500 uppercase tracking-widest">Congratulations!</h3>
+                             <p className="text-sm font-medium text-emerald-500/70">All test cases passed flawlessly.</p>
+                         </div>
                      ) : output !== null ? (
-                    <pre className="whitespace-pre-wrap">{output}</pre>
-                 ) : (
+                        testResults.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                                {testResults.map((tr, idx) => (
+                                   <div key={idx} className={`p-3 rounded-xl border flex flex-col gap-1.5 ${tr.passed ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : tr.passed === false ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
+                                       <div className="flex items-center gap-2">
+                                           {tr.passed ? <CheckCircle size={20} weight="fill" /> : tr.passed === false ? <X size={20} weight="bold" /> : <div className="w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full animate-spin"></div>}
+                                           <span className="font-bold text-[13px]">Test case {idx}</span>
+                                       </div>
+                                       {tr.isHidden && <span className="text-[10px] uppercase tracking-wider opacity-60 ml-7">Hidden Set</span>}
+                                   </div>
+                                ))}
+                                {output.trim() !== '' && !output.includes('___ACADMIX_STATUS_') && (
+                                   <div className="col-span-full mt-4 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400">
+                                       <h4 className="text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2"><WarningCircle /> Execution Error</h4>
+                                       <pre className="text-xs whitespace-pre-wrap">{output}</pre>
+                                   </div>
+                                )}
+                            </div>
+                        ) : (
+                            <pre className="whitespace-pre-wrap">{output}</pre>
+                        )
+                  ) : (
                     <div className="text-slate-500 dark:text-slate-400 italic">Code output will appear here.</div>
                  )}
               </div>

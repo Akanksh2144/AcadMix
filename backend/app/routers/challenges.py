@@ -104,20 +104,40 @@ def safe_parse(raw_s):
     except (ValueError, SyntaxError):
         return raw_s
 
-for idx, tc in enumerate(test_cases):
-    try:
-        raw_inp = tc['input_data']
-        parsed = safe_parse(raw_inp)
-        args = parsed if isinstance(parsed, tuple) and not raw_inp.strip().startswith("build_") else (parsed,)
-        
-        result = solve(*args)
-        print(result) # Exactly what the user wants to see
-    except SystemExit:
-        pass # allow clean exit
-    except Exception as e:
-        print(f"Execution Error: {{e}}")
-    finally:
-        print("___ACADMIX_SEP___")
+all_passed = True
+try:
+    if 'solve' not in globals() and 'solve' not in locals():
+        print("Error: The platform requires a function named 'solve' to evaluate your code. Please wrap your logic in 'def solve(...):'")
+        all_passed = False
+    else:
+        for idx, tc in enumerate(test_cases):
+            try:
+                raw_inp = tc['input_data']
+                parsed = safe_parse(raw_inp)
+                args = parsed if isinstance(parsed, tuple) and not raw_inp.strip().startswith("build_") else (parsed,)
+                
+                result = solve(*args)
+                
+                expected = tc.get('expected_output')
+                if expected is not None:
+                    passed = str(result).strip().lower() == str(expected).strip().lower()
+                    if not passed:
+                        all_passed = False
+                    print(f"___ACADMIX_STATUS_{'PASS' if passed else 'FAIL'}___")
+                
+                print(result) # Exactly what the user wants to see
+            except SystemExit:
+                pass # allow clean exit
+            except Exception as e:
+                print(f"Execution Error: {e}")
+                all_passed = False
+            finally:
+                print("___ACADMIX_SEP___")
+except Exception as e:
+    all_passed = False
+
+if all_passed and test_cases:
+    print("___ACADMIX_OK___")
 print("___ACADMIX_END___")
 """
 
@@ -275,10 +295,10 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
             exit_code = result.get("exit_code", -1)
             output = result.get("output", "")
             
-            # Is success requires exit_code 0 AND stdout ending in "OK\n" (unless fallback language)
+            # Is success requires exit_code 0 AND the AcadMix OK marker (unless fallback language)
             is_success = exit_code == 0
             if req.language.lower() == "python":
-                is_success = is_success and output.strip().endswith("OK")
+                is_success = is_success and "___ACADMIX_OK___" in output
                 
             if is_success:
                 pr = await session.execute(select(models.PremiumChallengeProgress).where(models.PremiumChallengeProgress.student_id == user["id"], models.PremiumChallengeProgress.challenge_id == req.challenge_id))
@@ -296,7 +316,7 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
                     prog.status = "completed"
                 await session.commit()
                 
-            return {"output": "All Test Cases Passed Flawlessly!" if is_success else output, "error": result.get("error", ""),
+            return {"output": output, "error": result.get("error", ""),
                     "exit_code": exit_code, "success": is_success}
                     
         # Pass through the actual runner error correctly
