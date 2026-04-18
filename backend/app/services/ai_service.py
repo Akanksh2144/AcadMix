@@ -362,7 +362,8 @@ async def generate_coach_stream(messages: List[Dict[str, str]], current_code: st
         f"{mode_instruction}\n"
         "5. UI Rules: If you ask the student multiple questions to guide them, YOU MUST format them as clear, separate bullet points on their own lines.\n"
         "6. Do not discuss your underlying model or technology.\n"
-        "7. NEVER use generic greetings like 'It looks like you're starting a new project'. Refer to the task as a 'problem' or 'challenge', not a 'project'. Dive straight into pedagogical explanation without fluff."
+        "7. NEVER use generic greetings like 'It looks like you're starting a new project'. Refer to the task as a 'problem' or 'challenge', not a 'project'. Dive straight into pedagogical explanation without fluff.\n"
+        "8. MCQ Coaching: Whenever you ask the student a diagnostic question to test their understanding, format it as a multiple-choice question (MCQ) with 3-4 distinct options (e.g. A, B, C). This helps guide their thinking."
     )
 
     # We append the current code state to the most recent user message only if necessary
