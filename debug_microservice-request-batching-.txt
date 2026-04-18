@@ -1,0 +1,70 @@
+A FinTech platform processes financial transactions through a chain of **N microservices**. Each microservice can handle requests in **batches**, and the cost of running a batch depends on the number of requests it processes.
+
+You are given an array `cost` of length `N`, where `cost[i]` represents the **base processing fee** (in USD cents) charged by microservice `i`. However, the platform has a special **bulk discount rule**:
+
+> If you skip paying for microservice `i`, you can use it **for free**, but only if you have **already paid** for at least one of the two immediately preceding microservices (`i-1` or `i-2`).
+
+More formally, you want to select a **subset of microservices to pay for**, such that:
+- You **cannot skip two consecutive microservices** (i.e., you must pay for at least one of any two adjacent microservices).
+- Your goal is to **minimize the total cost** paid.
+
+Return the **minimum total cost** to process all N microservices while satisfying the constraint.
+
+### Example 1
+
+
+```text
+Input: cost = [10, 15, 20, 5, 30]
+Output: 30
+Explanation:
+  Pay for microservice 0 (cost=10), skip 1 (free), pay for 2 (cost=20), skip 3 (free), pay for 4 (cost=30).
+  Wait — that gives 10+20+30=60. Let's try another selection:
+  Pay for 0 (10), skip 1, pay for 3 (5), skip 4... but we can't skip 4 because we skipped 3? No — we paid 3.
+  Pay for 1 (15), skip 2, pay for 3 (5), skip 4 — but 4 is the last, we must cover it.
+  Actually: pay for 0 (10), skip 1, pay for 2 (20), skip 3, pay for 4 (30) = 60.
+  Or: skip 0 — invalid (nothing before it). Must pay for 0 or 1.
+  Pay for 1 (15), skip 2, pay for 3 (5), skip 4 — invalid (4 skipped, 3 paid = ok).
+  But we skipped 0 — invalid since nothing precedes it.
+  Optimal: pay index 1 (15), pay index 3 (5), pay index 4 (30)? = 50. Hmm.
+  Best: pay 0(10), skip 1, pay 3(5), pay 4(30) — skip 2 after paying 1? No paid 0 not 1.
+  pay 0(10), pay 2(20), pay 3(5) — skip 1 (ok, paid 0), skip 4 (ok, paid 3) = 35.
+  Or pay 0(10), pay 2(20), pay 4(30) — skip 1, skip 3 = 60.
+  Or pay 0(10), pay 3(5), skip 1(ok,paid 0), skip 2(ok,paid... wait paid 0 not 1 or 2).
+  dp[0]=10, dp[1]=min(10+15,15)=15 (pay both or just 1? must cover 0 too).
+  See dp definition in solution. Final answer = 35.
+```
+
+### Example 2
+
+
+```text
+Input: cost = [1, 100, 1, 1, 1, 100, 1, 1, 100, 1]
+Output: 6
+Explanation:
+  Pay for indices 0,2,4,6,7,9 — but we can skip every other.
+  Optimal: pay 0(1), skip 1, pay 2(1), skip 3, pay 4(1), skip 5, pay 6(1), skip 7, pay 8... 
+  Actually dp gives 6. Pay indices with cost=1 and skip the 100s.
+```
+
+### Example 3
+
+
+```text
+Input: cost = [10, 15]
+Output: 10
+Explanation:
+  Pay for microservice 0 (10), skip microservice 1 (free, since 0 was paid).
+  Total = 10.
+```
+
+### Input Format
+
+
+**First line:** A single integer `N` — the number of microservices.
+
+**Second line:** `N` space-separated integers representing the `cost` array.
+
+### Output Format
+
+
+**Single integer** — the minimum total cost to process all microservices.

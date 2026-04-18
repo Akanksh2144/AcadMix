@@ -546,6 +546,9 @@ const CodePlayground = ({ navigate, user }) => {
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm]}
                   components={{
+                    h2: ({node, ...props}) => <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-6 mb-3" {...props} />,
+                    h3: ({node, ...props}) => <h3 className="text-[16px] font-bold text-slate-900 dark:text-slate-100 mt-6 mb-2 border-b border-slate-200 dark:border-slate-700 pb-1" {...props} />,
+                    hr: ({node, ...props}) => <hr className="border-slate-200 dark:border-slate-700 my-4" {...props} />,
                     pre: ({node, ...props}) => (
                       <pre className="bg-[#F9FAFB] dark:bg-[#1A1D24] border-l-[3px] border-[#F59E0B] dark:border-amber-500 pl-4 pr-4 py-3 rounded-r-lg overflow-x-auto text-[14px] my-5 font-sans whitespace-pre-wrap text-slate-700 dark:text-slate-300" {...props} />
                     ),
@@ -553,49 +556,12 @@ const CodePlayground = ({ navigate, user }) => {
                       if (inline) {
                         return <code className="bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-rose-600 dark:text-rose-400 font-mono text-[13px]" {...props}>{children}</code>;
                       }
-                      
-                      let content = Array.isArray(children) ? children[0] : children;
-                      if (typeof content === 'string') {
-                        content = content.replace(/\*\*/g, '');
-                        content = content.replace(/(Output\s*:|Explanation\s*:)/g, '\n$1');
-                        const parts = content.split(/(Input\s*:|Output\s*:|Explanation\s*:)/ig);
-                        if (parts.length > 1) {
-                            return (
-                              <code className="font-sans leading-loose text-[14px] flex flex-col gap-1.5" {...props}>
-                                {parts.map((part, i) => {
-                                   if (!part.trim()) return null;
-                                   if (/^(Input|Output|Explanation)\s*:$/i.test(part.trim())) {
-                                     return <strong key={i} className="font-bold text-[#F59E0B] dark:text-amber-500 mt-2 first:mt-0">{part.trim()}</strong>;
-                                   }
-                                   return <span key={i} className="font-mono whitespace-pre-wrap pl-2 text-slate-700 dark:text-slate-300">{part.trim()}</span>;
-                                })}
-                              </code>
-                            );
-                        }
-                      }
                       return <code className="font-mono text-[14px]" {...props}>{children}</code>;
                     },
-                    strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-slate-100" {...props} />
+                    strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-slate-100" {...props} />,
                   }}
                 >
-                  {(() => {
-                    let desc = activeChallenge.description || '';
-                    const headingsToEnforce = [
-                        "Input Format", 
-                        "Output Format", 
-                        "Constraints", 
-                        "Example", 
-                        "Example 1", 
-                        "Example 2", 
-                        "Example 3",
-                        "Real-World Use Cases",
-                    ];
-                    headingsToEnforce.forEach(h => {
-                        const regex = new RegExp(`(^|\\n)\\s*\\**${h}:?\\**\\s*(?=\\n|$)`, "gim");
-                        desc = desc.replace(regex, `\n\n### ${h}\n\n`);
-                    });
-                    return desc;
-                  })()}
+                  {activeChallenge.description}
                 </ReactMarkdown>
               </div>
 

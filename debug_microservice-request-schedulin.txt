@@ -1,0 +1,55 @@
+## Microservice Request Scheduling
+
+You are a backend engineer at a B2B SaaS company managing a single-threaded API gateway that processes incoming microservice requests one at a time. Each request has a **processing time of exactly 1 unit** and a **deadline** by which it must be completed (i.e., it must finish at or before its deadline time unit).
+
+Your goal is to schedule as many requests as possible such that **no request misses its deadline**. Return the **maximum number of requests** that can be completed on time.
+
+This is a classic **Greedy Job Scheduling** problem: greedily assign each job (sorted by deadline) to the latest available time slot at or before its deadline.
+
+---
+
+### Example
+
+```text
+Input:
+deadlines = [2, 1, 2, 1, 3]
+
+Output:
+3
+
+Explanation:
+Sort by deadline: [1, 1, 2, 2, 3]
+Slot 1: Assign job with deadline 1 → slot 1 used
+Slot 2: Assign job with deadline 1 → try slot 1 (taken), no earlier slot → skip
+Slot 3: Assign job with deadline 2 → slot 2 used
+Slot 4: Assign job with deadline 2 → try slot 2 (taken), try slot 1 (taken) → skip
+Slot 5: Assign job with deadline 3 → slot 3 used
+Total scheduled = 3 (slots 1, 2, 3 each have one job)
+```
+
+```text
+Input:
+deadlines = [4, 2, 4, 3, 1]
+
+Output:
+4
+
+Explanation:
+Sort by deadline: [1, 2, 3, 4, 4]
+Slot 1 → deadline 1 fits in slot 1 ✓
+Slot 2 → deadline 2 fits in slot 2 ✓
+Slot 3 → deadline 3 fits in slot 3 ✓
+Slot 4 → deadline 4 fits in slot 4 ✓
+Slot 5 → deadline 4, try slot 4 (taken), slot 3 (taken), slot 2 (taken), slot 1 (taken) → skip
+Total = 4
+```
+
+---
+
+### Input Format
+
+**Single line:** A list of integers `deadlines` where `deadlines[i]` is the deadline of the i-th request.
+
+### Output Format
+
+**Single integer:** The maximum number of requests that can be scheduled without any deadline miss.
