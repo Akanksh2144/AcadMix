@@ -758,7 +758,7 @@ const CodePlayground = ({ navigate, user }) => {
                       </button>
                     </div>
                     {userTestCases[activeTestCaseIdx] && (
-                      <div className="flex flex-col gap-4 flex-1">
+                      <div className="flex flex-col gap-4 flex-1 pb-6">
                         <div className="flex flex-col">
                           <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Input Data</label>
                           <textarea 
