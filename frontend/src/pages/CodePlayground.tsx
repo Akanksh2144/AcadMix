@@ -597,7 +597,8 @@ const CodePlayground = ({ navigate, user }) => {
                   <h3 className="text-[16px] font-bold text-slate-900 dark:text-slate-100 mb-3 tracking-wide">Real-World Use Cases</h3>
                   <div className="bg-[#F8F9FA] dark:bg-[#1E232D] rounded-xl overflow-hidden shadow-sm">
                     {['real_world_applications'].map((key, idx) => {
-                      const value = activeChallenge.problem_ai_context[key] || "The underlying algorithms and mathematical principles tested in this problem are foundational structures commonly deployed in distributed systems, cryptography, memory-allocation constraints, and real-time load balancing architecture across scalable B2B architecture.";
+                      let value = activeChallenge.problem_ai_context[key] || "The underlying algorithms and mathematical principles tested in this problem are foundational structures commonly deployed in distributed systems, cryptography, memory-allocation constraints, and real-time load balancing architecture across scalable B2B architecture.";
+                      value = value.replace(/^\s*\*\*\s*$/gm, '').replace(/\*\*\s*\*\*/g, '').trim();
                       
                       const title = 'Real-Time Use Cases & Applications';
                       return (
