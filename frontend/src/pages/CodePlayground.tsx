@@ -385,6 +385,7 @@ const CodePlayground = ({ navigate, user }) => {
     
     setAiReview("");
     try {
+      const isError = run.rawOutput && run.rawOutput.startsWith('Error:');
       const resData = await api.post('/code/review', {
         language: run.language,
         code: run.rawCode || run.code,
