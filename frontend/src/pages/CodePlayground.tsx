@@ -162,7 +162,16 @@ const CodePlayground = ({ navigate, user }) => {
     try {
       const res = await api.get('/challenges', { params: { limit: 100 } });
       const rawData = res.data?.data || res.data;
-      setChallenges(Array.isArray(rawData?.data) ? rawData.data : Array.isArray(rawData) ? rawData : []);
+      const parsedChallenges = Array.isArray(rawData) ? rawData : [];
+      setChallenges(parsedChallenges);
+      
+      // Auto-update activeChallenge if we now have test_cases from the backend
+      if (activeChallenge && parsedChallenges.length > 0) {
+        const freshActive = parsedChallenges.find(c => c.id === activeChallenge.id);
+        if (freshActive && freshActive.test_cases && !activeChallenge.test_cases) {
+          handleLoadChallenge(freshActive);
+        }
+      }
     } catch(err) { console.error(err); }
     setIsChallengesLoading(false);
   };

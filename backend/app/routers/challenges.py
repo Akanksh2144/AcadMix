@@ -148,8 +148,7 @@ async def get_challenges(page: int = 1, limit: int = 20, difficulty: str = "", t
             "difficulty": c.difficulty, "topics": c.topics,
             "language_support": c.language_support, "constraints": c.constraints,
             "problem_ai_context": c.problem_ai_context,
-            "test_cases": safe_tc,
-            "template_code": c.template_code
+            "test_cases": safe_tc
         }
 
     return {
