@@ -404,7 +404,10 @@ const CodePlayground = ({ navigate, user }) => {
         })
       });
 
-      if (!res.ok) throw new Error("Network Error");
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText);
+      }
 
       const initResData = await res.json();
       const initData = initResData.data || initResData;
@@ -444,12 +447,17 @@ const CodePlayground = ({ navigate, user }) => {
       
     } catch (err) {
       console.error("AI Review Error:", err);
-      // Wait, we don't want to crash. Let's show a graceful fallback if polling times out or fails
+      let errMsg = err.message;
+      try {
+        const parsed = JSON.parse(errMsg);
+        if (parsed.detail) errMsg = parsed.detail;
+      } catch (e) {}
+
       setAiReview({
-          time_complexity: "N/A",
-          space_complexity: "N/A",
-          logic_summary: "AI Code Analysis is currently unavailable or timed out.",
-          suggested_improvements: ["Please try submitting the review request again."]
+          time_complexity: "Error",
+          space_complexity: "Error",
+          logic_summary: `AI Code Analysis failed: ${errMsg}`,
+          suggested_improvements: ["Please fix the above error and try again."]
       });
     }
     setReviewing(false);
