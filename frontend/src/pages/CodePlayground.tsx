@@ -385,32 +385,15 @@ const CodePlayground = ({ navigate, user }) => {
     
     setAiReview("");
     try {
-      const isError = run.rawOutput && run.rawOutput.startsWith('Error:');
-      const token = localStorage.getItem('auth_token');
-      const url = `${import.meta.env.VITE_BACKEND_URL || ''}/api/code/review`;
-
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
-        },
-        body: JSON.stringify({
-          language: run.language,
-          code: run.rawCode || run.code,
-          output: isError ? '' : (run.rawOutput || ''),
-          error: isError ? run.rawOutput : '',
-          execution_time_ms: run.time || 0
-        })
+      const resData = await api.post('/code/review', {
+        language: run.language,
+        code: run.rawCode || run.code,
+        output: isError ? '' : (run.rawOutput || ''),
+        error: isError ? run.rawOutput : '',
+        execution_time_ms: run.time || 0
       });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText);
-      }
-
-      const initResData = await res.json();
-      const initData = initResData.data || initResData;
+      const initData = resData.data || resData;
       
       // Short-circuit if the backend executed synchronously (ARQ fallback)
       if (initData.status === "completed" && initData.task_id === "sync-fallback") {
@@ -429,19 +412,19 @@ const CodePlayground = ({ navigate, user }) => {
           await new Promise(resolve => setTimeout(resolve, delay));
           attempts++;
           
-          const statusRes = await fetch(`${import.meta.env.VITE_BACKEND_URL || ''}/api/code/review_status/${taskId}`, {
-              headers: { ...(token && { 'Authorization': `Bearer ${token}` }) }
-          });
-          if (!statusRes.ok) continue;
-          
-          const statusResData = await statusRes.json();
-          const statusData = statusResData.data || statusResData;
-          if (statusData.status === "completed") {
-              run.aiReview = statusData.review;
-              setAiReview(statusData.review);
-              break;
-          } else if (statusData.status === "failed") {
-              throw new Error(statusData.error || "Async task failed");
+          try {
+              const statusResData = await api.get(`/code/review_status/${taskId}`);
+              const statusData = statusResData.data || statusResData;
+              
+              if (statusData.status === "completed") {
+                  run.aiReview = statusData.review;
+                  setAiReview(statusData.review);
+                  break;
+              } else if (statusData.status === "failed") {
+                  throw new Error(statusData.error || "Async task failed");
+              }
+          } catch (pollingErr) {
+              // Ignore polling 404s/500s or processing loops
           }
       }
       
