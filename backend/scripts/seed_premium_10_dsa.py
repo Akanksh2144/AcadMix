@@ -73,6 +73,7 @@ async def generate_problem(topic: str, difficulty: str) -> dict:
     CRITICAL INSTRUCTIONS:
     Campus Lore Reskinning: Frame the problem narrative around an Indian college life context (e.g., 'The Hostel Warden checking rooms', 'Mess fee calculation', 'Library fine dispute').
     Strict Formatting: Output the response EXACTLY matching the provided JSON schema. Do not include markdown formatting or conversational text outside the JSON object.
+    Example Format: In the `description`, when writing your examples, you MUST put the 'Input', 'Output', and the 'Explanation' completely INSIDE a single triple-backtick (```) code block so they render together in the same grey UI box.
     Code: The optimal_solution_python MUST use a distinct method named 'solve'. It must return the answer.
     Test Cases: Generate at least 15 test cases (max 20). You MUST ensure the first 5 test cases have is_hidden: false. All remaining test cases (at least 10) MUST have is_hidden: true.
     Inputs: 'input_data' should be evaluated dynamically. Use standard python literal evaluation limits or tuple arguments. Make it simple.

@@ -478,7 +478,7 @@ const CodePlayground = ({ navigate, user }) => {
                     strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-slate-100" {...props} />
                   }}
                 >
-                  {activeChallenge.description}
+                  {activeChallenge.description?.replace(/```[\s\r\n]*(?:\*|_)*Explanation:(?:\*|_)*([\s\S]*?)(?=\n\n(?:\*|_)*Example|$)/gi, '\n\n**Explanation:**$1\n```\n\n')}
                 </ReactMarkdown>
               </div>
 
