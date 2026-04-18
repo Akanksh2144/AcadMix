@@ -74,9 +74,9 @@ async def generate_problem(topic: str, difficulty: str) -> dict:
     Campus Lore Reskinning: Frame the problem narrative around an Indian college life context (e.g., 'The Hostel Warden checking rooms', 'Mess fee calculation', 'Library fine dispute').
     Strict Formatting: Output the response EXACTLY matching the provided JSON schema. Do not include markdown formatting or conversational text outside the JSON object.
     Code: The optimal_solution_python MUST use a distinct method named 'solve'. It must return the answer.
-    Test Cases: Generate exactly 5 test cases. The first 3 must be is_hidden: false. The remaining 2 must be is_hidden: true.
+    Test Cases: Generate at least 15 test cases (max 20). You MUST ensure the first 5 test cases have is_hidden: false. All remaining test cases (at least 10) MUST have is_hidden: true.
     Inputs: 'input_data' should be evaluated dynamically. Use standard python literal evaluation limits or tuple arguments. Make it simple.
-    Test Case Accuracy: LLMs often fail at mental math for array indexing. For every single test case, you MUST use the 'step_by_step_trace' field to manually execute your algorithm on the 'input_data' (tracking variables, array bounds, and loop states) to mathematically guarantee the 'expected_output' matches the code's output.
+    Test Case Accuracy: LLMs often fail at mental math for array indexing. For every single test case, you MUST use the 'step_by_step_trace' field to manually execute your algorithm on the 'input_data' (tracking variables, array bounds, and loop states) to mathematically guarantee the 'expected_output' matches the code's output. CRITICAL: For hidden test cases, keep the step_by_step_trace extremely brief (1 line) to conserve API tokens!
     Self-Correction: Re-verify the full length of the array or string bounds manually against your own problem constraints before finalizing the expected output. Double-check your monotonic stack bounds and prefix sum logic to prevent math bugs.
 
     The JSON Schema:
@@ -116,6 +116,11 @@ import json
 # Safe test evaluation logic
 test_cases = json.loads(r'''{json.dumps(test_cases)}''')
 pass_count = 0
+
+# JSON eval safety constants for Python
+true = True
+false = False
+null = None
 
 for idx, tc in enumerate(test_cases):
     try:
@@ -158,20 +163,18 @@ print("OK")
 
 async def seed_problems():
     taxonomy = [
-        ("Arrays & Subarrays", "Easy"),
-        ("Arrays & Subarrays", "Medium"),
-        ("Strings & Hashing", "Easy"),
-        ("Strings & Hashing", "Medium"),
-        ("Math & Number Theory", "Easy"),
-        ("Pattern Printing", "Easy"),
-        ("Basic Sorting & Binary Search", "Medium"),
-        ("Two Pointers & Sliding Window", "Medium"),
-        ("Hash Maps & Sets", "Medium"),
-        ("Stacks & Queues", "Medium")
+        ("Binary Trees", "Medium"),
+        ("Dynamic Programming (1D)", "Medium"),
+        ("Graphs (BFS/DFS)", "Medium"),
+        ("Greedy Algorithms", "Easy"),
+        ("Backtracking", "Hard"),
+        ("Linked Lists", "Easy"),
+        ("Heaps & Priority Queues", "Medium"),
+        ("Tries", "Hard"),
+        ("Dynamic Programming (2D)", "Hard"),
+        ("Graphs (Shortest Path)", "Hard")
     ]
     
-    # User specifically requested exactly 5 problems to save credits
-    taxonomy = taxonomy[:5]
     
     records = []
     
