@@ -73,6 +73,13 @@ const CodePlayground = ({ navigate, user }) => {
   });
 
   const [activeConsoleTab, setActiveConsoleTab] = useState('test_cases');
+  const formatPythonLiteral = (str) => {
+    if (typeof str === 'string' && str.startsWith('"') && str.endsWith('"') && str.includes('\\n')) {
+      return str.slice(1, -1).replace(/\\n/g, '\n');
+    }
+    return str || '';
+  };
+
   const [userTestCases, setUserTestCases] = useState(() => {
     const saved = localStorage.getItem('acadmix_active_challenge');
     if (saved) {
@@ -80,7 +87,7 @@ const CodePlayground = ({ navigate, user }) => {
         const challenge = JSON.parse(saved);
         if (challenge.test_cases) {
           const unhidden = challenge.test_cases.filter(tc => !tc.is_hidden).map(tc => ({
-            input_data: tc.input_data,
+            input_data: formatPythonLiteral(tc.input_data),
             expected_output: tc.expected_output
           }));
           if (unhidden.length > 0) return unhidden;
@@ -98,12 +105,6 @@ const CodePlayground = ({ navigate, user }) => {
     setOutput(null);
     setExecTime(null);
     setShowChallengesModal(false);
-    const formatPythonLiteral = (str) => {
-      if (typeof str === 'string' && str.startsWith('"') && str.endsWith('"') && str.includes('\\n')) {
-        return str.slice(1, -1).replace(/\\n/g, '\n');
-      }
-      return str || '';
-    };
     
     if (challenge.test_cases) {
        const unhidden = challenge.test_cases.filter(tc => !tc.is_hidden).map(tc => ({
