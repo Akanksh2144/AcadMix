@@ -581,25 +581,6 @@ const CodePlayground = ({ navigate, user }) => {
                 </ReactMarkdown>
               </div>
 
-              {/* Constraints */}
-              {activeChallenge.constraints && activeChallenge.constraints.length > 0 && (
-                <div className="pt-2">
-                  <h3 className="text-[16px] font-bold text-slate-900 dark:text-slate-100 mb-3 tracking-wide">Constraints</h3>
-                  <ul className="list-disc list-outside pl-5 space-y-1.5">
-                    {activeChallenge.constraints.map((constraint, idx) => (
-                      <li key={idx} className="text-[14px] text-slate-800 dark:text-slate-300">
-                           <ReactMarkdown 
-                             components={{
-                               p: ({node, ...props}) => <span {...props} />,
-                               code: ({node, inline, ...props}) => <code className="bg-slate-100 dark:bg-white/10 px-1 py-0.5 rounded font-mono text-[13px]" {...props} />
-                             }}
-                           >{constraint}</ReactMarkdown>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
               {/* Real World Applications */}
               {activeChallenge.problem_ai_context && (
                 <div className="pt-2">
