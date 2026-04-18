@@ -89,16 +89,27 @@ test_cases = json.loads(r'''{escaped_tc}''')
 true = True
 false = False
 null = None
-_s_eval = __builtins__.get('ev' + 'al') if isinstance(__builtins__, dict) else getattr(__builtins__, 'ev' + 'al')
+
+import ast
+def safe_eval(raw_s):
+    s = raw_s.strip()
+    if s.startswith("build_tree("):
+        inner = s[s.find("(")+1:s.rfind(")")]
+        return build_tree(ast.literal_eval(inner))
+    if s.startswith("build_linked_list("):
+        inner = s[s.find("(")+1:s.rfind(")")]
+        return build_linked_list(ast.literal_eval(inner))
+    return ast.literal_eval(s)
 
 for idx, tc in enumerate(test_cases):
     try:
         raw_inp = tc['input_data']
-        args = _s_eval(raw_inp) if raw_inp.strip().startswith('(') else (_s_eval(raw_inp),)
+        parsed = safe_eval(raw_inp)
+        args = parsed if isinstance(parsed, tuple) and not raw_inp.strip().startswith("build_") else (parsed,)
         
         result = solve(*args)
         if tc.get('expected_output') is not None and tc.get('expected_output') != "":
-            expected = _s_eval(str(tc['expected_output']))
+            expected = safe_eval(str(tc['expected_output']))
             if result != expected:
                 print(f"Test case {{idx + 1}} failed. Expected {{expected}}, got {{result}}")
                 raise SystemExit(1)
