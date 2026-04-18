@@ -501,16 +501,16 @@ const CodePlayground = ({ navigate, user }) => {
                 </div>
               )}
 
-              {/* Real World Applications & Hints */}
+              {/* Real World Applications */}
               {activeChallenge.problem_ai_context && (
                 <div className="pt-2">
-                  <h3 className="text-[15px] font-medium text-slate-900 dark:text-slate-100 mb-3 tracking-wide">Real-World Applications & Hints</h3>
+                  <h3 className="text-[15px] font-medium text-slate-900 dark:text-slate-100 mb-3 tracking-wide">Real-World Use Cases</h3>
                   <div className="bg-[#F8F9FA] dark:bg-[#1E232D] rounded-xl overflow-hidden shadow-sm">
-                    {['real_world_applications', 'common_pitfalls'].map((key, idx) => {
+                    {['real_world_applications'].map((key, idx) => {
                       const value = activeChallenge.problem_ai_context[key];
                       if (!value || typeof value !== 'string') return null;
                       
-                      const title = key === 'real_world_applications' ? 'Real-Time Use Cases & Applications' : 'Common Pitfalls';
+                      const title = 'Real-Time Use Cases & Applications';
                       return (
                         <details key={idx} className="group border-b border-white outline-none dark:border-slate-800/50 last:border-0 [&_summary::-webkit-details-marker]:hidden">
                           <summary className="flex items-center justify-between px-5 py-4 cursor-pointer select-none outline-none hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
