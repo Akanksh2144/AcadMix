@@ -468,31 +468,33 @@ const CodePlayground = ({ navigate, user }) => {
                   remarkPlugins={[remarkGfm]}
                   components={{
                     pre: ({node, ...props}) => (
-                      <pre className="bg-slate-50 dark:bg-[#151B2B] border-l-4 border-slate-300 dark:border-indigo-500 p-4 rounded-r-xl overflow-x-auto text-[13px] my-4 shadow-sm font-mono text-slate-800 dark:text-slate-200" {...props} />
+                      <pre className="bg-[#F9FAFB] dark:bg-[#1A1D24] border-l-[3px] border-[#F59E0B] dark:border-amber-500 pl-4 pr-4 py-3 rounded-r-lg overflow-x-auto text-[14px] my-5 font-sans whitespace-pre-wrap text-slate-700 dark:text-slate-300" {...props} />
                     ),
                     code: ({node, inline, ...props}) => (
                       inline 
-                        ? <code className="bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-indigo-600 dark:text-indigo-400 font-mono text-[13px]" {...props} />
-                        : <code {...props} />
+                        ? <code className="bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-rose-600 dark:text-rose-400 font-mono text-[13px]" {...props} />
+                        : <code className="font-sans leading-loose text-[14px]" {...props} />
                     ),
                     strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-slate-100" {...props} />
                   }}
                 >
-                  {activeChallenge.description?.replace(/```[\s\r\n]*(?:\*|_)*Explanation:(?:\*|_)*([\s\S]*?)(?=\n\n(?:\*|_)*Example|$)/gi, '\n\n**Explanation:**$1\n```\n\n')}
+                  {activeChallenge.description?.replace(/```[\s\r\n]*(?:\*|_)*Explanation:(?:\*|_)*([\s\S]*?)(?=\n\n(?:\*|_)*Example|$)/gi, '\n\n**Explanation :** $1\n```\n\n')}
                 </ReactMarkdown>
               </div>
 
               {/* Constraints */}
               {activeChallenge.constraints && activeChallenge.constraints.length > 0 && (
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wider">Constraints</h3>
-                  <ul className="space-y-2.5 ml-1">
+                <div className="pt-2">
+                  <h3 className="text-[15px] font-medium text-slate-900 dark:text-slate-100 mb-3 tracking-wide">Constraints</h3>
+                  <ul className="list-disc list-outside pl-5 space-y-1.5">
                     {activeChallenge.constraints.map((constraint, idx) => (
-                      <li key={idx} className="text-[13px] flex items-start gap-3 text-slate-600 dark:text-slate-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 mt-1.5 shrink-0"></span>
-                        <div className="inline-block font-mono bg-slate-50 dark:bg-white/[0.03] px-2.5 py-0.5 rounded text-slate-700 dark:text-slate-300">
-                           <ReactMarkdown components={{p: ({node, ...props}) => <span {...props} />}}>{constraint}</ReactMarkdown>
-                        </div>
+                      <li key={idx} className="text-[14px] text-slate-800 dark:text-slate-300">
+                           <ReactMarkdown 
+                             components={{
+                               p: ({node, ...props}) => <span {...props} />,
+                               code: ({node, inline, ...props}) => <code className="bg-slate-100 dark:bg-white/10 px-1 py-0.5 rounded font-mono text-[13px]" {...props} />
+                             }}
+                           >{constraint}</ReactMarkdown>
                       </li>
                     ))}
                   </ul>
@@ -502,20 +504,20 @@ const CodePlayground = ({ navigate, user }) => {
               {/* Real World Applications & Hints */}
               {activeChallenge.problem_ai_context && (
                 <div className="pt-2">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wider">Real-World Applications & Hints</h3>
-                  <div className="space-y-3">
+                  <h3 className="text-[15px] font-medium text-slate-900 dark:text-slate-100 mb-3 tracking-wide">Real-World Applications & Hints</h3>
+                  <div className="bg-[#F8F9FA] dark:bg-[#1E232D] rounded-xl overflow-hidden shadow-sm">
                     {['real_world_applications', 'common_pitfalls'].map((key, idx) => {
                       const value = activeChallenge.problem_ai_context[key];
                       if (!value || typeof value !== 'string') return null;
                       
                       const title = key === 'real_world_applications' ? 'Real-Time Use Cases & Applications' : 'Common Pitfalls';
                       return (
-                        <details key={idx} className="group bg-slate-50 dark:bg-[#151B2B] rounded-xl border border-slate-100 dark:border-slate-800/50 overflow-hidden [&_summary::-webkit-details-marker]:hidden">
-                          <summary className="flex items-center justify-between px-5 py-3.5 cursor-pointer select-none">
-                            <span className="text-[13px] font-bold text-slate-700 dark:text-slate-300">{title}</span>
+                        <details key={idx} className="group border-b border-white outline-none dark:border-slate-800/50 last:border-0 [&_summary::-webkit-details-marker]:hidden">
+                          <summary className="flex items-center justify-between px-5 py-4 cursor-pointer select-none outline-none hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+                            <span className="text-[14px] text-slate-600 dark:text-slate-300 font-medium">{title}</span>
                             <CaretDown size={14} className="text-slate-400 transition-transform duration-200 group-open:rotate-180" weight="bold" />
                           </summary>
-                          <div className="px-5 pb-5 pt-1 text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800/50 mx-2 mt-1 py-3 text-start">
+                          <div className="px-5 pb-5 pt-2 text-[14px] text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-200 dark:border-slate-700/50 mx-0 mt-0 text-start bg-transparent">
                              <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
                                p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />
                              }}>{value}</ReactMarkdown>
