@@ -1171,20 +1171,27 @@ const CodePlayground = ({ navigate, user }) => {
                       </h3>
                       <p className="font-medium text-slate-700 dark:text-slate-300 leading-relaxed text-[15px]">{aiReview.logic_summary}</p>
                     </div>
-                    {aiReview.suggested_improvements && aiReview.suggested_improvements.length > 0 && (
-                      <div className="bg-white dark:bg-[#1A202C] p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    {aiReview.suggested_improvements && (
+                      <div className="bg-white dark:bg-[#1A202C] p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm mt-5">
                         <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 mb-3 tracking-widest uppercase flex items-center gap-2">
                           <CheckCircle weight="fill" className="text-emerald-500 text-base" />
                           Suggested Improvements
                         </h3>
-                        <ul className="space-y-2.5">
-                          {aiReview.suggested_improvements.map((imp, idx) => (
-                            <li key={idx} className="flex gap-3 items-start text-[14px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-                              <span className="text-indigo-500 mt-1 font-black">→</span>
-                              {imp}
-                            </li>
-                          ))}
-                        </ul>
+                        {aiReview.suggested_improvements.length > 0 ? (
+                          <ul className="space-y-2.5">
+                            {aiReview.suggested_improvements.map((imp, idx) => (
+                              <li key={idx} className="flex gap-3 items-start text-[14px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
+                                <span className="text-indigo-500 mt-1 font-black">→</span>
+                                {imp}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-[14px] font-medium text-slate-500 dark:text-slate-400 leading-relaxed flex items-center gap-2">
+                            <Sparkle weight="duotone" className="text-emerald-500" />
+                            No major improvements needed! Your code looks solid.
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
