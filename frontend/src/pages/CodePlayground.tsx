@@ -685,7 +685,7 @@ const CodePlayground = ({ navigate, user }) => {
                         <button
                           key={idx}
                           onClick={() => setActiveTestCaseIdx(idx)}
-                          className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-colors whitespace-nowrap ${activeTestCaseIdx === idx ? 'bg-slate-700/80 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700/50'}`}
+                          className={`px-4 py-1.5 rounded-full text-sm font-bold transition-colors whitespace-nowrap ${activeTestCaseIdx === idx ? 'bg-slate-700/80 text-white shadow-sm' : 'bg-slate-800 text-slate-400 hover:bg-slate-700/50'}`}
                         >
                           Case {idx + 1}
                         </button>
@@ -695,7 +695,7 @@ const CodePlayground = ({ navigate, user }) => {
                           setUserTestCases([...userTestCases, { input_data: '', expected_output: '' }]);
                           setActiveTestCaseIdx(userTestCases.length);
                         }}
-                        className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors" 
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors flex-shrink-0" 
                         title="Add Custom Test Case"
                       >
                         <Plus size={16} weight="bold" />
