@@ -577,7 +577,7 @@ const CodePlayground = ({ navigate, user }) => {
                                   // Check if previous delimiter was |||SEMI|||
                                   const prevIdx = labeled.split(/(\|\|\|SEMI\|\|\||\|\|\|\/SEMI\|\|\|)/).indexOf(seg);
                                   const isSemi = prevIdx > 0 && labeled.split(/(\|\|\|SEMI\|\|\||\|\|\|\/SEMI\|\|\|)/)[prevIdx - 1] === '|||SEMI|||';
-                                  return isSemi ? <strong key={j} className="font-semibold text-slate-800 dark:text-slate-200">{seg}</strong> : <span key={j}>{seg}</span>;
+                                  return isSemi ? <strong key={j} className="font-semibold text-slate-500 dark:text-slate-400">{seg}</strong> : <span key={j}>{seg}</span>;
                                 })}</span>;
                               }
                               return <span key={i}>{part}</span>;
