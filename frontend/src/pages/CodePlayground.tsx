@@ -50,6 +50,7 @@ const CodePlayground = ({ navigate, user }) => {
   const [showChallengesModal, setShowChallengesModal] = useState(false);
   const [showInsightsModal, setShowInsightsModal] = useState(false);
   const [difficultyFilter, setDifficultyFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   
   const [aiReview, setAiReview] = useState(null);
   const [reviewing, setReviewing] = useState(false);
@@ -117,17 +118,26 @@ const CodePlayground = ({ navigate, user }) => {
     fetchChallenges();
     fetchStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [difficultyFilter]);
+  }, []);
 
   const fetchChallenges = async () => {
     setIsChallengesLoading(true);
     try {
-      const res = await api.get('/challenges', { params: { difficulty: difficultyFilter, limit: 100 } });
+      const res = await api.get('/challenges', { params: { limit: 100 } });
       const rawData = res.data?.data || res.data;
       setChallenges(Array.isArray(rawData?.data) ? rawData.data : Array.isArray(rawData) ? rawData : []);
     } catch(err) { console.error(err); }
     setIsChallengesLoading(false);
   };
+
+  const filteredChallenges = React.useMemo(() => {
+    return challenges.filter(c => {
+      const matchDiff = !difficultyFilter || c.difficulty === difficultyFilter;
+      const term = searchQuery.toLowerCase();
+      const matchSearch = !term || (c.title && c.title.toLowerCase().includes(term)) || (c.topics && c.topics.some(t => t.toLowerCase().includes(term)));
+      return matchDiff && matchSearch;
+    });
+  }, [challenges, difficultyFilter, searchQuery]);
   
   const fetchStats = async () => {
     try {
@@ -843,6 +853,15 @@ const CodePlayground = ({ navigate, user }) => {
               </div>
               
               <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm focus-within:ring-1 focus-within:ring-indigo-500/30">
+                  <input 
+                    type="text" 
+                    placeholder="Search problems or topics..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-transparent border-none outline-none focus:ring-0 text-sm font-semibold text-slate-700 dark:text-slate-300 placeholder-slate-400 w-48 sm:w-64"
+                  />
+                </div>
                 <div className="flex items-center gap-2 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm focus-within:ring-0">
                    <Funnel size={16} className="text-slate-400" />
                    <select className="bg-transparent border-none outline-none focus:ring-0 focus:outline-none text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer"
@@ -853,7 +872,7 @@ const CodePlayground = ({ navigate, user }) => {
                      <option value="Hard">Hard</option>
                    </select>
                 </div>
-                <button onClick={() => setShowChallengesModal(false)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors">
+                <button onClick={() => setShowChallengesModal(false)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors shrink-0">
                   <X size={24} />
                 </button>
               </div>
@@ -864,13 +883,13 @@ const CodePlayground = ({ navigate, user }) => {
                  <div className="py-20 text-center text-slate-500 dark:text-slate-400">
                     Loading problems...
                  </div>
-               ) : challenges.length === 0 ? (
+               ) : filteredChallenges.length === 0 ? (
                  <div className="py-20 text-center text-slate-500 dark:text-slate-400">
                     No problems found.
                  </div>
                ) : (
                  <div className="divide-y divide-slate-100 dark:divide-white/[0.06]">
-                   {challenges.map((ch, i) => (
+                   {filteredChallenges.map((ch, i) => (
                      <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors group cursor-pointer" onClick={() => handleLoadChallenge(ch)}>
                         <div className="flex-1 pr-6">
                            <div className="flex items-center gap-3 mb-2">
