@@ -470,15 +470,32 @@ const CodePlayground = ({ navigate, user }) => {
                     pre: ({node, ...props}) => (
                       <pre className="bg-[#F9FAFB] dark:bg-[#1A1D24] border-l-[3px] border-[#F59E0B] dark:border-amber-500 pl-4 pr-4 py-3 rounded-r-lg overflow-x-auto text-[14px] my-5 font-sans whitespace-pre-wrap text-slate-700 dark:text-slate-300" {...props} />
                     ),
-                    code: ({node, inline, ...props}) => (
-                      inline 
-                        ? <code className="bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-rose-600 dark:text-rose-400 font-mono text-[13px]" {...props} />
-                        : <code className="font-sans leading-loose text-[14px]" {...props} />
-                    ),
+                    code: ({node, inline, children, ...props}) => {
+                      if (inline) {
+                        return <code className="bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-rose-600 dark:text-rose-400 font-mono text-[13px]" {...props}>{children}</code>;
+                      }
+                      
+                      let content = Array.isArray(children) ? children[0] : children;
+                      if (typeof content === 'string') {
+                        content = content.replace(/\*\*/g, '');
+                        const parts = content.split(/(Input\s*:|Output\s*:|Explanation\s*:)/g);
+                        return (
+                          <code className="font-sans leading-loose text-[14px]" {...props}>
+                            {parts.map((part, i) => {
+                               if (/^(Input|Output|Explanation)\s*:$/.test(part)) {
+                                 return <strong key={i} className="font-bold text-slate-900 dark:text-slate-100">{part}</strong>;
+                               }
+                               return part;
+                            })}
+                          </code>
+                        );
+                      }
+                      return <code className="font-sans leading-loose text-[14px]" {...props}>{children}</code>;
+                    },
                     strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-slate-100" {...props} />
                   }}
                 >
-                  {activeChallenge.description?.replace(/```[\s\r\n]*(?:\*|_)*Explanation:(?:\*|_)*([\s\S]*?)(?=\n\n(?:\*|_)*Example|$)/gi, '\n\n**Explanation :** $1\n```\n\n')}
+                  {activeChallenge.description?.replace(/```[\s\r\n]*(?:\*|_)*Explanation:(?:\*|_)*([\s\S]*?)(?=\n\n(?:\*|_)*Example|$)/gi, '\n\nExplanation : $1\n```\n\n')}
                 </ReactMarkdown>
               </div>
 
