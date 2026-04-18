@@ -215,10 +215,15 @@ async def run_challenge(request: Request, req: ChallengeRunTest, user: dict = De
         resp = await _do_request()
         if resp.status_code == 200:
             result = resp.json()
-            # In Run mode, exit_code 0 means 100% passed, exit_code 1 means some failed. 
-            # We will just pipe the stdout directly to the frontend console!
             return {"output": result.get("output", ""), "error": result.get("error", ""), "exit_code": result.get("exit_code", -1), "success": result.get("exit_code", -1) == 0}
-        return {"error": "Code runner service error", "exit_code": -1, "success": False}
+        
+        # Pass through the actual runner error correctly
+        try:
+            err_json = resp.json()
+            err_msg = err_json.get("detail", err_json.get("error", "Code runner service error"))
+        except:
+            err_msg = resp.text or "Code runner service error"
+        return {"error": err_msg, "exit_code": -1, "success": False}
     except Exception as e:
         return {"error": str(e), "exit_code": -1, "success": False}
 
@@ -261,10 +266,10 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
             output = result.get("output", "")
             
             # Is success requires exit_code 0 AND stdout ending in "OK\n" (unless fallback language)
-            is_success = (exit_code == 0)
-            if req.language.lower() == "python" and "OK" not in output:
-                 is_success = False
-            
+            is_success = exit_code == 0
+            if req.language.lower() == "python":
+                is_success = is_success and output.strip().endswith("OK")
+                
             if is_success:
                 pr = await session.execute(select(models.PremiumChallengeProgress).where(models.PremiumChallengeProgress.student_id == user["id"], models.PremiumChallengeProgress.challenge_id == req.challenge_id))
                 prog = pr.scalars().first()
@@ -283,6 +288,13 @@ async def submit_challenge(request: Request, req: ChallengeSubmit, user: dict = 
                 
             return {"output": "All Test Cases Passed Flawlessly!" if is_success else output, "error": result.get("error", ""),
                     "exit_code": exit_code, "success": is_success}
-        return {"error": "Code runner service error", "exit_code": -1, "success": False}
+                    
+        # Pass through the actual runner error correctly
+        try:
+            err_json = resp.json()
+            err_msg = err_json.get("detail", err_json.get("error", "Code runner service error"))
+        except:
+            err_msg = resp.text or "Code runner service error"
+        return {"error": err_msg, "exit_code": -1, "success": False}
     except Exception as e:
         return {"error": str(e), "exit_code": -1, "success": False}
