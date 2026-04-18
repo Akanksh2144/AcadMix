@@ -97,9 +97,16 @@ const CodePlayground = ({ navigate, user }) => {
     setOutput(null);
     setExecTime(null);
     setShowChallengesModal(false);
+    const formatPythonLiteral = (str) => {
+      if (typeof str === 'string' && str.startsWith('"') && str.endsWith('"') && str.includes('\\n')) {
+        return '"""\n' + str.slice(1, -1).replace(/\\n/g, '\n') + '\n"""';
+      }
+      return str || '';
+    };
+    
     if (challenge.test_cases) {
        const unhidden = challenge.test_cases.filter(tc => !tc.is_hidden).map(tc => ({
-           input_data: tc.input_data,
+           input_data: formatPythonLiteral(tc.input_data),
            expected_output: tc.expected_output
        }));
        setUserTestCases(unhidden.length > 0 ? unhidden : [{ input_data: '', expected_output: '' }]);
@@ -729,14 +736,14 @@ const CodePlayground = ({ navigate, user }) => {
                       <div className="flex flex-col gap-4 flex-1">
                         <div className="flex flex-col">
                           <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Input Data</label>
-                          <input 
+                          <textarea 
                             value={userTestCases[activeTestCaseIdx].input_data || ''}
                             onChange={(e) => {
                                const arr = [...userTestCases];
                                arr[activeTestCaseIdx].input_data = e.target.value;
                                setUserTestCases(arr);
                             }}
-                            className="bg-slate-800 border border-slate-700/50 outline-none font-mono text-sm text-slate-300 rounded-xl px-4 py-2.5 focus:ring-1 focus:ring-indigo-500/50"
+                            className="bg-slate-800 border border-slate-700/50 outline-none font-mono text-[13px] text-slate-300 rounded-xl px-4 py-3 focus:ring-1 focus:ring-indigo-500/50 min-h-[100px] resize-y custom-scrollbar"
                             placeholder="e.g. build_tree([1, 2, 3])"
                           />
                         </div>
