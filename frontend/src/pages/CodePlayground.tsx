@@ -34,6 +34,8 @@ const CodePlayground = ({ navigate, user }) => {
   const [testResults, setTestResults] = useState([]);
   const [running, setRunning] = useState(false);
   const [execTime, setExecTime] = useState(null);
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const langMenuRef = useRef(null);
 
   // Close language dropdown on outside click
   useEffect(() => {
