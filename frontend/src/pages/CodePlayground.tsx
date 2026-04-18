@@ -499,14 +499,16 @@ const CodePlayground = ({ navigate, user }) => {
                 </div>
               )}
 
-              {/* Fun Facts (problem_ai_context) */}
-              {activeChallenge.problem_ai_context && Object.keys(activeChallenge.problem_ai_context).length > 0 && (
+              {/* Real World Applications & Hints */}
+              {activeChallenge.problem_ai_context && (
                 <div className="pt-2">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wider">Fun Facts</h3>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wider">Real-World Applications & Hints</h3>
                   <div className="space-y-3">
-                    {Object.entries(activeChallenge.problem_ai_context).map(([key, value], idx) => {
+                    {['real_world_applications', 'common_pitfalls'].map((key, idx) => {
+                      const value = activeChallenge.problem_ai_context[key];
                       if (!value || typeof value !== 'string') return null;
-                      const title = key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                      
+                      const title = key === 'real_world_applications' ? 'Real-Time Use Cases & Applications' : 'Common Pitfalls';
                       return (
                         <details key={idx} className="group bg-slate-50 dark:bg-[#151B2B] rounded-xl border border-slate-100 dark:border-slate-800/50 overflow-hidden [&_summary::-webkit-details-marker]:hidden">
                           <summary className="flex items-center justify-between px-5 py-3.5 cursor-pointer select-none">
