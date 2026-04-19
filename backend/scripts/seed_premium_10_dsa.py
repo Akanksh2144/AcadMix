@@ -317,10 +317,7 @@ async def seed_problems():
                     "is_live": True
                 })
                 
-            # Wipe existing premium challenges to ensure fresh regeneration with perfect formatting
-            from sqlalchemy import delete
-            await session.execute(delete(PremiumCodingChallenge))
-            
+            # Append new premium challenges securely
             stmt = insert(PremiumCodingChallenge).values(final_db_records)
             await session.execute(stmt)
             await session.commit()

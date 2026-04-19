@@ -52,7 +52,7 @@ const HostelBooking = React.lazy(() => import('./pages/HostelBooking'));
 const PreEnrollBooking = React.lazy(() => import('./pages/PreEnrollBooking'));
 const WardenDashboard = React.lazy(() => import('./pages/WardenDashboard'));
 const ResumeATSScorer = React.lazy(() => import('./pages/ResumeATSScorer'));
-const CareerToolkit = React.lazy(() => import('./pages/CareerToolkit'));
+const CareerToolkit = React.lazy(() => import('./pages/CareerToolkit')); 
 const TransportAdminDashboard = React.lazy(() => import('./pages/TransportAdminDashboard'));
 const LibrarianDashboard = React.lazy(() => import('./pages/LibrarianDashboard'));
 const SecurityDashboard = React.lazy(() => import('./pages/SecurityDashboard'));

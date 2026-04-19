@@ -1019,11 +1019,11 @@ const TABS = [
   { id: 'company-intel', label: 'Company Intel', icon: Buildings, Component: CompanyIntelTab },
 ];
 
-const CareerToolkit = ({ navigate, user }) => {
-  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('career_tab') || 'cover-letter');
+const CareerToolkit = ({ navigate, user }: any) => {
+  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('career_tab') || 'resume-scorer');
   useEffect(() => { sessionStorage.setItem('career_tab', activeTab); }, [activeTab]);
 
-  const ActiveComponent = TABS.find(t => t.id === activeTab)?.Component || CoverLetterTab;
+  const ActiveComponent = TABS.find(t => t.id === activeTab)?.Component || ResumeTab;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
