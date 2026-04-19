@@ -413,7 +413,7 @@ function AppRoutes({ user, onLogin, onLogout }) {
       <Route path="/student/profile" element={
         <ProtectedRoute user={user}><StudentProfilePage navigate={navigate} user={user} /></ProtectedRoute>
       } />
-      <Route path="/preview/:id/:filename" element={
+      <Route path="/preview/:filename" element={
         <ProtectedRoute user={user}><DocumentPreviewPage /></ProtectedRoute>
       } />
 

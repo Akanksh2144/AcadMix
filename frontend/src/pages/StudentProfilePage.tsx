@@ -147,9 +147,9 @@ const StudentProfilePage = ({ navigate, user }: any) => {
 
   /* ── Download resume ────────────────────── */
   const handleDownload = async (id: string, filename: string) => {
-    // Open in a new tab natively using our dedicated React frontend Preview route!
-    // This perfectly hides the AWS URLs and keeps the browser URL bar super clean
-    window.open(`/preview/${id}/${encodeURIComponent(filename)}`, '_blank');
+    // Hide UUID entirely by passing it securely via sessionStorage
+    sessionStorage.setItem('preview_resume_id', id);
+    window.open(`/preview/${encodeURIComponent(filename)}`, '_blank');
   };
 
   /* ── Drag & Drop ────────────────────────── */
