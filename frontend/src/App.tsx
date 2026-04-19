@@ -47,6 +47,7 @@ const ExpertDashboard = React.lazy(() => import('./pages/ExpertDashboard'));
 const NodalOfficerDashboard = React.lazy(() => import('./pages/NodalOfficerDashboard'));
 const FacultyProfilePage = React.lazy(() => import('./pages/FacultyProfilePage'));
 const StudentProfilePage = React.lazy(() => import('./pages/StudentProfilePage'));
+const DocumentPreviewPage = React.lazy(() => import('./pages/DocumentPreviewPage'));
 const InterviewWarRoom = React.lazy(() => import('./pages/InterviewWarRoom'));
 const AIInterviewSession = React.lazy(() => import('./pages/AIInterviewSession'));
 const HostelBooking = React.lazy(() => import('./pages/HostelBooking'));
@@ -411,6 +412,9 @@ function AppRoutes({ user, onLogin, onLogout }) {
       } />
       <Route path="/student/profile" element={
         <ProtectedRoute user={user}><StudentProfilePage navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/preview/:id/:filename" element={
+        <ProtectedRoute user={user}><DocumentPreviewPage /></ProtectedRoute>
       } />
 
       {/* ── Fallback ─────────────────────────────────────────────── */}

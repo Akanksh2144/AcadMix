@@ -147,44 +147,9 @@ const StudentProfilePage = ({ navigate, user }: any) => {
 
   /* ── Download resume ────────────────────── */
   const handleDownload = async (id: string, filename: string) => {
-    try {
-      // API returns a binary Blob securely proxied through backend
-      const response = await resumeVaultAPI.download(id);
-      
-      const fileType = filename.toLowerCase().endsWith('.docx') 
-        ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-        : 'application/pdf';
-
-      const blob = new Blob([response.data || response], { type: fileType });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Open in new tab using a custom HTML shell to strictly enforce the tab title
-      const viewerWindow = window.open('', '_blank');
-      if (viewerWindow) {
-        viewerWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <title>${filename}</title>
-              <style>
-                html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #333; }
-                iframe { width: 100vw; height: 100vh; border: none; display: block; }
-              </style>
-            </head>
-            <body>
-              <iframe src="${url}"></iframe>
-            </body>
-          </html>
-        `);
-        viewerWindow.document.close();
-      }
-      
-      // We can't immediately revoke the URL if we open it in a new tab because 
-      // the iframe needs time to load the blob. Use a timeout.
-      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
-    } catch {
-      setMessage({ type: 'error', text: 'Download failed.' });
-    }
+    // Open in a new tab natively using our dedicated React frontend Preview route!
+    // This perfectly hides the AWS URLs and keeps the browser URL bar super clean
+    window.open(`/preview/${id}/${encodeURIComponent(filename)}`, '_blank');
   };
 
   /* ── Drag & Drop ────────────────────────── */
