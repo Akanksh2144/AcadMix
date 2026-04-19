@@ -83,8 +83,11 @@ const CodePlayground = ({ navigate, user }) => {
 
   const handleLoadChallenge = (challenge) => {
     setActiveChallenge(challenge);
-    setLanguage(challenge.language || 'python');
-    setCode(challenge.template_code || DEFAULT_TEMPLATES[challenge.language || 'python']);
+    const lang = challenge.language || 'python';
+    setLanguage(lang);
+    // Resolve starter template: init_code[lang] → template_code → default
+    const starterCode = challenge.init_code?.[lang] || challenge.template_code || DEFAULT_TEMPLATES[lang];
+    setCode(starterCode);
     setOutput(null);
     setExecTime(null);
     setShowChallengesModal(false);
