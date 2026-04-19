@@ -154,6 +154,7 @@ const StudentProfilePage = ({ navigate, user }: any) => {
       { icon: EnvelopeSimple, label: 'Email', value: user?.email },
       { icon: Phone, label: 'Phone', value: profile.phone },
       { icon: IdentificationCard, label: 'Roll No / Hall Ticket / Reg. No', value: profile.register_number || user?.roll_number || user?.college_id },
+      { icon: IdentificationCard, label: 'ABC ID', value: profile.abc_id },
       { icon: IdentificationCard, label: 'Aadhaar Number', value: profile.aadhaar, masked: true },
       { icon: Drop, label: 'Blood Group', value: profile.blood_group },
       { icon: User, label: 'Date of Birth', value: profile.dob },
@@ -167,7 +168,6 @@ const StudentProfilePage = ({ navigate, user }: any) => {
       { icon: GraduationCap, label: 'Section', value: user?.section || profile.section },
       { icon: GraduationCap, label: 'Current Semester', value: profile.current_semester },
       { icon: GraduationCap, label: 'Admission Year', value: profile.admission_year },
-      { icon: IdentificationCard, label: 'ABC ID', value: profile.abc_id },
     ],
     community: [
       { icon: Heart, label: 'Community', value: profile.community },
