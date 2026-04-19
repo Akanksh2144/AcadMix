@@ -190,7 +190,7 @@ async def extract_pdf_text(file_bytes: bytes) -> str:
     except Exception as e:
         logger.warning("PyMuPDF extraction failed: %s", e)
 
-    # Fallback to PyPDF2 just in case PyMuPDF fails to initialize on the stream
+    # Fallback 1: PyPDF2
     try:
         import PyPDF2
         reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
@@ -204,6 +204,21 @@ async def extract_pdf_text(file_bytes: bytes) -> str:
             return full_text
     except Exception as e:
         logger.warning("PyPDF2 fallback also failed: %s", e)
+
+    # Fallback 2: pdfplumber (restoring since it worked for this specific PDF previously)
+    try:
+        import pdfplumber
+        with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+            pages = []
+            for page in pdf.pages:
+                text = page.extract_text()
+                if text:
+                    pages.append(text)
+            full_text = "\n".join(pages).strip()
+            if full_text:
+                return full_text
+    except Exception as e:
+        logger.warning("pdfplumber fallback also failed: %s", e)
 
     raise HTTPException(status_code=422, detail="Could not extract text from the PDF. Please ensure it's a valid, text-based PDF (not a scanned image).")
 
