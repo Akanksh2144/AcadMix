@@ -774,9 +774,6 @@ const CodePlayground = ({ navigate, user }) => {
                 {activeConsoleTab === 'test_cases' ? (
                   <div className="p-4 flex flex-col h-full">
                     <div className="flex items-center gap-2 mb-4 shrink-0 overflow-x-auto custom-scrollbar pb-1">
-                      {userTestCases.map((tc, idx) => {
-                        const tr = testResults[idx];
-                        let pillClass = activeTestCaseIdx === idx ? 'bg-slate-700/80 text-white shadow-sm' : 'bg-slate-800 text-slate-400 hover:bg-slate-700/50';
                       {userTestCases.map((_, idx) => {
                        let pillStyle = '';
                        const tr = testResults[idx];
