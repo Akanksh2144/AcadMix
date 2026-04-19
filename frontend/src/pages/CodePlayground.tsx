@@ -264,15 +264,20 @@ const CodePlayground = ({ navigate, user }) => {
       
       let rawOutput = result;
       let uiSuccess = false;
-      if (rawOutput && rawOutput.includes('___ACADMIX_SEP___')) {
-         const parts = rawOutput.split('___ACADMIX_SEP___');
-         uiSuccess = rawOutput.includes('___ACADMIX_OK___');
-         rawOutput = parts[0].replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').trim();
+      let globalPrints = rawOutput;
+      
+      if (rawOutput && rawOutput.includes('___ACADMIX_START_TESTS___')) {
+         const splitIx = rawOutput.split('___ACADMIX_START_TESTS___');
+         globalPrints = splitIx[0];
          
-         const numCases = is_submit ? Math.max(0, parts.length - 2) : userTestCases.length;
+         const rawTests = splitIx[1] || '';
+         const parts = rawTests.split('___ACADMIX_SEP___');
+         uiSuccess = rawOutput.includes('___ACADMIX_OK___');
+         
+         const numCases = is_submit ? Math.max(0, parts.length - 1) : userTestCases.length;
          
          const parsedResults = Array.from({ length: numCases }).map((_, idx) => {
-             let actual = (parts[idx + 1] || '').replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').trim();
+             let actual = (parts[idx] || '').replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').trim();
              let passed = null;
              
              if (actual.includes('___ACADMIX_STATUS_PASS___')) {
@@ -300,7 +305,7 @@ const CodePlayground = ({ navigate, user }) => {
          setSubmitSuccess(data.success && is_submit);
       }
       
-      const cleanedOutput = rawOutput ? rawOutput.replace(/___ACADMIX_SEP___/g, '').replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').trim() : '';
+      const cleanedOutput = globalPrints ? globalPrints.replace(/___ACADMIX_SEP___/g, '').replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').replace(/___ACADMIX_START_TESTS___/g, '').trim() : '';
       setOutput(cleanedOutput);
       
       setHistory(prev => [{
