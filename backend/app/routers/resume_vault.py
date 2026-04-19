@@ -109,8 +109,19 @@ async def download_resume(
 
     # Try presigned URL first, fall back to stored URL
     presigned = storage.generate_presigned_url(resume.storage_key, expires_in=3600)
-    return {
-        "download_url": presigned or resume.file_url,
-        "filename": resume.filename,
-        "content_type": resume.content_type,
-    }
+    target_url = presigned or resume.file_url
+
+    import httpx
+    from starlette.responses import StreamingResponse
+
+    async def stream_file():
+        async with httpx.AsyncClient() as client:
+            async with client.stream("GET", target_url) as response:
+                async for chunk in response.aiter_bytes():
+                    yield chunk
+
+    return StreamingResponse(
+        stream_file(),
+        media_type=resume.content_type or "application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{resume.filename}"'}
+    )

@@ -557,7 +557,7 @@ export const resumeVaultAPI = {
   getPrimary: () => api.get('/resume-vault/primary'),
   setPrimary: (id) => api.patch(`/resume-vault/${id}/primary`),
   remove: (id) => api.delete(`/resume-vault/${id}`),
-  download: (id) => api.get(`/resume-vault/${id}/download`),
+  download: (id) => api.get(`/resume-vault/${id}/download`, { responseType: 'blob' }),
 };
 
 // Career Toolkit — AI-Powered Career Prep Tools

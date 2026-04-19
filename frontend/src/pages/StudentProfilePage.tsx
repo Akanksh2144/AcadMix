@@ -146,10 +146,19 @@ const StudentProfilePage = ({ navigate, user }: any) => {
   };
 
   /* ── Download resume ────────────────────── */
-  const handleDownload = async (id: string) => {
+  const handleDownload = async (id: string, filename: string) => {
     try {
-      const { data } = await resumeVaultAPI.download(id);
-      window.open(data.download_url, '_blank');
+      // API now returns a binary Blob via StreamingResponse
+      const response = await resumeVaultAPI.download(id);
+      
+      const url = window.URL.createObjectURL(new Blob([response.data || response]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
     } catch {
       setMessage({ type: 'error', text: 'Download failed.' });
     }
@@ -452,7 +461,7 @@ const StudentProfilePage = ({ navigate, user }: any) => {
                                   </button>
                                 )}
                                 <button
-                                  onClick={() => handleDownload(r.id)}
+                                  onClick={() => handleDownload(r.id, r.filename)}
                                   className="p-2 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-slate-400 hover:text-emerald-500 transition-colors"
                                   title="Download"
                                 >
