@@ -173,6 +173,8 @@ async def call_llm(messages: list, json_mode: bool = False) -> str:
 
 
 async def extract_pdf_text(file_bytes: bytes) -> str:
+    err_messages = []
+
     """Extract text from PDF bytes using PyMuPDF (fitz). Highly robust against weird encodings."""
     try:
         import fitz  # PyMuPDF
@@ -187,8 +189,10 @@ async def extract_pdf_text(file_bytes: bytes) -> str:
             return full_text
         else:
             logger.warning("PyMuPDF extracted empty text (scanned PDF or missing ToUnicode mapping).")
+            err_messages.append("fitz: empty output")
     except Exception as e:
         logger.warning("PyMuPDF extraction failed: %s", e)
+        err_messages.append(f"fitz: {e}")
 
     # Fallback 1: PyPDF2
     try:
@@ -202,8 +206,15 @@ async def extract_pdf_text(file_bytes: bytes) -> str:
         full_text = "\n".join(pages).strip()
         if full_text:
             return full_text
+        else:
+            err_messages.append("pypdf2: empty output")
     except Exception as e:
         logger.warning("PyPDF2 fallback also failed: %s", e)
+        err_messages.append(f"pypdf2: {e}")
+
+    # Check if empty
+    if not file_bytes:
+        raise HTTPException(status_code=422, detail="The uploaded file is empty (0 bytes).")
 
     # Fallback 2: pdfplumber (restoring original permissiveness)
     try:
@@ -217,8 +228,14 @@ async def extract_pdf_text(file_bytes: bytes) -> str:
             return "\n".join(pages).strip()
     except Exception as e:
         logger.warning("pdfplumber fallback also failed: %s", e)
+        err_messages.append(f"pdfplumber: {e}")
 
-    raise HTTPException(status_code=422, detail="Could not extract text from the PDF. Please ensure it's a valid, text-based PDF (not a scanned image).")
+    error_text = " | ".join(err_messages)
+    logger.error("Final PDF rejection due to: %s. File size passed: %s bytes", error_text, len(file_bytes))
+    raise HTTPException(
+        status_code=422, 
+        detail=f"Could not extract text from the PDF. Diagnostic: {error_text}"
+    )
 
 
 def parse_json_robust(raw: str) -> Optional[dict]:
