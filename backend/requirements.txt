@@ -131,6 +131,7 @@ asyncpg>=0.29.0
 alembic>=1.13.1
 sentry-sdk[fastapi]>=2.0.0
 razorpay==1.4.1
+google-cloud-aiplatform>=1.60.0   # Vertex AI SDK (production Gemini — interviews)
 
 gunicorn>=21.2.0
 pydantic-settings

@@ -30,11 +30,27 @@ class Settings(BaseSettings):
     SEED_DEMO_USERS: bool = False  # Set True ONLY in dev/staging to seed quick-login test accounts
 
     # External Integrations
-    LLM_REVIEW_MODEL: str = "gemini/gemini-2.0-flash"
-    INTERVIEW_LLM_MODEL: str = "gemini/gemini-2.0-flash"
-    RESUME_LLM_MODEL: str = "gemini/gemini-2.0-flash-lite"   # Cheaper model for ATS scoring & career tools
-    GEMINI_API_KEY: str = ""
-    GROQ_API_KEY: str = ""
+    LLM_REVIEW_MODEL: str = "gemini/gemini-2.0-flash"       # Legacy fallback — kept for hot standby
+    INTERVIEW_LLM_MODEL: str = "gemini/gemini-2.0-flash"     # Legacy fallback — kept for hot standby
+    RESUME_LLM_MODEL: str = "gemini/gemini-2.0-flash-lite"   # Legacy fallback — kept for hot standby
+    GEMINI_API_KEY: str = ""                                 # Legacy fallback — kept for hot standby
+    GROQ_API_KEY: str = ""                                   # Legacy fallback — kept for hot standby
+
+    # ── Vertex AI (Production Gemini — Interviews) ───────────────────────
+    # Google Cloud DPA available, data never used for training, SLA-backed
+    VERTEX_PROJECT_ID: str = ""                  # Google Cloud project ID (empty = Vertex disabled)
+    VERTEX_LOCATION: str = "us-central1"         # Vertex AI region
+    VERTEX_CREDENTIALS_PATH: str = ""            # Path to service account JSON (empty = ADC)
+    INTERVIEW_MODEL: str = "gemini-2.5-flash"    # Vertex AI model ID for interviews
+
+    # ── AWS Bedrock (Nova + Claude — Career/ERP/Coach/Review) ────────────
+    # SOC2/HIPAA-eligible, data never used for training
+    AWS_REGION: str = "us-east-1"                # Bedrock region
+    AWS_ACCESS_KEY_ID: str = ""                  # Empty = use IAM role / env
+    AWS_SECRET_ACCESS_KEY: str = ""              # Empty = use IAM role / env
+    BEDROCK_NOVA_LITE_MODEL: str = "amazon.nova-lite-v1:0"           # Career, code review, Ami, ATS
+    BEDROCK_NOVA_PRO_MODEL: str = "amazon.nova-pro-v1:0"             # ERP insights (standard)
+    BEDROCK_CLAUDE_SONNET_MODEL: str = "anthropic.claude-3-7-sonnet-v1:0"  # ERP fallback (complex only)
     
     # Self-Hosted vLLM (Phase 2 — activate at 10K+ students)
     # Set VLLM_BASE_URL to enable self-hosted inference (e.g. "https://gpu.acadmix.internal/v1")

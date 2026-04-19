@@ -94,53 +94,39 @@ RULES:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# LLM Helpers
+# LLM Helpers — Routed through Production LLM Gateway
 # ═══════════════════════════════════════════════════════════════════════════════
 
 async def call_llm(messages: list, model: str = None, json_mode: bool = False, max_tokens: int = 1024) -> str:
-    """Call LiteLLM with the given messages. Returns the response text."""
-    import litellm
-    litellm.api_key = settings.GEMINI_API_KEY
-
-    kwargs = {
-        "model": model or settings.INTERVIEW_LLM_MODEL,
-        "messages": messages,
-        "temperature": 0.7,
-        "max_tokens": max_tokens,
-        "timeout": 15.0,
-    }
-    if json_mode:
-        kwargs["response_format"] = {"type": "json_object"}
-        kwargs["timeout"] = 30.0  # Allow more time for JSON generation
+    """Route interview LLM calls through the centralized gateway.
+    
+    Production: Vertex AI (Gemini 2.5 Flash)
+    Fallback:   LiteLLM → Groq / Gemini AI Studio
+    """
+    from app.services.llm_gateway import gateway
 
     try:
-        response = await litellm.acompletion(**kwargs)
-        return response.choices[0].message.content.strip()
+        return await gateway.complete(
+            "interview",
+            messages,
+            json_mode=json_mode,
+            max_tokens=max_tokens,
+        )
     except Exception as e:
-        logger.error("LLM call failed: %s", e)
+        logger.error("Interview LLM call failed: %s", e)
         raise HTTPException(status_code=502, detail="AI service temporarily unavailable")
 
 
 async def stream_llm(messages: list, model: str = None):
-    """Stream LLM response tokens as SSE events."""
-    import litellm
-    litellm.api_key = settings.GEMINI_API_KEY
+    """Stream interview LLM responses as SSE events via the gateway."""
+    from app.services.llm_gateway import gateway
 
     try:
-        response = await litellm.acompletion(
-            model=model or settings.INTERVIEW_LLM_MODEL,
-            messages=messages,
-            temperature=0.7,
-            max_tokens=1024,
-            stream=True,
-        )
-        async for chunk in response:
-            delta = chunk.choices[0].delta
-            if delta.content:
-                yield f"data: {json.dumps({'token': delta.content})}\n\n"
+        async for chunk in gateway.stream("interview", messages):
+            yield f"data: {json.dumps({'token': chunk})}\n\n"
         yield f"data: {json.dumps({'done': True})}\n\n"
     except Exception as e:
-        logger.error("LLM streaming failed: %s", e)
+        logger.error("Interview LLM streaming failed: %s", e)
         yield f"data: {json.dumps({'error': 'AI service temporarily unavailable'})}\n\n"
 
 
@@ -312,10 +298,36 @@ async def send_message(interview_id: str, content: str, user: dict, session: Asy
         resume_section=resume_section,
     )
 
-    # Build LLM messages from conversation history (optimized: system + last 4 turns)
+    # ── Context Truncation (cost optimization) ─────────────────────────────
+    # Turn 1-5:  Send full conversation
+    # Turn 6+:   Send Resume + Summary of earlier turns + Last 5 turns
+    # This reduces token costs by ~50% for long interview sessions
     llm_messages = [{"role": "system", "content": system_prompt}]
-    for msg in conversation[-4:]:
-        llm_messages.append({"role": msg["role"], "content": msg["content"]})
+    if len(conversation) <= 10:  # 5 Q&A pairs = 10 messages
+        for msg in conversation:
+            llm_messages.append({"role": msg["role"], "content": msg["content"]})
+    else:
+        # Summarize older turns into a compact context block
+        older_turns = conversation[:-10]  # Everything before the last 5 Q&A pairs
+        summary_parts = []
+        for msg in older_turns:
+            label = "Interviewer" if msg["role"] == "assistant" else "Candidate"
+            # Truncate each turn to first 100 chars for the summary
+            content_brief = msg["content"][:100] + ("..." if len(msg["content"]) > 100 else "")
+            summary_parts.append(f"{label}: {content_brief}")
+        summary_text = "\n".join(summary_parts)
+
+        # Inject summary as a user context message, then append recent turns
+        llm_messages.append({
+            "role": "user",
+            "content": f"[CONVERSATION SUMMARY — Earlier exchanges]\n{summary_text}\n[END SUMMARY — Continue from here]",
+        })
+        llm_messages.append({
+            "role": "assistant",
+            "content": "Understood. I'll continue the interview from where we left off.",
+        })
+        for msg in conversation[-10:]:
+            llm_messages.append({"role": msg["role"], "content": msg["content"]})
 
     # Get AI response
     ai_response = await call_llm(llm_messages)

@@ -38,7 +38,8 @@ const LoginPage = ({ onLogin }) => {
   const [preEnrollToken, setPreEnrollToken] = useState<string | null>(null);
   const { isDark, toggle: toggleTheme } = useTheme();
   const tenant = useTenant();
-  const showQuickLogin = true; // Temporarily enable quick logins everywhere for testing
+  // Quick login buttons: ONLY show in local development, NEVER in production
+  const showQuickLogin = tenant.isDemo || ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
   const quickLoginRoles = [
     { role: 'Student', collegeId: '22WJ8A6745', password: '22WJ8A6745', color: 'bg-teal-500 hover:bg-teal-600', icon: '🎓' },
