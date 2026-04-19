@@ -7,6 +7,7 @@ import {
   FilePdf, FileDoc, Shield
 } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
+import AlertModal from '../components/AlertModal';
 import { resumeVaultAPI } from '../services/api';
 
 const itemVariants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } } };
@@ -58,9 +59,10 @@ const StudentProfilePage = ({ navigate, user }: any) => {
   const [resumes, setResumes] = useState<any[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; id?: string; filename?: string }>({ open: false });
 
   /* ── Load resumes ────────────────────────── */
   const loadResumes = useCallback(async () => {
@@ -93,7 +95,7 @@ const StudentProfilePage = ({ navigate, user }: any) => {
     }
 
     setUploading(true);
-    setMessage({ type: '', text: '' });
+    setMessage(null);
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -118,8 +120,11 @@ const StudentProfilePage = ({ navigate, user }: any) => {
   };
 
   /* ── Delete resume ──────────────────────── */
-  const handleDelete = async (id: string, filename: string) => {
-    if (!window.confirm(`Delete "${filename}"? This cannot be undone.`)) return;
+  const handleDelete = (id: string, filename: string) => {
+    setDeleteModal({ open: true, id, filename });
+  };
+
+  const processDelete = async (id: string, filename: string) => {
     try {
       await resumeVaultAPI.remove(id);
       setMessage({ type: 'success', text: `"${filename}" deleted.` });
@@ -127,6 +132,7 @@ const StudentProfilePage = ({ navigate, user }: any) => {
     } catch {
       setMessage({ type: 'error', text: 'Failed to delete resume.' });
     }
+    setDeleteModal({ open: false });
   };
 
   /* ── Download resume ────────────────────── */
@@ -163,7 +169,7 @@ const StudentProfilePage = ({ navigate, user }: any) => {
     academic: [
       { icon: GraduationCap, label: 'Stream', value: profile.stream || user?.stream },
       { icon: GraduationCap, label: 'Department', value: user?.department || profile.department },
-      { icon: GraduationCap, label: 'Branch', value: profile.branch || user?.branch },
+      { icon: GraduationCap, label: 'Branch', value: user?.branch || profile.branch },
       { icon: GraduationCap, label: 'Batch', value: user?.batch || profile.batch },
       { icon: GraduationCap, label: 'Section', value: user?.section || profile.section },
       { icon: GraduationCap, label: 'Current Semester', value: profile.current_semester },
@@ -280,7 +286,7 @@ const StudentProfilePage = ({ navigate, user }: any) => {
                       <div>
                         <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">Resume Vault</h3>
                         <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                          Store up to 5 resumes securely. Your primary resume is used for one-click applications.
+                          Store up to 3 resumes securely. Your primary resume is used for one-click applications.
                         </p>
                       </div>
                       <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
@@ -326,7 +332,7 @@ const StudentProfilePage = ({ navigate, user }: any) => {
                             {dragOver ? 'Drop your resume here' : 'Drag & drop your resume here'}
                           </p>
                           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
-                            PDF or DOCX • Max 2MB • {resumes.length}/5 uploaded
+                            PDF or DOCX • Max 2MB • {resumes.length}/3 uploaded
                           </p>
                         </>
                       )}
@@ -334,7 +340,7 @@ const StudentProfilePage = ({ navigate, user }: any) => {
 
                     {/* Status Messages */}
                     <AnimatePresence>
-                      {message.text && (
+                      {message && (
                         <motion.div
                           initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                           className={`mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold ${
@@ -462,6 +468,22 @@ const StudentProfilePage = ({ navigate, user }: any) => {
 
         </motion.div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AlertModal
+        open={deleteModal.open}
+        title="Delete Resume"
+        message={`Are you sure you want to delete "${deleteModal.filename}"?\n\nThis cannot be undone and you will lose any associated ATS insights.`}
+        type="danger"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={() => {
+          if (deleteModal.id && deleteModal.filename) {
+            processDelete(deleteModal.id, deleteModal.filename);
+          }
+        }}
+        onCancel={() => setDeleteModal({ open: false })}
+      />
     </div>
   );
 };

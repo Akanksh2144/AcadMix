@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     R2_BUCKET_NAME: str = "acadmix-vault"
     R2_PUBLIC_URL: str = ""               # Public bucket URL (e.g. https://files.acadmix.org)
     STORAGE_MAX_FILE_SIZE_MB: int = 2     # Max upload size in MB
-    STORAGE_MAX_RESUMES_PER_STUDENT: int = 5
+    STORAGE_MAX_RESUMES_PER_STUDENT: int = 3
 
     # Payments (Razorpay)
     RAZORPAY_KEY_ID: str = ""               # Razorpay key ID (empty = payments disabled)

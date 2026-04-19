@@ -10,7 +10,7 @@ from app.models.core import CollegeModule
 from app.core.security import get_current_user, require_role, require_permission
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/college/modules", tags=["College Modules"])
+router = APIRouter(prefix="/college/modules", tags=["College Modules"])
 
 class ModuleEnablePayload(BaseModel):
     is_enabled: bool
