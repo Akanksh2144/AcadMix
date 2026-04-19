@@ -774,14 +774,17 @@ const CodePlayground = ({ navigate, user }) => {
                 {activeConsoleTab === 'test_cases' ? (
                   <div className="p-4 flex flex-col h-full">
                     <div className="flex items-center gap-2 mb-4 shrink-0 overflow-x-auto custom-scrollbar pb-1">
-                      {userTestCases.map((_, idx) => {
+                    {userTestCases.map((_, idx) => {
                        let pillStyle = '';
                        const tr = testResults[idx];
-                       if (tr) {
-                          if (tr.passed === true) pillStyle = ' ring-1 ring-emerald-500/50 bg-emerald-500/10 text-emerald-400';
-                          else if (tr.passed === false) pillStyle = ' ring-1 ring-rose-500/50 bg-rose-500/10 text-rose-400';
-                       }
                        const isActive = activeTestCaseIdx === idx;
+                       if (tr) {
+                          if (tr.passed === true) {
+                              pillStyle = isActive ? 'bg-emerald-500 text-white shadow-sm ring-1 ring-emerald-600' : 'ring-1 ring-emerald-500/50 bg-emerald-500/10 text-emerald-400';
+                          } else if (tr.passed === false) {
+                              pillStyle = isActive ? 'bg-rose-500 text-white shadow-sm ring-1 ring-rose-600' : 'ring-1 ring-rose-500/50 bg-rose-500/10 text-rose-400';
+                          }
+                       }
                        const defaultStyle = isActive ? 'bg-slate-700/50 text-white' : 'bg-slate-800/30 hover:bg-slate-800/80 text-slate-400';
                        
                        return (
