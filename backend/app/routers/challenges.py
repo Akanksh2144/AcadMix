@@ -107,39 +107,44 @@ def safe_parse(raw_s):
 all_passed = True
 try:
     if test_cases:
+        has_solve = False
         try:
             _ = solve
+            has_solve = True
         except NameError:
-            all_passed = False
-            for tc in test_cases:
-                print("___ACADMIX_STATUS_FAIL___")
-                print("Platform Error: Function 'solve' is missing. Please wrap your logic in 'def solve(...):' so the system can evaluate your test cases.")
-                print("___ACADMIX_SEP___")
-        else:
-            for idx, tc in enumerate(test_cases):
+            pass
+
+        import io
+        import contextlib
+        for idx, tc in enumerate(test_cases):
+            f = io.StringIO()
+            with contextlib.redirect_stdout(f):
                 try:
-                    raw_inp = tc['input_data']
-                    parsed = safe_parse(raw_inp)
-                    args = parsed if isinstance(parsed, tuple) and not raw_inp.strip().startswith("build_") else (parsed,)
-                    
-                    result = solve(*args)
-                    
-                    expected = tc.get('expected_output')
-                    if expected is not None:
-                        passed = str(result).strip().lower() == str(expected).strip().lower()
-                        if not passed:
-                            all_passed = False
-                        status_str = 'PASS' if passed else 'FAIL'
-                        print(f"___ACADMIX_STATUS_{{status_str}}___")
-                    
-                    print(result) # Exactly what the user wants to see
+                    result = None
+                    if has_solve:
+                        raw_inp = tc['input_data']
+                        parsed = safe_parse(raw_inp)
+                        args = parsed if isinstance(parsed, tuple) and not raw_inp.strip().startswith("build_") else (parsed,)
+                        result = solve(*args)
                 except SystemExit:
-                    pass # allow clean exit
+                    pass
                 except Exception as e:
                     print(f"Execution Error: {{e}}")
                     all_passed = False
-                finally:
-                    print("___ACADMIX_SEP___")
+
+            output_str = f.getvalue()
+            actual_res = str(result) if result is not None else output_str.strip()
+            
+            expected = tc.get('expected_output')
+            if expected is not None:
+                passed = actual_res.strip().lower() == str(expected).strip().lower()
+                if not passed:
+                    all_passed = False
+                status_str = 'PASS' if passed else 'FAIL'
+                print(f"___ACADMIX_STATUS_{{status_str}}___")
+            
+            print(actual_res)
+            print("___ACADMIX_SEP___")
 except Exception as e:
     all_passed = False
 
