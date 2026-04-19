@@ -158,11 +158,26 @@ const StudentProfilePage = ({ navigate, user }: any) => {
       const blob = new Blob([response.data || response], { type: fileType });
       const url = window.URL.createObjectURL(blob);
       
-      // Open in new tab (browser natively previews PDFs, downloads DOCX)
-      window.open(url, '_blank');
+      // Open in new tab using a custom HTML shell to strictly enforce the tab title
+      const viewerWindow = window.open('', '_blank');
+      if (viewerWindow) {
+        viewerWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${filename}</title>
+              <style>body { margin: 0; overflow: hidden; background-color: #333; }</style>
+            </head>
+            <body>
+              <iframe src="${url}" width="100%" height="100%" style="border: none;"></iframe>
+            </body>
+          </html>
+        `);
+        viewerWindow.document.close();
+      }
       
       // We can't immediately revoke the URL if we open it in a new tab because 
-      // the new tab needs time to load the blob. Use a timeout.
+      // the iframe needs time to load the blob. Use a timeout.
       setTimeout(() => window.URL.revokeObjectURL(url), 10000);
     } catch {
       setMessage({ type: 'error', text: 'Download failed.' });
