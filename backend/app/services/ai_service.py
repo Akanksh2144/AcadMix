@@ -243,16 +243,18 @@ REVIEW_CACHE_TTL = 3600  # 1 hour
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# CODE REVIEW — Tier 2 (complex) with Redis cache
+# CODE REVIEW — via LLM Gateway with Redis cache
 # ═══════════════════════════════════════════════════════════════════════════════
 
 async def generate_code_review(code: str, language: str, output: str, error: str, execution_time_ms: float = None, memory_usage_mb: float = None) -> dict:
     """
     Calls an LLM to generate a strict JSON code review, defending against prompt injections.
     Uses Redis SHA-256 cache (1h TTL) to deduplicate identical submissions.
+    
+    Production: AWS Bedrock Nova Lite
+    Fallback:   LiteLLM → Groq / Gemini AI Studio
     """
-    model = get_tier1_model()
-    fallbacks = get_fallbacks_for(model)
+    from app.services.llm_gateway import gateway
     
     # ── Cache lookup ──────────────────────────────────────────────────────
     cache_key = _review_cache_key(code, language)
@@ -293,19 +295,14 @@ async def generate_code_review(code: str, language: str, output: str, error: str
         user_prompt += f"Execution Output:\n```\n{output}\n```\n"
         
     try:
-        response = await litellm.acompletion(
-            model=model,
-            fallbacks=fallbacks,
+        content = await gateway.complete(
+            "code_review",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            response_format={ "type": "json_object" },
-            temperature=0.1,
-            max_tokens=2000,
-            timeout=30.0
+            json_mode=True,
         )
-        content = response.choices[0].message.content
         result = json.loads(content)
         
         # ── Cache write ───────────────────────────────────────────────────
@@ -328,20 +325,19 @@ async def generate_code_review(code: str, language: str, output: str, error: str
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# AMI COACH — Streaming Socratic tutor (Tier 1 or Tier 2)
+# AMI COACH — Streaming Socratic tutor via LLM Gateway
 # ═══════════════════════════════════════════════════════════════════════════════
 
 async def generate_coach_stream(messages: List[Dict[str, str]], current_code: str, language: str, output: str = "", error: str = "", challenge_title: str = None, challenge_description: str = None) -> AsyncGenerator[str, None]:
     """
-    Calls an LLM as a Socratic AI Coach, streaming the response.
+    Calls the LLM as a Socratic AI Coach, streaming the response.
+    
+    Production: AWS Bedrock Nova Lite (streaming)
+    Fallback:   LiteLLM → Groq / Gemini AI Studio
     """
-    last_user_msg = ""
-    if messages and messages[-1]["role"] == "user":
-        last_user_msg = messages[-1]["content"]
+    from app.services.llm_gateway import gateway
 
     has_code = bool(current_code and current_code.strip())
-    model = route_ami_message(last_user_msg, has_code)
-    fallbacks = get_fallbacks_for(model)
     
     if has_code:
         mode_instruction = "4. Focus entirely on the immediate obstacle or logic flaw they are facing in their code."
@@ -383,7 +379,7 @@ async def generate_coach_stream(messages: List[Dict[str, str]], current_code: st
              context += "Context: Guide the student towards solving this exact problem without giving the answer.\n"
          else:
              context += "Context: Proactively explain the core logic of this algorithm step by step to build their conceptual understanding.\n"
-             
+              
     if error:
          context += f"Execution Error:\n```\n{error}\n```\n"
     elif output and has_code:
@@ -408,39 +404,25 @@ async def generate_coach_stream(messages: List[Dict[str, str]], current_code: st
              llm_messages.append(msg)
 
     try:
-        response = await litellm.acompletion(
-            model=model,
-            fallbacks=fallbacks,
-            messages=llm_messages,
-            temperature=0.5,
-            max_tokens=500,
-            stream=True,
-            timeout=30.0
-        )
-        previous_text = ""
-        async for chunk in response:
-            content = chunk.choices[0].delta.content
-            if content:
-                if content.startswith(previous_text) and len(previous_text) > 0:
-                    delta = content[len(previous_text):]
-                    previous_text = content
-                    if delta:
-                        yield delta
-                else:
-                    previous_text += content
-                    yield content
+        async for chunk in gateway.stream("ami_coach", llm_messages):
+            yield chunk
     except Exception as e:
         logger.error("LLM AI Coach Error: %s", e)
         yield "\n\n*Coach service is currently unavailable. Please try again.*"
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONVERSATIONAL INSIGHTS (ERP) — Text-to-SQL + Response formatting
 # ═══════════════════════════════════════════════════════════════════════════════
 
 async def generate_insights_sql(user_query: str, history: List[Dict[str, str]] = None, role: str = "") -> str:
-    """Uses LLM to convert a natural language query into a PostgreSQL SELECT query."""
-    model = get_tier1_model()
-    fallbacks = get_fallbacks_for(model)
+    """Uses LLM to convert a natural language query into a PostgreSQL SELECT query.
+    
+    Production: AWS Bedrock Nova Pro → Claude 3.7 Sonnet (complex fallback)
+    Fallback:   LiteLLM → Groq / Gemini AI Studio
+    """
+    from app.services.llm_gateway import gateway
+
     role_upper = role.upper()
     
     # Base Schema for generic roles
@@ -463,7 +445,6 @@ async def generate_insights_sql(user_query: str, history: List[Dict[str, str]] =
     
     if role_upper == "TPO":
         schemas.append(placements_schema)
-        # Strongly constrain TPO logic
         constraints.append("You are querying only Placement and Student data. DO NOT attempt to query attendance or invoices.")
     else:
         schemas.append(attendance_schema)
@@ -491,22 +472,15 @@ RULES:
 {constraint_str}
 '''
 
-    messages = [{"role": "system", "content": schema_context}]
+    messages_list = [{"role": "system", "content": schema_context}]
     if history:
         for msg in history:
-            messages.append(msg)
-    messages.append({"role": "user", "content": f"Write a query for: {user_query}"})
+            messages_list.append(msg)
+    messages_list.append({"role": "user", "content": f"Write a query for: {user_query}"})
 
     try:
-        response = await litellm.acompletion(
-            model=model,
-            fallbacks=fallbacks,
-            messages=messages,
-            temperature=0.0,
-            max_tokens=600,
-            timeout=30.0
-        )
-        content = response.choices[0].message.content.strip()
+        # ERP uses smart fallback: Nova Pro → Claude 3.7 Sonnet for complex queries
+        content = await gateway.complete_erp(user_query, messages_list)
         if content.startswith("```sql"):
             content = content[6:-3].strip()
         elif content.startswith("```"):
@@ -517,9 +491,12 @@ RULES:
         raise ValueError("Failed to generate database query. AI service unavailable.")
 
 async def format_insights_summary(user_query: str, data: List[dict]) -> dict:
-    """Generates a natural language summary and chart suggestion from execution results."""
-    model = get_tier1_model()
-    fallbacks = get_fallbacks_for(model)
+    """Generates a natural language summary and chart suggestion from execution results.
+    
+    Production: AWS Bedrock Nova Lite
+    Fallback:   LiteLLM → Groq / Gemini AI Studio
+    """
+    from app.services.llm_gateway import gateway
 
     data_sample = data[:10]
     row_count = len(data)
@@ -540,18 +517,15 @@ Output strictly in JSON:
     user_prompt = f"Question: {user_query}\\nTotal Rows Found: {row_count}\\nData Sample: {json.dumps(data_sample)}"
 
     try:
-         response = await litellm.acompletion(
-             model=model,
-             fallbacks=fallbacks,
+         content = await gateway.complete(
+             "erp_summary",
              messages=[
                  {"role": "system", "content": system_prompt},
                  {"role": "user", "content": user_prompt}
              ],
-             response_format={ "type": "json_object" },
-             temperature=0.1,
-             timeout=30.0
+             json_mode=True,
          )
-         result = json.loads(response.choices[0].message.content)
+         result = json.loads(content)
          return result
     except Exception as e:
          logger.error("Error generating insights summary: %s", e)
@@ -568,9 +542,11 @@ async def score_resume_for_job(resume_text: str, job_title: str, job_description
     """
     Scores a resume against a job description.
     Uses temperature 0.0 to ensure deterministic, highly reproducible scores.
+    
+    Production: AWS Bedrock Nova Lite
+    Fallback:   LiteLLM → Groq / Gemini AI Studio
     """
-    model = get_tier1_model()
-    fallbacks = get_fallbacks_for(model)
+    from app.services.llm_gateway import gateway
 
     system_prompt = '''
 You are an expert Applicant Tracking System (ATS). Your task is to evaluate a candidate's resume text against a Job Description.
@@ -591,18 +567,15 @@ Output strictly in JSON format:
     user_prompt = f"JOB TITLE: {job_title}\n\nJOB DESCRIPTION:\n{job_description}\n\nRESUME TEXT:\n{resume_text}"
 
     try:
-         response = await litellm.acompletion(
-             model=model,
-             fallbacks=fallbacks,
+         content = await gateway.complete(
+             "ats_scoring",
              messages=[
                  {"role": "system", "content": system_prompt},
                  {"role": "user", "content": user_prompt}
              ],
-             response_format={ "type": "json_object" },
-             temperature=0.0,
-             timeout=30.0
+             json_mode=True,
          )
-         result = json.loads(response.choices[0].message.content)
+         result = json.loads(content)
          # Ensure expected fields
          return {
              "match_percentage": result.get("match_percentage", 0),
@@ -618,3 +591,5 @@ Output strictly in JSON format:
              "strong_matches": [],
              "brief_summary": "ATS processing failed."
          }
+
+

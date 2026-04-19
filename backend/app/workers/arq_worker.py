@@ -60,26 +60,23 @@ async def generate_interview_feedback_task(ctx, interview_id: str, college_id: s
             transcript_lines.append(f"{role_label}: {msg['content']}")
         transcript = "\n\n".join(transcript_lines)
 
-        # Call LLM for feedback
+        # Call LLM for feedback via Production Gateway
         try:
-            import litellm
-            litellm.api_key = settings.GEMINI_API_KEY
+            from app.services.llm_gateway import gateway
 
             FEEDBACK_PROMPT = """You are an expert interview coach. Analyze this transcript and return JSON:
 {"overall_score": <0-100>, "scores": {"technical_depth": <0-100>, "communication": <0-100>, "problem_solving": <0-100>, "confidence": <0-100>, "clarity": <0-100>, "domain_knowledge": <0-100>}, "per_question": [{"question": "", "rating": "strong|average|needs_work", "feedback": ""}], "strengths": [], "weaknesses": [], "improvement_tips": [], "overall_comment": ""}
 Return ONLY valid JSON."""
 
-            response = await litellm.acompletion(
-                model=settings.INTERVIEW_LLM_MODEL,
+            feedback_raw = await gateway.complete(
+                "interview",
                 messages=[
                     {"role": "system", "content": FEEDBACK_PROMPT},
                     {"role": "user", "content": f"Transcript:\n\n{transcript}"},
                 ],
-                temperature=0.5,
+                json_mode=True,
                 max_tokens=3000,
-                response_format={"type": "json_object"},
             )
-            feedback_raw = response.choices[0].message.content.strip()
             feedback = json.loads(feedback_raw)
         except Exception as e:
             logger.error("[interview-feedback] LLM failed: %s", e)

@@ -40,20 +40,19 @@ async def call_llm(
 ) -> str:
     """Call the LLM with Redis SHA-256 caching (24h TTL).
 
+    Production: AWS Bedrock Nova Lite (via LLM Gateway)
+    Fallback:   LiteLLM → Groq / Gemini AI Studio
+    
     Uses the shared redis_client from app.core.security — one pool, not N.
     """
-    import litellm
-    from app.services.ai_service import get_tier1_model
-
-    litellm.api_key = settings.GEMINI_API_KEY
-    model = get_tier1_model()
+    from app.services.llm_gateway import gateway
 
     # ── Cache Lookup ──────────────────────────────────────────────────────────
     r = await _get_redis()
     cache_key = ""
     if r:
         payload = json.dumps(messages, sort_keys=True)
-        digest = hashlib.sha256(f"{model}:{payload}".encode()).hexdigest()
+        digest = hashlib.sha256(f"career_tools:{payload}".encode()).hexdigest()
         cache_key = f"career_cache:{digest}"
         try:
             cached = await r.get(cache_key)
@@ -63,19 +62,15 @@ async def call_llm(
         except Exception:
             pass
 
-    # ── LLM Call ──────────────────────────────────────────────────────────────
-    kwargs = {
-        "model": model,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    }
-    if json_mode:
-        kwargs["response_format"] = {"type": "json_object"}
-
+    # ── LLM Call via Gateway ─────────────────────────────────────────────────
     try:
-        response = await litellm.acompletion(**kwargs)
-        content = response.choices[0].message.content.strip()
+        content = await gateway.complete(
+            "career_tools",
+            messages,
+            json_mode=json_mode,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
 
         # ── Cache Write (24h TTL)
         if r and cache_key:
