@@ -172,4 +172,3 @@ def generate_storage_key(college_id: str, bucket_prefix: str, filename: str) -> 
     safe_name = filename.replace(" ", "_")
     base, ext = os.path.splitext(safe_name)
     return f"{bucket_prefix}/{college_id}/{base}_{short_id}{ext}"
-"""Cloudflare R2 storage client for AcadMix."""
