@@ -3,13 +3,14 @@ Training & Placement Officer Service.
 Handles companies, drives, Excel student uploads, and notifications.
 """
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from app.models.alumni_industry import Company, PlacementDrive, PlacementApplication
 from app.models.core import User, UserProfile
 from app.models.evaluation import SemesterGrade
 from app.models.notifications import Notification
+from app.models.interview_prep import PlacementRestriction
 import logging
 
 logger = logging.getLogger("acadmix.tpo")
@@ -247,6 +248,29 @@ class TPOService:
         if not drive or drive.college_id != college_id:
             return {"success": False, "error": "Drive not found"}
 
+        # ENFORCE TPO RESTRICTIONS (Blacklist Check)
+        now = datetime.utcnow()
+        restriction_stmt = select(PlacementRestriction).where(
+            PlacementRestriction.college_id == college_id,
+            PlacementRestriction.student_id == student_id,
+            PlacementRestriction.is_active == True,
+            PlacementRestriction.is_deleted == False,
+            or_(
+                PlacementRestriction.expires_at == None,
+                PlacementRestriction.expires_at > now
+            ),
+            or_(
+                PlacementRestriction.drive_id == None,
+                PlacementRestriction.drive_id == drive_id
+            )
+        )
+        restriction_res = await self.db.execute(restriction_stmt)
+        restriction = restriction_res.scalars().first()
+        
+        if restriction:
+            if restriction.restriction_type == "blocked":
+                return {"success": False, "error": f"You are currently restricted from applying: {restriction.reason}"}
+
         # ENFORCE RBAC & DOMAIN ISOLATION
         min_cgpa = drive.min_cgpa or (drive.eligibility_criteria or {}).get("min_cgpa", 0.0)
         actual_cgpa = await self._calculate_student_cgpa(student_id)
@@ -453,3 +477,135 @@ class TPOService:
             "is_accepted": False,
         }
         await self.db.commit()
+
+    # ── Restrictions (Blacklist) ───────────────────────────────────
+
+    async def get_restrictions(self, college_id: str) -> List[dict]:
+        stmt = (
+            select(PlacementRestriction, User)
+            .outerjoin(User, User.id == PlacementRestriction.student_id)
+            .where(
+                PlacementRestriction.college_id == college_id,
+                PlacementRestriction.is_deleted == False
+            )
+            .order_by(PlacementRestriction.created_at.desc())
+        )
+        res = await self.db.execute(stmt)
+        data = []
+        for r, u in res.all():
+            data.append({
+                "id": r.id,
+                "student_id": r.student_id,
+                "student_name": u.name if u else "Unknown",
+                "student_email": u.email if u else "Unknown",
+                "drive_id": r.drive_id,
+                "reason": r.reason,
+                "restriction_type": r.restriction_type,
+                "is_active": r.is_active,
+                "expires_at": r.expires_at.isoformat() if r.expires_at else None,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+            })
+        return data
+
+    async def get_student_restrictions(self, college_id: str, student_id: str) -> List[dict]:
+        stmt = select(PlacementRestriction).where(
+            PlacementRestriction.college_id == college_id,
+            PlacementRestriction.student_id == student_id,
+            PlacementRestriction.is_deleted == False,
+            PlacementRestriction.is_active == True
+        )
+        res = await self.db.execute(stmt)
+        data = []
+        for r in res.scalars().all():
+            data.append({
+                "id": r.id,
+                "drive_id": r.drive_id,
+                "reason": r.reason,
+                "restriction_type": r.restriction_type,
+                "expires_at": r.expires_at.isoformat() if r.expires_at else None,
+            })
+        return data
+
+    async def add_restriction(self, college_id: str, tpo_id: str, data: dict) -> str:
+        student_id = data["student_id"]
+        reason = data["reason"]
+        
+        expires_at = None
+        if data.get("expires_at"):
+            expires_at = datetime.fromisoformat(data["expires_at"])
+            
+        restriction = PlacementRestriction(
+            college_id=college_id,
+            student_id=student_id,
+            drive_id=data.get("drive_id"),
+            reason=reason,
+            restricted_by=tpo_id,
+            restriction_type=data.get("restriction_type", "blocked"),
+            expires_at=expires_at
+        )
+        self.db.add(restriction)
+        await self.db.flush()
+        
+        # Notify student
+        notif = Notification(
+            user_id=student_id,
+            college_id=college_id,
+            title="Placement Restriction Notice",
+            message=f"You have been restricted from placement activities. Reason: {reason}",
+            type="system",
+            related_entity_id=restriction.id,
+            related_entity_type="placement_restriction"
+        )
+        self.db.add(notif)
+        
+        res_id = restriction.id
+        await self.db.commit()
+        
+        # Try pushing notification
+        try:
+            from app.routers.websocket import push_notification
+            await push_notification(student_id, {
+                "title": notif.title,
+                "message": notif.message,
+                "type": "system"
+            })
+        except Exception:
+            pass
+            
+        return res_id
+
+    async def remove_restriction(self, college_id: str, restriction_id: str):
+        stmt = select(PlacementRestriction).where(
+            PlacementRestriction.id == restriction_id,
+            PlacementRestriction.college_id == college_id
+        )
+        res = await self.db.execute(stmt)
+        restriction = res.scalar_one_or_none()
+        if not restriction:
+            raise ValueError("Restriction not found")
+            
+        restriction.is_active = False
+        
+        # Notify student
+        notif = Notification(
+            user_id=restriction.student_id,
+            college_id=college_id,
+            title="Placement Restriction Lifted",
+            message=f"A placement restriction has been lifted.",
+            type="system",
+            related_entity_id=restriction.id,
+            related_entity_type="placement_restriction"
+        )
+        self.db.add(notif)
+        
+        await self.db.commit()
+        
+        try:
+            from app.routers.websocket import push_notification
+            await push_notification(restriction.student_id, {
+                "title": notif.title,
+                "message": notif.message,
+                "type": "system"
+            })
+        except Exception:
+            pass

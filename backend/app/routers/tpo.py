@@ -119,6 +119,50 @@ async def get_stats(
 
 
 # ════════════════════════════════════════════════════════════════════════════════
+# Placement Restrictions (Blacklist)
+# ════════════════════════════════════════════════════════════════════════════════
+
+@router.get("/tpo/restrictions", dependencies=[Depends(mark_enveloped)])
+async def get_restrictions(
+    user: dict = Depends(require_role("tpo", "tp_officer", "admin")),
+    svc: TPOService = Depends(get_tpo_service)
+):
+    return {"data": await svc.get_restrictions(user["college_id"])}
+
+
+@router.get("/tpo/restrictions/student/{student_id}", dependencies=[Depends(mark_enveloped)])
+async def get_student_restrictions(
+    student_id: str,
+    user: dict = Depends(require_role("tpo", "tp_officer", "admin")),
+    svc: TPOService = Depends(get_tpo_service)
+):
+    return {"data": await svc.get_student_restrictions(user["college_id"], student_id)}
+
+
+@router.post("/tpo/restrictions")
+async def add_restriction(
+    data: dict,
+    user: dict = Depends(require_role("tpo", "tp_officer", "admin")),
+    svc: TPOService = Depends(get_tpo_service)
+):
+    """
+    Expects data: { student_id, reason, restriction_type, drive_id (optional), expires_at (optional) }
+    """
+    res_id = await svc.add_restriction(user["college_id"], user["id"], data)
+    return {"success": True, "id": res_id}
+
+
+@router.delete("/tpo/restrictions/{restriction_id}")
+async def remove_restriction(
+    restriction_id: str,
+    user: dict = Depends(require_role("tpo", "tp_officer", "admin")),
+    svc: TPOService = Depends(get_tpo_service)
+):
+    await svc.remove_restriction(user["college_id"], restriction_id)
+    return {"success": True}
+
+
+# ════════════════════════════════════════════════════════════════════════════════
 # Excel Upload — Upload eligible students for a drive
 # ════════════════════════════════════════════════════════════════════════════════
 
