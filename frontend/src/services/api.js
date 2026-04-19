@@ -90,11 +90,13 @@ api.interceptors.response.use(
             onRefreshed(data.access_token);
           }
         } catch {
-          // Refresh failed — force logout
+          // Refresh failed — both tokens are dead. Force immediate logout.
           authToken = null;
           localStorage.removeItem('auth_token');
           refreshSubscribers = [];
           isRefreshing = false;
+          // Hard redirect to login — React state is stale at this point
+          window.location.replace('/login');
           return Promise.reject(error);
         }
         isRefreshing = false;
