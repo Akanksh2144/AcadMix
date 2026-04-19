@@ -123,13 +123,14 @@ try:
                     passed = str(result).strip().lower() == str(expected).strip().lower()
                     if not passed:
                         all_passed = False
-                    print(f"___ACADMIX_STATUS_{'PASS' if passed else 'FAIL'}___")
+                    status_str = 'PASS' if passed else 'FAIL'
+                    print(f"___ACADMIX_STATUS_{{status_str}}___")
                 
                 print(result) # Exactly what the user wants to see
             except SystemExit:
                 pass # allow clean exit
             except Exception as e:
-                print(f"Execution Error: {e}")
+                print(f"Execution Error: {{e}}")
                 all_passed = False
             finally:
                 print("___ACADMIX_SEP___")

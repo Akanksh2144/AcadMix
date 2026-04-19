@@ -313,18 +313,30 @@ const CodePlayground = ({ navigate, user }) => {
         success: data.exit_code === 0,
       }, ...prev].slice(0, 10));
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("CodeRunner Error:", err, err.response?.data);
+      let debugMsg = "";
+      if (err.isAxiosError && err.message === 'Network Error') {
+         debugMsg = `DEBUG NETWORK ERROR: config.url=${err.config?.url}, method=${err.config?.method}, baseURL=${err.config?.baseURL}, status=${err.response?.status}`;
+         alert(debugMsg); 
+      }
+      
+      const realErrorTrace = err.stack ? `JS Crash: ${String(err.stack).substring(0, 200)}` : `Raw Msg: ${err.message || String(err)}`;
+      
       const errDetail = err.response?.data?.detail 
                      || err.response?.data?.error 
-                     || (err.message === 'Network Error' ? 'Network Error: Backend is unreachable or CORS failed' : null)
+                     || debugMsg
+                     || realErrorTrace
                      || 'Execution failed. Please try again.';
       
       if (err.response?.status === 404 && typeof errDetail === 'string' && errDetail.includes('Challenge not found')) {
         setActiveChallenge(null);
         localStorage.removeItem('acadmix_active_challenge');
         toast.error("The challenge you were working on was no longer found. Returning to free-code mode.", { duration: 5000 });
+      } else {
+        toast.error(String(errDetail), { duration: 10000 });
       }
+
 
       setOutput(`Error: ${typeof errDetail === 'string' ? errDetail : JSON.stringify(errDetail)}`);
       setExecTime(Date.now() - startTime);
