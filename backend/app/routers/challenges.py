@@ -110,34 +110,33 @@ try:
         try:
             _ = solve
         except NameError:
-            print("Error: The platform requires a function named 'solve' to evaluate your code. Please wrap your logic in 'def solve(...):'")
             all_passed = False
-            raise SystemExit()
-            
-        for idx, tc in enumerate(test_cases):
-            try:
-                raw_inp = tc['input_data']
-                parsed = safe_parse(raw_inp)
-                args = parsed if isinstance(parsed, tuple) and not raw_inp.strip().startswith("build_") else (parsed,)
-                
-                result = solve(*args)
-                
-                expected = tc.get('expected_output')
-                if expected is not None:
-                    passed = str(result).strip().lower() == str(expected).strip().lower()
-                    if not passed:
-                        all_passed = False
-                    status_str = 'PASS' if passed else 'FAIL'
-                    print(f"___ACADMIX_STATUS_{{status_str}}___")
-                
-                print(result) # Exactly what the user wants to see
-            except SystemExit:
-                pass # allow clean exit
-            except Exception as e:
-                print(f"Execution Error: {{e}}")
-                all_passed = False
-            finally:
-                print("___ACADMIX_SEP___")
+            pass
+        else:
+            for idx, tc in enumerate(test_cases):
+                try:
+                    raw_inp = tc['input_data']
+                    parsed = safe_parse(raw_inp)
+                    args = parsed if isinstance(parsed, tuple) and not raw_inp.strip().startswith("build_") else (parsed,)
+                    
+                    result = solve(*args)
+                    
+                    expected = tc.get('expected_output')
+                    if expected is not None:
+                        passed = str(result).strip().lower() == str(expected).strip().lower()
+                        if not passed:
+                            all_passed = False
+                        status_str = 'PASS' if passed else 'FAIL'
+                        print(f"___ACADMIX_STATUS_{{status_str}}___")
+                    
+                    print(result) # Exactly what the user wants to see
+                except SystemExit:
+                    pass # allow clean exit
+                except Exception as e:
+                    print(f"Execution Error: {{e}}")
+                    all_passed = False
+                finally:
+                    print("___ACADMIX_SEP___")
 except Exception as e:
     all_passed = False
 
