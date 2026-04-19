@@ -32,8 +32,10 @@ TIMEOUT_CONFIG = {
 
 def _build_python_sandbox(user_code: str, test_cases_list: list) -> str:
     escaped_tc = json.dumps(test_cases_list or [])
+    import base64
+    user_code_b64 = base64.b64encode(user_code.encode("utf-8")).decode("utf-8")
     return f"""
-import json
+import sys, io, json, base64, contextlib
 from collections import deque
 
 class ListNode:
@@ -83,9 +85,9 @@ def build_tree(arr):
         i += 1
     return root
 
-{user_code}
-
 test_cases = json.loads(r'''{escaped_tc}''')
+user_code_b64 = "{user_code_b64}"
+user_code_str = base64.b64decode(user_code_b64).decode('utf-8')
 true = True
 false = False
 null = None
@@ -106,27 +108,23 @@ def safe_parse(raw_s):
 
 all_passed = True
 try:
-    if test_cases:
-        has_solve = False
-        try:
-            _ = solve
-            has_solve = True
-        except NameError:
-            pass
-
-        import io
-        import contextlib
+    if not test_cases:
+        exec(user_code_str, globals())
+    else:
         print("___ACADMIX_SEP___")
         for idx, tc in enumerate(test_cases):
             f = io.StringIO()
             with contextlib.redirect_stdout(f):
                 try:
+                    user_globals = globals().copy()
+                    exec(user_code_str, user_globals)
+                    
                     result = None
-                    if has_solve:
-                        raw_inp = tc['input_data']
+                    if 'solve' in user_globals:
+                        raw_inp = tc.get('input_data', '')
                         parsed = safe_parse(raw_inp)
                         args = parsed if isinstance(parsed, tuple) and not raw_inp.strip().startswith("build_") else (parsed,)
-                        result = solve(*args)
+                        result = user_globals['solve'](*args)
                 except SystemExit:
                     pass
                 except Exception as e:
