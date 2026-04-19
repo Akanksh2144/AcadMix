@@ -549,7 +549,7 @@ export const resumeAPI = {
 
 // Resume Vault — Persistent resume file storage (R2)
 export const resumeVaultAPI = {
-  upload: (formData) => api.post('/resume-vault/upload', formData),
+  upload: (formData) => api.post('/resume-vault/upload', formData, { headers: { 'Content-Type': undefined } }),
   list: () => api.get('/resume-vault/'),
   getPrimary: () => api.get('/resume-vault/primary'),
   setPrimary: (id) => api.patch(`/resume-vault/${id}/primary`),
