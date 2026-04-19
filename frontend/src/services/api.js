@@ -74,6 +74,9 @@ api.interceptors.response.use(
     // Standardize backend DomainException structure for frontend components
     if (error.response?.data && error.response.data.error) {
       error.response.data.detail = error.response.data.error;
+    } else if (error.response?.data?.data && error.response.data.data.detail) {
+      // Handle enveloped FastAPI HTTPExceptions (e.g. 422 Unprocessable Entity)
+      error.response.data.detail = error.response.data.data.detail;
     }
 
     const originalRequest = error.config;
