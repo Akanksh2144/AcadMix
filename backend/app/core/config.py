@@ -65,10 +65,10 @@ class Settings(BaseSettings):
     FIREBASE_CREDENTIALS_PATH: str = ""     # Path to firebase-credentials.json (empty = mock mode)
 
     # Object Storage (Cloudflare R2 — S3-compatible)
-    R2_ACCOUNT_ID: str = ""               # Cloudflare account ID
+    R2_ACCOUNT_ID: str = "a163b03744c05e628b6d500350b4a668"
     R2_ACCESS_KEY_ID: str = ""            # R2 API token access key
     R2_SECRET_ACCESS_KEY: str = ""        # R2 API token secret key
-    R2_BUCKET_NAME: str = "acadmix"       # Bucket name
+    R2_BUCKET_NAME: str = "acadmix-vault"
     R2_PUBLIC_URL: str = ""               # Public bucket URL (e.g. https://files.acadmix.org)
     STORAGE_MAX_FILE_SIZE_MB: int = 2     # Max upload size in MB
     STORAGE_MAX_RESUMES_PER_STUDENT: int = 5
