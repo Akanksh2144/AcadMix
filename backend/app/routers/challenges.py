@@ -106,11 +106,14 @@ def safe_parse(raw_s):
 
 all_passed = True
 try:
-    if 'solve' not in globals() and 'solve' not in locals():
+    try:
+        _ = solve
+    except NameError:
         print("Error: The platform requires a function named 'solve' to evaluate your code. Please wrap your logic in 'def solve(...):'")
         all_passed = False
-    else:
-        for idx, tc in enumerate(test_cases):
+        raise SystemExit()
+        
+    for idx, tc in enumerate(test_cases):
             try:
                 raw_inp = tc['input_data']
                 parsed = safe_parse(raw_inp)
