@@ -160,6 +160,7 @@ const StudentProfilePage = ({ navigate, user }: any) => {
       { icon: User, label: 'Gender', value: profile.gender },
     ],
     academic: [
+      { icon: GraduationCap, label: 'Stream', value: profile.stream || user?.stream },
       { icon: GraduationCap, label: 'Department', value: user?.department || profile.department },
       { icon: GraduationCap, label: 'Branch', value: profile.branch || user?.branch },
       { icon: GraduationCap, label: 'Batch', value: user?.batch || profile.batch },
