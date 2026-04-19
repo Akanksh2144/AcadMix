@@ -11,7 +11,7 @@ Architecture:
     │  purpose="ami_coach"     → Bedrock    (Nova Lite)              │
     │  purpose="ats_scoring"   → Bedrock    (Nova Lite)              │
     │  purpose="erp_insights"  → Bedrock    (Nova Pro)               │
-    │  purpose="erp_complex"   → Bedrock    (Claude 3.7 Sonnet)      │
+    │  purpose="erp_complex"   → Bedrock    (Claude Sonnet 4.6)       │
     │                                                                │
     │  Fallback chain: Primary → LiteLLM/Groq → Gemini AI Studio    │
     └────────────────────────────────────────────────────────────────┘
@@ -38,11 +38,24 @@ Usage:
 import json
 import logging
 import time
+from collections import defaultdict
 from typing import AsyncGenerator, Dict, List, Optional, Any
 
 from app.core.config import settings
 
 logger = logging.getLogger("acadmix.llm_gateway")
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# COST GUARD — Prevent runaway bills from loops / prompt injection
+# ═══════════════════════════════════════════════════════════════════════════════
+
+MAX_TOKENS_PER_REQUEST = 8000        # Hard cap — no single call can exceed this
+MAX_REQUESTS_PER_USER_PER_DAY = 50   # Per-student daily limit
+
+# In-memory daily request counter (reset on worker restart; Redis-backed in Phase 2)
+_daily_user_requests: Dict[str, int] = defaultdict(int)
+_daily_reset_timestamp: float = time.time()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -110,7 +123,7 @@ ROUTES: Dict[str, Dict[str, Any]] = {
         "description": "Text-to-SQL for faculty/admin/principal/HOD queries",
     },
 
-    # ── ERP Insights (complex fallback): Claude 3.7 Sonnet via Bedrock ─────
+    # ── ERP Insights (complex fallback): Claude Sonnet 4.6 via Bedrock ─────
     "erp_complex": {
         "provider": "bedrock",
         "model": None,
@@ -153,7 +166,13 @@ _bedrock_client = None
 
 
 def _get_vertex_client():
-    """Initialize Vertex AI client (lazy, singleton)."""
+    """Initialize Vertex AI client (lazy, singleton).
+    
+    Supports two credential modes:
+    1. VERTEX_CREDENTIALS_JSON (env var) — for Render / ephemeral containers
+    2. VERTEX_CREDENTIALS_PATH (file path) — for local development
+    3. Application Default Credentials — if neither is set
+    """
     global _vertex_client
     if _vertex_client is not None:
         return _vertex_client
@@ -164,19 +183,34 @@ def _get_vertex_client():
 
     try:
         import vertexai
-        from vertexai.generative_models import GenerativeModel
 
         init_kwargs = {
             "project": settings.VERTEX_PROJECT_ID,
             "location": settings.VERTEX_LOCATION,
         }
-        # Use explicit credentials if path provided
-        if settings.VERTEX_CREDENTIALS_PATH:
+
+        # Priority 1: JSON string from env var (Render / ephemeral containers)
+        if settings.VERTEX_CREDENTIALS_JSON:
+            import tempfile, os
+            from google.oauth2 import service_account
+            
+            creds_dict = json.loads(settings.VERTEX_CREDENTIALS_JSON)
+            credentials = service_account.Credentials.from_service_account_info(creds_dict)
+            init_kwargs["credentials"] = credentials
+            logger.info("Vertex AI credentials: loaded from VERTEX_CREDENTIALS_JSON env var")
+
+        # Priority 2: File path (local dev)
+        elif settings.VERTEX_CREDENTIALS_PATH:
             from google.oauth2 import service_account
             credentials = service_account.Credentials.from_service_account_file(
                 settings.VERTEX_CREDENTIALS_PATH
             )
             init_kwargs["credentials"] = credentials
+            logger.info("Vertex AI credentials: loaded from file %s", settings.VERTEX_CREDENTIALS_PATH)
+
+        # Priority 3: Application Default Credentials
+        else:
+            logger.info("Vertex AI credentials: using Application Default Credentials")
 
         vertexai.init(**init_kwargs)
         _vertex_client = True  # Flag that Vertex is initialized
@@ -578,6 +612,9 @@ class LLMGateway:
         tokens = max_tokens if max_tokens is not None else route["max_tokens"]
         tout = timeout if timeout is not None else route["timeout"]
 
+        # ── Cost Guard: enforce hard token cap ──────────────────────────────
+        tokens = min(tokens, MAX_TOKENS_PER_REQUEST)
+
         self._metrics["total_calls"] += 1
         start = time.monotonic()
 
@@ -692,16 +729,12 @@ class LLMGateway:
         """
         ERP-specific completion with automatic complexity fallback.
 
-        Tries Nova Pro first. If the result looks like a failure (empty, error,
-        or overly complex query detected), retries with Claude 3.7 Sonnet.
+        Tries Nova Pro first. Escalates to Claude Sonnet 4.6 only when:
+        1. Nova Pro returns invalid SQL (doesn't start with SELECT)
+        2. Nova Pro throws an exception
+        3. Complexity heuristic classifies query as inherently complex
 
-        Args:
-            user_query: The natural-language question from staff
-            messages: Full prompt messages
-            json_mode: Whether to request JSON output
-
-        Returns:
-            LLM response text
+        Does NOT escalate on empty results — a valid query can return zero rows.
         """
         # ── Complexity heuristic — route hard queries directly to Claude ──
         complex_signals = [
@@ -712,23 +745,28 @@ class LLMGateway:
         is_complex = any(signal in user_query.lower() for signal in complex_signals)
 
         if is_complex:
-            logger.info("[LLMGateway] ERP query classified as COMPLEX — routing to Claude 3.7 Sonnet")
+            logger.info("[LLMGateway] ERP query classified as COMPLEX — routing to Claude Sonnet 4.6")
             return await self.complete("erp_complex", messages, json_mode=json_mode)
 
         # ── Standard path: Nova Pro ──────────────────────────────────────
         try:
             result = await self.complete("erp_insights", messages, json_mode=json_mode)
 
-            # Validate the SQL result (basic sanity check)
-            result_clean = result.strip().upper()
-            if not result_clean.startswith("SELECT") and not json_mode:
-                logger.info("[LLMGateway] Nova Pro returned non-SQL for ERP — escalating to Claude")
-                return await self.complete("erp_complex", messages, json_mode=json_mode)
+            # Validate: Nova Pro must return valid SQL (not prose/errors)
+            result_clean = result.strip()
+            result_upper = result_clean.upper()
 
-            # Check for overly complex SQL (3+ JOINs)
-            if not json_mode and result.upper().count("JOIN") >= 3:
-                logger.info("[LLMGateway] Nova Pro generated 3+ JOINs — escalating to Claude for accuracy")
-                return await self.complete("erp_complex", messages, json_mode=json_mode)
+            if not json_mode:
+                # Check 1: Must start with SELECT (not prose, not an error message)
+                if not result_upper.startswith("SELECT"):
+                    logger.info("[LLMGateway] Nova Pro returned non-SQL — escalating to Claude")
+                    return await self.complete("erp_complex", messages, json_mode=json_mode)
+
+                # Check 2: LLM explicitly says it can't handle the query
+                inability_signals = ["I CANNOT", "I'M UNABLE", "NOT POSSIBLE", "BEYOND MY", "I NEED MORE CONTEXT"]
+                if any(sig in result_upper for sig in inability_signals):
+                    logger.info("[LLMGateway] Nova Pro signalled inability — escalating to Claude")
+                    return await self.complete("erp_complex", messages, json_mode=json_mode)
 
             return result
 
