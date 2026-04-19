@@ -68,10 +68,7 @@ const CodePlayground = ({ navigate, user }) => {
   const [challenges, setChallenges] = useState([]);
   const [isChallengesLoading, setIsChallengesLoading] = useState(true);
   const [stats, setStats] = useState(null);
-  const [activeChallenge, setActiveChallenge] = useState(() => {
-    const saved = localStorage.getItem('acadmix_active_challenge');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [activeChallenge, setActiveChallenge] = useState(null);
 
   const [activeConsoleTab, setActiveConsoleTab] = useState('test_cases');
   const formatPythonLiteral = (str) => {
@@ -81,22 +78,7 @@ const CodePlayground = ({ navigate, user }) => {
     return str || '';
   };
 
-  const [userTestCases, setUserTestCases] = useState(() => {
-    const saved = localStorage.getItem('acadmix_active_challenge');
-    if (saved) {
-      try {
-        const challenge = JSON.parse(saved);
-        if (challenge.test_cases) {
-          const unhidden = challenge.test_cases.filter(tc => !tc.is_hidden).map(tc => ({
-            input_data: formatPythonLiteral(tc.input_data),
-            expected_output: tc.expected_output
-          }));
-          if (unhidden.length > 0) return unhidden;
-        }
-      } catch(e) {}
-    }
-    return [{ input_data: '', expected_output: '' }];
-  });
+  const [userTestCases, setUserTestCases] = useState([{ input_data: '', expected_output: '' }]);
   const [activeTestCaseIdx, setActiveTestCaseIdx] = useState(0);
 
   const handleLoadChallenge = (challenge) => {
@@ -118,13 +100,7 @@ const CodePlayground = ({ navigate, user }) => {
     setActiveConsoleTab('test_cases');
   };
 
-  useEffect(() => {
-    if (activeChallenge) {
-      localStorage.setItem('acadmix_active_challenge', JSON.stringify(activeChallenge));
-    } else {
-      localStorage.removeItem('acadmix_active_challenge');
-    }
-  }, [activeChallenge]);
+  // No longer persist activeChallenge to localStorage — playground always starts clean
   
   // Resizable Pane State
   const [leftWidth, setLeftWidth] = useState(40); // Initial 40% width for left pane

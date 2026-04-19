@@ -514,7 +514,6 @@ function AppShell() {
     setUser(null);
     clearAuthToken();
     localStorage.removeItem('auth_token');
-    localStorage.removeItem('acadmix_active_challenge'); // Clear leftover playground session state
     routerNavigate('/login', { replace: true });
   };
 
