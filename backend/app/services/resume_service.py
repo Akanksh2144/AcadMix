@@ -205,7 +205,7 @@ async def extract_pdf_text(file_bytes: bytes) -> str:
     except Exception as e:
         logger.warning("PyPDF2 fallback also failed: %s", e)
 
-    # Fallback 2: pdfplumber (restoring since it worked for this specific PDF previously)
+    # Fallback 2: pdfplumber (restoring original permissiveness)
     try:
         import pdfplumber
         with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
@@ -214,9 +214,7 @@ async def extract_pdf_text(file_bytes: bytes) -> str:
                 text = page.extract_text()
                 if text:
                     pages.append(text)
-            full_text = "\n".join(pages).strip()
-            if full_text:
-                return full_text
+            return "\n".join(pages).strip()
     except Exception as e:
         logger.warning("pdfplumber fallback also failed: %s", e)
 
