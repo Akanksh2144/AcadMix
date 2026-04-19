@@ -111,7 +111,10 @@ try:
             _ = solve
         except NameError:
             all_passed = False
-            pass
+            for tc in test_cases:
+                print("___ACADMIX_STATUS_FAIL___")
+                print("Platform Error: Function 'solve' is missing. Please wrap your logic in 'def solve(...):' so the system can evaluate your test cases.")
+                print("___ACADMIX_SEP___")
         else:
             for idx, tc in enumerate(test_cases):
                 try:
