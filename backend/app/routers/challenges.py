@@ -116,6 +116,7 @@ try:
 
         import io
         import contextlib
+        print("___ACADMIX_SEP___")
         for idx, tc in enumerate(test_cases):
             f = io.StringIO()
             with contextlib.redirect_stdout(f):
@@ -143,6 +144,8 @@ try:
                 status_str = 'PASS' if passed else 'FAIL'
                 print(f"___ACADMIX_STATUS_{{status_str}}___")
             
+            if output_str.strip() and result is not None:
+                print(output_str.strip())
             print(actual_res)
             print("___ACADMIX_SEP___")
 except Exception as e:

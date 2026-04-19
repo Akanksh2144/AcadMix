@@ -267,12 +267,12 @@ const CodePlayground = ({ navigate, user }) => {
       if (rawOutput && rawOutput.includes('___ACADMIX_SEP___')) {
          const parts = rawOutput.split('___ACADMIX_SEP___');
          uiSuccess = rawOutput.includes('___ACADMIX_OK___');
-         rawOutput = rawOutput.replace(/___ACADMIX_SEP___/g, '').replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').trim();
+         rawOutput = parts[0].replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').trim();
          
-         const numCases = is_submit ? Math.max(0, parts.length - 1) : userTestCases.length;
+         const numCases = is_submit ? Math.max(0, parts.length - 2) : userTestCases.length;
          
          const parsedResults = Array.from({ length: numCases }).map((_, idx) => {
-             let actual = (parts[idx] || '').replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').trim();
+             let actual = (parts[idx + 1] || '').replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').trim();
              let passed = null;
              
              if (actual.includes('___ACADMIX_STATUS_PASS___')) {
