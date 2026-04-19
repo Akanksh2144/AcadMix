@@ -32,9 +32,8 @@ TIMEOUT_CONFIG = {
 
 def _build_python_sandbox(user_code: str, test_cases_list: list) -> str:
     escaped_tc = json.dumps(test_cases_list or [])
-    escaped_user_code = json.dumps(user_code)
     return f"""
-import sys, io, json, contextlib
+import json
 from collections import deque
 
 class ListNode:
@@ -84,7 +83,8 @@ def build_tree(arr):
         i += 1
     return root
 
-user_code_str = {escaped_user_code}
+{user_code}
+
 test_cases = json.loads(r'''{escaped_tc}''')
 true = True
 false = False
@@ -107,27 +107,31 @@ def safe_parse(raw_s):
 all_passed = True
 try:
     if test_cases:
+        has_solve = False
+        try:
+            _ = solve
+            has_solve = True
+        except NameError:
+            pass
+
+        import io
+        import contextlib
         print("___ACADMIX_START_TESTS___")
         for idx, tc in enumerate(test_cases):
             f = io.StringIO()
-            in_data = tc.get('input_data', '')
-            in_stream = io.StringIO(str(in_data))
-            
-            with contextlib.redirect_stdout(f), contextlib.redirect_stdin(in_stream):
-                env = globals().copy()
+            with contextlib.redirect_stdout(f):
                 try:
-                    exec(user_code_str, env)
                     result = None
-                    if 'solve' in env:
+                    if has_solve:
                         raw_inp = tc['input_data']
                         parsed = safe_parse(raw_inp)
                         args = parsed if isinstance(parsed, tuple) and not raw_inp.strip().startswith("build_") else (parsed,)
-                        result = env['solve'](*args)
+                        result = solve(*args)
                 except SystemExit:
                     pass
                 except Exception as e:
                     print(f"Execution Error: {{e}}")
-                    result = None
+                    all_passed = False
 
             output_str = f.getvalue()
             actual_res = str(result) if result is not None else output_str.strip()
@@ -142,13 +146,10 @@ try:
             
             print(actual_res)
             print("___ACADMIX_SEP___")
-    else:
-        env = globals().copy()
-        exec(user_code_str, env)
 except Exception as e:
     all_passed = False
 
-if all_passed:
+if all_passed and test_cases:
     print("___ACADMIX_OK___")
 print("___ACADMIX_END___")
 """
