@@ -27,8 +27,34 @@ const DEFAULT_TEMPLATES = {
 
 const CodePlayground = ({ navigate, user }) => {
   const { isDark } = useTheme();
-  const [language, setLanguage] = useState('python');
-  const [code, setCode] = useState(DEFAULT_TEMPLATES['python']);
+
+  // ── Refresh-aware session persistence ──────────────────────────────────────
+  // sessionStorage keeps the challenge alive across F5 refreshes.
+  // On SPA navigation away (back button), we clear it so the playground starts clean.
+  const isRefreshingRef = useRef(false);
+
+  const _restoreChallenge = () => {
+    try {
+      const raw = sessionStorage.getItem('acadmix_active_challenge');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  };
+
+  const [activeChallenge, setActiveChallenge] = useState(_restoreChallenge);
+
+  // Derive initial code & test cases from the restored challenge (if any)
+  const [code, setCode] = useState(() => {
+    const ch = _restoreChallenge();
+    if (ch) {
+      const lang = ch.language || 'python';
+      return ch.init_code?.[lang] || ch.template_code || DEFAULT_TEMPLATES[lang];
+    }
+    return DEFAULT_TEMPLATES['python'];
+  });
+  const [language, setLanguage] = useState(() => {
+    const ch = _restoreChallenge();
+    return ch?.language || 'python';
+  });
   const [stdin, setStdin] = useState('');
   const [output, setOutput] = useState(null);
   const [testResults, setTestResults] = useState([]);
@@ -68,7 +94,6 @@ const CodePlayground = ({ navigate, user }) => {
   const [challenges, setChallenges] = useState([]);
   const [isChallengesLoading, setIsChallengesLoading] = useState(true);
   const [stats, setStats] = useState(null);
-  const [activeChallenge, setActiveChallenge] = useState(null);
 
   const [activeConsoleTab, setActiveConsoleTab] = useState('test_cases');
   const formatPythonLiteral = (str) => {
@@ -78,7 +103,17 @@ const CodePlayground = ({ navigate, user }) => {
     return str || '';
   };
 
-  const [userTestCases, setUserTestCases] = useState([{ input_data: '', expected_output: '' }]);
+  const [userTestCases, setUserTestCases] = useState(() => {
+    const ch = _restoreChallenge();
+    if (ch?.test_cases) {
+      const unhidden = ch.test_cases.filter(tc => !tc.is_hidden).map(tc => ({
+        input_data: formatPythonLiteral(tc.input_data),
+        expected_output: tc.expected_output
+      }));
+      if (unhidden.length > 0) return unhidden;
+    }
+    return [{ input_data: '', expected_output: '' }];
+  });
   const [activeTestCaseIdx, setActiveTestCaseIdx] = useState(0);
 
   const handleLoadChallenge = (challenge) => {
@@ -103,7 +138,27 @@ const CodePlayground = ({ navigate, user }) => {
     setActiveConsoleTab('test_cases');
   };
 
-  // No longer persist activeChallenge to localStorage — playground always starts clean
+  // Persist activeChallenge to sessionStorage (survives refresh)
+  useEffect(() => {
+    if (activeChallenge) {
+      sessionStorage.setItem('acadmix_active_challenge', JSON.stringify(activeChallenge));
+    } else {
+      sessionStorage.removeItem('acadmix_active_challenge');
+    }
+  }, [activeChallenge]);
+
+  // Detect refresh vs SPA navigation for cleanup
+  useEffect(() => {
+    const handleBeforeUnload = () => { isRefreshingRef.current = true; };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // On SPA navigation away, clear session — on refresh, keep it
+      if (!isRefreshingRef.current) {
+        sessionStorage.removeItem('acadmix_active_challenge');
+      }
+    };
+  }, []);
   
   // Resizable Pane State
   const [leftWidth, setLeftWidth] = useState(40); // Initial 40% width for left pane
