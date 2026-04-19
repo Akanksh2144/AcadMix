@@ -425,7 +425,7 @@ const Placements = ({ navigate, user }) => {
                                      <span className="text-[10px] font-bold uppercase py-0.5 px-2 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-full">Primary</span>
                                   )}
                                </div>
-                               <p className="text-xs text-slate-500 md:truncate mt-0.5">Parsed on {new Date(r.uploaded_at).toLocaleDateString()}</p>
+                               <p className="text-xs text-slate-500 md:truncate mt-0.5">Parsed on {r.created_at ? new Date(r.created_at).toLocaleDateString() : 'Unknown Date'}</p>
                             </div>
                           </label>
                         ))}
