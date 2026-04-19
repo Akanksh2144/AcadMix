@@ -2,7 +2,8 @@
 Interview War Room — Database Models
 AI Mock Interviews & ATS Resume Scoring for placement preparation.
 """
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Text, Boolean, Index
+from sqlalchemy.sql import text as sa_text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 import uuid
@@ -54,3 +55,42 @@ class ResumeScore(Base, SoftDeleteMixin):
     target_role      = Column(String, nullable=True)                                     # Role the resume was scored against
     job_description  = Column(Text, nullable=True)                                       # Optional JD for precise matching
     created_at       = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class StudentResume(Base, SoftDeleteMixin):
+    """Persistent resume vault — stores actual file in R2, parsed text for ATS."""
+    __tablename__ = "student_resumes"
+
+    id           = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id   = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id   = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    filename     = Column(String, nullable=False)                   # Original filename (e.g. "Aarav_Resume_v3.pdf")
+    storage_key  = Column(String, nullable=False)                   # R2 object key
+    file_url     = Column(String, nullable=False)                   # Public/presigned URL
+    content_type = Column(String, nullable=False, default="application/pdf")
+    file_size    = Column(Integer, nullable=True)                   # bytes
+    parsed_text  = Column(Text, nullable=True)                      # Extracted text for ATS/job matching
+    is_primary   = Column(Boolean, nullable=False, server_default=sa_text('false'))  # Default resume for one-click apply
+    version      = Column(Integer, nullable=False, default=1)
+    created_at   = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_student_resume_primary", "student_id", "is_primary", unique=False),
+    )
+
+
+class PlacementRestriction(Base, SoftDeleteMixin):
+    """TPO-managed student placement restrictions (global or per-drive bans)."""
+    __tablename__ = "placement_restrictions"
+
+    id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id       = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id       = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    drive_id         = Column(String, ForeignKey("placement_drives.id", ondelete="CASCADE"), nullable=True)  # NULL = global
+    reason           = Column(String, nullable=False)
+    restricted_by    = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    restriction_type = Column(String, nullable=False, default="blocked")  # blocked / warning
+    is_active        = Column(Boolean, nullable=False, server_default=sa_text('true'))
+    expires_at       = Column(DateTime(timezone=True), nullable=True)     # NULL = permanent
+    created_at       = Column(DateTime(timezone=True), server_default=func.now())
+

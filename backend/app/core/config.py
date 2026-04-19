@@ -64,6 +64,15 @@ class Settings(BaseSettings):
     TRANSPORT_DELAY_THRESHOLD_MIN: int = 5  # Delay alert threshold (minutes)
     FIREBASE_CREDENTIALS_PATH: str = ""     # Path to firebase-credentials.json (empty = mock mode)
 
+    # Object Storage (Cloudflare R2 — S3-compatible)
+    R2_ACCOUNT_ID: str = ""               # Cloudflare account ID
+    R2_ACCESS_KEY_ID: str = ""            # R2 API token access key
+    R2_SECRET_ACCESS_KEY: str = ""        # R2 API token secret key
+    R2_BUCKET_NAME: str = "acadmix"       # Bucket name
+    R2_PUBLIC_URL: str = ""               # Public bucket URL (e.g. https://files.acadmix.org)
+    STORAGE_MAX_FILE_SIZE_MB: int = 2     # Max upload size in MB
+    STORAGE_MAX_RESUMES_PER_STUDENT: int = 5
+
     # Payments (Razorpay)
     RAZORPAY_KEY_ID: str = ""               # Razorpay key ID (empty = payments disabled)
     RAZORPAY_KEY_SECRET: str = ""           # Razorpay key secret
