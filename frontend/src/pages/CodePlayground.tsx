@@ -298,6 +298,9 @@ const CodePlayground = ({ navigate, user }) => {
       } else {
          setTestResults([]);
          setSubmitSuccess(data.success && is_submit);
+         if (userTestCases.length > 0 && !code.includes('solve') && code.trim().length > 0) {
+             toast('💡 Hint: Name your main function "solve" to evaluate test cases!', { icon: '💡', duration: 6000 });
+         }
       }
       
       const cleanedOutput = rawOutput ? rawOutput.replace(/___ACADMIX_SEP___/g, '').replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').trim() : '';
