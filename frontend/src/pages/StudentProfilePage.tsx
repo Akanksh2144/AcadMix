@@ -135,6 +135,9 @@ const StudentProfilePage = ({ navigate, user }: any) => {
   };
 
   const processDelete = async (id: string, filename: string) => {
+    // Dismiss the modal UI immediately for snappy UX before the network overhead
+    setDeleteModal({ open: false });
+    
     try {
       await resumeVaultAPI.remove(id);
       setMessage({ type: 'success', text: `"${filename}" deleted.` });
@@ -142,7 +145,6 @@ const StudentProfilePage = ({ navigate, user }: any) => {
     } catch {
       setMessage({ type: 'error', text: 'Failed to delete resume.' });
     }
-    setDeleteModal({ open: false });
   };
 
   /* ── Download resume ────────────────────── */
