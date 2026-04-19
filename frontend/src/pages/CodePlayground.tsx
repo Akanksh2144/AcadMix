@@ -777,28 +777,31 @@ const CodePlayground = ({ navigate, user }) => {
                       {userTestCases.map((tc, idx) => {
                         const tr = testResults[idx];
                         let pillClass = activeTestCaseIdx === idx ? 'bg-slate-700/80 text-white shadow-sm' : 'bg-slate-800 text-slate-400 hover:bg-slate-700/50';
-                        if (tr && tr.passed === true) pillClass = activeTestCaseIdx === idx ? 'bg-emerald-500 text-white shadow-sm' : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30';
-                        if (tr && tr.passed === false) pillClass = activeTestCaseIdx === idx ? 'bg-rose-500 text-white shadow-sm' : 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30';
-                        return (
-                        <button
-                          key={idx}
-                          onClick={() => setActiveTestCaseIdx(idx)}
-                          className={`px-4 py-1.5 rounded-full text-sm font-bold transition-colors whitespace-nowrap ${pillClass}`}
-                        >
-                          Case {idx + 1}
-                        </button>
-                        );
-                      })}
-                      <button 
-                        onClick={() => {
-                          setUserTestCases([...userTestCases, { input_data: '', expected_output: '' }]);
-                          setActiveTestCaseIdx(userTestCases.length);
-                        }}
-                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors flex-shrink-0" 
-                        title="Add Custom Test Case"
-                      >
-                        <Plus size={16} weight="bold" />
-                      </button>
+                      {userTestCases.map((_, idx) => {
+                       let pillStyle = '';
+                       const tr = testResults[idx];
+                       if (tr) {
+                          if (tr.passed === true) pillStyle = ' ring-1 ring-emerald-500/50 bg-emerald-500/10 text-emerald-400';
+                          else if (tr.passed === false) pillStyle = ' ring-1 ring-rose-500/50 bg-rose-500/10 text-rose-400';
+                       }
+                       const isActive = activeTestCaseIdx === idx;
+                       const defaultStyle = isActive ? 'bg-slate-700/50 text-white' : 'bg-slate-800/30 hover:bg-slate-800/80 text-slate-400';
+                       
+                       return (
+                          <button key={idx} onClick={() => setActiveTestCaseIdx(idx)}
+                            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${pillStyle || defaultStyle}`}>
+                            Case {idx + 1}
+                          </button>
+                       );
+                    })}
+                    <div className="w-[1px] h-6 bg-slate-700/50 mx-1"></div>
+                    <button onClick={() => {
+                      setUserTestCases([...userTestCases, { input_data: '', expected_output: '' }]);
+                      setActiveTestCaseIdx(userTestCases.length);
+                    }}
+                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800/30 hover:bg-slate-800/80 text-slate-400 transition-colors shrink-0">
+                      <Plus size={16} weight="bold" />
+                    </button>
                     </div>
                     {userTestCases[activeTestCaseIdx] && (
                       <div className="flex flex-col gap-4 flex-1 pb-6">
@@ -830,12 +833,14 @@ const CodePlayground = ({ navigate, user }) => {
                         </div>
                         {testResults[activeTestCaseIdx] && (
                           <div className="flex flex-col pt-2 pb-2">
-                            <label className={`text-[11px] font-bold ${testResults[activeTestCaseIdx].passed === false ? 'text-rose-400' : 'text-indigo-400'} uppercase tracking-wider mb-1 flex items-center gap-2`}>
-                              Actual Output
+                            <label className={`text-[11px] font-bold ${testResults[activeTestCaseIdx].passed === false ? 'text-rose-400' : testResults[activeTestCaseIdx].passed === true ? 'text-emerald-400' : 'text-slate-400'} uppercase tracking-wider mb-1 flex items-center gap-2`}>
+                              Actual Output {testResults[activeTestCaseIdx].passed === true ? '(PASSED)' : testResults[activeTestCaseIdx].passed === false ? '(FAILED)' : ''}
                             </label>
-                            <div className={`bg-slate-950 border ${testResults[activeTestCaseIdx].passed === false ? 'border-rose-500/30 text-rose-400' : 'border-indigo-500/30 text-slate-300'} outline-none font-mono text-sm rounded-xl px-4 py-3 min-h-[60px] whitespace-pre-wrap flex items-center overflow-x-auto overflow-y-auto max-h-[160px] custom-scrollbar`}>
-                               {testResults[activeTestCaseIdx].actual_output || '(no output)'}
-                            </div>
+                            <textarea
+                              readOnly
+                              value={testResults[activeTestCaseIdx].actual_output || '(no output)'}
+                              className={`bg-slate-900/80 border ${testResults[activeTestCaseIdx].passed === false ? 'border-rose-500/30' : testResults[activeTestCaseIdx].passed === true ? 'border-emerald-500/30' : 'border-slate-700/50'} outline-none font-mono text-[13px] text-slate-300 rounded-xl px-4 py-3 min-h-[80px] resize-none cursor-default custom-scrollbar`}
+                            />
                           </div>
                         )}
                       </div>
