@@ -81,6 +81,16 @@ const StudentProfilePage = ({ navigate, user }: any) => {
   const handleUpload = async (file: File) => {
     if (!file) return;
 
+    if (resumes.length >= 3) {
+      setMessage({ type: 'error', text: 'Upload limit reached. Delete existing ones to free up space.' });
+      return;
+    }
+
+    if (resumes.some((r: any) => r.filename === file.name)) {
+      setMessage({ type: 'error', text: 'Already a file exists with the same name. Rename the file and try again or try removing the existing one.' });
+      return;
+    }
+
     const validTypes = [
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -297,14 +307,16 @@ const StudentProfilePage = ({ navigate, user }: any) => {
 
                     {/* Drag & Drop Zone */}
                     <div
-                      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                      onDragOver={(e) => { if (resumes.length < 3) { e.preventDefault(); setDragOver(true); } }}
                       onDragLeave={() => setDragOver(false)}
-                      onDrop={handleDrop}
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 ${
-                        dragOver
-                          ? 'border-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10'
-                          : 'border-slate-200 dark:border-white/10 hover:border-indigo-300 hover:bg-slate-50/50 dark:hover:bg-white/5'
+                      onDrop={(e) => { if (resumes.length < 3) handleDrop(e); }}
+                      onClick={() => { if (resumes.length < 3) fileInputRef.current?.click(); }}
+                      className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 ${
+                        resumes.length >= 3
+                          ? 'border-slate-200 bg-slate-50 dark:border-white/5 dark:bg-white/5 opacity-60 cursor-not-allowed'
+                          : dragOver
+                            ? 'border-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 cursor-pointer'
+                            : 'border-slate-200 dark:border-white/10 hover:border-indigo-300 hover:bg-slate-50/50 dark:hover:bg-white/5 cursor-pointer'
                       }`}
                     >
                       <input
@@ -326,6 +338,15 @@ const StudentProfilePage = ({ navigate, user }: any) => {
                           <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                           <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Uploading & parsing...</p>
                         </div>
+                      ) : resumes.length >= 3 ? (
+                        <>
+                          <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                            Upload limit reached
+                          </p>
+                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
+                            Delete existing ones to free up space
+                          </p>
+                        </>
                       ) : (
                         <>
                           <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
