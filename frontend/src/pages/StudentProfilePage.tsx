@@ -166,10 +166,13 @@ const StudentProfilePage = ({ navigate, user }: any) => {
           <html>
             <head>
               <title>${filename}</title>
-              <style>body { margin: 0; overflow: hidden; background-color: #333; }</style>
+              <style>
+                html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #333; }
+                iframe { width: 100vw; height: 100vh; border: none; display: block; }
+              </style>
             </head>
             <body>
-              <iframe src="${url}" width="100%" height="100%" style="border: none;"></iframe>
+              <iframe src="${url}"></iframe>
             </body>
           </html>
         `);
