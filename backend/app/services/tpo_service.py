@@ -243,7 +243,7 @@ class TPOService:
 
     # ── Student Application ────────────────────────────────────────
 
-    async def apply_to_drive(self, college_id: str, student_id: str, drive_id: str) -> dict:
+    async def apply_to_drive(self, college_id: str, student_id: str, drive_id: str, app_data: dict = None) -> dict:
         drive = await self.db.get(PlacementDrive, drive_id)
         if not drive or drive.college_id != college_id:
             return {"success": False, "error": "Drive not found"}
@@ -285,7 +285,18 @@ class TPOService:
         if existing.scalar_one_or_none():
             return {"success": False, "error": "Already applied"}
 
-        application = PlacementApplication(college_id=college_id, student_id=student_id, drive_id=drive_id)
+        # Extract data
+        app_data = app_data or {}
+        resume_id = app_data.get("resume_id")
+        preferred_location = app_data.get("preferred_location")
+        role = app_data.get("role")
+
+        application = PlacementApplication(
+            college_id=college_id, 
+            student_id=student_id, 
+            drive_id=drive_id,
+            application_data=app_data,
+        )
         self.db.add(application)
         await self.db.commit()
         return {"success": True, "message": "Application submitted successfully"}

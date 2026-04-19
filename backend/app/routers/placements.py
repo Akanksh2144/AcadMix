@@ -45,6 +45,21 @@ async def student_placements(user: dict = Depends(get_current_user), session: As
     return out
 
 
+@router.post("/placements/drives/{drive_id}/apply")
+async def apply_drive(
+    drive_id: str,
+    req: dict,
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db)
+):
+    from app.services.tpo_service import TPOService
+    svc = TPOService(session)
+    res = await svc.apply_to_drive(user["college_id"], user["id"], drive_id, app_data=req)
+    if not res.get("success"):
+        raise HTTPException(status_code=400, detail=res.get("error"))
+    return res
+
+
 @router.post("/placements")
 async def create_placement(req: dict, user: dict = Depends(require_role("admin", "hod", "tp_officer")), session: AsyncSession = Depends(get_db)):
     row = models.PlacementDrive(

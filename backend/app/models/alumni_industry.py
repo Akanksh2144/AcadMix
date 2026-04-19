@@ -54,6 +54,7 @@ class PlacementApplication(Base, SoftDeleteMixin):
     status = Column(String, nullable=False, default="registered")
     round_results = Column(JSONB, nullable=True)
     offer_details = Column(JSONB, nullable=True)
+    application_data = Column(JSONB, nullable=True)  # Stores resume_id, preferred location, etc.
     registered_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
