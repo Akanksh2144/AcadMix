@@ -35,7 +35,7 @@ def _build_python_sandbox(user_code: str, test_cases_list: list) -> str:
     import base64
     user_code_b64 = base64.b64encode(user_code.encode("utf-8")).decode("utf-8")
     return f"""
-import sys, io, json, base64, contextlib
+import io, json, base64, contextlib
 from collections import deque
 
 class ListNode:
