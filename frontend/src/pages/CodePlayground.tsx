@@ -877,9 +877,11 @@ const CodePlayground = ({ navigate, user }) => {
                                    </div>
                                 ))}
                                 {output.trim() !== '' && !output.includes('___ACADMIX_STATUS_') && (
-                                   <div className="col-span-full mt-4 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400">
-                                       <h4 className="text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2"><WarningCircle /> Execution Error</h4>
-                                       <pre className="text-xs whitespace-pre-wrap">{output}</pre>
+                                   <div className="col-span-full mt-4 flex flex-col gap-2">
+                                       <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Global Standard Output</h4>
+                                       <div className="bg-slate-900 border border-slate-700/50 outline-none font-mono text-[13px] text-slate-300 rounded-xl px-4 py-3 min-h-[60px] whitespace-pre-wrap flex items-center overflow-auto custom-scrollbar">
+                                          {output}
+                                       </div>
                                    </div>
                                 )}
                             </div>
