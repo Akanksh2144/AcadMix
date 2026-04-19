@@ -148,17 +148,22 @@ const StudentProfilePage = ({ navigate, user }: any) => {
   /* ── Download resume ────────────────────── */
   const handleDownload = async (id: string, filename: string) => {
     try {
-      // API now returns a binary Blob via StreamingResponse
+      // API returns a binary Blob securely proxied through backend
       const response = await resumeVaultAPI.download(id);
       
-      const url = window.URL.createObjectURL(new Blob([response.data || response]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      const fileType = filename.toLowerCase().endsWith('.docx') 
+        ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+        : 'application/pdf';
+
+      const blob = new Blob([response.data || response], { type: fileType });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Open in new tab (browser natively previews PDFs, downloads DOCX)
+      window.open(url, '_blank');
+      
+      // We can't immediately revoke the URL if we open it in a new tab because 
+      // the new tab needs time to load the blob. Use a timeout.
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
     } catch {
       setMessage({ type: 'error', text: 'Download failed.' });
     }
