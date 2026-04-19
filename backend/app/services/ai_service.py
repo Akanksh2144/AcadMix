@@ -559,3 +559,62 @@ Output strictly in JSON:
              "summary": f"Found {row_count} records matching your query.",
              "chart_suggestion": None
          }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ATS JOB MATCHING — Deterministic-feeling AI scoring
+# ═══════════════════════════════════════════════════════════════════════════════
+
+async def score_resume_for_job(resume_text: str, job_title: str, job_description: str) -> dict:
+    """
+    Scores a resume against a job description.
+    Uses temperature 0.0 to ensure deterministic, highly reproducible scores.
+    """
+    model = get_tier1_model()
+    fallbacks = get_fallbacks_for(model)
+
+    system_prompt = '''
+You are an expert Applicant Tracking System (ATS). Your task is to evaluate a candidate's resume text against a Job Description.
+Calculate a "match_percentage" (0-100) based strictly on keyword overlap and core skills required. Be objective and harsh — an 85+ means a near-perfect match.
+Extract precisely up to 5 critical "missing_keywords" (skills in the JD not found in the resume).
+Extract precisely up to 5 "strong_matches" (critical skills found in both).
+Provide a 1-sentence "brief_summary" of their compatibility.
+
+Output strictly in JSON format:
+{
+  "match_percentage": 75,
+  "missing_keywords": ["TypeScript", "Docker"],
+  "strong_matches": ["React", "CSS", "Agile"],
+  "brief_summary": "Strong frontend fundamentals, but missing cloud deployment experience."
+}
+'''
+    
+    user_prompt = f"JOB TITLE: {job_title}\n\nJOB DESCRIPTION:\n{job_description}\n\nRESUME TEXT:\n{resume_text}"
+
+    try:
+         response = await litellm.acompletion(
+             model=model,
+             fallbacks=fallbacks,
+             messages=[
+                 {"role": "system", "content": system_prompt},
+                 {"role": "user", "content": user_prompt}
+             ],
+             response_format={ "type": "json_object" },
+             temperature=0.0,
+             timeout=30.0
+         )
+         result = json.loads(response.choices[0].message.content)
+         # Ensure expected fields
+         return {
+             "match_percentage": result.get("match_percentage", 0),
+             "missing_keywords": result.get("missing_keywords", [])[:5],
+             "strong_matches": result.get("strong_matches", [])[:5],
+             "brief_summary": result.get("brief_summary", "Unable to generate summary.")
+         }
+    except Exception as e:
+         logger.error("Error generating ATS score: %s", e)
+         return {
+             "match_percentage": 0,
+             "missing_keywords": ["Error"],
+             "strong_matches": [],
+             "brief_summary": "ATS processing failed."
+         }

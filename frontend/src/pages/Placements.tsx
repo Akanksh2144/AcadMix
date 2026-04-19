@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Buildings, MapPin, CalendarBlank, Briefcase, Clock, Users, Star, CaretDown, CaretUp, XCircle, FilePdf } from '@phosphor-icons/react';
+import { Buildings, MapPin, CalendarBlank, Briefcase, Clock, Users, Star, CaretDown, CaretUp, XCircle, FilePdf, Sparkle, CheckCircle, WarningCircle } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { placementsAPI, resumeVaultAPI, usersAPI } from '../services/api';
 
@@ -33,6 +33,11 @@ const Placements = ({ navigate, user }) => {
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+  
+  // ATS Score State
+  const [atsScore, setAtsScore] = useState(null);
+  const [atsLoading, setAtsLoading] = useState(false);
+  const [atsError, setAtsError] = useState(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -59,8 +64,26 @@ const Placements = ({ navigate, user }) => {
     setApplyDrive(drive);
     setError(null);
     setSuccessMsg(null);
+    setAtsScore(null);
+    setAtsError(null);
   };
   
+  const generateAtsScore = async () => {
+    if (!selectedResumeId) {
+        setAtsError("Please select a resume first.");
+        return;
+    }
+    setAtsLoading(true);
+    setAtsError(null);
+    try {
+        const { data } = await placementsAPI.scoreResume(applyDrive.id, { resume_id: selectedResumeId });
+        setAtsScore(data);
+    } catch (err) {
+        setAtsError(err.response?.data?.detail || "Failed to generate AI score.");
+    }
+    setAtsLoading(false);
+  };
+
   const submitApplication = async (e) => {
     e.preventDefault();
     if (!selectedResumeId) {
@@ -409,6 +432,82 @@ const Placements = ({ navigate, user }) => {
                       </div>
                     )}
                   </div>
+
+                  {/* ATS Scoring Section */}
+                  {resumes.length > 0 && selectedResumeId && (
+                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400">ATS Match Score</h4>
+                        {!atsScore && (
+                          <button 
+                            type="button" 
+                            onClick={generateAtsScore}
+                            disabled={atsLoading}
+                            className="btn-secondary py-1.5 px-3 text-xs bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 border-0 flex items-center gap-1.5"
+                          >
+                            {atsLoading ? (
+                              <div className="w-3 h-3 border-2 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin"></div>
+                            ) : <Sparkle size={14} weight="fill" />}
+                            {atsLoading ? 'Analyzing...' : 'Generate Score'}
+                          </button>
+                        )}
+                      </div>
+
+                      {atsError && (
+                        <div className="text-xs text-red-500 mb-4">{atsError}</div>
+                      )}
+
+                      {atsScore && (
+                        <div className="soft-card p-4 bg-slate-50 dark:bg-[#0B0F19] flex flex-col sm:flex-row gap-5 items-center sm:items-start" style={{animation: 'fadeInUp 0.3s ease'}}>
+                          {/* Circular Score */}
+                          <div className="flex-shrink-0 relative w-20 h-20 flex items-center justify-center">
+                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                              <path className="text-slate-200 dark:text-slate-800" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3" />
+                              <path 
+                                className={`${atsScore.match_percentage >= 80 ? 'text-emerald-500' : atsScore.match_percentage >= 50 ? 'text-amber-500' : 'text-red-500'}`} 
+                                strokeDasharray={`${atsScore.match_percentage}, 100`} 
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                                fill="none" stroke="currentColor" strokeWidth="3" 
+                              />
+                            </svg>
+                            <div className="absolute flex flex-col items-center justify-center">
+                              <span className="text-lg font-black text-slate-900 dark:text-white leading-none">{atsScore.match_percentage}%</span>
+                            </div>
+                          </div>
+                          
+                          {/* Details */}
+                          <div className="flex-1 w-full space-y-3">
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              {atsScore.brief_summary}
+                            </p>
+                            
+                            {atsScore.strong_matches?.length > 0 && (
+                              <div>
+                                <p className="text-xs font-bold text-slate-500 mb-1.5 flex items-center gap-1"><CheckCircle size={14} className="text-emerald-500"/> Matched Keywords</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {atsScore.strong_matches.map((kw, idx) => (
+                                    <span key={idx} className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-full">{kw}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {atsScore.missing_keywords?.length > 0 && (
+                              <div>
+                                <p className="text-xs font-bold text-slate-500 mb-1.5 flex items-center gap-1"><WarningCircle size={14} className="text-amber-500"/> Missing Critical Keywords</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {atsScore.missing_keywords.map((kw, idx) => (
+                                    <span key={idx} className="text-[10px] font-bold px-2 py-0.5 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-500 rounded-full">{kw}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                 </form>
               )}
             </div>

@@ -258,6 +258,7 @@ export const analyticsAPI = {
 export const placementsAPI = {
   studentPlacements: () => api.get('/placements/student'),
   applyToDrive: (driveId, data) => api.post(`/placements/drives/${driveId}/apply`, data),
+  scoreResume: (driveId, data) => api.post(`/placements/drives/${driveId}/ats-score`, data),
 };
 
 // Student Panel (DHTE spec)

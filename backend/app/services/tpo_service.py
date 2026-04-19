@@ -241,6 +241,36 @@ class TPOService:
         total_points = sum(grade_map.get(g, 0) for g in grades)
         return round(total_points / len(grades), 2)
 
+    # ── ATS Scoring ────────────────────────────────────────────────
+
+    async def calculate_ats_score(self, student_id: str, drive_id: str, resume_id: str) -> dict:
+        from app.models.interview_prep import StudentResume
+        from app.services.ai_service import score_resume_for_job
+        
+        # Verify drive exists
+        drive = await self.db.get(PlacementDrive, drive_id)
+        if not drive:
+            raise ValueError("Drive not found")
+            
+        # Verify resume belongs to student
+        resume = await self.db.get(StudentResume, resume_id)
+        if not resume or resume.student_id != student_id or resume.is_deleted:
+            raise ValueError("Resume not found or access denied")
+            
+        if not resume.parsed_text:
+            return {
+                "match_percentage": 0,
+                "missing_keywords": ["Resume Text Not Found"],
+                "strong_matches": [],
+                "brief_summary": "Your resume could not be parsed. Please re-upload a clear PDF."
+            }
+            
+        job_title = drive.role_title or "Software Engineer"
+        job_description = f"{drive.job_description or ''} {drive.eligibility_criteria or ''}"
+        
+        # Delegate to AI 
+        return await score_resume_for_job(resume.parsed_text, job_title, job_description)
+
     # ── Student Application ────────────────────────────────────────
 
     async def apply_to_drive(self, college_id: str, student_id: str, drive_id: str, app_data: dict = None) -> dict:

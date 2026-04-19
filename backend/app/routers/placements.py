@@ -59,6 +59,25 @@ async def apply_drive(
         raise HTTPException(status_code=400, detail=res.get("error"))
     return res
 
+@router.post("/placements/drives/{drive_id}/ats-score")
+async def get_ats_score(
+    drive_id: str,
+    req: dict,
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db)
+):
+    from app.services.tpo_service import TPOService
+    svc = TPOService(session)
+    resume_id = req.get("resume_id")
+    if not resume_id:
+        raise HTTPException(status_code=400, detail="resume_id is required")
+        
+    try:
+        res = await svc.calculate_ats_score(user["id"], drive_id, resume_id)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.post("/placements")
 async def create_placement(req: dict, user: dict = Depends(require_role("admin", "hod", "tp_officer")), session: AsyncSession = Depends(get_db)):
