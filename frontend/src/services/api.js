@@ -545,6 +545,16 @@ export const resumeAPI = {
   latest: () => api.get('/resume/latest'),
 };
 
+// Resume Vault — Persistent resume file storage (R2)
+export const resumeVaultAPI = {
+  upload: (formData) => api.post('/resume-vault/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  list: () => api.get('/resume-vault/'),
+  getPrimary: () => api.get('/resume-vault/primary'),
+  setPrimary: (id) => api.patch(`/resume-vault/${id}/primary`),
+  remove: (id) => api.delete(`/resume-vault/${id}`),
+  download: (id) => api.get(`/resume-vault/${id}/download`),
+};
+
 // Career Toolkit — AI-Powered Career Prep Tools
 export const careerAPI = {
   coverLetter: (data) => api.post('/career/cover-letter', data),

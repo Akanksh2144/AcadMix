@@ -46,6 +46,7 @@ const RetiredFacultyDashboard = React.lazy(() => import('./pages/RetiredFacultyD
 const ExpertDashboard = React.lazy(() => import('./pages/ExpertDashboard'));
 const NodalOfficerDashboard = React.lazy(() => import('./pages/NodalOfficerDashboard'));
 const FacultyProfilePage = React.lazy(() => import('./pages/FacultyProfilePage'));
+const StudentProfilePage = React.lazy(() => import('./pages/StudentProfilePage'));
 const InterviewWarRoom = React.lazy(() => import('./pages/InterviewWarRoom'));
 const AIInterviewSession = React.lazy(() => import('./pages/AIInterviewSession'));
 const HostelBooking = React.lazy(() => import('./pages/HostelBooking'));
@@ -113,6 +114,7 @@ const PAGE_TO_PATH = {
   'resume-ats-scorer': '/resume-scorer',
   'career-toolkit': '/career',
   'visitor-management': '/visitors',
+  'student-profile': '/student/profile',
 
 };
 
@@ -406,6 +408,9 @@ function AppRoutes({ user, onLogin, onLogout }) {
       } />
       <Route path="/faculty/profile" element={
         <ProtectedRoute user={user}><FacultyProfilePage navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/student/profile" element={
+        <ProtectedRoute user={user}><StudentProfilePage navigate={navigate} user={user} /></ProtectedRoute>
       } />
 
       {/* ── Fallback ─────────────────────────────────────────────── */}
