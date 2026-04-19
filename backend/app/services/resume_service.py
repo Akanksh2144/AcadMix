@@ -173,7 +173,24 @@ async def call_llm(messages: list, json_mode: bool = False) -> str:
 
 
 async def extract_pdf_text(file_bytes: bytes) -> str:
-    """Extract text from PDF bytes using PyPDF2. Falls back to pdfplumber."""
+    """Extract text from PDF bytes using PyMuPDF (fitz). Highly robust against weird encodings."""
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        pages = []
+        for page in doc:
+            text = page.get_text()
+            if text:
+                pages.append(text)
+        full_text = "\n".join(pages).strip()
+        if full_text:
+            return full_text
+        else:
+            logger.warning("PyMuPDF extracted empty text (scanned PDF or missing ToUnicode mapping).")
+    except Exception as e:
+        logger.warning("PyMuPDF extraction failed: %s", e)
+
+    # Fallback to PyPDF2 just in case PyMuPDF fails to initialize on the stream
     try:
         import PyPDF2
         reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
@@ -186,20 +203,7 @@ async def extract_pdf_text(file_bytes: bytes) -> str:
         if full_text:
             return full_text
     except Exception as e:
-        logger.warning("PyPDF2 extraction failed: %s", e)
-
-    # Fallback: try pdfplumber
-    try:
-        import pdfplumber
-        with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-            pages = []
-            for page in pdf.pages:
-                text = page.extract_text()
-                if text:
-                    pages.append(text)
-            return "\n".join(pages).strip()
-    except Exception as e:
-        logger.warning("pdfplumber extraction also failed: %s", e)
+        logger.warning("PyPDF2 fallback also failed: %s", e)
 
     raise HTTPException(status_code=422, detail="Could not extract text from the PDF. Please ensure it's a valid, text-based PDF (not a scanned image).")
 
