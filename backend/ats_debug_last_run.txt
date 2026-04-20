@@ -5,6 +5,50 @@
     "professional_summary": 70,
     "work_experience": 0,
     "education": 100,
-    "skills": 90,
+    "skills": 50,
     "projects": 75,
-    "certifications":
+    "certifications": 50,
+    "formatting": 90
+  },
+  "keywords_found": [
+    "Python",
+    "C++",
+    "JavaScript",
+    "HTML",
+    "CSS",
+    "React.js",
+    "MongoDB",
+    "MySQL",
+    "PostgreSQL",
+    "Docker",
+    "Jenkins",
+    "CI/CD",
+    "Git",
+    "Agile/Scrum",
+    "Flutter"
+  ],
+  "keywords_missing": [
+    "Java",
+    "SQL",
+    "RESTful APIs",
+    "Microservices",
+    "Unit Testing",
+    "Object-Oriented Programming (OOP)",
+    "Data Structures",
+    "Algorithms",
+    "Software Design Patterns",
+    "Version Control (Git)",
+    "Cloud Computing (AWS/Azure/GCP)",
+    "Problem Solving",
+    "Debugging"
+  ],
+  "improvement_tips": [
+    "Add a dedicated 'Work Experience' section detailing any internships or previous roles with quantifiable achievements relevant to software development.",
+    "Expand on project descriptions to highlight specific software development methodologies, challenges overcome, and the impact of your code.",
+    "Incorporate more core software development languages and frameworks like Java, SQL, and explore concepts like RESTful APIs and microservices.",
+    "Tailor the 'Professional Summary' to explicitly mention 'Software Developer' and briefly state relevant experience duration or aspirations.",
+    "Seek certifications or online courses specifically focused on software development principles, object-oriented design, and common development tools."
+  ],
+  "summary": "This resume presents a motivated Computer Science undergraduate with a strong foundation in programming and web technologies. While it showcases relevant technical skills and projects for a Software Developer role, the absence of work experience and a lack of emphasis on core software engineering principles (like OOP, design patterns, and testing) limit its immediate impact for this specific target role."
+}
+```

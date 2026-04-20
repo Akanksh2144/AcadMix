@@ -13,3 +13,5 @@ from app.models.visitors import Visitor, VisitRecord
 from app.models.notifications import Notification, PushSubscription
 from app.models.admissions import Admission
 
+from app.models.outcomes import ProgramOutcome, CourseOutcome, COPOMapping
+from app.models.assessments import AIGeneratedAssessment, AssessmentQuestion

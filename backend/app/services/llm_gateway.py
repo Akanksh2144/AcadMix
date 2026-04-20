@@ -43,6 +43,11 @@ from typing import AsyncGenerator, Dict, List, Optional, Any
 
 from app.core.config import settings
 
+from google import genai
+from google.genai import types
+from google.oauth2 import service_account
+from anthropic import AsyncAnthropicVertex
+
 logger = logging.getLogger("acadmix.llm_gateway")
 
 
@@ -152,6 +157,16 @@ ROUTES: Dict[str, Dict[str, Any]] = {
         "timeout": 30.0,
         "description": "Natural language summaries of ERP query results",
     },
+
+    # ── Assessment Generator: Gemini 2.0 Flash via Vertex AI ───────────────
+    "assessment_gen": {
+        "provider": "vertex",
+        "model": None,
+        "temperature": 0.4,
+        "max_tokens": 4000,
+        "timeout": 45.0,
+        "description": "Structured JSON assessment generation mapped to CO/PO matrices",
+    },
 }
 
 
@@ -166,307 +181,149 @@ def _resolve_models():
     ROUTES["erp_complex"]["model"] = getattr(settings, "VERTEX_MODEL_PRO", "gemini-2.5-pro")
     ROUTES["erp_last_resort"]["model"] = getattr(settings, "VERTEX_MODEL_FALLBACK", "claude-sonnet-4-6")
     ROUTES["erp_summary"]["model"] = getattr(settings, "VERTEX_MODEL_LITE", "gemini-2.0-flash-lite")
+    ROUTES["assessment_gen"]["model"] = getattr(settings, "VERTEX_MODEL_FLASH", "gemini-2.0-flash-001")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PROVIDER CLIENTS — Lazy-initialized singletons
 # ═══════════════════════════════════════════════════════════════════════════════
 
-_vertex_client = None
 
+# ---------------------------------------------------------------------------
+# Core Configuration & Auth
+# ---------------------------------------------------------------------------
 
-def _get_vertex_client():
-    """Initialize Vertex AI client (lazy, singleton).
+def _get_google_credentials():
+    import os
+    credentials_json = os.environ.get("VERTEX_CREDENTIALS_JSON")
+    if credentials_json:
+        credentials_dict = json.loads(credentials_json)
+        return service_account.Credentials.from_service_account_info(credentials_dict).with_scopes(["https://www.googleapis.com/auth/cloud-platform"])
+    return None
+
+def _get_vertex_client() -> genai.Client:
+    project_id = settings.VERTEX_PROJECT_ID
+    location = settings.VERTEX_LOCATION
+    credentials = _get_google_credentials()
     
-    Supports two credential modes:
-    1. GOOGLE_APPLICATION_CREDENTIALS_JSON (env var) — for Render / ephemeral containers
-    2. VERTEX_CREDENTIALS_PATH (file path) — for local development
-    3. Application Default Credentials — if neither is set
-    """
-    global _vertex_client
-    if _vertex_client is not None:
-        return _vertex_client
+    if credentials:
+        return genai.Client(vertexai=True, project=project_id, location=location, credentials=credentials)
+    return genai.Client(vertexai=True, project=project_id, location=location)
 
-    if not settings.VERTEX_PROJECT_ID:
-        logger.warning("VERTEX_PROJECT_ID not set — Vertex AI disabled, falling back to LiteLLM")
-        return None
+def _get_claude_client() -> AsyncAnthropicVertex:
+    project_id = settings.VERTEX_PROJECT_ID
+    region = settings.VERTEX_LOCATION
+    credentials = _get_google_credentials()
+    
+    if credentials:
+        return AsyncAnthropicVertex(project_id=project_id, region=region, google_credentials=credentials)
+    return AsyncAnthropicVertex(project_id=project_id, region=region)
 
-    try:
-        import vertexai
+# ---------------------------------------------------------------------------
+# Gemini Implementation (google-genai)
+# ---------------------------------------------------------------------------
 
-        init_kwargs = {
-            "project": settings.VERTEX_PROJECT_ID,
-            "location": settings.VERTEX_LOCATION,
-        }
+def _map_messages_to_content(messages: list[dict]) -> list[types.Content]:
+    contents = []
+    for msg in messages:
+        role = "user" if msg["role"] in ["user", "system"] else "model"
+        parts = []
+        
+        if isinstance(msg["content"], str):
+            parts.append(types.Part.from_text(text=msg["content"]))
+        elif isinstance(msg["content"], list):
+            for item in msg["content"]:
+                if item.get("type") == "text":
+                    parts.append(types.Part.from_text(text=item.get("text")))
+                elif item.get("type") == "document":
+                    parts.append(
+                        types.Part.from_bytes(
+                            data=item.get("data"),
+                            mime_type="application/pdf"
+                        )
+                    )
+        contents.append(types.Content(role=role, parts=parts))
+    return contents
 
-        # Priority 1: JSON string from env var
-        if getattr(settings, "GOOGLE_APPLICATION_CREDENTIALS_JSON", None):
-            import json, os, tempfile
-            from google.oauth2 import service_account
-            
-            creds_str = settings.GOOGLE_APPLICATION_CREDENTIALS_JSON
-            creds_dict = json.loads(creds_str)
-            credentials = service_account.Credentials.from_service_account_info(creds_dict)
-            init_kwargs["credentials"] = credentials
-            
-            # Export to ENV for other libraries (like AnthropicVertex) that rely on ADC path
-            fd, path = tempfile.mkstemp(suffix=".json")
-            with os.fdopen(fd, 'w') as f:
-                f.write(creds_str)
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = path
-            
-            logger.info("Vertex AI credentials: loaded from GOOGLE_APPLICATION_CREDENTIALS_JSON env var")
-        # Legacy fallback rename check
-        elif getattr(settings, "VERTEX_CREDENTIALS_JSON", None):
-            import json, os, tempfile
-            from google.oauth2 import service_account
-            
-            creds_str = settings.VERTEX_CREDENTIALS_JSON
-            creds_dict = json.loads(creds_str)
-            credentials = service_account.Credentials.from_service_account_info(creds_dict)
-            init_kwargs["credentials"] = credentials
-            
-            # Export to ENV for other libraries (like AnthropicVertex) that rely on ADC path
-            fd, path = tempfile.mkstemp(suffix=".json")
-            with os.fdopen(fd, 'w') as f:
-                f.write(creds_str)
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = path
-            
-            logger.info("Vertex AI credentials: loaded from VERTEX_CREDENTIALS_JSON env var")
-
-        # Priority 2: File path
-        elif getattr(settings, "VERTEX_CREDENTIALS_PATH", None):
-            from google.oauth2 import service_account
-            import os
-            credentials = service_account.Credentials.from_service_account_file(
-                settings.VERTEX_CREDENTIALS_PATH
-            )
-            init_kwargs["credentials"] = credentials
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.VERTEX_CREDENTIALS_PATH
-            logger.info("Vertex AI credentials: loaded from file %s", settings.VERTEX_CREDENTIALS_PATH)
-
-        # Priority 3: Application Default Credentials
-        else:
-            logger.info("Vertex AI credentials: using Application Default Credentials")
-
-        vertexai.init(**init_kwargs)
-        _vertex_client = True  # Flag that Vertex is initialized
-        logger.info(
-            "Vertex AI initialized: project=%s, location=%s, models=[%s, %s, %s]",
-            settings.VERTEX_PROJECT_ID,
-            settings.VERTEX_LOCATION,
-            getattr(settings, "VERTEX_MODEL_INTERVIEW", ""),
-            getattr(settings, "VERTEX_MODEL_FLASH", ""),
-            getattr(settings, "VERTEX_MODEL_FALLBACK", ""),
-        )
-        return _vertex_client
-    except Exception as e:
-        logger.error("Vertex AI initialization failed: %s", e)
-        return None
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# PROVIDER-SPECIFIC COMPLETION IMPLEMENTATIONS
-# ═══════════════════════════════════════════════════════════════════════════════
-
-async def _vertex_complete(
-    model: str,
-    messages: List[Dict[str, str]],
-    temperature: float = 0.7,
-    max_tokens: int = 1024,
-    json_mode: bool = False,
-    media_bytes: Optional[bytes] = None,
-    mime_type: str = "application/pdf",
-    **kwargs,
-) -> str:
-    """Call Gemini via Vertex AI SDK (async)."""
-    from vertexai.generative_models import GenerativeModel, GenerationConfig, Part
-
-    gen_config = GenerationConfig(
-        temperature=temperature,
-        max_output_tokens=max_tokens,
-    )
+async def _vertex_complete(model_name: str, messages: list[dict], **kwargs) -> str:
+    json_mode = kwargs.get("json_mode", False)
+    client = _get_vertex_client()
+    contents = _map_messages_to_content(messages)
+    
+    config_params = {}
     if json_mode:
-        gen_config.response_mime_type = "application/json"
-
-    system_parts = []
-    contents = []
+        config_params["response_mime_type"] = "application/json"
     
+    # Handle media payload from ATS scoring properly via parts manually if passed via kwargs 
+    # (Since ATS passes media_bytes directly to complete sometimes!)
+    media_bytes = kwargs.get("media_bytes")
+    mime_type = kwargs.get("mime_type", "application/pdf")
     if media_bytes:
-        # Prepend the media block to the user prompt context
-        contents.append({"role": "user", "parts": [{"text": "Attached Document:\n"}, Part.from_data(data=media_bytes, mime_type=mime_type)]})
+        contents.append(types.Content(role="user", parts=[
+            types.Part.from_text(text="Attached Document:\\n"),
+            types.Part.from_bytes(data=media_bytes, mime_type=mime_type)
+        ]))
+        
+    config = types.GenerateContentConfig(**config_params)
 
-    for msg in messages:
-        if msg["role"] == "system":
-            system_parts.append(msg["content"])
-        elif msg["role"] == "user":
-            if contents and contents[-1]["role"] == "user":
-                contents[-1]["parts"].append({"text": msg["content"]})
-            else:
-                contents.append({"role": "user", "parts": [{"text": msg["content"]}]})
-        elif msg["role"] == "assistant":
-            contents.append({"role": "model", "parts": [{"text": msg["content"]}]})
-
-    gen_model = GenerativeModel(
-        model,
-        generation_config=gen_config,
-        system_instruction="\n\n".join(system_parts) if system_parts else None,
+    response = await client.aio.models.generate_content(
+        model=model_name,
+        contents=contents,
+        config=config
     )
+    return response.text
 
-    import asyncio
-    # Vertex AI Python SDK is synchronous — run in executor
-    def _sync_call():
-        response = gen_model.generate_content(contents)
-        return response.text
+async def _vertex_stream(model_name: str, messages: list[dict], **kwargs):
+    client = _get_vertex_client()
+    contents = _map_messages_to_content(messages)
 
-    loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(None, _sync_call)
-    return result
-
-
-async def _vertex_stream(
-    model: str,
-    messages: List[Dict[str, str]],
-    temperature: float = 0.7,
-    max_tokens: int = 1024,
-    **kwargs,
-) -> AsyncGenerator[str, None]:
-    """Stream Gemini via Vertex AI SDK."""
-    from vertexai.generative_models import GenerativeModel, GenerationConfig
-    import asyncio
-
-    gen_config = GenerationConfig(
-        temperature=temperature,
-        max_output_tokens=max_tokens,
+    response_stream = await client.aio.models.generate_content_stream(
+        model=model_name,
+        contents=contents
     )
-
-    system_parts = []
-    contents = []
-    for msg in messages:
-        if msg["role"] == "system":
-            system_parts.append(msg["content"])
-        elif msg["role"] == "user":
-            contents.append({"role": "user", "parts": [{"text": msg["content"]}]})
-        elif msg["role"] == "assistant":
-            contents.append({"role": "model", "parts": [{"text": msg["content"]}]})
-
-    gen_model = GenerativeModel(
-        model,
-        generation_config=gen_config,
-        system_instruction="\n\n".join(system_parts) if system_parts else None,
-    )
-
-    def _sync_stream():
-        return gen_model.generate_content(contents, stream=True)
-
-    loop = asyncio.get_event_loop()
-    response = await loop.run_in_executor(None, _sync_stream)
-
-    for chunk in response:
+    async for chunk in response_stream:
         if chunk.text:
             yield chunk.text
 
+# ---------------------------------------------------------------------------
+# Claude Implementation (Anthropic Vertex)
+# ---------------------------------------------------------------------------
 
-async def _vertex_anthropic_complete(
-    model: str,
-    messages: List[Dict[str, str]],
-    temperature: float = 0.0,
-    max_tokens: int = 1000,
-    **kwargs,
-) -> str:
-    """Call Claude 4.6 via Vertex Model Garden (AnthropicVertex client)."""
-    import asyncio
-    from anthropic import AnthropicVertex
+def _parse_anthropic_messages(messages: list[dict]) -> tuple[str, list[dict]]:
+    system_text = next((m["content"] for m in messages if m["role"] == "system"), "")
+    user_messages = [m for m in messages if m["role"] != "system"]
     
-    # Initialize ephemeral AnthropicVertex client
-    client = AnthropicVertex(
-        region=settings.VERTEX_LOCATION,
-        project_id=settings.VERTEX_PROJECT_ID,
+    anthropic_messages = []
+    for m in user_messages:
+        role = "assistant" if m["role"] == "model" else "user"
+        anthropic_messages.append({"role": role, "content": m["content"]})
+        
+    return system_text, anthropic_messages
+
+async def _claude_complete(model_name: str, messages: list[dict], **kwargs) -> str:
+    client = _get_claude_client()
+    system_text, formatted_messages = _parse_anthropic_messages(messages)
+
+    response = await client.messages.create(
+        model=model_name,
+        max_tokens=8192,
+        system=system_text,
+        messages=formatted_messages
     )
+    return response.content[0].text
 
-    # Separate system messages from conversation
-    system_messages = ""
-    converse_messages = []
-    for msg in messages:
-        if msg["role"] == "system":
-            system_messages += msg["content"] + "\n"
-        else:
-            role = "user" if msg["role"] == "user" else "assistant"
-            converse_messages.append({
-                "role": role,
-                "content": [{"type": "text", "text": msg["content"]}],
-            })
+async def _claude_stream(model_name: str, messages: list[dict], **kwargs):
+    client = _get_claude_client()
+    system_text, formatted_messages = _parse_anthropic_messages(messages)
 
-    def _sync_call():
-        response = client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            system=system_messages.strip(),
-            messages=converse_messages
-        )
-        return response.content[0].text
-
-    loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(None, _sync_call)
-    return result
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# LITELLM FALLBACK — Used when Vertex/Bedrock are not configured or fail
-# ═══════════════════════════════════════════════════════════════════════════════
-
-async def _litellm_complete(
-    messages: List[Dict[str, str]],
-    temperature: float = 0.5,
-    max_tokens: int = 2000,
-    json_mode: bool = False,
-    timeout: float = 30.0,
-    **kwargs,
-) -> str:
-    """Fallback to LiteLLM (Groq/Gemini AI Studio)."""
-    import litellm
-
-    litellm.api_key = settings.GEMINI_API_KEY
-
-    call_kwargs = {
-        "model": settings.LLM_REVIEW_MODEL,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "timeout": timeout,
-    }
-    if json_mode:
-        call_kwargs["response_format"] = {"type": "json_object"}
-
-    response = await litellm.acompletion(**call_kwargs)
-    return response.choices[0].message.content.strip()
-
-
-async def _litellm_stream(
-    messages: List[Dict[str, str]],
-    temperature: float = 0.5,
-    max_tokens: int = 500,
-    timeout: float = 30.0,
-    **kwargs,
-) -> AsyncGenerator[str, None]:
-    """Fallback streaming via LiteLLM."""
-    import litellm
-
-    litellm.api_key = settings.GEMINI_API_KEY
-
-    response = await litellm.acompletion(
-        model=settings.LLM_REVIEW_MODEL,
-        messages=messages,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        stream=True,
-        timeout=timeout,
-    )
-    async for chunk in response:
-        content = chunk.choices[0].delta.content
-        if content:
-            yield content
+    async with client.messages.stream(
+        model=model_name,
+        max_tokens=8192,
+        system=system_text,
+        messages=formatted_messages
+    ) as stream:
+        async for text in stream.text_stream:
+            yield text
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -490,7 +347,7 @@ class LLMGateway:
         self._initialized = False
         self._metrics = {
             "total_calls": 0,
-            "provider_calls": {"vertex": 0, "bedrock": 0, "litellm": 0},
+            "provider_calls": {"vertex": 0, "bedrock": 0},
             "errors": 0,
             "fallbacks": 0,
         }
@@ -590,17 +447,17 @@ class LLMGateway:
             )
             self._metrics["errors"] += 1
 
-        # ── Fallback to LiteLLM (Groq / Gemini AI Studio) ────────────────
+        # ── Strict Native Vertex Fallback ────────────────────────────────
         try:
             self._metrics["fallbacks"] += 1
-            self._metrics["provider_calls"]["litellm"] += 1
-            logger.info("[LLMGateway] Falling back to LiteLLM for purpose=%s", purpose)
-            result = await _litellm_complete(
-                messages,
+            logger.warning("[LLMGateway] Primary failed. Degrading natively inside Vertex to gemini-2.5-flash")
+            result = await _vertex_complete(
+                "gemini-2.5-flash", messages,
                 temperature=temp, max_tokens=tokens,
                 json_mode=json_mode, timeout=tout,
+                media_bytes=media_bytes, mime_type=mime_type,
             )
-            self._log_call(purpose, "litellm", settings.LLM_REVIEW_MODEL, start)
+            self._log_call(purpose, "vertex_fallback", "gemini-2.5-flash", start)
             return result
         except Exception as e:
             logger.error("[LLMGateway] All providers failed for %s: %s", purpose, e)
@@ -636,10 +493,14 @@ class LLMGateway:
 
         # ── Try primary provider ─────────────────────────────────────────
         try:
-            if provider == "vertex" and _get_vertex_client():
+            if provider == "vertex":
                 self._metrics["provider_calls"]["vertex"] += 1
-                async for chunk in _vertex_stream(model, messages, temperature=temp, max_tokens=tokens):
-                    yield chunk
+                if "claude" in model.lower():
+                    async for chunk in _claude_stream(model, messages, temperature=temp, max_tokens=tokens):
+                        yield chunk
+                else:
+                    async for chunk in _vertex_stream(model, messages, temperature=temp, max_tokens=tokens):
+                        yield chunk
                 return
 
         except Exception as e:
@@ -649,11 +510,11 @@ class LLMGateway:
             )
             self._metrics["errors"] += 1
 
-        # ── Fallback to LiteLLM ──────────────────────────────────────────
+        # ── Strict Native Vertex Fallback ────────────────────────────────
         try:
             self._metrics["fallbacks"] += 1
-            self._metrics["provider_calls"]["litellm"] += 1
-            async for chunk in _litellm_stream(messages, temperature=temp, max_tokens=tokens):
+            logger.warning("[LLMGateway] Primary stream failed. Degrading natively inside Vertex to gemini-2.5-flash")
+            async for chunk in _vertex_stream("gemini-2.5-flash", messages, temperature=temp, max_tokens=tokens):
                 yield chunk
         except Exception as e:
             logger.error("[LLMGateway] All stream providers failed for %s: %s", purpose, e)

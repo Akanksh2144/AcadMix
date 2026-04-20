@@ -33,7 +33,6 @@ class Settings(BaseSettings):
     LLM_REVIEW_MODEL: str = "gemini/gemini-2.5-flash"       # Legacy fallback — kept for hot standby
     INTERVIEW_LLM_MODEL: str = "gemini/gemini-2.5-flash"     # Legacy fallback — kept for hot standby
     RESUME_LLM_MODEL: str = "gemini/gemini-2.5-flash"        # Legacy fallback — kept for hot standby
-    GEMINI_API_KEY: str = ""                                 # Legacy fallback — kept for hot standby
     GROQ_API_KEY: str = ""                                   # Legacy fallback — kept for hot standby
 
     # ── Vertex AI (Production Single Provider) ───────────────────────
@@ -46,7 +45,7 @@ class Settings(BaseSettings):
     
     # ── Vertex AI strict model definitions ───────────────────────
     VERTEX_MODEL_INTERVIEW: str = "gemini-2.5-flash"                  # Interviews
-    VERTEX_MODEL_LITE: str = "gemini-2.0-flash-lite"                  # Tools/Review/Ami/ATS
+    VERTEX_MODEL_LITE: str = "gemini-2.5-flash-lite"                  # Tools/Review/Ami/ATS
     VERTEX_MODEL_FLASH: str = "gemini-2.5-flash"                      # ERP Standard / ATS Heavy
     VERTEX_MODEL_PRO: str = "gemini-2.5-pro"                          # ERP Complex
     VERTEX_MODEL_FALLBACK: str = "gemini-2.5-pro"                     # ERP Fallback (Gemini instead of Claude)

@@ -1,18 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash, Copy, Eye, CalendarBlank, Clock, X, WarningCircle, CaretDown, CaretUp, DownloadSimple, UploadSimple, CalendarDots } from '@phosphor-icons/react';
-import PageHeader from '../components/PageHeader';
-import { facultyAPI, quizzesAPI } from '../services/api';
+import { facultyAPI, quizzesAPI, assessmentsAPI } from '../services/api';
 import * as XLSX from 'xlsx';
 import AlertModal from '../components/AlertModal';
 import { AnimatePresence, motion } from 'framer-motion';
+import FacultyAssessmentGenerator from '../components/faculty/FacultyAssessmentGenerator';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const QuizBuilder = ({ navigate, user }) => {
-  const [quizTitle, setQuizTitle] = useState('New Quiz');
   const [questions, setQuestions] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   
   const [assignments, setAssignments] = useState([]);
   const [subject, setSubject] = useState('');
+  
+  // AI Generator specific state
+  const [showAIGen, setShowAIGen] = useState(false);
+  const [aiWarnings, setAiWarnings] = useState([]);
+
   const [selectedClasses, setSelectedClasses] = useState([]);
   const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
   
@@ -245,6 +250,54 @@ const QuizBuilder = ({ navigate, user }) => {
     e.target.value = '';
   };
 
+  const handleAIGenerationComplete = (assessment, warnings) => {
+    setQuizTitle(assessment.title || 'AI Generated Assessment');
+    setAiWarnings(warnings || []);
+    
+    if (warnings && warnings.length > 0) {
+       showAlert('Incomplete Coverage Matrix', warnings.join('\n'), 'warning');
+    }
+
+    const mappedQuestions = assessment.questions.map((q, i) => {
+      let type = 'short';
+      let options = ['', '', '', ''];
+      let correctAnswer = 0;
+      
+      if (q.question_type === 'mcq' || q.options) {
+        type = 'mcq-single';
+        options = (q.options || []).map(o => o.text);
+        if (options.length < 4) options = [...options, ...Array(4 - options.length).fill('')];
+        
+        const charToIndex = {'A':0, 'B':1, 'C':2, 'D':3, 'a':0, 'b':1, 'c':2, 'd':3};
+        if (q.answer_key) {
+           if (charToIndex[q.answer_key] !== undefined) {
+             correctAnswer = charToIndex[q.answer_key];
+           } else {
+             const foundIdx = options.findIndex(o => o === q.answer_key);
+             correctAnswer = foundIdx >= 0 ? foundIdx : 0;
+           }
+        }
+      }
+      
+      return {
+        id: i + 1,
+        type,
+        text: q.question_text,
+        marks: q.marks || 1,
+        negativeMarks: 0,
+        options,
+        correctAnswer,
+        expectedAnswer: q.question_type !== 'mcq' ? (q.answer_key || '') : '', // store expected string
+        co_id: q.co_id,
+        po_id: q.po_id,
+        bloom_level: q.bloom_level
+      };
+    });
+    
+    setQuestions([...questions, ...mappedQuestions]);
+    setCurrentQuestion(questions.length); // Jump to first generated
+  };
+
   const addOption = () => {
     const nq = [...questions];
     nq[currentQuestion].options.push('');
@@ -323,6 +376,27 @@ const QuizBuilder = ({ navigate, user }) => {
       setSubmitting(true);
       const res = await quizzesAPI.create(quizData);
       
+      // Phase 3: Secure AI Relational Drafts upon Explicit Faculty Commit
+      const aiQuestions = questions.filter(q => q.co_id);
+      if (aiQuestions.length > 0 && activeCourseId) {
+         try {
+             await assessmentsAPI.commit(activeCourseId, {
+                type: 'quiz',
+                title: quizTitle,
+                questions: aiQuestions.map(q => ({
+                   question_text: q.text || 'Untitled',
+                   question_type: q.type === 'short' ? 'short_answer' : 'mcq',
+                   co_id: q.co_id,
+                   po_id: q.po_id,
+                   bloom_level: q.bloom_level || 'Apply',
+                   marks: q.marks,
+                   options: q.type === 'short' ? null : q.options.map((o, i) => ({ id: String.fromCharCode(65+i), text: o })),
+                   answer_key: q.type === 'short' ? q.expectedAnswer : String.fromCharCode(65+q.correctAnswer)
+                }))
+             });
+         } catch (e) { console.error("Warning: Could not sync AI relational trace:", e); }
+      }
+      
       if (!isDraft && showSchedule) {
         // Publish logic with future status ideally handled backend if we had a dedicated status field in QuizCreate. 
         // Backend overrides create_quiz status to "draft" by default, then we can publish it.
@@ -341,8 +415,8 @@ const QuizBuilder = ({ navigate, user }) => {
     }
   };
 
-  const availableSubjects = [...new Set(assignments.map(a => a.subject_name))];
-  const classesForSubject = assignments.filter(a => a.subject_name === subject);
+  const currentAssignment = assignments.find(a => a.subject_name === subject);
+  const activeCourseId = currentAssignment ? currentAssignment.course_id : null;
   
   const q = questions[currentQuestion];
 
@@ -599,6 +673,20 @@ const QuizBuilder = ({ navigate, user }) => {
                   className="hidden"
                 />
               </div>
+              
+              {/* AI GENERATOR TRIGGER */}
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-2">Automate from Syllabus</p>
+                <button
+                  onClick={() => {
+                    if(!activeCourseId) showAlert('Select Subject', 'Please select a subject to load its outcomes map.', 'warning');
+                    else setShowAIGen(true);
+                  }}
+                  className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-purple-500/10 to-indigo-500/10 text-purple-700 dark:text-purple-400 hover:from-purple-500/20 hover:to-indigo-500/20 border border-purple-500/20"
+                >
+                  <Sparkle size={15} weight="fill" /> Generate with AI ✨
+                </button>
+              </div>
             </div>
           </div>
 
@@ -609,13 +697,16 @@ const QuizBuilder = ({ navigate, user }) => {
                 <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Plus size={32} weight="duotone" className="text-slate-400" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">No Questions Yet</h3>
-                <p className="text-slate-400 mb-8 max-w-sm mx-auto">Start building your quiz by adding a question type below.</p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <button onClick={() => addQuestion('mcq-single')} className="btn-primary text-sm flex items-center gap-1"><Plus size={14}/> MCQ (Single)</button>
-                  <button onClick={() => addQuestion('mcq-multiple')} className="btn-secondary text-sm flex items-center gap-1 !text-purple-600 dark:!text-purple-400 border border-purple-200 dark:border-purple-500/20 hover:bg-purple-50 dark:hover:bg-purple-500/10 !bg-transparent dark:!bg-transparent"><Plus size={14}/> MCQ (Multiple)</button>
-                  <button onClick={() => addQuestion('short')} className="btn-secondary text-sm flex items-center gap-1 !text-amber-600 dark:!text-amber-400 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-50 dark:hover:bg-amber-500/10 !bg-transparent dark:!bg-transparent"><Plus size={14}/> Short Answer</button>
-                  <button onClick={() => addQuestion('coding')} className="btn-secondary text-sm flex items-center gap-1 !text-emerald-600 dark:!text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 !bg-transparent dark:!bg-transparent"><Plus size={14}/> Coding</button>
+                  <button onClick={() => addQuestion('short')} className="btn-secondary text-sm flex items-center gap-1 !text-amber-600 dark:!text-amber-400 border border-amber-200"><Plus size={14}/> Short Answer</button>
+                  <span className="text-slate-300 dark:text-slate-700 mx-2 flex items-center">or</span>
+                  <button onClick={() => {
+                    if(!activeCourseId) showAlert('Select Subject', 'Select a subject from the top header to enable AI.', 'warning');
+                    else setShowAIGen(true);
+                  }} className="btn-secondary text-sm flex items-center gap-1 !bg-gradient-to-r !from-purple-500/10 !to-indigo-500/10 !text-purple-700 dark:!text-purple-400 !border-purple-500/30 transition-all hover:scale-105">
+                    <Sparkle size={14} weight="fill"/> Autogenerate from Map ✨
+                  </button>
                 </div>
               </div>
             ) : (
@@ -632,6 +723,7 @@ const QuizBuilder = ({ navigate, user }) => {
                       }`}>
                         {q?.type === 'mcq-single' ? 'MCQ (Single)' : q?.type === 'mcq-multiple' ? 'MCQ (Multiple)' : q?.type === 'coding' ? 'Coding' : 'Short Answer'}
                       </span>
+                      {q?.co_id && <span className="soft-badge text-xs uppercase bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 border border-purple-500/30">AI Mapped CO</span>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -748,6 +840,13 @@ const QuizBuilder = ({ navigate, user }) => {
         confirmText="OK"
         onConfirm={closeAlert}
         onCancel={closeAlert}
+      />
+      <FacultyAssessmentGenerator 
+        isOpen={showAIGen}
+        onClose={() => setShowAIGen(false)}
+        courseId={activeCourseId}
+        academicSubjectName={subject}
+        onGenerationComplete={handleAIGenerationComplete}
       />
     </div>
   );

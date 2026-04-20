@@ -297,6 +297,16 @@ export const facultyPanelAPI = {
   myMentees: () => api.get('/faculty/my-mentees'),
 };
 
+export const outcomesAPI = {
+  getMatrix: (courseId) => api.get(`/courses/${courseId}/outcomes`),
+  saveMatrix: (courseId, payload) => api.post(`/courses/${courseId}/co-po-mapping`, payload),
+};
+
+export const assessmentsAPI = {
+  generate: (courseId, payload) => api.post(`/courses/${courseId}/generate-assessment`, payload),
+  commit: (courseId, payload) => api.post(`/courses/${courseId}/commit-assessment`, payload),
+};
+
 export const attendanceAPI = {
   mark: (data) => api.post('/faculty/attendance/mark', data),
   getStudentConsolidated: () => api.get('/student/attendance'),

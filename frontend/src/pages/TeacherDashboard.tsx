@@ -15,6 +15,7 @@ import FacultyMenteeList from '../components/faculty/FacultyMenteeList';
 import FacultyAnnouncements from '../components/faculty/FacultyAnnouncements';
 import InsightsChat from '../components/insights/InsightsChat';
 import InsightsCanvas from '../components/insights/InsightsCanvas';
+import FacultyCourseSetup from '../components/faculty/FacultyCourseSetup';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -52,6 +53,18 @@ const timeAgo = (ts) => {
 const TeacherDashboard = ({ navigate, user, onLogout }) => {
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('teacher_tab') || 'overview');
   const [showProfile, setShowProfile] = useState(false);
+  const [isOutcomesDirty, setIsOutcomesDirty] = useState(false);
+
+  const handleTabChange = (targetTab) => {
+    if (activeTab === 'outcomes' && isOutcomesDirty) {
+      if (!window.confirm("You have unsaved changes to your CO/PO matrix. Leave without saving?")) {
+        return;
+      }
+      setIsOutcomesDirty(false);
+    }
+    setActiveTab(targetTab);
+  };
+  
   useEffect(() => { sessionStorage.setItem('teacher_tab', activeTab); }, [activeTab]);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -246,6 +259,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
               { id: 'attendance', label: 'Attendance' },
               { id: 'teaching', label: 'Teaching Work' },
               { id: 'cia', label: 'CIA Marks' },
+              { id: 'outcomes', label: 'Course Setup' },
               { id: 'mentees', label: 'Mentees' },
               { id: 'leave', label: 'Leave' },
               { id: 'calendar', label: 'Calendar' },
@@ -255,7 +269,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
             ].map(tab => (
               <button 
                 key={tab.id} 
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`flex-1 justify-center min-w-max flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id 
                     ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm border border-emerald-200/60 dark:border-emerald-500/20"
@@ -433,6 +447,13 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
           </motion.div>
         )}
 
+        {activeTab === 'outcomes' && (
+          <motion.div data-testid="outcomes-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <FacultyCourseSetup onDirtyChange={(dirty) => setIsOutcomesDirty(dirty)} />
+            </motion.div>
+          </motion.div>
+        )}
 
         {activeTab === 'calendar' && (
           <motion.div data-testid="calendar-content" variants={containerVariants} initial="hidden" animate="show">

@@ -150,25 +150,24 @@ Return ONLY valid JSON, no markdown, no explanation outside the JSON."""
 # LLM + PDF Helpers
 # ═══════════════════════════════════════════════════════════════════════════════
 
-async def call_llm(messages: list, json_mode: bool = False) -> str:
-    """Call LiteLLM for resume analysis."""
-    import litellm
-    litellm.api_key = settings.GEMINI_API_KEY
-
-    kwargs = {
-        "model": settings.RESUME_LLM_MODEL,
-        "messages": messages,
-        "temperature": 0,          # deterministic — same input always yields same output
-        "max_tokens": 4096,
-    }
-    if json_mode:
-        kwargs["response_format"] = {"type": "json_object"}
-
+async def call_llm(messages: list, json_mode: bool = False, media_bytes: bytes = None, mime_type: str = "application/pdf") -> str:
+    """Call Vertex AI natively via the unified Gateway for resume analysis."""
+    from app.services.llm_gateway import gateway
+    
     try:
-        response = await litellm.acompletion(**kwargs)
-        return response.choices[0].message.content.strip()
+        response = await gateway.complete(
+            purpose="ats_scoring",
+            messages=messages,
+            json_mode=json_mode,
+            temperature=0,          # deterministic — same input always yields same output
+            max_tokens=4096,
+            media_bytes=media_bytes,
+            mime_type=mime_type
+        )
+        return response
     except Exception as e:
-        logger.error("LLM call failed: %s", e)
+        logger.error("Gateway LLM call failed: %s", e)
+        raise
         raise HTTPException(status_code=502, detail="AI service temporarily unavailable")
 
 
