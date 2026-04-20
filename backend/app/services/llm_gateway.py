@@ -561,6 +561,11 @@ class LLMGateway:
                 return result
 
         except Exception as e:
+            if provider == "vertex_anthropic":
+                from fastapi import HTTPException
+                logger.error("[LLMGateway] Critical Tier 3 failure (AnthropicVertex): %s", e)
+                raise HTTPException(status_code=503, detail="ERP Fallback explicitly failed. Ensure Claude 4.6 is enabled in Model Garden.")
+
             logger.warning(
                 "[LLMGateway] Primary provider %s/%s failed for %s: %s — falling back to LiteLLM",
                 provider, model, purpose, e,
@@ -643,13 +648,19 @@ class LLMGateway:
         json_mode: bool = False,
     ) -> str:
         """
-        """
         ERP-specific completion with 3-tier complexity fallback.
 
         Tier 1: Gemini 2.0 Flash (`erp_insights`)
         Tier 2: Gemini 2.5 Pro (`erp_complex`). Escalates if invalid SQL, keywords, or 3+ JOINs.
         Tier 3: Claude Sonnet 4.6 (`erp_last_resort`). Escalates if Tier 2 fails or invalid.
         """
+        import re
+
+        def _clean_sql(query: str) -> str:
+            """Remove markdown sql fences before validation."""
+            cleaned = re.sub(r"^```(?:sql)?\s*", "", query.strip(), flags=re.IGNORECASE)
+            cleaned = re.sub(r"\s*```$", "", cleaned, flags=re.IGNORECASE)
+            return cleaned.strip().upper()
         
         async def _tier_3_fallback(msgs: List[Dict[str, str]], json_req: bool) -> str:
             logger.warning("[LLMGateway] Escalating to Tier 3: Claude Sonnet 4.6")
@@ -659,7 +670,7 @@ class LLMGateway:
             logger.info("[LLMGateway] Escalating to Tier 2: Gemini 2.5 Pro")
             try:
                 t2_result = await self.complete("erp_complex", msgs, json_mode=json_req)
-                t2_upper = t2_result.strip().upper()
+                t2_upper = _clean_sql(t2_result)
                 if not json_req and not t2_upper.startswith("SELECT"):
                     return await _tier_3_fallback(msgs, json_req)
                 return t2_result
@@ -684,8 +695,7 @@ class LLMGateway:
             result = await self.complete("erp_insights", messages, json_mode=json_mode)
 
             # Validate: Flash must return valid SQL (not prose/errors)
-            result_clean = result.strip()
-            result_upper = result_clean.upper()
+            result_upper = _clean_sql(result)
 
             if not json_mode:
                 # Escalation trigger 1: Not SQL

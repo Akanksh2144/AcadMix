@@ -15,6 +15,21 @@ async def test_erp_escalation_tier1_success():
 
 
 @pytest.mark.asyncio
+async def test_erp_escalation_markdown_parsing():
+    """Test that valid SQL wrapped in markdown fences does not falsely trigger escalation."""
+    with patch.object(gateway, 'complete', new_callable=AsyncMock) as mock_complete:
+        # Tier 1 returns valid SQL wrapped in markdown
+        mock_complete.return_value = "```sql\nSELECT * FROM students;\n```"
+        
+        result = await gateway.complete_erp("Get students", [])
+        
+        # It should ONLY hit Tier 1, successfully parsing the SELECT and returning the raw result
+        assert mock_complete.call_count == 1
+        assert mock_complete.call_args_list[0][0][0] == "erp_insights"
+        assert result == "```sql\nSELECT * FROM students;\n```"
+
+
+@pytest.mark.asyncio
 async def test_erp_escalation_direct_tier2_complex_keyword():
     """Test that a query containing a complex signal like 'trend' directly routes to Tier 2."""
     with patch.object(gateway, 'complete', new_callable=AsyncMock) as mock_complete:
