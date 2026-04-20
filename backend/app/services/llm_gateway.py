@@ -133,9 +133,9 @@ ROUTES: Dict[str, Dict[str, Any]] = {
         "description": "Complex multi-step ERP queries",
     },
     
-    # ── ERP Insights (fallback): Claude 4.6 via Anthropic Vertex Model Garden ──
+    # ── ERP Insights (fallback): Gemini 2.5 Pro via Vertex AI ────────────
     "erp_last_resort": {
-        "provider": "vertex_anthropic",
+        "provider": "vertex",
         "model": None,
         "temperature": 0.0,
         "max_tokens": 1000,
@@ -582,7 +582,7 @@ class LLMGateway:
             if provider == "vertex_anthropic":
                 from fastapi import HTTPException
                 logger.error("[LLMGateway] Critical Tier 3 failure (AnthropicVertex): %s", e)
-                raise HTTPException(status_code=503, detail="ERP Fallback explicitly failed. Ensure Claude 4.6 is enabled in Model Garden.")
+                raise HTTPException(status_code=503, detail="ERP Fallback explicitly failed. Ensure the Model Garden endpoint is enabled.")
 
             logger.warning(
                 "[LLMGateway] Primary provider %s/%s failed for %s: %s — falling back to LiteLLM",
@@ -670,7 +670,7 @@ class LLMGateway:
 
         Tier 1: Gemini 2.0 Flash (`erp_insights`)
         Tier 2: Gemini 2.5 Pro (`erp_complex`). Escalates if invalid SQL, keywords, or 3+ JOINs.
-        Tier 3: Claude Sonnet 4.6 (`erp_last_resort`). Escalates if Tier 2 fails or invalid.
+        Tier 3: Gemini 2.5 Pro (`erp_last_resort`). Escalates if Tier 2 fails or invalid.
         """
         import re
 
@@ -681,7 +681,7 @@ class LLMGateway:
             return cleaned.strip().upper()
         
         async def _tier_3_fallback(msgs: List[Dict[str, str]], json_req: bool) -> str:
-            logger.warning("[LLMGateway] Escalating to Tier 3: Claude Sonnet 4.6")
+            logger.warning("[LLMGateway] Escalating to Tier 3: Gemini 2.5 Pro fallback")
             return await self.complete("erp_last_resort", msgs, json_mode=json_req)
             
         async def _tier_2_fallback(msgs: List[Dict[str, str]], json_req: bool) -> str:

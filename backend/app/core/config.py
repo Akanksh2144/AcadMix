@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     VERTEX_MODEL_LITE: str = "gemini-2.0-flash-lite-preview-02-05"    # Tools/Review/Ami/ATS
     VERTEX_MODEL_FLASH: str = "gemini-2.5-flash"                      # ERP Standard
     VERTEX_MODEL_PRO: str = "gemini-2.5-pro"                          # ERP Complex
-    VERTEX_MODEL_FALLBACK: str = "claude-sonnet-4-6"                  # ERP Fallback (Model Garden)
+    VERTEX_MODEL_FALLBACK: str = "gemini-2.5-pro"                     # ERP Fallback (Gemini instead of Claude)
     
     # Self-Hosted vLLM (Phase 2 — activate at 10K+ students)
     # Set VLLM_BASE_URL to enable self-hosted inference (e.g. "https://gpu.acadmix.internal/v1")
