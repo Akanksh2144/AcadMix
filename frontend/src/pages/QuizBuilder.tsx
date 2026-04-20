@@ -5,7 +5,6 @@ import * as XLSX from 'xlsx';
 import AlertModal from '../components/AlertModal';
 import { AnimatePresence, motion } from 'framer-motion';
 import FacultyAssessmentGenerator from '../components/faculty/FacultyAssessmentGenerator';
-import { AnimatePresence, motion } from 'framer-motion';
 
 const QuizBuilder = ({ navigate, user }) => {
   const [questions, setQuestions] = useState([]);
