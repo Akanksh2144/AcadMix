@@ -46,8 +46,8 @@ class Settings(BaseSettings):
     
     # ── Vertex AI strict model definitions ───────────────────────
     VERTEX_MODEL_INTERVIEW: str = "gemini-2.5-flash"                  # Interviews
-    VERTEX_MODEL_LITE: str = "gemini-2.0-flash-lite-preview-02-05"    # Tools/Review/Ami/ATS
-    VERTEX_MODEL_FLASH: str = "gemini-2.5-flash"                      # ERP Standard
+    VERTEX_MODEL_LITE: str = "gemini-2.0-flash-lite-001"              # Tools/Review/Ami/ATS
+    VERTEX_MODEL_FLASH: str = "gemini-2.0-flash-001"                  # ERP Standard
     VERTEX_MODEL_PRO: str = "gemini-2.5-pro"                          # ERP Complex
     VERTEX_MODEL_FALLBACK: str = "gemini-2.5-pro"                     # ERP Fallback (Gemini instead of Claude)
     
