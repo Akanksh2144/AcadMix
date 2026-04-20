@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import FacultyAssessmentGenerator from '../components/faculty/FacultyAssessmentGenerator';
 
 const QuizBuilder = ({ navigate, user }) => {
+  const [quizTitle, setQuizTitle] = useState('New Quiz');
   const [questions, setQuestions] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   
