@@ -201,30 +201,48 @@ def _get_vertex_client():
 
         # Priority 1: JSON string from env var
         if getattr(settings, "GOOGLE_APPLICATION_CREDENTIALS_JSON", None):
-            import json
+            import json, os, tempfile
             from google.oauth2 import service_account
             
-            creds_dict = json.loads(settings.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+            creds_str = settings.GOOGLE_APPLICATION_CREDENTIALS_JSON
+            creds_dict = json.loads(creds_str)
             credentials = service_account.Credentials.from_service_account_info(creds_dict)
             init_kwargs["credentials"] = credentials
+            
+            # Export to ENV for other libraries (like AnthropicVertex) that rely on ADC path
+            fd, path = tempfile.mkstemp(suffix=".json")
+            with os.fdopen(fd, 'w') as f:
+                f.write(creds_str)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = path
+            
             logger.info("Vertex AI credentials: loaded from GOOGLE_APPLICATION_CREDENTIALS_JSON env var")
         # Legacy fallback rename check
         elif getattr(settings, "VERTEX_CREDENTIALS_JSON", None):
-            import json
+            import json, os, tempfile
             from google.oauth2 import service_account
             
-            creds_dict = json.loads(settings.VERTEX_CREDENTIALS_JSON)
+            creds_str = settings.VERTEX_CREDENTIALS_JSON
+            creds_dict = json.loads(creds_str)
             credentials = service_account.Credentials.from_service_account_info(creds_dict)
             init_kwargs["credentials"] = credentials
+            
+            # Export to ENV for other libraries (like AnthropicVertex) that rely on ADC path
+            fd, path = tempfile.mkstemp(suffix=".json")
+            with os.fdopen(fd, 'w') as f:
+                f.write(creds_str)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = path
+            
             logger.info("Vertex AI credentials: loaded from VERTEX_CREDENTIALS_JSON env var")
 
         # Priority 2: File path
         elif getattr(settings, "VERTEX_CREDENTIALS_PATH", None):
             from google.oauth2 import service_account
+            import os
             credentials = service_account.Credentials.from_service_account_file(
                 settings.VERTEX_CREDENTIALS_PATH
             )
             init_kwargs["credentials"] = credentials
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.VERTEX_CREDENTIALS_PATH
             logger.info("Vertex AI credentials: loaded from file %s", settings.VERTEX_CREDENTIALS_PATH)
 
         # Priority 3: Application Default Credentials
