@@ -30,9 +30,9 @@ class Settings(BaseSettings):
     SEED_DEMO_USERS: bool = False  # Set True ONLY in dev/staging to seed quick-login test accounts
 
     # External Integrations
-    LLM_REVIEW_MODEL: str = "gemini/gemini-2.0-flash"       # Legacy fallback — kept for hot standby
-    INTERVIEW_LLM_MODEL: str = "gemini/gemini-2.0-flash"     # Legacy fallback — kept for hot standby
-    RESUME_LLM_MODEL: str = "gemini/gemini-2.0-flash-lite"   # Legacy fallback — kept for hot standby
+    LLM_REVIEW_MODEL: str = "gemini/gemini-2.5-flash"       # Legacy fallback — kept for hot standby
+    INTERVIEW_LLM_MODEL: str = "gemini/gemini-2.5-flash"     # Legacy fallback — kept for hot standby
+    RESUME_LLM_MODEL: str = "gemini/gemini-2.5-flash"        # Legacy fallback — kept for hot standby
     GEMINI_API_KEY: str = ""                                 # Legacy fallback — kept for hot standby
     GROQ_API_KEY: str = ""                                   # Legacy fallback — kept for hot standby
 
@@ -42,13 +42,14 @@ class Settings(BaseSettings):
     VERTEX_LOCATION: str = "asia-south1"         # Mumbai — lowest latency from India + data residency
     VERTEX_CREDENTIALS_PATH: str = ""            # Path to service account JSON (local dev)
     GOOGLE_APPLICATION_CREDENTIALS_JSON: str = "" # Full JSON string of service account (Render / ephemeral containers)
+    VERTEX_CREDENTIALS_JSON: str = ""            # Legacy fallback variable name
     
     # ── Vertex AI strict model definitions ───────────────────────
-    VERTEX_MODEL_INTERVIEW: str = "gemini-2.5-flash-preview-04-17"    # Interviews
-    VERTEX_MODEL_LITE: str = "gemini-2.0-flash-lite"                  # Tools/Review/Ami/ATS
-    VERTEX_MODEL_FLASH: str = "gemini-2.0-flash-001"                  # ERP Standard
+    VERTEX_MODEL_INTERVIEW: str = "gemini-2.5-flash"                  # Interviews
+    VERTEX_MODEL_LITE: str = "gemini-2.0-flash-lite-preview-02-05"    # Tools/Review/Ami/ATS
+    VERTEX_MODEL_FLASH: str = "gemini-2.5-flash"                      # ERP Standard
     VERTEX_MODEL_PRO: str = "gemini-2.5-pro"                          # ERP Complex
-    VERTEX_MODEL_FALLBACK: str = "claude-sonnet-4-6"                  # ERP Fallback (Model Garden)
+    VERTEX_MODEL_FALLBACK: str = "claude-3-7-sonnet@20250219"         # ERP Fallback (Model Garden)
     
     # Self-Hosted vLLM (Phase 2 — activate at 10K+ students)
     # Set VLLM_BASE_URL to enable self-hosted inference (e.g. "https://gpu.acadmix.internal/v1")
