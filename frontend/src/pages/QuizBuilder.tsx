@@ -416,6 +416,9 @@ const QuizBuilder = ({ navigate, user }) => {
     }
   };
 
+  const availableSubjects = [...new Set(assignments.map(a => a.subject_name))];
+  const classesForSubject = assignments.filter(a => a.subject_name === subject);
+
   const currentAssignment = assignments.find(a => a.subject_name === subject);
   const activeCourseId = currentAssignment ? currentAssignment.course_id : null;
   
