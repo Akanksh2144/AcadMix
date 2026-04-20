@@ -23,6 +23,7 @@ async def test_route(name, purpose, prompt):
 
 async def main():
     await test_route("2.0 flash lite", "career_tools", "Hi, respond with exactly: I am 2.0 flash lite")
+    await test_route("2.0 flash (erp_insights)", "erp_insights", "Hi, respond with exactly: I am 2.0 flash")
     await test_route("2.5 flash", "interview", "Hi, respond with exactly: I am 2.5 flash")
     await test_route("2.5 pro", "erp_complex", "Hi, respond with exactly: I am 2.5 pro")
     await test_route("2.5 pro fallback", "erp_last_resort", "Hi, respond with exactly: I am Gemini Fallback")

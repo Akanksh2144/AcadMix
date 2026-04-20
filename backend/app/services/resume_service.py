@@ -347,10 +347,18 @@ async def run_ats_scoring(resume: models.ResumeScore, session: AsyncSession) -> 
     from app.services.llm_gateway import gateway
     raw = await gateway.complete("ats_scoring", messages, json_mode=False)
     
+    with open("ats_debug_last_run.txt", "w", encoding="utf-8") as f:
+        f.write(raw)
+        
+    logger.error("============= DEBUG ATS RAW =============")
+    logger.error("RAW LENGTH: %d", len(raw))
+    logger.error("RAW CONTENT:\n%s", raw[:2000])
+    
     analysis = parse_json_robust(raw)
-
+    
     if analysis is None:
-        logger.warning("LLM returned unparseable JSON for ATS scoring. Raw (first 500): %s", raw[:500])
+        logger.error("============= DEBUG ANALYSIS IS NONE =============")
+        logger.error("LLM returned unparseable JSON for ATS scoring. Raw (first 500): %s", raw[:500])
         analysis = {
             "section_scores": {},
             "keywords_found": [],

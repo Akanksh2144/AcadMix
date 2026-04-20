@@ -1,0 +1,10 @@
+```json
+{
+  "section_scores": {
+    "contact_info": 100,
+    "professional_summary": 70,
+    "work_experience": 0,
+    "education": 100,
+    "skills": 90,
+    "projects": 75,
+    "certifications":

@@ -13,10 +13,16 @@ async def main():
         {"role": "user", "content": prompt},
     ]
     from app.services.llm_gateway import gateway
+    from app.services.resume_service import parse_json_robust
     raw = await gateway.complete("ats_scoring", messages, json_mode=False)
     print(f"RAW LENGTH: {len(raw)}")
     print("GW RESPONSE:")
     print(raw)
+    parsed = parse_json_robust(raw)
+    if parsed:
+        print("PARSED: YES")
+    else:
+        print("PARSED: NO")
 
 if __name__ == "__main__":
     asyncio.run(main())
