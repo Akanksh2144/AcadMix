@@ -252,7 +252,7 @@ const QuizBuilder = ({ navigate, user }) => {
   };
 
   const handleAIGenerationComplete = (assessment, warnings) => {
-    setQuizTitle(assessment.title || 'AI Generated Assessment');
+    setQuizTitle(assessment.title || 'Ami Generated Assessment');
     setAiWarnings(warnings || []);
     
     if (warnings && warnings.length > 0) {
@@ -688,7 +688,7 @@ const QuizBuilder = ({ navigate, user }) => {
                   }}
                   className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-purple-500/10 to-indigo-500/10 text-purple-700 dark:text-purple-400 hover:from-purple-500/20 hover:to-indigo-500/20 border border-purple-500/20"
                 >
-                  <Sparkle size={15} weight="fill" /> Generate with AI ✨
+                  <Sparkle size={15} weight="fill" /> Generate with Ami ✨
                 </button>
               </div>
             </div>
@@ -727,7 +727,7 @@ const QuizBuilder = ({ navigate, user }) => {
                       }`}>
                         {q?.type === 'mcq-single' ? 'MCQ (Single)' : q?.type === 'mcq-multiple' ? 'MCQ (Multiple)' : q?.type === 'coding' ? 'Coding' : 'Short Answer'}
                       </span>
-                      {q?.co_id && <span className="soft-badge text-xs uppercase bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 border border-purple-500/30">AI Mapped CO</span>}
+                      {q?.co_id && <span className="soft-badge text-xs uppercase bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 border border-purple-500/30">Ami Mapped CO</span>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

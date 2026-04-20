@@ -47,7 +47,7 @@ const FacultyAssessmentGenerator = ({ isOpen, onClose, courseId, academicSubject
       onClose();
       
     } catch(err) {
-      showAlert('Generation Failed', err.response?.data?.detail || "AI Generation failed. The Vertex endpoint may be unreachable.", 'danger');
+      showAlert('Generation Failed', err.response?.data?.detail || "Ami Generation failed. The Vertex endpoint may be unreachable.", 'danger');
     } finally {
       setIsGenerating(false);
       setLoadingText('Generating syllabus map...');
