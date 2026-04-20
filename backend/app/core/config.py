@@ -36,22 +36,19 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""                                 # Legacy fallback — kept for hot standby
     GROQ_API_KEY: str = ""                                   # Legacy fallback — kept for hot standby
 
-    # ── Vertex AI (Production Gemini — Interviews) ───────────────────────
+    # ── Vertex AI (Production Single Provider) ───────────────────────
     # Google Cloud DPA available, data never used for training, SLA-backed
     VERTEX_PROJECT_ID: str = ""                  # Google Cloud project ID (empty = Vertex disabled)
-    VERTEX_LOCATION: str = "asia-south1"           # Mumbai — lowest latency from India + data residency
-    VERTEX_CREDENTIALS_PATH: str = ""              # Path to service account JSON (local dev)
-    VERTEX_CREDENTIALS_JSON: str = ""              # Full JSON string of service account (Render / ephemeral containers)
-    INTERVIEW_MODEL: str = "gemini-2.5-flash"      # Vertex AI model ID for interviews
-
-    # ── AWS Bedrock (Nova + Claude — Career/ERP/Coach/Review) ────────────
-    # SOC2/HIPAA-eligible, data never used for training
-    AWS_REGION: str = "us-east-1"                # Bedrock region
-    AWS_ACCESS_KEY_ID: str = ""                  # Empty = use IAM role / env
-    AWS_SECRET_ACCESS_KEY: str = ""              # Empty = use IAM role / env
-    BEDROCK_NOVA_LITE_MODEL: str = "amazon.nova-lite-v1:0"           # Career, code review, Ami, ATS
-    BEDROCK_NOVA_PRO_MODEL: str = "amazon.nova-pro-v1:0"             # ERP insights (standard)
-    BEDROCK_CLAUDE_SONNET_MODEL: str = "anthropic.claude-sonnet-4-6"  # ERP fallback (complex only)
+    VERTEX_LOCATION: str = "asia-south1"         # Mumbai — lowest latency from India + data residency
+    VERTEX_CREDENTIALS_PATH: str = ""            # Path to service account JSON (local dev)
+    GOOGLE_APPLICATION_CREDENTIALS_JSON: str = "" # Full JSON string of service account (Render / ephemeral containers)
+    
+    # ── Vertex AI strict model definitions ───────────────────────
+    VERTEX_MODEL_INTERVIEW: str = "gemini-2.5-flash-preview-04-17"    # Interviews
+    VERTEX_MODEL_LITE: str = "gemini-2.0-flash-lite"                  # Tools/Review/Ami/ATS
+    VERTEX_MODEL_FLASH: str = "gemini-2.0-flash-001"                  # ERP Standard
+    VERTEX_MODEL_PRO: str = "gemini-2.5-pro"                          # ERP Complex
+    VERTEX_MODEL_FALLBACK: str = "claude-sonnet-4-6"                  # ERP Fallback (Model Garden)
     
     # Self-Hosted vLLM (Phase 2 — activate at 10K+ students)
     # Set VLLM_BASE_URL to enable self-hosted inference (e.g. "https://gpu.acadmix.internal/v1")

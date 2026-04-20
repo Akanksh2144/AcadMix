@@ -344,7 +344,9 @@ async def run_ats_scoring(resume: models.ResumeScore, session: AsyncSession) -> 
         {"role": "user", "content": prompt},
     ]
 
-    raw = await call_llm(messages, json_mode=True)
+    from app.services.llm_gateway import gateway
+    raw = await gateway.complete("ats_scoring", messages, json_mode=True)
+    
     analysis = parse_json_robust(raw)
 
     if analysis is None:

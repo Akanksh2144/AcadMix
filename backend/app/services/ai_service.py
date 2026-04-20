@@ -21,7 +21,7 @@ import hashlib
 import logging
 import time
 import asyncio
-from typing import AsyncGenerator, List, Dict
+from typing import AsyncGenerator, List, Dict, Optional
 
 import re
 import json
@@ -538,18 +538,17 @@ Output strictly in JSON:
 # ATS JOB MATCHING — Deterministic-feeling AI scoring
 # ═══════════════════════════════════════════════════════════════════════════════
 
-async def score_resume_for_job(resume_text: str, job_title: str, job_description: str) -> dict:
+async def score_resume_for_job(job_title: str, job_description: str, media_bytes: Optional[bytes] = None, mime_type: str = "application/pdf", resume_text: Optional[str] = None) -> dict:
     """
     Scores a resume against a job description.
     Uses temperature 0.0 to ensure deterministic, highly reproducible scores.
     
-    Production: AWS Bedrock Nova Lite
-    Fallback:   LiteLLM → Groq / Gemini AI Studio
+    Production: Vertex AI Gemini 2.0 Flash Lite (Native Media Ingestion)
     """
     from app.services.llm_gateway import gateway
 
     system_prompt = '''
-You are an expert Applicant Tracking System (ATS). Your task is to evaluate a candidate's resume text against a Job Description.
+You are an expert Applicant Tracking System (ATS). Your task is to evaluate a candidate's resume against a Job Description.
 Calculate a "match_percentage" (0-100) based strictly on keyword overlap and core skills required. Be objective and harsh — an 85+ means a near-perfect match.
 Extract precisely up to 5 critical "missing_keywords" (skills in the JD not found in the resume).
 Extract precisely up to 5 "strong_matches" (critical skills found in both).
@@ -564,7 +563,11 @@ Output strictly in JSON format:
 }
 '''
     
-    user_prompt = f"JOB TITLE: {job_title}\n\nJOB DESCRIPTION:\n{job_description}\n\nRESUME TEXT:\n{resume_text}"
+    # If we have only text and no bytes, inject text into the prompt
+    if not media_bytes and resume_text:
+        user_prompt = f"JOB TITLE: {job_title}\n\nJOB DESCRIPTION:\n{job_description}\n\nRESUME TEXT:\n{resume_text}"
+    else:
+        user_prompt = f"JOB TITLE: {job_title}\n\nJOB DESCRIPTION:\n{job_description}\n\nPlease analyze the attached resume document."
 
     try:
          content = await gateway.complete(
@@ -574,6 +577,8 @@ Output strictly in JSON format:
                  {"role": "user", "content": user_prompt}
              ],
              json_mode=True,
+             media_bytes=media_bytes,
+             mime_type=mime_type,
          )
          result = json.loads(content)
          # Ensure expected fields

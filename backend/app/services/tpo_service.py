@@ -246,6 +246,7 @@ class TPOService:
     async def calculate_ats_score(self, student_id: str, drive_id: str, resume_id: str) -> dict:
         from app.models.interview_prep import StudentResume
         from app.services.ai_service import score_resume_for_job
+        from app.core.storage import download_file
         
         # Verify drive exists
         drive = await self.db.get(PlacementDrive, drive_id)
@@ -257,19 +258,28 @@ class TPOService:
         if not resume or resume.student_id != student_id or resume.is_deleted:
             raise ValueError("Resume not found or access denied")
             
-        if not resume.parsed_text:
+        if not resume.storage_key:
             return {
                 "match_percentage": 0,
-                "missing_keywords": ["Resume Text Not Found"],
+                "missing_keywords": ["Resume File Not Found"],
                 "strong_matches": [],
-                "brief_summary": "Your resume could not be parsed. Please re-upload a clear PDF."
+                "brief_summary": "Your resume file could not be located. Please re-upload your PDF."
             }
             
         job_title = drive.role_title or "Software Engineer"
         job_description = f"{drive.job_description or ''} {drive.eligibility_criteria or ''}"
         
-        # Delegate to AI 
-        return await score_resume_for_job(resume.parsed_text, job_title, job_description)
+        pdf_bytes = download_file(resume.storage_key)
+        if not pdf_bytes:
+            return {
+                "match_percentage": 0,
+                "missing_keywords": ["File Download Failed"],
+                "strong_matches": [],
+                "brief_summary": "Could not fetch the resume document from storage."
+            }
+        
+        # Delegate to AI with native media
+        return await score_resume_for_job(media_bytes=pdf_bytes, mime_type=resume.content_type, job_title=job_title, job_description=job_description)
 
     # ── Student Application ────────────────────────────────────────
 

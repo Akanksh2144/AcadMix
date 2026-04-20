@@ -5,21 +5,21 @@ Architecture:
     ┌────────────────────────────────────────────────────────────────┐
     │                      LLMGateway                                │
     │                                                                │
-    │  purpose="interview"     → Vertex AI  (Gemini 2.5 Flash)      │
-    │  purpose="career_tools"  → Bedrock    (Nova Lite)              │
-    │  purpose="code_review"   → Bedrock    (Nova Lite)              │
-    │  purpose="ami_coach"     → Bedrock    (Nova Lite)              │
-    │  purpose="ats_scoring"   → Bedrock    (Nova Lite)              │
-    │  purpose="erp_insights"  → Bedrock    (Nova Pro)               │
-    │  purpose="erp_complex"   → Bedrock    (Claude Sonnet 4.6)       │
+    │  purpose="interview"     → Vertex AI  (Gemini 2.5 Flash)       │
+    │  purpose="career_tools"  → Vertex AI  (Gemini 2.0 Flash Lite)  │
+    │  purpose="code_review"   → Vertex AI  (Gemini 2.0 Flash Lite)  │
+    │  purpose="ami_coach"     → Vertex AI  (Gemini 2.0 Flash Lite)  │
+    │  purpose="ats_scoring"   → Vertex AI  (Gemini 2.0 Flash Lite)  │
+    │  purpose="erp_summary"   → Vertex AI  (Gemini 2.0 Flash Lite)  │
+    │  purpose="erp_insights"  → Vertex AI  (Gemini 2.0 Flash)       │
+    │  purpose="erp_complex"   → Vertex AI  (Gemini 2.5 Pro)         │
+    │  purpose="erp_last_resort"→ Vertex AI (Claude Sonnet 4.6)      │
     │                                                                │
-    │  Fallback chain: Primary → LiteLLM/Groq → Gemini AI Studio    │
+    │  Fallback chain: Primary → LiteLLM/Groq → Gemini AI Studio     │
     └────────────────────────────────────────────────────────────────┘
 
 Production compliance:
-    - Vertex AI: Google Cloud DPA, data never used for training
-    - AWS Bedrock: SOC2, HIPAA-eligible, data never used for training
-    - No student data ever touches free-tier / prototyping APIs
+    - Google Cloud Vertex AI DPA available, data never used for training
 
 Usage:
     from app.services.llm_gateway import gateway
@@ -73,9 +73,9 @@ ROUTES: Dict[str, Dict[str, Any]] = {
         "description": "Mock interviews — best reasoning for multi-turn conversation",
     },
 
-    # ── Career Tools: Nova Lite via Bedrock ────────────────────────────────
+    # ── Career Tools: Gemini 2.0 Flash Lite via Vertex AI ──────────────────
     "career_tools": {
-        "provider": "bedrock",
+        "provider": "vertex",
         "model": None,
         "temperature": 0.3,
         "max_tokens": 4096,
@@ -83,9 +83,9 @@ ROUTES: Dict[str, Dict[str, Any]] = {
         "description": "Cover letters, JD analysis, cold emails, HR questions, DSA, career paths",
     },
 
-    # ── Code Review: Nova Lite via Bedrock ─────────────────────────────────
+    # ── Code Review: Gemini 2.0 Flash Lite via Vertex AI ───────────────────
     "code_review": {
-        "provider": "bedrock",
+        "provider": "vertex",
         "model": None,
         "temperature": 0.1,
         "max_tokens": 2000,
@@ -93,9 +93,9 @@ ROUTES: Dict[str, Dict[str, Any]] = {
         "description": "Code quality analysis, complexity estimation",
     },
 
-    # ── Ami Coach: Nova Lite via Bedrock ───────────────────────────────────
+    # ── Ami Coach: Gemini 2.0 Flash Lite via Vertex AI ─────────────────────
     "ami_coach": {
-        "provider": "bedrock",
+        "provider": "vertex",
         "model": None,
         "temperature": 0.5,
         "max_tokens": 500,
@@ -103,9 +103,9 @@ ROUTES: Dict[str, Dict[str, Any]] = {
         "description": "Socratic tutor — streaming responses",
     },
 
-    # ── ATS Scoring: Nova Lite via Bedrock ─────────────────────────────────
+    # ── ATS Scoring: Gemini 2.0 Flash Lite via Vertex AI ───────────────────
     "ats_scoring": {
-        "provider": "bedrock",
+        "provider": "vertex",
         "model": None,
         "temperature": 0.0,
         "max_tokens": 2000,
@@ -113,9 +113,9 @@ ROUTES: Dict[str, Dict[str, Any]] = {
         "description": "Resume ATS scoring, keyword matching",
     },
 
-    # ── ERP Insights (standard): Nova Pro via Bedrock ──────────────────────
+    # ── ERP Insights (standard): Gemini 2.0 Flash via Vertex AI ────────────
     "erp_insights": {
-        "provider": "bedrock",
+        "provider": "vertex",
         "model": None,
         "temperature": 0.0,
         "max_tokens": 600,
@@ -123,19 +123,29 @@ ROUTES: Dict[str, Dict[str, Any]] = {
         "description": "Text-to-SQL for faculty/admin/principal/HOD queries",
     },
 
-    # ── ERP Insights (complex fallback): Claude Sonnet 4.6 via Bedrock ─────
+    # ── ERP Insights (complex): Gemini 2.5 Pro via Vertex AI ───────────────
     "erp_complex": {
-        "provider": "bedrock",
+        "provider": "vertex",
         "model": None,
         "temperature": 0.0,
         "max_tokens": 1000,
         "timeout": 45.0,
-        "description": "Complex multi-step ERP queries — fallback only when Nova Pro fails",
+        "description": "Complex multi-step ERP queries",
+    },
+    
+    # ── ERP Insights (fallback): Claude 4.6 via Anthropic Vertex Model Garden ──
+    "erp_last_resort": {
+        "provider": "vertex_anthropic",
+        "model": None,
+        "temperature": 0.0,
+        "max_tokens": 1000,
+        "timeout": 60.0,
+        "description": "Last-resort fallback for ERP queries when Gemini Pro fails",
     },
 
-    # ── ERP Summary: Nova Lite via Bedrock ─────────────────────────────────
+    # ── ERP Summary: Gemini 2.0 Flash Lite via Vertex AI ───────────────────
     "erp_summary": {
-        "provider": "bedrock",
+        "provider": "vertex",
         "model": None,
         "temperature": 0.1,
         "max_tokens": 500,
@@ -147,14 +157,15 @@ ROUTES: Dict[str, Dict[str, Any]] = {
 
 def _resolve_models():
     """Bind config setting values to route definitions at runtime."""
-    ROUTES["interview"]["model"] = settings.INTERVIEW_MODEL
-    ROUTES["career_tools"]["model"] = settings.BEDROCK_NOVA_LITE_MODEL
-    ROUTES["code_review"]["model"] = settings.BEDROCK_NOVA_LITE_MODEL
-    ROUTES["ami_coach"]["model"] = settings.BEDROCK_NOVA_LITE_MODEL
-    ROUTES["ats_scoring"]["model"] = settings.BEDROCK_NOVA_LITE_MODEL
-    ROUTES["erp_insights"]["model"] = settings.BEDROCK_NOVA_PRO_MODEL
-    ROUTES["erp_complex"]["model"] = settings.BEDROCK_CLAUDE_SONNET_MODEL
-    ROUTES["erp_summary"]["model"] = settings.BEDROCK_NOVA_LITE_MODEL
+    ROUTES["interview"]["model"] = getattr(settings, "VERTEX_MODEL_INTERVIEW", "gemini-2.5-flash-preview-04-17")
+    ROUTES["career_tools"]["model"] = getattr(settings, "VERTEX_MODEL_LITE", "gemini-2.0-flash-lite")
+    ROUTES["code_review"]["model"] = getattr(settings, "VERTEX_MODEL_LITE", "gemini-2.0-flash-lite")
+    ROUTES["ami_coach"]["model"] = getattr(settings, "VERTEX_MODEL_LITE", "gemini-2.0-flash-lite")
+    ROUTES["ats_scoring"]["model"] = getattr(settings, "VERTEX_MODEL_LITE", "gemini-2.0-flash-lite")
+    ROUTES["erp_insights"]["model"] = getattr(settings, "VERTEX_MODEL_FLASH", "gemini-2.0-flash-001")
+    ROUTES["erp_complex"]["model"] = getattr(settings, "VERTEX_MODEL_PRO", "gemini-2.5-pro")
+    ROUTES["erp_last_resort"]["model"] = getattr(settings, "VERTEX_MODEL_FALLBACK", "claude-sonnet-4-6")
+    ROUTES["erp_summary"]["model"] = getattr(settings, "VERTEX_MODEL_LITE", "gemini-2.0-flash-lite")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -162,14 +173,13 @@ def _resolve_models():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _vertex_client = None
-_bedrock_client = None
 
 
 def _get_vertex_client():
     """Initialize Vertex AI client (lazy, singleton).
     
     Supports two credential modes:
-    1. VERTEX_CREDENTIALS_JSON (env var) — for Render / ephemeral containers
+    1. GOOGLE_APPLICATION_CREDENTIALS_JSON (env var) — for Render / ephemeral containers
     2. VERTEX_CREDENTIALS_PATH (file path) — for local development
     3. Application Default Credentials — if neither is set
     """
@@ -189,9 +199,18 @@ def _get_vertex_client():
             "location": settings.VERTEX_LOCATION,
         }
 
-        # Priority 1: JSON string from env var (Render / ephemeral containers)
-        if settings.VERTEX_CREDENTIALS_JSON:
-            import tempfile, os
+        # Priority 1: JSON string from env var
+        if getattr(settings, "GOOGLE_APPLICATION_CREDENTIALS_JSON", None):
+            import json
+            from google.oauth2 import service_account
+            
+            creds_dict = json.loads(settings.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+            credentials = service_account.Credentials.from_service_account_info(creds_dict)
+            init_kwargs["credentials"] = credentials
+            logger.info("Vertex AI credentials: loaded from GOOGLE_APPLICATION_CREDENTIALS_JSON env var")
+        # Legacy fallback rename check
+        elif getattr(settings, "VERTEX_CREDENTIALS_JSON", None):
+            import json
             from google.oauth2 import service_account
             
             creds_dict = json.loads(settings.VERTEX_CREDENTIALS_JSON)
@@ -199,8 +218,8 @@ def _get_vertex_client():
             init_kwargs["credentials"] = credentials
             logger.info("Vertex AI credentials: loaded from VERTEX_CREDENTIALS_JSON env var")
 
-        # Priority 2: File path (local dev)
-        elif settings.VERTEX_CREDENTIALS_PATH:
+        # Priority 2: File path
+        elif getattr(settings, "VERTEX_CREDENTIALS_PATH", None):
             from google.oauth2 import service_account
             credentials = service_account.Credentials.from_service_account_file(
                 settings.VERTEX_CREDENTIALS_PATH
@@ -215,47 +234,16 @@ def _get_vertex_client():
         vertexai.init(**init_kwargs)
         _vertex_client = True  # Flag that Vertex is initialized
         logger.info(
-            "Vertex AI initialized: project=%s, location=%s, model=%s",
+            "Vertex AI initialized: project=%s, location=%s, models=[%s, %s, %s]",
             settings.VERTEX_PROJECT_ID,
             settings.VERTEX_LOCATION,
-            settings.INTERVIEW_MODEL,
+            getattr(settings, "VERTEX_MODEL_INTERVIEW", ""),
+            getattr(settings, "VERTEX_MODEL_FLASH", ""),
+            getattr(settings, "VERTEX_MODEL_FALLBACK", ""),
         )
         return _vertex_client
     except Exception as e:
         logger.error("Vertex AI initialization failed: %s", e)
-        return None
-
-
-def _get_bedrock_client():
-    """Initialize AWS Bedrock Runtime client (lazy, singleton)."""
-    global _bedrock_client
-    if _bedrock_client is not None:
-        return _bedrock_client
-
-    if not settings.AWS_REGION:
-        logger.warning("AWS_REGION not set — Bedrock disabled, falling back to LiteLLM")
-        return None
-
-    try:
-        import boto3
-
-        kwargs = {"region_name": settings.AWS_REGION}
-        # Use explicit credentials if provided, otherwise rely on IAM role / env
-        if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
-            kwargs["aws_access_key_id"] = settings.AWS_ACCESS_KEY_ID
-            kwargs["aws_secret_access_key"] = settings.AWS_SECRET_ACCESS_KEY
-
-        _bedrock_client = boto3.client("bedrock-runtime", **kwargs)
-        logger.info(
-            "AWS Bedrock initialized: region=%s, models=[%s, %s, %s]",
-            settings.AWS_REGION,
-            settings.BEDROCK_NOVA_LITE_MODEL,
-            settings.BEDROCK_NOVA_PRO_MODEL,
-            settings.BEDROCK_CLAUDE_SONNET_MODEL,
-        )
-        return _bedrock_client
-    except Exception as e:
-        logger.error("AWS Bedrock initialization failed: %s", e)
         return None
 
 
@@ -269,10 +257,12 @@ async def _vertex_complete(
     temperature: float = 0.7,
     max_tokens: int = 1024,
     json_mode: bool = False,
+    media_bytes: Optional[bytes] = None,
+    mime_type: str = "application/pdf",
     **kwargs,
 ) -> str:
     """Call Gemini via Vertex AI SDK (async)."""
-    from vertexai.generative_models import GenerativeModel, GenerationConfig
+    from vertexai.generative_models import GenerativeModel, GenerationConfig, Part
 
     gen_config = GenerationConfig(
         temperature=temperature,
@@ -281,29 +271,29 @@ async def _vertex_complete(
     if json_mode:
         gen_config.response_mime_type = "application/json"
 
-    gen_model = GenerativeModel(
-        model,
-        generation_config=gen_config,
-    )
-
-    # Convert OpenAI-style messages to Vertex AI format
-    # Vertex uses system_instruction + contents
     system_parts = []
     contents = []
+    
+    if media_bytes:
+        # Prepend the media block to the user prompt context
+        contents.append({"role": "user", "parts": [{"text": "Attached Document:\n"}, Part.from_data(data=media_bytes, mime_type=mime_type)]})
+
     for msg in messages:
         if msg["role"] == "system":
             system_parts.append(msg["content"])
         elif msg["role"] == "user":
-            contents.append({"role": "user", "parts": [{"text": msg["content"]}]})
+            if contents and contents[-1]["role"] == "user":
+                contents[-1]["parts"].append({"text": msg["content"]})
+            else:
+                contents.append({"role": "user", "parts": [{"text": msg["content"]}]})
         elif msg["role"] == "assistant":
             contents.append({"role": "model", "parts": [{"text": msg["content"]}]})
 
-    if system_parts:
-        gen_model = GenerativeModel(
-            model,
-            generation_config=gen_config,
-            system_instruction="\n\n".join(system_parts),
-        )
+    gen_model = GenerativeModel(
+        model,
+        generation_config=gen_config,
+        system_instruction="\n\n".join(system_parts) if system_parts else None,
+    )
 
     import asyncio
     # Vertex AI Python SDK is synchronous — run in executor
@@ -359,121 +349,49 @@ async def _vertex_stream(
             yield chunk.text
 
 
-async def _bedrock_complete(
+async def _vertex_anthropic_complete(
     model: str,
     messages: List[Dict[str, str]],
-    temperature: float = 0.3,
-    max_tokens: int = 4096,
-    json_mode: bool = False,
+    temperature: float = 0.0,
+    max_tokens: int = 1000,
     **kwargs,
 ) -> str:
-    """Call AWS Bedrock Converse API (async via executor)."""
+    """Call Claude 4.6 via Vertex Model Garden (AnthropicVertex client)."""
     import asyncio
-
-    client = _get_bedrock_client()
-    if not client:
-        raise RuntimeError("Bedrock client not available")
+    from anthropic import AnthropicVertex
+    
+    # Initialize ephemeral AnthropicVertex client
+    client = AnthropicVertex(
+        region=settings.VERTEX_LOCATION,
+        project_id=settings.VERTEX_PROJECT_ID,
+    )
 
     # Separate system messages from conversation
-    system_messages = []
+    system_messages = ""
     converse_messages = []
     for msg in messages:
         if msg["role"] == "system":
-            system_messages.append({"text": msg["content"]})
+            system_messages += msg["content"] + "\n"
         else:
             role = "user" if msg["role"] == "user" else "assistant"
             converse_messages.append({
                 "role": role,
-                "content": [{"text": msg["content"]}],
+                "content": [{"type": "text", "text": msg["content"]}],
             })
 
-    # Ensure messages alternate user/assistant (Bedrock requirement)
-    # If first message after system is assistant, prepend a user message
-    if converse_messages and converse_messages[0]["role"] == "assistant":
-        converse_messages.insert(0, {
-            "role": "user",
-            "content": [{"text": "Begin."}],
-        })
-
-    call_kwargs = {
-        "modelId": model,
-        "messages": converse_messages,
-        "inferenceConfig": {
-            "temperature": temperature,
-            "maxTokens": max_tokens,
-        },
-    }
-    if system_messages:
-        call_kwargs["system"] = system_messages
-
     def _sync_call():
-        response = client.converse(**call_kwargs)
-        output = response.get("output", {})
-        content_blocks = output.get("message", {}).get("content", [])
-        texts = [b["text"] for b in content_blocks if "text" in b]
-        return "\n".join(texts)
+        response = client.messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            system=system_messages.strip(),
+            messages=converse_messages
+        )
+        return response.content[0].text
 
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(None, _sync_call)
     return result
-
-
-async def _bedrock_stream(
-    model: str,
-    messages: List[Dict[str, str]],
-    temperature: float = 0.5,
-    max_tokens: int = 500,
-    **kwargs,
-) -> AsyncGenerator[str, None]:
-    """Stream AWS Bedrock Converse API."""
-    import asyncio
-
-    client = _get_bedrock_client()
-    if not client:
-        raise RuntimeError("Bedrock client not available")
-
-    system_messages = []
-    converse_messages = []
-    for msg in messages:
-        if msg["role"] == "system":
-            system_messages.append({"text": msg["content"]})
-        else:
-            role = "user" if msg["role"] == "user" else "assistant"
-            converse_messages.append({
-                "role": role,
-                "content": [{"text": msg["content"]}],
-            })
-
-    if converse_messages and converse_messages[0]["role"] == "assistant":
-        converse_messages.insert(0, {
-            "role": "user",
-            "content": [{"text": "Begin."}],
-        })
-
-    call_kwargs = {
-        "modelId": model,
-        "messages": converse_messages,
-        "inferenceConfig": {
-            "temperature": temperature,
-            "maxTokens": max_tokens,
-        },
-    }
-    if system_messages:
-        call_kwargs["system"] = system_messages
-
-    def _sync_stream():
-        return client.converse_stream(**call_kwargs)
-
-    loop = asyncio.get_event_loop()
-    response = await loop.run_in_executor(None, _sync_stream)
-
-    stream = response.get("stream", [])
-    for event in stream:
-        if "contentBlockDelta" in event:
-            delta = event["contentBlockDelta"].get("delta", {})
-            text = delta.get("text", "")
-            if text:
-                yield text
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -568,7 +486,6 @@ class LLMGateway:
 
         # Attempt to initialize providers (non-fatal if they fail)
         _get_vertex_client()
-        _get_bedrock_client()
 
         self._initialized = True
         logger.info("LLM Gateway initialized — routes: %s", list(ROUTES.keys()))
@@ -581,6 +498,8 @@ class LLMGateway:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         timeout: Optional[float] = None,
+        media_bytes: Optional[bytes] = None,
+        mime_type: str = "application/pdf",
     ) -> str:
         """
         Route a completion request to the right provider.
@@ -592,6 +511,8 @@ class LLMGateway:
             temperature: Override route default
             max_tokens: Override route default
             timeout: Override route default
+            media_bytes: Raw bytes of an uploaded file (e.g., PDF)
+            mime_type: Content type of media_bytes
 
         Returns:
             The LLM response text.
@@ -625,15 +546,16 @@ class LLMGateway:
                 result = await _vertex_complete(
                     model, messages,
                     temperature=temp, max_tokens=tokens, json_mode=json_mode,
+                    media_bytes=media_bytes, mime_type=mime_type,
                 )
                 self._log_call(purpose, provider, model, start)
                 return result
 
-            elif provider == "bedrock" and _get_bedrock_client():
-                self._metrics["provider_calls"]["bedrock"] += 1
-                result = await _bedrock_complete(
+            elif provider == "vertex_anthropic" and _get_vertex_client():
+                self._metrics["provider_calls"]["vertex"] += 1
+                result = await _vertex_anthropic_complete(
                     model, messages,
-                    temperature=temp, max_tokens=tokens, json_mode=json_mode,
+                    temperature=temp, max_tokens=tokens,
                 )
                 self._log_call(purpose, provider, model, start)
                 return result
@@ -697,12 +619,6 @@ class LLMGateway:
                     yield chunk
                 return
 
-            elif provider == "bedrock" and _get_bedrock_client():
-                self._metrics["provider_calls"]["bedrock"] += 1
-                async for chunk in _bedrock_stream(model, messages, temperature=temp, max_tokens=tokens):
-                    yield chunk
-                return
-
         except Exception as e:
             logger.warning(
                 "[LLMGateway] Primary stream %s/%s failed for %s: %s — falling back",
@@ -727,52 +643,70 @@ class LLMGateway:
         json_mode: bool = False,
     ) -> str:
         """
-        ERP-specific completion with automatic complexity fallback.
-
-        Tries Nova Pro first. Escalates to Claude Sonnet 4.6 only when:
-        1. Nova Pro returns invalid SQL (doesn't start with SELECT)
-        2. Nova Pro throws an exception
-        3. Complexity heuristic classifies query as inherently complex
-
-        Does NOT escalate on empty results — a valid query can return zero rows.
         """
-        # ── Complexity heuristic — route hard queries directly to Claude ──
+        ERP-specific completion with 3-tier complexity fallback.
+
+        Tier 1: Gemini 2.0 Flash (`erp_insights`)
+        Tier 2: Gemini 2.5 Pro (`erp_complex`). Escalates if invalid SQL, keywords, or 3+ JOINs.
+        Tier 3: Claude Sonnet 4.6 (`erp_last_resort`). Escalates if Tier 2 fails or invalid.
+        """
+        
+        async def _tier_3_fallback(msgs: List[Dict[str, str]], json_req: bool) -> str:
+            logger.warning("[LLMGateway] Escalating to Tier 3: Claude Sonnet 4.6")
+            return await self.complete("erp_last_resort", msgs, json_mode=json_req)
+            
+        async def _tier_2_fallback(msgs: List[Dict[str, str]], json_req: bool) -> str:
+            logger.info("[LLMGateway] Escalating to Tier 2: Gemini 2.5 Pro")
+            try:
+                t2_result = await self.complete("erp_complex", msgs, json_mode=json_req)
+                t2_upper = t2_result.strip().upper()
+                if not json_req and not t2_upper.startswith("SELECT"):
+                    return await _tier_3_fallback(msgs, json_req)
+                return t2_result
+            except Exception as e:
+                logger.error("[LLMGateway] Tier 2 failed: %s", e)
+                return await _tier_3_fallback(msgs, json_req)
+
+        # ── Complexity heuristic — route hard queries directly to Tier 2 ──
         complex_signals = [
             "compare", "trend", "across all", "correlation", "at-risk",
             "top performing", "analyze", "pattern", "anomaly", "predict",
             "year over year", "semester wise", "department wise breakdown",
+            "vs last year",
         ]
         is_complex = any(signal in user_query.lower() for signal in complex_signals)
 
         if is_complex:
-            logger.info("[LLMGateway] ERP query classified as COMPLEX — routing to Claude Sonnet 4.6")
-            return await self.complete("erp_complex", messages, json_mode=json_mode)
+            return await _tier_2_fallback(messages, json_mode)
 
-        # ── Standard path: Nova Pro ──────────────────────────────────────
+        # ── Standard path: Tier 1 (Gemini 2.0 Flash) ───────────────────────
         try:
             result = await self.complete("erp_insights", messages, json_mode=json_mode)
 
-            # Validate: Nova Pro must return valid SQL (not prose/errors)
+            # Validate: Flash must return valid SQL (not prose/errors)
             result_clean = result.strip()
             result_upper = result_clean.upper()
 
             if not json_mode:
-                # Check 1: Must start with SELECT (not prose, not an error message)
+                # Escalation trigger 1: Not SQL
                 if not result_upper.startswith("SELECT"):
-                    logger.info("[LLMGateway] Nova Pro returned non-SQL — escalating to Claude")
-                    return await self.complete("erp_complex", messages, json_mode=json_mode)
+                    return await _tier_2_fallback(messages, json_mode)
 
-                # Check 2: LLM explicitly says it can't handle the query
+                # Escalation trigger 2: Expressed inability
                 inability_signals = ["I CANNOT", "I'M UNABLE", "NOT POSSIBLE", "BEYOND MY", "I NEED MORE CONTEXT"]
                 if any(sig in result_upper for sig in inability_signals):
-                    logger.info("[LLMGateway] Nova Pro signalled inability — escalating to Claude")
-                    return await self.complete("erp_complex", messages, json_mode=json_mode)
+                    return await _tier_2_fallback(messages, json_mode)
+                    
+                # Escalation trigger 3: Heavily complex query generated (3+ JOINs)
+                if result_upper.count("JOIN") >= 3:
+                    logger.info("[LLMGateway] Tier 1 generated complex query (3+ JOINs) — escalating to Tier 2 to verify logic")
+                    return await _tier_2_fallback(messages, json_mode)
 
             return result
 
         except Exception as e:
-            logger.warning("[LLMGateway] Nova Pro ERP failed: %s — escalating to Claude", e)
-            return await self.complete("erp_complex", messages, json_mode=json_mode)
+            logger.warning("[LLMGateway] Tier 1 ERP failed: %s — escalating to Tier 2", e)
+            return await _tier_2_fallback(messages, json_mode)
 
     def get_metrics(self) -> dict:
         """Return gateway usage metrics for monitoring dashboards."""
