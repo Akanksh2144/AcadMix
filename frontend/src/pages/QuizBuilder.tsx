@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash, Copy, Eye, CalendarBlank, Clock, X, WarningCircle, CaretDown, CaretUp, DownloadSimple, UploadSimple, CalendarDots } from '@phosphor-icons/react';
+import { Plus, Trash, Copy, Eye, CalendarBlank, Clock, X, WarningCircle, CaretDown, CaretUp, DownloadSimple, UploadSimple, CalendarDots, Sparkle } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { facultyAPI, quizzesAPI, assessmentsAPI } from '../services/api';
 import * as XLSX from 'xlsx';
