@@ -345,7 +345,7 @@ async def run_ats_scoring(resume: models.ResumeScore, session: AsyncSession) -> 
     ]
 
     from app.services.llm_gateway import gateway
-    raw = await gateway.complete("ats_scoring", messages, json_mode=True)
+    raw = await gateway.complete("ats_scoring", messages, json_mode=False)
     
     analysis = parse_json_robust(raw)
 
