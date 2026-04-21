@@ -330,6 +330,209 @@ const BottomAudioVisualizer = ({ analyserRef, isListening }) => {
   );
 };
 
+// ─── Hardware Setup Lobby ──────────────────────────────────────────────────────
+const HardwareSetupLobby = ({ sessionConfig, onStart, onCancel }) => {
+  const videoRef = useRef(null);
+  const amplitudeBarRef = useRef(null);
+  const [devices, setDevices] = useState({ video: [], audio: [] });
+  const [selectedVideoId, setSelectedVideoId] = useState('');
+  const [selectedAudioId, setSelectedAudioId] = useState('');
+  const [hasMicSignal, setHasMicSignal] = useState(false);
+  const [permissionsGranted, setPermissionsGranted] = useState(false);
+  const streamRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const animationFrameRef = useRef(null);
+
+  const requestPermissionsAndEnumerate = async () => {
+    try {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+      }
+      
+      const constraints = {
+        video: selectedVideoId ? { deviceId: { exact: selectedVideoId } } : true,
+        audio: selectedAudioId ? { deviceId: { exact: selectedAudioId } } : true,
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+      setPermissionsGranted(true);
+      
+      if (videoRef.current && videoRef.current.srcObject !== stream) {
+        videoRef.current.srcObject = stream;
+      }
+
+      // Enumerate available devices safely
+      const allDevices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = allDevices.filter(d => d.kind === 'videoinput');
+      const audioDevices = allDevices.filter(d => d.kind === 'audioinput');
+      
+      setDevices({ video: videoDevices, audio: audioDevices });
+      
+      if (!selectedVideoId && videoDevices.length > 0) {
+        const activeVideo = stream.getVideoTracks()[0];
+        const matched = videoDevices.find(d => d.label === activeVideo?.label);
+        setSelectedVideoId(matched?.deviceId || videoDevices[0].deviceId);
+      }
+      if (!selectedAudioId && audioDevices.length > 0) {
+        const activeAudio = stream.getAudioTracks()[0];
+        const matched = audioDevices.find(d => d.label === activeAudio?.label);
+        setSelectedAudioId(matched?.deviceId || audioDevices[0].deviceId);
+      }
+
+      // Amplitude setup
+      if (!audioContextRef.current) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioContextRef.current = new AudioContext();
+      }
+      if (audioContextRef.current.state === 'suspended') {
+         audioContextRef.current.resume();
+      }
+      const analyser = audioContextRef.current.createAnalyser();
+      analyser.fftSize = 256;
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const checkVolume = () => {
+        if (!streamRef.current) return;
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
+        const average = sum / bufferLength;
+        if (average > 5) setHasMicSignal(true);
+        if (amplitudeBarRef.current) {
+           amplitudeBarRef.current.style.width = `${Math.min(100, average * 3)}%`;
+        }
+        animationFrameRef.current = requestAnimationFrame(checkVolume);
+      };
+      checkVolume();
+
+    } catch (err) {
+      console.error("Camera/Mic access denied:", err);
+      toast.error('Please grant camera and microphone permissions to proceed.');
+      setPermissionsGranted(false);
+    }
+  };
+
+  useEffect(() => {
+    requestPermissionsAndEnumerate();
+    return () => {
+      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch(()=>{});
+        audioContextRef.current = null;
+      }
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVideoId, selectedAudioId]);
+
+  const handleStartWrapper = () => {
+    // 1. Stop local tracks immediately
+    if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+    }
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    // 2. Fire Start with the confirmed Mic ID
+    onStart(selectedAudioId);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] flex items-center justify-center p-6">
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-2xl w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+        <div className="p-6 sm:p-8">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white mb-2">Hardware Setup</h2>
+          <p className="text-sm text-slate-500 mb-6 group">
+            {sessionConfig?.interview_type?.charAt(0).toUpperCase() + sessionConfig?.interview_type?.slice(1)} Interview
+            {sessionConfig?.target_company && ` @ ${sessionConfig.target_company}`}
+            {' — '}{sessionConfig?.target_role}
+          </p>
+          
+          {/* Camera Preview */}
+          <div className="relative w-full aspect-video bg-slate-100 dark:bg-slate-950 rounded-2xl overflow-hidden mb-6 border border-slate-200 dark:border-slate-800">
+            {permissionsGranted ? (
+               <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted 
+                  className="w-full h-full object-cover scale-x-[-1]" 
+               />
+            ) : (
+               <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                  <Warning size={32} className="mb-2 opacity-50" />
+                  <span className="text-sm font-bold uppercase tracking-wider">Awaiting Permissions</span>
+               </div>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            {/* Microphone Selector */}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Microphone</label>
+              <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/50 p-3">
+                <select 
+                  className="w-full bg-transparent text-sm font-bold text-slate-700 dark:text-slate-300 outline-none cursor-pointer truncate"
+                  value={selectedAudioId}
+                  onChange={(e) => setSelectedAudioId(e.target.value)}
+                  disabled={devices.audio.length === 0}
+                >
+                  {devices.audio.length > 0 ? devices.audio.map(d => (
+                    <option key={d.deviceId} value={d.deviceId} className="bg-white dark:bg-slate-900">{d.label || `Microphone ${d.deviceId.slice(0, 5)}`}</option>
+                  )) : <option>No microphone found</option>}
+                </select>
+                {/* Amplitude Bar */}
+                <div className="mt-3 h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex items-center">
+                  <div ref={amplitudeBarRef} className="h-full bg-emerald-500 w-0 transition-all duration-75" />
+                </div>
+              </div>
+            </div>
+
+            {/* Camera Selector */}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Camera</label>
+              <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/50 p-3">
+                <select 
+                  className="w-full bg-transparent text-sm font-bold text-slate-700 dark:text-slate-300 outline-none cursor-pointer truncate"
+                  value={selectedVideoId}
+                  onChange={(e) => setSelectedVideoId(e.target.value)}
+                  disabled={devices.video.length === 0}
+                >
+                  {devices.video.length > 0 ? devices.video.map(d => (
+                    <option key={d.deviceId} value={d.deviceId} className="bg-white dark:bg-slate-900">{d.label || `Camera ${d.deviceId.slice(0, 5)}`}</option>
+                  )) : <option>No camera found</option>}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Row */}
+          <div className="mt-8 flex flex-col-reverse sm:flex-row gap-3 pt-6 border-t border-slate-100 dark:border-slate-800/50">
+            <button 
+              onClick={onCancel}
+              className="px-6 py-3.5 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleStartWrapper} 
+              disabled={!permissionsGranted || !hasMicSignal}
+              className="flex-1 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {!permissionsGranted ? 'Waiting for permissions...' : !hasMicSignal ? 'Waiting for mic signal...' : 'Start Interview'}
+              {permissionsGranted && hasMicSignal && <ArrowsOut size={16} weight="bold" />}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // ─── Main Interview Session ──────────────────────────────────────────────────
 
 const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
@@ -349,6 +552,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [sessionMicId, setSessionMicId] = useState('');
 
   // Refs
   const recognitionRef = useRef(null);
@@ -454,10 +658,14 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
   // ── Speech Recognition (Student speaks) — uses refs to avoid stale closures ──
   const startListening = useCallback(async () => {
-    // 1. Initialize Web Audio API and Camera (runs once to request cleanly)
+    // 1. Initialize Web Audio API for visualizer (re-uses authorized mic without requesting video)
     if (!audioContextRef.current) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        const constraints = {
+          audio: sessionMicId ? { deviceId: { exact: sessionMicId } } : true,
+          video: false // No camera feed requested in the active interview
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         mediaStreamRef.current = stream;
         
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -597,8 +805,10 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   }, [interviewId, stopListening, speakText, startListening, maxQuestions, handleEndInterview]);
 
   // ── Start Interview ──
-  const handleStart = async () => {
+  const handleStart = async (micId) => {
     if (!sessionConfig?.interview_type) { navigate('interview-warroom'); return; }
+    
+    if (micId) setSessionMicId(micId);
 
     // Enter fullscreen
     try {
@@ -657,33 +867,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
   // ── Setup Screen (pre-fullscreen) ──
   if (phase === 'setup' && !sessionConfig?.viewId) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-[#0a0f1e] flex items-center justify-center p-6">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md w-full text-center">
-          <WaveformAvatar state="idle" analyserRef={analyserRef} />
-          <div className="mt-12">
-            <h2 className="text-2xl font-extrabold text-white mb-2">Ready for your interview?</h2>
-            <p className="text-sm text-slate-400 mb-2">
-              {sessionConfig?.interview_type?.charAt(0).toUpperCase() + sessionConfig?.interview_type?.slice(1)} Interview
-              {sessionConfig?.target_company && ` @ ${sessionConfig.target_company}`}
-              {' — '}{sessionConfig?.target_role}
-            </p>
-            <p className="text-xs text-slate-500 mb-8">
-              The AI will ask you questions using voice. Speak your answers naturally.<br/>
-              Your microphone will remain active throughout the session.
-            </p>
-            <button onClick={handleStart}
-              className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3">
-              <ArrowsOut size={24} weight="bold" />
-              Enter Fullscreen & Start
-            </button>
-            <button onClick={() => navigate('interview-warroom')} className="mt-4 text-sm font-bold text-slate-500 hover:text-slate-300 transition-colors">
-              ← Back to War Room
-            </button>
-          </div>
-        </motion.div>
-      </div>
-    );
+    return <HardwareSetupLobby sessionConfig={sessionConfig} onStart={handleStart} onCancel={() => navigate('interview-warroom')} />;
   }
 
   // ── Active Interview / Ending ──
@@ -738,32 +922,6 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-
-      {/* Floating Video Camera (Right Side) */}
-      <div className="hidden md:block absolute right-8 top-1/2 -translate-y-1/2 w-72 h-52 bg-slate-800 rounded-3xl overflow-hidden border border-white/10 shadow-2xl z-50">
-        {mediaStreamRef.current ? (
-          <video
-            ref={(node) => {
-              if (node && node.srcObject !== mediaStreamRef.current) {
-                node.srcObject = mediaStreamRef.current;
-              }
-            }}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover scale-x-[-1]" 
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-slate-900">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">Initializing Camera...</span>
-          </div>
-        )}
-        {/* Rec signal indicator */}
-        <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-full border border-white/10">
-           <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_#10b981]" />
-           <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Active</span>
-        </div>
       </div>
 
       {/* Bottom status bar */}
