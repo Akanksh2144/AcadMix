@@ -8,7 +8,7 @@ const POLL_INTERVAL = 10000;
 // Wait for Mappls SDK to be available on window (loaded dynamically)
 function waitForMappls(maxWait = 10000) {
   return new Promise((resolve) => {
-    if (window.mappls) { resolve(window.mappls); return; }
+    if (window.mappls && typeof window.mappls.Map === 'function') { resolve(window.mappls); return; }
 
     const apiKey = import.meta.env.VITE_MAPPLS_KEY || import.meta.env.VITE_MAPPLS_API_KEY;
     if (apiKey && !document.getElementById('mappls-sdk-script')) {
@@ -21,7 +21,7 @@ function waitForMappls(maxWait = 10000) {
 
     const start = Date.now();
     const interval = setInterval(() => {
-      if (window.mappls) {
+      if (window.mappls && typeof window.mappls.Map === 'function') {
         clearInterval(interval);
         resolve(window.mappls);
       } else if (Date.now() - start > maxWait) {
