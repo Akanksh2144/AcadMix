@@ -705,8 +705,7 @@ async def compute_leaderboard_ranks(ctx):
             await session.execute(text("TRUNCATE TABLE student_rankings"))
             
             students_r = await session.execute(
-                select(models.QuizAttempt.student_id, models.Quiz
-Attempt.final_score, models.Quiz.college_id)
+                select(models.QuizAttempt.student_id, models.QuizAttempt.final_score, models.Quiz.college_id)
                 .join(models.Quiz, models.Quiz.id == models.QuizAttempt.quiz_id)
                 .where(models.QuizAttempt.status == "submitted")
             )
@@ -742,6 +741,82 @@ Attempt.final_score, models.Quiz.college_id)
         logger.error("[leaderboard-cron] Ranking calculation failed: %s", e)
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# RESULTS WARMING & NOTIFICATION TASKS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+async def warm_results_cache_task(ctx, college_id: str, semester: int, student_ids: list):
+    """
+    Idempotent ARQ task designed strictly to populate memory footprints without side-effects.
+    """
+    from database import admin_session_ctx
+    from app.services.marks_service import MarksService
+    import asyncio
+    import logging
+
+    logger = logging.getLogger("acadmix.worker.results_cache")
+    logger.info("[results-warming] Pre-caching %d student payloads for %s", len(student_ids), college_id)
+    
+    async with admin_session_ctx() as session:
+        marks_svc = MarksService(session)
+        for i, s_id in enumerate(student_ids):
+            # get_student_cia inherently injects back into Redis logic natively using standard TTL
+            await marks_svc.get_student_cia(student_id=s_id, college_id=college_id, semester=semester)
+            
+            # Prevent PostgreSQL connection pool saturation & CPU starvation
+            if i > 0 and i % 100 == 0:
+                await asyncio.sleep(2)
+
+
+async def notify_results_task(ctx, college_id: str, semester: int, student_ids: list):
+    """
+    Separated Notification Task. Chunks targets implicitly and delays processing
+    to stagger TCP traffic loads natively. Strictly bound to max_tries=1.
+    """
+    import asyncio
+    import logging
+    from app.services.push_notifications import send_batch_data
+    from database import admin_session_ctx
+    from sqlalchemy import select
+    from app.models.core import User
+
+    logger = logging.getLogger("acadmix.worker.results_notify")
+    logger.info("[results-notify] Spawning notification orchestrator for %d students", len(student_ids))
+    
+    # Check execution context to prevent duplicate tries if ARQ ignores global config
+    if ctx.get('job_try', 1) > 1:
+        logger.warning("[results-notify] Aborting retry to prevent duplicate FCM dispatch spam.")
+        return
+
+    batch_size = 100
+    for i in range(0, len(student_ids), batch_size):
+        chunk = student_ids[i:i + batch_size]
+        try:
+            async with admin_session_ctx() as session:
+                fcm_stmt = select(User.fcm_token).where(
+                    User.id.in_(chunk), 
+                    User.fcm_token.is_not(None)
+                )
+                tokens_r = await session.execute(fcm_stmt)
+                tokens = [t for t in tokens_r.scalars().all() if t]
+
+            if tokens:
+                try:
+                    await send_batch_data(tokens, {
+                        "type": "RESULT_PUBLISHED",
+                        "title": "Semester Results Published!",
+                        "body": "Your updated exam scores are now available on the dashboard.",
+                        "semester": str(semester)
+                    })
+                except Exception as inner_e:
+                    logger.warning("[results-notify] Chunk %d to %d failed FCM dispatch: %s", i, i+batch_size, inner_e)
+        except Exception as e:
+            logger.error("[results-notify] Chunk resolution failed totally: %s", e)
+            
+        # The Core Stagger Mechanic
+        await asyncio.sleep(5)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # WORKER SETTINGS
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -749,6 +824,8 @@ class WorkerSettings:
     functions = [
         process_ai_review_task,
         generate_interview_feedback_task,
+        warm_results_cache_task,
+        notify_results_task,
         # WhatsApp on-demand tasks
         process_gatepass_approval_request,
         process_vending_receipt,
@@ -787,9 +864,9 @@ class WorkerSettings:
         from arq.connections import RedisSettings
         redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
 
-    # CPO-Level Hung LLM Protection
-    job_timeout = 30  # Max 30 seconds for LiteLLM inference
-    max_tries = 2     # Allow one retry if LiteLLM hits rate limit or random hang 
+    # Global Timeouts mapped globally due to large Stagger Batching intervals
+    job_timeout = 600  # Max 10m ceiling for deep-batch operations 
+    max_tries = 2     # Allow one retry generally (handled internally via job_try logic dynamically)
     
     # Pre-flight hook
     async def on_startup(ctx):

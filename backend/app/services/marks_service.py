@@ -11,7 +11,7 @@ import io
 from app import models
 from app.models.core import UserProfile
 from app.core.audit import log_audit
-
+from app.core.cache import cached_response, cache_set
 
 class MarksService:
     """Rewritten to use ONLY the normalized MarkSubmission + MarkSubmissionEntry schema.
@@ -367,6 +367,11 @@ class MarksService:
 
     async def get_student_cia(self, student_id: str, college_id: str, semester: Optional[int] = None, academic_year: Optional[str] = None) -> List[Dict[str, Any]]:
         """Fetch approved CIA marks for a student via normalized MarkSubmissionEntry."""
+        cache_key = f"marks:{college_id}:{student_id}:{semester or 'all'}"
+        cached = await cached_response(cache_key)
+        if cached:
+            return cached
+
         stmt = select(
             models.MarkSubmissionEntry, models.MarkSubmission
         ).join(
@@ -383,7 +388,7 @@ class MarksService:
         result = await self.session.execute(stmt)
         rows = result.all()
 
-        return [{
+        out = [{
             "subject_code": sub.subject_code,
             "exam_type": sub.exam_type,
             "component_id": sub.component_id,
@@ -392,6 +397,9 @@ class MarksService:
             "status": mse.status,
             "date_recorded": str(sub.published_at or sub.reviewed_at or sub.created_at),
         } for mse, sub in rows]
+
+        await cache_set(cache_key, out, ttl=259200)
+        return out
 
     async def get_status_report(self, user: dict, department: Optional[str] = None, academic_year: Optional[str] = None) -> List[Dict[str, Any]]:
         """HOD/Admin: CIA submission status report, optionally filtered by department."""

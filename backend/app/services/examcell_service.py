@@ -12,6 +12,7 @@ from sqlalchemy import func, and_, or_, delete
 from app import models
 from app.core.exceptions import ResourceNotFoundError, BusinessLogicError
 from app.core.audit import log_audit
+from app.core.cache import invalidate_cache
 
 
 DEFAULT_GRADE_SCALE = [
@@ -375,6 +376,31 @@ class ExamCellService:
             "student_count": len(semester_grades)
         })
         await self.db.commit()
+        
+        # --- Thundering Herd Mitigation: Clear Cache & Enqueue Async ARQ Tasks ---
+        try:
+            unique_student_ids = list(set([se.student_id for se in student_entries if se.student_id]))
+            
+            # Invalidate all stale marks for these students before re-warming
+            for s_id in unique_student_ids:
+                await invalidate_cache(f"marks:{college_id}:{s_id}:*")
+            
+            # Offload heavy tasks to background workers
+            from arq import create_pool
+            from arq.connections import RedisSettings
+            from app.core.config import settings
+            import logging
+            
+            if settings.REDIS_URL:
+                pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
+                await pool.enqueue_job("warm_results_cache_task", college_id, semester, unique_student_ids)
+                await pool.enqueue_job("notify_results_task", college_id, semester, unique_student_ids)
+                pool.close()
+                await pool.wait_closed()
+        except Exception as e:
+            import logging
+            logging.error(f"[Publish Marks] Fast-path enqueue failed: {e}")
+        # --------------------------------------------------------------------------
         
         return {
             "message": f"Published {len(semester_grades)} student grades",
