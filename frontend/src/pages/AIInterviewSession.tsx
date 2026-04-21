@@ -437,8 +437,8 @@ const HardwareSetupLobby = ({ sessionConfig, onStart, onCancel }) => {
         streamRef.current = null;
     }
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    // 2. Fire Start with the confirmed Mic ID
-    onStart(selectedAudioId);
+    // 2. Fire Start with the confirmed hardware IDs
+    onStart({ micId: selectedAudioId, videoId: selectedVideoId });
   };
 
   return (
@@ -553,6 +553,8 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [sessionMicId, setSessionMicId] = useState('');
+  const [sessionVideoId, setSessionVideoId] = useState('');
+  const dragConstraintsRef = useRef(null);
 
   // Refs
   const recognitionRef = useRef(null);
@@ -658,12 +660,12 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
   // ── Speech Recognition (Student speaks) — uses refs to avoid stale closures ──
   const startListening = useCallback(async () => {
-    // 1. Initialize Web Audio API for visualizer (re-uses authorized mic without requesting video)
+    // 1. Initialize Web Audio API for visualizer & restart camera
     if (!audioContextRef.current) {
       try {
         const constraints = {
           audio: sessionMicId ? { deviceId: { exact: sessionMicId } } : true,
-          video: false // No camera feed requested in the active interview
+          video: sessionVideoId ? { deviceId: { exact: sessionVideoId } } : true
         };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         mediaStreamRef.current = stream;
@@ -805,10 +807,11 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   }, [interviewId, stopListening, speakText, startListening, maxQuestions, handleEndInterview]);
 
   // ── Start Interview ──
-  const handleStart = async (micId) => {
+  const handleStart = async (hardwareIds) => {
     if (!sessionConfig?.interview_type) { navigate('interview-warroom'); return; }
     
-    if (micId) setSessionMicId(micId);
+    if (hardwareIds?.micId) setSessionMicId(hardwareIds.micId);
+    if (hardwareIds?.videoId) setSessionVideoId(hardwareIds.videoId);
 
     // Enter fullscreen
     try {
@@ -872,7 +875,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
   // ── Active Interview / Ending ──
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-slate-900 via-[#0d1321] to-[#0a0f1e] flex flex-col z-[9999]">
+    <div ref={dragConstraintsRef} className="fixed inset-0 bg-gradient-to-b from-slate-900 via-[#0d1321] to-[#0a0f1e] flex flex-col z-[9999] overflow-hidden">
       {/* Minimal Header */}
       <div className="flex items-center justify-between px-4 sm:px-8 py-4">
         <div className="flex items-center gap-3">
@@ -923,6 +926,36 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Floating Draggable Camera */}
+      {mediaStreamRef.current && (
+        <motion.div
+           drag
+           dragConstraints={dragConstraintsRef}
+           dragElastic={0.1}
+           dragMomentum={false}
+           initial={{ opacity: 0, scale: 0.8 }}
+           animate={{ opacity: 1, scale: 1 }}
+           className="absolute right-8 top-1/2 -translate-y-1/2 w-64 h-48 bg-slate-800 rounded-3xl overflow-hidden border border-white/10 shadow-2xl z-50 cursor-move cursor-grab active:cursor-grabbing"
+           style={{ touchAction: 'none' }}
+        >
+          <video
+            ref={(node) => {
+              if (node && node.srcObject !== mediaStreamRef.current) {
+                node.srcObject = mediaStreamRef.current;
+              }
+            }}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover scale-x-[-1] pointer-events-none" 
+          />
+          <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 pointer-events-none">
+             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_#10b981]" />
+             <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Active</span>
+          </div>
+        </motion.div>
+      )}
 
       {/* Bottom status bar */}
       <div className="px-8 py-5 flex items-center justify-center gap-6">
