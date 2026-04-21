@@ -140,11 +140,18 @@ const WaveformAvatar = ({ state, analyserRef }) => {
 const TypewriterText = ({ text, isSpeaking }) => {
   const [displayed, setDisplayed] = useState('');
   const [done, setDone] = useState(false);
+  const [hasStartedSpeaking, setHasStartedSpeaking] = useState(false);
+
+  // Track if speech has formally commenced for this cycle
+  useEffect(() => {
+    if (isSpeaking) setHasStartedSpeaking(true);
+  }, [isSpeaking]);
 
   // Core typing loop bound ONLY to the text changing
   useEffect(() => {
     setDisplayed('');
     setDone(false);
+    setHasStartedSpeaking(false);
     if (!text) return;
     
     let i = 0;
@@ -158,12 +165,13 @@ const TypewriterText = ({ text, isSpeaking }) => {
   }, [text]);
 
   // Instantly force-complete the typing if the AI physically finishes speaking
+  // (but only evaluate this AFTER it has formally started speaking)
   useEffect(() => {
-    if (!isSpeaking && !done && text) {
+    if (hasStartedSpeaking && !isSpeaking && !done && text) {
       setDisplayed(text);
       setDone(true);
     }
-  }, [isSpeaking, done, text]);
+  }, [isSpeaking, done, text, hasStartedSpeaking]);
 
   return (
     <p className="text-lg sm:text-xl font-medium text-white/90 leading-relaxed max-w-2xl mx-auto">
