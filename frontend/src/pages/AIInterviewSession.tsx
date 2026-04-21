@@ -402,9 +402,15 @@ const HardwareSetupLobby = ({ sessionConfig, onStart, onCancel }) => {
         let sum = 0;
         for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
         const average = sum / bufferLength;
-        if (average > 5) setHasMicSignal(true);
+        
+        // Filter out ambient noise floor (~4-6)
+        const noiseFloor = 6;
+        const normalizedVolume = Math.max(0, average - noiseFloor);
+        
+        if (normalizedVolume > 0) setHasMicSignal(true);
         if (amplitudeBarRef.current) {
-           amplitudeBarRef.current.style.width = `${Math.min(100, average * 3)}%`;
+           // Multiply for visual heft, hard cap at 100%
+           amplitudeBarRef.current.style.width = `${Math.min(100, normalizedVolume * 4)}%`;
         }
         animationFrameRef.current = requestAnimationFrame(checkVolume);
       };
