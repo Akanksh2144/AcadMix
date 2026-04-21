@@ -93,3 +93,59 @@ async def refresh_access_token(request: Request, response: Response, session: As
     result = await svc.refresh(request.cookies.get("refresh_token"))
     response.set_cookie("access_token", result["access_token"], httponly=True, secure=True, samesite="lax", max_age=1800)
     return result
+
+
+@router.post("/logout/all")
+async def logout_all(request: Request, response: Response, user: dict = Depends(get_current_user)):
+    _verify_origin(request)
+    from app.core.security import redis_client
+    if redis_client:
+        keys = await redis_client.keys(f"session:active:{user['id']}:*")
+        if keys:
+            await redis_client.delete(*keys)
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token", path="/api/auth")
+    return {"message": "Logged out of all devices"}
+
+
+@router.post("/heartbeat")
+async def heartbeat(request: Request, user: dict = Depends(get_current_user)):
+    """
+    Extends the active session TTL securely.
+    Protected by a native 90s cooldown to preclude malicious TTL spam loops.
+    """
+    from app.core.security import redis_client
+    import jwt
+    from app.core.security import JWT_SECRET, JWT_ALGORITHM
+    
+    if not redis_client:
+        return {"status": "ok"}
+        
+    # Standard extraction matching get_current_user's resolution tree
+    token = request.cookies.get("access_token")
+    if not token:
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            token = auth[7:]
+
+    if not token:
+        return {"status": "noop"}
+
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        session_id = payload.get("session_id")
+        user_id = payload.get("sub")
+        
+        if session_id and user_id:
+            throttle_key = f"rl:heartbeat:{session_id}"
+            
+            # Simple rate limiting logic protecting sliding loop execution (Atomic)
+            is_throttled = await redis_client.set(throttle_key, "1", nx=True, ex=90)
+            if not is_throttled:
+                return {"status": "skipped_throttle"}
+                
+            await redis_client.expire(f"session:active:{user_id}:{session_id}", 1800)
+    except Exception:
+        pass 
+        
+    return {"status": "ok"}

@@ -41,9 +41,9 @@ def hash_password(password: str) -> str:
 def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
-def create_access_token(user_id: str, role: str, tenant_id: str = "", permissions: dict = None) -> str:
+def create_access_token(user_id: str, role: str, tenant_id: str = "", permissions: dict = None, session_id: str = None) -> str:
     perms = permissions or {}
-    return jwt.encode({
+    payload = {
         "sub": user_id, 
         "role": role, 
         "tenant_id": tenant_id, 
@@ -51,14 +51,17 @@ def create_access_token(user_id: str, role: str, tenant_id: str = "", permission
         "exp": datetime.now(timezone.utc) + timedelta(minutes=TokenBlacklistConfig.ACCESS_TOKEN_TTL_MINUTES), 
         "type": "access",
         "jti": str(uuid.uuid4())
-    }, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    }
+    if session_id:
+        payload["session_id"] = session_id
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
-def create_refresh_token(user_id: str) -> str:
+def create_refresh_token(user_id: str, jti: str = None) -> str:
     return jwt.encode({
         "sub": user_id, 
         "exp": datetime.now(timezone.utc) + timedelta(days=TokenBlacklistConfig.REFRESH_TOKEN_TTL_DAYS), 
         "type": "refresh",
-        "jti": str(uuid.uuid4())
+        "jti": jti or str(uuid.uuid4())
     }, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 def verify_pre_enroll_token(token: str) -> dict:
@@ -110,6 +113,13 @@ async def get_current_user(request: Request, session: AsyncSession = Depends(get
             jti = payload.get("jti")
             if jti and await redis_client.exists(f"revoked_access:{jti}"):
                 raise HTTPException(status_code=401, detail="Token revoked")
+        
+        # --- Active Session Verification ---
+        session_id = payload.get("session_id")
+        if session_id and redis_client:
+            is_active = await redis_client.exists(f"session:active:{payload['sub']}:{session_id}")
+            if not is_active:
+                raise HTTPException(status_code=401, detail="Session expired due to inactivity")
         
         from sqlalchemy import text
         jwt_college_id = payload.get("tenant_id") or payload.get("college_id")

@@ -17,6 +17,7 @@ from app.core.security import (
     redis_client,
     JWT_SECRET,
     JWT_ALGORITHM,
+    TokenBlacklistConfig,
 )
 from app.core.exceptions import DomainException, ResourceNotFoundError
 from database import AsyncSessionLocal
@@ -132,8 +133,18 @@ class AuthService:
         perms = await self._resolve_role_permissions(user)
 
         tid = user.college_id or ""
-        access = create_access_token(user.id, user.role, tid, perms)
-        refresh = create_refresh_token(user.id)
+        
+        import uuid
+        session_id = str(uuid.uuid4())
+        access = create_access_token(user.id, user.role, tid, perms, session_id=session_id)
+        refresh = create_refresh_token(user.id, jti=session_id)
+        
+        if redis_client:
+            try:
+                await redis_client.setex(f"session:active:{user.id}:{session_id}", 1800, "1")
+            except Exception as e:
+                import logging
+                logging.getLogger("acadmix.security").error(f"Failed to set active session tracking: {e}")
 
         # Explicit Audit Log
         if user.role != "student":
@@ -193,10 +204,13 @@ class AuthService:
             from app.services.audit_service import AuditService
             payload = jwt.decode(refresh_token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             jti = payload.get("jti")
+            user_id = payload.get("sub")
+            
             if redis_client and jti:
                 await redis_client.setex(f"revoked_refresh:{jti}", 604800, "revoked")
+                if user_id:
+                    await redis_client.delete(f"session:active:{user_id}:{jti}")
                 
-            user_id = payload.get("sub")
             if user_id:
                 # Need college_id, fetch user
                 result = await self.db.execute(select(models.User).where(models.User.id == user_id))
@@ -232,10 +246,15 @@ class AuthService:
                 raise AuthenticationError("Invalid token type")
 
             jti = payload.get("jti")
-            if redis_client and await redis_client.exists(f"revoked_refresh:{jti}"):
-                raise AuthenticationError("Refresh token revoked")
-
             user_id = payload["sub"]
+
+            if redis_client:
+                if await redis_client.exists(f"revoked_refresh:{jti}"):
+                    raise AuthenticationError("Refresh token revoked")
+                # Intercept logic for Sliding Session 
+                if not await redis_client.exists(f"session:active:{user_id}:{jti}"):
+                    raise AuthenticationError("Session expired due to inactivity")
+
             result = await self.db.execute(
                 select(models.User).where(models.User.id == user_id)
             )
@@ -243,8 +262,9 @@ class AuthService:
             if not user:
                 raise AuthenticationError("User not found")
 
-            new_access = create_access_token(user_id, user.role, user.college_id)
-            return {"access_token": new_access, "expires_in": 900}
+            perms = await self._resolve_role_permissions(user)
+            new_access = create_access_token(user_id, user.role, user.college_id or "", perms, session_id=jti)
+            return {"access_token": new_access, "expires_in": TokenBlacklistConfig.ACCESS_TOKEN_TTL_MINUTES * 60}
 
         except jwt.ExpiredSignatureError:
             raise AuthenticationError("Refresh token expired")

@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AlertModal from './components/AlertModal';
 import PageTransition from './components/PageTransition';
 import ErrorBoundary from './components/ErrorBoundary';
+import IdleTimer from './components/auth/IdleTimer';
 import './App.css';
 import { authAPI, setAuthToken, clearAuthToken } from './services/api';
 
@@ -517,13 +518,18 @@ function AppShell() {
 
   const handleLogout = () => setShowLogoutModal(true);
 
-  const confirmLogout = async () => {
+  const confirmLogout = async (reason = null) => {
     setShowLogoutModal(false);
     try { await authAPI.logout(); } catch {}
     setUser(null);
     clearAuthToken();
     localStorage.removeItem('auth_token');
-    routerNavigate('/login', { replace: true });
+    
+    if (reason === 'idle') {
+      routerNavigate('/login?reason=idle', { replace: true });
+    } else {
+      routerNavigate('/login', { replace: true });
+    }
   };
 
   if (loading) {
@@ -539,6 +545,7 @@ function AppShell() {
 
   return (
     <div className="App">
+      <IdleTimer user={user} onLogout={() => confirmLogout('idle')} />
       <PageTransition pageKey={location.pathname}>
         <Suspense fallback={<LoadingSpinner />}>
           <AppRoutes user={user} onLogin={handleLogin} onLogout={handleLogout} />
