@@ -216,9 +216,20 @@ async def start_interview(req: dict, user: dict, session: AsyncSession) -> dict:
     )
 
     # Get opening question from AI
+    user_name = user.get("full_name", "Candidate").split()[0] if user.get("full_name") else "Candidate"
+    opening_prompt = f"""Begin the interview. 
+You are speaking to {user_name}.
+Your first response MUST be a detailed, welcoming introduction (about 4-5 sentences). 
+1. Greet them enthusiastically by name.
+2. Formally introduce yourself as the AI Interviewer for this {target_role} role. 
+3. Explicitly mention 1-2 briefly interesting, specific things you noted from their resume background (if provided).
+4. Lay out a clear agenda for the interview (quick logistics, core fundamentals/hands-on experience, and a wrap up). Mention it will take around 30 minutes.
+5. End by asking a broad ice-breaker question about their background and what draws them to this role.
+Speak naturally, do not sound robotic. Make it sound exactly like an experienced human recruiter starting a real high-stakes video screen."""
+
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": "Begin the interview. Ask your first question."},
+        {"role": "user", "content": opening_prompt},
     ]
     first_question = await call_llm(messages)
 

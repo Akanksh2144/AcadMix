@@ -47,6 +47,7 @@ const AIOrb = ({ state, audioLevel = 0 }) => {
       />
       {/* Core orb */}
       <motion.div
+        initial={{ borderRadius: '50%' }}
         animate={{
           scale: scale,
           borderRadius: state === 'thinking'
@@ -61,7 +62,7 @@ const AIOrb = ({ state, audioLevel = 0 }) => {
           ease: 'easeInOut',
           scale: { duration: 0.3 },
         }}
-        className="absolute inset-8 sm:inset-10"
+        className="absolute inset-8 sm:inset-10 rounded-full"
         style={{
           background: `radial-gradient(circle at 35% 35%, ${orbState.color1}, ${orbState.color2})`,
           boxShadow: `0 0 60px ${orbState.color1}60, 0 0 120px ${orbState.color1}20, inset 0 0 60px ${orbState.color2}30`,
