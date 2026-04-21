@@ -120,6 +120,9 @@ async def get_current_user(request: Request, session: AsyncSession = Depends(get
             is_active = await redis_client.exists(f"session:active:{payload['sub']}:{session_id}")
             if not is_active:
                 raise HTTPException(status_code=401, detail="Session expired due to inactivity")
+        elif redis_client:
+            # Hard enforcement: legacy tokens (missing session_id) must be proactively evicted.
+            raise HTTPException(status_code=401, detail="Session re-authentication required")
         
         from sqlalchemy import text
         jwt_college_id = payload.get("tenant_id") or payload.get("college_id")
