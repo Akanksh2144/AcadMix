@@ -378,7 +378,9 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
       audioContextRef.current = null;
     }
     if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current.getTracks().forEach(track => {
+        track.stop();
+      });
       mediaStreamRef.current = null;
     }
   }, []);
@@ -452,10 +454,10 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
   // ── Speech Recognition (Student speaks) — uses refs to avoid stale closures ──
   const startListening = useCallback(async () => {
-    // 1. Initialize Web Audio API for visualizer (runs once to request mic cleanly)
+    // 1. Initialize Web Audio API and Camera (runs once to request cleanly)
     if (!audioContextRef.current) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
         mediaStreamRef.current = stream;
         
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -466,8 +468,8 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
         sourceNodeRef.current = audioContextRef.current.createMediaStreamSource(stream);
         sourceNodeRef.current.connect(analyserRef.current);
       } catch (err) {
-        console.error("Microphone access denied for visualizer.", err);
-        toast.error('Microphone access is required for the interview.');
+        console.error("Camera/Microphone access denied.", err);
+        toast.error('Camera and Microphone access are required for the interview.');
       }
     } else if (audioContextRef.current.state === 'suspended') {
       audioContextRef.current.resume();
@@ -736,6 +738,32 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* Floating Video Camera (Right Side) */}
+      <div className="hidden md:block absolute right-8 top-1/2 -translate-y-1/2 w-72 h-52 bg-slate-800 rounded-3xl overflow-hidden border border-white/10 shadow-2xl z-50">
+        {mediaStreamRef.current ? (
+          <video
+            ref={(node) => {
+              if (node && node.srcObject !== mediaStreamRef.current) {
+                node.srcObject = mediaStreamRef.current;
+              }
+            }}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover scale-x-[-1]" 
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-slate-900">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">Initializing Camera...</span>
+          </div>
+        )}
+        {/* Rec signal indicator */}
+        <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-full border border-white/10">
+           <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_#10b981]" />
+           <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Active</span>
+        </div>
       </div>
 
       {/* Bottom status bar */}
