@@ -910,7 +910,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
         {/* Current question (typewriter) */}
         <div className="mt-16 mb-8 text-center px-4 min-h-[80px]">
-          {currentQuestion && <TypewriterText text={currentQuestion} speed={orbState === 'speaking' ? 40 : 0} />}
+          {currentQuestion && <TypewriterText text={currentQuestion} speed={orbState === 'speaking' ? 65 : 0} />}
         </div>
 
         {/* Student transcript (live) */}
