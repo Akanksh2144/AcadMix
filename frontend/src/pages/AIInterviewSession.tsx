@@ -16,104 +16,125 @@ const ORB_STATES = {
   evaluating:  { color1: '#8b5cf6', color2: '#ec4899', label: 'Evaluating...', speed: 1 },
 };
 
-// ─── AI Orb Component ────────────────────────────────────────────────────────
-const AIOrb = ({ state, audioLevel = 0 }) => {
-  const orbState = ORB_STATES[state] || ORB_STATES.idle;
-  const scale = state === 'speaking' ? 1 + audioLevel * 0.15 :
-                state === 'listening' ? 1 + audioLevel * 0.1 :
-                state === 'thinking' ? 1.05 : 1;
+// ─── Waveform Avatar Component (Option 1) ────────────────────────────────────
+const WaveformAvatar = ({ state, analyserRef }) => {
+  const barsRef = useRef([]);
+  const canvasRef = useRef(null); // Used for rendering the semicircular bars
+  
+  // Custom states for inertia based simulation
+  const currentHeightsRef = useRef(new Array(32).fill(10));
+  const targetHeightsRef = useRef(new Array(32).fill(10));
+  const frameRef = useRef(0);
+
+  useEffect(() => {
+    let animationId;
+
+    const renderLoop = () => {
+      frameRef.current++;
+      const bars = barsRef.current;
+      if (!bars || bars.length === 0) return;
+
+      const numBars = 32;
+
+      // Logic for LISTENING (Real Audio Analysis)
+      if (state === 'listening' && analyserRef?.current) {
+        const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+        analyserRef.current.getByteFrequencyData(dataArray);
+
+        for (let i = 0; i < numBars; i++) {
+          // dataArray has values 0-255. Map roughly to bar height 10 - 100px.
+          const val = dataArray[i] / 255;
+          const height = 10 + val * 90;
+          
+          // Smoothed real audio
+          currentHeightsRef.current[i] += (height - currentHeightsRef.current[i]) * 0.3;
+          if (bars[i]) bars[i].style.height = `${currentHeightsRef.current[i]}px`;
+        }
+      } 
+      // Logic for SPEAKING (Simulated Inertia Walk)
+      else if (state === 'speaking' || state === 'evaluating') {
+        const volatility = state === 'speaking' ? 0.8 : 0.3;
+        
+        for (let i = 0; i < numBars; i++) {
+          if (frameRef.current % 5 === 0) {
+            targetHeightsRef.current[i] = 10 + Math.random() * (90 * volatility);
+          }
+          currentHeightsRef.current[i] += (targetHeightsRef.current[i] - currentHeightsRef.current[i]) * 0.15;
+          if (bars[i]) bars[i].style.height = `${currentHeightsRef.current[i]}px`;
+        }
+      }
+      // Logic for THINKING (Sweeping wave)
+      else if (state === 'thinking') {
+        for (let i = 0; i < numBars; i++) {
+          // A sweeping sine wave from left to right
+          const wave = Math.sin(frameRef.current * 0.05 + i * 0.2); // -1 to 1
+          const height = 15 + ((wave + 1) / 2) * 40; // 15 to 55px
+          currentHeightsRef.current[i] = height;
+          if (bars[i]) bars[i].style.height = `${height}px`;
+        }
+      }
+      // IDLE or INTERRUPTED (Low flat pulse)
+      else {
+        const pulse = 10 + Math.sin(frameRef.current * 0.02) * 5; 
+        for (let i = 0; i < numBars; i++) {
+          currentHeightsRef.current[i] += (pulse - currentHeightsRef.current[i]) * 0.1;
+          if (bars[i]) bars[i].style.height = `${currentHeightsRef.current[i]}px`;
+        }
+      }
+
+      animationId = requestAnimationFrame(renderLoop);
+    };
+
+    renderLoop();
+    return () => cancelAnimationFrame(animationId);
+  }, [state, analyserRef]);
+
+  const orbColor = ORB_STATES[state]?.color1 || '#14b8a6';
 
   return (
-    <div className="relative w-48 h-48 sm:w-64 sm:h-64 mx-auto">
-      {/* Outer glow */}
-      <motion.div
-        animate={{
-          scale: [1, 1.15, 1],
-          opacity: [0.3, 0.15, 0.3],
-        }}
-        transition={{ duration: orbState.speed * 1.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute inset-0 rounded-full blur-3xl"
-        style={{ background: `radial-gradient(circle, ${orbState.color1}40, transparent 70%)` }}
-      />
-      {/* Middle glow layer */}
-      <motion.div
-        animate={{
-          scale: [1, 1.08, 0.98, 1],
-          rotate: [0, 180, 360],
-        }}
-        transition={{ duration: orbState.speed * 2, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute inset-4 rounded-full blur-2xl"
-        style={{ background: `radial-gradient(circle, ${orbState.color2}50, transparent 70%)` }}
-      />
-      {/* Core orb */}
-      <motion.div
-        initial={{ borderRadius: '50%' }}
-        animate={{
-          scale: scale,
-          borderRadius: state === 'thinking'
-            ? ['40% 60% 60% 40% / 60% 30% 70% 40%', '60% 40% 30% 70% / 40% 60% 70% 30%', '40% 60% 60% 40% / 60% 30% 70% 40%']
-            : state === 'speaking'
-            ? ['45% 55% 55% 45% / 55% 45% 55% 45%', '55% 45% 45% 55% / 45% 55% 45% 55%', '45% 55% 55% 45% / 55% 45% 55% 45%']
-            : '50%',
-        }}
-        transition={{
-          duration: orbState.speed,
-          repeat: Infinity,
-          ease: 'easeInOut',
-          scale: { duration: 0.3 },
-        }}
-        className="absolute inset-8 sm:inset-10 rounded-full"
-        style={{
-          background: `radial-gradient(circle at 35% 35%, ${orbState.color1}, ${orbState.color2})`,
-          boxShadow: `0 0 60px ${orbState.color1}60, 0 0 120px ${orbState.color1}20, inset 0 0 60px ${orbState.color2}30`,
-        }}
-      />
-      {/* Inner highlight */}
-      <motion.div
-        animate={{ opacity: [0.6, 0.9, 0.6] }}
-        transition={{ duration: orbState.speed * 0.8, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute inset-12 sm:inset-16 rounded-full"
-        style={{
-          background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), transparent 60%)`,
-        }}
-      />
-      {/* Floating particles (speaking/thinking) */}
-      {(state === 'speaking' || state === 'thinking' || state === 'evaluating') && (
-        <>
-          {[...Array(6)].map((_, i) => (
-            <motion.div
+    <div className="relative w-64 h-48 mx-auto flex items-end justify-center overflow-hidden pt-12">
+      {/* 32 bars arranged in a 180 degree semicircle */}
+      <div className="relative w-56 h-28">
+        {[...Array(32)].map((_, i) => {
+          // Angle from 0 (left) to 180 (right)
+          const angleDeg = -90 + (i / 31) * 180;
+          const angleRad = (angleDeg * Math.PI) / 180;
+          
+          // Radius of the bottom face opening
+          const radius = 80;
+          
+          // Calculate X and Y coordinates on the arc
+          // Center is bottom-middle
+          const x = radius * Math.sin(angleRad);
+          const y = -radius * Math.cos(angleRad);
+          
+          return (
+            <div
               key={i}
-              animate={{
-                y: [0, -80 - i * 15, 0],
-                x: [0, (i % 2 === 0 ? 20 : -20) * (i + 1) * 0.3, 0],
-                opacity: [0, 0.8, 0],
-                scale: [0.3, 1, 0.3],
-              }}
-              transition={{
-                duration: 2 + i * 0.4,
-                repeat: Infinity,
-                delay: i * 0.3,
-                ease: 'easeOut',
-              }}
-              className="absolute w-2 h-2 rounded-full"
+              className="absolute bottom-0 left-1/2 w-1.5 rounded-full origin-bottom"
               style={{
-                background: orbState.color1,
-                left: `${40 + i * 5}%`,
-                top: '50%',
+                marginLeft: '-3px',
+                backgroundColor: orbColor,
+                transform: `translate(${x}px, ${y}px) rotate(${angleDeg}deg)`,
+                height: '10px',
+                boxShadow: `0 0 10px ${orbColor}80`
               }}
+              ref={(el) => (barsRef.current[i] = el)}
             />
-          ))}
-        </>
-      )}
+          );
+        })}
+      </div>
+      
       {/* State label */}
-      <div className="absolute -bottom-8 left-0 right-0 text-center">
-        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: orbState.color1 }}>
-          {orbState.label}
+      <div className="absolute bottom-0 left-0 right-0 text-center">
+        <span className="text-xs font-bold uppercase tracking-widest drop-shadow-md" style={{ color: orbColor }}>
+          {ORB_STATES[state]?.label || 'Ready'}
         </span>
       </div>
     </div>
   );
 };
+
 
 // ─── Typewriter Text ─────────────────────────────────────────────────────────
 const TypewriterText = ({ text, speed = 30 }) => {
@@ -264,6 +285,51 @@ const Scorecard = ({ feedback, onBack, onRetry }) => {
   );
 };
 
+// ─── Small Bottom Audio Visualizer ─────────────────────────────────────────────
+const BottomAudioVisualizer = ({ analyserRef, isListening }) => {
+  const barsRef = useRef([]);
+  const heightRef = useRef(new Array(12).fill(3));
+
+  useEffect(() => {
+    if (!isListening) return;
+    let animationId;
+    const renderLoop = () => {
+      if (analyserRef?.current) {
+        const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+        analyserRef.current.getByteFrequencyData(dataArray);
+
+        for (let i = 0; i < 12; i++) {
+          // dataArray has 32 bins. We take the first 12 or uniformly sample.
+          const val = dataArray[i * 2] / 255; 
+          const targetHeight = 3 + val * 16; // 3 to 19px
+          heightRef.current[i] += (targetHeight - heightRef.current[i]) * 0.4;
+          if (barsRef.current[i]) {
+            barsRef.current[i].style.height = `${heightRef.current[i]}px`;
+          }
+        }
+      }
+      animationId = requestAnimationFrame(renderLoop);
+    };
+    renderLoop();
+    return () => cancelAnimationFrame(animationId);
+  }, [isListening, analyserRef]);
+
+  if (!isListening) return null;
+
+  return (
+    <div className="flex gap-0.5 items-end h-5">
+      {[...Array(12)].map((_, i) => (
+        <div
+          key={i}
+          ref={(el) => (barsRef.current[i] = el)}
+          className="w-1 bg-emerald-500/60 rounded-full"
+          style={{ height: '3px' }} // Initial height
+        />
+      ))}
+    </div>
+  );
+};
+
 // ─── Main Interview Session ──────────────────────────────────────────────────
 
 const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
@@ -292,8 +358,30 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   const transcriptRef = useRef('');
   const isSpeakingRef = useRef(false);
   const phaseRef = useRef('setup');
+  
+  // Audio Web API Refs
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const sourceNodeRef = useRef(null);
 
   const { isDark } = useTheme();
+
+  // ── Audio Cleanup Helper ──
+  const cleanupAudio = useCallback(() => {
+    if (sourceNodeRef.current) {
+      sourceNodeRef.current.disconnect();
+      sourceNodeRef.current = null;
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+  }, []);
 
   // ── Load past interview if viewId ──
   useEffect(() => {
@@ -363,7 +451,29 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   }, [stopListening]);
 
   // ── Speech Recognition (Student speaks) — uses refs to avoid stale closures ──
-  const startListening = useCallback(() => {
+  const startListening = useCallback(async () => {
+    // 1. Initialize Web Audio API for visualizer (runs once to request mic cleanly)
+    if (!audioContextRef.current) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaStreamRef.current = stream;
+        
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioContextRef.current = new AudioContext();
+        analyserRef.current = audioContextRef.current.createAnalyser();
+        analyserRef.current.fftSize = 64; // 32 bins
+        
+        sourceNodeRef.current = audioContextRef.current.createMediaStreamSource(stream);
+        sourceNodeRef.current.connect(analyserRef.current);
+      } catch (err) {
+        console.error("Microphone access denied for visualizer.", err);
+        toast.error('Microphone access is required for the interview.');
+      }
+    } else if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume();
+    }
+
+    // 2. Setup Speech Recognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) { toast.error('Speech recognition not supported in this browser. Please use Chrome.'); return; }
 
@@ -430,6 +540,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   const handleEndInterview = useCallback(async () => {
     stopListening();
     synthRef.current?.cancel();
+    cleanupAudio(); // Securely close audio hardware streams
     setPhase('ending');
     setOrbState('evaluating');
 
@@ -525,10 +636,11 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   useEffect(() => {
     return () => {
       stopListening();
+      cleanupAudio();
       synthRef.current?.cancel();
       clearInterval(timerRef.current);
     };
-  }, [stopListening]);
+  }, [stopListening, cleanupAudio]);
 
   // ── Scorecard View ──
   if (phase === 'scorecard' && feedback) {
@@ -546,7 +658,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-900 to-[#0a0f1e] flex items-center justify-center p-6">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md w-full text-center">
-          <AIOrb state="idle" />
+          <WaveformAvatar state="idle" analyserRef={analyserRef} />
           <div className="mt-12">
             <h2 className="text-2xl font-extrabold text-white mb-2">Ready for your interview?</h2>
             <p className="text-sm text-slate-400 mb-2">
@@ -598,8 +710,8 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
       {/* Center content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
-        {/* AI Orb */}
-        <AIOrb state={orbState} />
+        {/* Waveform Avatar */}
+        <WaveformAvatar state={orbState} analyserRef={analyserRef} />
 
         {/* Current question (typewriter) */}
         <div className="mt-16 mb-8 text-center px-4 min-h-[80px]">
@@ -648,17 +760,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
           )}
         </div>
         {isListening && (
-          <div className="flex gap-0.5">
-            {[...Array(12)].map((_, i) => (
-              <motion.div
-                key={i}
-                animate={{ scaleY: [0.3, 1, 0.3] }}
-                transition={{ duration: 0.6 + i * 0.05, repeat: Infinity, delay: i * 0.05 }}
-                className="w-1 bg-emerald-500/60 rounded-full"
-                style={{ height: 20 }}
-              />
-            ))}
-          </div>
+          <BottomAudioVisualizer analyserRef={analyserRef} isListening={isListening} />
         )}
       </div>
     </div>
