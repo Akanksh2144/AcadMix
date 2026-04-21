@@ -201,32 +201,55 @@ def _get_google_credentials():
         return service_account.Credentials.from_service_account_info(credentials_dict).with_scopes(["https://www.googleapis.com/auth/cloud-platform"])
     return None
 
+_vertex_client_instance = None
+_claude_client_instance = None
+
 def _get_vertex_client() -> genai.Client:
+    global _vertex_client_instance
+    if _vertex_client_instance is not None:
+        return _vertex_client_instance
+        
     project_id = settings.VERTEX_PROJECT_ID
     location = settings.VERTEX_LOCATION
     credentials = _get_google_credentials()
     
     if credentials:
-        return genai.Client(vertexai=True, project=project_id, location=location, credentials=credentials)
-    return genai.Client(vertexai=True, project=project_id, location=location)
+        _vertex_client_instance = genai.Client(vertexai=True, project=project_id, location=location, credentials=credentials)
+    else:
+        _vertex_client_instance = genai.Client(vertexai=True, project=project_id, location=location)
+    return _vertex_client_instance
 
 def _get_claude_client() -> AsyncAnthropicVertex:
+    global _claude_client_instance
+    if _claude_client_instance is not None:
+        return _claude_client_instance
+        
     project_id = settings.VERTEX_PROJECT_ID
     region = settings.VERTEX_LOCATION
     credentials = _get_google_credentials()
     
     if credentials:
-        return AsyncAnthropicVertex(project_id=project_id, region=region, google_credentials=credentials)
-    return AsyncAnthropicVertex(project_id=project_id, region=region)
+        _claude_client_instance = AsyncAnthropicVertex(project_id=project_id, region=region, google_credentials=credentials)
+    else:
+        _claude_client_instance = AsyncAnthropicVertex(project_id=project_id, region=region)
+    return _claude_client_instance
 
 # ---------------------------------------------------------------------------
 # Gemini Implementation (google-genai)
 # ---------------------------------------------------------------------------
 
+def _extract_system_prompt(messages: list[dict]) -> str:
+    for msg in messages:
+        if msg["role"] == "system":
+            return str(msg.get("content", ""))
+    return ""
+
 def _map_messages_to_content(messages: list[dict]) -> list[types.Content]:
     contents = []
     for msg in messages:
-        role = "user" if msg["role"] in ["user", "system"] else "model"
+        if msg["role"] == "system":
+            continue
+        role = "user" if msg["role"] == "user" else "model"
         parts = []
         
         if isinstance(msg["content"], str):
@@ -253,6 +276,15 @@ async def _vertex_complete(model_name: str, messages: list[dict], **kwargs) -> s
     config_params = {}
     if json_mode:
         config_params["response_mime_type"] = "application/json"
+        
+    sys_prompt = _extract_system_prompt(messages)
+    if sys_prompt:
+        config_params["system_instruction"] = sys_prompt
+        
+    if kwargs.get("temperature") is not None:
+        config_params["temperature"] = kwargs.get("temperature")
+    if kwargs.get("max_tokens") is not None:
+        config_params["max_output_tokens"] = kwargs.get("max_tokens")
     
     # Handle media payload from ATS scoring properly via parts manually if passed via kwargs 
     # (Since ATS passes media_bytes directly to complete sometimes!)
@@ -277,9 +309,21 @@ async def _vertex_stream(model_name: str, messages: list[dict], **kwargs):
     client = _get_vertex_client()
     contents = _map_messages_to_content(messages)
 
+    config_params = {}
+    sys_prompt = _extract_system_prompt(messages)
+    if sys_prompt:
+        config_params["system_instruction"] = sys_prompt
+    if kwargs.get("temperature") is not None:
+        config_params["temperature"] = kwargs.get("temperature")
+    if kwargs.get("max_tokens") is not None:
+        config_params["max_output_tokens"] = kwargs.get("max_tokens")
+        
+    config = types.GenerateContentConfig(**config_params) if config_params else None
+
     response_stream = await client.aio.models.generate_content_stream(
         model=model_name,
-        contents=contents
+        contents=contents,
+        config=config
     )
     async for chunk in response_stream:
         if chunk.text:
@@ -418,29 +462,21 @@ class LLMGateway:
         try:
             if provider == "vertex" and _get_vertex_client():
                 self._metrics["provider_calls"]["vertex"] += 1
-                result = await _vertex_complete(
-                    model, messages,
-                    temperature=temp, max_tokens=tokens, json_mode=json_mode,
-                    media_bytes=media_bytes, mime_type=mime_type,
-                )
-                self._log_call(purpose, provider, model, start)
-                return result
-
-            elif provider == "vertex_anthropic" and _get_vertex_client():
-                self._metrics["provider_calls"]["vertex"] += 1
-                result = await _vertex_anthropic_complete(
-                    model, messages,
-                    temperature=temp, max_tokens=tokens,
-                )
+                if "claude" in model.lower():
+                    result = await _claude_complete(
+                        model, messages,
+                        temperature=temp, max_tokens=tokens, json_mode=json_mode,
+                    )
+                else:
+                    result = await _vertex_complete(
+                        model, messages,
+                        temperature=temp, max_tokens=tokens, json_mode=json_mode,
+                        media_bytes=media_bytes, mime_type=mime_type,
+                    )
                 self._log_call(purpose, provider, model, start)
                 return result
 
         except Exception as e:
-            if provider == "vertex_anthropic":
-                from fastapi import HTTPException
-                logger.error("[LLMGateway] Critical Tier 3 failure (AnthropicVertex): %s", e)
-                raise HTTPException(status_code=503, detail="ERP Fallback explicitly failed. Ensure the Model Garden endpoint is enabled.")
-
             logger.warning(
                 "[LLMGateway] Primary provider %s/%s failed for %s: %s — falling back to LiteLLM",
                 provider, model, purpose, e,
