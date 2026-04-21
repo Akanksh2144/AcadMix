@@ -137,22 +137,33 @@ const WaveformAvatar = ({ state, analyserRef }) => {
 
 
 // ─── Typewriter Text ─────────────────────────────────────────────────────────
-const TypewriterText = ({ text, speed = 30 }) => {
+const TypewriterText = ({ text, isSpeaking }) => {
   const [displayed, setDisplayed] = useState('');
   const [done, setDone] = useState(false);
 
+  // Core typing loop bound ONLY to the text changing
   useEffect(() => {
     setDisplayed('');
     setDone(false);
     if (!text) return;
+    
     let i = 0;
     const timer = setInterval(() => {
       i++;
       setDisplayed(text.slice(0, i));
       if (i >= text.length) { clearInterval(timer); setDone(true); }
-    }, speed);
+    }, 65);
+    
     return () => clearInterval(timer);
-  }, [text, speed]);
+  }, [text]);
+
+  // Instantly force-complete the typing if the AI physically finishes speaking
+  useEffect(() => {
+    if (!isSpeaking && !done && text) {
+      setDisplayed(text);
+      setDone(true);
+    }
+  }, [isSpeaking, done, text]);
 
   return (
     <p className="text-lg sm:text-xl font-medium text-white/90 leading-relaxed max-w-2xl mx-auto">
@@ -795,6 +806,9 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
       // AI speaks the response
       await speakText(data.ai_response);
+      
+      // Stop execution context if user clicked "End Interview" while AI was speaking
+      if (phaseRef.current === 'ending') return;
 
       // If final question, auto-end
       if (data.is_final || data.question_number >= maxQuestions) {
@@ -910,7 +924,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
         {/* Current question (typewriter) */}
         <div className="mt-16 mb-8 text-center px-4 min-h-[80px]">
-          {currentQuestion && <TypewriterText text={currentQuestion} speed={orbState === 'speaking' ? 65 : 0} />}
+          {currentQuestion && <TypewriterText text={currentQuestion} isSpeaking={isSpeaking} />}
         </div>
 
         {/* Student transcript (live) */}
