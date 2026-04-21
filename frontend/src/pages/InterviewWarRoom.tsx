@@ -31,10 +31,6 @@ const AIInterviewTab = ({ navigate, quota, readiness }) => {
   const roles = ['Software Developer', 'Data Analyst', 'System Design', 'Frontend Developer', 'Backend Developer', 'DevOps Engineer', 'Full Stack Developer'];
 
   const handleStart = () => {
-    if (!quota || quota.remaining <= 0) {
-      toast.error('Monthly quota exhausted. Resets next month.');
-      return;
-    }
     navigate('ai-interview-session', {
       interview_type: interviewType,
       target_role: targetRole,
@@ -69,26 +65,7 @@ const AIInterviewTab = ({ navigate, quota, readiness }) => {
         </motion.div>
       )}
 
-      {/* Quota Card */}
-      <motion.div variants={itemVariants} className="soft-card p-5 mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-teal-50 dark:bg-teal-500/15 rounded-xl flex items-center justify-center">
-            <Microphone size={20} weight="duotone" className="text-teal-500" />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-slate-800 dark:text-white">Mock Interviews</p>
-            <p className="text-xs font-medium text-slate-400">{quota?.month || 'This month'}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1">
-            {Array.from({ length: quota?.total || 5 }).map((_, i) => (
-              <div key={i} className={`w-3 h-3 rounded-full transition-colors ${i < (quota?.used || 0) ? 'bg-teal-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
-            ))}
-          </div>
-          <span className="text-sm font-extrabold text-teal-600 dark:text-teal-400">{quota?.remaining ?? 5} left</span>
-        </div>
-      </motion.div>
+      {/* Quota limit UI temporarily removed pending redesign */}
 
       {/* Interview Type Selection */}
       <motion.div variants={itemVariants} className="mb-6">
@@ -142,7 +119,6 @@ const AIInterviewTab = ({ navigate, quota, readiness }) => {
       <motion.div variants={itemVariants}>
         <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
           onClick={handleStart}
-          disabled={!quota || quota.remaining <= 0}
           className="w-full py-5 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white rounded-2xl font-extrabold text-lg transition-all flex items-center justify-center gap-3 shadow-lg shadow-teal-500/20 disabled:opacity-50 disabled:cursor-not-allowed">
           <Sparkle size={24} weight="fill" />
           Start Ami Mock Interview
