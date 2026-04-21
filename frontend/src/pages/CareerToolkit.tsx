@@ -11,6 +11,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 import PageHeader from '../components/PageHeader';
+import { ResumeATSContent } from './ResumeATSScorer';
 
 /* ── Animation Variants ─────────────────────────────────── */
 const containerV = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
@@ -908,107 +909,13 @@ const CompanyIntelTab = () => {
   );
 };
 
-/* ═══════════════════════════════════════════════════════════════
-   9. RESUME SCORER TAB
-   ═══════════════════════════════════════════════════════════════ */
-const ResumeTab = ({ navigate }) => {
-  const [latestScore, setLatestScore] = useState(null);
-  const [history, setHistory] = useState([]);
-
-  useEffect(() => {
-    resumeAPI.latest().then(res => { if (res.data) setLatestScore(res.data); }).catch(() => {});
-    resumeAPI.history().then(res => setHistory(res.data || [])).catch(() => {});
-  }, []);
-
-  const scoreColor = latestScore?.ats_score >= 75 ? 'text-emerald-600 dark:text-emerald-400'
-    : latestScore?.ats_score >= 50 ? 'text-amber-600 dark:text-amber-400'
-    : latestScore?.ats_score != null ? 'text-red-500 dark:text-red-400' : '';
-
-  return (
-    <motion.div variants={containerV} initial="hidden" animate="show" className="space-y-5">
-      {/* Hero CTA Card */}
-      <motion.div variants={itemV}
-        className="soft-card overflow-hidden cursor-pointer group"
-        onClick={() => navigate('resume-ats-scorer')}>
-        <div className="h-1.5 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500" />
-        <div className="p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            {/* Score Gauge or Upload Icon */}
-            {latestScore?.ats_score != null ? (
-              <div className="relative w-28 h-28 shrink-0">
-                <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-                  <circle cx="60" cy="60" r="50" fill="none" strokeWidth="8" className="stroke-slate-100 dark:stroke-slate-800" />
-                  <circle cx="60" cy="60" r="50" fill="none" strokeWidth="8" strokeLinecap="round"
-                    className={latestScore.ats_score >= 70 ? 'stroke-emerald-500' : latestScore.ats_score >= 50 ? 'stroke-amber-500' : 'stroke-red-500'}
-                    strokeDasharray={`${(latestScore.ats_score / 100) * 314} 314`} style={{ transition: 'stroke-dasharray 1s ease' }} />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className={`text-2xl font-extrabold ${scoreColor}`}>{Math.round(latestScore.ats_score)}</span>
-                </div>
-              </div>
-            ) : (
-              <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center shrink-0">
-                <FileText size={36} weight="fill" className="text-white" />
-              </div>
-            )}
-
-            <div className="text-center sm:text-left flex-1">
-              <h3 className="text-xl font-extrabold text-slate-800 dark:text-white mb-1">
-                {latestScore?.ats_score != null ? 'Your ATS Score' : 'ATS Resume Scorer'}
-              </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                {latestScore?.ats_score != null
-                  ? `Last scored for ${latestScore.target_role || 'Software Developer'}. ${history.length} total scans.`
-                  : 'Upload your resume and get an Ami-powered ATS compatibility score with detailed feedback.'}
-              </p>
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl font-bold text-sm group-hover:from-teal-600 group-hover:to-cyan-700 transition-all shadow-md shadow-teal-500/20">
-                <Sparkle size={16} weight="fill" />
-                {latestScore?.ats_score != null ? 'View Full Analysis' : 'Analyze Resume'}
-                <ArrowRight size={14} weight="bold" className="group-hover:translate-x-0.5 transition-transform" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Recent history (max 3) */}
-      {history.length > 0 && (
-        <motion.div variants={itemV} className="soft-card overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
-            <h4 className="text-sm font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
-              <Clock size={14} weight="duotone" className="text-slate-400" /> Recent Scans
-            </h4>
-            <button onClick={() => navigate('resume-ats-scorer')}
-              className="text-xs font-bold text-teal-500 hover:text-teal-600 flex items-center gap-1 transition-colors">
-              View all <ArrowRight size={10} weight="bold" />
-            </button>
-          </div>
-          <div className="divide-y divide-slate-50 dark:divide-white/5">
-            {history.slice(0, 3).map(h => (
-              <div key={h.id} className="px-5 py-3 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{h.filename}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{h.target_role} · {h.created_at ? new Date(h.created_at).toLocaleDateString() : '—'}</p>
-                </div>
-                {h.ats_score != null && (
-                  <span className={`text-lg font-extrabold shrink-0 ${h.ats_score >= 70 ? 'text-emerald-600' : h.ats_score >= 50 ? 'text-amber-600' : 'text-red-500'}`}>
-                    {Math.round(h.ats_score)}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
-    </motion.div>
-  );
-};
+// Embedded natively via ResumeATSContent
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════════════════════════ */
 const TABS = [
-  { id: 'resume-scorer', label: 'Resume Scorer', icon: FileText, Component: ResumeTab },
+  { id: 'resume-scorer', label: 'Resume Scorer', icon: FileText, Component: ResumeATSContent },
   { id: 'cover-letter', label: 'Cover Letter', icon: FileText, Component: CoverLetterTab },
   { id: 'jd-analyzer', label: 'JD Analyzer', icon: MagnifyingGlass, Component: JDAnalyzerTab },
   { id: 'cold-email', label: 'Cold Email', icon: Envelope, Component: ColdEmailTab },
