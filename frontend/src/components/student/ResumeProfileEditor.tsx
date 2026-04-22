@@ -349,7 +349,6 @@ const ResumeProfileEditor = () => {
                 )}
                 {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === true && (
                   <div className="flex items-center gap-1.5 mt-1.5">
-                    <GithubLogo size={14} weight="fill" className="text-slate-800 dark:text-white" />
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{socialProfiles.github.full_name}</span>
                     <Check size={12} weight="bold" className="text-emerald-500" />
                   </div>
@@ -369,7 +368,6 @@ const ResumeProfileEditor = () => {
                 )}
                 {socialProfiles.portfolio && !socialProfiles.portfolio.loading && socialProfiles.portfolio.exists === true && (
                   <div className="flex items-center gap-1.5 mt-1.5">
-                    <Globe size={13} weight="bold" className="text-emerald-500" />
                     <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Website is live</span>
                     <Check size={12} weight="bold" className="text-emerald-500" />
                   </div>
