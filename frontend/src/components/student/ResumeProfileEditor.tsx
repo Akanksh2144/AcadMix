@@ -158,6 +158,7 @@ const ResumeProfileEditor = () => {
   const [dirty, setDirty] = useState(false);
   const [urlErrors, setUrlErrors] = useState<Record<string, string | null>>({});
   const [socialProfiles, setSocialProfiles] = useState<Record<string, SocialVerification | null>>({});
+  const [saveHint, setSaveHint] = useState('');
 
   // Recompute URL validation whenever data changes
   const revalidateUrls = (d: any) => {
@@ -232,10 +233,12 @@ const ResumeProfileEditor = () => {
   const save = async () => {
     // Final validation gate
     if (revalidateUrls(data)) {
-      toast.error('Fix the URL errors before saving.');
+      setSaveHint('Please fix the URL errors in Links section before saving.');
       setExpanded('links');
+      setTimeout(() => setSaveHint(''), 4000);
       return;
     }
+    setSaveHint('');
     setSaving(true);
     try {
       await resumeProfileAPI.update(data);
@@ -555,16 +558,16 @@ const ResumeProfileEditor = () => {
 
       {/* ── Save Button ──────────────────── */}
       <motion.div variants={itemV} className="sticky bottom-4 z-10">
-        <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={save} disabled={saving || !dirty || hasUrlErrors}
+        {saveHint && (
+          <p className="text-center text-xs font-bold text-amber-600 dark:text-amber-400 mb-2">{saveHint}</p>
+        )}
+        <motion.button whileHover={dirty && !hasUrlErrors ? { scale: 1.01 } : {}} whileTap={dirty && !hasUrlErrors ? { scale: 0.98 } : {}} onClick={save} disabled={saving || !dirty}
           className={`w-full py-4 rounded-2xl font-extrabold text-base flex items-center justify-center gap-3 shadow-lg transition-all ${
-            hasUrlErrors ? 'bg-red-100 dark:bg-red-500/10 text-red-400 cursor-not-allowed shadow-none'
-            : dirty ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white shadow-teal-500/20'
+            dirty && !hasUrlErrors ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white shadow-teal-500/20'
             : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none'
           }`}>
           {saving ? (
             <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
-          ) : hasUrlErrors ? (
-            <><Warning size={20} weight="fill" /> Fix URL errors to save</>
           ) : (
             <><FloppyDisk size={20} weight="fill" /> {dirty ? 'Save Resume Profile' : 'All changes saved'}</>
           )}
