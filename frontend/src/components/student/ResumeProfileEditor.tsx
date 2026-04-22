@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
   LinkedinLogo, GithubLogo, Globe, MapPin, Briefcase, Certificate,
   Trophy, Code, Plus, Trash, FloppyDisk, CaretDown, Sparkle,
   GraduationCap, Lightning, Check, Warning, Notebook, User,
-  EnvelopeSimple, Phone, Lock
+  EnvelopeSimple, Phone, Lock, DotsSixVertical
 } from '@phosphor-icons/react';
 import { resumeProfileAPI } from '../../services/api';
 import { toast } from 'sonner';
@@ -401,11 +401,14 @@ const ResumeProfileEditor = () => {
       <AnimatePresence>
         {expanded === 'education_history' && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="space-y-3">
+            <Reorder.Group axis="y" values={eduHistory} onReorder={(newOrder: any[]) => update('education_history', newOrder)} className="space-y-3">
               {eduHistory.map((e: any, i: number) => (
-                <div key={i} className="soft-card p-5">
+                <Reorder.Item key={JSON.stringify(e)} value={e} className="soft-card p-5 cursor-grab active:cursor-grabbing">
                   <div className="flex justify-between mb-3">
-                    <span className="text-xs font-extrabold text-slate-500">#{i + 1}</span>
+                    <div className="flex items-center gap-2">
+                      <DotsSixVertical size={16} weight="bold" className="text-slate-300 dark:text-slate-600" />
+                      <span className="text-xs font-extrabold text-slate-500">#{i + 1}</span>
+                    </div>
                     <RemoveBtn onClick={() => removeItem('education_history', i)} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -424,14 +427,14 @@ const ResumeProfileEditor = () => {
                     <FieldInput label="Year" value={e.year} onChange={(v: string) => updateItem('education_history', i, 'year', v)} placeholder="2020" />
                     <FieldInput label="Percentage / CGPA" value={e.percentage} onChange={(v: string) => updateItem('education_history', i, 'percentage', v)} placeholder="92% or 9.2 CGPA" />
                   </div>
-                </div>
+                </Reorder.Item>
               ))}
               {eduHistory.length === 0 && (
                 <div className="soft-card p-8 text-center">
                   <p className="text-sm text-slate-400">No education history added yet. Click + to add your 10th/12th details.</p>
                 </div>
               )}
-            </div>
+            </Reorder.Group>
           </motion.div>
         )}
       </AnimatePresence>
@@ -458,11 +461,14 @@ const ResumeProfileEditor = () => {
       <AnimatePresence>
         {expanded === 'projects' && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="space-y-3">
+            <Reorder.Group axis="y" values={projects} onReorder={(newOrder: any[]) => update('projects', newOrder)} className="space-y-3">
               {projects.map((p: any, i: number) => (
-                <div key={i} className="soft-card p-5">
+                <Reorder.Item key={JSON.stringify(p)} value={p} className="soft-card p-5 cursor-grab active:cursor-grabbing">
                   <div className="flex justify-between mb-3">
-                    <span className="text-xs font-extrabold text-emerald-500">Project #{i + 1}</span>
+                    <div className="flex items-center gap-2">
+                      <DotsSixVertical size={16} weight="bold" className="text-slate-300 dark:text-slate-600" />
+                      <span className="text-xs font-extrabold text-emerald-500">Project #{i + 1}</span>
+                    </div>
                     <RemoveBtn onClick={() => removeItem('projects', i)} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
@@ -472,10 +478,10 @@ const ResumeProfileEditor = () => {
                     <FieldInput label="Link (GitHub / Live)" value={p.link} onChange={(v: string) => updateItem('projects', i, 'link', v)} placeholder="github.com/..." />
                   </div>
                   <BulletEditor bullets={p.bullets || []} onChange={(v: string[]) => updateItem('projects', i, 'bullets', v)} />
-                </div>
+                </Reorder.Item>
               ))}
               {projects.length === 0 && <div className="soft-card p-8 text-center"><p className="text-sm text-slate-400">No projects added yet. Click + to add your first project.</p></div>}
-            </div>
+            </Reorder.Group>
           </motion.div>
         )}
       </AnimatePresence>
@@ -487,11 +493,14 @@ const ResumeProfileEditor = () => {
       <AnimatePresence>
         {expanded === 'experience' && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="space-y-3">
+            <Reorder.Group axis="y" values={experience} onReorder={(newOrder: any[]) => update('experience', newOrder)} className="space-y-3">
               {experience.map((e: any, i: number) => (
-                <div key={i} className="soft-card p-5">
+                <Reorder.Item key={JSON.stringify(e)} value={e} className="soft-card p-5 cursor-grab active:cursor-grabbing">
                   <div className="flex justify-between mb-3">
-                    <span className="text-xs font-extrabold text-rose-500">Experience #{i + 1}</span>
+                    <div className="flex items-center gap-2">
+                      <DotsSixVertical size={16} weight="bold" className="text-slate-300 dark:text-slate-600" />
+                      <span className="text-xs font-extrabold text-rose-500">Experience #{i + 1}</span>
+                    </div>
                     <RemoveBtn onClick={() => removeItem('experience', i)} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
@@ -501,10 +510,10 @@ const ResumeProfileEditor = () => {
                     <FieldInput label="Location" value={e.location} onChange={(v: string) => updateItem('experience', i, 'location', v)} placeholder="Bangalore, India" />
                   </div>
                   <BulletEditor bullets={e.bullets || []} onChange={(v: string[]) => updateItem('experience', i, 'bullets', v)} />
-                </div>
+                </Reorder.Item>
               ))}
               {experience.length === 0 && <div className="soft-card p-8 text-center"><p className="text-sm text-slate-400">No experience added yet. Internships, freelance, and part-time work count!</p></div>}
-            </div>
+            </Reorder.Group>
           </motion.div>
         )}
       </AnimatePresence>
@@ -516,11 +525,14 @@ const ResumeProfileEditor = () => {
       <AnimatePresence>
         {expanded === 'certifications' && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="space-y-3">
+            <Reorder.Group axis="y" values={certs} onReorder={(newOrder: any[]) => update('certifications', newOrder)} className="space-y-3">
               {certs.map((c: any, i: number) => (
-                <div key={i} className="soft-card p-5">
+                <Reorder.Item key={JSON.stringify(c)} value={c} className="soft-card p-5 cursor-grab active:cursor-grabbing">
                   <div className="flex justify-between mb-3">
-                    <span className="text-xs font-extrabold text-indigo-500">Certificate #{i + 1}</span>
+                    <div className="flex items-center gap-2">
+                      <DotsSixVertical size={16} weight="bold" className="text-slate-300 dark:text-slate-600" />
+                      <span className="text-xs font-extrabold text-indigo-500">Certificate #{i + 1}</span>
+                    </div>
                     <RemoveBtn onClick={() => removeItem('certifications', i)} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
@@ -531,10 +543,10 @@ const ResumeProfileEditor = () => {
                     <FieldInput label="Year" value={c.year} onChange={(v: string) => updateItem('certifications', i, 'year', v)} placeholder="2024" />
                     <FieldInput label="Credential URL" value={c.url} onChange={(v: string) => updateItem('certifications', i, 'url', v)} placeholder="https://verify.example.com/cert/..." />
                   </div>
-                </div>
+                </Reorder.Item>
               ))}
               {certs.length === 0 && <div className="soft-card p-8 text-center"><p className="text-sm text-slate-400">No certifications added yet.</p></div>}
-            </div>
+            </Reorder.Group>
           </motion.div>
         )}
       </AnimatePresence>
