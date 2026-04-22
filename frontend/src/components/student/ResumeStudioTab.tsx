@@ -338,30 +338,43 @@ const ResumeStudioTab = ({ navigate }: any) => {
     if (!previewRef.current) return;
     setDownloading('pdf');
     try {
-      // Clone the preview into a full-size off-screen container for high-res capture
-      const source = previewRef.current;
-      const clone = source.cloneNode(true) as HTMLElement;
-      clone.style.width = '210mm';
-      clone.style.minHeight = '297mm';
-      clone.style.padding = '20mm';
-      clone.style.position = 'fixed';
-      clone.style.top = '-9999px';
-      clone.style.left = '-9999px';
-      clone.style.background = '#fff';
-      clone.style.fontFamily = "'Times New Roman', 'Georgia', serif";
-      document.body.appendChild(clone);
-
+      const el = previewRef.current;
       const studentName = profileData?.personal?.name?.replace(/\s+/g, '_') || 'Resume';
+
+      // Temporarily expand the preview to full A4 size for hi-res capture
+      const origStyle = el.getAttribute('style') || '';
+      el.style.width = '794px';     // A4 @ 96dpi
+      el.style.minHeight = '1123px'; // A4 height @ 96dpi
+      el.style.padding = '48px 56px';
+      el.style.background = '#fff';
+      el.style.fontFamily = "'Times New Roman', Georgia, serif";
+      el.style.overflow = 'visible';
+
+      // Scale up the text to full readable size (preview uses ~50% scale text)
+      el.style.fontSize = '16px';
+      const allText = el.querySelectorAll<HTMLElement>('[class*="text-["]');
+      const origFontSizes: string[] = [];
+      allText.forEach((node) => {
+        origFontSizes.push(node.style.fontSize);
+        const match = node.className.match(/text-\[(\d+(?:\.\d+)?)(px|rem)\]/);
+        if (match) {
+          const size = parseFloat(match[1]);
+          // Scale up: preview text sizes are ~50% of actual, so multiply by ~2.2
+          node.style.fontSize = `${size * 2.2}px`;
+        }
+      });
 
       await html2pdf().set({
         margin: 0,
         filename: `${studentName}_Resume.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      }).from(clone).save();
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
+        jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait' as const },
+      }).from(el).save();
 
-      document.body.removeChild(clone);
+      // Restore original styles
+      allText.forEach((node, i) => { node.style.fontSize = origFontSizes[i]; });
+      el.setAttribute('style', origStyle);
       toast.success('PDF downloaded!');
     } catch {
       toast.error('Failed to generate PDF');
