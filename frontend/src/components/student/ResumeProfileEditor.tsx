@@ -77,12 +77,18 @@ const SectionHeader = ({ icon: Icon, title, count, color, expanded, onToggle, on
   </button>
 );
 
-const FieldInput = ({ label, value, onChange, onBlur, placeholder, type = 'text', rows, error }: any) => (
+const FieldInput = ({ label, value, onChange, onBlur, placeholder, type = 'text', rows, error, icon: Icon, iconClass }: any) => (
   <div>
     <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">{label}</label>
     {rows ? (
       <textarea value={value || ''} onChange={e => onChange(e.target.value)} onBlur={onBlur} placeholder={placeholder} rows={rows}
         className={`soft-input w-full text-sm resize-none ${error ? '!border-red-300 dark:!border-red-500/40 !ring-red-100 dark:!ring-red-500/10' : ''}`} />
+    ) : Icon ? (
+      <div className={`flex items-center soft-input w-full ${error ? '!border-red-300 dark:!border-red-500/40 !ring-red-100 dark:!ring-red-500/10' : ''}`}>
+        <Icon size={16} weight="fill" className={`shrink-0 mr-2.5 ${iconClass || 'text-slate-400'}`} />
+        <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} onBlur={onBlur} placeholder={placeholder}
+          className="flex-1 bg-transparent outline-none text-sm text-slate-800 dark:text-white placeholder:text-slate-400" />
+      </div>
     ) : (
       <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} onBlur={onBlur} placeholder={placeholder}
         className={`soft-input w-full text-sm ${error ? '!border-red-300 dark:!border-red-500/40 !ring-red-100 dark:!ring-red-500/10' : ''}`} />
@@ -329,12 +335,12 @@ const ResumeProfileEditor = () => {
             <div className="soft-card p-5 space-y-4">
               {/* LinkedIn */}
               <div>
-                <FieldInput label="LinkedIn URL" value={data.linkedin} onChange={(v: string) => update('linkedin', v)} placeholder="linkedin.com/in/your-profile" error={urlErrors.linkedin} />
+                <FieldInput label="LinkedIn URL" value={data.linkedin} onChange={(v: string) => update('linkedin', v)} placeholder="linkedin.com/in/your-profile" error={urlErrors.linkedin} icon={LinkedinLogo} iconClass="text-[#0A66C2]" />
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">LinkedIn profiles cannot be auto-verified</p>
               </div>
               {/* GitHub */}
               <div>
-                <FieldInput label="GitHub URL" value={data.github} onChange={(v: string) => update('github', v)} onBlur={() => handleUrlBlur('github')} placeholder="github.com/username" error={urlErrors.github} />
+                <FieldInput label="GitHub URL" value={data.github} onChange={(v: string) => update('github', v)} onBlur={() => handleUrlBlur('github')} placeholder="github.com/username" error={urlErrors.github} icon={GithubLogo} iconClass="text-slate-700 dark:text-white" />
                 {socialProfiles.github?.loading && (
                   <div className="flex items-center gap-2 mt-2">
                     <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
@@ -357,7 +363,7 @@ const ResumeProfileEditor = () => {
               </div>
               {/* Portfolio */}
               <div>
-                <FieldInput label="Portfolio / Website" value={data.portfolio} onChange={(v: string) => update('portfolio', v)} onBlur={() => handleUrlBlur('portfolio')} placeholder="yoursite.com" error={urlErrors.portfolio} />
+                <FieldInput label="Portfolio / Website" value={data.portfolio} onChange={(v: string) => update('portfolio', v)} onBlur={() => handleUrlBlur('portfolio')} placeholder="yoursite.com" error={urlErrors.portfolio} icon={Globe} iconClass="text-indigo-500" />
                 {socialProfiles.portfolio?.loading && (
                   <p className="text-[10px] text-slate-400 mt-1">Checking website...</p>
                 )}
