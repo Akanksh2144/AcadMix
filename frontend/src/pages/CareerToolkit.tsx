@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FileText, Briefcase, Envelope, ChartPolar, Users, Code, Path, Buildings, Database,
+  FileText, Briefcase, Envelope, ChartPolar, Users, Code, Path,
   Sparkle, Copy, Check, CaretDown, CaretRight, ArrowRight, Lightning, Target,
-  Star, Trophy, Warning, Brain, MagnifyingGlass, BookOpen, GraduationCap,
+  Star, Trophy, Warning, MagnifyingGlass, BookOpen, GraduationCap,
   ClipboardText, Lightbulb, Rocket, Fire, Clock
 } from '@phosphor-icons/react';
 import { careerAPI, resumeAPI } from '../services/api';
@@ -940,49 +940,26 @@ const CareerToolkit = ({ navigate, user }: any) => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         
-        {/* Placement Arenas (New Phase 1 Integration) */}
-        <div className="mb-10">
-          <h3 className="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
-             <Target size={18} className="text-teal-500"/> Placement Arenas
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-             <motion.div 
-               onClick={() => navigate('/sql-practice')}
-               whileHover={{ scale: 1.02 }} 
-               className="bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 rounded-2xl p-6 cursor-pointer shadow-sm hover:shadow-xl hover:border-indigo-500 transition-all flex flex-col items-start"
-             >
-                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center mb-4">
-                   <Database size={24} weight="duotone" className="text-indigo-500" />
-                </div>
-                <h4 className="font-extrabold text-slate-900 dark:text-white text-lg">SQL Sandbox</h4>
-                <p className="text-sm text-slate-500 mt-1">DataLemur-style environment with mass-recruiter database patterns.</p>
-             </motion.div>
-
-             <motion.div 
-               onClick={() => alert('Aptitude module is coming later this week!')}
-               whileHover={{ scale: 1.02 }} 
-               className="bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 rounded-2xl p-6 cursor-pointer shadow-sm hover:shadow-xl hover:border-amber-500 transition-all flex flex-col items-start"
-             >
-                <div className="w-12 h-12 bg-amber-50 dark:bg-amber-500/10 rounded-xl flex items-center justify-center mb-4">
-                   <Brain size={24} weight="duotone" className="text-amber-500" />
-                </div>
-                <h4 className="font-extrabold text-slate-900 dark:text-white text-lg">Aptitude & Reasoning</h4>
-                <p className="text-sm text-slate-500 mt-1">Quant, logical, and verbal diagnostic quizzes.</p>
-             </motion.div>
-
-             <motion.div 
-               onClick={() => alert('Company specific banks are being compiled.')}
-               whileHover={{ scale: 1.02 }} 
-               className="bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 rounded-2xl p-6 cursor-pointer shadow-sm hover:shadow-xl hover:border-emerald-500 transition-all flex flex-col items-start"
-             >
-                <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4">
-                   <Buildings size={24} weight="duotone" className="text-emerald-500" />
-                </div>
-                <h4 className="font-extrabold text-slate-900 dark:text-white text-lg">Target Company Prep</h4>
-                <p className="text-sm text-slate-500 mt-1">TCS, Amazon, Google specific patterns and history.</p>
-             </motion.div>
+        {/* Placement Hub CTA */}
+        <motion.div
+          whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+          onClick={() => navigate('placement-hub')}
+          className="mb-10 relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-700 p-6 sm:p-8 cursor-pointer shadow-lg shadow-indigo-500/15 hover:shadow-2xl hover:shadow-indigo-500/25 transition-all group"
+        >
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-3 right-6 w-28 h-28 rounded-full bg-white/20 blur-3xl" />
           </div>
-        </div>
+          <div className="relative z-10 flex items-center gap-5">
+            <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0">
+              <Target size={24} weight="fill" className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-black text-white">Placement Preparation Suite</h3>
+              <p className="text-sm text-white/60 mt-0.5">AI Mock Interviews · SQL Sandbox · Aptitude & Reasoning · Company Prep</p>
+            </div>
+            <ArrowRight size={22} weight="bold" className="text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all shrink-0" />
+          </div>
+        </motion.div>
 
         <h3 className="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2 mt-4 mt-8 pt-8 border-t border-slate-100 dark:border-white/5">
            <Code size={18} className="text-slate-400"/> AI Toolkit

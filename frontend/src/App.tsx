@@ -56,6 +56,7 @@ const PreEnrollBooking = React.lazy(() => import('./pages/PreEnrollBooking'));
 const WardenDashboard = React.lazy(() => import('./pages/WardenDashboard'));
 const ResumeATSScorer = React.lazy(() => import('./pages/ResumeATSScorer'));
 const CareerToolkit = React.lazy(() => import('./pages/CareerToolkit')); 
+const PlacementHub = React.lazy(() => import('./pages/PlacementHub'));
 const SQLPractice = React.lazy(() => import('./pages/SQLPractice'));
 const TransportAdminDashboard = React.lazy(() => import('./pages/TransportAdminDashboard'));
 const LibrarianDashboard = React.lazy(() => import('./pages/LibrarianDashboard'));
@@ -116,6 +117,7 @@ const PAGE_TO_PATH = {
   'hostel-booking': '/hostel',
   'resume-ats-scorer': '/resume-scorer',
   'career-toolkit': '/career',
+  'placement-hub': '/placement-prep',
   'visitor-management': '/visitors',
   'student-profile': '/student/profile',
 
@@ -393,6 +395,9 @@ function AppRoutes({ user, onLogin, onLogout }) {
       } />
       <Route path="/career" element={
         <ProtectedRoute user={user}><CareerToolkit navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/placement-prep" element={
+        <ProtectedRoute user={user}><PlacementHub navigate={navigate} user={user} /></ProtectedRoute>
       } />
       <Route path="/sql-practice" element={
         <ProtectedRoute user={user}><SQLPractice navigate={navigate} user={user} /></ProtectedRoute>
