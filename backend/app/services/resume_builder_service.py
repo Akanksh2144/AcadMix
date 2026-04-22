@@ -14,7 +14,7 @@ from typing import Dict, Any
 
 from docx import Document
 from docx.shared import Pt, Cm, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.oxml.ns import qn
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,6 +28,7 @@ logger = logging.getLogger("acadmix.resume_builder")
 # ═══════════════════════════════════════════════════════════════════════════════
 _FONT = "Times New Roman"
 _CLR = RGBColor(0x00, 0x00, 0x00)  # Pure black for everything
+_CONTENT_WIDTH = Cm(21 - 2.0 - 2.0)  # A4 width minus margins
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -161,32 +162,39 @@ def _build_classic(data: Dict[str, Any]) -> Document:
         branch = current.get("branch", "")
         degree = current.get("degree", "B.Tech")
         title = f"{degree} in {branch}" if branch else degree
+
+        # Line 1: Degree + Institution .... right-aligned Batch
         p = _para(doc, sp_before=2, sp_after=0)
-        _run(p, title, sz=Pt(11), bold=True)
-        # Institution + batch on next line
-        details = [current["institution"]]
+        p.paragraph_format.tab_stops.add_tab_stop(_CONTENT_WIDTH, WD_TAB_ALIGNMENT.RIGHT)
+        _run(p, f"{title}, ", sz=Pt(11), bold=True)
+        _run(p, current["institution"], sz=Pt(11))
         if current.get("batch"):
-            details.append(f"Batch {current['batch']}")
-        p2 = _para(doc, sp_before=0, sp_after=2)
-        _run(p2, "  |  ".join(details), sz=Pt(10))
+            _run(p, "\t", sz=Pt(11))
+            _run(p, current["batch"], sz=Pt(11), italic=True)
 
     for edu in education:
         level = edu.get("level", "")
         school = edu.get("school", "")
-        p = _para(doc, sp_before=2, sp_after=0)
+
+        # Line 1: Level, School .... right-aligned Year
+        p = _para(doc, sp_before=4, sp_after=0)
+        p.paragraph_format.tab_stops.add_tab_stop(_CONTENT_WIDTH, WD_TAB_ALIGNMENT.RIGHT)
         _run(p, level, sz=Pt(11), bold=True)
-        sub = []
         if school:
-            sub.append(school)
+            _run(p, f", {school}", sz=Pt(11))
+        if edu.get("year"):
+            _run(p, "\t", sz=Pt(11))
+            _run(p, str(edu["year"]), sz=Pt(11), italic=True)
+
+        # Line 2: Board | Percentage (subtitle)
+        sub = []
         if edu.get("board"):
             sub.append(edu["board"])
-        if edu.get("year"):
-            sub.append(str(edu["year"]))
         if edu.get("percentage"):
-            sub.append(f"{edu['percentage']}%")
+            sub.append(f"{edu['percentage']}")
         if sub:
-            p2 = _para(doc, sp_before=0, sp_after=2)
-            _run(p2, "  |  ".join(sub), sz=Pt(10))
+            p2 = _para(doc, sp_before=0, sp_after=1)
+            _run(p2, "  |  ".join(sub), sz=Pt(10), italic=True)
 
     # ── SKILLS ────────────────────────────────────────────────
     has_skills = any(skills.get(k) for k in ["languages", "frameworks", "tools", "databases"])

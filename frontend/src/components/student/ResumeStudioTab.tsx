@@ -82,21 +82,30 @@ const ResumePreview = ({ data, template }: { data: any; template: string }) => {
         {/* Education */}
         <SectionTitle>Education</SectionTitle>
         {currentEdu && currentEdu.institution && (
-          <div className="mb-[3px]">
-            <p className="text-[9px] font-[700] text-black">
-              {currentEdu.degree || 'B.Tech'}{currentEdu.branch ? ` in ${currentEdu.branch}` : ''}
-            </p>
-            <p className="text-[8px] text-black">
-              {[currentEdu.institution, currentEdu.batch && `Batch ${currentEdu.batch}`].filter(Boolean).join('  |  ')}
-            </p>
+          <div className="mb-[4px]">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[9px] text-black">
+                <span className="font-[700]">{currentEdu.degree || 'B.Tech'}{currentEdu.branch ? ` in ${currentEdu.branch}` : ''}, </span>
+                {currentEdu.institution}
+              </p>
+              {currentEdu.batch && <span className="text-[8px] text-black italic shrink-0 ml-2">{currentEdu.batch}</span>}
+            </div>
           </div>
         )}
         {education.map((edu: any, i: number) => (
-          <div key={i} className="mb-[3px]">
-            <p className="text-[9px] font-[700] text-black">{edu.level}</p>
-            <p className="text-[8px] text-black">
-              {[edu.school, edu.board, edu.year, edu.percentage && `${edu.percentage}%`].filter(Boolean).join('  |  ')}
-            </p>
+          <div key={i} className="mb-[4px]">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[9px] text-black">
+                <span className="font-[700]">{edu.level}</span>
+                {edu.school && <span>, {edu.school}</span>}
+              </p>
+              {edu.year && <span className="text-[8px] text-black italic shrink-0 ml-2">{edu.year}</span>}
+            </div>
+            {(edu.board || edu.percentage) && (
+              <p className="text-[7.5px] text-black italic">
+                {[edu.board, edu.percentage].filter(Boolean).join('  |  ')}
+              </p>
+            )}
           </div>
         ))}
 
