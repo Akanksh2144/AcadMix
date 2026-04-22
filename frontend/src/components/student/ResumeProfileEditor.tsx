@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { motion, Reorder } from 'framer-motion';
 import {
   LinkedinLogo, GithubLogo, Globe, MapPin, Briefcase, Certificate,
-  Trophy, Code, Plus, Trash, FloppyDisk, CaretDown, Sparkle,
+  Trophy, Code, Plus, Trash, FloppyDisk, Sparkle,
   GraduationCap, Lightning, Check, Warning, Notebook, User,
   EnvelopeSimple, Phone, Lock, DotsSixVertical
 } from '@phosphor-icons/react';
@@ -59,22 +59,21 @@ interface SocialVerification {
 }
 
 /* ── Shared small components ─────────────────────── */
-const SectionHeader = ({ icon: Icon, title, count, color, expanded, onToggle, onAdd }: any) => (
-  <button onClick={onToggle} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10 transition-all group">
+const SectionLabel = ({ icon: Icon, title, count, color, onAdd }: any) => (
+  <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5">
     <div className={`w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br ${color}`}>
       <Icon size={18} weight="fill" className="text-white" />
     </div>
-    <div className="flex-1 text-left">
+    <div className="flex-1">
       <p className="text-sm font-extrabold text-slate-800 dark:text-white">{title}</p>
       {count !== undefined && <p className="text-[10px] font-bold text-slate-400 mt-0.5">{count} {count === 1 ? 'entry' : 'entries'}</p>}
     </div>
     {onAdd && (
-      <span onClick={(e) => { e.stopPropagation(); onAdd(); }} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-500/15 text-slate-400 hover:text-teal-500 transition-colors">
+      <button onClick={onAdd} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-500/15 text-slate-400 hover:text-teal-500 transition-colors">
         <Plus size={14} weight="bold" />
-      </span>
+      </button>
     )}
-    <CaretDown size={14} weight="bold" className={`text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-  </button>
+  </div>
 );
 
 const FieldInput = ({ label, value, onChange, onBlur, placeholder, type = 'text', rows, error, icon: Icon, iconClass }: any) => (
@@ -160,7 +159,6 @@ const ResumeProfileEditor = () => {
   const [saving, setSaving] = useState(false);
   const [autoFilled, setAutoFilled] = useState<any>({});
   const [data, setData] = useState<any>({});
-  const [expanded, setExpanded] = useState<string | null>('personal');
   const [dirty, setDirty] = useState(false);
   const [urlErrors, setUrlErrors] = useState<Record<string, string | null>>({});
   const [socialProfiles, setSocialProfiles] = useState<Record<string, SocialVerification | null>>({});
@@ -244,7 +242,6 @@ const ResumeProfileEditor = () => {
     // Final validation gate
     if (revalidateUrls(data)) {
       setSaveHint('Please fix the URL errors in Links section before saving.');
-      setExpanded('links');
       setTimeout(() => setSaveHint(''), 4000);
       return;
     }
@@ -260,13 +257,10 @@ const ResumeProfileEditor = () => {
     setSaving(false);
   };
 
-  const toggle = (key: string) => setExpanded(expanded === key ? null : key);
-
   // List helpers
   const addItem = (key: string, template: any) => {
     const list = [template, ...(data[key] || [])];
     update(key, list);
-    setExpanded(key);
   };
   const updateItem = (key: string, index: number, field: string, value: any) => {
     const list = [...(data[key] || [])];
@@ -293,114 +287,86 @@ const ResumeProfileEditor = () => {
   return (
     <div className="space-y-4">
       {/* ── Personal / Contact ─────────────── */}
-      <SectionHeader icon={User} title="Personal & Contact" color="from-teal-500 to-emerald-600" expanded={expanded === 'personal'} onToggle={() => toggle('personal')} />
-      <AnimatePresence>
-        {expanded === 'personal' && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="soft-card p-5 space-y-4">
-              {/* Auto-filled banner */}
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-teal-50/50 dark:bg-teal-500/5 border border-teal-200/30 dark:border-teal-500/15">
-                <Sparkle size={14} weight="fill" className="text-teal-500 shrink-0" />
-                <p className="text-[11px] font-bold text-teal-600 dark:text-teal-400">
-                  {autoFilled.institution} · {autoFilled.department} · Batch {autoFilled.batch}
-                </p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Name — read-only from ERP */}
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Full Name</label>
-                  <div className="relative">
-                    <input type="text" value={autoFilled.name || ''} readOnly className="soft-input w-full text-sm pr-10 !bg-slate-50 dark:!bg-white/[0.03] !cursor-not-allowed !text-slate-500" />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" title="Read-only from ERP"><Lock size={13} weight="bold" /></div>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">Managed by your college admin</p>
-                </div>
-                {/* Email — editable */}
-                <FieldInput label="Email" value={data.email || autoFilled.email} onChange={(v: string) => update('email', v)} placeholder={autoFilled.email || 'your.email@example.com'} />
-                {/* Phone — editable */}
-                <FieldInput label="Phone Number" value={data.phone || autoFilled.phone} onChange={(v: string) => update('phone', v)} placeholder="+91 98765 43210" />
-                {/* Location */}
-                <FieldInput label="City / Location" value={data.location} onChange={(v: string) => update('location', v)} placeholder="Hyderabad, Telangana" />
-              </div>
+      <SectionLabel icon={User} title="Personal & Contact" color="from-teal-500 to-emerald-600" />
+      <div className="soft-card p-5 space-y-4">
+        {/* Auto-filled banner */}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-teal-50/50 dark:bg-teal-500/5 border border-teal-200/30 dark:border-teal-500/15">
+          <Sparkle size={14} weight="fill" className="text-teal-500 shrink-0" />
+          <p className="text-[11px] font-bold text-teal-600 dark:text-teal-400">
+            {autoFilled.institution} · {autoFilled.department} · Batch {autoFilled.batch}
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Name — read-only from ERP */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Full Name</label>
+            <div className="relative">
+              <input type="text" value={autoFilled.name || ''} readOnly className="soft-input w-full text-sm pr-10 !bg-slate-50 dark:!bg-white/[0.03] !cursor-not-allowed !text-slate-500" />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" title="Read-only from ERP"><Lock size={13} weight="bold" /></div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <p className="text-[10px] text-slate-400 mt-1">Managed by your college admin</p>
+          </div>
+          <FieldInput label="Email" value={data.email || autoFilled.email} onChange={(v: string) => update('email', v)} placeholder={autoFilled.email || 'your.email@example.com'} />
+          <FieldInput label="Phone Number" value={data.phone || autoFilled.phone} onChange={(v: string) => update('phone', v)} placeholder="+91 98765 43210" />
+          <FieldInput label="City / Location" value={data.location} onChange={(v: string) => update('location', v)} placeholder="Hyderabad, Telangana" />
+        </div>
+      </div>
 
       {/* ── Links ─────────────────────────── */}
-      <SectionHeader icon={Globe} title="Social & Professional Links" color="from-blue-500 to-indigo-600" expanded={expanded === 'links'} onToggle={() => toggle('links')} />
-      <AnimatePresence>
-        {expanded === 'links' && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="soft-card p-5 space-y-4">
-              {/* LinkedIn */}
-              <div>
-                <FieldInput label="LinkedIn URL" value={data.linkedin} onChange={(v: string) => update('linkedin', v)} placeholder="linkedin.com/in/your-profile" error={urlErrors.linkedin} icon={LinkedinLogo} iconClass="text-[#0A66C2]" />
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">LinkedIn profiles cannot be auto-verified</p>
-              </div>
-              {/* GitHub */}
-              <div>
-                <FieldInput label="GitHub URL" value={data.github} onChange={(v: string) => update('github', v)} onBlur={() => handleUrlBlur('github')} placeholder="github.com/username" error={urlErrors.github} icon={GithubLogo} iconClass="text-slate-700 dark:text-white" />
-                {socialProfiles.github?.loading && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-[11px] font-bold text-slate-400">Verifying GitHub profile...</span>
-                  </div>
-                )}
-                {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === true && (
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{socialProfiles.github.full_name}</span>
-                    <Check size={12} weight="bold" className="text-emerald-500" />
-                  </div>
-                )}
-                {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === false && (
-                  <p className="text-[10px] font-bold text-red-500 mt-1">Profile not found</p>
-                )}
-                {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === null && socialProfiles.github.error && (
-                  <p className="text-[10px] text-slate-400 mt-1">{socialProfiles.github.error}</p>
-                )}
-              </div>
-              {/* Portfolio */}
-              <div>
-                <FieldInput label="Portfolio / Website" value={data.portfolio} onChange={(v: string) => update('portfolio', v)} onBlur={() => handleUrlBlur('portfolio')} placeholder="yoursite.com" error={urlErrors.portfolio} icon={Globe} iconClass="text-indigo-500" />
-                {socialProfiles.portfolio?.loading && (
-                  <p className="text-[10px] text-slate-400 mt-1">Checking website...</p>
-                )}
-                {socialProfiles.portfolio && !socialProfiles.portfolio.loading && socialProfiles.portfolio.exists === true && (
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Website is live</span>
-                    <Check size={12} weight="bold" className="text-emerald-500" />
-                  </div>
-                )}
-                {socialProfiles.portfolio && !socialProfiles.portfolio.loading && socialProfiles.portfolio.exists === false && (
-                  <p className="text-[10px] font-bold text-red-500 mt-1">Could not reach this website</p>
-                )}
-              </div>
+      <SectionLabel icon={Globe} title="Social & Professional Links" color="from-blue-500 to-indigo-600" />
+      <div className="soft-card p-5 space-y-4">
+        <div>
+          <FieldInput label="LinkedIn URL" value={data.linkedin} onChange={(v: string) => update('linkedin', v)} placeholder="linkedin.com/in/your-profile" error={urlErrors.linkedin} icon={LinkedinLogo} iconClass="text-[#0A66C2]" />
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">LinkedIn profiles cannot be auto-verified</p>
+        </div>
+        <div>
+          <FieldInput label="GitHub URL" value={data.github} onChange={(v: string) => update('github', v)} onBlur={() => handleUrlBlur('github')} placeholder="github.com/username" error={urlErrors.github} icon={GithubLogo} iconClass="text-slate-700 dark:text-white" />
+          {socialProfiles.github?.loading && (
+            <div className="flex items-center gap-2 mt-2">
+              <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+              <span className="text-[11px] font-bold text-slate-400">Verifying GitHub profile...</span>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+          {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === true && (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{socialProfiles.github.full_name}</span>
+              <Check size={12} weight="bold" className="text-emerald-500" />
+            </div>
+          )}
+          {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === false && (
+            <p className="text-[10px] font-bold text-red-500 mt-1">Profile not found</p>
+          )}
+          {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === null && socialProfiles.github.error && (
+            <p className="text-[10px] text-slate-400 mt-1">{socialProfiles.github.error}</p>
+          )}
+        </div>
+        <div>
+          <FieldInput label="Portfolio / Website" value={data.portfolio} onChange={(v: string) => update('portfolio', v)} onBlur={() => handleUrlBlur('portfolio')} placeholder="yoursite.com" error={urlErrors.portfolio} icon={Globe} iconClass="text-indigo-500" />
+          {socialProfiles.portfolio?.loading && (
+            <p className="text-[10px] text-slate-400 mt-1">Checking website...</p>
+          )}
+          {socialProfiles.portfolio && !socialProfiles.portfolio.loading && socialProfiles.portfolio.exists === true && (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Website is live</span>
+              <Check size={12} weight="bold" className="text-emerald-500" />
+            </div>
+          )}
+          {socialProfiles.portfolio && !socialProfiles.portfolio.loading && socialProfiles.portfolio.exists === false && (
+            <p className="text-[10px] font-bold text-red-500 mt-1">Could not reach this website</p>
+          )}
+        </div>
+      </div>
 
       {/* ── Professional Summary ──────────── */}
-      <SectionHeader icon={Notebook} title="Professional Summary" color="from-violet-500 to-purple-600" expanded={expanded === 'summary'} onToggle={() => toggle('summary')} />
-      <AnimatePresence>
-        {expanded === 'summary' && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="soft-card p-5">
-              <FieldInput label="Summary (2-3 lines)" value={data.summary} onChange={(v: string) => update('summary', v)}
-                placeholder="Aspiring software developer with experience in full-stack web development..." rows={3} />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <SectionLabel icon={Notebook} title="Professional Summary" color="from-violet-500 to-purple-600" />
+      <div className="soft-card p-5">
+        <FieldInput label="Summary (2-3 lines)" value={data.summary} onChange={(v: string) => update('summary', v)}
+          placeholder="Aspiring software developer with experience in full-stack web development..." rows={3} />
+      </div>
 
       {/* ── Education ─── */}
-      <SectionHeader icon={GraduationCap} title="Education" color="from-amber-500 to-orange-600" count={eduHistory.length}
-        expanded={expanded === 'education_history'} onToggle={() => toggle('education_history')}
+      <SectionLabel icon={GraduationCap} title="Education" color="from-amber-500 to-orange-600" count={eduHistory.length}
         onAdd={() => addItem('education_history', { school: '', location: '', degree: '', field: '', gradMonth: '', gradYear: '', stillEnrolled: false, percentage: '' })} />
-      <AnimatePresence>
-        {expanded === 'education_history' && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <Reorder.Group axis="y" values={eduHistory} onReorder={(newOrder: any[]) => update('education_history', newOrder)} className="space-y-3">
               {eduHistory.map((e: any, i: number) => (
                 <Reorder.Item key={JSON.stringify(e)} value={e} className="soft-card p-5">
@@ -481,148 +447,110 @@ const ResumeProfileEditor = () => {
               )}
             </Reorder.Group>
 
-            {/* Pro tip */}
-            <div className="flex items-start gap-2 mt-3 px-1">
-              <Sparkle size={14} weight="fill" className="text-amber-500 shrink-0 mt-0.5" />
-              <p className="text-xs text-slate-400"><span className="font-bold text-slate-500">Pro Tip</span>  Details like honors, clubs, and research projects show employers your growth and learning.</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="flex items-start gap-2 px-1">
+        <Sparkle size={14} weight="fill" className="text-amber-500 shrink-0 mt-0.5" />
+        <p className="text-xs text-slate-400"><span className="font-bold text-slate-500">Pro Tip</span>  Details like honors, clubs, and research projects show employers your growth and learning.</p>
+      </div>
 
       {/* ── Skills ────────────────────────── */}
-      <SectionHeader icon={Code} title="Technical Skills" color="from-cyan-500 to-teal-600" expanded={expanded === 'skills'} onToggle={() => toggle('skills')} />
-      <AnimatePresence>
-        {expanded === 'skills' && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="soft-card p-5 space-y-4">
-              <TagInput label="Programming Languages" tags={skills.languages || []} onChange={(v: string[]) => update('skills', { ...skills, languages: v })} placeholder="e.g., Python" />
-              <TagInput label="Frameworks / Libraries" tags={skills.frameworks || []} onChange={(v: string[]) => update('skills', { ...skills, frameworks: v })} placeholder="e.g., React" />
-              <TagInput label="Tools / Platforms" tags={skills.tools || []} onChange={(v: string[]) => update('skills', { ...skills, tools: v })} placeholder="e.g., Docker" />
-              <TagInput label="Databases" tags={skills.databases || []} onChange={(v: string[]) => update('skills', { ...skills, databases: v })} placeholder="e.g., PostgreSQL" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <SectionLabel icon={Code} title="Technical Skills" color="from-cyan-500 to-teal-600" />
+      <div className="soft-card p-5 space-y-4">
+        <TagInput label="Programming Languages" tags={skills.languages || []} onChange={(v: string[]) => update('skills', { ...skills, languages: v })} placeholder="e.g., Python" />
+        <TagInput label="Frameworks / Libraries" tags={skills.frameworks || []} onChange={(v: string[]) => update('skills', { ...skills, frameworks: v })} placeholder="e.g., React" />
+        <TagInput label="Tools / Platforms" tags={skills.tools || []} onChange={(v: string[]) => update('skills', { ...skills, tools: v })} placeholder="e.g., Docker" />
+        <TagInput label="Databases" tags={skills.databases || []} onChange={(v: string[]) => update('skills', { ...skills, databases: v })} placeholder="e.g., PostgreSQL" />
+      </div>
 
       {/* ── Projects ──────────────────────── */}
-      <SectionHeader icon={Lightning} title="Projects" color="from-emerald-500 to-green-600" count={projects.length}
-        expanded={expanded === 'projects'} onToggle={() => toggle('projects')}
+      <SectionLabel icon={Lightning} title="Projects" color="from-emerald-500 to-green-600" count={projects.length}
         onAdd={() => addItem('projects', { title: '', tech_stack: '', duration: '', bullets: [''], link: '' })} />
-      <AnimatePresence>
-        {expanded === 'projects' && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <Reorder.Group axis="y" values={projects} onReorder={(newOrder: any[]) => update('projects', newOrder)} className="space-y-3">
-              {projects.map((p: any, i: number) => (
-                <Reorder.Item key={JSON.stringify(p)} value={p} className="soft-card p-5">
-                  <div className="flex justify-between mb-3">
-                    <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
-                      <DotsSixVertical size={16} weight="bold" className="text-slate-400 dark:text-slate-500" />
-                      <span className="text-xs font-extrabold text-emerald-500">Project #{i + 1}</span>
-                    </div>
-                    <RemoveBtn onClick={() => removeItem('projects', i)} />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                    <FieldInput label="Project Title" value={p.title} onChange={(v: string) => updateItem('projects', i, 'title', v)} placeholder="e.g., E-Commerce Platform" />
-                    <FieldInput label="Tech Stack" value={p.tech_stack} onChange={(v: string) => updateItem('projects', i, 'tech_stack', v)} placeholder="React, Node.js, MongoDB" />
-                    <FieldInput label="Duration" value={p.duration} onChange={(v: string) => updateItem('projects', i, 'duration', v)} placeholder="Jan 2024 – Mar 2024" />
-                    <FieldInput label="Link (GitHub / Live)" value={p.link} onChange={(v: string) => updateItem('projects', i, 'link', v)} placeholder="github.com/..." />
-                  </div>
-                  <BulletEditor bullets={p.bullets || []} onChange={(v: string[]) => updateItem('projects', i, 'bullets', v)} />
-                </Reorder.Item>
-              ))}
-              {projects.length === 0 && <div className="soft-card p-8 text-center"><p className="text-sm text-slate-400">No projects added yet. Click + to add your first project.</p></div>}
-            </Reorder.Group>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Reorder.Group axis="y" values={projects} onReorder={(newOrder: any[]) => update('projects', newOrder)} className="space-y-3">
+        {projects.map((p: any, i: number) => (
+          <Reorder.Item key={JSON.stringify(p)} value={p} className="soft-card p-5">
+            <div className="flex justify-between mb-3">
+              <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
+                <DotsSixVertical size={16} weight="bold" className="text-slate-400 dark:text-slate-500" />
+                <span className="text-xs font-extrabold text-emerald-500">Project #{i + 1}</span>
+              </div>
+              <RemoveBtn onClick={() => removeItem('projects', i)} />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <FieldInput label="Project Title" value={p.title} onChange={(v: string) => updateItem('projects', i, 'title', v)} placeholder="e.g., E-Commerce Platform" />
+              <FieldInput label="Tech Stack" value={p.tech_stack} onChange={(v: string) => updateItem('projects', i, 'tech_stack', v)} placeholder="React, Node.js, MongoDB" />
+              <FieldInput label="Duration" value={p.duration} onChange={(v: string) => updateItem('projects', i, 'duration', v)} placeholder="Jan 2024 – Mar 2024" />
+              <FieldInput label="Link (GitHub / Live)" value={p.link} onChange={(v: string) => updateItem('projects', i, 'link', v)} placeholder="github.com/..." />
+            </div>
+            <BulletEditor bullets={p.bullets || []} onChange={(v: string[]) => updateItem('projects', i, 'bullets', v)} />
+          </Reorder.Item>
+        ))}
+        {projects.length === 0 && <div className="soft-card p-8 text-center"><p className="text-sm text-slate-400">No projects added yet. Click + to add your first project.</p></div>}
+      </Reorder.Group>
 
       {/* ── Experience ────────────────────── */}
-      <SectionHeader icon={Briefcase} title="Experience / Internships" color="from-rose-500 to-pink-600" count={experience.length}
-        expanded={expanded === 'experience'} onToggle={() => toggle('experience')}
+      <SectionLabel icon={Briefcase} title="Experience / Internships" color="from-rose-500 to-pink-600" count={experience.length}
         onAdd={() => addItem('experience', { company: '', role: '', duration: '', location: '', bullets: [''] })} />
-      <AnimatePresence>
-        {expanded === 'experience' && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <Reorder.Group axis="y" values={experience} onReorder={(newOrder: any[]) => update('experience', newOrder)} className="space-y-3">
-              {experience.map((e: any, i: number) => (
-                <Reorder.Item key={JSON.stringify(e)} value={e} className="soft-card p-5">
-                  <div className="flex justify-between mb-3">
-                    <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
-                      <DotsSixVertical size={16} weight="bold" className="text-slate-400 dark:text-slate-500" />
-                      <span className="text-xs font-extrabold text-rose-500">Experience #{i + 1}</span>
-                    </div>
-                    <RemoveBtn onClick={() => removeItem('experience', i)} />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                    <FieldInput label="Company" value={e.company} onChange={(v: string) => updateItem('experience', i, 'company', v)} placeholder="e.g., Google" />
-                    <FieldInput label="Role / Title" value={e.role} onChange={(v: string) => updateItem('experience', i, 'role', v)} placeholder="e.g., SDE Intern" />
-                    <FieldInput label="Duration" value={e.duration} onChange={(v: string) => updateItem('experience', i, 'duration', v)} placeholder="May 2024 – Jul 2024" />
-                    <FieldInput label="Location" value={e.location} onChange={(v: string) => updateItem('experience', i, 'location', v)} placeholder="Bangalore, India" />
-                  </div>
-                  <BulletEditor bullets={e.bullets || []} onChange={(v: string[]) => updateItem('experience', i, 'bullets', v)} />
-                </Reorder.Item>
-              ))}
-              {experience.length === 0 && <div className="soft-card p-8 text-center"><p className="text-sm text-slate-400">No experience added yet. Internships, freelance, and part-time work count!</p></div>}
-            </Reorder.Group>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Reorder.Group axis="y" values={experience} onReorder={(newOrder: any[]) => update('experience', newOrder)} className="space-y-3">
+        {experience.map((e: any, i: number) => (
+          <Reorder.Item key={JSON.stringify(e)} value={e} className="soft-card p-5">
+            <div className="flex justify-between mb-3">
+              <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
+                <DotsSixVertical size={16} weight="bold" className="text-slate-400 dark:text-slate-500" />
+                <span className="text-xs font-extrabold text-rose-500">Experience #{i + 1}</span>
+              </div>
+              <RemoveBtn onClick={() => removeItem('experience', i)} />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <FieldInput label="Company" value={e.company} onChange={(v: string) => updateItem('experience', i, 'company', v)} placeholder="e.g., Google" />
+              <FieldInput label="Role / Title" value={e.role} onChange={(v: string) => updateItem('experience', i, 'role', v)} placeholder="e.g., SDE Intern" />
+              <FieldInput label="Duration" value={e.duration} onChange={(v: string) => updateItem('experience', i, 'duration', v)} placeholder="May 2024 – Jul 2024" />
+              <FieldInput label="Location" value={e.location} onChange={(v: string) => updateItem('experience', i, 'location', v)} placeholder="Bangalore, India" />
+            </div>
+            <BulletEditor bullets={e.bullets || []} onChange={(v: string[]) => updateItem('experience', i, 'bullets', v)} />
+          </Reorder.Item>
+        ))}
+        {experience.length === 0 && <div className="soft-card p-8 text-center"><p className="text-sm text-slate-400">No experience added yet. Internships, freelance, and part-time work count!</p></div>}
+      </Reorder.Group>
 
       {/* ── Certifications ────────────────── */}
-      <SectionHeader icon={Certificate} title="Certifications" color="from-indigo-500 to-blue-600" count={certs.length}
-        expanded={expanded === 'certifications'} onToggle={() => toggle('certifications')}
+      <SectionLabel icon={Certificate} title="Certifications" color="from-indigo-500 to-blue-600" count={certs.length}
         onAdd={() => addItem('certifications', { name: '', issuer: '', year: '', url: '' })} />
-      <AnimatePresence>
-        {expanded === 'certifications' && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <Reorder.Group axis="y" values={certs} onReorder={(newOrder: any[]) => update('certifications', newOrder)} className="space-y-3">
-              {certs.map((c: any, i: number) => (
-                <Reorder.Item key={JSON.stringify(c)} value={c} className="soft-card p-5">
-                  <div className="flex justify-between mb-3">
-                    <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
-                      <DotsSixVertical size={16} weight="bold" className="text-slate-400 dark:text-slate-500" />
-                      <span className="text-xs font-extrabold text-indigo-500">Certificate #{i + 1}</span>
-                    </div>
-                    <RemoveBtn onClick={() => removeItem('certifications', i)} />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                    <FieldInput label="Certificate Name" value={c.name} onChange={(v: string) => updateItem('certifications', i, 'name', v)} placeholder="AWS Cloud Practitioner" />
-                    <FieldInput label="Issuing Organization" value={c.issuer} onChange={(v: string) => updateItem('certifications', i, 'issuer', v)} placeholder="Amazon Web Services" />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <FieldInput label="Year" value={c.year} onChange={(v: string) => updateItem('certifications', i, 'year', v)} placeholder="2024" />
-                    <FieldInput label="Credential URL" value={c.url} onChange={(v: string) => updateItem('certifications', i, 'url', v)} placeholder="https://verify.example.com/cert/..." />
-                  </div>
-                </Reorder.Item>
-              ))}
-              {certs.length === 0 && <div className="soft-card p-8 text-center"><p className="text-sm text-slate-400">No certifications added yet.</p></div>}
-            </Reorder.Group>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Reorder.Group axis="y" values={certs} onReorder={(newOrder: any[]) => update('certifications', newOrder)} className="space-y-3">
+        {certs.map((c: any, i: number) => (
+          <Reorder.Item key={JSON.stringify(c)} value={c} className="soft-card p-5">
+            <div className="flex justify-between mb-3">
+              <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
+                <DotsSixVertical size={16} weight="bold" className="text-slate-400 dark:text-slate-500" />
+                <span className="text-xs font-extrabold text-indigo-500">Certificate #{i + 1}</span>
+              </div>
+              <RemoveBtn onClick={() => removeItem('certifications', i)} />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <FieldInput label="Certificate Name" value={c.name} onChange={(v: string) => updateItem('certifications', i, 'name', v)} placeholder="AWS Cloud Practitioner" />
+              <FieldInput label="Issuing Organization" value={c.issuer} onChange={(v: string) => updateItem('certifications', i, 'issuer', v)} placeholder="Amazon Web Services" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <FieldInput label="Year" value={c.year} onChange={(v: string) => updateItem('certifications', i, 'year', v)} placeholder="2024" />
+              <FieldInput label="Credential URL" value={c.url} onChange={(v: string) => updateItem('certifications', i, 'url', v)} placeholder="https://verify.example.com/cert/..." />
+            </div>
+          </Reorder.Item>
+        ))}
+        {certs.length === 0 && <div className="soft-card p-8 text-center"><p className="text-sm text-slate-400">No certifications added yet.</p></div>}
+      </Reorder.Group>
 
       {/* ── Achievements ──────────────────── */}
-      <SectionHeader icon={Trophy} title="Achievements" color="from-yellow-500 to-amber-600" count={achievements.length}
-        expanded={expanded === 'achievements'} onToggle={() => toggle('achievements')}
+      <SectionLabel icon={Trophy} title="Achievements" color="from-yellow-500 to-amber-600" count={achievements.length}
         onAdd={() => update('achievements', [...achievements, ''])} />
-      <AnimatePresence>
-        {expanded === 'achievements' && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="soft-card p-5 space-y-2">
-              {achievements.map((a: string, i: number) => (
-                <div key={i} className="flex gap-2">
-                  <span className="text-amber-500 text-xs mt-2.5 shrink-0">🏆</span>
-                  <input value={a} onChange={e => { const n = [...achievements]; n[i] = e.target.value; update('achievements', n); }}
-                    placeholder="e.g., Won Smart India Hackathon 2024" className="soft-input flex-1 text-sm" />
-                  <RemoveBtn onClick={() => update('achievements', achievements.filter((_: any, j: number) => j !== i))} />
-                </div>
-              ))}
-              {achievements.length === 0 && <p className="text-sm text-slate-400 text-center py-4">No achievements added yet.</p>}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="soft-card p-5 space-y-2">
+        {achievements.map((a: string, i: number) => (
+          <div key={i} className="flex gap-2">
+            <span className="text-amber-500 text-xs mt-2.5 shrink-0">🏆</span>
+            <input value={a} onChange={e => { const n = [...achievements]; n[i] = e.target.value; update('achievements', n); }}
+              placeholder="e.g., Won Smart India Hackathon 2024" className="soft-input flex-1 text-sm" />
+            <RemoveBtn onClick={() => update('achievements', achievements.filter((_: any, j: number) => j !== i))} />
+          </div>
+        ))}
+        {achievements.length === 0 && <p className="text-sm text-slate-400 text-center py-4">No achievements added yet.</p>}
+      </div>
 
       {/* ── Save Button ──────────────────── */}
       <motion.div variants={itemV} className="sticky bottom-4 z-10">
