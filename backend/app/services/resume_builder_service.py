@@ -93,19 +93,9 @@ def _bullet(doc, text):
 
 
 def _tech_stack_line(doc, tech):
-    """Tech Stack: label bold, items regular. Indented to match bullets."""
-    p = doc.add_paragraph()
-    p.style = doc.styles['List Bullet']
-    # Remove the bullet character by overriding numbering
-    p.paragraph_format.space_before = Pt(1)
-    p.paragraph_format.space_after = Pt(2)
-    # Clear bullet numbering — use indent only
-    numPr = p._p.get_or_add_pPr().find(qn('w:numPr'))
-    if numPr is not None:
-        p._p.get_or_add_pPr().remove(numPr)
-    # Manual indent to match bullets
-    fmt = p.paragraph_format
-    fmt.left_indent = Cm(1.27)  # Standard list bullet indent
+    """Tech Stack: label bold, items regular. Indented to match bullets, no bullet marker."""
+    p = _para(doc, sp_before=1, sp_after=2)
+    p.paragraph_format.left_indent = Cm(1.27)  # Match bullet indent
     _run(p, "Tech Stack: ", sz=Pt(11), bold=True)
     _run(p, tech, sz=Pt(11))
     return p
