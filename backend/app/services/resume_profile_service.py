@@ -31,6 +31,9 @@ _URL_VALIDATORS = {
 # ═══════════════════════════════════════════════════════════════════════════════
 
 ALLOWED_FIELDS = {
+    # Contact overrides (student can use a different email/phone for resume)
+    "email", "phone",
+
     # Social / Professional links
     "linkedin", "github", "portfolio", "location",
 
@@ -137,7 +140,7 @@ async def update_resume_profile(
                     cleaned[sub_key] = [str(s)[:100] for s in value[sub_key][:30]]
             resume[key] = cleaned
 
-        elif key in ("linkedin", "github", "portfolio", "location", "summary"):
+        elif key in ("linkedin", "github", "portfolio", "location", "summary", "email", "phone"):
             val = str(value).strip()[:500] if value else ""
             # Validate URLs — reject silently if invalid
             if key in _URL_VALIDATORS and val:

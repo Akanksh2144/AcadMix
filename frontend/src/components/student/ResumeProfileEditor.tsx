@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LinkedinLogo, GithubLogo, Globe, MapPin, Briefcase, Certificate,
   Trophy, Code, Plus, Trash, FloppyDisk, CaretDown, Sparkle,
-  GraduationCap, Lightning, Check, Warning, Notebook
+  GraduationCap, Lightning, Check, Warning, Notebook, User,
+  EnvelopeSimple, Phone, Lock
 } from '@phosphor-icons/react';
 import { resumeProfileAPI } from '../../services/api';
 import { toast } from 'sonner';
@@ -27,10 +28,22 @@ const URL_VALIDATORS: Record<string, { pattern: RegExp; hint: string }> = {
 };
 
 const validateUrl = (key: string, value: string): string | null => {
-  if (!value || !value.trim()) return null; // empty is fine
+  if (!value || !value.trim()) return null;
   const rule = URL_VALIDATORS[key];
   if (!rule) return null;
   return rule.pattern.test(value.trim()) ? null : rule.hint;
+};
+
+/* ── Extract username from LinkedIn/GitHub URLs ──── */
+const extractUsername = (key: string, url: string): string | null => {
+  if (!url || !url.trim()) return null;
+  if (key === 'linkedin') {
+    const m = url.match(/linkedin\.com\/in\/([a-zA-Z0-9_-]+)/); return m ? m[1] : null;
+  }
+  if (key === 'github') {
+    const m = url.match(/github\.com\/([a-zA-Z0-9_-]+)/); return m ? m[1] : null;
+  }
+  return null;
 };
 
 /* ── Shared small components ─────────────────────── */
@@ -52,14 +65,14 @@ const SectionHeader = ({ icon: Icon, title, count, color, expanded, onToggle, on
   </button>
 );
 
-const FieldInput = ({ label, value, onChange, placeholder, type = 'text', rows, error }: any) => (
+const FieldInput = ({ label, value, onChange, onBlur, placeholder, type = 'text', rows, error }: any) => (
   <div>
     <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">{label}</label>
     {rows ? (
-      <textarea value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows}
+      <textarea value={value || ''} onChange={e => onChange(e.target.value)} onBlur={onBlur} placeholder={placeholder} rows={rows}
         className={`soft-input w-full text-sm resize-none ${error ? '!border-red-300 dark:!border-red-500/40 !ring-red-100 dark:!ring-red-500/10' : ''}`} />
     ) : (
-      <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+      <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} onBlur={onBlur} placeholder={placeholder}
         className={`soft-input w-full text-sm ${error ? '!border-red-300 dark:!border-red-500/40 !ring-red-100 dark:!ring-red-500/10' : ''}`} />
     )}
     {error && (
@@ -129,9 +142,10 @@ const ResumeProfileEditor = () => {
   const [saving, setSaving] = useState(false);
   const [autoFilled, setAutoFilled] = useState<any>({});
   const [data, setData] = useState<any>({});
-  const [expanded, setExpanded] = useState<string | null>('links');
+  const [expanded, setExpanded] = useState<string | null>('personal');
   const [dirty, setDirty] = useState(false);
   const [urlErrors, setUrlErrors] = useState<Record<string, string | null>>({});
+  const [resolvedUsernames, setResolvedUsernames] = useState<Record<string, string | null>>({});
 
   // Recompute URL validation whenever data changes
   const revalidateUrls = (d: any) => {
@@ -147,7 +161,13 @@ const ResumeProfileEditor = () => {
     try {
       const { data: res } = await resumeProfileAPI.get();
       setAutoFilled(res.auto_filled || {});
-      setData(res.editable || {});
+      const editable = res.editable || {};
+      setData(editable);
+      // Resolve usernames from saved data on load
+      setResolvedUsernames({
+        linkedin: extractUsername('linkedin', editable.linkedin || ''),
+        github: extractUsername('github', editable.github || ''),
+      });
     } catch { /* silent */ }
     setLoading(false);
   }, []);
@@ -161,6 +181,22 @@ const ResumeProfileEditor = () => {
     // Re-validate URLs on each change for instant feedback
     if (['linkedin', 'github', 'portfolio'].includes(key)) {
       setUrlErrors(prev => ({ ...prev, [key]: validateUrl(key, value || '') }));
+      // Clear resolved username while typing (will re-resolve on blur)
+      if (key === 'linkedin' || key === 'github') {
+        setResolvedUsernames(prev => ({ ...prev, [key]: null }));
+      }
+    }
+  };
+
+  // Called on blur for LinkedIn/GitHub — extract and display username
+  const handleUrlBlur = (key: string) => {
+    const url = data[key] || '';
+    const err = validateUrl(key, url);
+    if (!err && url.trim()) {
+      const username = extractUsername(key, url);
+      setResolvedUsernames(prev => ({ ...prev, [key]: username }));
+    } else {
+      setResolvedUsernames(prev => ({ ...prev, [key]: null }));
     }
   };
 
@@ -216,27 +252,71 @@ const ResumeProfileEditor = () => {
 
   return (
     <div className="space-y-4">
-      {/* Auto-filled notice */}
-      <motion.div variants={itemV} className="p-4 rounded-2xl bg-teal-50/50 dark:bg-teal-500/5 border border-teal-200/50 dark:border-teal-500/20 flex items-start gap-3">
-        <Sparkle size={18} weight="fill" className="text-teal-500 mt-0.5 shrink-0" />
-        <div>
-          <p className="text-sm font-bold text-teal-700 dark:text-teal-300">Auto-filled from your AcadMix profile</p>
-          <p className="text-xs text-teal-600/70 dark:text-teal-400/70 mt-0.5">
-            {autoFilled.name} · {autoFilled.email} · {autoFilled.department} · Batch {autoFilled.batch} · {autoFilled.institution}
-          </p>
-        </div>
-      </motion.div>
+      {/* ── Personal / Contact ─────────────── */}
+      <SectionHeader icon={User} title="Personal & Contact" color="from-teal-500 to-emerald-600" expanded={expanded === 'personal'} onToggle={() => toggle('personal')} />
+      <AnimatePresence>
+        {expanded === 'personal' && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+            <div className="soft-card p-5 space-y-4">
+              {/* Auto-filled banner */}
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-teal-50/50 dark:bg-teal-500/5 border border-teal-200/30 dark:border-teal-500/15">
+                <Sparkle size={14} weight="fill" className="text-teal-500 shrink-0" />
+                <p className="text-[11px] font-bold text-teal-600 dark:text-teal-400">
+                  {autoFilled.institution} · {autoFilled.department} · Batch {autoFilled.batch}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Name — read-only from ERP */}
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Full Name</label>
+                  <div className="flex items-center gap-2">
+                    <input type="text" value={autoFilled.name || ''} readOnly className="soft-input w-full text-sm !bg-slate-50 dark:!bg-white/[0.03] !cursor-not-allowed !text-slate-500" />
+                    <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800" title="Read-only from ERP"><Lock size={13} weight="bold" className="text-slate-400" /></div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">Managed by your college admin</p>
+                </div>
+                {/* Email — editable */}
+                <FieldInput label="Email" value={data.email || autoFilled.email} onChange={(v: string) => update('email', v)} placeholder={autoFilled.email || 'your.email@example.com'} />
+                {/* Phone — editable */}
+                <FieldInput label="Phone Number" value={data.phone || autoFilled.phone} onChange={(v: string) => update('phone', v)} placeholder="+91 98765 43210" />
+                {/* Location */}
+                <FieldInput label="City / Location" value={data.location} onChange={(v: string) => update('location', v)} placeholder="Hyderabad, Telangana" />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* ── Links & Location ──────────────── */}
-      <SectionHeader icon={Globe} title="Links & Location" color="from-blue-500 to-indigo-600" expanded={expanded === 'links'} onToggle={() => toggle('links')} />
+      {/* ── Links ─────────────────────────── */}
+      <SectionHeader icon={Globe} title="Social & Professional Links" color="from-blue-500 to-indigo-600" expanded={expanded === 'links'} onToggle={() => toggle('links')} />
       <AnimatePresence>
         {expanded === 'links' && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="soft-card p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FieldInput label="LinkedIn URL" value={data.linkedin} onChange={(v: string) => update('linkedin', v)} placeholder="linkedin.com/in/your-profile" error={urlErrors.linkedin} />
-              <FieldInput label="GitHub URL" value={data.github} onChange={(v: string) => update('github', v)} placeholder="github.com/username" error={urlErrors.github} />
+            <div className="soft-card p-5 space-y-4">
+              {/* LinkedIn */}
+              <div>
+                <FieldInput label="LinkedIn URL" value={data.linkedin} onChange={(v: string) => update('linkedin', v)} onBlur={() => handleUrlBlur('linkedin')} placeholder="linkedin.com/in/your-profile" error={urlErrors.linkedin} />
+                {resolvedUsernames.linkedin && (
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <LinkedinLogo size={14} weight="fill" className="text-[#0A66C2]" />
+                    <span className="text-xs font-bold text-[#0A66C2] dark:text-blue-400">{resolvedUsernames.linkedin}</span>
+                    <Check size={11} weight="bold" className="text-emerald-500" />
+                  </div>
+                )}
+              </div>
+              {/* GitHub */}
+              <div>
+                <FieldInput label="GitHub URL" value={data.github} onChange={(v: string) => update('github', v)} onBlur={() => handleUrlBlur('github')} placeholder="github.com/username" error={urlErrors.github} />
+                {resolvedUsernames.github && (
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <GithubLogo size={14} weight="fill" className="text-slate-800 dark:text-white" />
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{resolvedUsernames.github}</span>
+                    <Check size={11} weight="bold" className="text-emerald-500" />
+                  </div>
+                )}
+              </div>
+              {/* Portfolio */}
               <FieldInput label="Portfolio / Website" value={data.portfolio} onChange={(v: string) => update('portfolio', v)} placeholder="yoursite.com" error={urlErrors.portfolio} />
-              <FieldInput label="City / Location" value={data.location} onChange={(v: string) => update('location', v)} placeholder="Hyderabad, Telangana" />
             </div>
           </motion.div>
         )}
@@ -379,14 +459,19 @@ const ResumeProfileEditor = () => {
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <div className="space-y-3">
               {certs.map((c: any, i: number) => (
-                <div key={i} className="soft-card p-4 flex items-start gap-3">
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <FieldInput label="Certificate Name" value={c.name} onChange={(v: string) => updateItem('certifications', i, 'name', v)} placeholder="AWS Cloud Practitioner" />
-                    <FieldInput label="Issuer" value={c.issuer} onChange={(v: string) => updateItem('certifications', i, 'issuer', v)} placeholder="Amazon Web Services" />
-                    <FieldInput label="Year" value={c.year} onChange={(v: string) => updateItem('certifications', i, 'year', v)} placeholder="2024" />
-                    <FieldInput label="Credential URL" value={c.url} onChange={(v: string) => updateItem('certifications', i, 'url', v)} placeholder="https://..." />
+                <div key={i} className="soft-card p-5">
+                  <div className="flex justify-between mb-3">
+                    <span className="text-xs font-extrabold text-indigo-500">Certificate #{i + 1}</span>
+                    <RemoveBtn onClick={() => removeItem('certifications', i)} />
                   </div>
-                  <div className="mt-5"><RemoveBtn onClick={() => removeItem('certifications', i)} /></div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                    <FieldInput label="Certificate Name" value={c.name} onChange={(v: string) => updateItem('certifications', i, 'name', v)} placeholder="AWS Cloud Practitioner" />
+                    <FieldInput label="Issuing Organization" value={c.issuer} onChange={(v: string) => updateItem('certifications', i, 'issuer', v)} placeholder="Amazon Web Services" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <FieldInput label="Year" value={c.year} onChange={(v: string) => updateItem('certifications', i, 'year', v)} placeholder="2024" />
+                    <FieldInput label="Credential URL" value={c.url} onChange={(v: string) => updateItem('certifications', i, 'url', v)} placeholder="https://verify.example.com/cert/..." />
+                  </div>
                 </div>
               ))}
               {certs.length === 0 && <div className="soft-card p-8 text-center"><p className="text-sm text-slate-400">No certifications added yet.</p></div>}
