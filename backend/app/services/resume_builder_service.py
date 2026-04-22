@@ -163,25 +163,27 @@ def _build_classic(data: Dict[str, Any]) -> Document:
             _run(p, current["batch"], sz=Pt(11), italic=True)
 
     for edu in education:
-        level = edu.get("level", "")
+        degree = edu.get("degree") or edu.get("level", "")
         school = edu.get("school", "")
+        location = edu.get("location", "")
+        field = edu.get("field") or edu.get("board", "")
+        year = edu.get("gradYear") or edu.get("year", "")
+        month = edu.get("gradMonth", "")
+        percentage = edu.get("percentage", "")
 
-        # Line 1: Level, School .... right-aligned Year
+        # Line 1: Degree, School .... right-aligned graduation date
         p = _para(doc, sp_before=4, sp_after=0)
         p.paragraph_format.tab_stops.add_tab_stop(_CONTENT_WIDTH, WD_TAB_ALIGNMENT.RIGHT)
-        _run(p, level, sz=Pt(11), bold=True)
+        _run(p, degree, sz=Pt(11), bold=True)
         if school:
             _run(p, f", {school}", sz=Pt(11))
-        if edu.get("year"):
+        grad_date = f"{month} {year}".strip() if month else str(year) if year else ""
+        if grad_date:
             _run(p, "\t", sz=Pt(11))
-            _run(p, str(edu["year"]), sz=Pt(11), italic=True)
+            _run(p, grad_date, sz=Pt(11), italic=True)
 
-        # Line 2: Board | Percentage (subtitle)
-        sub = []
-        if edu.get("board"):
-            sub.append(edu["board"])
-        if edu.get("percentage"):
-            sub.append(f"{edu['percentage']}")
+        # Line 2: Field of Study | Location | Percentage
+        sub = [v for v in [field, location, percentage] if v]
         if sub:
             p2 = _para(doc, sp_before=0, sp_after=1)
             _run(p2, "  |  ".join(sub), sz=Pt(10), italic=True)

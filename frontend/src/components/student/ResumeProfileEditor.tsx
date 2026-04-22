@@ -394,10 +394,10 @@ const ResumeProfileEditor = () => {
         )}
       </AnimatePresence>
 
-      {/* ── Education History (10th/12th) ─── */}
-      <SectionHeader icon={GraduationCap} title="Education History (10th / 12th)" color="from-amber-500 to-orange-600" count={eduHistory.length}
+      {/* ── Education ─── */}
+      <SectionHeader icon={GraduationCap} title="Education" color="from-amber-500 to-orange-600" count={eduHistory.length}
         expanded={expanded === 'education_history'} onToggle={() => toggle('education_history')}
-        onAdd={() => addItem('education_history', { level: '', school: '', board: '', year: '', percentage: '' })} />
+        onAdd={() => addItem('education_history', { school: '', location: '', degree: '', field: '', gradMonth: '', gradYear: '', stillEnrolled: false, percentage: '' })} />
       <AnimatePresence>
         {expanded === 'education_history' && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
@@ -411,30 +411,81 @@ const ResumeProfileEditor = () => {
                     </div>
                     <RemoveBtn onClick={() => removeItem('education_history', i)} />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Level</label>
-                      <select value={e.level || ''} onChange={ev => updateItem('education_history', i, 'level', ev.target.value)} className="soft-input w-full text-sm">
-                        <option value="">Select...</option>
-                        <option value="10th">10th (SSC / CBSE / ICSE)</option>
-                        <option value="12th">12th (Intermediate / HSC)</option>
-                        <option value="Diploma">Diploma</option>
-                        <option value="Other">Other</option>
-                      </select>
+                  <div className="space-y-3">
+                    {/* Row 1: School Name + Location */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <FieldInput label="School Name" value={e.school} onChange={(v: string) => updateItem('education_history', i, 'school', v)} placeholder="e.g., Delhi Public School" />
+                      <FieldInput label="School Location" value={e.location} onChange={(v: string) => updateItem('education_history', i, 'location', v)} placeholder="e.g., Hyderabad, India" />
                     </div>
-                    <FieldInput label="School / College" value={e.school} onChange={(v: string) => updateItem('education_history', i, 'school', v)} placeholder="e.g., Delhi Public School" />
-                    <FieldInput label="Board / University" value={e.board} onChange={(v: string) => updateItem('education_history', i, 'board', v)} placeholder="e.g., CBSE, AP Board" />
-                    <FieldInput label="Year" value={e.year} onChange={(v: string) => updateItem('education_history', i, 'year', v)} placeholder="2020" />
-                    <FieldInput label="Percentage / CGPA" value={e.percentage} onChange={(v: string) => updateItem('education_history', i, 'percentage', v)} placeholder="92% or 9.2 CGPA" />
+
+                    {/* Row 2: Degree */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Degree</label>
+                        <select value={e.degree || e.level || ''} onChange={ev => updateItem('education_history', i, 'degree', ev.target.value)} className="soft-input w-full text-sm">
+                          <option value="">Select</option>
+                          <option value="10th">10th (SSC / CBSE / ICSE)</option>
+                          <option value="12th">12th (Intermediate / HSC)</option>
+                          <option value="Diploma">Diploma</option>
+                          <option value="B.Tech">B.Tech</option>
+                          <option value="B.Sc">B.Sc</option>
+                          <option value="B.Com">B.Com</option>
+                          <option value="BBA">BBA</option>
+                          <option value="BCA">BCA</option>
+                          <option value="M.Tech">M.Tech</option>
+                          <option value="M.Sc">M.Sc</option>
+                          <option value="MBA">MBA</option>
+                          <option value="MCA">MCA</option>
+                          <option value="PhD">PhD</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <FieldInput label="Percentage / CGPA" value={e.percentage} onChange={(v: string) => updateItem('education_history', i, 'percentage', v)} placeholder="92% or 9.2 CGPA" />
+                    </div>
+
+                    {/* Row 3: Field of Study + Graduation Date */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <FieldInput label="Field of Study" value={e.field || e.board || ''} onChange={(v: string) => updateItem('education_history', i, 'field', v)} placeholder="e.g., Computer Science, Commerce" />
+                      <div>
+                        <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Graduation Date</label>
+                        <div className="flex gap-2">
+                          <select value={e.gradMonth || ''} onChange={ev => updateItem('education_history', i, 'gradMonth', ev.target.value)} className="soft-input flex-1 text-sm">
+                            <option value="">Month</option>
+                            {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                          </select>
+                          <select value={e.gradYear || e.year || ''} onChange={ev => updateItem('education_history', i, 'gradYear', ev.target.value)} className="soft-input flex-1 text-sm">
+                            <option value="">Year</option>
+                            {Array.from({ length: 15 }, (_, k) => new Date().getFullYear() + 5 - k).map(y => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Row 4: Still enrolled checkbox */}
+                    <label className="flex items-center gap-2.5 cursor-pointer group mt-1">
+                      <input type="checkbox" checked={!!e.stillEnrolled} onChange={ev => updateItem('education_history', i, 'stillEnrolled', ev.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-teal-500 focus:ring-teal-400 dark:bg-slate-800" />
+                      <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-800 dark:group-hover:text-white transition-colors">I'm still enrolled</span>
+                    </label>
                   </div>
                 </Reorder.Item>
               ))}
               {eduHistory.length === 0 && (
                 <div className="soft-card p-8 text-center">
-                  <p className="text-sm text-slate-400">No education history added yet. Click + to add your 10th/12th details.</p>
+                  <p className="text-sm text-slate-400">No education added yet. Click + to add your education details.</p>
                 </div>
               )}
             </Reorder.Group>
+
+            {/* Pro tip */}
+            <div className="flex items-start gap-2 mt-3 px-1">
+              <Sparkle size={14} weight="fill" className="text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-slate-400"><span className="font-bold text-slate-500">Pro Tip</span>  Details like honors, clubs, and research projects show employers your growth and learning.</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

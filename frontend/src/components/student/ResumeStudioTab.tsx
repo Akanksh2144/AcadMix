@@ -93,22 +93,29 @@ const ResumePreview = ({ data, template }: { data: any; template: string }) => {
             </div>
           </div>
         )}
-        {education.map((edu: any, i: number) => (
-          <div key={i} className="mb-[4px]">
-            <div className="flex items-baseline justify-between">
-              <p className="text-[9px] text-black">
-                <span className="font-[700]">{edu.level}</span>
-                {edu.school && <span>, {edu.school}</span>}
-              </p>
-              {edu.year && <span className="text-[8px] text-black italic shrink-0 ml-2">{edu.year}</span>}
+        {education.map((edu: any, i: number) => {
+          const degree = edu.degree || edu.level || '';
+          const field = edu.field || edu.board || '';
+          const year = edu.gradYear || edu.year || '';
+          const month = edu.gradMonth || '';
+          const gradDate = month ? `${month} ${year}`.trim() : year;
+          return (
+            <div key={i} className="mb-[4px]">
+              <div className="flex items-baseline justify-between">
+                <p className="text-[9px] text-black">
+                  <span className="font-[700]">{degree}</span>
+                  {edu.school && <span>, {edu.school}</span>}
+                </p>
+                {gradDate && <span className="text-[8px] text-black italic shrink-0 ml-2">{gradDate}</span>}
+              </div>
+              {(field || edu.location || edu.percentage) && (
+                <p className="text-[7.5px] text-black italic">
+                  {[field, edu.location, edu.percentage].filter(Boolean).join('  |  ')}
+                </p>
+              )}
             </div>
-            {(edu.board || edu.percentage) && (
-              <p className="text-[7.5px] text-black italic">
-                {[edu.board, edu.percentage].filter(Boolean).join('  |  ')}
-              </p>
-            )}
-          </div>
-        ))}
+          );
+        })}
 
         {/* Skills */}
         {hasSkills ? (
