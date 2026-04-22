@@ -309,9 +309,9 @@ const ResumeProfileEditor = () => {
                 {/* Name — read-only from ERP */}
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Full Name</label>
-                  <div className="flex items-center gap-2">
-                    <input type="text" value={autoFilled.name || ''} readOnly className="soft-input w-full text-sm !bg-slate-50 dark:!bg-white/[0.03] !cursor-not-allowed !text-slate-500" />
-                    <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800" title="Read-only from ERP"><Lock size={13} weight="bold" className="text-slate-400" /></div>
+                  <div className="relative">
+                    <input type="text" value={autoFilled.name || ''} readOnly className="soft-input w-full text-sm pr-10 !bg-slate-50 dark:!bg-white/[0.03] !cursor-not-allowed !text-slate-500" />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" title="Read-only from ERP"><Lock size={13} weight="bold" /></div>
                   </div>
                   <p className="text-[10px] text-slate-400 mt-1">Managed by your college admin</p>
                 </div>
@@ -403,10 +403,10 @@ const ResumeProfileEditor = () => {
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <Reorder.Group axis="y" values={eduHistory} onReorder={(newOrder: any[]) => update('education_history', newOrder)} className="space-y-3">
               {eduHistory.map((e: any, i: number) => (
-                <Reorder.Item key={JSON.stringify(e)} value={e} className="soft-card p-5 cursor-grab active:cursor-grabbing">
+                <Reorder.Item key={JSON.stringify(e)} value={e} className="soft-card p-5">
                   <div className="flex justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <DotsSixVertical size={16} weight="bold" className="text-slate-300 dark:text-slate-600" />
+                    <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
+                      <DotsSixVertical size={16} weight="bold" className="text-slate-400 dark:text-slate-500" />
                       <span className="text-xs font-extrabold text-slate-500">#{i + 1}</span>
                     </div>
                     <RemoveBtn onClick={() => removeItem('education_history', i)} />
@@ -514,10 +514,10 @@ const ResumeProfileEditor = () => {
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <Reorder.Group axis="y" values={projects} onReorder={(newOrder: any[]) => update('projects', newOrder)} className="space-y-3">
               {projects.map((p: any, i: number) => (
-                <Reorder.Item key={JSON.stringify(p)} value={p} className="soft-card p-5 cursor-grab active:cursor-grabbing">
+                <Reorder.Item key={JSON.stringify(p)} value={p} className="soft-card p-5">
                   <div className="flex justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <DotsSixVertical size={16} weight="bold" className="text-slate-300 dark:text-slate-600" />
+                    <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
+                      <DotsSixVertical size={16} weight="bold" className="text-slate-400 dark:text-slate-500" />
                       <span className="text-xs font-extrabold text-emerald-500">Project #{i + 1}</span>
                     </div>
                     <RemoveBtn onClick={() => removeItem('projects', i)} />
@@ -546,10 +546,10 @@ const ResumeProfileEditor = () => {
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <Reorder.Group axis="y" values={experience} onReorder={(newOrder: any[]) => update('experience', newOrder)} className="space-y-3">
               {experience.map((e: any, i: number) => (
-                <Reorder.Item key={JSON.stringify(e)} value={e} className="soft-card p-5 cursor-grab active:cursor-grabbing">
+                <Reorder.Item key={JSON.stringify(e)} value={e} className="soft-card p-5">
                   <div className="flex justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <DotsSixVertical size={16} weight="bold" className="text-slate-300 dark:text-slate-600" />
+                    <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
+                      <DotsSixVertical size={16} weight="bold" className="text-slate-400 dark:text-slate-500" />
                       <span className="text-xs font-extrabold text-rose-500">Experience #{i + 1}</span>
                     </div>
                     <RemoveBtn onClick={() => removeItem('experience', i)} />
@@ -578,10 +578,10 @@ const ResumeProfileEditor = () => {
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <Reorder.Group axis="y" values={certs} onReorder={(newOrder: any[]) => update('certifications', newOrder)} className="space-y-3">
               {certs.map((c: any, i: number) => (
-                <Reorder.Item key={JSON.stringify(c)} value={c} className="soft-card p-5 cursor-grab active:cursor-grabbing">
+                <Reorder.Item key={JSON.stringify(c)} value={c} className="soft-card p-5">
                   <div className="flex justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <DotsSixVertical size={16} weight="bold" className="text-slate-300 dark:text-slate-600" />
+                    <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
+                      <DotsSixVertical size={16} weight="bold" className="text-slate-400 dark:text-slate-500" />
                       <span className="text-xs font-extrabold text-indigo-500">Certificate #{i + 1}</span>
                     </div>
                     <RemoveBtn onClick={() => removeItem('certifications', i)} />
