@@ -305,9 +305,12 @@ async def generate_docx(
         if college:
             institution = college.name
 
+    # Get user's name from User model (not UserProfile)
+    student_name_str = user_obj.name if user_obj else user.get("full_name", "Resume")
+
     data = {
         "personal": {
-            "name": profile.full_name or user.get("full_name", ""),
+            "name": student_name_str,
             "email": resume.get("email") or user.get("email", ""),
             "phone": resume.get("phone") or getattr(profile, "phone", "") or "",
             "location": resume.get("location", ""),
@@ -336,6 +339,6 @@ async def generate_docx(
     doc.save(buffer)
     buffer.seek(0)
 
-    student_name = (profile.full_name or "resume").replace(" ", "_")
+    safe_name = (student_name_str or "resume").replace(" ", "_")
     logger.info("Generated %s resume for student %s", template, user["id"])
-    return buffer, f"{student_name}_Resume.docx"
+    return buffer, f"{safe_name}_Resume.docx"
