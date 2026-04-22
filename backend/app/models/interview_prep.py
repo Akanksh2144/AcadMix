@@ -94,3 +94,72 @@ class PlacementRestriction(Base, SoftDeleteMixin):
     expires_at       = Column(DateTime(timezone=True), nullable=True)     # NULL = permanent
     created_at       = Column(DateTime(timezone=True), server_default=func.now())
 
+
+class CompanyQuestionBank(Base, SoftDeleteMixin):
+    """Company-specific mass-recruiter test patterns (e.g. TCS NQT, Infosys HackWithInfy)."""
+    __tablename__ = "company_question_banks"
+
+    id             = Column(String, primary_key=True, index=True, default=generate_uuid)
+    company_name   = Column(String, index=True, nullable=False)                         # 'TCS', 'Infosys', 'Amazon'
+    exam_name      = Column(String, nullable=False)                                     # 'TCS NQT', 'HackWithInfy'
+    exam_pattern   = Column(JSONB, nullable=False)                                      # {"sections": ["Numerical", "Verbal"], "total_questions": 26, "duration_minutes": 60}
+    questions      = Column(JSONB, nullable=False, server_default='[]')                 # Array of question dicts
+    created_at     = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class AptitudeQuestion(Base, SoftDeleteMixin):
+    """Quantitative, Logical, and Verbal reasoning database."""
+    __tablename__ = "aptitude_questions"
+
+    id             = Column(String, primary_key=True, index=True, default=generate_uuid)
+    category       = Column(String, index=True, nullable=False)                         # Quantitative / Logical / Verbal
+    subcategory    = Column(String, nullable=True)                                      # Time & Work, Puzzles, Grammar
+    difficulty     = Column(String, nullable=False, server_default='medium')            # easy/medium/hard
+    question_text  = Column(Text, nullable=False)
+    options        = Column(JSONB, nullable=False)                                      # {"A": "val", "B": "val2", ...}
+    correct_option = Column(String, nullable=False)                                     # "A"
+    explanation    = Column(Text, nullable=True)
+    created_at     = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class CompanyInterviewExperience(Base, SoftDeleteMixin):
+    """Curated, read-only interview records from past years."""
+    __tablename__ = "company_interview_experiences"
+
+    id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    company_name     = Column(String, index=True, nullable=False)
+    target_role      = Column(String, index=True, nullable=False)                       # SDE-1, Data Analyst
+    year             = Column(Integer, nullable=False)
+    difficulty_rating= Column(Integer, nullable=True)                                   # 1-5 scale
+    rounds           = Column(JSONB, nullable=False, server_default='[]')               # [{"round": 1, "type": "OA", "details": "..."}]
+    created_at       = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class SQLProblem(Base, SoftDeleteMixin):
+    """DataLemur-style SQL Practice challenges"""
+    __tablename__ = "sql_problems"
+
+    id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    title            = Column(String, nullable=False)
+    dataset_theme    = Column(String, nullable=False)                                   # E-commerce, HR, Social Media
+    company_tag      = Column(String, nullable=True)                                    # 'Amazon'
+    difficulty       = Column(String, nullable=False, server_default='medium')          # easy/medium/hard
+    problem_statement= Column(Text, nullable=False)
+    schema_sql       = Column(Text, nullable=False)                                     # CREATE TABLE ... INSERT INTO ...
+    hint             = Column(Text, nullable=True)
+    expected_query   = Column(Text, nullable=False)                                     # Server-side validation logic
+    expected_output  = Column(JSONB, nullable=False)                                    # JSON array format of output rows
+    created_at       = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class PlacementAttemptTracker(Base, SoftDeleteMixin):
+    """Aggregates all placement practice stats to power the TPO Accreditation Dashboard"""
+    __tablename__ = "placement_attempt_trackers"
+
+    id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    student_id       = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    module_type      = Column(String, nullable=False)                                   # 'aptitude', 'sql', 'company_bank'
+    reference_id     = Column(String, nullable=False)                                   # Question ID / SQL ID
+    is_correct       = Column(Boolean, nullable=False)
+    time_taken_sec   = Column(Integer, nullable=True)
+    created_at       = Column(DateTime(timezone=True), server_default=func.now())

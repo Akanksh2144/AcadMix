@@ -744,3 +744,15 @@ export const preEnrollAPI = {
   })
 };
 
+// PLACEMENT PREP DEPTH API
+export const placementPrepAPI = {
+  aptitudeQuestions: (params) => api.get('/placement-prep/aptitude', { params }),
+  companyPrep: (companyName) => api.get('/placement-prep/company', { params: { company_name: companyName } }),
+  companyExperiences: (companyName) => api.get('/placement-prep/experiences', { params: { company_name: companyName } }),
+  sqlProblems: (params) => api.get('/placement-prep/sql-problems', { params }),
+  getSqlProblem: (id) => api.get(`/placement-prep/sql-problems/${id}`),
+  logAptitudeAttempt: (data) => api.post('/placement-prep/aptitude/attempt', data),
+  logSqlAttempt: (data) => api.post('/placement-prep/sql/attempt', data),
+  getProgress: (studentId) => api.get(`/placement-prep/progress/${studentId}`),
+};
+

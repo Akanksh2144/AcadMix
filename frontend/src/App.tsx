@@ -56,6 +56,7 @@ const PreEnrollBooking = React.lazy(() => import('./pages/PreEnrollBooking'));
 const WardenDashboard = React.lazy(() => import('./pages/WardenDashboard'));
 const ResumeATSScorer = React.lazy(() => import('./pages/ResumeATSScorer'));
 const CareerToolkit = React.lazy(() => import('./pages/CareerToolkit')); 
+const SQLPractice = React.lazy(() => import('./pages/SQLPractice'));
 const TransportAdminDashboard = React.lazy(() => import('./pages/TransportAdminDashboard'));
 const LibrarianDashboard = React.lazy(() => import('./pages/LibrarianDashboard'));
 const SecurityDashboard = React.lazy(() => import('./pages/SecurityDashboard'));
@@ -392,6 +393,9 @@ function AppRoutes({ user, onLogin, onLogout }) {
       } />
       <Route path="/career" element={
         <ProtectedRoute user={user}><CareerToolkit navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/sql-practice" element={
+        <ProtectedRoute user={user}><SQLPractice navigate={navigate} user={user} /></ProtectedRoute>
       } />
       <Route path="/placements" element={
         <ProtectedRoute user={user}><Placements navigate={navigate} user={user} /></ProtectedRoute>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Buildings, Briefcase, FileText, ChartLineUp, SignOut, DownloadSimple, Users, Trophy, Plus, Sun, Moon, Bell, Info, BookOpen, UserCircle, X, Upload, Table, CalendarBlank, MapPin, CurrencyDollar, GraduationCap, CheckCircle, WarningCircle, SpinnerGap, PencilSimple, Sparkle, Trash } from '@phosphor-icons/react';
+import { Buildings, Briefcase, FileText, ChartLineUp, SignOut, DownloadSimple, Users, Trophy, Plus, Sun, Moon, Bell, Info, BookOpen, UserCircle, X, Upload, Table, CalendarBlank, MapPin, CurrencyDollar, GraduationCap, CheckCircle, WarningCircle, SpinnerGap, PencilSimple, Sparkle, Trash, Database, Brain, ShieldCheck } from '@phosphor-icons/react';
 import { tpoAPI, notificationsAPI, insightsAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
@@ -663,6 +663,71 @@ const OverviewContent = () => {
             <p className="text-sm font-medium text-slate-400">Download placement data as Excel</p>
           </div>
         </motion.div>
+      </motion.div>
+
+      {/* --- NAAC / NBA Accreditation Matrix --- */}
+      <motion.div variants={itemVariants} className="mt-8">
+        <div className="flex items-center justify-between mb-4">
+           <h3 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+             <ShieldCheck size={24} weight="fill" className="text-indigo-500" />
+             Institutional Readiness Matrix
+           </h3>
+           <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest rounded-full">
+             NAAC / NBA Evidence
+           </span>
+        </div>
+
+        <div className="bg-white dark:bg-[#1A202C] rounded-2xl border border-slate-200 dark:border-white/10 p-6 flex flex-col md:flex-row gap-8 shadow-sm">
+           {/* Left: Overall Score */}
+           <div className="md:w-1/3 flex flex-col justify-center items-center p-6 bg-slate-50 dark:bg-[#0F172A] rounded-2xl border border-slate-100 dark:border-white/5">
+              <div className="relative flex items-center justify-center w-32 h-32">
+                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="18" cy="18" r="16" fill="none" className="stroke-slate-200 dark:stroke-slate-800" strokeWidth="3"></circle>
+                    <circle cx="18" cy="18" r="16" fill="none" className="stroke-indigo-500" strokeWidth="3" strokeDasharray="100 100" strokeDashoffset="22" strokeLinecap="round"></circle>
+                 </svg>
+                 <div className="absolute flex flex-col items-center">
+                    <span className="text-3xl font-extrabold text-slate-900 dark:text-white">78%</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Avg Score</span>
+                 </div>
+              </div>
+              <p className="text-xs font-bold text-slate-500 mt-4 text-center">
+                Institutional Placement Readiness Index calculated across 850 students.
+              </p>
+           </div>
+
+           {/* Right: Breakdown */}
+           <div className="md:w-2/3 flex flex-col justify-center gap-6">
+              <div>
+                <div className="flex justify-between items-end mb-2">
+                   <span className="font-bold text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2"><Database size={16} className="text-blue-500"/> SQL Practice (DataLemur)</span>
+                   <span className="font-extrabold text-sm text-slate-900 dark:text-white">65% Completion</span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
+                   <div className="bg-blue-500 h-2 rounded-full" style={{ width: '65%' }}></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-end mb-2">
+                   <span className="font-bold text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2"><Brain size={16} className="text-amber-500"/> Aptitude & Reasoning</span>
+                   <span className="font-extrabold text-sm text-slate-900 dark:text-white">82% Completion</span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
+                   <div className="bg-amber-500 h-2 rounded-full" style={{ width: '82%' }}></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-end mb-2">
+                   <span className="font-bold text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2"><Buildings size={16} className="text-emerald-500"/> Target Company Prep</span>
+                   <span className="font-extrabold text-sm text-slate-900 dark:text-white">41% Completion</span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
+                   <div className="bg-emerald-500 h-2 rounded-full" style={{ width: '41%' }}></div>
+                </div>
+              </div>
+           </div>
+        </div>
       </motion.div>
     </motion.div>
   );

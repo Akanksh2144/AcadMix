@@ -7,7 +7,7 @@ from app.routers import (
     exam_cell_core, student_core, hod_core, faculty_core, admin_core, attempts, results, analytics, 
     leaderboard, dashboards, marks_extra, timetable_extra, announcements, challenges, industry, tpo, fees, webhooks,
     interview, resume, hostel, career_tools, iot_webhooks, transport, transport_admin, library,
-    visitors, websocket, notifications, audit, insights, pre_enroll, modules, resume_vault, outcomes, assessments,
+    visitors, websocket, notifications, audit, insights, pre_enroll, modules, resume_vault, outcomes, assessments, placement_prep,
 )
 from app.routers import nodal_routes
 
@@ -32,6 +32,7 @@ api_router.include_router(tpo.router, tags=["tpo"])
 api_router.include_router(fees.router, tags=["fees"])
 api_router.include_router(interview.router, tags=["interview_warroom"])
 api_router.include_router(resume.router, tags=["interview_warroom"])
+api_router.include_router(placement_prep.router, tags=["placement_prep"])
 api_router.include_router(hostel.router, tags=["hostel"])
 api_router.include_router(library.router, tags=["library"])
 api_router.include_router(career_tools.router, tags=["career_toolkit"])

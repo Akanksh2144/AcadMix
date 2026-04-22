@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FileText, Briefcase, Envelope, ChartPolar, Users, Code, Path, Buildings,
+  FileText, Briefcase, Envelope, ChartPolar, Users, Code, Path, Buildings, Database,
   Sparkle, Copy, Check, CaretDown, CaretRight, ArrowRight, Lightning, Target,
   Star, Trophy, Warning, Brain, MagnifyingGlass, BookOpen, GraduationCap,
   ClipboardText, Lightbulb, Rocket, Fire, Clock
@@ -937,6 +937,55 @@ const CareerToolkit = ({ navigate, user }: any) => {
       <PageHeader navigate={navigate} user={user} title="Career Toolkit" subtitle="Powered by Ami" maxWidth="max-w-7xl" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        
+        {/* Placement Arenas (New Phase 1 Integration) */}
+        <div className="mb-10">
+          <h3 className="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+             <Target size={18} className="text-teal-500"/> Placement Arenas
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+             <motion.div 
+               onClick={() => navigate('/sql-practice')}
+               whileHover={{ scale: 1.02 }} 
+               className="bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 rounded-2xl p-6 cursor-pointer shadow-sm hover:shadow-xl hover:border-indigo-500 transition-all flex flex-col items-start"
+             >
+                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center mb-4">
+                   <Database size={24} weight="duotone" className="text-indigo-500" />
+                </div>
+                <h4 className="font-extrabold text-slate-900 dark:text-white text-lg">SQL Sandbox</h4>
+                <p className="text-sm text-slate-500 mt-1">DataLemur-style environment with mass-recruiter database patterns.</p>
+             </motion.div>
+
+             <motion.div 
+               onClick={() => alert('Aptitude module is coming later this week!')}
+               whileHover={{ scale: 1.02 }} 
+               className="bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 rounded-2xl p-6 cursor-pointer shadow-sm hover:shadow-xl hover:border-amber-500 transition-all flex flex-col items-start"
+             >
+                <div className="w-12 h-12 bg-amber-50 dark:bg-amber-500/10 rounded-xl flex items-center justify-center mb-4">
+                   <Brain size={24} weight="duotone" className="text-amber-500" />
+                </div>
+                <h4 className="font-extrabold text-slate-900 dark:text-white text-lg">Aptitude & Reasoning</h4>
+                <p className="text-sm text-slate-500 mt-1">Quant, logical, and verbal diagnostic quizzes.</p>
+             </motion.div>
+
+             <motion.div 
+               onClick={() => alert('Company specific banks are being compiled.')}
+               whileHover={{ scale: 1.02 }} 
+               className="bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 rounded-2xl p-6 cursor-pointer shadow-sm hover:shadow-xl hover:border-emerald-500 transition-all flex flex-col items-start"
+             >
+                <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4">
+                   <Buildings size={24} weight="duotone" className="text-emerald-500" />
+                </div>
+                <h4 className="font-extrabold text-slate-900 dark:text-white text-lg">Target Company Prep</h4>
+                <p className="text-sm text-slate-500 mt-1">TCS, Amazon, Google specific patterns and history.</p>
+             </motion.div>
+          </div>
+        </div>
+
+        <h3 className="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2 mt-4 mt-8 pt-8 border-t border-slate-100 dark:border-white/5">
+           <Code size={18} className="text-slate-400"/> AI Toolkit
+        </h3>
+
         {/* Tab Bar */}
         <div className="flex overflow-x-auto gap-1 p-1.5 bg-slate-100 dark:bg-white/[0.04] rounded-xl mb-8 hide-scrollbar">
           {TABS.map(tab => {
