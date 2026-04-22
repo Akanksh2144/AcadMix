@@ -171,3 +171,65 @@ async def _get_user_profile(
         )
     )
     return result.scalars().first()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Social Profile Verification
+# ═══════════════════════════════════════════════════════════════════════════════
+
+async def verify_social_profile(platform: str, username: str) -> Dict[str, Any]:
+    """
+    Verify a social profile exists and fetch public metadata.
+
+    GitHub: Uses public API (no auth needed, 60 req/hr rate limit).
+    LinkedIn: No public API — returns parsed username only.
+    """
+    import httpx
+
+    username = username.strip()
+    if not username or len(username) > 100:
+        return {"exists": False, "error": "Invalid username"}
+
+    if platform == "github":
+        try:
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                resp = await client.get(
+                    f"https://api.github.com/users/{username}",
+                    headers={"Accept": "application/vnd.github.v3+json"},
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return {
+                        "exists": True,
+                        "platform": "github",
+                        "username": data.get("login", username),
+                        "full_name": data.get("name") or data.get("login", username),
+                        "avatar_url": data.get("avatar_url"),
+                        "bio": data.get("bio") or "",
+                        "public_repos": data.get("public_repos", 0),
+                    }
+                elif resp.status_code == 404:
+                    return {"exists": False, "platform": "github", "error": "Profile not found"}
+                elif resp.status_code == 403:
+                    logger.warning("GitHub API rate limited")
+                    return {"exists": None, "platform": "github", "error": "Rate limited — try again later"}
+                else:
+                    return {"exists": None, "platform": "github", "error": "Could not verify"}
+        except httpx.TimeoutException:
+            return {"exists": None, "platform": "github", "error": "GitHub took too long to respond"}
+        except Exception as e:
+            logger.error("GitHub verification error: %s", str(e))
+            return {"exists": None, "platform": "github", "error": "Verification failed"}
+
+    elif platform == "linkedin":
+        # LinkedIn has no public profile API — would need OAuth app approval.
+        # We return the parsed username as a best-effort result.
+        return {
+            "exists": None,
+            "platform": "linkedin",
+            "username": username,
+            "full_name": None,
+            "note": "LinkedIn verification requires OAuth — cannot auto-verify",
+        }
+
+    return {"exists": False, "error": f"Unknown platform: {platform}"}

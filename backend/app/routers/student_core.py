@@ -362,3 +362,13 @@ async def update_resume_profile(
 ):
     """Update student-editable resume profile fields (projects, skills, experience, etc.)."""
     return await resume_profile_service.update_resume_profile(user, data, session)
+
+
+@router.get("/student/verify-social-profile")
+async def verify_social_profile(
+    platform: str = Query(..., regex="^(github|linkedin)$"),
+    username: str = Query(..., min_length=1, max_length=100),
+    user: dict = Depends(require_role("student")),
+):
+    """Verify a GitHub/LinkedIn profile exists and return public metadata."""
+    return await resume_profile_service.verify_social_profile(platform, username)

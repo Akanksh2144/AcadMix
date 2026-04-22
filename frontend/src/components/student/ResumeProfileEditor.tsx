@@ -46,6 +46,18 @@ const extractUsername = (key: string, url: string): string | null => {
   return null;
 };
 
+interface SocialVerification {
+  exists: boolean | null;
+  username: string;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  bio?: string;
+  public_repos?: number;
+  note?: string;
+  error?: string;
+  loading?: boolean;
+}
+
 /* ── Shared small components ─────────────────────── */
 const SectionHeader = ({ icon: Icon, title, count, color, expanded, onToggle, onAdd }: any) => (
   <button onClick={onToggle} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10 transition-all group">
@@ -145,7 +157,7 @@ const ResumeProfileEditor = () => {
   const [expanded, setExpanded] = useState<string | null>('personal');
   const [dirty, setDirty] = useState(false);
   const [urlErrors, setUrlErrors] = useState<Record<string, string | null>>({});
-  const [resolvedUsernames, setResolvedUsernames] = useState<Record<string, string | null>>({});
+  const [socialProfiles, setSocialProfiles] = useState<Record<string, SocialVerification | null>>({});
 
   // Recompute URL validation whenever data changes
   const revalidateUrls = (d: any) => {
@@ -163,11 +175,13 @@ const ResumeProfileEditor = () => {
       setAutoFilled(res.auto_filled || {});
       const editable = res.editable || {};
       setData(editable);
-      // Resolve usernames from saved data on load
-      setResolvedUsernames({
-        linkedin: extractUsername('linkedin', editable.linkedin || ''),
-        github: extractUsername('github', editable.github || ''),
-      });
+      // Verify saved profiles on load
+      for (const key of ['github', 'linkedin'] as const) {
+        const username = extractUsername(key, editable[key] || '');
+        if (username) {
+          verifySocialProfile(key, username);
+        }
+      }
     } catch { /* silent */ }
     setLoading(false);
   }, []);
@@ -181,22 +195,37 @@ const ResumeProfileEditor = () => {
     // Re-validate URLs on each change for instant feedback
     if (['linkedin', 'github', 'portfolio'].includes(key)) {
       setUrlErrors(prev => ({ ...prev, [key]: validateUrl(key, value || '') }));
-      // Clear resolved username while typing (will re-resolve on blur)
+      // Clear verified profile while typing (will re-verify on blur)
       if (key === 'linkedin' || key === 'github') {
-        setResolvedUsernames(prev => ({ ...prev, [key]: null }));
+        setSocialProfiles(prev => ({ ...prev, [key]: null }));
       }
     }
   };
 
-  // Called on blur for LinkedIn/GitHub — extract and display username
+  // Verify social profile via backend API call
+  const verifySocialProfile = async (key: string, username: string) => {
+    setSocialProfiles(prev => ({ ...prev, [key]: { exists: null, username, loading: true } }));
+    try {
+      const { data: result } = await resumeProfileAPI.verifySocial(key, username);
+      setSocialProfiles(prev => ({ ...prev, [key]: { ...result, loading: false } }));
+    } catch {
+      setSocialProfiles(prev => ({ ...prev, [key]: { exists: null, username, error: 'Verification failed', loading: false } }));
+    }
+  };
+
+  // Called on blur for LinkedIn/GitHub — extract username and verify
   const handleUrlBlur = (key: string) => {
     const url = data[key] || '';
     const err = validateUrl(key, url);
     if (!err && url.trim()) {
       const username = extractUsername(key, url);
-      setResolvedUsernames(prev => ({ ...prev, [key]: username }));
+      if (username) {
+        verifySocialProfile(key, username);
+      } else {
+        setSocialProfiles(prev => ({ ...prev, [key]: null }));
+      }
     } else {
-      setResolvedUsernames(prev => ({ ...prev, [key]: null }));
+      setSocialProfiles(prev => ({ ...prev, [key]: null }));
     }
   };
 
@@ -296,22 +325,60 @@ const ResumeProfileEditor = () => {
               {/* LinkedIn */}
               <div>
                 <FieldInput label="LinkedIn URL" value={data.linkedin} onChange={(v: string) => update('linkedin', v)} onBlur={() => handleUrlBlur('linkedin')} placeholder="linkedin.com/in/your-profile" error={urlErrors.linkedin} />
-                {resolvedUsernames.linkedin && (
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <LinkedinLogo size={14} weight="fill" className="text-[#0A66C2]" />
-                    <span className="text-xs font-bold text-[#0A66C2] dark:text-blue-400">{resolvedUsernames.linkedin}</span>
-                    <Check size={11} weight="bold" className="text-emerald-500" />
+                {socialProfiles.linkedin?.loading && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-[11px] font-bold text-slate-400">Verifying LinkedIn profile...</span>
+                  </div>
+                )}
+                {socialProfiles.linkedin && !socialProfiles.linkedin.loading && (
+                  <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-blue-50/50 dark:bg-blue-500/5 border border-blue-200/30 dark:border-blue-500/15">
+                    <LinkedinLogo size={16} weight="fill" className="text-[#0A66C2] shrink-0" />
+                    <span className="text-xs font-bold text-[#0A66C2] dark:text-blue-400">{socialProfiles.linkedin.username}</span>
+                    {socialProfiles.linkedin.note && (
+                      <span className="text-[10px] text-slate-400 ml-1">· Cannot auto-verify</span>
+                    )}
                   </div>
                 )}
               </div>
               {/* GitHub */}
               <div>
                 <FieldInput label="GitHub URL" value={data.github} onChange={(v: string) => update('github', v)} onBlur={() => handleUrlBlur('github')} placeholder="github.com/username" error={urlErrors.github} />
-                {resolvedUsernames.github && (
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <GithubLogo size={14} weight="fill" className="text-slate-800 dark:text-white" />
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{resolvedUsernames.github}</span>
-                    <Check size={11} weight="bold" className="text-emerald-500" />
+                {socialProfiles.github?.loading && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-[11px] font-bold text-slate-400">Verifying GitHub profile...</span>
+                  </div>
+                )}
+                {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === true && (
+                  <div className="flex items-center gap-2.5 mt-2 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5">
+                    {socialProfiles.github.avatar_url && (
+                      <img src={socialProfiles.github.avatar_url} alt="" className="w-8 h-8 rounded-full ring-2 ring-emerald-400/40 shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <GithubLogo size={14} weight="fill" className="text-slate-800 dark:text-white shrink-0" />
+                        <span className="text-sm font-extrabold text-slate-800 dark:text-white truncate">{socialProfiles.github.full_name}</span>
+                        <Check size={13} weight="bold" className="text-emerald-500 shrink-0" />
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                        @{socialProfiles.github.username}
+                        {socialProfiles.github.public_repos !== undefined && ` · ${socialProfiles.github.public_repos} repos`}
+                        {socialProfiles.github.bio && ` · ${socialProfiles.github.bio}`}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === false && (
+                  <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-red-50/50 dark:bg-red-500/5 border border-red-200/30 dark:border-red-500/15">
+                    <Warning size={14} weight="fill" className="text-red-500 shrink-0" />
+                    <span className="text-xs font-bold text-red-500">GitHub profile not found</span>
+                  </div>
+                )}
+                {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === null && socialProfiles.github.error && (
+                  <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-amber-50/50 dark:bg-amber-500/5 border border-amber-200/30 dark:border-amber-500/15">
+                    <Warning size={14} weight="fill" className="text-amber-500 shrink-0" />
+                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{socialProfiles.github.error}</span>
                   </div>
                 )}
               </div>
