@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Editor from '@monaco-editor/react';
-import { Database, Play, CheckCircle, XCircle, List, ArrowLeft, Lightbulb, Warning, Table as TableIcon } from '@phosphor-icons/react';
+import { Database, Play, CheckCircle, XCircle, List, ArrowLeft, Lightbulb, Table as TableIcon } from '@phosphor-icons/react';
 import { useTheme } from '../contexts/ThemeContext';
 import { placementPrepAPI } from '../services/api';
 import { toast } from 'sonner';
@@ -22,7 +22,7 @@ const SQLPractice = ({ navigate, user }) => {
   const [selectedProblem, setSelectedProblem] = useState(null);
   
   // Editor & DB State
-  const [query, setQuery] = useState('-- Write your PostgreSQL query here\nSELECT * FROM ...;');
+  const [query, setQuery] = useState('-- Write your SQL query here\nSELECT * FROM ...;');
   const [db, setDb] = useState(null);
   const [dbError, setDbError] = useState(null);
   
@@ -34,17 +34,22 @@ const SQLPractice = ({ navigate, user }) => {
   const [showHint, setShowHint] = useState(false);
   const [tab, setTab] = useState('output'); // 'output' or 'expected'
 
-  // Ref to track component mount
+  // Ref to track component mount and SQL Engine
   const mounted = useRef(true);
+  const sqlEngineRef = useRef(null);
 
   // Initialize SQLite WASM
   useEffect(() => {
-    let initialized = false;
+    mounted.current = true;
     const initDB = async () => {
       try {
-        const SQL = await initSqlJs({ locateFile: () => sqlWasm });
+        if (!sqlEngineRef.current) {
+           const SQL = await initSqlJs({ locateFile: () => sqlWasm });
+           if (!mounted.current) return;
+           sqlEngineRef.current = SQL;
+        }
         if (mounted.current) {
-          setDb(() => new SQL.Database());
+          setDb(() => new sqlEngineRef.current.Database());
         }
       } catch (err) {
         console.error("Failed to load generic SQL Engine", err);
@@ -79,14 +84,14 @@ const SQLPractice = ({ navigate, user }) => {
     setTab('output');
 
     // Re-initialize database schema for this session
-    if (db) {
+    if (sqlEngineRef.current) {
       try {
         // Create fresh memory database
-        initSqlJs({ locateFile: () => sqlWasm }).then(SQL => {
-            const freshDb = new SQL.Database();
+        const freshDb = new sqlEngineRef.current.Database();
+        if (prob.schema_sql) {
             freshDb.run(prob.schema_sql);
-            setDb(() => freshDb);
-        });
+        }
+        setDb(() => freshDb);
       } catch (e) {
          setDbError("Schema loading failed: " + e.message);
       }
@@ -252,6 +257,7 @@ const SQLPractice = ({ navigate, user }) => {
                     <div className="flex items-center gap-2 mt-0.5">
                         <span className={`px-1.5 py-0.5 border rounded uppercase text-[9px] font-bold tracking-widest ${diffColors[selectedProblem.difficulty]}`}>{selectedProblem.difficulty}</span>
                         {selectedProblem.company_tag && <span className="text-[10px] font-bold text-slate-400">{selectedProblem.company_tag}</span>}
+                        <span className="bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-widest uppercase ml-1">SQLite Dialect</span>
                     </div>
                 </div>
             </div>
@@ -271,7 +277,7 @@ const SQLPractice = ({ navigate, user }) => {
             <div className="w-full lg:w-1/3 bg-white dark:bg-[#1E293B] overflow-y-auto border-r border-slate-200 dark:border-white/10 flex flex-col">
                 <div className="p-6">
                     <h3 className="text-xl font-extrabold text-slate-900 dark:text-white mb-4">Problem Statement</h3>
-                    <div className="prose prose-slate dark:prose-invert prose-sm max-w-none text-slate-700 dark:text-slate-300 leading-relaxed whitespce-pre-wrap">
+                    <div className="prose prose-slate dark:prose-invert prose-sm max-w-none text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
                         {selectedProblem.problem_statement}
                     </div>
                     
