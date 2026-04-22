@@ -17,6 +17,14 @@ from app import models
 
 logger = logging.getLogger("acadmix.resume_profile")
 
+# URL validation patterns — permissive but enforce correct domains
+import re
+_URL_VALIDATORS = {
+    "linkedin": re.compile(r'^(https?://)?(www\.)?linkedin\.com/in/[a-zA-Z0-9_-]{3,100}/?$'),
+    "github":   re.compile(r'^(https?://)?(www\.)?github\.com/[a-zA-Z0-9_-]{1,39}/?$'),
+    "portfolio": re.compile(r'^(https?://)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(/.*)?$'),
+}
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Schema constants — defines the shape of resume_profile within extra_data
@@ -130,7 +138,13 @@ async def update_resume_profile(
             resume[key] = cleaned
 
         elif key in ("linkedin", "github", "portfolio", "location", "summary"):
-            resume[key] = str(value)[:500] if value else ""
+            val = str(value).strip()[:500] if value else ""
+            # Validate URLs — reject silently if invalid
+            if key in _URL_VALIDATORS and val:
+                if not _URL_VALIDATORS[key].match(val):
+                    logger.info("Rejected invalid %s URL: %s", key, val[:80])
+                    continue
+            resume[key] = val
 
     extra["resume_profile"] = resume
     profile.extra_data = extra

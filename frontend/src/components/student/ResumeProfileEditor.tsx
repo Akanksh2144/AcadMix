@@ -10,6 +10,29 @@ import { toast } from 'sonner';
 
 const itemV = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } } };
 
+/* ── URL Validators ──────────────────────────────── */
+const URL_VALIDATORS: Record<string, { pattern: RegExp; hint: string }> = {
+  linkedin: {
+    pattern: /^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]{3,100}\/?$/,
+    hint: 'Must be linkedin.com/in/your-profile',
+  },
+  github: {
+    pattern: /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9_-]{1,39}\/?$/,
+    hint: 'Must be github.com/username',
+  },
+  portfolio: {
+    pattern: /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/,
+    hint: 'Must be a valid URL (e.g., yoursite.com)',
+  },
+};
+
+const validateUrl = (key: string, value: string): string | null => {
+  if (!value || !value.trim()) return null; // empty is fine
+  const rule = URL_VALIDATORS[key];
+  if (!rule) return null;
+  return rule.pattern.test(value.trim()) ? null : rule.hint;
+};
+
 /* ── Shared small components ─────────────────────── */
 const SectionHeader = ({ icon: Icon, title, count, color, expanded, onToggle, onAdd }: any) => (
   <button onClick={onToggle} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10 transition-all group">
@@ -29,13 +52,20 @@ const SectionHeader = ({ icon: Icon, title, count, color, expanded, onToggle, on
   </button>
 );
 
-const FieldInput = ({ label, value, onChange, placeholder, type = 'text', rows }: any) => (
+const FieldInput = ({ label, value, onChange, placeholder, type = 'text', rows, error }: any) => (
   <div>
     <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">{label}</label>
     {rows ? (
-      <textarea value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows} className="soft-input w-full text-sm resize-none" />
+      <textarea value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows}
+        className={`soft-input w-full text-sm resize-none ${error ? '!border-red-300 dark:!border-red-500/40 !ring-red-100 dark:!ring-red-500/10' : ''}`} />
     ) : (
-      <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="soft-input w-full text-sm" />
+      <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        className={`soft-input w-full text-sm ${error ? '!border-red-300 dark:!border-red-500/40 !ring-red-100 dark:!ring-red-500/10' : ''}`} />
+    )}
+    {error && (
+      <p className="flex items-center gap-1 mt-1 text-[11px] font-bold text-red-500 dark:text-red-400">
+        <Warning size={11} weight="fill" /> {error}
+      </p>
     )}
   </div>
 );
@@ -101,6 +131,17 @@ const ResumeProfileEditor = () => {
   const [data, setData] = useState<any>({});
   const [expanded, setExpanded] = useState<string | null>('links');
   const [dirty, setDirty] = useState(false);
+  const [urlErrors, setUrlErrors] = useState<Record<string, string | null>>({});
+
+  // Recompute URL validation whenever data changes
+  const revalidateUrls = (d: any) => {
+    const errs: Record<string, string | null> = {};
+    for (const key of ['linkedin', 'github', 'portfolio']) {
+      errs[key] = validateUrl(key, d[key] || '');
+    }
+    setUrlErrors(errs);
+    return Object.values(errs).some(e => e !== null);
+  };
 
   const load = useCallback(async () => {
     try {
@@ -114,11 +155,24 @@ const ResumeProfileEditor = () => {
   useEffect(() => { load(); }, [load]);
 
   const update = (key: string, value: any) => {
-    setData((prev: any) => ({ ...prev, [key]: value }));
+    const next = { ...data, [key]: value };
+    setData(next);
     setDirty(true);
+    // Re-validate URLs on each change for instant feedback
+    if (['linkedin', 'github', 'portfolio'].includes(key)) {
+      setUrlErrors(prev => ({ ...prev, [key]: validateUrl(key, value || '') }));
+    }
   };
 
+  const hasUrlErrors = Object.values(urlErrors).some(e => e !== null);
+
   const save = async () => {
+    // Final validation gate
+    if (revalidateUrls(data)) {
+      toast.error('Fix the URL errors before saving.');
+      setExpanded('links');
+      return;
+    }
     setSaving(true);
     try {
       await resumeProfileAPI.update(data);
@@ -179,9 +233,9 @@ const ResumeProfileEditor = () => {
         {expanded === 'links' && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <div className="soft-card p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FieldInput label="LinkedIn URL" value={data.linkedin} onChange={(v: string) => update('linkedin', v)} placeholder="linkedin.com/in/your-profile" />
-              <FieldInput label="GitHub URL" value={data.github} onChange={(v: string) => update('github', v)} placeholder="github.com/username" />
-              <FieldInput label="Portfolio / Website" value={data.portfolio} onChange={(v: string) => update('portfolio', v)} placeholder="yoursite.com" />
+              <FieldInput label="LinkedIn URL" value={data.linkedin} onChange={(v: string) => update('linkedin', v)} placeholder="linkedin.com/in/your-profile" error={urlErrors.linkedin} />
+              <FieldInput label="GitHub URL" value={data.github} onChange={(v: string) => update('github', v)} placeholder="github.com/username" error={urlErrors.github} />
+              <FieldInput label="Portfolio / Website" value={data.portfolio} onChange={(v: string) => update('portfolio', v)} placeholder="yoursite.com" error={urlErrors.portfolio} />
               <FieldInput label="City / Location" value={data.location} onChange={(v: string) => update('location', v)} placeholder="Hyderabad, Telangana" />
             </div>
           </motion.div>
@@ -365,13 +419,16 @@ const ResumeProfileEditor = () => {
 
       {/* ── Save Button ──────────────────── */}
       <motion.div variants={itemV} className="sticky bottom-4 z-10">
-        <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={save} disabled={saving || !dirty}
+        <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={save} disabled={saving || !dirty || hasUrlErrors}
           className={`w-full py-4 rounded-2xl font-extrabold text-base flex items-center justify-center gap-3 shadow-lg transition-all ${
-            dirty ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white shadow-teal-500/20'
+            hasUrlErrors ? 'bg-red-100 dark:bg-red-500/10 text-red-400 cursor-not-allowed shadow-none'
+            : dirty ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white shadow-teal-500/20'
             : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none'
           }`}>
           {saving ? (
             <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
+          ) : hasUrlErrors ? (
+            <><Warning size={20} weight="fill" /> Fix URL errors to save</>
           ) : (
             <><FloppyDisk size={20} weight="fill" /> {dirty ? 'Save Resume Profile' : 'All changes saved'}</>
           )}
