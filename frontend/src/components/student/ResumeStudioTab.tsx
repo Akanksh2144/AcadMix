@@ -30,95 +30,102 @@ const ResumePreview = ({ data, template }: { data: any; template: string }) => {
   const certs = data?.certifications || [];
   const achievements = data?.achievements || [];
   const summary = data?.summary || '';
-
   const currentEdu = personal.current_education;
 
   const SectionTitle = ({ children }: any) => (
-    <div className="mb-1.5 mt-3 first:mt-0">
-      <h3 className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-[#0D4771] border-b border-[#0D4771]/30 pb-0.5">{children}</h3>
+    <div className="mt-[6px] mb-[3px] first:mt-0">
+      <h3 className="text-[10px] font-[900] uppercase tracking-[0.18em] text-[#0D4771] border-b-[1.5px] border-[#0D4771] pb-[2px]">{children}</h3>
     </div>
   );
-
   const Placeholder = ({ text }: { text: string }) => (
-    <p className="text-[7px] italic text-slate-300">[{text}]</p>
+    <p className="text-[8px] italic text-slate-300 leading-snug">[{text}]</p>
   );
-
   const Bullet = ({ children }: any) => (
-    <p className="text-[7px] text-slate-600 leading-tight pl-2 relative before:content-['•'] before:absolute before:left-0 before:text-slate-400">{children}</p>
+    <p className="text-[8px] text-[#333] leading-[1.4] pl-[8px] relative before:content-['•'] before:absolute before:left-0 before:text-[#666]">{children}</p>
   );
 
   const hasSkills = skills.languages?.length || skills.frameworks?.length || skills.tools?.length || skills.databases?.length;
 
   return (
     <div className="w-full bg-white shadow-2xl shadow-black/10 rounded-sm overflow-hidden" style={{ aspectRatio: '210 / 297', fontFamily: "'Calibri', 'Segoe UI', sans-serif" }}>
-      <div className="p-4 h-full overflow-hidden">
+      <div className="p-5 h-full overflow-hidden">
 
         {/* Name */}
-        <h1 className="text-center text-[14px] font-extrabold tracking-wider text-[#1A1A2E] uppercase">
+        <h1 className="text-center text-[16px] font-[900] tracking-[0.2em] text-[#1A1A2E] uppercase leading-tight">
           {personal.name || <span className="text-slate-300">YOUR FULL NAME</span>}
         </h1>
 
         {/* Contact */}
         {(personal.email || personal.phone || personal.location) && (
-          <p className="text-center text-[7px] text-slate-500 mt-0.5">
-            {[personal.email, personal.phone, personal.location].filter(Boolean).join(' | ')}
+          <p className="text-center text-[8px] text-[#555] mt-[3px] leading-snug">
+            {[personal.email, personal.phone, personal.location].filter(Boolean).join('  •  ')}
           </p>
         )}
 
         {/* Links */}
         {(personal.linkedin || personal.github || personal.portfolio) && (
-          <p className="text-center text-[7px] text-[#0A66C2] mt-0.5">
-            {[personal.linkedin, personal.github, personal.portfolio].filter(Boolean).join(' | ')}
+          <p className="text-center text-[8px] text-[#0A66C2] mt-[2px] leading-snug">
+            {[personal.linkedin, personal.github, personal.portfolio].filter(Boolean).join('  •  ')}
           </p>
         )}
 
         {/* Summary */}
-        <SectionTitle>Professional Summary</SectionTitle>
-        {summary.trim() ? (
-          <p className="text-[7px] text-slate-600 leading-tight">{summary}</p>
-        ) : (
-          <Placeholder text="Write 2-3 sentences about your technical interests and career goals" />
+        {summary.trim() && (
+          <>
+            <SectionTitle>Professional Summary</SectionTitle>
+            <p className="text-[8px] text-[#333] leading-[1.5]">{summary}</p>
+          </>
         )}
 
         {/* Education */}
         <SectionTitle>Education</SectionTitle>
-        {currentEdu && (
-          <div className="mb-1">
-            <p className="text-[8px]">
-              <span className="font-bold text-[#1A1A2E]">{currentEdu.degree || 'B.Tech'}</span>
-              <span className="text-slate-500"> — {currentEdu.institution}</span>
-            </p>
-            <p className="text-[6.5px] text-slate-400">
-              {[currentEdu.branch, currentEdu.batch && `Batch ${currentEdu.batch}`, currentEdu.cgpa && `CGPA: ${currentEdu.cgpa}`].filter(Boolean).join(' | ')}
-            </p>
+        {currentEdu && currentEdu.institution && (
+          <div className="mb-[4px]">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[9px]">
+                <span className="font-[800] text-[#1A1A2E]">{currentEdu.degree || 'B.Tech'}{currentEdu.branch ? ` in ${currentEdu.branch}` : ''}</span>
+              </p>
+              {currentEdu.batch && <span className="text-[8px] text-[#666]">{currentEdu.batch}</span>}
+            </div>
+            <p className="text-[8px] text-[#555]">{currentEdu.institution}</p>
           </div>
         )}
         {education.map((edu: any, i: number) => (
-          <div key={i} className="mb-0.5">
-            <p className="text-[8px]">
-              <span className="font-bold text-[#1A1A2E]">{edu.level}</span>
-              {edu.school && <span className="text-slate-500"> — {edu.school}</span>}
-            </p>
-            <p className="text-[6.5px] text-slate-400">
-              {[edu.board, edu.year, edu.percentage && `${edu.percentage}%`].filter(Boolean).join(' | ')}
-            </p>
+          <div key={i} className="mb-[3px]">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[9px]">
+                <span className="font-[800] text-[#1A1A2E]">{edu.level}</span>
+                {edu.school && <span className="text-[#555]"> — {edu.school}</span>}
+              </p>
+              {edu.year && <span className="text-[8px] text-[#666]">{edu.year}</span>}
+            </div>
+            {(edu.board || edu.percentage) && (
+              <p className="text-[8px] text-[#666]">
+                {[edu.board, edu.percentage && `${edu.percentage}%`].filter(Boolean).join('  •  ')}
+              </p>
+            )}
           </div>
         ))}
+        {!currentEdu?.institution && !education.length && (
+          <Placeholder text="Add your education details" />
+        )}
 
         {/* Skills */}
         {hasSkills ? (
           <>
             <SectionTitle>Technical Skills</SectionTitle>
-            {[['languages', 'Languages'], ['frameworks', 'Frameworks'], ['tools', 'Tools & Platforms'], ['databases', 'Databases']].map(([key, label]) => {
-              const items = skills[key];
-              if (!items?.length) return null;
-              return (
-                <p key={key} className="text-[7px] text-slate-600 leading-tight">
-                  <span className="font-bold text-[#1A1A2E]">{label}: </span>
-                  {items.join(', ')}
-                </p>
-              );
-            })}
+            <div className="space-y-[1px]">
+              {([['languages', 'Languages'], ['frameworks', 'Frameworks'], ['tools', 'Tools & Platforms'], ['databases', 'Databases']] as const).map(([key, label]) => {
+                const items = skills[key];
+                if (!items?.length) return null;
+                return (
+                  <p key={key} className="text-[8px] text-[#333] leading-[1.5]">
+                    <span className="font-[700] text-[#1A1A2E]">{label}: </span>
+                    {items.join(', ')}
+                  </p>
+                );
+              })}
+            </div>
           </>
         ) : null}
 
@@ -127,11 +134,15 @@ const ResumePreview = ({ data, template }: { data: any; template: string }) => {
           <>
             <SectionTitle>Projects</SectionTitle>
             {projects.slice(0, 3).map((p: any, i: number) => (
-              <div key={i} className="mb-1">
-                <p className="text-[8px]">
-                  <span className="font-bold text-[#1A1A2E]">{p.title || 'Untitled'}</span>
-                  {p.tech_stack && <span className="text-slate-400 text-[6.5px]"> | {p.tech_stack}</span>}
-                </p>
+              <div key={i} className="mb-[4px]">
+                <div className="flex items-baseline justify-between">
+                  <p className="text-[9px]">
+                    <span className="font-[800] text-[#1A1A2E]">{p.title || 'Untitled'}</span>
+                    {p.tech_stack && <span className="text-[#888] text-[8px]"> — {p.tech_stack}</span>}
+                  </p>
+                  {p.duration && <span className="text-[7px] text-[#888]">{p.duration}</span>}
+                </div>
+                {p.link && <p className="text-[7px] text-[#0A66C2]">{p.link}</p>}
                 {p.bullets?.filter((b: string) => b.trim()).slice(0, 3).map((b: string, j: number) => (
                   <Bullet key={j}>{b}</Bullet>
                 ))}
@@ -145,14 +156,15 @@ const ResumePreview = ({ data, template }: { data: any; template: string }) => {
           <>
             <SectionTitle>Experience</SectionTitle>
             {experience.slice(0, 3).map((e: any, i: number) => (
-              <div key={i} className="mb-1">
-                <p className="text-[8px]">
-                  <span className="font-bold text-[#1A1A2E]">{e.role || 'Role'}</span>
-                  {e.company && <span className="text-slate-500"> — {e.company}</span>}
-                </p>
-                {(e.duration || e.location) && (
-                  <p className="text-[6.5px] text-slate-400">{[e.duration, e.location].filter(Boolean).join(' | ')}</p>
-                )}
+              <div key={i} className="mb-[4px]">
+                <div className="flex items-baseline justify-between">
+                  <p className="text-[9px]">
+                    <span className="font-[800] text-[#1A1A2E]">{e.role || 'Role'}</span>
+                    {e.company && <span className="text-[#555]"> — {e.company}</span>}
+                  </p>
+                  {e.duration && <span className="text-[8px] text-[#888]">{e.duration}</span>}
+                </div>
+                {e.location && <p className="text-[7px] text-[#888]">{e.location}</p>}
                 {e.bullets?.filter((b: string) => b.trim()).slice(0, 3).map((b: string, j: number) => (
                   <Bullet key={j}>{b}</Bullet>
                 ))}
@@ -166,9 +178,9 @@ const ResumePreview = ({ data, template }: { data: any; template: string }) => {
           <>
             <SectionTitle>Certifications</SectionTitle>
             {certs.map((c: any, i: number) => (
-              <p key={i} className="text-[7px] text-slate-600">
-                <span className="font-bold text-[#1A1A2E]">{c.name}</span>
-                {(c.issuer || c.year) && <span className="text-slate-400"> — {[c.issuer, c.year].filter(Boolean).join(', ')}</span>}
+              <p key={i} className="text-[8px] text-[#333] leading-[1.5]">
+                <span className="font-[700] text-[#1A1A2E]">{c.name}</span>
+                {(c.issuer || c.year) && <span className="text-[#666]"> — {[c.issuer, c.year].filter(Boolean).join(', ')}</span>}
               </p>
             ))}
           </>
@@ -269,7 +281,7 @@ const ResumeStudioTab = ({ navigate }: any) => {
         portfolio: editable.portfolio || '',
         current_education: {
           degree: 'B.Tech',
-          institution: autoFilled.college || '',
+          institution: autoFilled.institution || '',
           branch: autoFilled.department || '',
           batch: autoFilled.batch || '',
         },
