@@ -264,7 +264,7 @@ const ResumeProfileEditor = () => {
 
   // List helpers
   const addItem = (key: string, template: any) => {
-    const list = [...(data[key] || []), template];
+    const list = [template, ...(data[key] || [])];
     update(key, list);
     setExpanded(key);
   };
