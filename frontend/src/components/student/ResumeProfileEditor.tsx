@@ -175,12 +175,10 @@ const ResumeProfileEditor = () => {
       setAutoFilled(res.auto_filled || {});
       const editable = res.editable || {};
       setData(editable);
-      // Verify saved profiles on load
-      for (const key of ['github', 'linkedin'] as const) {
-        const username = extractUsername(key, editable[key] || '');
-        if (username) {
-          verifySocialProfile(key, username);
-        }
+      // Verify saved GitHub profile on load
+      const ghUsername = extractUsername('github', editable.github || '');
+      if (ghUsername) {
+        verifySocialProfile('github', ghUsername);
       }
     } catch { /* silent */ }
     setLoading(false);
@@ -195,9 +193,9 @@ const ResumeProfileEditor = () => {
     // Re-validate URLs on each change for instant feedback
     if (['linkedin', 'github', 'portfolio'].includes(key)) {
       setUrlErrors(prev => ({ ...prev, [key]: validateUrl(key, value || '') }));
-      // Clear verified profile while typing (will re-verify on blur)
-      if (key === 'linkedin' || key === 'github') {
-        setSocialProfiles(prev => ({ ...prev, [key]: null }));
+      // Clear verified GitHub profile while typing (will re-verify on blur)
+      if (key === 'github') {
+        setSocialProfiles(prev => ({ ...prev, github: null }));
       }
     }
   };
@@ -324,22 +322,8 @@ const ResumeProfileEditor = () => {
             <div className="soft-card p-5 space-y-4">
               {/* LinkedIn */}
               <div>
-                <FieldInput label="LinkedIn URL" value={data.linkedin} onChange={(v: string) => update('linkedin', v)} onBlur={() => handleUrlBlur('linkedin')} placeholder="linkedin.com/in/your-profile" error={urlErrors.linkedin} />
-                {socialProfiles.linkedin?.loading && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-[11px] font-bold text-slate-400">Verifying LinkedIn profile...</span>
-                  </div>
-                )}
-                {socialProfiles.linkedin && !socialProfiles.linkedin.loading && (
-                  <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-blue-50/50 dark:bg-blue-500/5 border border-blue-200/30 dark:border-blue-500/15">
-                    <LinkedinLogo size={16} weight="fill" className="text-[#0A66C2] shrink-0" />
-                    <span className="text-xs font-bold text-[#0A66C2] dark:text-blue-400">{socialProfiles.linkedin.username}</span>
-                    {socialProfiles.linkedin.note && (
-                      <span className="text-[10px] text-slate-400 ml-1">· Cannot auto-verify</span>
-                    )}
-                  </div>
-                )}
+                <FieldInput label="LinkedIn URL" value={data.linkedin} onChange={(v: string) => update('linkedin', v)} placeholder="linkedin.com/in/your-profile" error={urlErrors.linkedin} />
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">LinkedIn profiles cannot be auto-verified</p>
               </div>
               {/* GitHub */}
               <div>
