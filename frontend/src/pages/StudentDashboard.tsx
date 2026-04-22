@@ -414,7 +414,7 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
             { id: 'code-playground', icon: Terminal, label: 'Code Playground', sub: 'Practice coding', iconBg: 'bg-purple-50 dark:bg-purple-500/10 group-hover:bg-purple-100 dark:group-hover:bg-purple-500/20', iconText: 'text-purple-500', testId: 'view-code-playground-button' },
             isHostelVisible ? { id: 'hostel-booking', icon: House, label: 'Hostel Booking', sub: 'Book your bed', iconBg: 'bg-pink-50 dark:bg-pink-500/10 group-hover:bg-pink-100 dark:group-hover:bg-pink-500/20', iconText: 'text-pink-500', testId: 'view-hostel-booking-button' } : null,
             { id: 'transport', label: 'Bus Tracker', sub: 'Track your bus', icon: Bus, iconBg: 'bg-emerald-50 dark:bg-emerald-500/10 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/20', iconText: 'text-emerald-500', testId: 'view-transport-button', isTab: true },
-            { id: 'career-toolkit', icon: Toolbox, label: 'Career Toolkit', sub: '9 AI career tools', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-career-toolkit-button' },
+            { id: 'career-toolkit', icon: Toolbox, label: 'Career Toolkit', sub: '10 AI career tools', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-career-toolkit-button' },
 
           ].filter(Boolean).map((item: any) => {
             const Icon = item.icon;
