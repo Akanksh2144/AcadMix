@@ -335,50 +335,91 @@ const ResumeStudioTab = ({ navigate }: any) => {
   };
 
   const handleDownloadPdf = async () => {
-    if (!previewRef.current) return;
+    if (!profileData) return;
     setDownloading('pdf');
     try {
-      const el = previewRef.current;
-      const studentName = profileData?.personal?.name?.replace(/\s+/g, '_') || 'Resume';
+      const p = profileData.personal || {};
+      const eduList = profileData.education_history || [];
+      const sk = profileData.skills || {};
+      const proj = profileData.projects || [];
+      const exp = profileData.experience || [];
+      const certsList = profileData.certifications || [];
+      const achv = profileData.achievements || [];
+      const sum = profileData.summary || '';
+      const ce = p.current_education;
+      const studentName = p.name?.replace(/\s+/g, '_') || 'Resume';
 
-      // Temporarily expand the preview to full A4 size for hi-res capture
-      const origStyle = el.getAttribute('style') || '';
-      el.style.width = '794px';     // A4 @ 96dpi
-      el.style.minHeight = '1123px'; // A4 height @ 96dpi
-      el.style.padding = '48px 56px';
-      el.style.background = '#fff';
-      el.style.fontFamily = "'Times New Roman', Georgia, serif";
-      el.style.overflow = 'visible';
+      const esc = (s: string) => s?.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') || '';
+      const sectionHead = (t: string) => `<div style="margin-top:14px;margin-bottom:4px;border-bottom:1.5px solid #000;padding-bottom:2px"><span style="font-size:13px;font-weight:700">${t}</span></div>`;
+      const bulletPt = (t: string) => `<div style="font-size:11px;padding-left:14px;position:relative;line-height:1.5"><span style="position:absolute;left:0;top:0">&#9679;</span>${esc(t)}</div>`;
 
-      // Scale up the text to full readable size (preview uses ~50% scale text)
-      el.style.fontSize = '16px';
-      const allText = el.querySelectorAll<HTMLElement>('[class*="text-["]');
-      const origFontSizes: string[] = [];
-      allText.forEach((node) => {
-        origFontSizes.push(node.style.fontSize);
-        const match = node.className.match(/text-\[(\d+(?:\.\d+)?)(px|rem)\]/);
-        if (match) {
-          const size = parseFloat(match[1]);
-          // Scale up: preview text sizes are ~50% of actual, so multiply by ~2.2
-          node.style.fontSize = `${size * 2.2}px`;
-        }
+      let html = `<div style="font-family:'Times New Roman',Georgia,serif;color:#000;padding:48px 56px;width:794px;min-height:1123px;box-sizing:border-box;background:#fff">`;
+      html += `<h1 style="text-align:center;font-size:22px;font-weight:700;margin:0;line-height:1.3">${esc(p.name || '')}</h1>`;
+      const contact = [p.email, p.phone, p.location].filter(Boolean).map(esc);
+      if (contact.length) html += `<p style="text-align:center;font-size:11px;margin:2px 0 0">${contact.join('  |  ')}</p>`;
+      const links = [p.linkedin, p.github, p.portfolio].filter(Boolean).map(esc);
+      if (links.length) html += `<p style="text-align:center;font-size:11px;margin:2px 0 0">${links.join('  |  ')}</p>`;
+      if (sum.trim()) { html += sectionHead('Summary'); html += `<p style="font-size:11px;line-height:1.6;margin:0">${esc(sum)}</p>`; }
+      html += sectionHead('Education');
+      if (ce?.institution) {
+        html += `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px"><span style="font-size:12px"><b>${esc(ce.degree||'B.Tech')}${ce.branch?' in '+esc(ce.branch):''}</b>, ${esc(ce.institution)}</span>${ce.batch?`<span style="font-size:11px;font-style:italic">${esc(ce.batch)}</span>`:''}</div>`;
+      }
+      eduList.forEach((e: any) => {
+        const deg = e.degree||e.level||''; const fld = e.field||e.board||'';
+        const yr = e.gradYear||e.year||''; const mo = e.gradMonth||'';
+        const gd = mo ? `${mo} ${yr}`.trim() : yr;
+        html += `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px"><b>${esc(deg)}</b>${e.school?', '+esc(e.school):''}</span>${gd?`<span style="font-size:11px;font-style:italic">${esc(String(gd))}</span>`:''}</div>`;
+        const sub = [fld, e.location, e.percentage].filter(Boolean).map(esc);
+        if (sub.length) html += `<p style="font-size:10px;font-style:italic;margin:0 0 4px">${sub.join('  |  ')}</p>`;
       });
+      const skRows = [['languages','Languages'],['frameworks','Frameworks'],['tools','Tools &amp; Platforms'],['databases','Databases']] as const;
+      if (skRows.some(([k]) => sk[k]?.length)) {
+        html += sectionHead('Technical Skills');
+        skRows.forEach(([k, label]) => { if (sk[k]?.length) html += `<p style="font-size:11px;line-height:1.6;margin:0"><b>${label}:</b> ${esc(sk[k].join(', '))}</p>`; });
+      }
+      if (proj.length) {
+        html += sectionHead('Projects');
+        proj.forEach((pr: any) => {
+          html += `<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:12px">${esc(pr.title||'')}</b>${pr.duration?`<span style="font-size:11px;font-style:italic">${esc(pr.duration)}</span>`:''}</div>`;
+          pr.bullets?.filter((b: string) => b.trim()).forEach((b: string) => { html += bulletPt(b); });
+          if (pr.tech_stack) html += `<div style="font-size:11px;padding-left:14px;line-height:1.5"><b>Tech Stack:</b> ${esc(pr.tech_stack)}</div>`;
+          html += `</div>`;
+        });
+      }
+      if (exp.length) {
+        html += sectionHead('Experience');
+        exp.forEach((e: any) => {
+          html += `<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px"><b>${esc(e.role||'')}</b>${e.company?', '+esc(e.company):''}</span>${e.duration?`<span style="font-size:11px;font-style:italic">${esc(e.duration)}</span>`:''}</div>`;
+          if (e.location) html += `<p style="font-size:10px;font-style:italic;margin:0">${esc(e.location)}</p>`;
+          e.bullets?.filter((b: string) => b.trim()).forEach((b: string) => { html += bulletPt(b); });
+          html += `</div>`;
+        });
+      }
+      if (certsList.length) {
+        html += sectionHead('Certifications');
+        certsList.forEach((c: any) => { html += `<p style="font-size:11px;line-height:1.6;margin:0"><b>${esc(c.name||'')}</b>${(c.issuer||c.year)?' &mdash; '+[c.issuer,c.year].filter(Boolean).map(esc).join(', '):''}</p>`; });
+      }
+      if (achv.length) {
+        html += sectionHead('Achievements');
+        achv.forEach((a: any) => { const t = typeof a === 'string' ? a : a.title || ''; if (t.trim()) html += bulletPt(t); });
+      }
+      html += `</div>`;
+
+      const container = document.createElement('div');
+      container.style.cssText = 'position:fixed;top:-9999px;left:-9999px';
+      container.innerHTML = html;
+      document.body.appendChild(container);
 
       await html2pdf().set({
-        margin: 0,
-        filename: `${studentName}_Resume.pdf`,
+        margin: 0, filename: `${studentName}_Resume.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
         jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait' as const },
-      }).from(el).save();
+      }).from(container.firstChild).save();
 
-      // Restore original styles
-      allText.forEach((node, i) => { node.style.fontSize = origFontSizes[i]; });
-      el.setAttribute('style', origStyle);
+      document.body.removeChild(container);
       toast.success('PDF downloaded!');
-    } catch {
-      toast.error('Failed to generate PDF');
-    }
+    } catch { toast.error('Failed to generate PDF'); }
     setDownloading(null);
   };
 
