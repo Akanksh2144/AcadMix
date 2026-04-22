@@ -6,15 +6,15 @@ and UserProfile base fields (ERP auto-fill) to produce a clean, single-column
 Word document optimized for ATS scanners.
 
 Templates:
-  - classic: Clean, professional, single-column. Ideal for mass-recruiters.
+  - classic: Clean, professional, single-column. Academic style.
 """
 import io
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any
 
 from docx import Document
-from docx.shared import Pt, Inches, Cm, RGBColor, Emu
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
+from docx.shared import Pt, Cm, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,28 +23,11 @@ from app import models
 
 logger = logging.getLogger("acadmix.resume_builder")
 
-
 # ═══════════════════════════════════════════════════════════════════════════════
-# Style Constants
+# Constants
 # ═══════════════════════════════════════════════════════════════════════════════
-
-_FONT = "Calibri"
-_NAME_SZ = Pt(20)
-_CONTACT_SZ = Pt(9.5)
-_HEADING_SZ = Pt(11)
-_TITLE_SZ = Pt(10.5)
-_BODY_SZ = Pt(10)
-_SUB_SZ = Pt(9)
-
-_CLR_BLACK = RGBColor(0x1A, 0x1A, 0x2E)
-_CLR_BODY = RGBColor(0x33, 0x33, 0x33)
-_CLR_SUBTLE = RGBColor(0x66, 0x66, 0x66)
-_CLR_LINK = RGBColor(0x0A, 0x66, 0xC2)
-_CLR_HEADING = RGBColor(0x0D, 0x47, 0x71)
-_CLR_PLACEHOLDER = RGBColor(0xBB, 0xBB, 0xBB)
-
-# Page width minus margins  (A4 = 21cm, margins = 1.5cm each)
-_CONTENT_WIDTH = Cm(21 - 1.5 - 1.5)  # 18cm
+_FONT = "Times New Roman"
+_CLR = RGBColor(0x00, 0x00, 0x00)  # Pure black for everything
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -53,94 +36,77 @@ _CONTENT_WIDTH = Cm(21 - 1.5 - 1.5)  # 18cm
 
 def _margins(doc: Document):
     for s in doc.sections:
-        s.top_margin = Cm(1.2)
-        s.bottom_margin = Cm(1.0)
-        s.left_margin = Cm(1.5)
-        s.right_margin = Cm(1.5)
+        s.top_margin = Cm(1.5)
+        s.bottom_margin = Cm(1.5)
+        s.left_margin = Cm(2.0)
+        s.right_margin = Cm(2.0)
 
 
-def _run(p, text, sz=None, bold=False, color=None, italic=False):
+def _run(p, text, sz=Pt(11), bold=False, italic=False):
+    """Add a black run — everything is black in this template."""
     r = p.add_run(text)
     r.font.name = _FONT
-    if sz:
-        r.font.size = sz
+    r.font.size = sz
+    r.font.color.rgb = _CLR
     if bold:
         r.bold = True
     if italic:
         r.font.italic = True
-    if color:
-        r.font.color.rgb = color
     return r
 
 
 def _para(doc, sp_before=0, sp_after=0, align=None):
-    """Create an empty paragraph with spacing."""
     p = doc.add_paragraph()
     fmt = p.paragraph_format
     fmt.space_before = Pt(sp_before)
     fmt.space_after = Pt(sp_after)
-    fmt.line_spacing = Pt(13)
     if align:
         p.alignment = align
     return p
 
 
 def _heading(doc, title):
-    """Section heading — uppercase, bold, dark teal, with solid bottom border."""
-    p = _para(doc, sp_before=10, sp_after=3)
-    _run(p, title.upper(), sz=_HEADING_SZ, bold=True, color=_CLR_HEADING)
+    """Section heading — bold, larger, with thin bottom border. Not uppercase."""
+    p = _para(doc, sp_before=8, sp_after=3)
+    _run(p, title, sz=Pt(13), bold=True)
 
-    # Solid bottom border
+    # Thin bottom border
     pPr = p._p.get_or_add_pPr()
     bdr = pPr.makeelement(qn('w:pBdr'), {})
     bdr.append(bdr.makeelement(qn('w:bottom'), {
-        qn('w:val'): 'single', qn('w:sz'): '8',
-        qn('w:space'): '1', qn('w:color'): '0D4771',
+        qn('w:val'): 'single', qn('w:sz'): '4',
+        qn('w:space'): '1', qn('w:color'): '000000',
     }))
     pPr.append(bdr)
     return p
 
 
-def _entry_line(doc, left_text, left_bold=True, right_text=None):
-    """
-    A two-column entry: bold title left, subtle date/info right-aligned.
-    Uses a right-tab stop at the content width.
-    """
-    p = _para(doc, sp_before=2, sp_after=0)
-
-    # Add right tab stop
-    fmt = p.paragraph_format
-    tab_stops = fmt.tab_stops
-    tab_stops.add_tab_stop(_CONTENT_WIDTH, WD_TAB_ALIGNMENT.RIGHT)
-
-    _run(p, left_text, sz=_TITLE_SZ, bold=left_bold, color=_CLR_BLACK)
-    if right_text:
-        _run(p, "\t", sz=_TITLE_SZ)
-        _run(p, right_text, sz=_SUB_SZ, color=_CLR_SUBTLE)
-    return p
-
-
-def _subtitle(doc, text):
-    """Subtle subtitle line (institution, location, board info)."""
-    p = _para(doc, sp_before=0, sp_after=1)
-    _run(p, text, sz=_SUB_SZ, color=_CLR_SUBTLE)
-    return p
-
-
 def _bullet(doc, text):
-    """Bullet point with proper indentation."""
+    """Bullet point — round bullet, indented."""
     p = doc.add_paragraph()
     p.style = doc.styles['List Bullet']
     p.paragraph_format.space_before = Pt(0)
     p.paragraph_format.space_after = Pt(1)
-    p.paragraph_format.line_spacing = Pt(13)
-    _run(p, text, sz=_BODY_SZ, color=_CLR_BODY)
+    _run(p, text, sz=Pt(11))
     return p
 
 
-def _placeholder(doc, hint):
-    p = _para(doc, sp_before=0, sp_after=1)
-    _run(p, f"[{hint}]", sz=_SUB_SZ, color=_CLR_PLACEHOLDER, italic=True)
+def _tech_stack_line(doc, tech):
+    """Tech Stack: label bold, items regular. Indented to match bullets."""
+    p = doc.add_paragraph()
+    p.style = doc.styles['List Bullet']
+    # Remove the bullet character by overriding numbering
+    p.paragraph_format.space_before = Pt(1)
+    p.paragraph_format.space_after = Pt(2)
+    # Clear bullet numbering — use indent only
+    numPr = p._p.get_or_add_pPr().find(qn('w:numPr'))
+    if numPr is not None:
+        p._p.get_or_add_pPr().remove(numPr)
+    # Manual indent to match bullets
+    fmt = p.paragraph_format
+    fmt.left_indent = Cm(1.27)  # Standard list bullet indent
+    _run(p, "Tech Stack: ", sz=Pt(11), bold=True)
+    _run(p, tech, sz=Pt(11))
     return p
 
 
@@ -164,31 +130,28 @@ def _build_classic(data: Dict[str, Any]) -> Document:
     # ── NAME ──────────────────────────────────────────────────
     name = personal.get("name", "").strip()
     p = _para(doc, sp_before=0, sp_after=2, align=WD_ALIGN_PARAGRAPH.CENTER)
-    p.paragraph_format.line_spacing = Pt(20)
     if name:
-        r = _run(p, name.upper(), sz=_NAME_SZ, bold=True, color=_CLR_BLACK)
-        r.font.letter_spacing = Pt(2)
+        _run(p, name, sz=Pt(18), bold=True)
     else:
-        r = _run(p, "[YOUR FULL NAME]", sz=_NAME_SZ, bold=True, color=_CLR_PLACEHOLDER)
-        r.font.letter_spacing = Pt(2)
+        _run(p, "[Your Full Name]", sz=Pt(18), bold=True, italic=True)
 
     # ── CONTACT ───────────────────────────────────────────────
     contact = [v for v in [personal.get("email"), personal.get("phone"), personal.get("location")] if v]
     if contact:
         p = _para(doc, sp_before=0, sp_after=1, align=WD_ALIGN_PARAGRAPH.CENTER)
-        _run(p, "  •  ".join(contact), sz=_CONTACT_SZ, color=_CLR_SUBTLE)
+        _run(p, "  |  ".join(contact), sz=Pt(10))
 
     # ── LINKS ─────────────────────────────────────────────────
     links = [v for v in [personal.get("linkedin"), personal.get("github"), personal.get("portfolio")] if v]
     if links:
-        p = _para(doc, sp_before=0, sp_after=4, align=WD_ALIGN_PARAGRAPH.CENTER)
-        _run(p, "  •  ".join(links), sz=_CONTACT_SZ, color=_CLR_LINK)
+        p = _para(doc, sp_before=0, sp_after=3, align=WD_ALIGN_PARAGRAPH.CENTER)
+        _run(p, "  |  ".join(links), sz=Pt(10))
 
     # ── SUMMARY ───────────────────────────────────────────────
     if summary and summary.strip():
-        _heading(doc, "Professional Summary")
+        _heading(doc, "Summary")
         p = _para(doc, sp_before=1, sp_after=2)
-        _run(p, summary.strip(), sz=_BODY_SZ, color=_CLR_BODY)
+        _run(p, summary.strip(), sz=Pt(11))
 
     # ── EDUCATION ─────────────────────────────────────────────
     _heading(doc, "Education")
@@ -198,20 +161,32 @@ def _build_classic(data: Dict[str, Any]) -> Document:
         branch = current.get("branch", "")
         degree = current.get("degree", "B.Tech")
         title = f"{degree} in {branch}" if branch else degree
-        _entry_line(doc, title, right_text=current.get("batch", ""))
-        _subtitle(doc, current["institution"])
+        p = _para(doc, sp_before=2, sp_after=0)
+        _run(p, title, sz=Pt(11), bold=True)
+        # Institution + batch on next line
+        details = [current["institution"]]
+        if current.get("batch"):
+            details.append(f"Batch {current['batch']}")
+        p2 = _para(doc, sp_before=0, sp_after=2)
+        _run(p2, "  |  ".join(details), sz=Pt(10))
 
     for edu in education:
         level = edu.get("level", "")
         school = edu.get("school", "")
-        title = f"{level} — {school}" if school else level
-        _entry_line(doc, title, right_text=edu.get("year", ""))
-        sub = [v for v in [edu.get("board"), edu.get("percentage") and f"{edu['percentage']}%"] if v]
+        p = _para(doc, sp_before=2, sp_after=0)
+        _run(p, level, sz=Pt(11), bold=True)
+        sub = []
+        if school:
+            sub.append(school)
+        if edu.get("board"):
+            sub.append(edu["board"])
+        if edu.get("year"):
+            sub.append(str(edu["year"]))
+        if edu.get("percentage"):
+            sub.append(f"{edu['percentage']}%")
         if sub:
-            _subtitle(doc, "  •  ".join(sub))
-
-    if not current and not education:
-        _placeholder(doc, "Add your education — degree, institution, CGPA, year")
+            p2 = _para(doc, sp_before=0, sp_after=2)
+            _run(p2, "  |  ".join(sub), sz=Pt(10))
 
     # ── SKILLS ────────────────────────────────────────────────
     has_skills = any(skills.get(k) for k in ["languages", "frameworks", "tools", "databases"])
@@ -222,46 +197,29 @@ def _build_classic(data: Dict[str, Any]) -> Document:
             items = skills.get(key, [])
             if items:
                 p = _para(doc, sp_before=0, sp_after=1)
-                _run(p, f"{label}: ", sz=_BODY_SZ, bold=True, color=_CLR_BLACK)
-                _run(p, ", ".join(items), sz=_BODY_SZ, color=_CLR_BODY)
+                _run(p, f"{label}: ", sz=Pt(11), bold=True)
+                _run(p, ", ".join(items), sz=Pt(11))
 
     # ── PROJECTS ──────────────────────────────────────────────
     if projects:
         _heading(doc, "Projects")
         for proj in projects:
             title = proj.get("title", "Untitled")
-            duration = proj.get("duration", "")
 
-            # Title line: bold project name, right-aligned duration
-            p = _para(doc, sp_before=3, sp_after=0)
-            fmt = p.paragraph_format
-            fmt.tab_stops.add_tab_stop(_CONTENT_WIDTH, WD_TAB_ALIGNMENT.RIGHT)
-            _run(p, title, sz=_TITLE_SZ, bold=True, color=_CLR_BLACK)
-            if duration:
-                _run(p, "\t", sz=_TITLE_SZ)
-                _run(p, duration, sz=_SUB_SZ, color=_CLR_SUBTLE)
+            # Bold project title
+            p = _para(doc, sp_before=3, sp_after=1)
+            _run(p, title, sz=Pt(11), bold=True)
 
-            # Tech stack line: italic, subtle
-            tech = proj.get("tech_stack", "")
-            if tech:
-                p2 = _para(doc, sp_before=0, sp_after=0)
-                _run(p2, tech, sz=_SUB_SZ, color=_CLR_SUBTLE, italic=True)
-
-            # Link
-            link = proj.get("link", "")
-            if link:
-                p3 = _para(doc, sp_before=0, sp_after=0)
-                _run(p3, link, sz=_SUB_SZ, color=_CLR_LINK)
-
-            # Bullets
+            # Bullets first
             bullets = proj.get("bullets", [])
-            written = False
             for b in bullets:
                 if b and b.strip():
                     _bullet(doc, b.strip())
-                    written = True
-            if not written:
-                _placeholder(doc, "Describe what you built, the tech used, and measurable impact")
+
+            # Tech Stack: at the end, indented to match bullets
+            tech = proj.get("tech_stack", "")
+            if tech:
+                _tech_stack_line(doc, tech)
 
     # ── EXPERIENCE ────────────────────────────────────────────
     if experience:
@@ -269,45 +227,34 @@ def _build_classic(data: Dict[str, Any]) -> Document:
         for exp in experience:
             role = exp.get("role", "Role")
             company = exp.get("company", "")
-            duration = exp.get("duration", "")
 
-            # Title line: bold role, lighter company, right-aligned duration
+            # Bold role title
             p = _para(doc, sp_before=3, sp_after=0)
-            fmt = p.paragraph_format
-            fmt.tab_stops.add_tab_stop(_CONTENT_WIDTH, WD_TAB_ALIGNMENT.RIGHT)
-            _run(p, role, sz=_TITLE_SZ, bold=True, color=_CLR_BLACK)
+            _run(p, role, sz=Pt(11), bold=True)
             if company:
-                _run(p, f"  —  {company}", sz=_TITLE_SZ, color=_CLR_SUBTLE)
-            if duration:
-                _run(p, "\t", sz=_TITLE_SZ)
-                _run(p, duration, sz=_SUB_SZ, color=_CLR_SUBTLE)
+                _run(p, f", {company}", sz=Pt(11))
 
-            # Location subtitle
-            loc = exp.get("location", "")
-            if loc:
-                _subtitle(doc, loc)
+            # Duration/location subtitle
+            sub = [v for v in [exp.get("duration"), exp.get("location")] if v]
+            if sub:
+                p2 = _para(doc, sp_before=0, sp_after=1)
+                _run(p2, "  |  ".join(sub), sz=Pt(10), italic=True)
 
             # Bullets
             bullets = exp.get("bullets", [])
-            written = False
             for b in bullets:
                 if b and b.strip():
                     _bullet(doc, b.strip())
-                    written = True
-            if not written:
-                _placeholder(doc, "Describe responsibilities & achievements — use action verbs and metrics")
 
     # ── CERTIFICATIONS ────────────────────────────────────────
     if certs:
         _heading(doc, "Certifications")
         for c in certs:
-            name_t = c.get("name", "")
-            suffix = [v for v in [c.get("issuer"), c.get("year") and str(c["year"])] if v]
-            left = f"{name_t} — {', '.join(suffix)}" if suffix else name_t
             p = _para(doc, sp_before=0, sp_after=1)
-            _run(p, name_t, sz=_BODY_SZ, bold=True, color=_CLR_BLACK)
+            _run(p, c.get("name", ""), sz=Pt(11), bold=True)
+            suffix = [v for v in [c.get("issuer"), c.get("year") and str(c["year"])] if v]
             if suffix:
-                _run(p, f" — {', '.join(suffix)}", sz=_BODY_SZ, color=_CLR_SUBTLE)
+                _run(p, f" — {', '.join(suffix)}", sz=Pt(11))
 
     # ── ACHIEVEMENTS ──────────────────────────────────────────
     if achievements:
@@ -329,11 +276,7 @@ async def generate_docx(
     session: AsyncSession,
     template: str = "classic",
 ) -> io.BytesIO:
-    """
-    Generate a resume .docx from the student's resume profile data.
-
-    Returns an in-memory BytesIO buffer containing the .docx file.
-    """
+    """Generate a resume .docx from the student's resume profile data."""
     result = await session.execute(
         select(models.UserProfile).where(
             models.UserProfile.user_id == user["id"],
@@ -379,10 +322,7 @@ async def generate_docx(
         "achievements": resume.get("achievements", []),
     }
 
-    if template == "classic":
-        doc = _build_classic(data)
-    else:
-        doc = _build_classic(data)
+    doc = _build_classic(data)
 
     buffer = io.BytesIO()
     doc.save(buffer)
