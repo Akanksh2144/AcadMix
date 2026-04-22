@@ -4,10 +4,11 @@ import {
   User, Phone, EnvelopeSimple, IdentificationCard, House, GraduationCap,
   Heart, Users, CurrencyCircleDollar, Drop, FileText, UploadSimple, Trash,
   Star, DownloadSimple, CheckCircle, Warning, CaretLeft, CloudArrowUp,
-  FilePdf, FileDoc, Shield
+  FilePdf, FileDoc, Shield, Briefcase
 } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import AlertModal from '../components/AlertModal';
+import ResumeProfileEditor from '../components/student/ResumeProfileEditor';
 import { resumeVaultAPI } from '../services/api';
 
 const itemVariants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } } };
@@ -45,6 +46,7 @@ const SECTIONS = [
   { key: 'community', label: 'Community & Social', icon: Heart },
   { key: 'family', label: 'Family Details', icon: Users },
   { key: 'address', label: 'Address', icon: House },
+  { key: 'resume_profile', label: 'Resume Profile', icon: Briefcase },
   { key: 'resumes', label: 'Resume Vault', icon: FileText },
 ];
 
@@ -209,6 +211,7 @@ const StudentProfilePage = ({ navigate, user }: any) => {
 
   const currentInfoSection = infoSections[activeSection];
   const isResumeTab = activeSection === 'resumes';
+  const isResumeProfileTab = activeSection === 'resume_profile';
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
@@ -273,7 +276,7 @@ const StudentProfilePage = ({ navigate, user }: any) => {
             <motion.div variants={itemVariants} className="lg:col-span-3 space-y-4">
 
               {/* ── Personal Info Sections ── */}
-              {!isResumeTab && currentInfoSection && (
+              {!isResumeTab && !isResumeProfileTab && currentInfoSection && (
                 <div className="soft-card p-5 sm:p-6">
                   <h3 className="text-lg font-extrabold text-slate-900 dark:text-white mb-4">
                     {SECTIONS.find(s => s.key === activeSection)?.label}
@@ -283,6 +286,15 @@ const StudentProfilePage = ({ navigate, user }: any) => {
                       <InfoRow key={ii} icon={item.icon} label={item.label} value={item.value} masked={item.masked} />
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* ── Resume Profile Tab ── */}
+              {isResumeProfileTab && (
+                <div className="soft-card p-5 sm:p-6">
+                  <h3 className="text-lg font-extrabold text-slate-900 dark:text-white mb-1">Resume Profile</h3>
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-5">Add your projects, skills, experience, and certifications. This data powers the Resume Builder.</p>
+                  <ResumeProfileEditor />
                 </div>
               )}
 

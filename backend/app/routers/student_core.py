@@ -10,6 +10,7 @@ from app import models
 import app.schemas as server_schemas
 from app.schemas import *
 from app.services.student_service import StudentService
+from app.services import resume_profile_service
 
 router = APIRouter()
 
@@ -338,3 +339,26 @@ async def get_student_materials(subject_code: Optional[str] = None, user: dict =
         
     res = await session.execute(query.order_by(models.StudyMaterial.created_at.desc()))
     return res.scalars().all()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Resume Profile — Student-editable fields for resume builder auto-fill
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/student/resume-profile")
+async def get_resume_profile(
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db),
+):
+    """Fetch resume profile — auto-filled ERP data + student-editable fields."""
+    return await resume_profile_service.get_resume_profile(user, session)
+
+
+@router.put("/student/resume-profile")
+async def update_resume_profile(
+    data: dict = Body(...),
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db),
+):
+    """Update student-editable resume profile fields (projects, skills, experience, etc.)."""
+    return await resume_profile_service.update_resume_profile(user, data, session)

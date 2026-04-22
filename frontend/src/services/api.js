@@ -582,6 +582,12 @@ export const careerAPI = {
   companyIntel: () => api.get('/career/company-intel'),
 };
 
+// Resume Profile — Student-editable resume enrichment data
+export const resumeProfileAPI = {
+  get: () => api.get('/student/resume-profile'),
+  update: (data) => api.put('/student/resume-profile', data),
+};
+
 // Hostel Management — Sleeper Bus Bed Booking
 export const hostelAPI = {
   // Student booking funnel
