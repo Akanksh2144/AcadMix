@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText, FilePdf, FileDoc, Download, Sparkle, Eye, PencilSimple,
@@ -8,6 +8,7 @@ import {
 } from '@phosphor-icons/react';
 import { resumeProfileAPI } from '../../services/api';
 import { toast } from 'sonner';
+import html2pdf from 'html2pdf.js';
 
 /* ── Animation Variants ─────────────────────────────────── */
 const fadeIn = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } } };
@@ -261,6 +262,7 @@ const ResumeStudioTab = ({ navigate }: any) => {
   const [profileData, setProfileData] = useState<any>(null);
   const [template, setTemplate] = useState('classic');
   const [downloading, setDownloading] = useState<string | null>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   // Merge auto-filled + editable data into a single preview model
   const buildPreviewData = useCallback((autoFilled: any, editable: any) => {
@@ -311,7 +313,6 @@ const ResumeStudioTab = ({ navigate }: any) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      // Extract filename from Content-Disposition header or use default
       const disposition = response.headers['content-disposition'];
       const match = disposition?.match(/filename="(.+)"/);
       a.download = match ? match[1] : 'Resume.docx';
@@ -322,6 +323,41 @@ const ResumeStudioTab = ({ navigate }: any) => {
       toast.success('Resume downloaded!');
     } catch {
       toast.error('Failed to generate resume');
+    }
+    setDownloading(null);
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!previewRef.current) return;
+    setDownloading('pdf');
+    try {
+      // Clone the preview into a full-size off-screen container for high-res capture
+      const source = previewRef.current;
+      const clone = source.cloneNode(true) as HTMLElement;
+      clone.style.width = '210mm';
+      clone.style.minHeight = '297mm';
+      clone.style.padding = '20mm';
+      clone.style.position = 'fixed';
+      clone.style.top = '-9999px';
+      clone.style.left = '-9999px';
+      clone.style.background = '#fff';
+      clone.style.fontFamily = "'Times New Roman', 'Georgia', serif";
+      document.body.appendChild(clone);
+
+      const studentName = profileData?.personal?.name?.replace(/\s+/g, '_') || 'Resume';
+
+      await html2pdf().set({
+        margin: 0,
+        filename: `${studentName}_Resume.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      }).from(clone).save();
+
+      document.body.removeChild(clone);
+      toast.success('PDF downloaded!');
+    } catch {
+      toast.error('Failed to generate PDF');
     }
     setDownloading(null);
   };
@@ -409,10 +445,13 @@ const ResumeStudioTab = ({ navigate }: any) => {
             </motion.button>
 
             <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-              disabled
-              className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl font-extrabold text-sm bg-slate-100 dark:bg-white/[0.04] text-slate-400 cursor-not-allowed">
-              <FilePdf size={18} weight="fill" /> Download PDF
-              <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 ml-1">Coming soon</span>
+              onClick={handleDownloadPdf} disabled={downloading === 'pdf'}
+              className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl font-extrabold text-sm bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg shadow-rose-500/20 transition-all disabled:opacity-50">
+              {downloading === 'pdf' ? (
+                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating...</>
+              ) : (
+                <><FilePdf size={18} weight="fill" /> Download PDF</>
+              )}
             </motion.button>
           </div>
         </div>
@@ -426,7 +465,9 @@ const ResumeStudioTab = ({ navigate }: any) => {
             <span className="text-[10px] text-slate-400">Scaled to fit — actual document is A4</span>
           </div>
           <div className="soft-card p-4 bg-slate-100 dark:bg-slate-900/50">
-            <ResumePreview data={profileData} template={template} />
+            <div ref={previewRef}>
+              <ResumePreview data={profileData} template={template} />
+            </div>
           </div>
         </div>
       </div>
