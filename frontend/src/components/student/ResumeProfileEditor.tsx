@@ -178,9 +178,9 @@ const ResumeProfileEditor = () => {
       setData(editable);
       // Verify saved GitHub profile on load
       const ghUsername = extractUsername('github', editable.github || '');
-      if (ghUsername) {
-        verifySocialProfile('github', ghUsername);
-      }
+      if (ghUsername) verifySocialProfile('github', ghUsername);
+      // Verify saved portfolio on load
+      if (editable.portfolio?.trim()) verifySocialProfile('portfolio', editable.portfolio.trim());
     } catch { /* silent */ }
     setLoading(false);
   }, []);
@@ -194,9 +194,9 @@ const ResumeProfileEditor = () => {
     // Re-validate URLs on each change for instant feedback
     if (['linkedin', 'github', 'portfolio'].includes(key)) {
       setUrlErrors(prev => ({ ...prev, [key]: validateUrl(key, value || '') }));
-      // Clear verified GitHub profile while typing (will re-verify on blur)
-      if (key === 'github') {
-        setSocialProfiles(prev => ({ ...prev, github: null }));
+      // Clear verified profile while typing (will re-verify on blur)
+      if (key === 'github' || key === 'portfolio') {
+        setSocialProfiles(prev => ({ ...prev, [key]: null }));
       }
     }
   };
@@ -212,16 +212,20 @@ const ResumeProfileEditor = () => {
     }
   };
 
-  // Called on blur for LinkedIn/GitHub — extract username and verify
+  // Called on blur for GitHub/portfolio — verify profile/site
   const handleUrlBlur = (key: string) => {
     const url = data[key] || '';
     const err = validateUrl(key, url);
     if (!err && url.trim()) {
-      const username = extractUsername(key, url);
-      if (username) {
-        verifySocialProfile(key, username);
+      if (key === 'portfolio') {
+        verifySocialProfile('portfolio', url.trim());
       } else {
-        setSocialProfiles(prev => ({ ...prev, [key]: null }));
+        const username = extractUsername(key, url);
+        if (username) {
+          verifySocialProfile(key, username);
+        } else {
+          setSocialProfiles(prev => ({ ...prev, [key]: null }));
+        }
       }
     } else {
       setSocialProfiles(prev => ({ ...prev, [key]: null }));
@@ -352,7 +356,22 @@ const ResumeProfileEditor = () => {
                 )}
               </div>
               {/* Portfolio */}
-              <FieldInput label="Portfolio / Website" value={data.portfolio} onChange={(v: string) => update('portfolio', v)} placeholder="yoursite.com" error={urlErrors.portfolio} />
+              <div>
+                <FieldInput label="Portfolio / Website" value={data.portfolio} onChange={(v: string) => update('portfolio', v)} onBlur={() => handleUrlBlur('portfolio')} placeholder="yoursite.com" error={urlErrors.portfolio} />
+                {socialProfiles.portfolio?.loading && (
+                  <p className="text-[10px] text-slate-400 mt-1">Checking website...</p>
+                )}
+                {socialProfiles.portfolio && !socialProfiles.portfolio.loading && socialProfiles.portfolio.exists === true && (
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <Globe size={13} weight="bold" className="text-emerald-500" />
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Website is live</span>
+                    <Check size={12} weight="bold" className="text-emerald-500" />
+                  </div>
+                )}
+                {socialProfiles.portfolio && !socialProfiles.portfolio.loading && socialProfiles.portfolio.exists === false && (
+                  <p className="text-[10px] font-bold text-red-500 mt-1">Could not reach this website</p>
+                )}
+              </div>
             </div>
           </motion.div>
         )}

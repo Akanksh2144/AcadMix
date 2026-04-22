@@ -232,4 +232,24 @@ async def verify_social_profile(platform: str, username: str) -> Dict[str, Any]:
             "note": "LinkedIn verification requires OAuth — cannot auto-verify",
         }
 
+    elif platform == "portfolio":
+        # Verify a portfolio website exists by sending a HEAD request.
+        url = username.strip()  # 'username' param carries the full URL here
+        if not url.startswith("http"):
+            url = f"https://{url}"
+        try:
+            async with httpx.AsyncClient(timeout=8.0, follow_redirects=True, verify=False) as client:
+                resp = await client.head(url, headers={"User-Agent": "AcadMix-Verifier/1.0"})
+                # Some sites block HEAD, fall back to GET
+                if resp.status_code == 405:
+                    resp = await client.get(url, headers={"User-Agent": "AcadMix-Verifier/1.0"})
+                if resp.status_code < 400:
+                    return {"exists": True, "platform": "portfolio", "url": url}
+                else:
+                    return {"exists": False, "platform": "portfolio", "error": "Site returned an error"}
+        except httpx.TimeoutException:
+            return {"exists": None, "platform": "portfolio", "error": "Site took too long to respond"}
+        except Exception:
+            return {"exists": False, "platform": "portfolio", "error": "Could not reach this website"}
+
     return {"exists": False, "error": f"Unknown platform: {platform}"}
