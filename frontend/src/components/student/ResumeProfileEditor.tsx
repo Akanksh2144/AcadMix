@@ -338,35 +338,17 @@ const ResumeProfileEditor = () => {
                   </div>
                 )}
                 {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === true && (
-                  <div className="flex items-center gap-2.5 mt-2 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5">
-                    {socialProfiles.github.avatar_url && (
-                      <img src={socialProfiles.github.avatar_url} alt="" className="w-8 h-8 rounded-full ring-2 ring-emerald-400/40 shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <GithubLogo size={14} weight="fill" className="text-slate-800 dark:text-white shrink-0" />
-                        <span className="text-sm font-extrabold text-slate-800 dark:text-white truncate">{socialProfiles.github.full_name}</span>
-                        <Check size={13} weight="bold" className="text-emerald-500 shrink-0" />
-                      </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                        @{socialProfiles.github.username}
-                        {socialProfiles.github.public_repos !== undefined && ` · ${socialProfiles.github.public_repos} repos`}
-                        {socialProfiles.github.bio && ` · ${socialProfiles.github.bio}`}
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <GithubLogo size={14} weight="fill" className="text-slate-800 dark:text-white" />
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{socialProfiles.github.full_name}</span>
+                    <Check size={12} weight="bold" className="text-emerald-500" />
                   </div>
                 )}
                 {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === false && (
-                  <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-red-50/50 dark:bg-red-500/5 border border-red-200/30 dark:border-red-500/15">
-                    <Warning size={14} weight="fill" className="text-red-500 shrink-0" />
-                    <span className="text-xs font-bold text-red-500">GitHub profile not found</span>
-                  </div>
+                  <p className="text-[10px] font-bold text-red-500 mt-1">Profile not found</p>
                 )}
                 {socialProfiles.github && !socialProfiles.github.loading && socialProfiles.github.exists === null && socialProfiles.github.error && (
-                  <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-amber-50/50 dark:bg-amber-500/5 border border-amber-200/30 dark:border-amber-500/15">
-                    <Warning size={14} weight="fill" className="text-amber-500 shrink-0" />
-                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{socialProfiles.github.error}</span>
-                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">{socialProfiles.github.error}</p>
                 )}
               </div>
               {/* Portfolio */}
