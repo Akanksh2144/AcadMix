@@ -230,15 +230,30 @@ def _build_classic(data: Dict[str, Any]) -> Document:
         _heading(doc, "Projects")
         for proj in projects:
             title = proj.get("title", "Untitled")
-            tech = proj.get("tech_stack", "")
-            left = f"{title} — {tech}" if tech else title
-            _entry_line(doc, left, right_text=proj.get("duration", ""))
+            duration = proj.get("duration", "")
 
+            # Title line: bold project name, right-aligned duration
+            p = _para(doc, sp_before=3, sp_after=0)
+            fmt = p.paragraph_format
+            fmt.tab_stops.add_tab_stop(_CONTENT_WIDTH, WD_TAB_ALIGNMENT.RIGHT)
+            _run(p, title, sz=_TITLE_SZ, bold=True, color=_CLR_BLACK)
+            if duration:
+                _run(p, "\t", sz=_TITLE_SZ)
+                _run(p, duration, sz=_SUB_SZ, color=_CLR_SUBTLE)
+
+            # Tech stack line: italic, subtle
+            tech = proj.get("tech_stack", "")
+            if tech:
+                p2 = _para(doc, sp_before=0, sp_after=0)
+                _run(p2, tech, sz=_SUB_SZ, color=_CLR_SUBTLE, italic=True)
+
+            # Link
             link = proj.get("link", "")
             if link:
-                p = _para(doc, sp_before=0, sp_after=0)
-                _run(p, link, sz=_SUB_SZ, color=_CLR_LINK)
+                p3 = _para(doc, sp_before=0, sp_after=0)
+                _run(p3, link, sz=_SUB_SZ, color=_CLR_LINK)
 
+            # Bullets
             bullets = proj.get("bullets", [])
             written = False
             for b in bullets:
@@ -254,13 +269,25 @@ def _build_classic(data: Dict[str, Any]) -> Document:
         for exp in experience:
             role = exp.get("role", "Role")
             company = exp.get("company", "")
-            left = f"{role} — {company}" if company else role
-            _entry_line(doc, left, right_text=exp.get("duration", ""))
+            duration = exp.get("duration", "")
 
+            # Title line: bold role, lighter company, right-aligned duration
+            p = _para(doc, sp_before=3, sp_after=0)
+            fmt = p.paragraph_format
+            fmt.tab_stops.add_tab_stop(_CONTENT_WIDTH, WD_TAB_ALIGNMENT.RIGHT)
+            _run(p, role, sz=_TITLE_SZ, bold=True, color=_CLR_BLACK)
+            if company:
+                _run(p, f"  —  {company}", sz=_TITLE_SZ, color=_CLR_SUBTLE)
+            if duration:
+                _run(p, "\t", sz=_TITLE_SZ)
+                _run(p, duration, sz=_SUB_SZ, color=_CLR_SUBTLE)
+
+            # Location subtitle
             loc = exp.get("location", "")
             if loc:
                 _subtitle(doc, loc)
 
+            # Bullets
             bullets = exp.get("bullets", [])
             written = False
             for b in bullets:
