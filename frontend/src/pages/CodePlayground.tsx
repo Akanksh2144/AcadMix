@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { toast } from 'sonner';
 
@@ -578,6 +578,13 @@ const CodePlayground = ({ navigate, user }) => {
         maxWidth="max-w-[1600px]"
         rightContent={
           <>
+            <button 
+              onClick={() => navigate('/sql-practice')}
+              className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2"
+            >
+              <Database size={16} weight="fill" />
+              Practice SQL
+            </button>
             <button
               onClick={() => setShowInsightsModal(true)}
               className="hidden lg:flex bg-white hover:bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 !px-4 !py-2.5 text-sm font-semibold rounded-xl transition-all shadow-sm items-center gap-2"
