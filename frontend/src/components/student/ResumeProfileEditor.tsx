@@ -87,7 +87,7 @@ const FieldInput = ({ label, value, onChange, onBlur, placeholder, type = 'text'
       <div className={`flex items-center soft-input w-full ${error ? '!border-red-300 dark:!border-red-500/40 !ring-red-100 dark:!ring-red-500/10' : ''}`}>
         <Icon size={16} weight="fill" className={`shrink-0 mr-2.5 ${iconClass || 'text-slate-400'}`} />
         <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} onBlur={onBlur} placeholder={placeholder}
-          className="flex-1 bg-transparent outline-none text-sm text-slate-800 dark:text-white placeholder:text-slate-400" />
+          className="flex-1 bg-transparent border-0 outline-none ring-0 shadow-none focus:ring-0 focus:outline-none text-sm text-slate-800 dark:text-white placeholder:text-slate-400 p-0" />
       </div>
     ) : (
       <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} onBlur={onBlur} placeholder={placeholder}
