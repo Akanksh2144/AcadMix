@@ -587,6 +587,7 @@ export const resumeProfileAPI = {
   get: () => api.get('/student/resume-profile'),
   update: (data) => api.put('/student/resume-profile', data),
   verifySocial: (platform, username) => api.get('/student/verify-social-profile', { params: { platform, username } }),
+  generateDocx: (template = 'classic') => api.post('/student/resume/generate-docx', { template }, { responseType: 'blob' }),
 };
 
 // Hostel Management — Sleeper Bus Bed Booking

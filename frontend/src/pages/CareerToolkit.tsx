@@ -12,6 +12,7 @@ import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Responsi
 import { toast } from 'sonner';
 import PageHeader from '../components/PageHeader';
 import { ResumeATSContent } from './ResumeATSScorer';
+import ResumeStudioTab from '../components/student/ResumeStudioTab';
 
 /* ── Animation Variants ─────────────────────────────────── */
 const containerV = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
@@ -915,7 +916,8 @@ const CompanyIntelTab = () => {
    MAIN PAGE
    ═══════════════════════════════════════════════════════════════ */
 const TABS = [
-  { id: 'resume-scorer', label: 'Resume Scorer', icon: FileText, Component: ResumeATSContent },
+  { id: 'resume-builder', label: 'Resume Builder', icon: FileText, Component: ResumeStudioTab },
+  { id: 'resume-scorer', label: 'Resume Scorer', icon: ChartPolar, Component: ResumeATSContent },
   { id: 'cover-letter', label: 'Cover Letter', icon: FileText, Component: CoverLetterTab },
   { id: 'jd-analyzer', label: 'JD Analyzer', icon: MagnifyingGlass, Component: JDAnalyzerTab },
   { id: 'cold-email', label: 'Cold Email', icon: Envelope, Component: ColdEmailTab },

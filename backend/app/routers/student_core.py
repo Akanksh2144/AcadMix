@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List, Optional
@@ -11,6 +12,7 @@ import app.schemas as server_schemas
 from app.schemas import *
 from app.services.student_service import StudentService
 from app.services import resume_profile_service
+from app.services import resume_builder_service
 
 router = APIRouter()
 
@@ -372,3 +374,22 @@ async def verify_social_profile(
 ):
     """Verify a GitHub/LinkedIn/portfolio profile exists and return public metadata."""
     return await resume_profile_service.verify_social_profile(platform, username)
+
+
+@router.post("/student/resume/generate-docx")
+async def generate_resume_docx(
+    body: dict = Body(default={}),
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db),
+):
+    """Generate a .docx resume from the student's resume profile data."""
+    template = body.get("template", "classic")
+    try:
+        buffer, filename = await resume_builder_service.generate_docx(user, session, template)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
