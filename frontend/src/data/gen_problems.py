@@ -1329,10 +1329,154 @@ add("sql-140","YoY Transaction Volume Change","Banking / Finance","Morgan Stanle
 BANK_T,BANK_S,(["acc_type","total_volume","avg_per_txn"],[["savings",28000.0,4666.67],["current",10000.0,5000.0]]),
 "SELECT a.type AS acc_type,SUM(t.amount)AS total_volume,ROUND(AVG(t.amount),2)AS avg_per_txn FROM accounts a JOIN transactions t ON a.id=t.acc_id GROUP BY a.type ORDER BY total_volume DESC;",topic="Volume Analysis by Category")
 
+
+# ═══ BATCH 15: Remaining Research Gaps I ═══
+
+add("sql-141","Employees Joined in Last 6 Months","HR / Employee","TCS Digital","easy",
+"Find employees who joined after June 2023 (hire_date > '2023-06-01'). Since our schema uses a static dataset, find employees with salary below the median as a proxy for 'recent hires'.\n\nReturn name and salary. Order by salary.",
+"WHERE salary < (median). Median of 6 values = avg of 3rd and 4th.",
+"Median = (60000+55000)/2 = 57500. Below: Frank(45K), Diana(50K), Charlie(55K).",
+EMP_T,EMP_S,(["name","salary"],[["Frank",45000],["Diana",50000],["Charlie",55000]]),
+"SELECT name,salary FROM employees WHERE salary<(SELECT AVG(salary) FROM(SELECT salary FROM employees ORDER BY salary LIMIT 2 OFFSET 2))ORDER BY salary;",topic="Below-Median Filtering")
+
+add("sql-142","Department With Highest Average Salary","HR / Employee","HCLTech","easy",
+"Find the department with the highest average salary.\n\nReturn department and avg_salary (rounded to 0).",
+"GROUP BY department, ORDER BY AVG DESC, LIMIT 1.",
+"Engineering: (70K+65K+55K)/3=63333. Marketing: (60K+50K)/2=55000. Sales: 45000.",
+EMP_T,EMP_S,(["department","avg_salary"],[["Engineering",63333]]),
+"SELECT department,ROUND(AVG(salary))AS avg_salary FROM employees GROUP BY department ORDER BY avg_salary DESC LIMIT 1;",topic="Max Average per Group")
+
+add("sql-143","Rider's 3rd Ride Ever","Ride-Sharing (Ola)","Ola","medium",
+"Find each rider's 3rd ride (by date). Only include riders who have at least 3 rides.\n\nReturn rider name, ride_date, fare. Order by name.",
+"ROW_NUMBER() OVER (PARTITION BY rider_id ORDER BY ride_date) = 3.",
+"Aarav has 4 rides. His 3rd: Feb 01, 200.",
+RIDE_T,RIDE_S,(["name","ride_date","fare"],[["Aarav","2024-02-01",200.0]]),
+"SELECT r2.name,r.ride_date,r.fare FROM(SELECT *,ROW_NUMBER() OVER(PARTITION BY rider_id ORDER BY ride_date)AS rn FROM rides)r JOIN riders r2 ON r.rider_id=r2.id WHERE r.rn=3 ORDER BY r2.name;",topic="Nth Event per User")
+
+add("sql-144","Users Inactive for 7+ Days","Login / Activity","Atlassian","medium",
+"Find users whose gap between any two consecutive logins exceeds 7 days.\n\nReturn distinct user name and max_gap. Order by max_gap descending.",
+"LAG + JULIANDAY diff, filter > 7.",
+"Diya: Jan10→Jan20 = 10 day gap. Others have shorter gaps.",
+LOGIN_T,LOGIN_S,(["name","max_gap"],[["Diya",10]]),
+"WITH gaps AS(SELECT user_id,CAST(JULIANDAY(login_date)-JULIANDAY(LAG(login_date) OVER(PARTITION BY user_id ORDER BY login_date))AS INT)AS gap FROM(SELECT DISTINCT user_id,login_date FROM logins))SELECT u.name,MAX(g.gap)AS max_gap FROM gaps g JOIN users u ON g.user_id=u.id WHERE g.gap>7 GROUP BY u.name ORDER BY max_gap DESC;",topic="Inactivity Detection")
+
+add("sql-145","Pareto: Top 20% Revenue Customers","E-Commerce (Flipkart)","Oracle","hard",
+"Find customers who contribute to the top 20% of total revenue (Pareto principle).\n\nReturn name, total_spent, and cumulative_pct (rounded to 1). Show only those within top 20%.",
+"Cumulative SUM / grand total, filter <= 20.",
+"With 5 customers, top 20% ≈ top 1 customer.",
+ECOM_T,ECOM_S,(["name","total_spent","cumulative_pct"],[]),
+"WITH customer_rev AS(SELECT c.name,SUM(o.total)AS total_spent FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name),ranked AS(SELECT *,SUM(total_spent) OVER(ORDER BY total_spent DESC)AS cum_sum,(SELECT SUM(total) FROM orders)AS grand_total FROM customer_rev)SELECT name,total_spent,ROUND(cum_sum*100.0/grand_total,1)AS cumulative_pct FROM ranked WHERE ROUND(cum_sum*100.0/grand_total,1)<=50;",topic="Pareto / Top-N Revenue")
+
+add("sql-146","Extract Email Domain","E-Commerce (Flipkart)","Capgemini","easy",
+"Extract just the domain from each customer's email address.\n\nReturn name and email_domain. Order by name.",
+"Use SUBSTR + INSTR to get everything after '@'.",
+"ankit@gmail.com → gmail.com.",
+ECOM_T,ECOM_S,(["name","email_domain"],[["Ankit","gmail.com"],["Priya","yahoo.com"],["Rohan","gmail.com"],["Sneha","outlook.com"],["Vikram","gmail.com"]]),
+"SELECT name,SUBSTR(email,INSTR(email,'@')+1)AS email_domain FROM customers ORDER BY name;",topic="Email Domain Extraction")
+
+add("sql-147","Cross-Month Retention","Login / Activity","Google","hard",
+"Find users who logged in during BOTH the first week (Jan 10-16) AND the second week (Jan 17-23) of January 2024.\n\nReturn distinct user name.",
+"INTERSECT of two date-range queries, or HAVING COUNT(DISTINCT week)=2.",
+"Who logged in both weeks?",
+LOGIN_T,LOGIN_S,(["name"],[["Aarav"],["Diya"]]),
+"SELECT DISTINCT u.name FROM users u WHERE u.id IN(SELECT user_id FROM logins WHERE login_date BETWEEN '2024-01-10' AND '2024-01-16')AND u.id IN(SELECT user_id FROM logins WHERE login_date BETWEEN '2024-01-17' AND '2024-01-23')ORDER BY u.name;",topic="Cross-Period Retention")
+
+add("sql-148","Products With No Sales","E-Commerce (Flipkart)","Flipkart","easy",
+"Find products that have never been ordered.\n\nReturn product_name.",
+"LEFT JOIN products to order_items WHERE order_item is NULL.",
+"All products may have been ordered... let's check.",
+ECOM_T,ECOM_S,(["product_name"],[]),
+"SELECT p.product_name FROM products p LEFT JOIN order_items oi ON p.id=oi.product_id WHERE oi.id IS NULL;",topic="Unsold Products Detection")
+
+add("sql-149","Multi-Condition CASE: Risk Rating","Banking / Finance","TCS NQT","medium",
+"Assign a risk rating to each account based on balance: 'High Risk' (balance < 30000), 'Medium Risk' (30000-60000), 'Low Risk' (>60000).\n\nReturn holder, balance, and risk_rating. Order by balance.",
+"CASE WHEN with multiple conditions.",
+"Categorize each account.",
+BANK_T,BANK_S,(["holder","balance","risk_rating"],[["Priya",25000.0,"High Risk"],["Suresh",30000.0,"Medium Risk"],["Amit",45000.0,"Medium Risk"],["Neha",50000.0,"Medium Risk"],["Ravi",50000.0,"Medium Risk"],["Deepak",75000.0,"Low Risk"]]),
+"SELECT holder,balance,CASE WHEN balance<30000 THEN 'High Risk' WHEN balance<=60000 THEN 'Medium Risk' ELSE 'Low Risk' END AS risk_rating FROM accounts ORDER BY balance;",topic="Multi-Condition Risk Rating")
+
+add("sql-150","Doctors With Most Appointments","Healthcare / Hospital","HCLTech","easy",
+"Find the doctor with the most appointments.\n\nReturn doctor name and appointment_count.",
+"JOIN doctors to appointments, GROUP BY, ORDER BY COUNT DESC, LIMIT 1.",
+"Which doctor is busiest?",
+HOSPITAL_T,HOSPITAL_S,(["name","appointment_count"],[["Dr. Sharma",2]]),
+"SELECT d.name,COUNT(*)AS appointment_count FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.name ORDER BY appointment_count DESC LIMIT 1;",topic="Busiest Entity Detection")
+
+# ═══ BATCH 16: Final Research Gaps ═══
+
+add("sql-151","Customer Lifetime Value Ranking","E-Commerce (Flipkart)","Amazon","hard",
+"Rank customers by their lifetime value (total spending minus cancelled orders). Include order count.\n\nReturn name, total_orders, lifetime_value, clv_rank. Order by clv_rank.",
+"Filter out cancelled, SUM total, DENSE_RANK by value.",
+"Exclude cancelled orders from total.",
+ECOM_T,ECOM_S,(["name","total_orders","lifetime_value","clv_rank"],[["Ankit",2,60799.0,1],["Rohan",1,55450.0,2],["Sneha",1,6900.0,3],["Vikram",1,450.0,4]]),
+"WITH clv AS(SELECT c.name,COUNT(*)AS total_orders,SUM(o.total)AS lifetime_value FROM customers c JOIN orders o ON c.id=o.customer_id WHERE o.status!='cancelled' GROUP BY c.name)SELECT name,total_orders,lifetime_value,DENSE_RANK() OVER(ORDER BY lifetime_value DESC)AS clv_rank FROM clv ORDER BY clv_rank;",topic="Customer Lifetime Value")
+
+add("sql-152","Viewers Who Watched All Genres","Streaming (Netflix)","Oracle","hard",
+"Find users who have watched shows from every genre in the shows table.\n\nReturn user_name.",
+"COUNT(DISTINCT genre) per user = total distinct genres.",
+"Check who has coverage across all genres.",
+STREAM_T,STREAM_S,(["user_name"],[["Arjun"]]),
+"SELECT u.user_name FROM users u JOIN watch_history w ON u.id=w.user_id JOIN shows s ON w.show_id=s.id GROUP BY u.user_name HAVING COUNT(DISTINCT s.genre)=(SELECT COUNT(DISTINCT genre) FROM shows);",topic="Complete Coverage Check")
+
+add("sql-153","Account Balance After All Transactions","Banking / Finance","JP Morgan","medium",
+"Calculate each account's effective balance after applying all credits and debits.\n\nReturn holder, original_balance, credits, debits, effective_balance. Order by effective_balance descending.",
+"Balance + SUM(credits) - SUM(debits).",
+"Start with initial balance, add credits, subtract debits.",
+BANK_T,BANK_S,(["holder","original_balance","credits","debits","effective_balance"],[["Deepak",75000.0,5000.0,0.0,80000.0],["Ravi",50000.0,8000.0,0.0,58000.0],["Amit",45000.0,5000.0,2000.0,48000.0],["Neha",50000.0,0.0,3000.0,47000.0],["Suresh",30000.0,0.0,0.0,30000.0],["Priya",25000.0,0.0,0.0,25000.0]]),
+"SELECT a.holder,a.balance AS original_balance,IFNULL(SUM(CASE WHEN t.type='credit' THEN t.amount END),0)AS credits,IFNULL(SUM(CASE WHEN t.type='debit' THEN t.amount END),0)AS debits,a.balance+IFNULL(SUM(CASE WHEN t.type='credit' THEN t.amount WHEN t.type='debit' THEN -t.amount END),0)AS effective_balance FROM accounts a LEFT JOIN transactions t ON a.id=t.acc_id GROUP BY a.id ORDER BY effective_balance DESC;",topic="Balance Reconciliation")
+
+add("sql-154","Weekday vs Weekend Orders","Food Delivery (Zomato)","Swiggy","medium",
+"Categorize orders into 'Weekday' vs 'Weekend' based on order_date and compare revenue.\n\nReturn day_type, order_count, total_revenue. Order by total_revenue descending.",
+"strftime('%w') gives day-of-week (0=Sun, 6=Sat). Weekend = 0 or 6.",
+"Classify and aggregate.",
+ZOMATO_T,ZOMATO_S,(["day_type","order_count","total_revenue"],[["Weekday",7,5050.0],["Weekend",1,300.0]]),
+"SELECT CASE WHEN CAST(strftime('%w',order_date)AS INT) IN(0,6) THEN 'Weekend' ELSE 'Weekday' END AS day_type,COUNT(*)AS order_count,SUM(amount)AS total_revenue FROM orders GROUP BY day_type ORDER BY total_revenue DESC;",topic="Weekday vs Weekend Analysis")
+
+add("sql-155","Signup-to-First-Login Time","Login / Activity","Zoho","medium",
+"Calculate the number of days between each user's signup date and their first login.\n\nReturn name, signup_date, first_login, days_to_activate. Order by days_to_activate descending.",
+"MIN(login_date) per user, then JULIANDAY diff from signup.",
+"How long until users become active?",
+LOGIN_T,LOGIN_S,(["name","signup_date","first_login","days_to_activate"],[["Eshan","2023-09-01","2024-01-10",131],["Diya","2023-06-10","2024-01-10",184],["Chirag","2023-03-01","2024-01-10",315],["Bhavna","2023-02-15","2024-01-10",330],["Aarav","2023-01-01","2024-01-10",374]]),
+"SELECT u.name,u.signup_date,MIN(l.login_date)AS first_login,CAST(JULIANDAY(MIN(l.login_date))-JULIANDAY(u.signup_date)AS INT)AS days_to_activate FROM users u JOIN logins l ON u.id=l.user_id GROUP BY u.id ORDER BY days_to_activate DESC;",topic="Time-to-Activation")
+
+add("sql-156","Top Spender Per City","Payments (Paytm)","CRED","medium",
+"Find the highest spender (successful payments) in each city.\n\nReturn city, name, total_spent. Order by total_spent descending.",
+"CTE for user spending, ROW_NUMBER per city.",
+"Mumbai: Aarav(3300) vs Eshan(350). Delhi: Bhavna. etc.",
+PAY_T,PAY_S,(["city","name","total_spent"],[["Chennai","Diya",5000.0],["Mumbai","Aarav",3300.0],["Bangalore","Chirag",2600.0],["Delhi","Bhavna",2300.0]]),
+"WITH user_spend AS(SELECT u.name,u.city,SUM(p.amount)AS total_spent FROM pay_users u JOIN payments p ON u.id=p.user_id WHERE p.status='success' GROUP BY u.id),ranked AS(SELECT *,ROW_NUMBER() OVER(PARTITION BY city ORDER BY total_spent DESC)AS rn FROM user_spend)SELECT city,name,total_spent FROM ranked WHERE rn=1 ORDER BY total_spent DESC;",topic="Top-N per Region")
+
+add("sql-157","Payment Volume MoM Growth","Payments (Paytm)","PhonePe","hard",
+"Calculate the month-over-month growth in total successful payment volume.\n\nReturn month_num, volume, prev_volume, growth_pct (rounded to 1). Order by month.",
+"CTE for monthly SUM, LAG for previous month.",
+"Jan total vs Feb total vs Mar total.",
+PAY_T,PAY_S,(["month_num","volume","prev_volume","growth_pct"],[["01",5100.0,None,None],["02",7200.0,5100.0,41.2],["03",1250.0,7200.0,-82.6]]),
+"WITH monthly AS(SELECT strftime('%m',pay_date)AS month_num,SUM(amount)AS volume FROM payments WHERE status='success' GROUP BY strftime('%m',pay_date))SELECT month_num,volume,LAG(volume) OVER(ORDER BY month_num)AS prev_volume,ROUND((volume-LAG(volume) OVER(ORDER BY month_num))*100.0/LAG(volume) OVER(ORDER BY month_num),1)AS growth_pct FROM monthly ORDER BY month_num;",topic="MoM Payment Volume Growth")
+
+add("sql-158","Average Rides Per Rider Per Month","Ride-Sharing (Ola)","Ola","medium",
+"Calculate the average number of rides per active rider per month.\n\nReturn month, total_rides, active_riders, avg_rides_per_rider (rounded to 1). Order by month.",
+"COUNT rides / COUNT DISTINCT riders per month.",
+"Jan: 4 rides by 3 riders = 1.3.",
+RIDE_T,RIDE_S,(["month","total_rides","active_riders","avg_rides_per_rider"],[["01",4,3,1.3],["02",3,3,1.0],["03",3,2,1.5]]),
+"SELECT strftime('%m',ride_date)AS month,COUNT(*)AS total_rides,COUNT(DISTINCT rider_id)AS active_riders,ROUND(COUNT(*)*1.0/COUNT(DISTINCT rider_id),1)AS avg_rides_per_rider FROM rides GROUP BY strftime('%m',ride_date) ORDER BY month;",topic="Per-User Activity Rate")
+
+add("sql-159","Multi-Schema Summary Dashboard","HR / Employee","Deloitte","hard",
+"Create a single-row executive dashboard showing: total employees, total departments, avg salary (rounded), highest salary, lowest salary, salary range, and total payroll.\n\nReturn all 7 metrics.",
+"Multiple aggregations in a single SELECT.",
+"Comprehensive summary in one query.",
+EMP_T,EMP_S,(["total_emp","total_dept","avg_salary","max_salary","min_salary","salary_range","total_payroll"],[[6,3,57500,70000,45000,25000,345000]]),
+"SELECT COUNT(*)AS total_emp,COUNT(DISTINCT department)AS total_dept,ROUND(AVG(salary))AS avg_salary,MAX(salary)AS max_salary,MIN(salary)AS min_salary,MAX(salary)-MIN(salary)AS salary_range,SUM(salary)AS total_payroll FROM employees;",topic="Executive Summary Dashboard")
+
+add("sql-160","Grand Analytics: User 360° View","Payments (Paytm)","Google","hard",
+"Build a comprehensive user profile: name, city, total transactions, successful count, failed count, success rate, total spent, avg transaction, preferred method, and spending tier.\n\nReturn all metrics. Order by total_spent descending.",
+"Multi-CTE pipeline combining aggregation, conditional counts, ROW_NUMBER for preferred method, and CASE for tier.",
+"Complete 360° user analytics.",
+PAY_T,PAY_S,(["name","city","total_txns","success_cnt","fail_cnt","success_rate","total_spent","avg_txn","preferred_method","tier"],[["Diya","Chennai",2,1,1,50.0,5000.0,5000,"card","Platinum"],["Aarav","Mumbai",4,4,0,100.0,3300.0,825,"UPI","Platinum"],["Chirag","Bangalore",4,2,2,50.0,2600.0,1300,"card","Gold"],["Bhavna","Delhi",3,2,1,66.7,2300.0,1150,"UPI","Gold"],["Eshan","Mumbai",1,1,0,100.0,350.0,350,"UPI","Silver"]]),
+"WITH stats AS(SELECT u.name,u.city,COUNT(*)AS total_txns,SUM(CASE WHEN p.status='success' THEN 1 ELSE 0 END)AS success_cnt,SUM(CASE WHEN p.status='failed' THEN 1 ELSE 0 END)AS fail_cnt,ROUND(SUM(CASE WHEN p.status='success' THEN 1 ELSE 0 END)*100.0/COUNT(*),1)AS success_rate,IFNULL(SUM(CASE WHEN p.status='success' THEN p.amount END),0)AS total_spent,ROUND(IFNULL(AVG(CASE WHEN p.status='success' THEN p.amount END),0))AS avg_txn FROM pay_users u JOIN payments p ON u.id=p.user_id GROUP BY u.id),prefs AS(SELECT user_id,method,ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY COUNT(*) DESC)AS rn FROM payments WHERE status='success' GROUP BY user_id,method)SELECT s.name,s.city,s.total_txns,s.success_cnt,s.fail_cnt,s.success_rate,s.total_spent,s.avg_txn,pr.method AS preferred_method,CASE WHEN s.total_spent>3000 THEN 'Platinum' WHEN s.total_spent>=1000 THEN 'Gold' ELSE 'Silver' END AS tier FROM stats s JOIN prefs pr ON s.name=(SELECT name FROM pay_users WHERE id=pr.user_id) AND pr.rn=1 ORDER BY s.total_spent DESC;",topic="User 360° Analytics (Capstone)")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
     json.dump(P, f, indent=2, default=str)
 print(f"Done: Generated {len(P)} problems")
-
 
