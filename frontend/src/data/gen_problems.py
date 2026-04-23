@@ -2683,6 +2683,78 @@ add("sql-330","Total Rides Per Month","Ride-Sharing (Ola)","Cognizant","medium",
 RIDE_T,RIDE_S,(["month","ride_count"],[]),
 "SELECT SUBSTR(ride_date,1,7)AS month,COUNT(*)AS ride_count FROM rides GROUP BY SUBSTR(ride_date,1,7) ORDER BY month;",topic="Monthly Ride Count")
 
+# ═══ BATCH 33: Cognizant Final 10 — COMPLETES to 30 ═══
+
+add("sql-331","Running Count of Orders","E-Commerce (Flipkart)","Cognizant","medium",
+"Show a running count of orders by order date.\n\nReturn order_id, order_date, running_count. Order by order_date.",
+"COUNT(*) OVER(ORDER BY order_date).",
+"Cumulative order count.",
+ECOM_T,ECOM_S,(["order_id","order_date","running_count"],[[1,"2024-01-10",1],[2,"2024-01-15",3],[3,"2024-01-15",3],[4,"2024-02-20",4],[5,"2024-03-15",7],[6,"2024-03-10",5],[7,"2024-03-15",7]]),
+"SELECT id AS order_id,order_date,COUNT(*) OVER(ORDER BY order_date)AS running_count FROM orders ORDER BY order_date;",topic="Window Running COUNT")
+
+add("sql-332","Second Cheapest Product","E-Commerce (Flipkart)","Cognizant","medium",
+"Find the second cheapest product.\n\nReturn name, price.",
+"DENSE_RANK OVER(ORDER BY price ASC), filter rank=2.",
+"Cheapest=SQL Book(450), 2nd=Cotton T-Shirt(799).",
+ECOM_T,ECOM_S,(["name","price"],[["Cotton T-Shirt",799.0]]),
+"SELECT name,price FROM(SELECT name,price,DENSE_RANK() OVER(ORDER BY price ASC)AS rk FROM products)t WHERE rk=2;",topic="2nd Cheapest (DENSE_RANK)")
+
+add("sql-333","Total Fare Collected Per City","Ride-Sharing (Ola)","Cognizant","easy",
+"Calculate total fare revenue per pickup city.\n\nReturn pickup, total_fare. Order by total_fare DESC.",
+"GROUP BY pickup, SUM(fare).",
+"Sum fares by pickup city.",
+RIDE_T,RIDE_S,(["pickup","total_fare"],[]),
+"SELECT pickup,SUM(fare)AS total_fare FROM rides GROUP BY pickup ORDER BY total_fare DESC;",topic="SUM Fare Per City")
+
+add("sql-334","Accounts With Balance Above 50K","Banking / Finance","Cognizant","easy",
+"Find bank accounts with balance exceeding 50,000.\n\nReturn holder, balance. Order by balance DESC.",
+"WHERE balance > 50000.",
+"High-balance accounts.",
+BANK_T,BANK_S,(["holder","balance"],[["Meena",150000.0],["Ravi",75000.0]]),
+"SELECT holder,balance FROM accounts WHERE balance>50000 ORDER BY balance DESC;",topic="WHERE Balance Filter")
+
+add("sql-335","Employee Name Length","HR / Employee","Cognizant","easy",
+"Show each employee's name and the length of their name.\n\nReturn name, name_len. Order by name_len DESC, name.",
+"LENGTH(name).",
+"Charlie=7, Diana=5, Alice=5, Frank=5, Bob=3, Eve=3.",
+EMP_T,EMP_S,(["name","name_len"],[["Charlie",7],["Alice",5],["Diana",5],["Frank",5],["Bob",3],["Eve",3]]),
+"SELECT name,LENGTH(name)AS name_len FROM employees ORDER BY name_len DESC,name;",topic="LENGTH() Function")
+
+add("sql-336","Student GPA Classification","University / Education","Cognizant","easy",
+"Classify students by GPA: 'Distinction' (>=3.5), 'First Class' (>=3.0), 'Second Class' (others).\n\nReturn name, gpa, classification. Order by gpa DESC.",
+"CASE WHEN gpa >= 3.5 THEN 'Distinction'...",
+"GPA-based classification.",
+UNI_T,UNI_S,(["name","gpa","classification"],[]),
+"SELECT name,gpa,CASE WHEN gpa>=3.5 THEN 'Distinction' WHEN gpa>=3.0 THEN 'First Class' ELSE 'Second Class' END AS classification FROM students ORDER BY gpa DESC;",topic="CASE GPA Tiers")
+
+add("sql-337","Users Who Both Posted and Commented","Social Media (Instagram)","Cognizant","medium",
+"Find users who have both created a post AND left a comment.\n\nReturn username. Order by username.",
+"EXISTS in posts AND EXISTS in comments.",
+"Users active in both content creation and engagement.",
+SOCIAL_T,SOCIAL_S,(["username"],[]),
+"SELECT DISTINCT pr.username FROM profiles pr WHERE EXISTS(SELECT 1 FROM posts p WHERE p.user_id=pr.id) AND EXISTS(SELECT 1 FROM comments c WHERE c.user_id=pr.id) ORDER BY pr.username;",topic="EXISTS Both Tables")
+
+add("sql-338","Order Status Distribution","E-Commerce (Flipkart)","Cognizant","easy",
+"Count orders by their status.\n\nReturn status, order_count. Order by order_count DESC.",
+"GROUP BY status, COUNT.",
+"delivered, shipped, cancelled counts.",
+ECOM_T,ECOM_S,(["status","order_count"],[["delivered",5],["shipped",1],["cancelled",1]]),
+"SELECT status,COUNT(*)AS order_count FROM orders GROUP BY status ORDER BY order_count DESC;",topic="COUNT Per Status")
+
+add("sql-339","Customer Order Frequency Label","E-Commerce (Flipkart)","Cognizant","medium",
+"Label customers as 'Power User' (3+), 'Active' (2), or 'Casual' (1) based on order count.\n\nReturn name, orders, label. Order by orders DESC.",
+"CASE on COUNT of orders.",
+"Ankit=3(Power), others=1(Casual).",
+ECOM_T,ECOM_S,(["name","orders","label"],[["Ankit",3,"Power User"],["Priya",1,"Casual"],["Rohan",1,"Casual"],["Sneha",1,"Casual"],["Vikram",1,"Casual"]]),
+"SELECT c.name,COUNT(o.id)AS orders,CASE WHEN COUNT(o.id)>=3 THEN 'Power User' WHEN COUNT(o.id)=2 THEN 'Active' ELSE 'Casual' END AS label FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name ORDER BY orders DESC;",topic="CASE Frequency Label")
+
+add("sql-340","Doctors Treating Multiple Patients","Healthcare / Hospital","Cognizant","medium",
+"Find doctors who have treated 2 or more unique patients.\n\nReturn doctor name, patient_count. Order by patient_count DESC.",
+"GROUP BY doc_id HAVING COUNT(DISTINCT patient_id) >= 2.",
+"Dr. Sharma and Dr. Patel each treated 2 patients.",
+HOSPITAL_T,HOSPITAL_S,(["name","patient_count"],[["Dr. Sharma",2],["Dr. Patel",2]]),
+"SELECT d.name,COUNT(DISTINCT a.patient_id)AS patient_count FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.name HAVING COUNT(DISTINCT a.patient_id)>=2 ORDER BY patient_count DESC;",topic="HAVING DISTINCT Patients")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
