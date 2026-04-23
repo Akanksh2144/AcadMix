@@ -21,7 +21,7 @@ const diffColors: Record<string, string> = {
 const companyLogos: Record<string, string> = {
   'Accenture': 'accenture.com', 'Adobe': 'adobe.com', 'Amazon': 'amazon.com',
   'Apollo': 'apollohospitals.com', 'Atlassian': 'atlassian.com', 'Capgemini': 'capgemini.com',
-  'Cognizant': 'cognizant.com', 'CRED': 'cred.club', 'Deloitte': 'deloitte.com',
+  'Cisco': 'cisco.com', 'Cognizant': 'cognizant.com', 'CRED': 'cred.club', 'Deloitte': 'deloitte.com',
   'Flipkart': 'flipkart.com', 'Freshworks': 'freshworks.com', 'Goldman Sachs': 'goldmansachs.com',
   'Google': 'google.com', 'HCLTech': 'hcltech.com', 'HDFC': 'hdfcbank.com',
   'ICICI': 'icicibank.com', 'Infosys': 'infosys.com', 'JP Morgan': 'jpmorgan.com',
@@ -30,13 +30,13 @@ const companyLogos: Record<string, string> = {
   'Oracle': 'oracle.com', 'Paytm': 'paytm.com', 'PhonePe': 'phonepe.com',
   'Practo': 'practo.com', 'Razorpay': 'razorpay.com', 'Salesforce': 'salesforce.com',
   'SAP': 'sap.com', 'ServiceNow': 'servicenow.com', 'Swiggy': 'swiggy.com',
-  'TCS Digital': 'tcs.com', 'TCS NQT': 'tcs.com', 'Tech Mahindra': 'techmahindra.com',
+  'TCS': 'tcs.com', 'TCS Digital': 'tcs.com', 'TCS NQT': 'tcs.com', 'Tech Mahindra': 'techmahindra.com',
   'Uber': 'uber.com', 'Walmart': 'walmart.com', 'Wipro': 'wipro.com',
   'Zomato': 'zomato.com', 'Zoho': 'zoho.com',
 };
 
 const CompanyLogo = ({ name, size = 16 }: { name: string; size?: number }) => {
-  const domain = companyLogos[name];
+  const domain = companyLogos[name] || `${name.toLowerCase().replace(/\s+/g, '')}.com`;
   if (!domain) return null;
   return <img src={`https://img.logo.dev/${domain}?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png`} alt={name} title={name} className="rounded-sm shrink-0 object-contain" style={{ width: size, height: size }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />;
 };
