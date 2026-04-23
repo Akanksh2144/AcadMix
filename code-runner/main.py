@@ -57,7 +57,16 @@ _BLOCKED_PATTERNS = {
         r"\bsocket\s*\(", r"\bconnect\s*\("
     ],
     "cpp": [],
-    "sql": [r"(?i)\bATTACH\b", r"(?i)\bPRAGMA\b", r"(?i)\bDROP\b", r"(?i)\bDELETE\b", r"(?i)\bUPDATE\b", r"(?i)\bINSERT\b", r"(?i)\bALTER\b"]
+    "sql": [r"(?i)\bATTACH\b", r"(?i)\bPRAGMA\b", r"(?i)\bDROP\b", r"(?i)\bDELETE\b", r"(?i)\bUPDATE\b", r"(?i)\bINSERT\b", r"(?i)\bALTER\b"],
+    "matlab": [
+        r"\bsystem\s*\(",
+        r"\bunix\s*\(",
+        r"\bpopen\s*\(",
+        r"\bfeval\s*\(",
+        r"\beval\s*\(",
+        r"\bexe\s*\(",
+        r"\bgetenv\s*\("
+    ]
 }
 _BLOCKED_PATTERNS["cpp"] = _BLOCKED_PATTERNS["c"]
 
@@ -92,14 +101,16 @@ def _validate_code(code: str, language: str):
                 )
 
 
-def _make_sandbox_limits(cpu_seconds: int):
+def _make_sandbox_limits(cpu_seconds: int, memory_bytes: int = None):
     """Return a preexec_fn that sets resource limits and drops to sandbox user."""
     if not IS_LINUX:
         return None
 
+    mem_limit = memory_bytes if memory_bytes is not None else MAX_MEMORY_BYTES
+
     def _fn():
         try:
-            resource.setrlimit(resource.RLIMIT_DATA, (MAX_MEMORY_BYTES, MAX_MEMORY_BYTES))
+            resource.setrlimit(resource.RLIMIT_DATA, (mem_limit, mem_limit))
             resource.setrlimit(resource.RLIMIT_FSIZE, (MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_BYTES))
             resource.setrlimit(resource.RLIMIT_NPROC, (MAX_PROCESSES, MAX_PROCESSES))
             resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds))
@@ -111,7 +122,7 @@ def _make_sandbox_limits(cpu_seconds: int):
     return _fn
 
 
-def _run_cmd(cmd, test_input="", wall_timeout=10, cpu_seconds=10, cwd=None):
+def _run_cmd(cmd, test_input="", wall_timeout=10, cpu_seconds=10, cwd=None, memory_bytes=None):
     try:
         r = subprocess.run(
             cmd,
@@ -120,7 +131,7 @@ def _run_cmd(cmd, test_input="", wall_timeout=10, cpu_seconds=10, cwd=None):
             text=True,
             timeout=wall_timeout,
             cwd=cwd,
-            preexec_fn=_make_sandbox_limits(cpu_seconds),
+            preexec_fn=_make_sandbox_limits(cpu_seconds, memory_bytes),
         )
         return r.stdout, r.stderr, r.returncode
     except subprocess.TimeoutExpired:
@@ -129,7 +140,7 @@ def _run_cmd(cmd, test_input="", wall_timeout=10, cpu_seconds=10, cwd=None):
         return "", str(e), -1
 
 
-def _run_compile(cmd, wall_timeout=60, cpu_seconds=60, cwd=None):
+def _run_compile(cmd, wall_timeout=60, cpu_seconds=60, cwd=None, memory_bytes=None):
     try:
         r = subprocess.run(
             cmd,
@@ -137,7 +148,7 @@ def _run_compile(cmd, wall_timeout=60, cpu_seconds=60, cwd=None):
             text=True,
             timeout=wall_timeout,
             cwd=cwd,
-            preexec_fn=_make_sandbox_limits(cpu_seconds),
+            preexec_fn=_make_sandbox_limits(cpu_seconds, memory_bytes),
         )
         return r.stdout, r.stderr, r.returncode
     except subprocess.TimeoutExpired:
@@ -248,6 +259,21 @@ def run_code(req: ExecuteRequest, x_internal_token: str = Header(None)):
             out, err, code = _run_cmd([
                 "sqlite3", "-header", "-markdown", db_file, f".read {query_file}"
             ], wall_timeout=10, cpu_seconds=10, cwd=tmpdir)
+
+        # ── MATLAB / Octave ───────────────────────────────────────────────────────
+        elif lang == "matlab":
+            fp = os.path.join(tmpdir, "solution.m")
+            with open(fp, "w") as f:
+                f.write(req.code)
+            os.chmod(fp, 0o644)
+            out, err, code = _run_cmd(
+                ["octave-cli", "--no-gui", "--quiet", fp],
+                req.test_input,
+                wall_timeout=15,
+                cpu_seconds=15,
+                cwd=tmpdir,
+                memory_bytes=512 * 1024 * 1024
+            )
 
         else:
             raise HTTPException(status_code=400, detail=f"Unsupported language")

@@ -74,6 +74,15 @@ _BLOCKED_PATTERNS = {
         r"\bsystem\s*\(", r"\bexecl?[vpe]*\s*\(", r"\bfork\s*\(", 
         r"\bpopen\s*\(", r"\bsocket\s*\(",
     ],
+    "matlab": [
+        r"\bsystem\s*\(",
+        r"\bunix\s*\(",
+        r"\bpopen\s*\(",
+        r"\bfeval\s*\(",
+        r"\beval\s*\(",
+        r"\bexe\s*\(",
+        r"\bgetenv\s*\("
+    ],
 }
 _BLOCKED_PATTERNS["cpp"] = _BLOCKED_PATTERNS["c"]
 
@@ -133,6 +142,7 @@ TIMEOUT_CONFIG = {
     "cpp": 65.0,
     "java": 50.0,
     "sql": 15.0,
+    "matlab": 15.0,
 }
 
 @router.post("/execute")

@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     default-jdk \
     iptables \
     sqlite3 \
+    octave \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
