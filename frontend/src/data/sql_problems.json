@@ -45562,5 +45562,1287 @@
       }
     ],
     "solution_sql": "WITH stats AS(SELECT c.id,c.name,c.city,SUBSTR(c.email,INSTR(c.email,'@')+1)AS domain,COUNT(*)AS orders,SUM(o.total)AS spent,ROUND(AVG(o.total))AS avg_order,MIN(o.order_date)AS first_order,MAX(o.order_date)AS last_order,CAST(JULIANDAY(MAX(o.order_date))-JULIANDAY(MIN(o.order_date))AS INT)AS days_active FROM customers c JOIN orders o ON c.id=o.customer_id WHERE o.status!='cancelled' GROUP BY c.id),cats AS(SELECT o.customer_id,p.category,SUM(oi.qty)AS qty,ROW_NUMBER() OVER(PARTITION BY o.customer_id ORDER BY SUM(oi.qty) DESC)AS rn FROM orders o JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id WHERE o.status!='cancelled' GROUP BY o.customer_id,p.category)SELECT s.name,s.city,s.domain,s.orders,s.spent,s.avg_order,s.first_order,s.last_order,s.days_active,cat.category AS top_category,CASE WHEN s.spent>10000 THEN 'VIP' WHEN s.spent>1000 THEN 'Regular' ELSE 'New' END AS segment FROM stats s LEFT JOIN cats cat ON s.id=cat.customer_id AND cat.rn=1 ORDER BY s.spent DESC;"
+  },
+  {
+    "id": "sql-181",
+    "title": "FULL OUTER JOIN: All Employees & Departments",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "Google",
+    "difficulty": "hard",
+    "topic": "FULL OUTER JOIN",
+    "problem_statement": "Use FULL OUTER JOIN to show all employees AND all departments, even if unmatched.\n\nReturn employee name (or NULL), department from employees (or NULL), dept_name from departments (or NULL), budget (or NULL). Order by COALESCE(department, dept_name).\n\n\u26a0\ufe0f This problem uses PostgreSQL (FULL OUTER JOIN is not available in SQLite).",
+    "hint": "FULL OUTER JOIN matches on employee.department = departments.dept_name. Unmatched rows appear with NULLs.",
+    "explanation": "HR and Finance have no employees. All employees have matching departments.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "department",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Engineering",
+            70000,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Marketing",
+            60000,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Engineering",
+            55000,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Marketing",
+            50000,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Engineering",
+            65000,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "Sales",
+            45000,
+            "2022-02-14"
+          ]
+        ]
+      },
+      {
+        "name": "departments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "dept_name",
+            "type": "varchar"
+          },
+          {
+            "name": "budget",
+            "type": "int"
+          },
+          {
+            "name": "head_count",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Engineering",
+            500000,
+            3
+          ],
+          [
+            2,
+            "Marketing",
+            200000,
+            2
+          ],
+          [
+            3,
+            "Sales",
+            150000,
+            1
+          ],
+          [
+            4,
+            "HR",
+            100000,
+            0
+          ],
+          [
+            5,
+            "Finance",
+            300000,
+            0
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "department",
+        "dept_name",
+        "budget"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "Engineering",
+          "Engineering",
+          500000
+        ],
+        [
+          "Charlie",
+          "Engineering",
+          "Engineering",
+          500000
+        ],
+        [
+          "Eve",
+          "Engineering",
+          "Engineering",
+          500000
+        ],
+        [
+          "Bob",
+          "Marketing",
+          "Marketing",
+          200000
+        ],
+        [
+          "Diana",
+          "Marketing",
+          "Marketing",
+          50000
+        ],
+        [
+          "Frank",
+          "Sales",
+          "Sales",
+          150000
+        ],
+        [
+          null,
+          null,
+          "Finance",
+          300000
+        ],
+        [
+          null,
+          null,
+          "HR",
+          100000
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR(100),department VARCHAR(50),salary INT,hire_date DATE);\nCREATE TABLE departments(id INT PRIMARY KEY,dept_name VARCHAR(50),budget INT,head_count INT);\nINSERT INTO employees VALUES(1,'Alice','Engineering',70000,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Marketing',60000,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Engineering',55000,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Marketing',50000,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Engineering',65000,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','Sales',45000,'2022-02-14');\nINSERT INTO departments VALUES(1,'Engineering',500000,3);\nINSERT INTO departments VALUES(2,'Marketing',200000,2);\nINSERT INTO departments VALUES(3,'Sales',150000,1);\nINSERT INTO departments VALUES(4,'HR',100000,0);\nINSERT INTO departments VALUES(5,'Finance',300000,0);",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "department",
+          "dept_name",
+          "budget"
+        ],
+        "values": [
+          [
+            "Alice",
+            "Engineering",
+            "Engineering",
+            500000
+          ],
+          [
+            "Charlie",
+            "Engineering",
+            "Engineering",
+            500000
+          ],
+          [
+            "Eve",
+            "Engineering",
+            "Engineering",
+            500000
+          ],
+          [
+            "Bob",
+            "Marketing",
+            "Marketing",
+            200000
+          ],
+          [
+            "Diana",
+            "Marketing",
+            "Marketing",
+            50000
+          ],
+          [
+            "Frank",
+            "Sales",
+            "Sales",
+            150000
+          ],
+          [
+            null,
+            null,
+            "Finance",
+            300000
+          ],
+          [
+            null,
+            null,
+            "HR",
+            100000
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT e.name,e.department,d.dept_name,d.budget FROM employees e FULL OUTER JOIN departments d ON e.department=d.dept_name ORDER BY COALESCE(e.department,d.dept_name),e.name;",
+    "backend_only": true
+  },
+  {
+    "id": "sql-182",
+    "title": "FULL OUTER JOIN: Unmatched Only",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "Microsoft",
+    "difficulty": "medium",
+    "topic": "FULL OUTER JOIN: Unmatched",
+    "problem_statement": "Use FULL OUTER JOIN to find departments with no employees AND employees in departments not in the departments table (orphans).\n\nReturn dept source (employee department or departments.dept_name), has_employees (boolean), has_dept_record (boolean). Order by dept.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "hint": "FULL OUTER JOIN + WHERE either side IS NULL to find mismatches.",
+    "explanation": "HR and Finance have no employees.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "department",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Engineering",
+            70000,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Marketing",
+            60000,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Engineering",
+            55000,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Marketing",
+            50000,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Engineering",
+            65000,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "Sales",
+            45000,
+            "2022-02-14"
+          ]
+        ]
+      },
+      {
+        "name": "departments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "dept_name",
+            "type": "varchar"
+          },
+          {
+            "name": "budget",
+            "type": "int"
+          },
+          {
+            "name": "head_count",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Engineering",
+            500000,
+            3
+          ],
+          [
+            2,
+            "Marketing",
+            200000,
+            2
+          ],
+          [
+            3,
+            "Sales",
+            150000,
+            1
+          ],
+          [
+            4,
+            "HR",
+            100000,
+            0
+          ],
+          [
+            5,
+            "Finance",
+            300000,
+            0
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "dept",
+        "has_employees",
+        "has_dept_record"
+      ],
+      "rows": [
+        [
+          "Finance",
+          false,
+          true
+        ],
+        [
+          "HR",
+          false,
+          true
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR(100),department VARCHAR(50),salary INT,hire_date DATE);\nCREATE TABLE departments(id INT PRIMARY KEY,dept_name VARCHAR(50),budget INT,head_count INT);\nINSERT INTO employees VALUES(1,'Alice','Engineering',70000,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Marketing',60000,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Engineering',55000,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Marketing',50000,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Engineering',65000,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','Sales',45000,'2022-02-14');\nINSERT INTO departments VALUES(1,'Engineering',500000,3);\nINSERT INTO departments VALUES(2,'Marketing',200000,2);\nINSERT INTO departments VALUES(3,'Sales',150000,1);\nINSERT INTO departments VALUES(4,'HR',100000,0);\nINSERT INTO departments VALUES(5,'Finance',300000,0);",
+    "expected_output": [
+      {
+        "columns": [
+          "dept",
+          "has_employees",
+          "has_dept_record"
+        ],
+        "values": [
+          [
+            "Finance",
+            false,
+            true
+          ],
+          [
+            "HR",
+            false,
+            true
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT COALESCE(e.department,d.dept_name)AS dept,e.id IS NOT NULL AS has_employees,d.id IS NOT NULL AS has_dept_record FROM employees e FULL OUTER JOIN departments d ON e.department=d.dept_name WHERE e.id IS NULL OR d.id IS NULL GROUP BY COALESCE(e.department,d.dept_name),e.id IS NOT NULL,d.id IS NOT NULL ORDER BY dept;",
+    "backend_only": true
+  },
+  {
+    "id": "sql-183",
+    "title": "FULL OUTER JOIN: Budget Utilization",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "Deloitte",
+    "difficulty": "hard",
+    "topic": "FULL OUTER JOIN: Budget Analysis",
+    "problem_statement": "Using FULL OUTER JOIN, compare each department's budget against its actual payroll (SUM of salaries).\n\nReturn dept_name, budget, actual_payroll, utilization_pct (rounded to 1). Order by utilization_pct descending NULLS LAST.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "hint": "FULL OUTER JOIN + GROUP BY + SUM salary vs budget.",
+    "explanation": "Engineering: 190K salary / 500K budget = 38%. Marketing: 110K / 200K = 55%.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "department",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Engineering",
+            70000,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Marketing",
+            60000,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Engineering",
+            55000,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Marketing",
+            50000,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Engineering",
+            65000,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "Sales",
+            45000,
+            "2022-02-14"
+          ]
+        ]
+      },
+      {
+        "name": "departments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "dept_name",
+            "type": "varchar"
+          },
+          {
+            "name": "budget",
+            "type": "int"
+          },
+          {
+            "name": "head_count",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Engineering",
+            500000,
+            3
+          ],
+          [
+            2,
+            "Marketing",
+            200000,
+            2
+          ],
+          [
+            3,
+            "Sales",
+            150000,
+            1
+          ],
+          [
+            4,
+            "HR",
+            100000,
+            0
+          ],
+          [
+            5,
+            "Finance",
+            300000,
+            0
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "dept_name",
+        "budget",
+        "actual_payroll",
+        "utilization_pct"
+      ],
+      "rows": [
+        [
+          "Sales",
+          150000,
+          45000,
+          30.0
+        ],
+        [
+          "Engineering",
+          500000,
+          190000,
+          38.0
+        ],
+        [
+          "Marketing",
+          200000,
+          110000,
+          55.0
+        ],
+        [
+          "Finance",
+          300000,
+          0,
+          0.0
+        ],
+        [
+          "HR",
+          100000,
+          0,
+          0.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR(100),department VARCHAR(50),salary INT,hire_date DATE);\nCREATE TABLE departments(id INT PRIMARY KEY,dept_name VARCHAR(50),budget INT,head_count INT);\nINSERT INTO employees VALUES(1,'Alice','Engineering',70000,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Marketing',60000,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Engineering',55000,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Marketing',50000,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Engineering',65000,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','Sales',45000,'2022-02-14');\nINSERT INTO departments VALUES(1,'Engineering',500000,3);\nINSERT INTO departments VALUES(2,'Marketing',200000,2);\nINSERT INTO departments VALUES(3,'Sales',150000,1);\nINSERT INTO departments VALUES(4,'HR',100000,0);\nINSERT INTO departments VALUES(5,'Finance',300000,0);",
+    "expected_output": [
+      {
+        "columns": [
+          "dept_name",
+          "budget",
+          "actual_payroll",
+          "utilization_pct"
+        ],
+        "values": [
+          [
+            "Sales",
+            150000,
+            45000,
+            30.0
+          ],
+          [
+            "Engineering",
+            500000,
+            190000,
+            38.0
+          ],
+          [
+            "Marketing",
+            200000,
+            110000,
+            55.0
+          ],
+          [
+            "Finance",
+            300000,
+            0,
+            0.0
+          ],
+          [
+            "HR",
+            100000,
+            0,
+            0.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT d.dept_name,d.budget,COALESCE(SUM(e.salary),0)AS actual_payroll,ROUND(COALESCE(SUM(e.salary),0)*100.0/d.budget,1)AS utilization_pct FROM departments d FULL OUTER JOIN employees e ON d.dept_name=e.department GROUP BY d.dept_name,d.budget ORDER BY utilization_pct DESC NULLS LAST;",
+    "backend_only": true
+  },
+  {
+    "id": "sql-184",
+    "title": "FULL OUTER JOIN: Customer-Order Reconciliation",
+    "dataset_theme": "E-Commerce (Flipkart)",
+    "company_tag": "Amazon",
+    "difficulty": "hard",
+    "topic": "FULL OUTER JOIN: Reconciliation",
+    "problem_statement": "Use FULL OUTER JOIN to reconcile customers with their orders. Show ALL customers (even with no orders) and ALL orders (even with orphan customer IDs).\n\nReturn customer name (or 'Unknown'), order_id (or NULL), total (or 0). Order by name, order_id.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "hint": "FULL OUTER JOIN customers to orders, COALESCE for NULLs.",
+    "explanation": "Some customers may not have orders. Some orders may have invalid customer IDs.",
+    "tables_meta": [
+      {
+        "name": "customers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "email",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ankit",
+            "ankit@gmail.com",
+            "Mumbai",
+            "2023-01-15"
+          ],
+          [
+            2,
+            "Priya",
+            "priya@yahoo.com",
+            "Delhi",
+            "2023-03-20"
+          ],
+          [
+            3,
+            "Rohan",
+            "rohan@gmail.com",
+            "Bangalore",
+            "2023-06-10"
+          ],
+          [
+            4,
+            "Sneha",
+            "sneha@outlook.com",
+            "Mumbai",
+            "2024-01-05"
+          ],
+          [
+            5,
+            "Vikram",
+            "vikram@gmail.com",
+            "Chennai",
+            "2023-09-12"
+          ]
+        ]
+      },
+      {
+        "name": "products",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "product_name",
+            "type": "varchar"
+          },
+          {
+            "name": "category",
+            "type": "varchar"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Laptop",
+            "Electronics",
+            55000
+          ],
+          [
+            102,
+            "Headphones",
+            "Electronics",
+            2500
+          ],
+          [
+            103,
+            "T-Shirt",
+            "Fashion",
+            799
+          ],
+          [
+            104,
+            "Sneakers",
+            "Fashion",
+            3200
+          ],
+          [
+            105,
+            "Python Book",
+            "Books",
+            450
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "customer_id",
+            "type": "int"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          },
+          {
+            "name": "total",
+            "type": "real"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            "2024-01-10",
+            57500,
+            "delivered"
+          ],
+          [
+            1002,
+            2,
+            "2024-01-15",
+            3299,
+            "delivered"
+          ],
+          [
+            1003,
+            1,
+            "2024-02-05",
+            799,
+            "delivered"
+          ],
+          [
+            1004,
+            3,
+            "2024-02-20",
+            55450,
+            "shipped"
+          ],
+          [
+            1005,
+            2,
+            "2024-03-01",
+            2500,
+            "cancelled"
+          ],
+          [
+            1006,
+            4,
+            "2024-03-10",
+            6900,
+            "delivered"
+          ],
+          [
+            1007,
+            5,
+            "2024-03-15",
+            450,
+            "delivered"
+          ]
+        ]
+      },
+      {
+        "name": "order_items",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "order_id",
+            "type": "int"
+          },
+          {
+            "name": "product_id",
+            "type": "int"
+          },
+          {
+            "name": "qty",
+            "type": "int"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1001,
+            101,
+            1,
+            55000
+          ],
+          [
+            2,
+            1001,
+            102,
+            1,
+            2500
+          ],
+          [
+            3,
+            1002,
+            103,
+            1,
+            799
+          ],
+          [
+            4,
+            1002,
+            102,
+            1,
+            2500
+          ],
+          [
+            5,
+            1003,
+            103,
+            1,
+            799
+          ],
+          [
+            6,
+            1004,
+            101,
+            1,
+            55000
+          ],
+          [
+            7,
+            1004,
+            105,
+            1,
+            450
+          ],
+          [
+            8,
+            1005,
+            102,
+            1,
+            2500
+          ],
+          [
+            9,
+            1006,
+            104,
+            1,
+            3200
+          ],
+          [
+            10,
+            1006,
+            103,
+            1,
+            799
+          ],
+          [
+            11,
+            1006,
+            102,
+            1,
+            2500
+          ],
+          [
+            12,
+            1007,
+            105,
+            1,
+            450
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "order_id",
+        "total"
+      ],
+      "rows": [
+        [
+          "Ankit",
+          1,
+          2500.0
+        ],
+        [
+          "Ankit",
+          2,
+          55000.0
+        ],
+        [
+          "Ankit",
+          3,
+          3299.0
+        ],
+        [
+          "Priya",
+          5,
+          3299.0
+        ],
+        [
+          "Rohan",
+          4,
+          55450.0
+        ],
+        [
+          "Sneha",
+          6,
+          6900.0
+        ],
+        [
+          "Vikram",
+          7,
+          450.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE customers(id INT PRIMARY KEY,name VARCHAR,email VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE products(id INT PRIMARY KEY,product_name VARCHAR,category VARCHAR,price REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,customer_id INT,order_date DATE,total REAL,status VARCHAR);\nCREATE TABLE order_items(id INT PRIMARY KEY,order_id INT,product_id INT,qty INT,price REAL);\nINSERT INTO customers VALUES(1,'Ankit','ankit@gmail.com','Mumbai','2023-01-15');\nINSERT INTO customers VALUES(2,'Priya','priya@yahoo.com','Delhi','2023-03-20');\nINSERT INTO customers VALUES(3,'Rohan','rohan@gmail.com','Bangalore','2023-06-10');\nINSERT INTO customers VALUES(4,'Sneha','sneha@outlook.com','Mumbai','2024-01-05');\nINSERT INTO customers VALUES(5,'Vikram','vikram@gmail.com','Chennai','2023-09-12');\nINSERT INTO products VALUES(101,'Laptop',  'Electronics',55000);\nINSERT INTO products VALUES(102,'Headphones','Electronics',2500);\nINSERT INTO products VALUES(103,'T-Shirt','Fashion',799);\nINSERT INTO products VALUES(104,'Sneakers','Fashion',3200);\nINSERT INTO products VALUES(105,'Python Book','Books',450);\nINSERT INTO orders VALUES(1001,1,'2024-01-10',57500,'delivered');\nINSERT INTO orders VALUES(1002,2,'2024-01-15',3299,'delivered');\nINSERT INTO orders VALUES(1003,1,'2024-02-05',799,'delivered');\nINSERT INTO orders VALUES(1004,3,'2024-02-20',55450,'shipped');\nINSERT INTO orders VALUES(1005,2,'2024-03-01',2500,'cancelled');\nINSERT INTO orders VALUES(1006,4,'2024-03-10',6900,'delivered');\nINSERT INTO orders VALUES(1007,5,'2024-03-15',450,'delivered');\nINSERT INTO order_items VALUES(1,1001,101,1,55000);\nINSERT INTO order_items VALUES(2,1001,102,1,2500);\nINSERT INTO order_items VALUES(3,1002,103,1,799);\nINSERT INTO order_items VALUES(4,1002,102,1,2500);\nINSERT INTO order_items VALUES(5,1003,103,1,799);\nINSERT INTO order_items VALUES(6,1004,101,1,55000);\nINSERT INTO order_items VALUES(7,1004,105,1,450);\nINSERT INTO order_items VALUES(8,1005,102,1,2500);\nINSERT INTO order_items VALUES(9,1006,104,1,3200);\nINSERT INTO order_items VALUES(10,1006,103,1,799);\nINSERT INTO order_items VALUES(11,1006,102,1,2500);\nINSERT INTO order_items VALUES(12,1007,105,1,450);",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "order_id",
+          "total"
+        ],
+        "values": [
+          [
+            "Ankit",
+            1,
+            2500.0
+          ],
+          [
+            "Ankit",
+            2,
+            55000.0
+          ],
+          [
+            "Ankit",
+            3,
+            3299.0
+          ],
+          [
+            "Priya",
+            5,
+            3299.0
+          ],
+          [
+            "Rohan",
+            4,
+            55450.0
+          ],
+          [
+            "Sneha",
+            6,
+            6900.0
+          ],
+          [
+            "Vikram",
+            7,
+            450.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT COALESCE(c.name,'Unknown')AS name,o.id AS order_id,COALESCE(o.total,0)AS total FROM customers c FULL OUTER JOIN orders o ON c.id=o.customer_id ORDER BY name,order_id;",
+    "backend_only": true
+  },
+  {
+    "id": "sql-185",
+    "title": "FULL OUTER JOIN: Cross-Table Coverage Report",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "SAP",
+    "difficulty": "hard",
+    "topic": "FULL OUTER JOIN: Coverage Report",
+    "problem_statement": "Create a full coverage report: for every department (from both tables), show the department name, count of employees, budget, and whether it's 'Staffed', 'Empty', or 'Unbudgeted'.\n\nReturn dept, emp_count, budget, status. Order by dept.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "hint": "FULL OUTER JOIN + CASE for status classification.",
+    "explanation": "Engineering/Marketing/Sales = Staffed. HR/Finance = Empty. No Unbudgeted ones exist.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "department",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Engineering",
+            70000,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Marketing",
+            60000,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Engineering",
+            55000,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Marketing",
+            50000,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Engineering",
+            65000,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "Sales",
+            45000,
+            "2022-02-14"
+          ]
+        ]
+      },
+      {
+        "name": "departments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "dept_name",
+            "type": "varchar"
+          },
+          {
+            "name": "budget",
+            "type": "int"
+          },
+          {
+            "name": "head_count",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Engineering",
+            500000,
+            3
+          ],
+          [
+            2,
+            "Marketing",
+            200000,
+            2
+          ],
+          [
+            3,
+            "Sales",
+            150000,
+            1
+          ],
+          [
+            4,
+            "HR",
+            100000,
+            0
+          ],
+          [
+            5,
+            "Finance",
+            300000,
+            0
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "dept",
+        "emp_count",
+        "budget",
+        "status"
+      ],
+      "rows": [
+        [
+          "Engineering",
+          3,
+          500000,
+          "Staffed"
+        ],
+        [
+          "Finance",
+          0,
+          300000,
+          "Empty"
+        ],
+        [
+          "HR",
+          0,
+          100000,
+          "Empty"
+        ],
+        [
+          "Marketing",
+          2,
+          200000,
+          "Staffed"
+        ],
+        [
+          "Sales",
+          1,
+          150000,
+          "Staffed"
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR(100),department VARCHAR(50),salary INT,hire_date DATE);\nCREATE TABLE departments(id INT PRIMARY KEY,dept_name VARCHAR(50),budget INT,head_count INT);\nINSERT INTO employees VALUES(1,'Alice','Engineering',70000,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Marketing',60000,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Engineering',55000,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Marketing',50000,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Engineering',65000,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','Sales',45000,'2022-02-14');\nINSERT INTO departments VALUES(1,'Engineering',500000,3);\nINSERT INTO departments VALUES(2,'Marketing',200000,2);\nINSERT INTO departments VALUES(3,'Sales',150000,1);\nINSERT INTO departments VALUES(4,'HR',100000,0);\nINSERT INTO departments VALUES(5,'Finance',300000,0);",
+    "expected_output": [
+      {
+        "columns": [
+          "dept",
+          "emp_count",
+          "budget",
+          "status"
+        ],
+        "values": [
+          [
+            "Engineering",
+            3,
+            500000,
+            "Staffed"
+          ],
+          [
+            "Finance",
+            0,
+            300000,
+            "Empty"
+          ],
+          [
+            "HR",
+            0,
+            100000,
+            "Empty"
+          ],
+          [
+            "Marketing",
+            2,
+            200000,
+            "Staffed"
+          ],
+          [
+            "Sales",
+            1,
+            150000,
+            "Staffed"
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT COALESCE(e.department,d.dept_name)AS dept,COUNT(e.id)AS emp_count,COALESCE(d.budget,0)AS budget,CASE WHEN COUNT(e.id)>0 AND d.id IS NOT NULL THEN 'Staffed' WHEN COUNT(e.id)=0 AND d.id IS NOT NULL THEN 'Empty' ELSE 'Unbudgeted' END AS status FROM employees e FULL OUTER JOIN departments d ON e.department=d.dept_name GROUP BY COALESCE(e.department,d.dept_name),d.id,d.budget ORDER BY dept;",
+    "backend_only": true
   }
 ]

@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func, Integer
+from sqlalchemy import func, Integer, text
+from pydantic import BaseModel
 import logging
+import uuid
+import asyncio
 
 from database import get_db
 from app.core.security import require_role
@@ -226,4 +229,124 @@ async def get_student_progress(
             "unique_solved": unique_sql_solved,
             "accuracy": round((sql_stats.correct / sql_stats.total * 100) if sql_stats.total else 0, 1)
         }
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PostgreSQL Sandboxed SQL Executor
+# For problems requiring features not in SQLite WASM (e.g. FULL OUTER JOIN)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class SQLExecuteRequest(BaseModel):
+    schema_sql: str
+    user_query: str
+    problem_id: str
+
+# Dangerous SQL patterns to block
+_BLOCKED_PATTERNS = [
+    'DROP DATABASE', 'DROP SCHEMA', 'CREATE DATABASE', 'ALTER SYSTEM',
+    'COPY ', 'pg_read_file', 'pg_write_file', 'lo_import', 'lo_export',
+    'CREATE EXTENSION', 'CREATE ROLE', 'ALTER ROLE', 'GRANT ', 'REVOKE ',
+]
+
+@router.post("/placement-prep/sql/execute")
+async def execute_sql_backend(
+    req: SQLExecuteRequest,
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db),
+):
+    """
+    Execute user SQL against a temporary PostgreSQL schema.
+    Used for problems requiring features not in SQLite WASM (FULL OUTER JOIN, etc.)
+    
+    Flow:
+    1. Create temporary schema with unique name
+    2. SET search_path to temp schema
+    3. Run problem schema_sql (CREATE TABLE + INSERT)
+    4. Run user_query (SELECT only)
+    5. Return results in sql.js-compatible format
+    6. DROP temp schema (CASCADE)
+    """
+    # ── Validation ──
+    if len(req.user_query) > 5000:
+        raise HTTPException(400, "Query too long (max 5000 chars)")
+    if len(req.schema_sql) > 20000:
+        raise HTTPException(400, "Schema too large")
+    
+    # Block dangerous patterns
+    combined = (req.user_query + req.schema_sql).upper()
+    for pattern in _BLOCKED_PATTERNS:
+        if pattern in combined:
+            raise HTTPException(400, f"Forbidden SQL pattern detected: {pattern}")
+    
+    # Only allow SELECT in user query (no DML/DDL)
+    user_upper = req.user_query.strip().upper()
+    if not user_upper.startswith('SELECT') and not user_upper.startswith('WITH'):
+        raise HTTPException(400, "Only SELECT queries are allowed")
+    
+    # ── Create sandboxed schema ──
+    schema_name = f"sql_sandbox_{uuid.uuid4().hex[:12]}"
+    
+    try:
+        # Use raw connection for full control
+        raw_conn = await session.connection()
+        
+        # Create temp schema + set search path
+        await raw_conn.execute(text(f'CREATE SCHEMA "{schema_name}"'))
+        await raw_conn.execute(text(f'SET search_path TO "{schema_name}", public'))
+        
+        # Run schema setup (CREATE TABLEs + INSERTs)
+        for stmt in req.schema_sql.split(';'):
+            stmt = stmt.strip()
+            if stmt:
+                try:
+                    await raw_conn.execute(text(stmt))
+                except Exception as e:
+                    logger.warning(f"Schema setup error: {e}")
+        
+        # Execute user query with timeout
+        try:
+            result = await asyncio.wait_for(
+                _execute_user_query(raw_conn, req.user_query),
+                timeout=5.0
+            )
+        except asyncio.TimeoutError:
+            raise HTTPException(408, "Query timed out (max 5 seconds)")
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"SQL execution error: {e}")
+        raise HTTPException(500, f"Execution error: {str(e)}")
+    finally:
+        # Always clean up the temp schema
+        try:
+            await raw_conn.execute(text(f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE'))
+            await raw_conn.execute(text('SET search_path TO public'))
+            await session.rollback()  # rollback any uncommitted changes
+        except Exception as cleanup_err:
+            logger.error(f"Schema cleanup error: {cleanup_err}")
+
+
+async def _execute_user_query(conn, query: str):
+    """Execute and return results in sql.js-compatible format: [{columns, values}]"""
+    result = await conn.execute(text(query))
+    columns = list(result.keys())
+    rows = result.fetchall()
+    
+    # Convert to sql.js format for frontend compatibility
+    values = []
+    for row in rows:
+        values.append([
+            None if v is None else float(v) if isinstance(v, (int, float)) and not isinstance(v, bool)
+            else str(v) if not isinstance(v, (str, int, float, bool, type(None)))
+            else v
+            for v in row
+        ])
+    
+    return {
+        "results": [{"columns": columns, "values": values}],
+        "engine": "postgresql"
     }

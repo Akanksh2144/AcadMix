@@ -761,6 +761,7 @@ export const placementPrepAPI = {
   getSqlProblem: (id) => api.get(`/placement-prep/sql-problems/${id}`),
   logAptitudeAttempt: (data) => api.post('/placement-prep/aptitude/attempt', data),
   logSqlAttempt: (data) => api.post('/placement-prep/sql/attempt', data),
+  executeSqlBackend: (data) => api.post('/placement-prep/sql/execute', data),
   getProgress: (studentId) => api.get(`/placement-prep/progress/${studentId}`),
 };
 

@@ -272,9 +272,38 @@ const SQLPractice = ({ navigate, user }: any) => {
     } catch { return false; }
   };
 
-  const handleRun = () => {
-    if (!db || !selectedProblem) return;
+  const handleRun = async () => {
+    if (!selectedProblem) return;
     const t0 = performance.now();
+
+    // ── Backend-only problems (e.g. FULL OUTER JOIN) → PostgreSQL ──
+    if (selectedProblem.backend_only) {
+      try {
+        const res = await placementPrepAPI.executeSqlBackend({
+          schema_sql: selectedProblem.schema_sql,
+          user_query: query,
+          problem_id: selectedProblem.id,
+        });
+        const pgResult = res.data?.results || res.data?.data?.results;
+        setExecTime(+(performance.now() - t0).toFixed(1));
+        setResult(pgResult);
+        const correct = isResultCorrect(pgResult, expected);
+        setIsCorrect(correct);
+        if (correct) updateStatus(selectedProblem.id, 'solved');
+        else updateStatus(selectedProblem.id, 'started');
+        correct ? toast.success('Correct! Great job. (PostgreSQL)') : toast.error('Incorrect. Check the expected output.');
+        placementPrepAPI.logSqlAttempt({ problem_id: selectedProblem.id, is_correct: correct, time_taken_sec: Math.round((performance.now() - t0) / 1000) }).catch(() => {});
+      } catch (err: any) {
+        const msg = err?.response?.data?.detail || err?.message || 'Backend execution failed';
+        setResult([{ error_string: msg }]);
+        setIsCorrect(false);
+        setExecTime(+(performance.now() - t0).toFixed(1));
+      }
+      return;
+    }
+
+    // ── Standard SQLite WASM execution ──
+    if (!db) return;
     try {
       const res = db.exec(query);
       setExecTime(+(performance.now() - t0).toFixed(1));
@@ -426,6 +455,7 @@ const SQLPractice = ({ navigate, user }: any) => {
                 <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 py-1 px-2 rounded"><TableIcon size={14} /> {p.dataset_theme}</span>
                 {p.company_tag && <span className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 py-1 px-2 rounded"><CompanyLogo name={p.company_tag} size={14} /> {p.company_tag}</span>}
                 {p.topic && <span className="bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 py-1 px-2 rounded">📘 {p.topic}</span>}
+                {p.backend_only && <span className="bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 py-1 px-2 rounded font-bold">🐘 PostgreSQL</span>}
                 {tagLabel && <span className={`ml-auto py-1 px-2 rounded ${tagColor}`}>{tagLabel}</span>}
               </div>
             </motion.div>);
@@ -460,6 +490,7 @@ const SQLPractice = ({ navigate, user }: any) => {
         </div>
         <div className="flex items-center gap-2">
           {execTime > 0 && <span className="text-xs font-bold text-slate-400 bg-slate-50 dark:bg-white/5 px-2 py-1 rounded hidden sm:inline-flex items-center gap-1"><Timer size={12} /> {execTime}ms</span>}
+          {sp?.backend_only && <span className="text-xs font-bold bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-lg hidden sm:inline-flex items-center gap-1">🐘 PostgreSQL Engine</span>}
           <button onClick={handleRun} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-transform text-sm">
             <Play size={14} weight="fill" /> Run Code
           </button>

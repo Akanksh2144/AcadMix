@@ -3,12 +3,15 @@
 import json, os
 
 P = []
-def add(id,title,theme,company,diff,stmt,hint,expl,tables,schema,expected,solution,topic="Miscellaneous"):
-    P.append({"id":id,"title":title,"dataset_theme":theme,"company_tag":company,"difficulty":diff,
+def add(id,title,theme,company,diff,stmt,hint,expl,tables,schema,expected,solution,topic="Miscellaneous",backend_only=False):
+    entry = {"id":id,"title":title,"dataset_theme":theme,"company_tag":company,"difficulty":diff,
               "topic":topic,"problem_statement":stmt,"hint":hint,"explanation":expl,"tables_meta":tables,
               "example_output":{"columns":expected[0],"rows":expected[1]},
               "schema_sql":schema,"expected_output":[{"columns":expected[0],"values":expected[1]}],
-              "solution_sql":solution})
+              "solution_sql":solution}
+    if backend_only:
+        entry["backend_only"] = True
+    P.append(entry)
 
 # ═══ SCHEMA BLOCKS ═══
 EMP_S = """CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR,dept VARCHAR,salary INT,mgr_id INT,hire_date DATE);
@@ -1619,9 +1622,70 @@ add("sql-180","Grand Finale: Cross-Schema Business Intelligence","E-Commerce (Fl
 ECOM_T,ECOM_S,(["name","city","domain","orders","spent","avg_order","first_order","last_order","days_active","top_category","segment"],[["Ankit","Mumbai","gmail.com",2,60799.0,30400,"2024-01-10","2024-01-15",5,"Electronics","VIP"],["Rohan","Pune","gmail.com",1,55450.0,55450,"2024-02-20","2024-02-20",0,"Electronics","VIP"],["Sneha","Mumbai","outlook.com",1,6900.0,6900,"2024-03-10","2024-03-10",0,"Fashion","Regular"],["Priya","Delhi","yahoo.com",1,3299.0,3299,"2024-03-15","2024-03-15",0,"Electronics","Regular"],["Vikram","Bangalore","gmail.com",1,450.0,450,"2024-03-15","2024-03-15",0,"Books","New"]]),
 "WITH stats AS(SELECT c.id,c.name,c.city,SUBSTR(c.email,INSTR(c.email,'@')+1)AS domain,COUNT(*)AS orders,SUM(o.total)AS spent,ROUND(AVG(o.total))AS avg_order,MIN(o.order_date)AS first_order,MAX(o.order_date)AS last_order,CAST(JULIANDAY(MAX(o.order_date))-JULIANDAY(MIN(o.order_date))AS INT)AS days_active FROM customers c JOIN orders o ON c.id=o.customer_id WHERE o.status!='cancelled' GROUP BY c.id),cats AS(SELECT o.customer_id,p.category,SUM(oi.qty)AS qty,ROW_NUMBER() OVER(PARTITION BY o.customer_id ORDER BY SUM(oi.qty) DESC)AS rn FROM orders o JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id WHERE o.status!='cancelled' GROUP BY o.customer_id,p.category)SELECT s.name,s.city,s.domain,s.orders,s.spent,s.avg_order,s.first_order,s.last_order,s.days_active,cat.category AS top_category,CASE WHEN s.spent>10000 THEN 'VIP' WHEN s.spent>1000 THEN 'Regular' ELSE 'New' END AS segment FROM stats s LEFT JOIN cats cat ON s.id=cat.customer_id AND cat.rn=1 ORDER BY s.spent DESC;",topic="Cross-Schema BI Report (Grand Finale)")
 
+
+# ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
+# These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
+# They are flagged backend_only=True and execute on the backend PostgreSQL engine.
+
+# PostgreSQL schema (VARCHAR → TEXT for PG compat, otherwise same structure)
+PG_EMP_S = """CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR(100),department VARCHAR(50),salary INT,hire_date DATE);
+CREATE TABLE departments(id INT PRIMARY KEY,dept_name VARCHAR(50),budget INT,head_count INT);
+INSERT INTO employees VALUES(1,'Alice','Engineering',70000,'2019-01-15');
+INSERT INTO employees VALUES(2,'Bob','Marketing',60000,'2020-03-01');
+INSERT INTO employees VALUES(3,'Charlie','Engineering',55000,'2020-06-10');
+INSERT INTO employees VALUES(4,'Diana','Marketing',50000,'2021-01-20');
+INSERT INTO employees VALUES(5,'Eve','Engineering',65000,'2021-08-05');
+INSERT INTO employees VALUES(6,'Frank','Sales',45000,'2022-02-14');
+INSERT INTO departments VALUES(1,'Engineering',500000,3);
+INSERT INTO departments VALUES(2,'Marketing',200000,2);
+INSERT INTO departments VALUES(3,'Sales',150000,1);
+INSERT INTO departments VALUES(4,'HR',100000,0);
+INSERT INTO departments VALUES(5,'Finance',300000,0);"""
+PG_EMP_T = [{"name":"employees","columns":[{"name":"id","type":"int"},{"name":"name","type":"varchar"},{"name":"department","type":"varchar"},{"name":"salary","type":"int"},{"name":"hire_date","type":"date"}],
+"sample_input":[[1,"Alice","Engineering",70000,"2019-01-15"],[2,"Bob","Marketing",60000,"2020-03-01"],[3,"Charlie","Engineering",55000,"2020-06-10"],[4,"Diana","Marketing",50000,"2021-01-20"],[5,"Eve","Engineering",65000,"2021-08-05"],[6,"Frank","Sales",45000,"2022-02-14"]]},
+{"name":"departments","columns":[{"name":"id","type":"int"},{"name":"dept_name","type":"varchar"},{"name":"budget","type":"int"},{"name":"head_count","type":"int"}],
+"sample_input":[[1,"Engineering",500000,3],[2,"Marketing",200000,2],[3,"Sales",150000,1],[4,"HR",100000,0],[5,"Finance",300000,0]]}]
+
+add("sql-181","FULL OUTER JOIN: All Employees & Departments","HR / Employee","Google","hard",
+"Use FULL OUTER JOIN to show all employees AND all departments, even if unmatched.\n\nReturn employee name (or NULL), department from employees (or NULL), dept_name from departments (or NULL), budget (or NULL). Order by COALESCE(department, dept_name).\n\n⚠️ This problem uses PostgreSQL (FULL OUTER JOIN is not available in SQLite).",
+"FULL OUTER JOIN matches on employee.department = departments.dept_name. Unmatched rows appear with NULLs.",
+"HR and Finance have no employees. All employees have matching departments.",
+PG_EMP_T,PG_EMP_S,(["name","department","dept_name","budget"],[["Alice","Engineering","Engineering",500000],["Charlie","Engineering","Engineering",500000],["Eve","Engineering","Engineering",500000],["Bob","Marketing","Marketing",200000],["Diana","Marketing","Marketing",50000],["Frank","Sales","Sales",150000],[None,None,"Finance",300000],[None,None,"HR",100000]]),
+"SELECT e.name,e.department,d.dept_name,d.budget FROM employees e FULL OUTER JOIN departments d ON e.department=d.dept_name ORDER BY COALESCE(e.department,d.dept_name),e.name;",topic="FULL OUTER JOIN",backend_only=True)
+
+add("sql-182","FULL OUTER JOIN: Unmatched Only","HR / Employee","Microsoft","medium",
+"Use FULL OUTER JOIN to find departments with no employees AND employees in departments not in the departments table (orphans).\n\nReturn dept source (employee department or departments.dept_name), has_employees (boolean), has_dept_record (boolean). Order by dept.\n\n⚠️ PostgreSQL required.",
+"FULL OUTER JOIN + WHERE either side IS NULL to find mismatches.",
+"HR and Finance have no employees.",
+PG_EMP_T,PG_EMP_S,(["dept","has_employees","has_dept_record"],[["Finance",False,True],["HR",False,True]]),
+"SELECT COALESCE(e.department,d.dept_name)AS dept,e.id IS NOT NULL AS has_employees,d.id IS NOT NULL AS has_dept_record FROM employees e FULL OUTER JOIN departments d ON e.department=d.dept_name WHERE e.id IS NULL OR d.id IS NULL GROUP BY COALESCE(e.department,d.dept_name),e.id IS NOT NULL,d.id IS NOT NULL ORDER BY dept;",topic="FULL OUTER JOIN: Unmatched",backend_only=True)
+
+add("sql-183","FULL OUTER JOIN: Budget Utilization","HR / Employee","Deloitte","hard",
+"Using FULL OUTER JOIN, compare each department's budget against its actual payroll (SUM of salaries).\n\nReturn dept_name, budget, actual_payroll, utilization_pct (rounded to 1). Order by utilization_pct descending NULLS LAST.\n\n⚠️ PostgreSQL required.",
+"FULL OUTER JOIN + GROUP BY + SUM salary vs budget.",
+"Engineering: 190K salary / 500K budget = 38%. Marketing: 110K / 200K = 55%.",
+PG_EMP_T,PG_EMP_S,(["dept_name","budget","actual_payroll","utilization_pct"],[["Sales",150000,45000,30.0],["Engineering",500000,190000,38.0],["Marketing",200000,110000,55.0],["Finance",300000,0,0.0],["HR",100000,0,0.0]]),
+"SELECT d.dept_name,d.budget,COALESCE(SUM(e.salary),0)AS actual_payroll,ROUND(COALESCE(SUM(e.salary),0)*100.0/d.budget,1)AS utilization_pct FROM departments d FULL OUTER JOIN employees e ON d.dept_name=e.department GROUP BY d.dept_name,d.budget ORDER BY utilization_pct DESC NULLS LAST;",topic="FULL OUTER JOIN: Budget Analysis",backend_only=True)
+
+add("sql-184","FULL OUTER JOIN: Customer-Order Reconciliation","E-Commerce (Flipkart)","Amazon","hard",
+"Use FULL OUTER JOIN to reconcile customers with their orders. Show ALL customers (even with no orders) and ALL orders (even with orphan customer IDs).\n\nReturn customer name (or 'Unknown'), order_id (or NULL), total (or 0). Order by name, order_id.\n\n⚠️ PostgreSQL required.",
+"FULL OUTER JOIN customers to orders, COALESCE for NULLs.",
+"Some customers may not have orders. Some orders may have invalid customer IDs.",
+ECOM_T,ECOM_S,(["name","order_id","total"],[["Ankit",1,2500.0],["Ankit",2,55000.0],["Ankit",3,3299.0],["Priya",5,3299.0],["Rohan",4,55450.0],["Sneha",6,6900.0],["Vikram",7,450.0]]),
+"SELECT COALESCE(c.name,'Unknown')AS name,o.id AS order_id,COALESCE(o.total,0)AS total FROM customers c FULL OUTER JOIN orders o ON c.id=o.customer_id ORDER BY name,order_id;",topic="FULL OUTER JOIN: Reconciliation",backend_only=True)
+
+add("sql-185","FULL OUTER JOIN: Cross-Table Coverage Report","HR / Employee","SAP","hard",
+"Create a full coverage report: for every department (from both tables), show the department name, count of employees, budget, and whether it's 'Staffed', 'Empty', or 'Unbudgeted'.\n\nReturn dept, emp_count, budget, status. Order by dept.\n\n⚠️ PostgreSQL required.",
+"FULL OUTER JOIN + CASE for status classification.",
+"Engineering/Marketing/Sales = Staffed. HR/Finance = Empty. No Unbudgeted ones exist.",
+PG_EMP_T,PG_EMP_S,(["dept","emp_count","budget","status"],[["Engineering",3,500000,"Staffed"],["Finance",0,300000,"Empty"],["HR",0,100000,"Empty"],["Marketing",2,200000,"Staffed"],["Sales",1,150000,"Staffed"]]),
+"SELECT COALESCE(e.department,d.dept_name)AS dept,COUNT(e.id)AS emp_count,COALESCE(d.budget,0)AS budget,CASE WHEN COUNT(e.id)>0 AND d.id IS NOT NULL THEN 'Staffed' WHEN COUNT(e.id)=0 AND d.id IS NOT NULL THEN 'Empty' ELSE 'Unbudgeted' END AS status FROM employees e FULL OUTER JOIN departments d ON e.department=d.dept_name GROUP BY COALESCE(e.department,d.dept_name),d.id,d.budget ORDER BY dept;",topic="FULL OUTER JOIN: Coverage Report",backend_only=True)
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
     json.dump(P, f, indent=2, default=str)
 print(f"Done: Generated {len(P)} problems")
-
+pg_count = sum(1 for p in P if p.get('backend_only'))
+print(f"  -> {pg_count} PostgreSQL-only problems (backend_only=True)")
+print(f"  -> {len(P) - pg_count} SQLite WASM problems")
