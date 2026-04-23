@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Editor from '@monaco-editor/react';
 import { Database, Play, CheckCircle, XCircle, List, ArrowLeft, Lightbulb, Table as TableIcon, Eye, EyeSlash, Timer } from '@phosphor-icons/react';
@@ -112,6 +112,43 @@ const SQLPractice = ({ navigate, user }: any) => {
   const [questionTab, setQuestionTab] = useState('question');
   const mounted = useRef(true);
   const sqlEngineRef = useRef<any>(null);
+
+  // ── Resizable panels ──
+  const [leftPct, setLeftPct] = useState(42);        // left panel width %
+  const [editorPct, setEditorPct] = useState(60);    // editor height % of right panel
+  const draggingRef = useRef<'h' | 'v' | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
+
+  const onMouseDown = useCallback((axis: 'h' | 'v') => {
+    draggingRef.current = axis;
+    document.body.style.cursor = axis === 'h' ? 'col-resize' : 'row-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!draggingRef.current) return;
+      if (draggingRef.current === 'h' && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const pct = ((e.clientX - rect.left) / rect.width) * 100;
+        setLeftPct(Math.min(Math.max(pct, 25), 65));
+      }
+      if (draggingRef.current === 'v' && rightRef.current) {
+        const rect = rightRef.current.getBoundingClientRect();
+        const pct = ((e.clientY - rect.top) / rect.height) * 100;
+        setEditorPct(Math.min(Math.max(pct, 25), 85));
+      }
+    };
+    const onUp = () => {
+      draggingRef.current = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, []);
 
   // Init SQLite WASM
   useEffect(() => {
@@ -274,9 +311,9 @@ const SQLPractice = ({ navigate, user }: any) => {
       </header>
 
       {/* Split Content */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <div ref={containerRef} className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* LEFT: Problem + Schema */}
-        <div className="w-full lg:w-[42%] bg-white dark:bg-[#1E293B] overflow-y-auto border-r border-slate-200 dark:border-white/10">
+        <div style={{ width: `${leftPct}%` }} className="hidden lg:flex flex-col bg-white dark:bg-[#1E293B] overflow-y-auto shrink-0">
           {/* Tabs */}
           <div className="flex border-b border-slate-200 dark:border-white/10 px-5 gap-4">
             {(['question', 'solution'] as const).map(t => (
@@ -354,9 +391,15 @@ const SQLPractice = ({ navigate, user }: any) => {
           </div>
         </div>
 
+        {/* Horizontal Resize Handle */}
+        <div onMouseDown={() => onMouseDown('h')}
+          className="hidden lg:flex w-1.5 shrink-0 cursor-col-resize items-center justify-center bg-slate-100 dark:bg-slate-800 hover:bg-indigo-200 dark:hover:bg-indigo-500/30 active:bg-indigo-300 transition-colors group">
+          <div className="w-0.5 h-8 rounded-full bg-slate-300 dark:bg-slate-600 group-hover:bg-indigo-400 transition-colors" />
+        </div>
+
         {/* RIGHT: Editor + Output */}
-        <div className="w-full lg:w-[58%] flex flex-col">
-          <div className="flex-1 relative min-h-[250px] border-b border-slate-200 dark:border-white/10">
+        <div ref={rightRef} className="flex-1 flex flex-col min-w-0">
+          <div style={{ height: `${editorPct}%` }} className="relative shrink-0 overflow-hidden">
             <div className="absolute top-3 right-4 z-10 flex items-center gap-2">
               <span className="bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest">SQLite</span>
             </div>
@@ -369,8 +412,14 @@ const SQLPractice = ({ navigate, user }: any) => {
             />
           </div>
 
+          {/* Vertical Resize Handle */}
+          <div onMouseDown={() => onMouseDown('v')}
+            className="h-1.5 shrink-0 cursor-row-resize flex items-center justify-center bg-slate-100 dark:bg-slate-800 hover:bg-indigo-200 dark:hover:bg-indigo-500/30 active:bg-indigo-300 transition-colors group">
+            <div className="h-0.5 w-8 rounded-full bg-slate-300 dark:bg-slate-600 group-hover:bg-indigo-400 transition-colors" />
+          </div>
+
           {/* Results Panel */}
-          <div className="h-56 sm:h-64 bg-white dark:bg-[#1E293B] shrink-0 flex flex-col">
+          <div className="flex-1 bg-white dark:bg-[#1E293B] flex flex-col min-h-0">
             <div className="px-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <button onClick={() => setTab('output')} className={`py-3 text-sm font-bold border-b-2 transition-colors ${tab === 'output' ? 'border-indigo-500 text-indigo-500' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>Output</button>
