@@ -1811,6 +1811,79 @@ add("sql-210","Library Schema: Books Not Borrowed","University / Education","Zoh
 UNI_T,UNI_S,(["course_name"],[]),
 "SELECT c.name AS course_name FROM courses c LEFT JOIN enrollments e ON c.id=e.course_id WHERE e.id IS NULL ORDER BY c.name;",topic="LEFT JOIN: Orphan Detection")
 
+# ═══ BATCH 21: TCS NQT Scale-Up (10 of 20) ═══
+
+add("sql-211","Salary Raise Simulation: 10% Hike for Eng","HR / Employee","TCS NQT","easy",
+"Show what each Engineering employee's salary would be after a 10% raise.\n\nReturn name, current_salary, new_salary. Order by new_salary DESC.",
+"SELECT name, salary, salary * 1.10 WHERE dept = 'Eng'.",
+"Alice: 70000->77000. Eve: 65000->71500. Bob: 60000->66000.",
+EMP_T,EMP_S,(["name","current_salary","new_salary"],[["Alice",70000,77000.0],["Eve",65000,71500.0],["Bob",60000,66000.0]]),
+"SELECT name,salary AS current_salary,ROUND(salary*1.10,0)AS new_salary FROM employees WHERE dept='Eng' ORDER BY new_salary DESC;",topic="Salary Hike Simulation")
+
+add("sql-212","Employees Hired Same Year as Alice","HR / Employee","TCS NQT","easy",
+"Find employees hired in the same year as Alice.\n\nReturn name, hire_date. Order by name.",
+"Subquery: WHERE SUBSTR(hire_date,1,4) = (SELECT SUBSTR(hire_date,1,4) FROM employees WHERE name='Alice').",
+"Alice hired 2019. Only Alice herself in 2019.",
+EMP_T,EMP_S,(["name","hire_date"],[["Alice","2019-01-15"]]),
+"SELECT name,hire_date FROM employees WHERE SUBSTR(hire_date,1,4)=(SELECT SUBSTR(hire_date,1,4) FROM employees WHERE name='Alice') ORDER BY name;",topic="Subquery: Same Year")
+
+add("sql-213","Top 3 Highest Paid Employees","HR / Employee","TCS NQT","easy",
+"Find the 3 highest-paid employees.\n\nReturn name, salary. Order by salary DESC.",
+"ORDER BY salary DESC LIMIT 3.",
+"Alice(70K), Eve(65K), Bob(60K).",
+EMP_T,EMP_S,(["name","salary"],[["Alice",70000],["Eve",65000],["Bob",60000]]),
+"SELECT name,salary FROM employees ORDER BY salary DESC LIMIT 3;",topic="ORDER BY + LIMIT")
+
+add("sql-214","Average Fare Per City","Ride-Sharing (Ola)","TCS NQT","easy",
+"Calculate the average ride fare for each city.\n\nReturn city, avg_fare (rounded to 1). Order by avg_fare DESC.",
+"JOIN rides with riders, GROUP BY city, AVG(fare).",
+"Avg fare per city from the rides table.",
+RIDE_T,RIDE_S,(["city","avg_fare"],[["Mumbai",225.0],["Delhi",250.0],["Bangalore",200.0],["Pune",175.0]]),
+"SELECT r2.city,ROUND(AVG(r.fare),1)AS avg_fare FROM rides r JOIN riders r2 ON r.rider_id=r2.id GROUP BY r2.city ORDER BY avg_fare DESC;",topic="GROUP BY + AVG")
+
+add("sql-215","Count Orders Per Customer","E-Commerce (Flipkart)","TCS NQT","easy",
+"Count how many orders each customer has placed.\n\nReturn name, order_count. Order by order_count DESC.",
+"JOIN customers + orders, GROUP BY, COUNT.",
+"Ankit has 3, others have 1.",
+ECOM_T,ECOM_S,(["name","order_count"],[["Ankit",3],["Priya",1],["Rohan",1],["Sneha",1],["Vikram",1]]),
+"SELECT c.name,COUNT(o.id)AS order_count FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name ORDER BY order_count DESC;",topic="JOIN + COUNT Per Group")
+
+add("sql-216","Products Never Ordered","E-Commerce (Flipkart)","TCS NQT","medium",
+"Find products that have never been ordered by anyone.\n\nReturn product name, price. Order by name.",
+"LEFT JOIN order_items ON product_id, WHERE order_items.id IS NULL.",
+"Check which products have no entries in order_items.",
+ECOM_T,ECOM_S,(["name","price"],[]),
+"SELECT p.name,p.price FROM products p LEFT JOIN order_items oi ON p.id=oi.product_id WHERE oi.id IS NULL ORDER BY p.name;",topic="LEFT JOIN: Never Ordered")
+
+add("sql-217","Display With Column Aliases","HR / Employee","TCS NQT","easy",
+"Display employee info with friendly column names: 'Full Name', 'Department', 'Annual Salary'.\n\nReturn Full_Name, Department, Annual_Salary. Order by Annual_Salary DESC.",
+"Use AS for aliasing. salary is already annual.",
+"Simple column aliasing exercise.",
+EMP_T,EMP_S,(["Full_Name","Department","Annual_Salary"],[["Alice","Eng",70000],["Eve","Eng",65000],["Bob","Eng",60000],["Charlie","Sales",55000],["Diana","Sales",50000],["Frank","HR",45000]]),
+"SELECT name AS Full_Name,dept AS Department,salary AS Annual_Salary FROM employees ORDER BY Annual_Salary DESC;",topic="Column Aliasing")
+
+add("sql-218","Employees Between Salary Range","HR / Employee","TCS NQT","easy",
+"Find employees with salary between 50000 and 65000 (inclusive).\n\nReturn name, salary. Order by salary.",
+"WHERE salary BETWEEN 50000 AND 65000.",
+"Charlie(55K), Diana(50K), Bob(60K), Eve(65K).",
+EMP_T,EMP_S,(["name","salary"],[["Diana",50000],["Charlie",55000],["Bob",60000],["Eve",65000]]),
+"SELECT name,salary FROM employees WHERE salary BETWEEN 50000 AND 65000 ORDER BY salary;",topic="BETWEEN Range Filter")
+
+add("sql-219","Department With Lowest Average Salary","HR / Employee","TCS NQT","medium",
+"Find the department with the lowest average salary.\n\nReturn dept, avg_salary.",
+"GROUP BY dept, ORDER BY AVG(salary) ASC LIMIT 1.",
+"HR avg=45K, Sales avg=52.5K, Eng avg=65K. HR is lowest.",
+EMP_T,EMP_S,(["dept","avg_salary"],[["HR",45000.0]]),
+"SELECT dept,AVG(salary)AS avg_salary FROM employees GROUP BY dept ORDER BY avg_salary ASC LIMIT 1;",topic="Lowest AVG Per Group")
+
+add("sql-220","Employees With 'a' in Name","HR / Employee","TCS NQT","easy",
+"Find all employees whose name contains the letter 'a' (case-insensitive).\n\nReturn name. Order by name.",
+"WHERE LOWER(name) LIKE '%a%'.",
+"Alice, Charlie, Diana, Frank, Eve — check lowercase.",
+EMP_T,EMP_S,(["name"],[["Alice"],["Charlie"],["Diana"],["Frank"]]),
+"SELECT name FROM employees WHERE LOWER(name) LIKE '%a%' ORDER BY name;",topic="LIKE Case-Insensitive")
+
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
