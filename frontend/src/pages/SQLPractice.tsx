@@ -364,8 +364,8 @@ const SQLPractice = ({ navigate, user }: any) => {
 
   /* ── Problem List ─────────────────────────────────────── */
   if (!selectedProblem) return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0F172A] p-4 lg:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0F172A] px-4 lg:px-10 py-4 lg:py-6">
+      <div className="space-y-6">
         <button onClick={() => navigate('placement-hub')} className="flex items-center gap-2 text-slate-500 hover:text-indigo-500 transition-colors font-bold text-sm">
           <ArrowLeft size={16} weight="bold" /> Back to Placement Hub
         </button>
@@ -499,7 +499,7 @@ const SQLPractice = ({ navigate, user }: any) => {
           return (
           <>
           <p className="text-xs font-bold text-slate-400">{filtered.length} of {problems.length} problems</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filtered.map((p: any, i: number) => {
             const status = statusMap[p.id] || 'unsolved';
             const badgeColor = status === 'solved' ? 'bg-emerald-500 shadow-emerald-500/30'
