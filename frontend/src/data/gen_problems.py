@@ -943,9 +943,47 @@ add("sql-095","CTE + Window Combo: Ranked Monthly Revenue","E-Commerce (Flipkart
 ECOM_T,ECOM_S,(["month_num","monthly_revenue","revenue_rank"],[["01",60799.0,1],["02",58749.0,2],["03",7350.0,3]]),
 "WITH monthly AS(SELECT strftime('%m',order_date)AS month_num,SUM(total)AS monthly_revenue FROM orders GROUP BY strftime('%m',order_date))SELECT month_num,monthly_revenue,DENSE_RANK() OVER(ORDER BY monthly_revenue DESC)AS revenue_rank FROM monthly;",topic="CTE + Window Combo")
 
+# ═══ BATCH 10: CAPSTONE (Final 5 — Boss Level) ═══
+
+add("sql-096","Full Analytics: Driver Scorecard","Ride-Sharing (Ola)","Google","hard",
+"Build a driver scorecard: for each driver show name, city, total completed rides, total earnings, average fare (rounded), their city rank by earnings, and whether they are 'Top Earner' (rank 1) or 'Regular'.\n\nReturn name, city, rides, earnings, avg_fare, city_rank, badge. Order by city, city_rank.",
+"CTE for stats, DENSE_RANK per city, CASE for badge.",
+"Ramesh is top in Mumbai, Kavita top in Delhi, etc.",
+RIDE_T,RIDE_S,(["name","city","rides","earnings","avg_fare","city_rank","badge"],[["Mohan","Bangalore",1,550.0,550,1,"Top Earner"],["Lakshmi","Chennai",1,150.0,150,1,"Top Earner"],["Kavita","Delhi",1,600.0,600,1,"Top Earner"],["Ramesh","Mumbai",4,1070.0,268,1,"Top Earner"],["Sunil","Mumbai",2,530.0,265,2,"Regular"]]),
+"WITH stats AS(SELECT d.name,d.city,COUNT(*)AS rides,SUM(r.fare)AS earnings,ROUND(AVG(r.fare))AS avg_fare FROM drivers d JOIN rides r ON d.id=r.driver_id WHERE r.status='completed' GROUP BY d.id),ranked AS(SELECT *,DENSE_RANK() OVER(PARTITION BY city ORDER BY earnings DESC)AS city_rank FROM stats)SELECT name,city,rides,earnings,avg_fare,city_rank,CASE WHEN city_rank=1 THEN 'Top Earner' ELSE 'Regular' END AS badge FROM ranked ORDER BY city,city_rank;",topic="Full Analytics Report")
+
+add("sql-097","Repeat Buyers: Customer Cohort","E-Commerce (Flipkart)","Amazon","hard",
+"Classify customers into cohorts: 'One-Timer' (1 order), 'Repeat' (2-3 orders), 'Loyal' (4+ orders). Exclude cancelled.\n\nReturn cohort and customer_count. Order by customer_count descending.",
+"CTE counts orders per customer, CASE classifies, outer GROUP BY.",
+"One-Timer: Rohan,Sneha,Vikram=3. Repeat: Ankit(2),Priya(1 non-cancelled)=2. Loyal: 0.",
+ECOM_T,ECOM_S,(["cohort","customer_count"],[["One-Timer",4],["Repeat",1]]),
+"WITH order_counts AS(SELECT customer_id,COUNT(*)AS cnt FROM orders WHERE status!='cancelled' GROUP BY customer_id),cohorts AS(SELECT CASE WHEN cnt>=4 THEN 'Loyal' WHEN cnt>=2 THEN 'Repeat' ELSE 'One-Timer' END AS cohort FROM order_counts)SELECT cohort,COUNT(*)AS customer_count FROM cohorts GROUP BY cohort ORDER BY customer_count DESC;",topic="Cohort Analysis")
+
+add("sql-098","Top-2 Posts Per User (With Ties)","Social Media (Instagram)","Meta","hard",
+"Find each user's top 2 most-liked posts, keeping ties.\n\nReturn username, content, likes, and post_rank. Order by username, post_rank.",
+"Use DENSE_RANK per user by likes DESC, filter <=2.",
+"ankit_dev: Deployed(95,rank1), SQL is amazing(42,rank2). priya_codes: Open source(88,rank1), Python vs JS(56,rank2).",
+SOCIAL_T,SOCIAL_S,(["username","content","likes","post_rank"],[["ankit_dev","Deployed to production!",95,1],["ankit_dev","SQL is amazing",42,2],["priya_codes","My first open source PR!",88,1],["priya_codes","Python vs JavaScript",56,2],["rohan_js","Built a REST API",15,1],["sneha_ml","Deep learning notes",33,1],["vikram_sql","SQL window functions",71,1]]),
+"SELECT username,content,likes,post_rank FROM(SELECT pr.username,p.content,p.likes,DENSE_RANK() OVER(PARTITION BY p.user_id ORDER BY p.likes DESC)AS post_rank FROM posts p JOIN profiles pr ON p.user_id=pr.id)WHERE post_rank<=2 ORDER BY username,post_rank;",topic="Top-N Per Group with Ties")
+
+add("sql-099","Cross-Domain: Riders Who Are Customers","Ride-Sharing (Ola)","Flipkart","hard",
+"Find people whose name appears in BOTH the riders table (Ride-Sharing) AND the customers table (E-Commerce) by matching on name.\n\nReturn name and both their city from riders and city from customers.",
+"JOIN riders r ON r.name = customers c.name — cross-schema name match.",
+"No names match between the two schemas, so result is empty.",
+RIDE_T,RIDE_S,(["name"],[]),
+"SELECT r.name FROM riders r WHERE r.name IN(SELECT c.name FROM customers c);",topic="Cross-Schema Matching")
+
+add("sql-100","Grand Pipeline: Complete E-Commerce Report","E-Commerce (Flipkart)","Goldman Sachs","hard",
+"Build a complete business report using a multi-CTE pipeline:\n1. Calculate per-customer stats (orders, spending)\n2. Rank customers by spending\n3. Add their most-bought category\n\nReturn name, total_orders, total_spent, spending_rank, top_category. Order by spending_rank.",
+"3 CTEs chained: customer_stats → ranked → top_categories, final JOIN.",
+"Ankit: 2 orders, 58299 spent, rank 1, top category Electronics.",
+ECOM_T,ECOM_S,(["name","total_orders","total_spent","spending_rank","top_category"],[["Ankit",2,58299.0,1,"Electronics"],["Rohan",1,55450.0,2,"Electronics"],["Sneha",1,6900.0,3,"Fashion"],["Priya",1,3299.0,4,"Electronics"],["Vikram",1,450.0,5,"Books"]]),
+"WITH customer_stats AS(SELECT c.id,c.name,COUNT(*)AS total_orders,SUM(o.total)AS total_spent FROM customers c JOIN orders o ON c.id=o.customer_id WHERE o.status!='cancelled' GROUP BY c.id),ranked AS(SELECT *,DENSE_RANK() OVER(ORDER BY total_spent DESC)AS spending_rank FROM customer_stats),top_cat AS(SELECT o.customer_id,p.category,SUM(oi.qty)AS cat_qty,ROW_NUMBER() OVER(PARTITION BY o.customer_id ORDER BY SUM(oi.qty) DESC)AS rn FROM orders o JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id WHERE o.status!='cancelled' GROUP BY o.customer_id,p.category)SELECT r.name,r.total_orders,r.total_spent,r.spending_rank,tc.category AS top_category FROM ranked r LEFT JOIN top_cat tc ON r.id=tc.customer_id AND tc.rn=1 ORDER BY r.spending_rank;",topic="Multi-CTE Pipeline (Capstone)")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
     json.dump(P, f, indent=2, default=str)
 print(f"Done: Generated {len(P)} problems")
+
 
