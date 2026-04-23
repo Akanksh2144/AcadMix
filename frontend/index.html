@@ -13,15 +13,5 @@
         <noscript>You need to enable JavaScript to run this app.</noscript>
         <div id="root"></div>
         <script type="module" src="/src/index.tsx"></script>
-        <script type="module">
-            import { WebR } from 'https://webr.r-wasm.org/latest/webr.mjs';
-            window.initWebR = async () => {
-                if (!window.__webr_instance) {
-                    window.__webr_instance = new WebR();
-                    await window.__webr_instance.init();
-                }
-                return window.__webr_instance;
-            };
-        </script>
     </body>
 </html>
