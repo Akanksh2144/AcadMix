@@ -27,7 +27,7 @@ const companyLogos: Record<string, string> = {
 const CompanyLogo = ({ name, size = 16 }: { name: string; size?: number }) => {
   const domain = companyLogos[name];
   if (!domain) return null;
-  return <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`} alt="" className="rounded-sm shrink-0 object-contain" style={{ width: size, height: size }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />;
+  return <img src={`https://img.logo.dev/${domain}?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png`} alt="" className="rounded-sm shrink-0 object-contain" style={{ width: size, height: size }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />;
 };
 
 /* ── Custom Filter Dropdown (replaces native <select>) ── */
