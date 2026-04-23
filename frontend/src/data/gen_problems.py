@@ -2611,6 +2611,78 @@ add("sql-320","Count Appointments Per Specialty","Healthcare / Hospital","Cogniz
 HOSPITAL_T,HOSPITAL_S,(["specialty","appt_count"],[["Cardiology",3],["Orthopedics",2],["Dermatology",1]]),
 "SELECT d.specialty,COUNT(a.id)AS appt_count FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.specialty ORDER BY appt_count DESC;",topic="COUNT Per Specialty")
 
+# ═══ BATCH 32: Cognizant Scale-Up (10 of 22) ═══
+
+add("sql-321","Highest Single Order Total","E-Commerce (Flipkart)","Cognizant","easy",
+"Find the single highest order total.\n\nReturn order_id, total.",
+"ORDER BY total DESC LIMIT 1 or SELECT MAX(total).",
+"Highest order by total value.",
+ECOM_T,ECOM_S,(["order_id","total"],[[4,55450.0]]),
+"SELECT id AS order_id,total FROM orders ORDER BY total DESC LIMIT 1;",topic="MAX Order Total")
+
+add("sql-322","Riders From Delhi","Ride-Sharing (Ola)","Cognizant","easy",
+"Find all riders who live in Delhi.\n\nReturn name, phone. Order by name.",
+"WHERE city = 'Delhi'.",
+"Bhavna, Eshan from Delhi.",
+RIDE_T,RIDE_S,(["name","phone"],[]),
+"SELECT name,phone FROM riders WHERE city='Delhi' ORDER BY name;",topic="WHERE City Filter")
+
+add("sql-323","Products Sorted by Price Descending","E-Commerce (Flipkart)","Cognizant","easy",
+"List all products sorted by price from highest to lowest.\n\nReturn name, category, price. Order by price DESC.",
+"Simple ORDER BY price DESC.",
+"MacBook(120K), iPhone(80K), etc.",
+ECOM_T,ECOM_S,(["name","category","price"],[["MacBook Pro","Electronics",120000.0],["iPhone 15","Electronics",79999.0],["Running Shoes","Fashion",3499.0],["Cotton T-Shirt","Fashion",799.0],["SQL Book","Books",450.0]]),
+"SELECT name,category,price FROM products ORDER BY price DESC;",topic="ORDER BY Price DESC")
+
+add("sql-324","First Employee Hired","HR / Employee","Cognizant","easy",
+"Find the employee who was hired first.\n\nReturn name, hire_date.",
+"ORDER BY hire_date LIMIT 1.",
+"Alice was hired on 2019-01-15.",
+EMP_T,EMP_S,(["name","hire_date"],[["Alice","2019-01-15"]]),
+"SELECT name,hire_date FROM employees ORDER BY hire_date LIMIT 1;",topic="Earliest Hire (LIMIT)")
+
+add("sql-325","Average Patient Age Per Gender","Healthcare / Hospital","Cognizant","easy",
+"Calculate the average patient age for each gender.\n\nReturn gender, avg_age (rounded to 0). Order by gender.",
+"GROUP BY gender, AVG(age).",
+"F avg, M avg.",
+HOSPITAL_T,HOSPITAL_S,(["gender","avg_age"],[["F",30],["M",38]]),
+"SELECT gender,ROUND(AVG(age),0)AS avg_age FROM patients GROUP BY gender ORDER BY gender;",topic="AVG Age Per Gender")
+
+add("sql-326","Orders With Multiple Line Items","E-Commerce (Flipkart)","Cognizant","medium",
+"Find orders that contain more than 1 line item.\n\nReturn order_id, item_count. Order by item_count DESC.",
+"GROUP BY order_id HAVING COUNT > 1.",
+"Orders with multiple products.",
+ECOM_T,ECOM_S,(["order_id","item_count"],[[2,3],[4,2]]),
+"SELECT order_id,COUNT(*)AS item_count FROM order_items GROUP BY order_id HAVING COUNT(*)>1 ORDER BY item_count DESC;",topic="HAVING Multiple Items")
+
+add("sql-327","Rank Restaurants by Rating","Food Delivery (Zomato)","Cognizant","medium",
+"Rank all restaurants by rating using DENSE_RANK.\n\nReturn name, rating, rating_rank. Order by rating_rank.",
+"DENSE_RANK() OVER(ORDER BY rating DESC).",
+"Dosa Corner=1, Biryani House=2, etc.",
+ZOMATO_T,ZOMATO_S,(["name","rating","rating_rank"],[["Dosa Corner",4.7,1],["Biryani House",4.5,2],["Pizza Palace",4.2,3],["Dragon Wok",3.8,4],["Burger Barn",3.5,5]]),
+"SELECT name,rating,DENSE_RANK() OVER(ORDER BY rating DESC)AS rating_rank FROM restaurants ORDER BY rating_rank;",topic="DENSE_RANK Restaurants")
+
+add("sql-328","Employees Earning 50K to 65K","HR / Employee","Cognizant","easy",
+"Find employees with salary between 50,000 and 65,000.\n\nReturn name, dept, salary. Order by salary.",
+"WHERE salary BETWEEN 50000 AND 65000.",
+"Diana, Charlie, Bob, Eve.",
+EMP_T,EMP_S,(["name","dept","salary"],[["Diana","Sales",50000],["Charlie","Sales",55000],["Bob","Eng",60000],["Eve","Eng",65000]]),
+"SELECT name,dept,salary FROM employees WHERE salary BETWEEN 50000 AND 65000 ORDER BY salary;",topic="BETWEEN Salary Range")
+
+add("sql-329","Full Order Details (3-Table Join)","E-Commerce (Flipkart)","Cognizant","medium",
+"Show order details: customer name, product name, quantity, order date.\n\nReturn name, product, qty, order_date. Order by order_date, name.",
+"3-table join: orders -> order_items -> products + customers.",
+"Full order detail view.",
+ECOM_T,ECOM_S,(["name","product","qty","order_date"],[]),
+"SELECT c.name,p.name AS product,oi.qty,o.order_date FROM customers c JOIN orders o ON c.id=o.customer_id JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id ORDER BY o.order_date,c.name;",topic="3-Table Order Details")
+
+add("sql-330","Total Rides Per Month","Ride-Sharing (Ola)","Cognizant","medium",
+"Count total rides per month.\n\nReturn month, ride_count. Order by month.",
+"SUBSTR(ride_date,1,7) GROUP BY, COUNT.",
+"Group rides by year-month.",
+RIDE_T,RIDE_S,(["month","ride_count"],[]),
+"SELECT SUBSTR(ride_date,1,7)AS month,COUNT(*)AS ride_count FROM rides GROUP BY SUBSTR(ride_date,1,7) ORDER BY month;",topic="Monthly Ride Count")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
