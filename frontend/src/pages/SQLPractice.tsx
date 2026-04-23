@@ -369,19 +369,63 @@ const SQLPractice = ({ navigate, user }: any) => {
               <p className="text-slate-500">DataLemur-style challenges from mass recruiters.</p>
             </div>
           </div>
-          {/* Progress */}
-          <div className="soft-card px-5 py-3 flex items-center gap-4 min-w-[200px]">
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Progress</span>
-                <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">{Object.values(statusMap).filter(s => s === 'solved').length}/{problems.length}</span>
+          {/* ── Progress Dashboard ── */}
+          {(() => {
+            const solved = Object.values(statusMap).filter(s => s === 'solved').length;
+            const total = problems.length;
+            const pct = total ? Math.round((solved / total) * 100) : 0;
+            const easySolved = problems.filter((p: any) => p.difficulty === 'easy' && statusMap[p.id] === 'solved').length;
+            const easyTotal = problems.filter((p: any) => p.difficulty === 'easy').length;
+            const medSolved = problems.filter((p: any) => p.difficulty === 'medium' && statusMap[p.id] === 'solved').length;
+            const medTotal = problems.filter((p: any) => p.difficulty === 'medium').length;
+            const hardSolved = problems.filter((p: any) => p.difficulty === 'hard' && statusMap[p.id] === 'solved').length;
+            const hardTotal = problems.filter((p: any) => p.difficulty === 'hard').length;
+            const ring = (r: number, pctVal: number, color: string, width: number) => {
+              const circ = 2 * Math.PI * r;
+              return (
+                <>
+                  <circle cx="80" cy="80" r={r} fill="none" strokeWidth={width} className="stroke-slate-200 dark:stroke-white/5" />
+                  <circle cx="80" cy="80" r={r} fill="none" strokeWidth={width} stroke={color}
+                    strokeDasharray={`${circ * (pctVal / 100)} ${circ}`}
+                    strokeLinecap="round" transform="rotate(-90 80 80)"
+                    className="transition-all duration-1000 ease-out" />
+                </>
+              );
+            };
+            return (
+              <div className="soft-card px-6 py-5 flex items-center gap-6 min-w-[320px]">
+                <div className="relative shrink-0">
+                  <svg width="160" height="160" viewBox="0 0 160 160">
+                    {ring(70, easyTotal ? (easySolved / easyTotal) * 100 : 0, '#10b981', 10)}
+                    {ring(56, medTotal ? (medSolved / medTotal) * 100 : 0, '#f59e0b', 10)}
+                    {ring(42, hardTotal ? (hardSolved / hardTotal) * 100 : 0, '#ef4444', 10)}
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-black text-slate-900 dark:text-white">{pct}%</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{solved}/{total}</span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">Your Progress</p>
+                  <div className="flex items-center gap-3">
+                    <span className="w-3 h-3 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 w-16">Easy</span>
+                    <span className="text-sm font-extrabold text-slate-900 dark:text-white tabular-nums">{easySolved}/{easyTotal}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="w-3 h-3 rounded-full bg-amber-500 shrink-0" />
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 w-16">Medium</span>
+                    <span className="text-sm font-extrabold text-slate-900 dark:text-white tabular-nums">{medSolved}/{medTotal}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 w-16">Hard</span>
+                    <span className="text-sm font-extrabold text-slate-900 dark:text-white tabular-nums">{hardSolved}/{hardTotal}</span>
+                  </div>
+                </div>
               </div>
-              <div className="h-2 rounded-full bg-slate-100 dark:bg-white/5 overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500" style={{ width: `${problems.length ? (Object.values(statusMap).filter(s => s === 'solved').length / problems.length) * 100 : 0}%` }} />
-              </div>
-            </div>
-            <CheckCircle size={24} weight="fill" className="text-emerald-500 shrink-0" />
-          </div>
+            );
+          })()}
         </div>
 
         {/* ── Filters ── */}
