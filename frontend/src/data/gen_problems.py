@@ -2391,6 +2391,80 @@ add("sql-290","Total Orders Per City","E-Commerce (Flipkart)","Wipro","medium",
 ECOM_T,ECOM_S,(["city","order_count"],[["Mumbai",4],["Delhi",1],["Pune",1],["Bangalore",1]]),
 "SELECT c.city,COUNT(o.id)AS order_count FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.city ORDER BY order_count DESC;",topic="Orders Per City")
 
+# ═══ BATCH 29: Wipro Final 5 + HCLTech First 5 ═══
+
+# --- Wipro (5 remaining → completes to 30) ---
+add("sql-291","Profile Followers Count","Social Media (Instagram)","Wipro","easy",
+"Count followers for each profile (from the follows table).\n\nReturn username, follower_count. Order by follower_count DESC.",
+"JOIN profiles + follows, COUNT, GROUP BY.",
+"Count who follows whom.",
+SOCIAL_T,SOCIAL_S,(["username","follower_count"],[]),
+"SELECT pr.username,COUNT(f.id)AS follower_count FROM profiles pr LEFT JOIN follows f ON pr.id=f.following_id GROUP BY pr.username ORDER BY follower_count DESC;",topic="COUNT Followers")
+
+add("sql-292","Employees Hired on Weekday vs Weekend","HR / Employee","Wipro","medium",
+"Classify each employee's hire date as 'Weekday' or 'Weekend'.\n\nReturn name, hire_date, day_type. Order by hire_date.",
+"strftime('%w') returns 0=Sun, 6=Sat.",
+"Check each hire date's day of week.",
+EMP_T,EMP_S,(["name","hire_date","day_type"],[["Alice","2019-01-15","Weekday"],["Bob","2020-03-01","Weekend"],["Charlie","2020-06-10","Weekday"],["Diana","2021-01-20","Weekday"],["Eve","2021-08-05","Weekday"],["Frank","2022-02-14","Weekday"]]),
+"SELECT name,hire_date,CASE WHEN CAST(strftime('%w',hire_date)AS INT) IN(0,6) THEN 'Weekend' ELSE 'Weekday' END AS day_type FROM employees ORDER BY hire_date;",topic="Day-of-Week Classification")
+
+add("sql-293","Customers Who Ordered in All 3 Months","E-Commerce (Flipkart)","Wipro","hard",
+"Find customers who placed orders in all three months (Jan, Feb, Mar 2024).\n\nReturn name. Order by name.",
+"HAVING COUNT(DISTINCT month) = 3.",
+"Check if any customer ordered in all 3 months.",
+ECOM_T,ECOM_S,(["name"],[]),
+"SELECT c.name FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name HAVING COUNT(DISTINCT SUBSTR(o.order_date,1,7))=3 ORDER BY c.name;",topic="HAVING DISTINCT Months")
+
+add("sql-294","Students Enrolled in 2+ Courses","University / Education","Wipro","medium",
+"Find students enrolled in 2 or more courses.\n\nReturn student name, course_count. Order by course_count DESC.",
+"JOIN students + enrollments, GROUP BY, HAVING COUNT >= 2.",
+"Students with multiple enrollments.",
+UNI_T,UNI_S,(["name","course_count"],[]),
+"SELECT s.name,COUNT(e.id)AS course_count FROM students s JOIN enrollments e ON s.id=e.student_id GROUP BY s.name HAVING COUNT(e.id)>=2 ORDER BY course_count DESC;",topic="HAVING Multi-Enrollment")
+
+add("sql-295","Hired Weekday Distribution","HR / Employee","Wipro","medium",
+"Count how many employees were hired on each day of the week.\n\nReturn day_name, hire_count. Order by hire_count DESC.",
+"CASE strftime('%w') for day names, GROUP BY.",
+"Distribution of hires across days.",
+EMP_T,EMP_S,(["day_name","hire_count"],[]),
+"SELECT CASE CAST(strftime('%w',hire_date)AS INT) WHEN 0 THEN 'Sunday' WHEN 1 THEN 'Monday' WHEN 2 THEN 'Tuesday' WHEN 3 THEN 'Wednesday' WHEN 4 THEN 'Thursday' WHEN 5 THEN 'Friday' WHEN 6 THEN 'Saturday' END AS day_name,COUNT(*)AS hire_count FROM employees GROUP BY day_name ORDER BY hire_count DESC;",topic="Day Distribution")
+
+# --- HCLTech (5 of 23 needed) ---
+add("sql-296","Top 5 Highest Paid Employees","HR / Employee","HCLTech","easy",
+"Find the 5 highest-paid employees.\n\nReturn name, salary. Order by salary DESC.",
+"ORDER BY salary DESC LIMIT 5.",
+"Top 5 by salary.",
+EMP_T,EMP_S,(["name","salary"],[["Alice",70000],["Eve",65000],["Bob",60000],["Charlie",55000],["Diana",50000]]),
+"SELECT name,salary FROM employees ORDER BY salary DESC LIMIT 5;",topic="TOP 5 by Salary")
+
+add("sql-297","Restaurant With Most Orders","Food Delivery (Zomato)","HCLTech","medium",
+"Find the restaurant that received the most orders.\n\nReturn restaurant name, order_count.",
+"JOIN restaurants + orders, COUNT, ORDER DESC LIMIT 1.",
+"Restaurant with highest order volume.",
+ZOMATO_T,ZOMATO_S,(["name","order_count"],[["Biryani House",3]]),
+"SELECT r.name,COUNT(o.id)AS order_count FROM restaurants r JOIN orders o ON r.id=o.rest_id GROUP BY r.name ORDER BY order_count DESC LIMIT 1;",topic="Most Orders Restaurant")
+
+add("sql-298","Patients Over Age 40","Healthcare / Hospital","HCLTech","easy",
+"Find all patients older than 40.\n\nReturn name, age, gender. Order by age DESC.",
+"WHERE age > 40.",
+"Amit is 45.",
+HOSPITAL_T,HOSPITAL_S,(["name","age","gender"],[["Amit",45,"M"]]),
+"SELECT name,age,gender FROM patients WHERE age>40 ORDER BY age DESC;",topic="WHERE Age Filter")
+
+add("sql-299","Average Fare Per Ride City","Ride-Sharing (Ola)","HCLTech","easy",
+"Calculate average fare grouped by pickup city.\n\nReturn pickup, avg_fare (rounded to 0). Order by avg_fare DESC.",
+"GROUP BY pickup, AVG(fare).",
+"Average fare by pickup location.",
+RIDE_T,RIDE_S,(["pickup","avg_fare"],[]),
+"SELECT pickup,ROUND(AVG(fare),0)AS avg_fare FROM rides GROUP BY pickup ORDER BY avg_fare DESC;",topic="AVG Fare by Pickup")
+
+add("sql-300","Products Below Average Price","E-Commerce (Flipkart)","HCLTech","medium",
+"Find products whose price is below the average product price.\n\nReturn name, price. Order by price.",
+"WHERE price < (SELECT AVG(price) FROM products).",
+"Avg price ~40949. Cotton T-Shirt, Running Shoes, SQL Book are below.",
+ECOM_T,ECOM_S,(["name","price"],[["SQL Book",450.0],["Cotton T-Shirt",799.0],["Running Shoes",3499.0]]),
+"SELECT name,price FROM products WHERE price<(SELECT AVG(price) FROM products) ORDER BY price;",topic="Subquery: Below Avg Price")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.

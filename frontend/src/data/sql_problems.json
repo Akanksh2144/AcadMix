@@ -69777,6 +69777,2256 @@
     "solution_sql": "SELECT c.city,COUNT(o.id)AS order_count FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.city ORDER BY order_count DESC;"
   },
   {
+    "id": "sql-291",
+    "title": "Profile Followers Count",
+    "dataset_theme": "Social Media (Instagram)",
+    "company_tag": "Wipro",
+    "difficulty": "easy",
+    "topic": "COUNT Followers",
+    "problem_statement": "Count followers for each profile (from the follows table).\n\nReturn username, follower_count. Order by follower_count DESC.",
+    "hint": "JOIN profiles + follows, COUNT, GROUP BY.",
+    "explanation": "Count who follows whom.",
+    "tables_meta": [
+      {
+        "name": "profiles",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "username",
+            "type": "varchar"
+          },
+          {
+            "name": "full_name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "joined",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "ankit_dev",
+            "Ankit Sharma",
+            "Mumbai",
+            "2023-01-10"
+          ],
+          [
+            2,
+            "priya_codes",
+            "Priya Patel",
+            "Delhi",
+            "2023-02-15"
+          ],
+          [
+            3,
+            "rohan_js",
+            "Rohan Gupta",
+            "Bangalore",
+            "2023-04-20"
+          ],
+          [
+            4,
+            "sneha_ml",
+            "Sneha Iyer",
+            "Chennai",
+            "2023-07-01"
+          ],
+          [
+            5,
+            "vikram_sql",
+            "Vikram Singh",
+            "Mumbai",
+            "2023-09-05"
+          ]
+        ]
+      },
+      {
+        "name": "posts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "content",
+            "type": "varchar"
+          },
+          {
+            "name": "post_date",
+            "type": "date"
+          },
+          {
+            "name": "likes",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            "Learning React today!",
+            "2024-01-10",
+            25
+          ],
+          [
+            2,
+            1,
+            "SQL is amazing",
+            "2024-01-15",
+            42
+          ],
+          [
+            3,
+            2,
+            "My first open source PR!",
+            "2024-01-20",
+            88
+          ],
+          [
+            4,
+            3,
+            "Built a REST API",
+            "2024-02-05",
+            15
+          ],
+          [
+            5,
+            2,
+            "Python vs JavaScript",
+            "2024-02-10",
+            56
+          ]
+        ]
+      },
+      {
+        "name": "follows",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "follower_id",
+            "type": "int"
+          },
+          {
+            "name": "following_id",
+            "type": "int"
+          },
+          {
+            "name": "follow_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            2,
+            "2023-03-01"
+          ],
+          [
+            2,
+            1,
+            3,
+            "2023-05-10"
+          ],
+          [
+            3,
+            2,
+            1,
+            "2023-03-05"
+          ],
+          [
+            4,
+            2,
+            4,
+            "2023-08-15"
+          ],
+          [
+            5,
+            3,
+            1,
+            "2023-06-01"
+          ],
+          [
+            6,
+            3,
+            2,
+            "2023-06-01"
+          ]
+        ]
+      },
+      {
+        "name": "comments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "post_id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "comment",
+            "type": "varchar"
+          },
+          {
+            "name": "comment_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            2,
+            2,
+            "Great post!",
+            "2024-01-15"
+          ],
+          [
+            2,
+            3,
+            1,
+            "Congrats!",
+            "2024-01-20"
+          ],
+          [
+            3,
+            3,
+            4,
+            "Amazing work",
+            "2024-01-21"
+          ],
+          [
+            4,
+            5,
+            3,
+            "I prefer Python",
+            "2024-02-11"
+          ],
+          [
+            5,
+            7,
+            1,
+            "Nice writeup",
+            "2024-03-01"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "username",
+        "follower_count"
+      ],
+      "rows": []
+    },
+    "schema_sql": "CREATE TABLE profiles(id INT PRIMARY KEY,username VARCHAR,full_name VARCHAR,city VARCHAR,joined DATE);\nCREATE TABLE posts(id INT PRIMARY KEY,user_id INT,content VARCHAR,post_date DATE,likes INT);\nCREATE TABLE follows(id INT PRIMARY KEY,follower_id INT,following_id INT,follow_date DATE);\nCREATE TABLE comments(id INT PRIMARY KEY,post_id INT,user_id INT,comment VARCHAR,comment_date DATE);\nINSERT INTO profiles VALUES(1,'ankit_dev','Ankit Sharma','Mumbai','2023-01-10');\nINSERT INTO profiles VALUES(2,'priya_codes','Priya Patel','Delhi','2023-02-15');\nINSERT INTO profiles VALUES(3,'rohan_js','Rohan Gupta','Bangalore','2023-04-20');\nINSERT INTO profiles VALUES(4,'sneha_ml','Sneha Iyer','Chennai','2023-07-01');\nINSERT INTO profiles VALUES(5,'vikram_sql','Vikram Singh','Mumbai','2023-09-05');\nINSERT INTO posts VALUES(1,1,'Learning React today!','2024-01-10',25);\nINSERT INTO posts VALUES(2,1,'SQL is amazing','2024-01-15',42);\nINSERT INTO posts VALUES(3,2,'My first open source PR!','2024-01-20',88);\nINSERT INTO posts VALUES(4,3,'Built a REST API','2024-02-05',15);\nINSERT INTO posts VALUES(5,2,'Python vs JavaScript','2024-02-10',56);\nINSERT INTO posts VALUES(6,4,'Deep learning notes','2024-02-15',33);\nINSERT INTO posts VALUES(7,5,'SQL window functions','2024-03-01',71);\nINSERT INTO posts VALUES(8,1,'Deployed to production!','2024-03-05',95);\nINSERT INTO follows VALUES(1,1,2,'2023-03-01');\nINSERT INTO follows VALUES(2,1,3,'2023-05-10');\nINSERT INTO follows VALUES(3,2,1,'2023-03-05');\nINSERT INTO follows VALUES(4,2,4,'2023-08-15');\nINSERT INTO follows VALUES(5,3,1,'2023-06-01');\nINSERT INTO follows VALUES(6,3,2,'2023-06-01');\nINSERT INTO follows VALUES(7,4,2,'2023-09-01');\nINSERT INTO follows VALUES(8,5,1,'2023-10-01');\nINSERT INTO follows VALUES(9,5,3,'2023-10-01');\nINSERT INTO comments VALUES(1,2,2,'Great post!','2024-01-15');\nINSERT INTO comments VALUES(2,3,1,'Congrats!','2024-01-20');\nINSERT INTO comments VALUES(3,3,4,'Amazing work','2024-01-21');\nINSERT INTO comments VALUES(4,5,3,'I prefer Python','2024-02-11');\nINSERT INTO comments VALUES(5,7,1,'Nice writeup','2024-03-01');\nINSERT INTO comments VALUES(6,8,2,'Awesome!','2024-03-05');\nINSERT INTO comments VALUES(7,8,3,'Well done','2024-03-06');\nINSERT INTO comments VALUES(8,8,5,'Ship it!','2024-03-06');",
+    "expected_output": [
+      {
+        "columns": [
+          "username",
+          "follower_count"
+        ],
+        "values": []
+      }
+    ],
+    "solution_sql": "SELECT pr.username,COUNT(f.id)AS follower_count FROM profiles pr LEFT JOIN follows f ON pr.id=f.following_id GROUP BY pr.username ORDER BY follower_count DESC;"
+  },
+  {
+    "id": "sql-292",
+    "title": "Employees Hired on Weekday vs Weekend",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "Wipro",
+    "difficulty": "medium",
+    "topic": "Day-of-Week Classification",
+    "problem_statement": "Classify each employee's hire date as 'Weekday' or 'Weekend'.\n\nReturn name, hire_date, day_type. Order by hire_date.",
+    "hint": "strftime('%w') returns 0=Sun, 6=Sat.",
+    "explanation": "Check each hire date's day of week.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "dept",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "mgr_id",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Eng",
+            70000,
+            null,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Eng",
+            60000,
+            1,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Sales",
+            55000,
+            null,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Sales",
+            50000,
+            3,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Eng",
+            65000,
+            1,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "HR",
+            45000,
+            null,
+            "2022-02-14"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "hire_date",
+        "day_type"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "2019-01-15",
+          "Weekday"
+        ],
+        [
+          "Bob",
+          "2020-03-01",
+          "Weekend"
+        ],
+        [
+          "Charlie",
+          "2020-06-10",
+          "Weekday"
+        ],
+        [
+          "Diana",
+          "2021-01-20",
+          "Weekday"
+        ],
+        [
+          "Eve",
+          "2021-08-05",
+          "Weekday"
+        ],
+        [
+          "Frank",
+          "2022-02-14",
+          "Weekday"
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR,dept VARCHAR,salary INT,mgr_id INT,hire_date DATE);\nINSERT INTO employees VALUES(1,'Alice','Eng',70000,NULL,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Eng',60000,1,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Sales',55000,NULL,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Sales',50000,3,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Eng',65000,1,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','HR',45000,NULL,'2022-02-14');",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "hire_date",
+          "day_type"
+        ],
+        "values": [
+          [
+            "Alice",
+            "2019-01-15",
+            "Weekday"
+          ],
+          [
+            "Bob",
+            "2020-03-01",
+            "Weekend"
+          ],
+          [
+            "Charlie",
+            "2020-06-10",
+            "Weekday"
+          ],
+          [
+            "Diana",
+            "2021-01-20",
+            "Weekday"
+          ],
+          [
+            "Eve",
+            "2021-08-05",
+            "Weekday"
+          ],
+          [
+            "Frank",
+            "2022-02-14",
+            "Weekday"
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT name,hire_date,CASE WHEN CAST(strftime('%w',hire_date)AS INT) IN(0,6) THEN 'Weekend' ELSE 'Weekday' END AS day_type FROM employees ORDER BY hire_date;"
+  },
+  {
+    "id": "sql-293",
+    "title": "Customers Who Ordered in All 3 Months",
+    "dataset_theme": "E-Commerce (Flipkart)",
+    "company_tag": "Wipro",
+    "difficulty": "hard",
+    "topic": "HAVING DISTINCT Months",
+    "problem_statement": "Find customers who placed orders in all three months (Jan, Feb, Mar 2024).\n\nReturn name. Order by name.",
+    "hint": "HAVING COUNT(DISTINCT month) = 3.",
+    "explanation": "Check if any customer ordered in all 3 months.",
+    "tables_meta": [
+      {
+        "name": "customers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "email",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ankit",
+            "ankit@gmail.com",
+            "Mumbai",
+            "2023-01-15"
+          ],
+          [
+            2,
+            "Priya",
+            "priya@yahoo.com",
+            "Delhi",
+            "2023-03-20"
+          ],
+          [
+            3,
+            "Rohan",
+            "rohan@gmail.com",
+            "Bangalore",
+            "2023-06-10"
+          ],
+          [
+            4,
+            "Sneha",
+            "sneha@outlook.com",
+            "Mumbai",
+            "2024-01-05"
+          ],
+          [
+            5,
+            "Vikram",
+            "vikram@gmail.com",
+            "Chennai",
+            "2023-09-12"
+          ]
+        ]
+      },
+      {
+        "name": "products",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "product_name",
+            "type": "varchar"
+          },
+          {
+            "name": "category",
+            "type": "varchar"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Laptop",
+            "Electronics",
+            55000
+          ],
+          [
+            102,
+            "Headphones",
+            "Electronics",
+            2500
+          ],
+          [
+            103,
+            "T-Shirt",
+            "Fashion",
+            799
+          ],
+          [
+            104,
+            "Sneakers",
+            "Fashion",
+            3200
+          ],
+          [
+            105,
+            "Python Book",
+            "Books",
+            450
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "customer_id",
+            "type": "int"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          },
+          {
+            "name": "total",
+            "type": "real"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            "2024-01-10",
+            57500,
+            "delivered"
+          ],
+          [
+            1002,
+            2,
+            "2024-01-15",
+            3299,
+            "delivered"
+          ],
+          [
+            1003,
+            1,
+            "2024-02-05",
+            799,
+            "delivered"
+          ],
+          [
+            1004,
+            3,
+            "2024-02-20",
+            55450,
+            "shipped"
+          ],
+          [
+            1005,
+            2,
+            "2024-03-01",
+            2500,
+            "cancelled"
+          ],
+          [
+            1006,
+            4,
+            "2024-03-10",
+            6900,
+            "delivered"
+          ],
+          [
+            1007,
+            5,
+            "2024-03-15",
+            450,
+            "delivered"
+          ]
+        ]
+      },
+      {
+        "name": "order_items",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "order_id",
+            "type": "int"
+          },
+          {
+            "name": "product_id",
+            "type": "int"
+          },
+          {
+            "name": "qty",
+            "type": "int"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1001,
+            101,
+            1,
+            55000
+          ],
+          [
+            2,
+            1001,
+            102,
+            1,
+            2500
+          ],
+          [
+            3,
+            1002,
+            103,
+            1,
+            799
+          ],
+          [
+            4,
+            1002,
+            102,
+            1,
+            2500
+          ],
+          [
+            5,
+            1003,
+            103,
+            1,
+            799
+          ],
+          [
+            6,
+            1004,
+            101,
+            1,
+            55000
+          ],
+          [
+            7,
+            1004,
+            105,
+            1,
+            450
+          ],
+          [
+            8,
+            1005,
+            102,
+            1,
+            2500
+          ],
+          [
+            9,
+            1006,
+            104,
+            1,
+            3200
+          ],
+          [
+            10,
+            1006,
+            103,
+            1,
+            799
+          ],
+          [
+            11,
+            1006,
+            102,
+            1,
+            2500
+          ],
+          [
+            12,
+            1007,
+            105,
+            1,
+            450
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name"
+      ],
+      "rows": []
+    },
+    "schema_sql": "CREATE TABLE customers(id INT PRIMARY KEY,name VARCHAR,email VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE products(id INT PRIMARY KEY,product_name VARCHAR,category VARCHAR,price REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,customer_id INT,order_date DATE,total REAL,status VARCHAR);\nCREATE TABLE order_items(id INT PRIMARY KEY,order_id INT,product_id INT,qty INT,price REAL);\nINSERT INTO customers VALUES(1,'Ankit','ankit@gmail.com','Mumbai','2023-01-15');\nINSERT INTO customers VALUES(2,'Priya','priya@yahoo.com','Delhi','2023-03-20');\nINSERT INTO customers VALUES(3,'Rohan','rohan@gmail.com','Bangalore','2023-06-10');\nINSERT INTO customers VALUES(4,'Sneha','sneha@outlook.com','Mumbai','2024-01-05');\nINSERT INTO customers VALUES(5,'Vikram','vikram@gmail.com','Chennai','2023-09-12');\nINSERT INTO products VALUES(101,'Laptop',  'Electronics',55000);\nINSERT INTO products VALUES(102,'Headphones','Electronics',2500);\nINSERT INTO products VALUES(103,'T-Shirt','Fashion',799);\nINSERT INTO products VALUES(104,'Sneakers','Fashion',3200);\nINSERT INTO products VALUES(105,'Python Book','Books',450);\nINSERT INTO orders VALUES(1001,1,'2024-01-10',57500,'delivered');\nINSERT INTO orders VALUES(1002,2,'2024-01-15',3299,'delivered');\nINSERT INTO orders VALUES(1003,1,'2024-02-05',799,'delivered');\nINSERT INTO orders VALUES(1004,3,'2024-02-20',55450,'shipped');\nINSERT INTO orders VALUES(1005,2,'2024-03-01',2500,'cancelled');\nINSERT INTO orders VALUES(1006,4,'2024-03-10',6900,'delivered');\nINSERT INTO orders VALUES(1007,5,'2024-03-15',450,'delivered');\nINSERT INTO order_items VALUES(1,1001,101,1,55000);\nINSERT INTO order_items VALUES(2,1001,102,1,2500);\nINSERT INTO order_items VALUES(3,1002,103,1,799);\nINSERT INTO order_items VALUES(4,1002,102,1,2500);\nINSERT INTO order_items VALUES(5,1003,103,1,799);\nINSERT INTO order_items VALUES(6,1004,101,1,55000);\nINSERT INTO order_items VALUES(7,1004,105,1,450);\nINSERT INTO order_items VALUES(8,1005,102,1,2500);\nINSERT INTO order_items VALUES(9,1006,104,1,3200);\nINSERT INTO order_items VALUES(10,1006,103,1,799);\nINSERT INTO order_items VALUES(11,1006,102,1,2500);\nINSERT INTO order_items VALUES(12,1007,105,1,450);",
+    "expected_output": [
+      {
+        "columns": [
+          "name"
+        ],
+        "values": []
+      }
+    ],
+    "solution_sql": "SELECT c.name FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name HAVING COUNT(DISTINCT SUBSTR(o.order_date,1,7))=3 ORDER BY c.name;"
+  },
+  {
+    "id": "sql-294",
+    "title": "Students Enrolled in 2+ Courses",
+    "dataset_theme": "University / Education",
+    "company_tag": "Wipro",
+    "difficulty": "medium",
+    "topic": "HAVING Multi-Enrollment",
+    "problem_statement": "Find students enrolled in 2 or more courses.\n\nReturn student name, course_count. Order by course_count DESC.",
+    "hint": "JOIN students + enrollments, GROUP BY, HAVING COUNT >= 2.",
+    "explanation": "Students with multiple enrollments.",
+    "tables_meta": [
+      {
+        "name": "students",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "branch",
+            "type": "varchar"
+          },
+          {
+            "name": "year",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ravi",
+            "CSE",
+            3
+          ],
+          [
+            2,
+            "Meera",
+            "ECE",
+            2
+          ],
+          [
+            3,
+            "Arjun",
+            "CSE",
+            3
+          ],
+          [
+            4,
+            "Kavya",
+            "ME",
+            4
+          ],
+          [
+            5,
+            "Nikhil",
+            "CSE",
+            2
+          ]
+        ]
+      },
+      {
+        "name": "courses",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "course_name",
+            "type": "varchar"
+          },
+          {
+            "name": "credits",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Data Structures",
+            4
+          ],
+          [
+            102,
+            "DBMS",
+            3
+          ],
+          [
+            103,
+            "OS",
+            4
+          ],
+          [
+            104,
+            "Signals",
+            3
+          ]
+        ]
+      },
+      {
+        "name": "enrollments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "student_id",
+            "type": "int"
+          },
+          {
+            "name": "course_id",
+            "type": "int"
+          },
+          {
+            "name": "grade",
+            "type": "varchar"
+          },
+          {
+            "name": "semester",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            101,
+            "A",
+            "Fall2024"
+          ],
+          [
+            2,
+            1,
+            102,
+            "B",
+            "Fall2024"
+          ],
+          [
+            3,
+            2,
+            104,
+            "A",
+            "Fall2024"
+          ],
+          [
+            4,
+            3,
+            101,
+            "A",
+            "Fall2024"
+          ],
+          [
+            5,
+            3,
+            103,
+            "B",
+            "Fall2024"
+          ],
+          [
+            6,
+            4,
+            103,
+            "C",
+            "Fall2024"
+          ],
+          [
+            7,
+            5,
+            101,
+            "B",
+            "Fall2024"
+          ],
+          [
+            8,
+            5,
+            102,
+            "A",
+            "Fall2024"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "course_count"
+      ],
+      "rows": []
+    },
+    "schema_sql": "CREATE TABLE students(id INT PRIMARY KEY,name VARCHAR,branch VARCHAR,year INT);\nCREATE TABLE courses(id INT PRIMARY KEY,course_name VARCHAR,credits INT);\nCREATE TABLE enrollments(id INT PRIMARY KEY,student_id INT,course_id INT,grade VARCHAR,semester VARCHAR);\nINSERT INTO students VALUES(1,'Ravi','CSE',3);\nINSERT INTO students VALUES(2,'Meera','ECE',2);\nINSERT INTO students VALUES(3,'Arjun','CSE',3);\nINSERT INTO students VALUES(4,'Kavya','ME',4);\nINSERT INTO students VALUES(5,'Nikhil','CSE',2);\nINSERT INTO courses VALUES(101,'Data Structures',4);\nINSERT INTO courses VALUES(102,'DBMS',3);\nINSERT INTO courses VALUES(103,'OS',4);\nINSERT INTO courses VALUES(104,'Signals',3);\nINSERT INTO enrollments VALUES(1,1,101,'A','Fall2024');\nINSERT INTO enrollments VALUES(2,1,102,'B','Fall2024');\nINSERT INTO enrollments VALUES(3,2,104,'A','Fall2024');\nINSERT INTO enrollments VALUES(4,3,101,'A','Fall2024');\nINSERT INTO enrollments VALUES(5,3,103,'B','Fall2024');\nINSERT INTO enrollments VALUES(6,4,103,'C','Fall2024');\nINSERT INTO enrollments VALUES(7,5,101,'B','Fall2024');\nINSERT INTO enrollments VALUES(8,5,102,'A','Fall2024');",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "course_count"
+        ],
+        "values": []
+      }
+    ],
+    "solution_sql": "SELECT s.name,COUNT(e.id)AS course_count FROM students s JOIN enrollments e ON s.id=e.student_id GROUP BY s.name HAVING COUNT(e.id)>=2 ORDER BY course_count DESC;"
+  },
+  {
+    "id": "sql-295",
+    "title": "Hired Weekday Distribution",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "Wipro",
+    "difficulty": "medium",
+    "topic": "Day Distribution",
+    "problem_statement": "Count how many employees were hired on each day of the week.\n\nReturn day_name, hire_count. Order by hire_count DESC.",
+    "hint": "CASE strftime('%w') for day names, GROUP BY.",
+    "explanation": "Distribution of hires across days.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "dept",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "mgr_id",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Eng",
+            70000,
+            null,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Eng",
+            60000,
+            1,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Sales",
+            55000,
+            null,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Sales",
+            50000,
+            3,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Eng",
+            65000,
+            1,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "HR",
+            45000,
+            null,
+            "2022-02-14"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "day_name",
+        "hire_count"
+      ],
+      "rows": []
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR,dept VARCHAR,salary INT,mgr_id INT,hire_date DATE);\nINSERT INTO employees VALUES(1,'Alice','Eng',70000,NULL,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Eng',60000,1,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Sales',55000,NULL,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Sales',50000,3,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Eng',65000,1,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','HR',45000,NULL,'2022-02-14');",
+    "expected_output": [
+      {
+        "columns": [
+          "day_name",
+          "hire_count"
+        ],
+        "values": []
+      }
+    ],
+    "solution_sql": "SELECT CASE CAST(strftime('%w',hire_date)AS INT) WHEN 0 THEN 'Sunday' WHEN 1 THEN 'Monday' WHEN 2 THEN 'Tuesday' WHEN 3 THEN 'Wednesday' WHEN 4 THEN 'Thursday' WHEN 5 THEN 'Friday' WHEN 6 THEN 'Saturday' END AS day_name,COUNT(*)AS hire_count FROM employees GROUP BY day_name ORDER BY hire_count DESC;"
+  },
+  {
+    "id": "sql-296",
+    "title": "Top 5 Highest Paid Employees",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "HCLTech",
+    "difficulty": "easy",
+    "topic": "TOP 5 by Salary",
+    "problem_statement": "Find the 5 highest-paid employees.\n\nReturn name, salary. Order by salary DESC.",
+    "hint": "ORDER BY salary DESC LIMIT 5.",
+    "explanation": "Top 5 by salary.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "dept",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "mgr_id",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Eng",
+            70000,
+            null,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Eng",
+            60000,
+            1,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Sales",
+            55000,
+            null,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Sales",
+            50000,
+            3,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Eng",
+            65000,
+            1,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "HR",
+            45000,
+            null,
+            "2022-02-14"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "salary"
+      ],
+      "rows": [
+        [
+          "Alice",
+          70000
+        ],
+        [
+          "Eve",
+          65000
+        ],
+        [
+          "Bob",
+          60000
+        ],
+        [
+          "Charlie",
+          55000
+        ],
+        [
+          "Diana",
+          50000
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR,dept VARCHAR,salary INT,mgr_id INT,hire_date DATE);\nINSERT INTO employees VALUES(1,'Alice','Eng',70000,NULL,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Eng',60000,1,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Sales',55000,NULL,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Sales',50000,3,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Eng',65000,1,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','HR',45000,NULL,'2022-02-14');",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "salary"
+        ],
+        "values": [
+          [
+            "Alice",
+            70000
+          ],
+          [
+            "Eve",
+            65000
+          ],
+          [
+            "Bob",
+            60000
+          ],
+          [
+            "Charlie",
+            55000
+          ],
+          [
+            "Diana",
+            50000
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT name,salary FROM employees ORDER BY salary DESC LIMIT 5;"
+  },
+  {
+    "id": "sql-297",
+    "title": "Restaurant With Most Orders",
+    "dataset_theme": "Food Delivery (Zomato)",
+    "company_tag": "HCLTech",
+    "difficulty": "medium",
+    "topic": "Most Orders Restaurant",
+    "problem_statement": "Find the restaurant that received the most orders.\n\nReturn restaurant name, order_count.",
+    "hint": "JOIN restaurants + orders, COUNT, ORDER DESC LIMIT 1.",
+    "explanation": "Restaurant with highest order volume.",
+    "tables_meta": [
+      {
+        "name": "restaurants",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "cuisine",
+            "type": "varchar"
+          },
+          {
+            "name": "rating",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Biryani House",
+            "Mumbai",
+            "Indian",
+            4.5
+          ],
+          [
+            2,
+            "Pizza Palace",
+            "Delhi",
+            "Italian",
+            4.2
+          ],
+          [
+            3,
+            "Dragon Wok",
+            "Mumbai",
+            "Chinese",
+            3.8
+          ],
+          [
+            4,
+            "Dosa Corner",
+            "Bangalore",
+            "Indian",
+            4.7
+          ],
+          [
+            5,
+            "Burger Barn",
+            "Delhi",
+            "American",
+            3.5
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "rest_id",
+            "type": "int"
+          },
+          {
+            "name": "cust_id",
+            "type": "int"
+          },
+          {
+            "name": "amount",
+            "type": "real"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            1,
+            201,
+            450,
+            "2024-01-15"
+          ],
+          [
+            102,
+            2,
+            202,
+            650,
+            "2024-01-16"
+          ],
+          [
+            103,
+            1,
+            203,
+            380,
+            "2024-01-17"
+          ],
+          [
+            104,
+            4,
+            201,
+            220,
+            "2024-02-01"
+          ],
+          [
+            105,
+            3,
+            204,
+            510,
+            "2024-02-05"
+          ],
+          [
+            106,
+            1,
+            202,
+            400,
+            "2024-02-10"
+          ],
+          [
+            107,
+            5,
+            205,
+            320,
+            "2024-03-01"
+          ],
+          [
+            108,
+            2,
+            201,
+            700,
+            "2024-03-05"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "order_count"
+      ],
+      "rows": [
+        [
+          "Biryani House",
+          3
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE restaurants(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,cuisine VARCHAR,rating REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,rest_id INT,cust_id INT,amount REAL,order_date DATE);\nINSERT INTO restaurants VALUES(1,'Biryani House','Mumbai','Indian',4.5);\nINSERT INTO restaurants VALUES(2,'Pizza Palace','Delhi','Italian',4.2);\nINSERT INTO restaurants VALUES(3,'Dragon Wok','Mumbai','Chinese',3.8);\nINSERT INTO restaurants VALUES(4,'Dosa Corner','Bangalore','Indian',4.7);\nINSERT INTO restaurants VALUES(5,'Burger Barn','Delhi','American',3.5);\nINSERT INTO orders VALUES(101,1,201,450,'2024-01-15');\nINSERT INTO orders VALUES(102,2,202,650,'2024-01-16');\nINSERT INTO orders VALUES(103,1,203,380,'2024-01-17');\nINSERT INTO orders VALUES(104,4,201,220,'2024-02-01');\nINSERT INTO orders VALUES(105,3,204,510,'2024-02-05');\nINSERT INTO orders VALUES(106,1,202,400,'2024-02-10');\nINSERT INTO orders VALUES(107,5,205,320,'2024-03-01');\nINSERT INTO orders VALUES(108,2,201,700,'2024-03-05');",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "order_count"
+        ],
+        "values": [
+          [
+            "Biryani House",
+            3
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT r.name,COUNT(o.id)AS order_count FROM restaurants r JOIN orders o ON r.id=o.rest_id GROUP BY r.name ORDER BY order_count DESC LIMIT 1;"
+  },
+  {
+    "id": "sql-298",
+    "title": "Patients Over Age 40",
+    "dataset_theme": "Healthcare / Hospital",
+    "company_tag": "HCLTech",
+    "difficulty": "easy",
+    "topic": "WHERE Age Filter",
+    "problem_statement": "Find all patients older than 40.\n\nReturn name, age, gender. Order by age DESC.",
+    "hint": "WHERE age > 40.",
+    "explanation": "Amit is 45.",
+    "tables_meta": [
+      {
+        "name": "doctors",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "specialty",
+            "type": "varchar"
+          },
+          {
+            "name": "experience_yrs",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Dr. Sharma",
+            "Cardiology",
+            15
+          ],
+          [
+            2,
+            "Dr. Patel",
+            "Orthopedics",
+            10
+          ],
+          [
+            3,
+            "Dr. Gupta",
+            "Dermatology",
+            8
+          ]
+        ]
+      },
+      {
+        "name": "patients",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "age",
+            "type": "int"
+          },
+          {
+            "name": "gender",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Rahul",
+            35,
+            "M"
+          ],
+          [
+            102,
+            "Priya",
+            28,
+            "F"
+          ],
+          [
+            103,
+            "Amit",
+            45,
+            "M"
+          ],
+          [
+            104,
+            "Sneha",
+            32,
+            "F"
+          ]
+        ]
+      },
+      {
+        "name": "appointments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "doc_id",
+            "type": "int"
+          },
+          {
+            "name": "patient_id",
+            "type": "int"
+          },
+          {
+            "name": "visit_date",
+            "type": "date"
+          },
+          {
+            "name": "diagnosis",
+            "type": "varchar"
+          },
+          {
+            "name": "fee",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            101,
+            "2024-01-10",
+            "Hypertension",
+            500
+          ],
+          [
+            1002,
+            2,
+            102,
+            "2024-01-12",
+            "Fracture",
+            800
+          ],
+          [
+            1003,
+            1,
+            103,
+            "2024-01-15",
+            "Arrhythmia",
+            500
+          ],
+          [
+            1004,
+            3,
+            104,
+            "2024-02-01",
+            "Eczema",
+            400
+          ],
+          [
+            1005,
+            1,
+            101,
+            "2024-02-10",
+            "Follow-up",
+            300
+          ],
+          [
+            1006,
+            2,
+            103,
+            "2024-02-15",
+            "Joint Pain",
+            600
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "age",
+        "gender"
+      ],
+      "rows": [
+        [
+          "Amit",
+          45,
+          "M"
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE doctors(id INT PRIMARY KEY,name VARCHAR,specialty VARCHAR,experience_yrs INT);\nCREATE TABLE patients(id INT PRIMARY KEY,name VARCHAR,age INT,gender VARCHAR);\nCREATE TABLE appointments(id INT PRIMARY KEY,doc_id INT,patient_id INT,visit_date DATE,diagnosis VARCHAR,fee INT);\nINSERT INTO doctors VALUES(1,'Dr. Sharma','Cardiology',15);\nINSERT INTO doctors VALUES(2,'Dr. Patel','Orthopedics',10);\nINSERT INTO doctors VALUES(3,'Dr. Gupta','Dermatology',8);\nINSERT INTO patients VALUES(101,'Rahul',35,'M');\nINSERT INTO patients VALUES(102,'Priya',28,'F');\nINSERT INTO patients VALUES(103,'Amit',45,'M');\nINSERT INTO patients VALUES(104,'Sneha',32,'F');\nINSERT INTO appointments VALUES(1001,1,101,'2024-01-10','Hypertension',500);\nINSERT INTO appointments VALUES(1002,2,102,'2024-01-12','Fracture',800);\nINSERT INTO appointments VALUES(1003,1,103,'2024-01-15','Arrhythmia',500);\nINSERT INTO appointments VALUES(1004,3,104,'2024-02-01','Eczema',400);\nINSERT INTO appointments VALUES(1005,1,101,'2024-02-10','Follow-up',300);\nINSERT INTO appointments VALUES(1006,2,103,'2024-02-15','Joint Pain',600);",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "age",
+          "gender"
+        ],
+        "values": [
+          [
+            "Amit",
+            45,
+            "M"
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT name,age,gender FROM patients WHERE age>40 ORDER BY age DESC;"
+  },
+  {
+    "id": "sql-299",
+    "title": "Average Fare Per Ride City",
+    "dataset_theme": "Ride-Sharing (Ola)",
+    "company_tag": "HCLTech",
+    "difficulty": "easy",
+    "topic": "AVG Fare by Pickup",
+    "problem_statement": "Calculate average fare grouped by pickup city.\n\nReturn pickup, avg_fare (rounded to 0). Order by avg_fare DESC.",
+    "hint": "GROUP BY pickup, AVG(fare).",
+    "explanation": "Average fare by pickup location.",
+    "tables_meta": [
+      {
+        "name": "drivers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "rating",
+            "type": "real"
+          },
+          {
+            "name": "joined",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ramesh",
+            "Mumbai",
+            4.8,
+            "2022-06-01"
+          ],
+          [
+            2,
+            "Sunil",
+            "Mumbai",
+            4.5,
+            "2023-01-10"
+          ],
+          [
+            3,
+            "Kavita",
+            "Delhi",
+            4.9,
+            "2022-03-15"
+          ],
+          [
+            4,
+            "Mohan",
+            "Bangalore",
+            4.2,
+            "2023-05-20"
+          ],
+          [
+            5,
+            "Lakshmi",
+            "Chennai",
+            4.7,
+            "2022-11-01"
+          ]
+        ]
+      },
+      {
+        "name": "riders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Aarav",
+            "Mumbai",
+            "2023-01-05"
+          ],
+          [
+            2,
+            "Bhavna",
+            "Delhi",
+            "2023-03-15"
+          ],
+          [
+            3,
+            "Chirag",
+            "Mumbai",
+            "2023-06-01"
+          ],
+          [
+            4,
+            "Diya",
+            "Bangalore",
+            "2023-09-10"
+          ],
+          [
+            5,
+            "Eshan",
+            "Chennai",
+            "2024-01-01"
+          ]
+        ]
+      },
+      {
+        "name": "rides",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "rider_id",
+            "type": "int"
+          },
+          {
+            "name": "driver_id",
+            "type": "int"
+          },
+          {
+            "name": "pickup",
+            "type": "varchar"
+          },
+          {
+            "name": "dropoff",
+            "type": "varchar"
+          },
+          {
+            "name": "fare",
+            "type": "real"
+          },
+          {
+            "name": "distance_km",
+            "type": "real"
+          },
+          {
+            "name": "ride_date",
+            "type": "date"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            1,
+            "Andheri",
+            "Bandra",
+            250,
+            8.5,
+            "2024-01-10",
+            "completed"
+          ],
+          [
+            2,
+            1,
+            2,
+            "Bandra",
+            "Dadar",
+            180,
+            5.2,
+            "2024-01-12",
+            "completed"
+          ],
+          [
+            3,
+            2,
+            3,
+            "CP",
+            "Nehru Place",
+            320,
+            12.0,
+            "2024-01-15",
+            "completed"
+          ],
+          [
+            4,
+            3,
+            1,
+            "Worli",
+            "Andheri",
+            400,
+            15.3,
+            "2024-01-20",
+            "completed"
+          ],
+          [
+            5,
+            1,
+            1,
+            "Dadar",
+            "Andheri",
+            200,
+            7.0,
+            "2024-02-01",
+            "completed"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "pickup",
+        "avg_fare"
+      ],
+      "rows": []
+    },
+    "schema_sql": "CREATE TABLE drivers(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,rating REAL,joined DATE);\nCREATE TABLE riders(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE rides(id INT PRIMARY KEY,rider_id INT,driver_id INT,pickup VARCHAR,dropoff VARCHAR,fare REAL,distance_km REAL,ride_date DATE,status VARCHAR);\nINSERT INTO drivers VALUES(1,'Ramesh','Mumbai',4.8,'2022-06-01');\nINSERT INTO drivers VALUES(2,'Sunil','Mumbai',4.5,'2023-01-10');\nINSERT INTO drivers VALUES(3,'Kavita','Delhi',4.9,'2022-03-15');\nINSERT INTO drivers VALUES(4,'Mohan','Bangalore',4.2,'2023-05-20');\nINSERT INTO drivers VALUES(5,'Lakshmi','Chennai',4.7,'2022-11-01');\nINSERT INTO riders VALUES(1,'Aarav','Mumbai','2023-01-05');\nINSERT INTO riders VALUES(2,'Bhavna','Delhi','2023-03-15');\nINSERT INTO riders VALUES(3,'Chirag','Mumbai','2023-06-01');\nINSERT INTO riders VALUES(4,'Diya','Bangalore','2023-09-10');\nINSERT INTO riders VALUES(5,'Eshan','Chennai','2024-01-01');\nINSERT INTO rides VALUES(1,1,1,'Andheri','Bandra',250,8.5,'2024-01-10','completed');\nINSERT INTO rides VALUES(2,1,2,'Bandra','Dadar',180,5.2,'2024-01-12','completed');\nINSERT INTO rides VALUES(3,2,3,'CP','Nehru Place',320,12.0,'2024-01-15','completed');\nINSERT INTO rides VALUES(4,3,1,'Worli','Andheri',400,15.3,'2024-01-20','completed');\nINSERT INTO rides VALUES(5,1,1,'Dadar','Andheri',200,7.0,'2024-02-01','completed');\nINSERT INTO rides VALUES(6,4,4,'Koramangala','Whitefield',550,22.0,'2024-02-05','completed');\nINSERT INTO rides VALUES(7,2,3,'Saket','CP',280,10.5,'2024-02-10','cancelled');\nINSERT INTO rides VALUES(8,5,5,'T Nagar','Adyar',150,4.0,'2024-02-15','completed');\nINSERT INTO rides VALUES(9,3,2,'Andheri','Powai',350,13.0,'2024-03-01','completed');\nINSERT INTO rides VALUES(10,1,1,'Bandra','Worli',220,6.5,'2024-03-05','completed');",
+    "expected_output": [
+      {
+        "columns": [
+          "pickup",
+          "avg_fare"
+        ],
+        "values": []
+      }
+    ],
+    "solution_sql": "SELECT pickup,ROUND(AVG(fare),0)AS avg_fare FROM rides GROUP BY pickup ORDER BY avg_fare DESC;"
+  },
+  {
+    "id": "sql-300",
+    "title": "Products Below Average Price",
+    "dataset_theme": "E-Commerce (Flipkart)",
+    "company_tag": "HCLTech",
+    "difficulty": "medium",
+    "topic": "Subquery: Below Avg Price",
+    "problem_statement": "Find products whose price is below the average product price.\n\nReturn name, price. Order by price.",
+    "hint": "WHERE price < (SELECT AVG(price) FROM products).",
+    "explanation": "Avg price ~40949. Cotton T-Shirt, Running Shoes, SQL Book are below.",
+    "tables_meta": [
+      {
+        "name": "customers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "email",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ankit",
+            "ankit@gmail.com",
+            "Mumbai",
+            "2023-01-15"
+          ],
+          [
+            2,
+            "Priya",
+            "priya@yahoo.com",
+            "Delhi",
+            "2023-03-20"
+          ],
+          [
+            3,
+            "Rohan",
+            "rohan@gmail.com",
+            "Bangalore",
+            "2023-06-10"
+          ],
+          [
+            4,
+            "Sneha",
+            "sneha@outlook.com",
+            "Mumbai",
+            "2024-01-05"
+          ],
+          [
+            5,
+            "Vikram",
+            "vikram@gmail.com",
+            "Chennai",
+            "2023-09-12"
+          ]
+        ]
+      },
+      {
+        "name": "products",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "product_name",
+            "type": "varchar"
+          },
+          {
+            "name": "category",
+            "type": "varchar"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Laptop",
+            "Electronics",
+            55000
+          ],
+          [
+            102,
+            "Headphones",
+            "Electronics",
+            2500
+          ],
+          [
+            103,
+            "T-Shirt",
+            "Fashion",
+            799
+          ],
+          [
+            104,
+            "Sneakers",
+            "Fashion",
+            3200
+          ],
+          [
+            105,
+            "Python Book",
+            "Books",
+            450
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "customer_id",
+            "type": "int"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          },
+          {
+            "name": "total",
+            "type": "real"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            "2024-01-10",
+            57500,
+            "delivered"
+          ],
+          [
+            1002,
+            2,
+            "2024-01-15",
+            3299,
+            "delivered"
+          ],
+          [
+            1003,
+            1,
+            "2024-02-05",
+            799,
+            "delivered"
+          ],
+          [
+            1004,
+            3,
+            "2024-02-20",
+            55450,
+            "shipped"
+          ],
+          [
+            1005,
+            2,
+            "2024-03-01",
+            2500,
+            "cancelled"
+          ],
+          [
+            1006,
+            4,
+            "2024-03-10",
+            6900,
+            "delivered"
+          ],
+          [
+            1007,
+            5,
+            "2024-03-15",
+            450,
+            "delivered"
+          ]
+        ]
+      },
+      {
+        "name": "order_items",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "order_id",
+            "type": "int"
+          },
+          {
+            "name": "product_id",
+            "type": "int"
+          },
+          {
+            "name": "qty",
+            "type": "int"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1001,
+            101,
+            1,
+            55000
+          ],
+          [
+            2,
+            1001,
+            102,
+            1,
+            2500
+          ],
+          [
+            3,
+            1002,
+            103,
+            1,
+            799
+          ],
+          [
+            4,
+            1002,
+            102,
+            1,
+            2500
+          ],
+          [
+            5,
+            1003,
+            103,
+            1,
+            799
+          ],
+          [
+            6,
+            1004,
+            101,
+            1,
+            55000
+          ],
+          [
+            7,
+            1004,
+            105,
+            1,
+            450
+          ],
+          [
+            8,
+            1005,
+            102,
+            1,
+            2500
+          ],
+          [
+            9,
+            1006,
+            104,
+            1,
+            3200
+          ],
+          [
+            10,
+            1006,
+            103,
+            1,
+            799
+          ],
+          [
+            11,
+            1006,
+            102,
+            1,
+            2500
+          ],
+          [
+            12,
+            1007,
+            105,
+            1,
+            450
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "price"
+      ],
+      "rows": [
+        [
+          "SQL Book",
+          450.0
+        ],
+        [
+          "Cotton T-Shirt",
+          799.0
+        ],
+        [
+          "Running Shoes",
+          3499.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE customers(id INT PRIMARY KEY,name VARCHAR,email VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE products(id INT PRIMARY KEY,product_name VARCHAR,category VARCHAR,price REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,customer_id INT,order_date DATE,total REAL,status VARCHAR);\nCREATE TABLE order_items(id INT PRIMARY KEY,order_id INT,product_id INT,qty INT,price REAL);\nINSERT INTO customers VALUES(1,'Ankit','ankit@gmail.com','Mumbai','2023-01-15');\nINSERT INTO customers VALUES(2,'Priya','priya@yahoo.com','Delhi','2023-03-20');\nINSERT INTO customers VALUES(3,'Rohan','rohan@gmail.com','Bangalore','2023-06-10');\nINSERT INTO customers VALUES(4,'Sneha','sneha@outlook.com','Mumbai','2024-01-05');\nINSERT INTO customers VALUES(5,'Vikram','vikram@gmail.com','Chennai','2023-09-12');\nINSERT INTO products VALUES(101,'Laptop',  'Electronics',55000);\nINSERT INTO products VALUES(102,'Headphones','Electronics',2500);\nINSERT INTO products VALUES(103,'T-Shirt','Fashion',799);\nINSERT INTO products VALUES(104,'Sneakers','Fashion',3200);\nINSERT INTO products VALUES(105,'Python Book','Books',450);\nINSERT INTO orders VALUES(1001,1,'2024-01-10',57500,'delivered');\nINSERT INTO orders VALUES(1002,2,'2024-01-15',3299,'delivered');\nINSERT INTO orders VALUES(1003,1,'2024-02-05',799,'delivered');\nINSERT INTO orders VALUES(1004,3,'2024-02-20',55450,'shipped');\nINSERT INTO orders VALUES(1005,2,'2024-03-01',2500,'cancelled');\nINSERT INTO orders VALUES(1006,4,'2024-03-10',6900,'delivered');\nINSERT INTO orders VALUES(1007,5,'2024-03-15',450,'delivered');\nINSERT INTO order_items VALUES(1,1001,101,1,55000);\nINSERT INTO order_items VALUES(2,1001,102,1,2500);\nINSERT INTO order_items VALUES(3,1002,103,1,799);\nINSERT INTO order_items VALUES(4,1002,102,1,2500);\nINSERT INTO order_items VALUES(5,1003,103,1,799);\nINSERT INTO order_items VALUES(6,1004,101,1,55000);\nINSERT INTO order_items VALUES(7,1004,105,1,450);\nINSERT INTO order_items VALUES(8,1005,102,1,2500);\nINSERT INTO order_items VALUES(9,1006,104,1,3200);\nINSERT INTO order_items VALUES(10,1006,103,1,799);\nINSERT INTO order_items VALUES(11,1006,102,1,2500);\nINSERT INTO order_items VALUES(12,1007,105,1,450);",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "price"
+        ],
+        "values": [
+          [
+            "SQL Book",
+            450.0
+          ],
+          [
+            "Cotton T-Shirt",
+            799.0
+          ],
+          [
+            "Running Shoes",
+            3499.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT name,price FROM products WHERE price<(SELECT AVG(price) FROM products) ORDER BY price;"
+  },
+  {
     "id": "sql-181",
     "title": "FULL OUTER JOIN: All Employees & Departments",
     "dataset_theme": "HR / Employee",
