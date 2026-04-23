@@ -23,7 +23,7 @@ const companyLogos: Record<string, string> = {
   'Flipkart': 'flipkart.com', 'Freshworks': 'freshworks.com', 'Goldman Sachs': 'goldmansachs.com',
   'Google': 'google.com', 'HCLTech': 'hcltech.com', 'HDFC': 'hdfcbank.com',
   'ICICI': 'icicibank.com', 'Infosys': 'infosys.com', 'JP Morgan': 'jpmorgan.com',
-  'Juspay': 'juspay.in', 'Kotak': 'kotak.com', 'Meta': 'meta.com', 'Microsoft': 'microsoft.com',
+  'Juspay': 'juspay.in', 'Kotak': 'kotakbank.in', 'Meta': 'meta.com', 'Microsoft': 'microsoft.com',
   'Morgan Stanley': 'morganstanley.com', 'Myntra': 'myntra.com', 'Ola': 'olacabs.com',
   'Oracle': 'oracle.com', 'Paytm': 'paytm.com', 'PhonePe': 'phonepe.com',
   'Practo': 'practo.com', 'Razorpay': 'razorpay.com', 'Salesforce': 'salesforce.com',
