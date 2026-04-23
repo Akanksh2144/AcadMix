@@ -299,10 +299,12 @@ const CodePlayground = ({ navigate, user }) => {
          setRPlots([]);
          
          try {
-             await webr.evalRVoid(`svg("acadmix_plot.svg", width=8, height=5)`);
+             // Prepend the svg device creation directly to the user's code so captureR evaluates it in the same context
+             const finalCode = `svg("acadmix_plot.svg", width=8, height=5)\n` + code;
              const shelter = await new webr.Shelter();
-             const capture = await shelter.captureR(code, { withAutoprint: true, catchStreams: true });
-             await webr.evalRVoid(`dev.off()`);
+             const capture = await shelter.captureR(finalCode, { withAutoprint: true, catchStreams: true });
+             // Force close the device in case user code threw an error and didn't close it naturally
+             await webr.evalRVoid(`try(dev.off(), silent=TRUE)`);
              
              const outText = capture.output
                  .filter(msg => msg.type === 'stdout' || msg.type === 'stderr')
