@@ -100,6 +100,16 @@ const SQLPractice = ({ navigate, user }: any) => {
   const [problems, setProblems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProblem, setSelectedProblem] = useState<any>(null);
+  const [solvedSet, setSolvedSet] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('sql_solved') || '[]')); } catch { return new Set(); }
+  });
+  const markSolved = (id: string) => {
+    setSolvedSet(prev => {
+      const next = new Set(prev).add(id);
+      localStorage.setItem('sql_solved', JSON.stringify([...next]));
+      return next;
+    });
+  };
   const [query, setQuery] = useState('-- Write your SQL query here\nSELECT * FROM ...;');
   const [db, setDb] = useState<any>(null);
   const [result, setResult] = useState<any>(null);
@@ -205,6 +215,7 @@ const SQLPractice = ({ navigate, user }: any) => {
       setResult(res);
       const correct = isResultCorrect(res, expected);
       setIsCorrect(correct);
+      if (correct) markSolved(selectedProblem.id);
       correct ? toast.success('Correct! Great job.') : toast.error('Incorrect. Check the expected output.');
       placementPrepAPI.logSqlAttempt({ problem_id: selectedProblem.id, is_correct: correct, time_taken_sec: Math.round((performance.now() - t0) / 1000) }).catch(() => {});
     } catch (err: any) {
@@ -249,31 +260,57 @@ const SQLPractice = ({ navigate, user }: any) => {
         <button onClick={() => navigate('placement-hub')} className="flex items-center gap-2 text-slate-500 hover:text-indigo-500 transition-colors font-bold text-sm">
           <ArrowLeft size={16} weight="bold" /> Back to Placement Hub
         </button>
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Database size={32} weight="fill" className="text-white" />
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <Database size={32} weight="fill" className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">SQL Practice Arena</h1>
+              <p className="text-slate-500">DataLemur-style challenges from mass recruiters.</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">SQL Practice Arena</h1>
-            <p className="text-slate-500">DataLemur-style challenges from mass recruiters.</p>
+          {/* Progress */}
+          <div className="soft-card px-5 py-3 flex items-center gap-4 min-w-[200px]">
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Progress</span>
+                <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">{solvedSet.size}/{problems.length}</span>
+              </div>
+              <div className="h-2 rounded-full bg-slate-100 dark:bg-white/5 overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500" style={{ width: `${problems.length ? (solvedSet.size / problems.length) * 100 : 0}%` }} />
+              </div>
+            </div>
+            <CheckCircle size={24} weight="fill" className="text-emerald-500 shrink-0" />
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {problems.map((p: any, i: number) => (
+          {problems.map((p: any, i: number) => {
+            const solved = solvedSet.has(p.id);
+            return (
             <motion.div key={p.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
               onClick={() => loadProblem(p)}
-              className="bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 rounded-2xl p-5 cursor-pointer hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-500/10 transition-all group">
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="font-extrabold text-slate-800 dark:text-white text-lg group-hover:text-indigo-500 transition-colors line-clamp-2 pr-4">{p.title}</h3>
+              className={`relative bg-white dark:bg-[#1E293B] border rounded-2xl p-5 cursor-pointer hover:shadow-xl hover:shadow-indigo-500/10 transition-all group ${
+                solved ? 'border-emerald-300 dark:border-emerald-500/30 hover:border-emerald-400' : 'border-slate-200 dark:border-white/10 hover:border-indigo-500'
+              }`}>
+              {/* Solved badge */}
+              {solved && (
+                <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-500/30">
+                  <CheckCircle size={16} weight="fill" className="text-white" />
+                </div>
+              )}
+              <div className="flex items-start justify-between mb-3 pr-8">
+                <h3 className={`font-extrabold text-lg group-hover:text-indigo-500 transition-colors line-clamp-2 pr-2 ${solved ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-800 dark:text-white'}`}>{p.title}</h3>
                 <span className={`px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-widest shrink-0 ${diffColors[p.difficulty]}`}>{p.difficulty}</span>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">{p.problem_statement?.split('\n')[0]}</p>
               <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
                 <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 py-1 px-2 rounded"><TableIcon size={14} /> {p.dataset_theme}</span>
                 {p.company_tag && <span className="bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 py-1 px-2 rounded">🏢 {p.company_tag}</span>}
+                {solved && <span className="ml-auto bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 py-1 px-2 rounded">✓ Solved</span>}
               </div>
-            </motion.div>
-          ))}
+            </motion.div>);
+          })}
         </div>
       </div>
     </div>
