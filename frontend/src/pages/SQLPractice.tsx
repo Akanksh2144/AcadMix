@@ -186,7 +186,11 @@ const SQLPractice = ({ navigate, user }: any) => {
 
   const loadProblem = (prob: any) => {
     setSelectedProblem(prob);
-    setQuery(`-- ${prob.title}\n-- Write your query below\n\n`);
+    const tableNames = (prob.tables_meta || []).map((t: any) => t.name);
+    const starter = tableNames.length
+      ? '-- ' + prob.title + '\n' + tableNames.map((n: string) => 'SELECT * FROM ' + n + ' LIMIT 5;').join('\n')
+      : '-- ' + prob.title + '\n-- Write your query below\n';
+    setQuery(starter);
     setResult(null); setExpected(prob.expected_output); setIsCorrect(null);
     setShowHint(false); setShowSolution(false); setTab('output'); setQuestionTab('question');
     if (sqlEngineRef.current) {
