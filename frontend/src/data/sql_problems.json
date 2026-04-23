@@ -594,7 +594,7 @@
       "rows": [
         [
           "Pizza Palace",
-          1350.0
+          1350
         ]
       ]
     },
@@ -608,7 +608,7 @@
         "values": [
           [
             "Pizza Palace",
-            1350.0
+            1350
           ]
         ]
       }
@@ -808,7 +808,7 @@
     "topic": "GROUP BY & Aggregation",
     "problem_statement": "Find the average restaurant rating for each city.\n\nReturn city and avg_rating rounded to 1 decimal, ordered by avg_rating descending.",
     "hint": "Use GROUP BY city with AVG(rating) and ROUND().",
-    "explanation": "Mumbai: (4.5+3.8)/2=4.15\u21924.2. Bangalore: 4.7. Delhi: (4.2+3.5)/2=3.85\u21923.9.",
+    "explanation": "Mumbai: (4.5+3.8)/2=4.15→4.2. Bangalore: 4.7. Delhi: (4.2+3.5)/2=3.85→3.9.",
     "tables_meta": [
       {
         "name": "restaurants",
@@ -1824,11 +1824,11 @@
       "rows": [
         [
           "Delhi",
-          20000.0
+          20000
         ],
         [
           "Mumbai",
-          13000.0
+          13000
         ]
       ]
     },
@@ -1842,11 +1842,11 @@
         "values": [
           [
             "Delhi",
-            20000.0
+            20000
           ],
           [
             "Mumbai",
-            13000.0
+            13000
           ]
         ]
       }
@@ -2008,7 +2008,7 @@
       "rows": [
         [
           "Suresh",
-          5000.0
+          5000
         ]
       ]
     },
@@ -2022,7 +2022,7 @@
         "values": [
           [
             "Suresh",
-            5000.0
+            5000
           ]
         ]
       }
@@ -2516,7 +2516,7 @@
     "topic": "Nested Subqueries",
     "problem_statement": "For each restaurant, find the date with the highest single-day order total.\n\nReturn restaurant name, order_date, and day_revenue.",
     "hint": "GROUP BY rest_id and order_date, then use a window function or subquery to pick the max per restaurant.",
-    "explanation": "Biryani House: Jan15=450,Jan17=380,Feb10=400 \u2192 Jan15. Pizza Palace: Jan16=650,Mar5=700 \u2192 Mar5.",
+    "explanation": "Biryani House: Jan15=450,Jan17=380,Feb10=400 → Jan15. Pizza Palace: Jan16=650,Mar5=700 → Mar5.",
     "tables_meta": [
       {
         "name": "restaurants",
@@ -2674,27 +2674,27 @@
         [
           "Biryani House",
           "2024-01-15",
-          450.0
+          450
         ],
         [
           "Pizza Palace",
           "2024-03-05",
-          700.0
+          700
         ],
         [
           "Dragon Wok",
           "2024-02-05",
-          510.0
+          510
         ],
         [
           "Dosa Corner",
           "2024-02-01",
-          220.0
+          220
         ],
         [
           "Burger Barn",
           "2024-03-01",
-          320.0
+          320
         ]
       ]
     },
@@ -2710,27 +2710,27 @@
           [
             "Biryani House",
             "2024-01-15",
-            450.0
+            450
           ],
           [
             "Pizza Palace",
             "2024-03-05",
-            700.0
+            700
           ],
           [
             "Dragon Wok",
             "2024-02-05",
-            510.0
+            510
           ],
           [
             "Dosa Corner",
             "2024-02-01",
-            220.0
+            220
           ],
           [
             "Burger Barn",
             "2024-03-01",
-            320.0
+            320
           ]
         ]
       }
@@ -3632,7 +3632,7 @@
       "rows": [
         [
           "premium",
-          99.0
+          99
         ],
         [
           "basic",
@@ -3650,7 +3650,7 @@
         "values": [
           [
             "premium",
-            99.0
+            99
           ],
           [
             "basic",
@@ -5367,49 +5367,49 @@
         [
           201,
           "2024-01-15",
-          450.0,
+          450,
           null
         ],
         [
           201,
           "2024-02-01",
-          220.0,
-          450.0
+          220,
+          450
         ],
         [
           201,
           "2024-03-05",
-          700.0,
-          220.0
+          700,
+          220
         ],
         [
           202,
           "2024-01-16",
-          650.0,
+          650,
           null
         ],
         [
           202,
           "2024-02-10",
-          400.0,
-          650.0
+          400,
+          650
         ],
         [
           203,
           "2024-01-17",
-          380.0,
+          380,
           null
         ],
         [
           204,
           "2024-02-05",
-          510.0,
+          510,
           null
         ],
         [
           205,
           "2024-03-01",
-          320.0,
+          320,
           null
         ]
       ]
@@ -5427,49 +5427,49 @@
           [
             201,
             "2024-01-15",
-            450.0,
+            450,
             null
           ],
           [
             201,
             "2024-02-01",
-            220.0,
-            450.0
+            220,
+            450
           ],
           [
             201,
             "2024-03-05",
-            700.0,
-            220.0
+            700,
+            220
           ],
           [
             202,
             "2024-01-16",
-            650.0,
+            650,
             null
           ],
           [
             202,
             "2024-02-10",
-            400.0,
-            650.0
+            400,
+            650
           ],
           [
             203,
             "2024-01-17",
-            380.0,
+            380,
             null
           ],
           [
             204,
             "2024-02-05",
-            510.0,
+            510,
             null
           ],
           [
             205,
             "2024-03-01",
-            320.0,
+            320,
             null
           ]
         ]
@@ -5635,44 +5635,44 @@
         [
           "Ravi",
           "2024-01-10",
-          5000.0,
-          5000.0
+          5000,
+          5000
         ],
         [
           "Ravi",
           "2024-01-15",
-          2000.0,
-          7000.0
+          2000,
+          7000
         ],
         [
           "Ravi",
           "2024-02-15",
-          3000.0,
-          10000.0
+          3000,
+          10000
         ],
         [
           "Meena",
           "2024-01-20",
-          15000.0,
-          15000.0
+          15000,
+          15000
         ],
         [
           "Meena",
           "2024-02-10",
-          20000.0,
-          35000.0
+          20000,
+          35000
         ],
         [
           "Kiran",
           "2024-02-01",
-          8000.0,
-          8000.0
+          8000,
+          8000
         ],
         [
           "Suresh",
           "2024-02-05",
-          5000.0,
-          5000.0
+          5000,
+          5000
         ]
       ]
     },
@@ -5689,44 +5689,44 @@
           [
             "Ravi",
             "2024-01-10",
-            5000.0,
-            5000.0
+            5000,
+            5000
           ],
           [
             "Ravi",
             "2024-01-15",
-            2000.0,
-            7000.0
+            2000,
+            7000
           ],
           [
             "Ravi",
             "2024-02-15",
-            3000.0,
-            10000.0
+            3000,
+            10000
           ],
           [
             "Meena",
             "2024-01-20",
-            15000.0,
-            15000.0
+            15000,
+            15000
           ],
           [
             "Meena",
             "2024-02-10",
-            20000.0,
-            35000.0
+            20000,
+            35000
           ],
           [
             "Kiran",
             "2024-02-01",
-            8000.0,
-            8000.0
+            8000,
+            8000
           ],
           [
             "Suresh",
             "2024-02-05",
-            5000.0,
-            5000.0
+            5000,
+            5000
           ]
         ]
       }
@@ -5902,11 +5902,11 @@
       "rows": [
         [
           201,
-          1370.0
+          1370
         ],
         [
           202,
-          1050.0
+          1050
         ]
       ]
     },
@@ -5920,11 +5920,11 @@
         "values": [
           [
             201,
-            1370.0
+            1370
           ],
           [
             202,
-            1050.0
+            1050
           ]
         ]
       }
@@ -6690,7 +6690,7 @@
     "topic": "NULL / COALESCE",
     "problem_statement": "List all employees with their manager name. If an employee has no manager, show 'No Manager' instead of NULL.\n\nReturn emp_name and manager_name, ordered by emp_name.",
     "hint": "Use LEFT JOIN + COALESCE(m.name, 'No Manager').",
-    "explanation": "Alice,Charlie,Frank have mgr_id=NULL \u2192 'No Manager'. Bob\u2192Alice, Eve\u2192Alice, Diana\u2192Charlie.",
+    "explanation": "Alice,Charlie,Frank have mgr_id=NULL → 'No Manager'. Bob→Alice, Eve→Alice, Diana→Charlie.",
     "tables_meta": [
       {
         "name": "employees",
@@ -6853,7 +6853,7 @@
     "difficulty": "medium",
     "topic": "Multi-Join (3 Tables)",
     "problem_statement": "Join all three tables to show which doctor diagnosed which patient and what the diagnosis was.\n\nReturn doctor_name, patient_name, diagnosis, ordered by visit_date.",
-    "hint": "JOIN doctors \u2192 appointments \u2192 patients using doc_id and patient_id.",
+    "hint": "JOIN doctors → appointments → patients using doc_id and patient_id.",
     "explanation": "Three-way join across doctors, appointments, and patients tables.",
     "tables_meta": [
       {
@@ -7348,7 +7348,7 @@
     "topic": "Window Functions (LEAD)",
     "problem_statement": "For each customer order, show the date of their NEXT order using LEAD.\n\nReturn customer_id, order_date, and next_order_date (NULL if last). Order by customer_id, order_date.",
     "hint": "Use LEAD(order_date) OVER (PARTITION BY customer_id ORDER BY order_date).",
-    "explanation": "Ankit: Jan10\u2192Feb05, Feb05\u2192NULL. Priya: Jan15\u2192Mar01, Mar01\u2192NULL.",
+    "explanation": "Ankit: Jan10→Feb05, Feb05→NULL. Priya: Jan15→Mar01, Mar01→NULL.",
     "tables_meta": [
       {
         "name": "customers",
@@ -8074,17 +8074,17 @@
         [
           "Books",
           "Python Book",
-          450.0
+          450
         ],
         [
           "Electronics",
           "Laptop",
-          55000.0
+          55000
         ],
         [
           "Fashion",
           "Sneakers",
-          3200.0
+          3200
         ]
       ]
     },
@@ -8100,17 +8100,17 @@
           [
             "Books",
             "Python Book",
-            450.0
+            450
           ],
           [
             "Electronics",
             "Laptop",
-            55000.0
+            55000
           ],
           [
             "Fashion",
             "Sneakers",
-            3200.0
+            3200
           ]
         ]
       }
@@ -8810,13 +8810,13 @@
           1003,
           1,
           "2024-02-05",
-          799.0
+          799
         ],
         [
           1004,
           3,
           "2024-02-20",
-          55450.0
+          55450
         ]
       ]
     },
@@ -8834,13 +8834,13 @@
             1003,
             1,
             "2024-02-05",
-            799.0
+            799
           ],
           [
             1004,
             3,
             "2024-02-20",
-            55450.0
+            55450
           ]
         ]
       }
@@ -9175,31 +9175,31 @@
       "rows": [
         [
           "Ankit",
-          58299.0,
+          58299,
           2,
           1
         ],
         [
           "Rohan",
-          55450.0,
+          55450,
           1,
           2
         ],
         [
           "Sneha",
-          6900.0,
+          6900,
           1,
           3
         ],
         [
           "Priya",
-          3299.0,
+          3299,
           1,
           4
         ],
         [
           "Vikram",
-          450.0,
+          450,
           1,
           5
         ]
@@ -9217,31 +9217,31 @@
         "values": [
           [
             "Ankit",
-            58299.0,
+            58299,
             2,
             1
           ],
           [
             "Rohan",
-            55450.0,
+            55450,
             1,
             2
           ],
           [
             "Sneha",
-            6900.0,
+            6900,
             1,
             3
           ],
           [
             "Priya",
-            3299.0,
+            3299,
             1,
             4
           ],
           [
             "Vikram",
-            450.0,
+            450,
             1,
             5
           ]
@@ -9263,7 +9263,7 @@
     "topic": "Cross Join",
     "problem_statement": "Generate all possible customer-product combinations.\n\nReturn customer name, product_name. Order by customer name, product_name. LIMIT 10.",
     "hint": "Use CROSS JOIN between customers and products.",
-    "explanation": "5 customers \u00d7 5 products = 25 total pairs. First 10 shown.",
+    "explanation": "5 customers × 5 products = 25 total pairs. First 10 shown.",
     "tables_meta": [
       {
         "name": "customers",
@@ -10506,11 +10506,11 @@
       "rows": [
         [
           "Kiran",
-          8000.0
+          8000
         ],
         [
           "Meena",
-          17500.0
+          17500
         ],
         [
           "Ravi",
@@ -10518,7 +10518,7 @@
         ],
         [
           "Suresh",
-          5000.0
+          5000
         ]
       ]
     },
@@ -10532,11 +10532,11 @@
         "values": [
           [
             "Kiran",
-            8000.0
+            8000
           ],
           [
             "Meena",
-            17500.0
+            17500
           ],
           [
             "Ravi",
@@ -10544,7 +10544,7 @@
           ],
           [
             "Suresh",
-            5000.0
+            5000
           ]
         ]
       }
@@ -10564,7 +10564,7 @@
     "topic": "ORDER BY with CASE",
     "problem_statement": "List all orders sorted by status priority: 'shipped' first, then 'delivered', then 'cancelled'.\n\nReturn order id, order_date, total, and status.",
     "hint": "Use ORDER BY CASE WHEN status='shipped' THEN 1 WHEN status='delivered' THEN 2 ELSE 3 END.",
-    "explanation": "Shipped(1004) \u2192 Delivered(1001,1002,1003,1006,1007) \u2192 Cancelled(1005).",
+    "explanation": "Shipped(1004) → Delivered(1001,1002,1003,1006,1007) → Cancelled(1005).",
     "tables_meta": [
       {
         "name": "customers",
@@ -10880,43 +10880,43 @@
         [
           1004,
           "2024-02-20",
-          55450.0,
+          55450,
           "shipped"
         ],
         [
           1001,
           "2024-01-10",
-          57500.0,
+          57500,
           "delivered"
         ],
         [
           1002,
           "2024-01-15",
-          3299.0,
+          3299,
           "delivered"
         ],
         [
           1003,
           "2024-02-05",
-          799.0,
+          799,
           "delivered"
         ],
         [
           1006,
           "2024-03-10",
-          6900.0,
+          6900,
           "delivered"
         ],
         [
           1007,
           "2024-03-15",
-          450.0,
+          450,
           "delivered"
         ],
         [
           1005,
           "2024-03-01",
-          2500.0,
+          2500,
           "cancelled"
         ]
       ]
@@ -10934,43 +10934,43 @@
           [
             1004,
             "2024-02-20",
-            55450.0,
+            55450,
             "shipped"
           ],
           [
             1001,
             "2024-01-10",
-            57500.0,
+            57500,
             "delivered"
           ],
           [
             1002,
             "2024-01-15",
-            3299.0,
+            3299,
             "delivered"
           ],
           [
             1003,
             "2024-02-05",
-            799.0,
+            799,
             "delivered"
           ],
           [
             1006,
             "2024-03-10",
-            6900.0,
+            6900,
             "delivered"
           ],
           [
             1007,
             "2024-03-15",
-            450.0,
+            450,
             "delivered"
           ],
           [
             1005,
             "2024-03-01",
-            2500.0,
+            2500,
             "cancelled"
           ]
         ]
@@ -11305,7 +11305,7 @@
     "topic": "Date Arithmetic (JULIANDAY)",
     "problem_statement": "For each user's post, calculate days since their previous post using LAG and JULIANDAY.\n\nReturn username, post_date, content, and days_gap (NULL for first). Order by username, post_date.",
     "hint": "Use LAG(post_date) OVER (...) and JULIANDAY difference.",
-    "explanation": "Ankit: Jan10\u2192NULL, Jan15\u21925, Mar05\u219250.",
+    "explanation": "Ankit: Jan10→NULL, Jan15→5, Mar05→50.",
     "tables_meta": [
       {
         "name": "profiles",
@@ -11686,7 +11686,7 @@
     "difficulty": "medium",
     "topic": "Multi-Join (4 Tables)",
     "problem_statement": "Join all four tables to show post author username, content, commenter full name, and comment.\n\nOrder by comment_date.",
-    "hint": "JOIN posts\u2192profiles (author), comments\u2192profiles (commenter).",
+    "hint": "JOIN posts→profiles (author), comments→profiles (commenter).",
     "explanation": "4-way join across profiles, posts, comments, and profiles again.",
     "tables_meta": [
       {
@@ -12563,31 +12563,31 @@
         [
           "Python Book",
           "Books",
-          450.0,
+          450,
           "Python Book"
         ],
         [
           "Headphones",
           "Electronics",
-          2500.0,
+          2500,
           "Headphones"
         ],
         [
           "Laptop",
           "Electronics",
-          55000.0,
+          55000,
           "Headphones"
         ],
         [
           "T-Shirt",
           "Fashion",
-          799.0,
+          799,
           "T-Shirt"
         ],
         [
           "Sneakers",
           "Fashion",
-          3200.0,
+          3200,
           "T-Shirt"
         ]
       ]
@@ -12605,31 +12605,31 @@
           [
             "Python Book",
             "Books",
-            450.0,
+            450,
             "Python Book"
           ],
           [
             "Headphones",
             "Electronics",
-            2500.0,
+            2500,
             "Headphones"
           ],
           [
             "Laptop",
             "Electronics",
-            55000.0,
+            55000,
             "Headphones"
           ],
           [
             "T-Shirt",
             "Fashion",
-            799.0,
+            799,
             "T-Shirt"
           ],
           [
             "Sneakers",
             "Fashion",
-            3200.0,
+            3200,
             "T-Shirt"
           ]
         ]
@@ -13705,8 +13705,8 @@
     "difficulty": "hard",
     "topic": "Self-Join / INTERSECT Logic",
     "problem_statement": "Find pairs of users who mutually follow each other.\n\nReturn user_a and user_b (alphabetically), no duplicates.",
-    "hint": "Self-join follows on follower\u2194following symmetry.",
-    "explanation": "ankit_dev\u2194priya_codes, ankit_dev\u2194rohan_js are mutual.",
+    "hint": "Self-join follows on follower↔following symmetry.",
+    "explanation": "ankit_dev↔priya_codes, ankit_dev↔rohan_js are mutual.",
     "tables_meta": [
       {
         "name": "profiles",
@@ -14318,17 +14318,17 @@
       "rows": [
         [
           "Electronics",
-          117500.0,
+          117500,
           94.8
         ],
         [
           "Fashion",
-          5597.0,
+          5597,
           4.5
         ],
         [
           "Books",
-          900.0,
+          900,
           0.7
         ]
       ]
@@ -14344,17 +14344,17 @@
         "values": [
           [
             "Electronics",
-            117500.0,
+            117500,
             94.8
           ],
           [
             "Fashion",
-            5597.0,
+            5597,
             4.5
           ],
           [
             "Books",
-            900.0,
+            900,
             0.7
           ]
         ]
@@ -14712,7 +14712,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -14734,7 +14734,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -14752,62 +14752,62 @@
         [
           "Aarav",
           "2024-01-10",
-          250.0,
-          250.0
+          250,
+          250
         ],
         [
           "Aarav",
           "2024-01-12",
-          180.0,
-          250.0
+          180,
+          250
         ],
         [
           "Aarav",
           "2024-02-01",
-          200.0,
-          250.0
+          200,
+          250
         ],
         [
           "Aarav",
           "2024-03-05",
-          220.0,
-          250.0
+          220,
+          250
         ],
         [
           "Bhavna",
           "2024-01-15",
-          320.0,
-          320.0
+          320,
+          320
         ],
         [
           "Bhavna",
           "2024-02-10",
-          280.0,
-          320.0
+          280,
+          320
         ],
         [
           "Chirag",
           "2024-01-20",
-          400.0,
-          400.0
+          400,
+          400
         ],
         [
           "Chirag",
           "2024-03-01",
-          350.0,
-          400.0
+          350,
+          400
         ],
         [
           "Diya",
           "2024-02-05",
-          550.0,
-          550.0
+          550,
+          550
         ],
         [
           "Eshan",
           "2024-02-15",
-          150.0,
-          150.0
+          150,
+          150
         ]
       ]
     },
@@ -14824,62 +14824,62 @@
           [
             "Aarav",
             "2024-01-10",
-            250.0,
-            250.0
+            250,
+            250
           ],
           [
             "Aarav",
             "2024-01-12",
-            180.0,
-            250.0
+            180,
+            250
           ],
           [
             "Aarav",
             "2024-02-01",
-            200.0,
-            250.0
+            200,
+            250
           ],
           [
             "Aarav",
             "2024-03-05",
-            220.0,
-            250.0
+            220,
+            250
           ],
           [
             "Bhavna",
             "2024-01-15",
-            320.0,
-            320.0
+            320,
+            320
           ],
           [
             "Bhavna",
             "2024-02-10",
-            280.0,
-            320.0
+            280,
+            320
           ],
           [
             "Chirag",
             "2024-01-20",
-            400.0,
-            400.0
+            400,
+            400
           ],
           [
             "Chirag",
             "2024-03-01",
-            350.0,
-            400.0
+            350,
+            400
           ],
           [
             "Diya",
             "2024-02-05",
-            550.0,
-            550.0
+            550,
+            550
           ],
           [
             "Eshan",
             "2024-02-15",
-            150.0,
-            150.0
+            150,
+            150
           ]
         ]
       }
@@ -15278,7 +15278,7 @@
     "topic": "Math Functions (ABS)",
     "problem_statement": "For each completed ride, show how much the fare deviates from the average fare (absolute value).\n\nReturn ride_id, fare, and deviation rounded to 1 decimal. Order by deviation descending.",
     "hint": "Use ABS(fare - (SELECT AVG(fare) FROM rides WHERE status='completed')).",
-    "explanation": "Avg completed fare = (250+180+320+400+200+550+150+350+220)/9 \u2248 291.1.",
+    "explanation": "Avg completed fare = (250+180+320+400+200+550+150+350+220)/9 ≈ 291.1.",
     "tables_meta": [
       {
         "name": "drivers",
@@ -15465,7 +15465,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -15487,7 +15487,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -15503,47 +15503,47 @@
       "rows": [
         [
           6,
-          550.0,
+          550,
           258.9
         ],
         [
           4,
-          400.0,
+          400,
           108.9
         ],
         [
           9,
-          350.0,
+          350,
           58.9
         ],
         [
           3,
-          320.0,
+          320,
           28.9
         ],
         [
           1,
-          250.0,
+          250,
           41.1
         ],
         [
           10,
-          220.0,
+          220,
           71.1
         ],
         [
           5,
-          200.0,
+          200,
           91.1
         ],
         [
           2,
-          180.0,
+          180,
           111.1
         ],
         [
           8,
-          150.0,
+          150,
           141.1
         ]
       ]
@@ -15559,47 +15559,47 @@
         "values": [
           [
             6,
-            550.0,
+            550,
             258.9
           ],
           [
             4,
-            400.0,
+            400,
             108.9
           ],
           [
             9,
-            350.0,
+            350,
             58.9
           ],
           [
             3,
-            320.0,
+            320,
             28.9
           ],
           [
             1,
-            250.0,
+            250,
             41.1
           ],
           [
             10,
-            220.0,
+            220,
             71.1
           ],
           [
             5,
-            200.0,
+            200,
             91.1
           ],
           [
             2,
-            180.0,
+            180,
             111.1
           ],
           [
             8,
-            150.0,
+            150,
             141.1
           ]
         ]
@@ -15807,7 +15807,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -15829,7 +15829,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -16391,7 +16391,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -16413,7 +16413,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -16432,7 +16432,7 @@
           "Diya",
           "Koramangala",
           "Whitefield",
-          25.0
+          25
         ],
         [
           "Aarav",
@@ -16498,7 +16498,7 @@
             "Diya",
             "Koramangala",
             "Whitefield",
-            25.0
+            25
           ],
           [
             "Aarav",
@@ -16753,7 +16753,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -16775,7 +16775,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -16792,31 +16792,31 @@
       "rows": [
         [
           "Ramesh",
-          1070.0,
+          1070,
           4,
           268
         ],
         [
           "Kavita",
-          600.0,
+          600,
           1,
           600
         ],
         [
           "Mohan",
-          550.0,
+          550,
           1,
           550
         ],
         [
           "Sunil",
-          530.0,
+          530,
           2,
           265
         ],
         [
           "Lakshmi",
-          150.0,
+          150,
           1,
           150
         ]
@@ -16834,31 +16834,31 @@
         "values": [
           [
             "Ramesh",
-            1070.0,
+            1070,
             4,
             268
           ],
           [
             "Kavita",
-            600.0,
+            600,
             1,
             600
           ],
           [
             "Mohan",
-            550.0,
+            550,
             1,
             550
           ],
           [
             "Sunil",
-            530.0,
+            530,
             2,
             265
           ],
           [
             "Lakshmi",
-            150.0,
+            150,
             1,
             150
           ]
@@ -17067,7 +17067,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -17089,7 +17089,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -17108,25 +17108,25 @@
           4,
           "Worli",
           "Andheri",
-          400.0
+          400
         ],
         [
           9,
           "Andheri",
           "Powai",
-          350.0
+          350
         ],
         [
           1,
           "Andheri",
           "Bandra",
-          250.0
+          250
         ],
         [
           10,
           "Bandra",
           "Worli",
-          220.0
+          220
         ]
       ]
     },
@@ -17144,25 +17144,25 @@
             4,
             "Worli",
             "Andheri",
-            400.0
+            400
           ],
           [
             9,
             "Andheri",
             "Powai",
-            350.0
+            350
           ],
           [
             1,
             "Andheri",
             "Bandra",
-            250.0
+            250
           ],
           [
             10,
             "Bandra",
             "Worli",
-            220.0
+            220
           ]
         ]
       }
@@ -18330,7 +18330,7 @@
         [
           "Alice",
           70000,
-          1.0
+          1
         ],
         [
           "Eve",
@@ -18355,7 +18355,7 @@
         [
           "Frank",
           45000,
-          0.0
+          0
         ]
       ]
     },
@@ -18371,7 +18371,7 @@
           [
             "Alice",
             70000,
-            1.0
+            1
           ],
           [
             "Eve",
@@ -18396,7 +18396,7 @@
           [
             "Frank",
             45000,
-            0.0
+            0
           ]
         ]
       }
@@ -18559,8 +18559,8 @@
       "rows": [
         [
           "Mumbai",
-          13000.0,
-          5000.0
+          13000,
+          5000
         ]
       ]
     },
@@ -18575,8 +18575,8 @@
         "values": [
           [
             "Mumbai",
-            13000.0,
-            5000.0
+            13000,
+            5000
           ]
         ]
       }
@@ -18783,7 +18783,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -18805,7 +18805,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -18820,9 +18820,9 @@
       ],
       "rows": [
         [
-          150.0,
-          550.0,
-          400.0
+          150,
+          550,
+          400
         ]
       ]
     },
@@ -18836,9 +18836,9 @@
         ],
         "values": [
           [
-            150.0,
-            550.0,
-            400.0
+            150,
+            550,
+            400
           ]
         ]
       }
@@ -19357,7 +19357,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -19379,7 +19379,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -19396,22 +19396,22 @@
         [
           "Bangalore",
           "Mohan",
-          550.0
+          550
         ],
         [
           "Chennai",
           "Lakshmi",
-          150.0
+          150
         ],
         [
           "Delhi",
           "Kavita",
-          600.0
+          600
         ],
         [
           "Mumbai",
           "Ramesh",
-          1070.0
+          1070
         ]
       ]
     },
@@ -19427,22 +19427,22 @@
           [
             "Bangalore",
             "Mohan",
-            550.0
+            550
           ],
           [
             "Chennai",
             "Lakshmi",
-            150.0
+            150
           ],
           [
             "Delhi",
             "Kavita",
-            600.0
+            600
           ],
           [
             "Mumbai",
             "Ramesh",
-            1070.0
+            1070
           ]
         ]
       }
@@ -19649,7 +19649,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -19671,7 +19671,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -19688,27 +19688,27 @@
         [
           3,
           "completed",
-          320.0
+          320
         ],
         [
           4,
           "completed",
-          400.0
+          400
         ],
         [
           6,
           "completed",
-          550.0
+          550
         ],
         [
           7,
           "cancelled",
-          280.0
+          280
         ],
         [
           9,
           "completed",
-          350.0
+          350
         ]
       ]
     },
@@ -19724,27 +19724,27 @@
           [
             3,
             "completed",
-            320.0
+            320
           ],
           [
             4,
             "completed",
-            400.0
+            400
           ],
           [
             6,
             "completed",
-            550.0
+            550
           ],
           [
             7,
             "cancelled",
-            280.0
+            280
           ],
           [
             9,
             "completed",
-            350.0
+            350
           ]
         ]
       }
@@ -19764,7 +19764,7 @@
     "topic": "Derived Table / Inline View",
     "problem_statement": "Using a derived table (inline subquery in FROM), find riders whose average fare exceeds the overall average.\n\nReturn rider name and avg_fare (rounded to 0). Order by avg_fare descending.",
     "hint": "SELECT FROM (SELECT rider_id, AVG(fare) ...) WHERE avg_fare > (overall avg).",
-    "explanation": "Overall avg \u2248 291. Diya(550), Chirag(375), Bhavna(300) are above.",
+    "explanation": "Overall avg ≈ 291. Diya(550), Chirag(375), Bhavna(300) are above.",
     "tables_meta": [
       {
         "name": "drivers",
@@ -19951,7 +19951,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -19973,7 +19973,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -20202,7 +20202,7 @@
     "topic": "CAST / Type Conversion",
     "problem_statement": "Show each completed ride's fare cast as an integer (truncated, not rounded).\n\nReturn ride_id, original fare, and fare_int. Order by ride_id.",
     "hint": "Use CAST(fare AS INT).",
-    "explanation": "250.0\u2192250, 180.0\u2192180, etc.",
+    "explanation": "250.0→250, 180.0→180, etc.",
     "tables_meta": [
       {
         "name": "drivers",
@@ -20389,7 +20389,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -20411,7 +20411,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -20427,47 +20427,47 @@
       "rows": [
         [
           1,
-          250.0,
+          250,
           250
         ],
         [
           2,
-          180.0,
+          180,
           180
         ],
         [
           3,
-          320.0,
+          320,
           320
         ],
         [
           4,
-          400.0,
+          400,
           400
         ],
         [
           5,
-          200.0,
+          200,
           200
         ],
         [
           6,
-          550.0,
+          550,
           550
         ],
         [
           8,
-          150.0,
+          150,
           150
         ],
         [
           9,
-          350.0,
+          350,
           350
         ],
         [
           10,
-          220.0,
+          220,
           220
         ]
       ]
@@ -20483,47 +20483,47 @@
         "values": [
           [
             1,
-            250.0,
+            250,
             250
           ],
           [
             2,
-            180.0,
+            180,
             180
           ],
           [
             3,
-            320.0,
+            320,
             320
           ],
           [
             4,
-            400.0,
+            400,
             400
           ],
           [
             5,
-            200.0,
+            200,
             200
           ],
           [
             6,
-            550.0,
+            550,
             550
           ],
           [
             8,
-            150.0,
+            150,
             150
           ],
           [
             9,
-            350.0,
+            350,
             350
           ],
           [
             10,
-            220.0,
+            220,
             220
           ]
         ]
@@ -20860,44 +20860,44 @@
         [
           1001,
           "2024-01-10",
-          57500.0,
-          57500.0
+          57500,
+          57500
         ],
         [
           1002,
           "2024-01-15",
-          3299.0,
-          60799.0
+          3299,
+          60799
         ],
         [
           1003,
           "2024-02-05",
-          799.0,
-          61598.0
+          799,
+          61598
         ],
         [
           1004,
           "2024-02-20",
-          55450.0,
-          117048.0
+          55450,
+          117048
         ],
         [
           1005,
           "2024-03-01",
-          2500.0,
-          119548.0
+          2500,
+          119548
         ],
         [
           1006,
           "2024-03-10",
-          6900.0,
-          126448.0
+          6900,
+          126448
         ],
         [
           1007,
           "2024-03-15",
-          450.0,
-          126898.0
+          450,
+          126898
         ]
       ]
     },
@@ -20914,44 +20914,44 @@
           [
             1001,
             "2024-01-10",
-            57500.0,
-            57500.0
+            57500,
+            57500
           ],
           [
             1002,
             "2024-01-15",
-            3299.0,
-            60799.0
+            3299,
+            60799
           ],
           [
             1003,
             "2024-02-05",
-            799.0,
-            61598.0
+            799,
+            61598
           ],
           [
             1004,
             "2024-02-20",
-            55450.0,
-            117048.0
+            55450,
+            117048
           ],
           [
             1005,
             "2024-03-01",
-            2500.0,
-            119548.0
+            2500,
+            119548
           ],
           [
             1006,
             "2024-03-10",
-            6900.0,
-            126448.0
+            6900,
+            126448
           ],
           [
             1007,
             "2024-03-15",
-            450.0,
-            126898.0
+            450,
+            126898
           ]
         ]
       }
@@ -21158,7 +21158,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -21180,7 +21180,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -21404,7 +21404,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -21426,7 +21426,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -21689,19 +21689,19 @@
       "rows": [
         [
           "Bangalore",
-          75000.0
+          75000
         ],
         [
           "Delhi",
-          120000.0
+          120000
         ],
         [
           "Mumbai",
-          80000.0
+          80000
         ],
         [
           "TOTAL",
-          275000.0
+          275000
         ]
       ]
     },
@@ -21715,19 +21715,19 @@
         "values": [
           [
             "Bangalore",
-            75000.0
+            75000
           ],
           [
             "Delhi",
-            120000.0
+            120000
           ],
           [
             "Mumbai",
-            80000.0
+            80000
           ],
           [
             "TOTAL",
-            275000.0
+            275000
           ]
         ]
       }
@@ -22931,17 +22931,17 @@
         [
           1001,
           "2024-01-10",
-          57500.0
+          57500
         ],
         [
           1006,
           "2024-03-10",
-          6900.0
+          6900
         ],
         [
           1002,
           "2024-01-15",
-          3299.0
+          3299
         ]
       ]
     },
@@ -22957,17 +22957,17 @@
           [
             1001,
             "2024-01-10",
-            57500.0
+            57500
           ],
           [
             1006,
             "2024-03-10",
-            6900.0
+            6900
           ],
           [
             1002,
             "2024-01-15",
-            3299.0
+            3299
           ]
         ]
       }
@@ -22987,7 +22987,7 @@
     "topic": "Moving Average Window",
     "problem_statement": "For each rider, calculate a 2-ride moving average of fare (current + previous ride).\n\nReturn rider name, ride_date, fare, and moving_avg (rounded to 0). Order by rider name, ride_date.",
     "hint": "Use AVG(fare) OVER (PARTITION BY rider_id ORDER BY ride_date ROWS BETWEEN 1 PRECEDING AND CURRENT ROW).",
-    "explanation": "Aarav: Jan10\u2192250, Jan12\u2192(250+180)/2=215, Feb01\u2192(180+200)/2=190...",
+    "explanation": "Aarav: Jan10→250, Jan12→(250+180)/2=215, Feb01→(180+200)/2=190...",
     "tables_meta": [
       {
         "name": "drivers",
@@ -23174,7 +23174,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -23196,7 +23196,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -23214,61 +23214,61 @@
         [
           "Aarav",
           "2024-01-10",
-          250.0,
+          250,
           250
         ],
         [
           "Aarav",
           "2024-01-12",
-          180.0,
+          180,
           215
         ],
         [
           "Aarav",
           "2024-02-01",
-          200.0,
+          200,
           190
         ],
         [
           "Aarav",
           "2024-03-05",
-          220.0,
+          220,
           210
         ],
         [
           "Bhavna",
           "2024-01-15",
-          320.0,
+          320,
           320
         ],
         [
           "Bhavna",
           "2024-02-10",
-          280.0,
+          280,
           300
         ],
         [
           "Chirag",
           "2024-01-20",
-          400.0,
+          400,
           400
         ],
         [
           "Chirag",
           "2024-03-01",
-          350.0,
+          350,
           375
         ],
         [
           "Diya",
           "2024-02-05",
-          550.0,
+          550,
           550
         ],
         [
           "Eshan",
           "2024-02-15",
-          150.0,
+          150,
           150
         ]
       ]
@@ -23286,61 +23286,61 @@
           [
             "Aarav",
             "2024-01-10",
-            250.0,
+            250,
             250
           ],
           [
             "Aarav",
             "2024-01-12",
-            180.0,
+            180,
             215
           ],
           [
             "Aarav",
             "2024-02-01",
-            200.0,
+            200,
             190
           ],
           [
             "Aarav",
             "2024-03-05",
-            220.0,
+            220,
             210
           ],
           [
             "Bhavna",
             "2024-01-15",
-            320.0,
+            320,
             320
           ],
           [
             "Bhavna",
             "2024-02-10",
-            280.0,
+            280,
             300
           ],
           [
             "Chirag",
             "2024-01-20",
-            400.0,
+            400,
             400
           ],
           [
             "Chirag",
             "2024-03-01",
-            350.0,
+            350,
             375
           ],
           [
             "Diya",
             "2024-02-05",
-            550.0,
+            550,
             550
           ],
           [
             "Eshan",
             "2024-02-15",
-            150.0,
+            150,
             150
           ]
         ]
@@ -23604,7 +23604,7 @@
     "difficulty": "hard",
     "topic": "Nested 3-Level Subquery",
     "problem_statement": "Find student names who got grade 'A' in courses taught in the 'CSE' department.\n\nReturn student name, ordered alphabetically.",
-    "hint": "3-level nesting: students \u2192 enrollments \u2192 courses WHERE dept='CSE'.",
+    "hint": "3-level nesting: students → enrollments → courses WHERE dept='CSE'.",
     "explanation": "CSE courses (101,103). Grade A in CSE: Ravi(101), Nikhil(103), Arjun(101).",
     "tables_meta": [
       {
@@ -24020,7 +24020,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -24042,7 +24042,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -24392,15 +24392,15 @@
       "rows": [
         [
           "January",
-          60799.0
+          60799
         ],
         [
           "February",
-          58749.0
+          58749
         ],
         [
           "March",
-          7350.0
+          7350
         ]
       ]
     },
@@ -24414,15 +24414,15 @@
         "values": [
           [
             "January",
-            60799.0
+            60799
           ],
           [
             "February",
-            58749.0
+            58749
           ],
           [
             "March",
-            7350.0
+            7350
           ]
         ]
       }
@@ -24735,7 +24735,7 @@
         [
           "Built a REST API",
           15,
-          100.0
+          100
         ]
       ]
     },
@@ -24786,7 +24786,7 @@
           [
             "Built a REST API",
             15,
-            100.0
+            100
           ]
         ]
       }
@@ -24993,7 +24993,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -25015,7 +25015,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -25416,37 +25416,37 @@
           "Alice",
           "Engineering",
           70000,
-          77000.0
+          77000
         ],
         [
           "Eve",
           "Engineering",
           65000,
-          71500.0
+          71500
         ],
         [
           "Bob",
           "Marketing",
           60000,
-          63000.0
+          63000
         ],
         [
           "Charlie",
           "Engineering",
           55000,
-          60500.0
+          60500
         ],
         [
           "Diana",
           "Marketing",
           50000,
-          52500.0
+          52500
         ],
         [
           "Frank",
           "Sales",
           45000,
-          47250.0
+          47250
         ]
       ]
     },
@@ -25464,37 +25464,37 @@
             "Alice",
             "Engineering",
             70000,
-            77000.0
+            77000
           ],
           [
             "Eve",
             "Engineering",
             65000,
-            71500.0
+            71500
           ],
           [
             "Bob",
             "Marketing",
             60000,
-            63000.0
+            63000
           ],
           [
             "Charlie",
             "Engineering",
             55000,
-            60500.0
+            60500
           ],
           [
             "Diana",
             "Marketing",
             50000,
-            52500.0
+            52500
           ],
           [
             "Frank",
             "Sales",
             45000,
-            47250.0
+            47250
           ]
         ]
       }
@@ -25828,17 +25828,17 @@
       "rows": [
         [
           "01",
-          60799.0,
+          60799,
           1
         ],
         [
           "02",
-          58749.0,
+          58749,
           2
         ],
         [
           "03",
-          7350.0,
+          7350,
           3
         ]
       ]
@@ -25854,17 +25854,17 @@
         "values": [
           [
             "01",
-            60799.0,
+            60799,
             1
           ],
           [
             "02",
-            58749.0,
+            58749,
             2
           ],
           [
             "03",
-            7350.0,
+            7350,
             3
           ]
         ]
@@ -26072,7 +26072,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -26094,7 +26094,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -26116,7 +26116,7 @@
           "Mohan",
           "Bangalore",
           1,
-          550.0,
+          550,
           550,
           1,
           "Top Earner"
@@ -26125,7 +26125,7 @@
           "Lakshmi",
           "Chennai",
           1,
-          150.0,
+          150,
           150,
           1,
           "Top Earner"
@@ -26134,7 +26134,7 @@
           "Kavita",
           "Delhi",
           1,
-          600.0,
+          600,
           600,
           1,
           "Top Earner"
@@ -26143,7 +26143,7 @@
           "Ramesh",
           "Mumbai",
           4,
-          1070.0,
+          1070,
           268,
           1,
           "Top Earner"
@@ -26152,7 +26152,7 @@
           "Sunil",
           "Mumbai",
           2,
-          530.0,
+          530,
           265,
           2,
           "Regular"
@@ -26176,7 +26176,7 @@
             "Mohan",
             "Bangalore",
             1,
-            550.0,
+            550,
             550,
             1,
             "Top Earner"
@@ -26185,7 +26185,7 @@
             "Lakshmi",
             "Chennai",
             1,
-            150.0,
+            150,
             150,
             1,
             "Top Earner"
@@ -26194,7 +26194,7 @@
             "Kavita",
             "Delhi",
             1,
-            600.0,
+            600,
             600,
             1,
             "Top Earner"
@@ -26203,7 +26203,7 @@
             "Ramesh",
             "Mumbai",
             4,
-            1070.0,
+            1070,
             268,
             1,
             "Top Earner"
@@ -26212,7 +26212,7 @@
             "Sunil",
             "Mumbai",
             2,
-            530.0,
+            530,
             265,
             2,
             "Regular"
@@ -27147,7 +27147,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -27169,7 +27169,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -27205,7 +27205,7 @@
     "difficulty": "hard",
     "topic": "Multi-CTE Pipeline (Capstone)",
     "problem_statement": "Build a complete business report using a multi-CTE pipeline:\n1. Calculate per-customer stats (orders, spending)\n2. Rank customers by spending\n3. Add their most-bought category\n\nReturn name, total_orders, total_spent, spending_rank, top_category. Order by spending_rank.",
-    "hint": "3 CTEs chained: customer_stats \u2192 ranked \u2192 top_categories, final JOIN.",
+    "hint": "3 CTEs chained: customer_stats → ranked → top_categories, final JOIN.",
     "explanation": "Ankit: 2 orders, 58299 spent, rank 1, top category Electronics.",
     "tables_meta": [
       {
@@ -27523,35 +27523,35 @@
         [
           "Ankit",
           2,
-          58299.0,
+          58299,
           1,
           "Electronics"
         ],
         [
           "Rohan",
           1,
-          55450.0,
+          55450,
           2,
           "Electronics"
         ],
         [
           "Sneha",
           1,
-          6900.0,
+          6900,
           3,
           "Fashion"
         ],
         [
           "Priya",
           1,
-          3299.0,
+          3299,
           4,
           "Electronics"
         ],
         [
           "Vikram",
           1,
-          450.0,
+          450,
           5,
           "Books"
         ]
@@ -27571,35 +27571,35 @@
           [
             "Ankit",
             2,
-            58299.0,
+            58299,
             1,
             "Electronics"
           ],
           [
             "Rohan",
             1,
-            55450.0,
+            55450,
             2,
             "Electronics"
           ],
           [
             "Sneha",
             1,
-            6900.0,
+            6900,
             3,
             "Fashion"
           ],
           [
             "Priya",
             1,
-            3299.0,
+            3299,
             4,
             "Electronics"
           ],
           [
             "Vikram",
             1,
-            450.0,
+            450,
             5,
             "Books"
           ]
@@ -28215,7 +28215,7 @@
     "topic": "Gaps & Islands: Consecutive Days",
     "problem_statement": "Find users who posted on at least 3 consecutive days.\n\nReturn distinct username.",
     "hint": "Use LAG/LEAD to check consecutive dates, or row_number gap technique.",
-    "explanation": "Aarav: Jan10,11,12(3 consecutive\u2713). Chirag: not posting on consecutive days.",
+    "explanation": "Aarav: Jan10,11,12(3 consecutive✓). Chirag: not posting on consecutive days.",
     "tables_meta": [
       {
         "name": "users",
@@ -28390,7 +28390,7 @@
     "topic": "Month-over-Month Growth",
     "problem_statement": "Calculate MoM revenue growth percentage.\n\nReturn month_num, revenue, prev_month_revenue, and growth_pct (rounded to 1). Order by month_num.",
     "hint": "Use LAG(revenue) OVER (ORDER BY month) to get previous month, then (current-prev)/prev*100.",
-    "explanation": "Jan\u2192Feb: (58749-60799)/60799*100 = -3.4%. Feb\u2192Mar: (7350-58749)/58749 = -87.5%.",
+    "explanation": "Jan→Feb: (58749-60799)/60799*100 = -3.4%. Feb→Mar: (7350-58749)/58749 = -87.5%.",
     "tables_meta": [
       {
         "name": "customers",
@@ -28705,20 +28705,20 @@
       "rows": [
         [
           "01",
-          60799.0,
+          60799,
           null,
           null
         ],
         [
           "02",
-          58749.0,
-          60799.0,
+          58749,
+          60799,
           -3.4
         ],
         [
           "03",
-          7350.0,
-          58749.0,
+          7350,
+          58749,
           -87.5
         ]
       ]
@@ -28735,20 +28735,20 @@
         "values": [
           [
             "01",
-            60799.0,
+            60799,
             null,
             null
           ],
           [
             "02",
-            58749.0,
-            60799.0,
+            58749,
+            60799,
             -3.4
           ],
           [
             "03",
-            7350.0,
-            58749.0,
+            7350,
+            58749,
             -87.5
           ]
         ]
@@ -28767,7 +28767,7 @@
     ],
     "difficulty": "medium",
     "topic": "Row Swapping (CASE + MOD)",
-    "problem_statement": "Swap adjacent student seat IDs: student in seat 1\u21942, 3\u21944, etc. If odd total, last student stays.\n\nReturn student id (swapped) and name. Order by new id.",
+    "problem_statement": "Swap adjacent student seat IDs: student in seat 1↔2, 3↔4, etc. If odd total, last student stays.\n\nReturn student id (swapped) and name. Order by new id.",
     "hint": "Use CASE: if id is odd and not last, id+1. If even, id-1. If odd and last, keep id.",
     "explanation": "Swap adjacent rows using modular arithmetic.",
     "tables_meta": [
@@ -29203,7 +29203,7 @@
     ],
     "difficulty": "medium",
     "topic": "Deduplication (Keep First)",
-    "problem_statement": "Show which employee records to KEEP if we had duplicates \u2014 keep the row with the lowest ID per department.\n\nReturn the employee id and name that would be kept (first employee per department). Order by id.",
+    "problem_statement": "Show which employee records to KEEP if we had duplicates — keep the row with the lowest ID per department.\n\nReturn the employee id and name that would be kept (first employee per department). Order by id.",
     "hint": "ROW_NUMBER() OVER (PARTITION BY department ORDER BY id) = 1.",
     "explanation": "Engineering first=Alice(1). Marketing first=Bob(2). Sales first=Frank(6).",
     "tables_meta": [
@@ -29839,7 +29839,7 @@
         [
           "Total",
           7,
-          100.0
+          100
         ],
         [
           "Delivered",
@@ -29870,7 +29870,7 @@
           [
             "Total",
             7,
-            100.0
+            100
           ],
           [
             "Delivered",
@@ -30404,31 +30404,31 @@
         [
           "Aarav",
           "2024-01-10",
-          500.0,
+          500,
           "UPI"
         ],
         [
           "Bhavna",
           "2024-01-13",
-          800.0,
+          800,
           "UPI"
         ],
         [
           "Chirag",
           "2024-01-20",
-          2500.0,
+          2500,
           "card"
         ],
         [
           "Diya",
           "2024-02-01",
-          5000.0,
+          5000,
           "card"
         ],
         [
           "Eshan",
           "2024-03-01",
-          350.0,
+          350,
           "UPI"
         ]
       ]
@@ -30446,31 +30446,31 @@
           [
             "Aarav",
             "2024-01-10",
-            500.0,
+            500,
             "UPI"
           ],
           [
             "Bhavna",
             "2024-01-13",
-            800.0,
+            800,
             "UPI"
           ],
           [
             "Chirag",
             "2024-01-20",
-            2500.0,
+            2500,
             "card"
           ],
           [
             "Diya",
             "2024-02-01",
-            5000.0,
+            5000,
             "card"
           ],
           [
             "Eshan",
             "2024-03-01",
-            350.0,
+            350,
             "UPI"
           ]
         ]
@@ -30636,7 +30636,7 @@
           "card",
           5,
           1,
-          20.0
+          20
         ],
         [
           "UPI",
@@ -30666,7 +30666,7 @@
             "card",
             5,
             1,
-            20.0
+            20
           ],
           [
             "UPI",
@@ -30882,7 +30882,7 @@
     "topic": "Rolling Average (N-Window)",
     "problem_statement": "For each successful payment by Aarav (user_id=1), show a rolling average of the last 3 payments.\n\nReturn pay_date, amount, and rolling_avg (rounded to 0). Order by pay_date.",
     "hint": "AVG(amount) OVER (ORDER BY pay_date ROWS BETWEEN 2 PRECEDING AND CURRENT ROW).",
-    "explanation": "Jan10:500\u2192500. Jan15:1200\u2192(500+1200)/2=850. Feb10:700\u2192(500+1200+700)/3=800. Mar05:900\u2192(1200+700+900)/3=933.",
+    "explanation": "Jan10:500→500. Jan15:1200→(500+1200)/2=850. Feb10:700→(500+1200+700)/3=800. Mar05:900→(1200+700+900)/3=933.",
     "tables_meta": [
       {
         "name": "pay_users",
@@ -31018,22 +31018,22 @@
       "rows": [
         [
           "2024-01-10",
-          500.0,
+          500,
           500
         ],
         [
           "2024-01-15",
-          1200.0,
+          1200,
           850
         ],
         [
           "2024-02-10",
-          700.0,
+          700,
           800
         ],
         [
           "2024-03-05",
-          900.0,
+          900,
           933
         ]
       ]
@@ -31049,22 +31049,22 @@
         "values": [
           [
             "2024-01-10",
-            500.0,
+            500,
             500
           ],
           [
             "2024-01-15",
-            1200.0,
+            1200,
             850
           ],
           [
             "2024-02-10",
-            700.0,
+            700,
             800
           ],
           [
             "2024-03-05",
-            900.0,
+            900,
             933
           ]
         ]
@@ -31284,7 +31284,7 @@
     "topic": "Acceptance / Reciprocation Rate",
     "problem_statement": "From the follows table, calculate the mutual follow (acceptance) rate: what percentage of follows are reciprocated?\n\nReturn total_follows, mutual_follows, acceptance_rate_pct (rounded to 1).",
     "hint": "Self-join follows to find reciprocated pairs, then divide by total.",
-    "explanation": "Total follows=9. Mutual pairs: (1\u21942),(1\u21943),(2\u21941),(3\u21941),(2\u21943 not mutual). Count reciprocated follow rows.",
+    "explanation": "Total follows=9. Mutual pairs: (1↔2),(1↔3),(2↔1),(3↔1),(2↔3 not mutual). Count reciprocated follow rows.",
     "tables_meta": [
       {
         "name": "profiles",
@@ -31714,27 +31714,27 @@
       "rows": [
         [
           "Diya",
-          5000.0,
+          5000,
           "Platinum"
         ],
         [
           "Aarav",
-          3300.0,
+          3300,
           "Platinum"
         ],
         [
           "Chirag",
-          2600.0,
+          2600,
           "Gold"
         ],
         [
           "Bhavna",
-          2300.0,
+          2300,
           "Gold"
         ],
         [
           "Eshan",
-          350.0,
+          350,
           "Silver"
         ]
       ]
@@ -31750,27 +31750,27 @@
         "values": [
           [
             "Diya",
-            5000.0,
+            5000,
             "Platinum"
           ],
           [
             "Aarav",
-            3300.0,
+            3300,
             "Platinum"
           ],
           [
             "Chirag",
-            2600.0,
+            2600,
             "Gold"
           ],
           [
             "Bhavna",
-            2300.0,
+            2300,
             "Gold"
           ],
           [
             "Eshan",
-            350.0,
+            350,
             "Silver"
           ]
         ]
@@ -31791,7 +31791,7 @@
     "topic": "Surge / Outlier Detection",
     "problem_statement": "Identify completed rides where the fare exceeded twice the overall average fare (surge-priced).\n\nReturn ride_id, rider name, fare, avg_fare (rounded), and surge_multiple (rounded to 1). Order by fare descending.",
     "hint": "Scalar subquery for average, then fare > 2 * avg.",
-    "explanation": "Avg completed fare \u2248 291. 2x = 582. Only ride #6 (550) is close but below. Actually 550 < 582.",
+    "explanation": "Avg completed fare ≈ 291. 2x = 582. Only ride #6 (550) is close but below. Actually 550 < 582.",
     "tables_meta": [
       {
         "name": "drivers",
@@ -31978,7 +31978,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -32000,7 +32000,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -33168,27 +33168,27 @@
       "rows": [
         [
           "Indian",
-          1900.0,
+          1900,
           35.5
         ],
         [
           "South Indian",
-          1400.0,
+          1400,
           26.2
         ],
         [
           "Chinese",
-          1200.0,
+          1200,
           22.4
         ],
         [
           "American",
-          450.0,
+          450,
           8.4
         ],
         [
           "Italian",
-          400.0,
+          400,
           7.5
         ]
       ]
@@ -33204,27 +33204,27 @@
         "values": [
           [
             "Indian",
-            1900.0,
+            1900,
             35.5
           ],
           [
             "South Indian",
-            1400.0,
+            1400,
             26.2
           ],
           [
             "Chinese",
-            1200.0,
+            1200,
             22.4
           ],
           [
             "American",
-            450.0,
+            450,
             8.4
           ],
           [
             "Italian",
-            400.0,
+            400,
             7.5
           ]
         ]
@@ -33244,7 +33244,7 @@
     "difficulty": "medium",
     "topic": "Return / Cancellation Rate",
     "problem_statement": "Treat 'cancelled' orders as returns. Calculate the return rate per product category.\n\nReturn category, total_orders, cancelled_orders, return_rate_pct (rounded to 1). Order by return_rate descending.",
-    "hint": "JOIN orders\u2192order_items\u2192products. Conditional count of cancelled.",
+    "hint": "JOIN orders→order_items→products. Conditional count of cancelled.",
     "explanation": "Which category has the most cancellations?",
     "tables_meta": [
       {
@@ -33568,13 +33568,13 @@
           "Electronics",
           6,
           0,
-          0.0
+          0
         ],
         [
           "Books",
           2,
           0,
-          0.0
+          0
         ]
       ]
     },
@@ -33598,13 +33598,13 @@
             "Electronics",
             6,
             0,
-            0.0
+            0
           ],
           [
             "Books",
             2,
             0,
-            0.0
+            0
           ]
         ]
       }
@@ -34052,7 +34052,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -34074,7 +34074,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -34922,7 +34922,7 @@
         [
           "Q1",
           7,
-          126898.0
+          126898
         ]
       ]
     },
@@ -34938,7 +34938,7 @@
           [
             "Q1",
             7,
-            126898.0
+            126898
           ]
         ]
       }
@@ -35713,7 +35713,7 @@
     "difficulty": "hard",
     "topic": "Event Sequence Analysis",
     "problem_statement": "For users who had a failed payment followed by a successful one, calculate the time gap in days between failure and next success.\n\nReturn user name, failed_date, next_success_date, days_gap. Order by days_gap.",
-    "hint": "LEAD on payments partitioned by user_id, filter failed\u2192success pairs.",
+    "hint": "LEAD on payments partitioned by user_id, filter failed→success pairs.",
     "explanation": "Bhavna: failed Jan12, success Jan13 = 1 day. Chirag: failed Jan22, success Jan22 = 0 days.",
     "tables_meta": [
       {
@@ -35902,7 +35902,7 @@
     "difficulty": "medium",
     "topic": "Mode / Most Frequent Value",
     "problem_statement": "Find each user's most-used payment method (by count of successful payments).\n\nReturn user name, preferred_method, and usage_count. Order by name.",
-    "hint": "GROUP BY user_id, method \u2192 ROW_NUMBER per user \u2192 rn=1.",
+    "hint": "GROUP BY user_id, method → ROW_NUMBER per user → rn=1.",
     "explanation": "Aarav prefers UPI (2 times). Bhavna: UPI(1) vs card(1), pick first.",
     "tables_meta": [
       {
@@ -36249,7 +36249,7 @@
       "rows": [
         [
           "Diya",
-          10.0
+          10
         ],
         [
           "Aarav",
@@ -36261,11 +36261,11 @@
         ],
         [
           "Chirag",
-          1.0
+          1
         ],
         [
           "Eshan",
-          1.0
+          1
         ]
       ]
     },
@@ -36279,7 +36279,7 @@
         "values": [
           [
             "Diya",
-            10.0
+            10
           ],
           [
             "Aarav",
@@ -36291,11 +36291,11 @@
           ],
           [
             "Chirag",
-            1.0
+            1
           ],
           [
             "Eshan",
-            1.0
+            1
           ]
         ]
       }
@@ -36801,13 +36801,13 @@
       "rows": [
         [
           "savings",
-          28000.0,
+          28000,
           4666.67
         ],
         [
           "current",
-          10000.0,
-          5000.0
+          10000,
+          5000
         ]
       ]
     },
@@ -36822,13 +36822,13 @@
         "values": [
           [
             "savings",
-            28000.0,
+            28000,
             4666.67
           ],
           [
             "current",
-            10000.0,
-            5000.0
+            10000,
+            5000
           ]
         ]
       }
@@ -37299,7 +37299,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -37321,7 +37321,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -37338,7 +37338,7 @@
         [
           "Aarav",
           "2024-02-01",
-          200.0
+          200
         ]
       ]
     },
@@ -37354,7 +37354,7 @@
           [
             "Aarav",
             "2024-02-01",
-            200.0
+            200
           ]
         ]
       }
@@ -37374,7 +37374,7 @@
     "topic": "Inactivity Detection",
     "problem_statement": "Find users whose gap between any two consecutive logins exceeds 7 days.\n\nReturn distinct user name and max_gap. Order by max_gap descending.",
     "hint": "LAG + JULIANDAY diff, filter > 7.",
-    "explanation": "Diya: Jan10\u2192Jan20 = 10 day gap. Others have shorter gaps.",
+    "explanation": "Diya: Jan10→Jan20 = 10 day gap. Others have shorter gaps.",
     "tables_meta": [
       {
         "name": "users",
@@ -37541,7 +37541,7 @@
     "topic": "Pareto / Top-N Revenue",
     "problem_statement": "Find customers who contribute to the top 20% of total revenue (Pareto principle).\n\nReturn name, total_spent, and cumulative_pct (rounded to 1). Show only those within top 20%.",
     "hint": "Cumulative SUM / grand total, filter <= 20.",
-    "explanation": "With 5 customers, top 20% \u2248 top 1 customer.",
+    "explanation": "With 5 customers, top 20% ≈ top 1 customer.",
     "tables_meta": [
       {
         "name": "customers",
@@ -37880,7 +37880,7 @@
     "topic": "Email Domain Extraction",
     "problem_statement": "Extract just the domain from each customer's email address.\n\nReturn name and email_domain. Order by name.",
     "hint": "Use SUBSTR + INSTR to get everything after '@'.",
-    "explanation": "ankit@gmail.com \u2192 gmail.com.",
+    "explanation": "ankit@gmail.com → gmail.com.",
     "tables_meta": [
       {
         "name": "customers",
@@ -38906,32 +38906,32 @@
       "rows": [
         [
           "Priya",
-          25000.0,
+          25000,
           "High Risk"
         ],
         [
           "Suresh",
-          30000.0,
+          30000,
           "Medium Risk"
         ],
         [
           "Amit",
-          45000.0,
+          45000,
           "Medium Risk"
         ],
         [
           "Neha",
-          50000.0,
+          50000,
           "Medium Risk"
         ],
         [
           "Ravi",
-          50000.0,
+          50000,
           "Medium Risk"
         ],
         [
           "Deepak",
-          75000.0,
+          75000,
           "Low Risk"
         ]
       ]
@@ -38947,32 +38947,32 @@
         "values": [
           [
             "Priya",
-            25000.0,
+            25000,
             "High Risk"
           ],
           [
             "Suresh",
-            30000.0,
+            30000,
             "Medium Risk"
           ],
           [
             "Amit",
-            45000.0,
+            45000,
             "Medium Risk"
           ],
           [
             "Neha",
-            50000.0,
+            50000,
             "Medium Risk"
           ],
           [
             "Ravi",
-            50000.0,
+            50000,
             "Medium Risk"
           ],
           [
             "Deepak",
-            75000.0,
+            75000,
             "Low Risk"
           ]
         ]
@@ -39521,25 +39521,25 @@
         [
           "Ankit",
           2,
-          60799.0,
+          60799,
           1
         ],
         [
           "Rohan",
           1,
-          55450.0,
+          55450,
           2
         ],
         [
           "Sneha",
           1,
-          6900.0,
+          6900,
           3
         ],
         [
           "Vikram",
           1,
-          450.0,
+          450,
           4
         ]
       ]
@@ -39557,25 +39557,25 @@
           [
             "Ankit",
             2,
-            60799.0,
+            60799,
             1
           ],
           [
             "Rohan",
             1,
-            55450.0,
+            55450,
             2
           ],
           [
             "Sneha",
             1,
-            6900.0,
+            6900,
             3
           ],
           [
             "Vikram",
             1,
-            450.0,
+            450,
             4
           ]
         ]
@@ -39965,45 +39965,45 @@
       "rows": [
         [
           "Deepak",
-          75000.0,
-          5000.0,
-          0.0,
-          80000.0
+          75000,
+          5000,
+          0,
+          80000
         ],
         [
           "Ravi",
-          50000.0,
-          8000.0,
-          0.0,
-          58000.0
+          50000,
+          8000,
+          0,
+          58000
         ],
         [
           "Amit",
-          45000.0,
-          5000.0,
-          2000.0,
-          48000.0
+          45000,
+          5000,
+          2000,
+          48000
         ],
         [
           "Neha",
-          50000.0,
-          0.0,
-          3000.0,
-          47000.0
+          50000,
+          0,
+          3000,
+          47000
         ],
         [
           "Suresh",
-          30000.0,
-          0.0,
-          0.0,
-          30000.0
+          30000,
+          0,
+          0,
+          30000
         ],
         [
           "Priya",
-          25000.0,
-          0.0,
-          0.0,
-          25000.0
+          25000,
+          0,
+          0,
+          25000
         ]
       ]
     },
@@ -40020,45 +40020,45 @@
         "values": [
           [
             "Deepak",
-            75000.0,
-            5000.0,
-            0.0,
-            80000.0
+            75000,
+            5000,
+            0,
+            80000
           ],
           [
             "Ravi",
-            50000.0,
-            8000.0,
-            0.0,
-            58000.0
+            50000,
+            8000,
+            0,
+            58000
           ],
           [
             "Amit",
-            45000.0,
-            5000.0,
-            2000.0,
-            48000.0
+            45000,
+            5000,
+            2000,
+            48000
           ],
           [
             "Neha",
-            50000.0,
-            0.0,
-            3000.0,
-            47000.0
+            50000,
+            0,
+            3000,
+            47000
           ],
           [
             "Suresh",
-            30000.0,
-            0.0,
-            0.0,
-            30000.0
+            30000,
+            0,
+            0,
+            30000
           ],
           [
             "Priya",
-            25000.0,
-            0.0,
-            0.0,
-            25000.0
+            25000,
+            0,
+            0,
+            25000
           ]
         ]
       }
@@ -40236,12 +40236,12 @@
         [
           "Weekday",
           7,
-          5050.0
+          5050
         ],
         [
           "Weekend",
           1,
-          300.0
+          300
         ]
       ]
     },
@@ -40257,12 +40257,12 @@
           [
             "Weekday",
             7,
-            5050.0
+            5050
           ],
           [
             "Weekend",
             1,
-            300.0
+            300
           ]
         ]
       }
@@ -40642,22 +40642,22 @@
         [
           "Chennai",
           "Diya",
-          5000.0
+          5000
         ],
         [
           "Mumbai",
           "Aarav",
-          3300.0
+          3300
         ],
         [
           "Bangalore",
           "Chirag",
-          2600.0
+          2600
         ],
         [
           "Delhi",
           "Bhavna",
-          2300.0
+          2300
         ]
       ]
     },
@@ -40673,22 +40673,22 @@
           [
             "Chennai",
             "Diya",
-            5000.0
+            5000
           ],
           [
             "Mumbai",
             "Aarav",
-            3300.0
+            3300
           ],
           [
             "Bangalore",
             "Chirag",
-            2600.0
+            2600
           ],
           [
             "Delhi",
             "Bhavna",
-            2300.0
+            2300
           ]
         ]
       }
@@ -40845,20 +40845,20 @@
       "rows": [
         [
           "01",
-          5100.0,
+          5100,
           null,
           null
         ],
         [
           "02",
-          7200.0,
-          5100.0,
+          7200,
+          5100,
           41.2
         ],
         [
           "03",
-          1250.0,
-          7200.0,
+          1250,
+          7200,
           -82.6
         ]
       ]
@@ -40875,20 +40875,20 @@
         "values": [
           [
             "01",
-            5100.0,
+            5100,
             null,
             null
           ],
           [
             "02",
-            7200.0,
-            5100.0,
+            7200,
+            5100,
             41.2
           ],
           [
             "03",
-            1250.0,
-            7200.0,
+            1250,
+            7200,
             -82.6
           ]
         ]
@@ -41096,7 +41096,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -41118,7 +41118,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -41143,7 +41143,7 @@
           "02",
           3,
           3,
-          1.0
+          1
         ],
         [
           "03",
@@ -41173,7 +41173,7 @@
             "02",
             3,
             3,
-            1.0
+            1
           ],
           [
             "03",
@@ -41333,17 +41333,17 @@
   },
   {
     "id": "sql-160",
-    "title": "Grand Analytics: User 360\u00b0 View",
+    "title": "Grand Analytics: User 360° View",
     "dataset_theme": "Payments (Paytm)",
     "company_tag": "Google",
     "company_tags": [
       "Google"
     ],
     "difficulty": "hard",
-    "topic": "User 360\u00b0 Analytics (Capstone)",
+    "topic": "User 360° Analytics (Capstone)",
     "problem_statement": "Build a comprehensive user profile: name, city, total transactions, successful count, failed count, success rate, total spent, avg transaction, preferred method, and spending tier.\n\nReturn all metrics. Order by total_spent descending.",
     "hint": "Multi-CTE pipeline combining aggregation, conditional counts, ROW_NUMBER for preferred method, and CASE for tier.",
-    "explanation": "Complete 360\u00b0 user analytics.",
+    "explanation": "Complete 360° user analytics.",
     "tables_meta": [
       {
         "name": "pay_users",
@@ -41490,8 +41490,8 @@
           2,
           1,
           1,
-          50.0,
-          5000.0,
+          50,
+          5000,
           5000,
           "card",
           "Platinum"
@@ -41502,8 +41502,8 @@
           4,
           4,
           0,
-          100.0,
-          3300.0,
+          100,
+          3300,
           825,
           "UPI",
           "Platinum"
@@ -41514,8 +41514,8 @@
           4,
           2,
           2,
-          50.0,
-          2600.0,
+          50,
+          2600,
           1300,
           "card",
           "Gold"
@@ -41527,7 +41527,7 @@
           2,
           1,
           66.7,
-          2300.0,
+          2300,
           1150,
           "UPI",
           "Gold"
@@ -41538,8 +41538,8 @@
           1,
           1,
           0,
-          100.0,
-          350.0,
+          100,
+          350,
           350,
           "UPI",
           "Silver"
@@ -41568,8 +41568,8 @@
             2,
             1,
             1,
-            50.0,
-            5000.0,
+            50,
+            5000,
             5000,
             "card",
             "Platinum"
@@ -41580,8 +41580,8 @@
             4,
             4,
             0,
-            100.0,
-            3300.0,
+            100,
+            3300,
             825,
             "UPI",
             "Platinum"
@@ -41592,8 +41592,8 @@
             4,
             2,
             2,
-            50.0,
-            2600.0,
+            50,
+            2600,
             1300,
             "card",
             "Gold"
@@ -41605,7 +41605,7 @@
             2,
             1,
             66.7,
-            2300.0,
+            2300,
             1150,
             "UPI",
             "Gold"
@@ -41616,8 +41616,8 @@
             1,
             1,
             0,
-            100.0,
-            350.0,
+            100,
+            350,
             350,
             "UPI",
             "Silver"
@@ -41827,7 +41827,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -41849,7 +41849,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -42320,7 +42320,7 @@
       "rows": [
         [
           "Electronics",
-          117048.0,
+          117048,
           19508
         ]
       ]
@@ -42336,7 +42336,7 @@
         "values": [
           [
             "Electronics",
-            117048.0,
+            117048,
             19508
           ]
         ]
@@ -42850,7 +42850,7 @@
       "rows": [
         [
           "Ankit",
-          57500.0,
+          57500,
           null,
           null
         ],
@@ -42858,25 +42858,25 @@
           "Priya",
           null,
           null,
-          3299.0
+          3299
         ],
         [
           "Rohan",
           null,
-          55450.0,
+          55450,
           null
         ],
         [
           "Sneha",
           null,
           null,
-          6900.0
+          6900
         ],
         [
           "Vikram",
           null,
           null,
-          450.0
+          450
         ]
       ]
     },
@@ -42892,7 +42892,7 @@
         "values": [
           [
             "Ankit",
-            57500.0,
+            57500,
             null,
             null
           ],
@@ -42900,25 +42900,25 @@
             "Priya",
             null,
             null,
-            3299.0
+            3299
           ],
           [
             "Rohan",
             null,
-            55450.0,
+            55450,
             null
           ],
           [
             "Sneha",
             null,
             null,
-            6900.0
+            6900
           ],
           [
             "Vikram",
             null,
             null,
-            450.0
+            450
           ]
         ]
       }
@@ -43038,7 +43038,7 @@
           "Eve",
           65000,
           57500,
-          13.0
+          13
         ],
         [
           "Bob",
@@ -43056,7 +43056,7 @@
           "Diana",
           50000,
           57500,
-          -13.0
+          -13
         ],
         [
           "Frank",
@@ -43086,7 +43086,7 @@
             "Eve",
             65000,
             57500,
-            13.0
+            13
           ],
           [
             "Bob",
@@ -43104,7 +43104,7 @@
             "Diana",
             50000,
             57500,
-            -13.0
+            -13
           ],
           [
             "Frank",
@@ -43624,7 +43624,7 @@
       ],
       "rows": [
         [
-          57500.0
+          57500
         ]
       ]
     },
@@ -43636,7 +43636,7 @@
         ],
         "values": [
           [
-            57500.0
+            57500
           ]
         ]
       }
@@ -43843,7 +43843,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -43865,7 +43865,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -44433,17 +44433,17 @@
         [
           "2024-01",
           3,
-          10000.0
+          10000
         ],
         [
           "2024-02",
           3,
-          13000.0
+          13000
         ],
         [
           "2024-03",
           2,
-          15000.0
+          15000
         ]
       ]
     },
@@ -44459,17 +44459,17 @@
           [
             "2024-01",
             3,
-            10000.0
+            10000
           ],
           [
             "2024-02",
             3,
-            13000.0
+            13000
           ],
           [
             "2024-03",
             2,
-            15000.0
+            15000
           ]
         ]
       }
@@ -45023,7 +45023,7 @@
     "topic": "Row-to-Row Difference",
     "problem_statement": "For Aarav's successful payments, show each payment and the difference from the previous payment amount.\n\nReturn pay_date, amount, prev_amount, difference. Order by pay_date.",
     "hint": "LAG(amount) OVER(ORDER BY pay_date), then subtract.",
-    "explanation": "Jan10:500\u2192NULL. Jan15:1200\u2192+700. Feb10:700\u2192-500. Mar05:900\u2192+200.",
+    "explanation": "Jan10:500→NULL. Jan15:1200→+700. Feb10:700→-500. Mar05:900→+200.",
     "tables_meta": [
       {
         "name": "pay_users",
@@ -45160,27 +45160,27 @@
       "rows": [
         [
           "2024-01-10",
-          500.0,
+          500,
           null,
           null
         ],
         [
           "2024-01-15",
-          1200.0,
-          500.0,
-          700.0
+          1200,
+          500,
+          700
         ],
         [
           "2024-02-10",
-          700.0,
-          1200.0,
-          -500.0
+          700,
+          1200,
+          -500
         ],
         [
           "2024-03-05",
-          900.0,
-          700.0,
-          200.0
+          900,
+          700,
+          200
         ]
       ]
     },
@@ -45196,27 +45196,27 @@
         "values": [
           [
             "2024-01-10",
-            500.0,
+            500,
             null,
             null
           ],
           [
             "2024-01-15",
-            1200.0,
-            500.0,
-            700.0
+            1200,
+            500,
+            700
           ],
           [
             "2024-02-10",
-            700.0,
-            1200.0,
-            -500.0
+            700,
+            1200,
+            -500
           ],
           [
             "2024-03-05",
-            900.0,
-            700.0,
-            200.0
+            900,
+            700,
+            200
           ]
         ]
       }
@@ -46181,7 +46181,7 @@
           "Mumbai",
           "gmail.com",
           2,
-          60799.0,
+          60799,
           30400,
           "2024-01-10",
           "2024-01-15",
@@ -46194,7 +46194,7 @@
           "Pune",
           "gmail.com",
           1,
-          55450.0,
+          55450,
           55450,
           "2024-02-20",
           "2024-02-20",
@@ -46207,7 +46207,7 @@
           "Mumbai",
           "outlook.com",
           1,
-          6900.0,
+          6900,
           6900,
           "2024-03-10",
           "2024-03-10",
@@ -46220,7 +46220,7 @@
           "Delhi",
           "yahoo.com",
           1,
-          3299.0,
+          3299,
           3299,
           "2024-03-15",
           "2024-03-15",
@@ -46233,7 +46233,7 @@
           "Bangalore",
           "gmail.com",
           1,
-          450.0,
+          450,
           450,
           "2024-03-15",
           "2024-03-15",
@@ -46265,7 +46265,7 @@
             "Mumbai",
             "gmail.com",
             2,
-            60799.0,
+            60799,
             30400,
             "2024-01-10",
             "2024-01-15",
@@ -46278,7 +46278,7 @@
             "Pune",
             "gmail.com",
             1,
-            55450.0,
+            55450,
             55450,
             "2024-02-20",
             "2024-02-20",
@@ -46291,7 +46291,7 @@
             "Mumbai",
             "outlook.com",
             1,
-            6900.0,
+            6900,
             6900,
             "2024-03-10",
             "2024-03-10",
@@ -46304,7 +46304,7 @@
             "Delhi",
             "yahoo.com",
             1,
-            3299.0,
+            3299,
             3299,
             "2024-03-15",
             "2024-03-15",
@@ -46317,7 +46317,7 @@
             "Bangalore",
             "gmail.com",
             1,
-            450.0,
+            450,
             450,
             "2024-03-15",
             "2024-03-15",
@@ -46348,7 +46348,7 @@
     "topic": "Employee vs Manager Salary",
     "problem_statement": "Find employees who earn MORE than their direct manager.\n\nReturn employee name, employee salary, manager name, manager salary. Order by employee salary DESC.",
     "hint": "Self-join: employees e1 JOIN employees e2 ON e1.mgr_id = e2.id WHERE e1.salary > e2.salary.",
-    "explanation": "Bob(60K) has manager Alice(70K) \u2014 no. Eve(65K) has manager Alice(70K) \u2014 no. Diana(50K) has manager Charlie(55K) \u2014 no.",
+    "explanation": "Bob(60K) has manager Alice(70K) — no. Eve(65K) has manager Alice(70K) — no. Diana(50K) has manager Charlie(55K) — no.",
     "tables_meta": [
       {
         "name": "employees",
@@ -50207,11 +50207,11 @@
       "rows": [
         [
           "Rohan",
-          55450.0
+          55450
         ],
         [
           "Ankit",
-          55000.0
+          55000
         ]
       ]
     },
@@ -50225,11 +50225,11 @@
         "values": [
           [
             "Rohan",
-            55450.0
+            55450
           ],
           [
             "Ankit",
-            55000.0
+            55000
           ]
         ]
       }
@@ -50436,7 +50436,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -50458,7 +50458,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -50758,7 +50758,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -50780,7 +50780,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -51176,17 +51176,17 @@
         [
           "2024-01",
           2,
-          57500.0
+          57500
         ],
         [
           "2024-02",
           1,
-          55450.0
+          55450
         ],
         [
           "2024-03",
           4,
-          13948.0
+          13948
         ]
       ]
     },
@@ -51202,17 +51202,17 @@
           [
             "2024-01",
             2,
-            57500.0
+            57500
           ],
           [
             "2024-02",
             1,
-            55450.0
+            55450
           ],
           [
             "2024-03",
             4,
-            13948.0
+            13948
           ]
         ]
       }
@@ -51923,17 +51923,17 @@
         [
           "Alice",
           70000,
-          77000.0
+          77000
         ],
         [
           "Eve",
           65000,
-          71500.0
+          71500
         ],
         [
           "Bob",
           60000,
-          66000.0
+          66000
         ]
       ]
     },
@@ -51949,17 +51949,17 @@
           [
             "Alice",
             70000,
-            77000.0
+            77000
           ],
           [
             "Eve",
             65000,
-            71500.0
+            71500
           ],
           [
             "Bob",
             60000,
-            66000.0
+            66000
           ]
         ]
       }
@@ -52430,7 +52430,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -52452,7 +52452,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -52467,19 +52467,19 @@
       "rows": [
         [
           "Mumbai",
-          225.0
+          225
         ],
         [
           "Delhi",
-          250.0
+          250
         ],
         [
           "Bangalore",
-          200.0
+          200
         ],
         [
           "Pune",
-          175.0
+          175
         ]
       ]
     },
@@ -52493,19 +52493,19 @@
         "values": [
           [
             "Mumbai",
-            225.0
+            225
           ],
           [
             "Delhi",
-            250.0
+            250
           ],
           [
             "Bangalore",
-            200.0
+            200
           ],
           [
             "Pune",
-            175.0
+            175
           ]
         ]
       }
@@ -53657,7 +53657,7 @@
       "rows": [
         [
           "HR",
-          45000.0
+          45000
         ]
       ]
     },
@@ -53671,7 +53671,7 @@
         "values": [
           [
             "HR",
-            45000.0
+            45000
           ]
         ]
       }
@@ -53691,7 +53691,7 @@
     "topic": "LIKE Case-Insensitive",
     "problem_statement": "Find all employees whose name contains the letter 'a' (case-insensitive).\n\nReturn name. Order by name.",
     "hint": "WHERE LOWER(name) LIKE '%a%'.",
-    "explanation": "Alice, Charlie, Diana, Frank, Eve \u2014 check lowercase.",
+    "explanation": "Alice, Charlie, Diana, Frank, Eve — check lowercase.",
     "tables_meta": [
       {
         "name": "employees",
@@ -53985,23 +53985,23 @@
       "rows": [
         [
           "Pizza Palace",
-          1350.0
+          1350
         ],
         [
           "Biryani House",
-          1230.0
+          1230
         ],
         [
           "Dragon Wok",
-          510.0
+          510
         ],
         [
           "Burger Barn",
-          320.0
+          320
         ],
         [
           "Dosa Corner",
-          220.0
+          220
         ]
       ]
     },
@@ -54015,23 +54015,23 @@
         "values": [
           [
             "Pizza Palace",
-            1350.0
+            1350
           ],
           [
             "Biryani House",
-            1230.0
+            1230
           ],
           [
             "Dragon Wok",
-            510.0
+            510
           ],
           [
             "Burger Barn",
-            320.0
+            320
           ],
           [
             "Dosa Corner",
-            220.0
+            220
           ]
         ]
       }
@@ -54881,7 +54881,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -54903,7 +54903,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -55257,17 +55257,17 @@
         [
           1,
           "2024-01-10",
-          2500.0
+          2500
         ],
         [
           2,
           "2024-01-15",
-          55000.0
+          55000
         ],
         [
           3,
           "2024-01-15",
-          3299.0
+          3299
         ]
       ]
     },
@@ -55283,17 +55283,17 @@
           [
             1,
             "2024-01-10",
-            2500.0
+            2500
           ],
           [
             2,
             "2024-01-15",
-            55000.0
+            55000
           ],
           [
             3,
             "2024-01-15",
-            3299.0
+            3299
           ]
         ]
       }
@@ -56801,7 +56801,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -56823,7 +56823,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -57293,22 +57293,22 @@
         [
           "Electronics",
           "MacBook Pro",
-          120000.0
+          120000
         ],
         [
           "Fashion",
           "Running Shoes",
-          3499.0
+          3499
         ],
         [
           "Fashion",
           "Cotton T-Shirt",
-          799.0
+          799
         ],
         [
           "Books",
           "SQL Book",
-          450.0
+          450
         ]
       ]
     },
@@ -57324,22 +57324,22 @@
           [
             "Electronics",
             "MacBook Pro",
-            120000.0
+            120000
           ],
           [
             "Fashion",
             "Running Shoes",
-            3499.0
+            3499
           ],
           [
             "Fashion",
             "Cotton T-Shirt",
-            799.0
+            799
           ],
           [
             "Books",
             "SQL Book",
-            450.0
+            450
           ]
         ]
       }
@@ -58380,7 +58380,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -58402,7 +58402,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -59465,7 +59465,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -59487,7 +59487,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -59841,11 +59841,11 @@
       "rows": [
         [
           "MacBook Pro",
-          120000.0
+          120000
         ],
         [
           "iPhone 15",
-          79999.0
+          79999
         ]
       ]
     },
@@ -59859,11 +59859,11 @@
         "values": [
           [
             "MacBook Pro",
-            120000.0
+            120000
           ],
           [
             "iPhone 15",
-            79999.0
+            79999
           ]
         ]
       }
@@ -60406,15 +60406,15 @@
       "rows": [
         [
           "2024-01",
-          1480.0
+          1480
         ],
         [
           "2024-02",
-          730.0
+          730
         ],
         [
           "2024-03",
-          1020.0
+          1020
         ]
       ]
     },
@@ -60428,15 +60428,15 @@
         "values": [
           [
             "2024-01",
-            1480.0
+            1480
           ],
           [
             "2024-02",
-            730.0
+            730
           ],
           [
             "2024-03",
-            1020.0
+            1020
           ]
         ]
       }
@@ -61999,19 +61999,19 @@
       "rows": [
         [
           "Meena",
-          35000.0
+          35000
         ],
         [
           "Ravi",
-          10000.0
+          10000
         ],
         [
           "Suresh",
-          5000.0
+          5000
         ],
         [
           "Kavita",
-          8000.0
+          8000
         ]
       ]
     },
@@ -62025,19 +62025,19 @@
         "values": [
           [
             "Meena",
-            35000.0
+            35000
           ],
           [
             "Ravi",
-            10000.0
+            10000
           ],
           [
             "Suresh",
-            5000.0
+            5000
           ],
           [
             "Kavita",
-            8000.0
+            8000
           ]
         ]
       }
@@ -62370,11 +62370,11 @@
       "rows": [
         [
           "Ankit",
-          60799.0
+          60799
         ],
         [
           "Rohan",
-          55450.0
+          55450
         ]
       ]
     },
@@ -62388,11 +62388,11 @@
         "values": [
           [
             "Ankit",
-            60799.0
+            60799
           ],
           [
             "Rohan",
-            55450.0
+            55450
           ]
         ]
       }
@@ -62502,11 +62502,11 @@
       "rows": [
         [
           "Eng",
-          65000.0
+          65000
         ],
         [
           "Sales",
-          52500.0
+          52500
         ]
       ]
     },
@@ -62520,11 +62520,11 @@
         "values": [
           [
             "Eng",
-            65000.0
+            65000
           ],
           [
             "Sales",
-            52500.0
+            52500
           ]
         ]
       }
@@ -63733,27 +63733,27 @@
       "rows": [
         [
           "Ankit",
-          60799.0,
+          60799,
           1
         ],
         [
           "Rohan",
-          55450.0,
+          55450,
           2
         ],
         [
           "Sneha",
-          6900.0,
+          6900,
           3
         ],
         [
           "Priya",
-          3299.0,
+          3299,
           4
         ],
         [
           "Vikram",
-          450.0,
+          450,
           5
         ]
       ]
@@ -63769,27 +63769,27 @@
         "values": [
           [
             "Ankit",
-            60799.0,
+            60799,
             1
           ],
           [
             "Rohan",
-            55450.0,
+            55450,
             2
           ],
           [
             "Sneha",
-            6900.0,
+            6900,
             3
           ],
           [
             "Priya",
-            3299.0,
+            3299,
             4
           ],
           [
             "Vikram",
-            450.0,
+            450,
             5
           ]
         ]
@@ -64690,7 +64690,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -64712,7 +64712,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -66131,7 +66131,7 @@
         [
           "Alice",
           70000,
-          1.0
+          1
         ],
         [
           "Eve",
@@ -66156,7 +66156,7 @@
         [
           "Frank",
           45000,
-          0.0
+          0
         ]
       ]
     },
@@ -66172,7 +66172,7 @@
           [
             "Alice",
             70000,
-            1.0
+            1
           ],
           [
             "Eve",
@@ -66197,7 +66197,7 @@
           [
             "Frank",
             45000,
-            0.0
+            0
           ]
         ]
       }
@@ -66530,19 +66530,19 @@
       "rows": [
         [
           "Mumbai",
-          67699.0
+          67699
         ],
         [
           "Pune",
-          55450.0
+          55450
         ],
         [
           "Delhi",
-          3299.0
+          3299
         ],
         [
           "Bangalore",
-          450.0
+          450
         ]
       ]
     },
@@ -66556,19 +66556,19 @@
         "values": [
           [
             "Mumbai",
-            67699.0
+            67699
           ],
           [
             "Pune",
-            55450.0
+            55450
           ],
           [
             "Delhi",
-            3299.0
+            3299
           ],
           [
             "Bangalore",
-            450.0
+            450
           ]
         ]
       }
@@ -68233,7 +68233,7 @@
       "rows": [
         [
           "Running Shoes",
-          3499.0
+          3499
         ]
       ]
     },
@@ -68247,7 +68247,7 @@
         "values": [
           [
             "Running Shoes",
-            3499.0
+            3499
           ]
         ]
       }
@@ -68746,27 +68746,27 @@
         [
           "Ankit",
           "2024-01-15",
-          55000.0
+          55000
         ],
         [
           "Priya",
           "2024-03-15",
-          3299.0
+          3299
         ],
         [
           "Rohan",
           "2024-02-20",
-          55450.0
+          55450
         ],
         [
           "Sneha",
           "2024-03-10",
-          6900.0
+          6900
         ],
         [
           "Vikram",
           "2024-03-15",
-          450.0
+          450
         ]
       ]
     },
@@ -68782,27 +68782,27 @@
           [
             "Ankit",
             "2024-01-15",
-            55000.0
+            55000
           ],
           [
             "Priya",
             "2024-03-15",
-            3299.0
+            3299
           ],
           [
             "Rohan",
             "2024-02-20",
-            55450.0
+            55450
           ],
           [
             "Sneha",
             "2024-03-10",
-            6900.0
+            6900
           ],
           [
             "Vikram",
             "2024-03-15",
-            450.0
+            450
           ]
         ]
       }
@@ -69781,7 +69781,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -69803,7 +69803,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -69842,7 +69842,7 @@
     ],
     "difficulty": "easy",
     "topic": "CASE Value Mapping",
-    "problem_statement": "Replace department abbreviations: 'Eng' \u2192 'Engineering', 'HR' \u2192 'Human Resources'.\n\nReturn name, full_dept. Order by name.",
+    "problem_statement": "Replace department abbreviations: 'Eng' → 'Engineering', 'HR' → 'Human Resources'.\n\nReturn name, full_dept. Order by name.",
     "hint": "CASE or REPLACE for dept name expansion.",
     "explanation": "Map short codes to full names.",
     "tables_meta": [
@@ -70574,7 +70574,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -70596,7 +70596,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -72872,7 +72872,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -72894,7 +72894,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -73246,15 +73246,15 @@
       "rows": [
         [
           "SQL Book",
-          450.0
+          450
         ],
         [
           "Cotton T-Shirt",
-          799.0
+          799
         ],
         [
           "Running Shoes",
-          3499.0
+          3499
         ]
       ]
     },
@@ -73268,15 +73268,15 @@
         "values": [
           [
             "SQL Book",
-            450.0
+            450
           ],
           [
             "Cotton T-Shirt",
-            799.0
+            799
           ],
           [
             "Running Shoes",
-            3499.0
+            3499
           ]
         ]
       }
@@ -73811,7 +73811,7 @@
       "rows": [
         [
           "Ankit",
-          60799.0
+          60799
         ]
       ]
     },
@@ -73825,7 +73825,7 @@
         "values": [
           [
             "Ankit",
-            60799.0
+            60799
           ]
         ]
       }
@@ -74032,7 +74032,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -74054,7 +74054,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -74284,7 +74284,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -74306,7 +74306,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -74661,17 +74661,17 @@
       "rows": [
         [
           2,
-          55000.0,
+          55000,
           "delivered"
         ],
         [
           4,
-          55450.0,
+          55450,
           "delivered"
         ],
         [
           6,
-          6900.0,
+          6900,
           "delivered"
         ]
       ]
@@ -74687,17 +74687,17 @@
         "values": [
           [
             2,
-            55000.0,
+            55000,
             "delivered"
           ],
           [
             4,
-            55450.0,
+            55450,
             "delivered"
           ],
           [
             6,
-            6900.0,
+            6900,
             "delivered"
           ]
         ]
@@ -75635,7 +75635,7 @@
       "rows": [
         [
           "Q1",
-          126898.0
+          126898
         ]
       ]
     },
@@ -75649,7 +75649,7 @@
         "values": [
           [
             "Q1",
-            126898.0
+            126898
           ]
         ]
       }
@@ -75856,7 +75856,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -75878,7 +75878,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -76601,7 +76601,7 @@
         ],
         [
           "Cotton T-Shirt",
-          3.0
+          3
         ],
         [
           "Running Shoes",
@@ -76609,11 +76609,11 @@
         ],
         [
           "MacBook Pro",
-          1.0
+          1
         ],
         [
           "iPhone 15",
-          1.0
+          1
         ]
       ]
     },
@@ -76631,7 +76631,7 @@
           ],
           [
             "Cotton T-Shirt",
-            3.0
+            3
           ],
           [
             "Running Shoes",
@@ -76639,11 +76639,11 @@
           ],
           [
             "MacBook Pro",
-            1.0
+            1
           ],
           [
             "iPhone 15",
-            1.0
+            1
           ]
         ]
       }
@@ -76807,21 +76807,21 @@
       "rows": [
         [
           "Meena",
-          20000.0,
-          15000.0,
+          20000,
+          15000,
           1.33
         ],
         [
           "Ravi",
-          5000.0,
-          5000.0,
-          1.0
+          5000,
+          5000,
+          1
         ],
         [
           "Kavita",
-          0.0,
-          8000.0,
-          0.0
+          0,
+          8000,
+          0
         ]
       ]
     },
@@ -76837,21 +76837,21 @@
         "values": [
           [
             "Meena",
-            20000.0,
-            15000.0,
+            20000,
+            15000,
             1.33
           ],
           [
             "Ravi",
-            5000.0,
-            5000.0,
-            1.0
+            5000,
+            5000,
+            1
           ],
           [
             "Kavita",
-            0.0,
-            8000.0,
-            0.0
+            0,
+            8000,
+            0
           ]
         ]
       }
@@ -78356,7 +78356,7 @@
       "rows": [
         [
           4,
-          55450.0
+          55450
         ]
       ]
     },
@@ -78370,7 +78370,7 @@
         "values": [
           [
             4,
-            55450.0
+            55450
           ]
         ]
       }
@@ -78577,7 +78577,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -78599,7 +78599,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -78953,27 +78953,27 @@
         [
           "MacBook Pro",
           "Electronics",
-          120000.0
+          120000
         ],
         [
           "iPhone 15",
           "Electronics",
-          79999.0
+          79999
         ],
         [
           "Running Shoes",
           "Fashion",
-          3499.0
+          3499
         ],
         [
           "Cotton T-Shirt",
           "Fashion",
-          799.0
+          799
         ],
         [
           "SQL Book",
           "Books",
-          450.0
+          450
         ]
       ]
     },
@@ -78989,27 +78989,27 @@
           [
             "MacBook Pro",
             "Electronics",
-            120000.0
+            120000
           ],
           [
             "iPhone 15",
             "Electronics",
-            79999.0
+            79999
           ],
           [
             "Running Shoes",
             "Fashion",
-            3499.0
+            3499
           ],
           [
             "Cotton T-Shirt",
             "Fashion",
-            799.0
+            799
           ],
           [
             "SQL Book",
             "Books",
-            450.0
+            450
           ]
         ]
       }
@@ -80648,7 +80648,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -80670,7 +80670,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -81433,7 +81433,7 @@
       "rows": [
         [
           "Cotton T-Shirt",
-          799.0
+          799
         ]
       ]
     },
@@ -81447,7 +81447,7 @@
         "values": [
           [
             "Cotton T-Shirt",
-            799.0
+            799
           ]
         ]
       }
@@ -81654,7 +81654,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -81676,7 +81676,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -81857,11 +81857,11 @@
       "rows": [
         [
           "Meena",
-          150000.0
+          150000
         ],
         [
           "Ravi",
-          75000.0
+          75000
         ]
       ]
     },
@@ -81875,11 +81875,11 @@
         "values": [
           [
             "Meena",
-            150000.0
+            150000
           ],
           [
             "Ravi",
-            75000.0
+            75000
           ]
         ]
       }
@@ -83843,31 +83843,31 @@
         [
           "Ankit",
           3,
-          60799.0,
+          60799,
           20266
         ],
         [
           "Rohan",
           1,
-          55450.0,
+          55450,
           55450
         ],
         [
           "Sneha",
           1,
-          6900.0,
+          6900,
           6900
         ],
         [
           "Priya",
           1,
-          3299.0,
+          3299,
           3299
         ],
         [
           "Vikram",
           1,
-          450.0,
+          450,
           450
         ]
       ]
@@ -83885,31 +83885,31 @@
           [
             "Ankit",
             3,
-            60799.0,
+            60799,
             20266
           ],
           [
             "Rohan",
             1,
-            55450.0,
+            55450,
             55450
           ],
           [
             "Sneha",
             1,
-            6900.0,
+            6900,
             6900
           ],
           [
             "Priya",
             1,
-            3299.0,
+            3299,
             3299
           ],
           [
             "Vikram",
             1,
-            450.0,
+            450,
             450
           ]
         ]
@@ -84339,10 +84339,10 @@
       "Accenture"
     ],
     "difficulty": "medium",
-    "topic": "Revenue = Price \u00d7 Qty",
-    "problem_statement": "Calculate total revenue per product (price \u00d7 quantity sold).\n\nReturn product name, total_revenue. Order by total_revenue DESC.",
+    "topic": "Revenue = Price × Qty",
+    "problem_statement": "Calculate total revenue per product (price × quantity sold).\n\nReturn product name, total_revenue. Order by total_revenue DESC.",
     "hint": "JOIN products + order_items, SUM(price * qty).",
-    "explanation": "Revenue = price \u00d7 total qty across all orders.",
+    "explanation": "Revenue = price × total qty across all orders.",
     "tables_meta": [
       {
         "name": "customers",
@@ -84655,23 +84655,23 @@
       "rows": [
         [
           "MacBook Pro",
-          240000.0
+          240000
         ],
         [
           "iPhone 15",
-          239997.0
+          239997
         ],
         [
           "Running Shoes",
-          10497.0
+          10497
         ],
         [
           "Cotton T-Shirt",
-          2397.0
+          2397
         ],
         [
           "SQL Book",
-          1350.0
+          1350
         ]
       ]
     },
@@ -84685,23 +84685,23 @@
         "values": [
           [
             "MacBook Pro",
-            240000.0
+            240000
           ],
           [
             "iPhone 15",
-            239997.0
+            239997
           ],
           [
             "Running Shoes",
-            10497.0
+            10497
           ],
           [
             "Cotton T-Shirt",
-            2397.0
+            2397
           ],
           [
             "SQL Book",
-            1350.0
+            1350
           ]
         ]
       }
@@ -85411,24 +85411,24 @@
       "rows": [
         [
           "Meena",
-          150000.0,
-          20000.0,
-          15000.0,
-          5000.0
+          150000,
+          20000,
+          15000,
+          5000
         ],
         [
           "Ravi",
-          75000.0,
-          5000.0,
-          5000.0,
-          0.0
+          75000,
+          5000,
+          5000,
+          0
         ],
         [
           "Kavita",
-          30000.0,
-          0.0,
-          8000.0,
-          -8000.0
+          30000,
+          0,
+          8000,
+          -8000
         ]
       ]
     },
@@ -85445,24 +85445,24 @@
         "values": [
           [
             "Meena",
-            150000.0,
-            20000.0,
-            15000.0,
-            5000.0
+            150000,
+            20000,
+            15000,
+            5000
           ],
           [
             "Ravi",
-            75000.0,
-            5000.0,
-            5000.0,
-            0.0
+            75000,
+            5000,
+            5000,
+            0
           ],
           [
             "Kavita",
-            30000.0,
-            0.0,
-            8000.0,
-            -8000.0
+            30000,
+            0,
+            8000,
+            -8000
           ]
         ]
       }
@@ -85927,15 +85927,15 @@
       "rows": [
         [
           "MacBook Pro",
-          240000.0
+          240000
         ],
         [
           "iPhone 15",
-          239997.0
+          239997
         ],
         [
           "Running Shoes",
-          10497.0
+          10497
         ]
       ]
     },
@@ -85949,15 +85949,15 @@
         "values": [
           [
             "MacBook Pro",
-            240000.0
+            240000
           ],
           [
             "iPhone 15",
-            239997.0
+            239997
           ],
           [
             "Running Shoes",
-            10497.0
+            10497
           ]
         ]
       }
@@ -88306,7 +88306,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -88328,7 +88328,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -90004,7 +90004,7 @@
         [
           "Frank",
           45000,
-          13.0
+          13
         ]
       ]
     },
@@ -90045,7 +90045,7 @@
           [
             "Frank",
             45000,
-            13.0
+            13
           ]
         ]
       }
@@ -90833,7 +90833,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -90855,7 +90855,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -91420,37 +91420,37 @@
       "rows": [
         [
           4,
-          55450.0,
+          55450,
           "Large"
         ],
         [
           2,
-          55000.0,
+          55000,
           "Large"
         ],
         [
           6,
-          6900.0,
+          6900,
           "Medium"
         ],
         [
           3,
-          3299.0,
+          3299,
           "Medium"
         ],
         [
           1,
-          2500.0,
+          2500,
           "Medium"
         ],
         [
           5,
-          450.0,
+          450,
           "Small"
         ],
         [
           7,
-          3299.0,
+          3299,
           "Medium"
         ]
       ]
@@ -91466,37 +91466,37 @@
         "values": [
           [
             4,
-            55450.0,
+            55450,
             "Large"
           ],
           [
             2,
-            55000.0,
+            55000,
             "Large"
           ],
           [
             6,
-            6900.0,
+            6900,
             "Medium"
           ],
           [
             3,
-            3299.0,
+            3299,
             "Medium"
           ],
           [
             1,
-            2500.0,
+            2500,
             "Medium"
           ],
           [
             5,
-            450.0,
+            450,
             "Small"
           ],
           [
             7,
-            3299.0,
+            3299,
             "Medium"
           ]
         ]
@@ -92302,7 +92302,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -92324,7 +92324,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -93164,27 +93164,27 @@
       "rows": [
         [
           "Pizza Palace",
-          1350.0,
+          1350,
           41.9
         ],
         [
           "Biryani House",
-          1230.0,
+          1230,
           38.1
         ],
         [
           "Dragon Wok",
-          510.0,
+          510,
           15.8
         ],
         [
           "Burger Barn",
-          130.0,
-          4.0
+          130,
+          4
         ],
         [
           "Dosa Corner",
-          10.0,
+          10,
           0.3
         ]
       ]
@@ -93200,27 +93200,27 @@
         "values": [
           [
             "Pizza Palace",
-            1350.0,
+            1350,
             41.9
           ],
           [
             "Biryani House",
-            1230.0,
+            1230,
             38.1
           ],
           [
             "Dragon Wok",
-            510.0,
+            510,
             15.8
           ],
           [
             "Burger Barn",
-            130.0,
-            4.0
+            130,
+            4
           ],
           [
             "Dosa Corner",
-            10.0,
+            10,
             0.3
           ]
         ]
@@ -93554,11 +93554,11 @@
       "rows": [
         [
           "Delivered",
-          120350.0
+          120350
         ],
         [
           "Other",
-          6598.0
+          6598
         ]
       ]
     },
@@ -93572,11 +93572,11 @@
         "values": [
           [
             "Delivered",
-            120350.0
+            120350
           ],
           [
             "Other",
-            6598.0
+            6598
           ]
         ]
       }
@@ -94668,15 +94668,15 @@
       "rows": [
         [
           "delivered",
-          120350.0
+          120350
         ],
         [
           "shipped",
-          3299.0
+          3299
         ],
         [
           "cancelled",
-          3299.0
+          3299
         ]
       ]
     },
@@ -94690,15 +94690,15 @@
         "values": [
           [
             "delivered",
-            120350.0
+            120350
           ],
           [
             "shipped",
-            3299.0
+            3299
           ],
           [
             "cancelled",
-            3299.0
+            3299
           ]
         ]
       }
@@ -95606,7 +95606,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -95628,7 +95628,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -95987,31 +95987,31 @@
         [
           "Books",
           "SQL Book",
-          450.0,
+          450,
           1
         ],
         [
           "Electronics",
           "MacBook Pro",
-          120000.0,
+          120000,
           1
         ],
         [
           "Electronics",
           "iPhone 15",
-          79999.0,
+          79999,
           2
         ],
         [
           "Fashion",
           "Running Shoes",
-          3499.0,
+          3499,
           1
         ],
         [
           "Fashion",
           "Cotton T-Shirt",
-          799.0,
+          799,
           2
         ]
       ]
@@ -96029,31 +96029,31 @@
           [
             "Books",
             "SQL Book",
-            450.0,
+            450,
             1
           ],
           [
             "Electronics",
             "MacBook Pro",
-            120000.0,
+            120000,
             1
           ],
           [
             "Electronics",
             "iPhone 15",
-            79999.0,
+            79999,
             2
           ],
           [
             "Fashion",
             "Running Shoes",
-            3499.0,
+            3499,
             1
           ],
           [
             "Fashion",
             "Cotton T-Shirt",
-            799.0,
+            799,
             2
           ]
         ]
@@ -96388,27 +96388,27 @@
       "rows": [
         [
           "Ankit",
-          60799.0,
+          60799,
           "Platinum"
         ],
         [
           "Rohan",
-          55450.0,
+          55450,
           "Platinum"
         ],
         [
           "Sneha",
-          6900.0,
+          6900,
           "Gold"
         ],
         [
           "Priya",
-          3299.0,
+          3299,
           "Silver"
         ],
         [
           "Vikram",
-          450.0,
+          450,
           "Silver"
         ]
       ]
@@ -96424,27 +96424,27 @@
         "values": [
           [
             "Ankit",
-            60799.0,
+            60799,
             "Platinum"
           ],
           [
             "Rohan",
-            55450.0,
+            55450,
             "Platinum"
           ],
           [
             "Sneha",
-            6900.0,
+            6900,
             "Gold"
           ],
           [
             "Priya",
-            3299.0,
+            3299,
             "Silver"
           ],
           [
             "Vikram",
-            450.0,
+            450,
             "Silver"
           ]
         ]
@@ -97706,11 +97706,11 @@
       "rows": [
         [
           "Mumbai",
-          20000.0
+          20000
         ],
         [
           "Delhi",
-          5000.0
+          5000
         ]
       ]
     },
@@ -97724,11 +97724,11 @@
         "values": [
           [
             "Mumbai",
-            20000.0
+            20000
           ],
           [
             "Delhi",
-            5000.0
+            5000
           ]
         ]
       }
@@ -100405,7 +100405,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -100427,7 +100427,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -101905,11 +101905,11 @@
       "rows": [
         [
           "debit",
-          28000.0
+          28000
         ],
         [
           "credit",
-          25000.0
+          25000
         ]
       ]
     },
@@ -101923,11 +101923,11 @@
         "values": [
           [
             "debit",
-            28000.0
+            28000
           ],
           [
             "credit",
-            25000.0
+            25000
           ]
         ]
       }
@@ -102672,25 +102672,25 @@
       "rows": [
         [
           "Meena",
-          150000.0,
+          150000,
           112500,
           37500
         ],
         [
           "Ravi",
-          75000.0,
+          75000,
           112500,
           -37500
         ],
         [
           "Kavita",
-          30000.0,
+          30000,
           30000,
           0
         ],
         [
           "Suresh",
-          45000.0,
+          45000,
           45000,
           0
         ]
@@ -102708,25 +102708,25 @@
         "values": [
           [
             "Meena",
-            150000.0,
+            150000,
             112500,
             37500
           ],
           [
             "Ravi",
-            75000.0,
+            75000,
             112500,
             -37500
           ],
           [
             "Kavita",
-            30000.0,
+            30000,
             30000,
             0
           ],
           [
             "Suresh",
-            45000.0,
+            45000,
             45000,
             0
           ]
@@ -103290,28 +103290,28 @@
       "rows": [
         [
           "2024-01-10",
-          2500.0,
-          2500.0
+          2500,
+          2500
         ],
         [
           "2024-01-15",
-          58299.0,
-          60799.0
+          58299,
+          60799
         ],
         [
           "2024-02-20",
-          55450.0,
-          116249.0
+          55450,
+          116249
         ],
         [
           "2024-03-10",
-          6900.0,
-          123149.0
+          6900,
+          123149
         ],
         [
           "2024-03-15",
-          3749.0,
-          126898.0
+          3749,
+          126898
         ]
       ]
     },
@@ -103326,28 +103326,28 @@
         "values": [
           [
             "2024-01-10",
-            2500.0,
-            2500.0
+            2500,
+            2500
           ],
           [
             "2024-01-15",
-            58299.0,
-            60799.0
+            58299,
+            60799
           ],
           [
             "2024-02-20",
-            55450.0,
-            116249.0
+            55450,
+            116249
           ],
           [
             "2024-03-10",
-            6900.0,
-            123149.0
+            6900,
+            123149
           ],
           [
             "2024-03-15",
-            3749.0,
-            126898.0
+            3749,
+            126898
           ]
         ]
       }
@@ -104132,7 +104132,7 @@
             "CP",
             "Nehru Place",
             320,
-            12.0,
+            12,
             "2024-01-15",
             "completed"
           ],
@@ -104154,7 +104154,7 @@
             "Dadar",
             "Andheri",
             200,
-            7.0,
+            7,
             "2024-02-01",
             "completed"
           ]
@@ -105121,7 +105121,7 @@
       "rows": [
         [
           7,
-          126898.0,
+          126898,
           18128,
           5,
           14
@@ -105141,7 +105141,7 @@
         "values": [
           [
             7,
-            126898.0,
+            126898,
             18128,
             5,
             14
@@ -105162,7 +105162,7 @@
     ],
     "difficulty": "hard",
     "topic": "FULL OUTER JOIN",
-    "problem_statement": "Use FULL OUTER JOIN to show all employees AND all departments, even if unmatched.\n\nReturn employee name (or NULL), department from employees (or NULL), dept_name from departments (or NULL), budget (or NULL). Order by COALESCE(department, dept_name).\n\n\u26a0\ufe0f This problem uses PostgreSQL (FULL OUTER JOIN is not available in SQLite).",
+    "problem_statement": "Use FULL OUTER JOIN to show all employees AND all departments, even if unmatched.\n\nReturn employee name (or NULL), department from employees (or NULL), dept_name from departments (or NULL), budget (or NULL). Order by COALESCE(department, dept_name).\n\n⚠️ This problem uses PostgreSQL (FULL OUTER JOIN is not available in SQLite).",
     "hint": "FULL OUTER JOIN matches on employee.department = departments.dept_name. Unmatched rows appear with NULLs.",
     "explanation": "HR and Finance have no employees. All employees have matching departments.",
     "tables_meta": [
@@ -105422,7 +105422,7 @@
     ],
     "difficulty": "medium",
     "topic": "FULL OUTER JOIN: Unmatched",
-    "problem_statement": "Use FULL OUTER JOIN to find departments with no employees AND employees in departments not in the departments table (orphans).\n\nReturn dept source (employee department or departments.dept_name), has_employees (boolean), has_dept_record (boolean). Order by dept.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "Use FULL OUTER JOIN to find departments with no employees AND employees in departments not in the departments table (orphans).\n\nReturn dept source (employee department or departments.dept_name), has_employees (boolean), has_dept_record (boolean). Order by dept.\n\n⚠️ PostgreSQL required.",
     "hint": "FULL OUTER JOIN + WHERE either side IS NULL to find mismatches.",
     "explanation": "HR and Finance have no employees.",
     "tables_meta": [
@@ -105604,7 +105604,7 @@
     ],
     "difficulty": "hard",
     "topic": "FULL OUTER JOIN: Budget Analysis",
-    "problem_statement": "Using FULL OUTER JOIN, compare each department's budget against its actual payroll (SUM of salaries).\n\nReturn dept_name, budget, actual_payroll, utilization_pct (rounded to 1). Order by utilization_pct descending NULLS LAST.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "Using FULL OUTER JOIN, compare each department's budget against its actual payroll (SUM of salaries).\n\nReturn dept_name, budget, actual_payroll, utilization_pct (rounded to 1). Order by utilization_pct descending NULLS LAST.\n\n⚠️ PostgreSQL required.",
     "hint": "FULL OUTER JOIN + GROUP BY + SUM salary vs budget.",
     "explanation": "Engineering: 190K salary / 500K budget = 38%. Marketing: 110K / 200K = 55%.",
     "tables_meta": [
@@ -105743,31 +105743,31 @@
           "Sales",
           150000,
           45000,
-          30.0
+          30
         ],
         [
           "Engineering",
           500000,
           190000,
-          38.0
+          38
         ],
         [
           "Marketing",
           200000,
           110000,
-          55.0
+          55
         ],
         [
           "Finance",
           300000,
           0,
-          0.0
+          0
         ],
         [
           "HR",
           100000,
           0,
-          0.0
+          0
         ]
       ]
     },
@@ -105785,31 +105785,31 @@
             "Sales",
             150000,
             45000,
-            30.0
+            30
           ],
           [
             "Engineering",
             500000,
             190000,
-            38.0
+            38
           ],
           [
             "Marketing",
             200000,
             110000,
-            55.0
+            55
           ],
           [
             "Finance",
             300000,
             0,
-            0.0
+            0
           ],
           [
             "HR",
             100000,
             0,
-            0.0
+            0
           ]
         ]
       }
@@ -105828,7 +105828,7 @@
     ],
     "difficulty": "hard",
     "topic": "FULL OUTER JOIN: Reconciliation",
-    "problem_statement": "Use FULL OUTER JOIN to reconcile customers with their orders. Show ALL customers (even with no orders) and ALL orders (even with orphan customer IDs).\n\nReturn customer name (or 'Unknown'), order_id (or NULL), total (or 0). Order by name, order_id.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "Use FULL OUTER JOIN to reconcile customers with their orders. Show ALL customers (even with no orders) and ALL orders (even with orphan customer IDs).\n\nReturn customer name (or 'Unknown'), order_id (or NULL), total (or 0). Order by name, order_id.\n\n⚠️ PostgreSQL required.",
     "hint": "FULL OUTER JOIN customers to orders, COALESCE for NULLs.",
     "explanation": "Some customers may not have orders. Some orders may have invalid customer IDs.",
     "tables_meta": [
@@ -106145,37 +106145,37 @@
         [
           "Ankit",
           1,
-          2500.0
+          2500
         ],
         [
           "Ankit",
           2,
-          55000.0
+          55000
         ],
         [
           "Ankit",
           3,
-          3299.0
+          3299
         ],
         [
           "Priya",
           5,
-          3299.0
+          3299
         ],
         [
           "Rohan",
           4,
-          55450.0
+          55450
         ],
         [
           "Sneha",
           6,
-          6900.0
+          6900
         ],
         [
           "Vikram",
           7,
-          450.0
+          450
         ]
       ]
     },
@@ -106191,37 +106191,37 @@
           [
             "Ankit",
             1,
-            2500.0
+            2500
           ],
           [
             "Ankit",
             2,
-            55000.0
+            55000
           ],
           [
             "Ankit",
             3,
-            3299.0
+            3299
           ],
           [
             "Priya",
             5,
-            3299.0
+            3299
           ],
           [
             "Rohan",
             4,
-            55450.0
+            55450
           ],
           [
             "Sneha",
             6,
-            6900.0
+            6900
           ],
           [
             "Vikram",
             7,
-            450.0
+            450
           ]
         ]
       }
@@ -106240,7 +106240,7 @@
     ],
     "difficulty": "hard",
     "topic": "FULL OUTER JOIN: Coverage Report",
-    "problem_statement": "Create a full coverage report: for every department (from both tables), show the department name, count of employees, budget, and whether it's 'Staffed', 'Empty', or 'Unbudgeted'.\n\nReturn dept, emp_count, budget, status. Order by dept.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "Create a full coverage report: for every department (from both tables), show the department name, count of employees, budget, and whether it's 'Staffed', 'Empty', or 'Unbudgeted'.\n\nReturn dept, emp_count, budget, status. Order by dept.\n\n⚠️ PostgreSQL required.",
     "hint": "FULL OUTER JOIN + CASE for status classification.",
     "explanation": "Engineering/Marketing/Sales = Staffed. HR/Finance = Empty. No Unbudgeted ones exist.",
     "tables_meta": [
@@ -106455,7 +106455,7 @@
     "category": "Joins"
   },
   {
-    "id": "sql-186",
+    "id": "sql-186_dup_l5ufn",
     "title": "COALESCE: Fill Missing Manager",
     "dataset_theme": "HR / Employee",
     "company_tag": "TCS NQT",
@@ -106621,7 +106621,7 @@
     "category": "Control Flow Functions"
   },
   {
-    "id": "sql-187",
+    "id": "sql-187_dup_0c6my",
     "title": "IIF: Pass/Fail Salary Check",
     "dataset_theme": "HR / Employee",
     "company_tag": "Wipro",
@@ -106801,7 +106801,7 @@
     "category": "Control Flow Functions"
   },
   {
-    "id": "sql-188",
+    "id": "sql-188_dup_trmlv",
     "title": "NULLIF: Avoid Division by Zero",
     "dataset_theme": "Banking / Finance",
     "company_tag": "HDFC",
@@ -106958,27 +106958,27 @@
       "rows": [
         [
           "Kiran",
-          8000.0,
+          8000,
           0,
           null
         ],
         [
           "Meena",
-          20000.0,
-          15000.0,
+          20000,
+          15000,
           1.33
         ],
         [
           "Ravi",
-          5000.0,
-          5000.0,
-          1.0
+          5000,
+          5000,
+          1
         ],
         [
           "Suresh",
           0,
-          5000.0,
-          0.0
+          5000,
+          0
         ]
       ]
     },
@@ -106994,27 +106994,27 @@
         "values": [
           [
             "Kiran",
-            8000.0,
+            8000,
             0,
             null
           ],
           [
             "Meena",
-            20000.0,
-            15000.0,
+            20000,
+            15000,
             1.33
           ],
           [
             "Ravi",
-            5000.0,
-            5000.0,
-            1.0
+            5000,
+            5000,
+            1
           ],
           [
             "Suresh",
             0,
-            5000.0,
-            0.0
+            5000,
+            0
           ]
         ]
       }
@@ -107023,7 +107023,7 @@
     "category": "Control Flow Functions"
   },
   {
-    "id": "sql-189",
+    "id": "sql-189_dup_j7w28",
     "title": "COALESCE Chain: Multi-Field Fallback",
     "dataset_theme": "Healthcare / Hospital",
     "company_tag": "Deloitte",
@@ -107270,7 +107270,7 @@
     "category": "Control Flow Functions"
   },
   {
-    "id": "sql-190",
+    "id": "sql-190_dup_a4znx",
     "title": "IIF + COALESCE: Tiered Commission",
     "dataset_theme": "Food Delivery / Zomato",
     "company_tag": "Zomato",
@@ -107281,7 +107281,7 @@
     ],
     "difficulty": "hard",
     "topic": "Control Flow: IIF + COALESCE",
-    "problem_statement": "Calculate commission for each restaurant: 5% on orders above 500, 3% on orders between 300\u2013500, 1% on orders below 300. For restaurants with no orders, show commission as 0.\n\nReturn restaurant_name, total_orders, total_revenue, commission. Order by commission DESC.",
+    "problem_statement": "Calculate commission for each restaurant: 5% on orders above 500, 3% on orders between 300–500, 1% on orders below 300. For restaurants with no orders, show commission as 0.\n\nReturn restaurant_name, total_orders, total_revenue, commission. Order by commission DESC.",
     "hint": "Combine IIF/CASE for tiered rates, COALESCE for NULL handling on LEFT JOIN.",
     "explanation": "Biryani House: 3 orders (450+380+400=1230), commission = 450*0.03+380*0.03+400*0.03=36.9. Pizza Palace: 2 orders (650+700=1350), commission = 650*0.05+700*0.05=67.5.",
     "tables_meta": [
@@ -107442,31 +107442,31 @@
         [
           "Pizza Palace",
           2,
-          1350.0,
+          1350,
           67.5
         ],
         [
           "Dragon Wok",
           1,
-          510.0,
+          510,
           25.5
         ],
         [
           "Biryani House",
           3,
-          1230.0,
+          1230,
           36.9
         ],
         [
           "Burger Barn",
           1,
-          320.0,
+          320,
           9.6
         ],
         [
           "Dosa Corner",
           1,
-          220.0,
+          220,
           2.2
         ]
       ]
@@ -107484,31 +107484,31 @@
           [
             "Pizza Palace",
             2,
-            1350.0,
+            1350,
             67.5
           ],
           [
             "Dragon Wok",
             1,
-            510.0,
+            510,
             25.5
           ],
           [
             "Biryani House",
             3,
-            1230.0,
+            1230,
             36.9
           ],
           [
             "Burger Barn",
             1,
-            320.0,
+            320,
             9.6
           ],
           [
             "Dosa Corner",
             1,
-            220.0,
+            220,
             2.2
           ]
         ]
@@ -107518,7 +107518,7 @@
     "category": "Control Flow Functions"
   },
   {
-    "id": "sql-191",
+    "id": "sql-191_dup_ctw32",
     "title": "ARRAY_AGG: Products Per Order",
     "dataset_theme": "E-Commerce / Shopping",
     "company_tag": "Amazon",
@@ -107528,7 +107528,7 @@
     ],
     "difficulty": "easy",
     "topic": "Array Functions: ARRAY_AGG",
-    "problem_statement": "For each order, list all product names purchased as a sorted array.\n\nReturn order_id and products_array. Order by order_id.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "For each order, list all product names purchased as a sorted array.\n\nReturn order_id and products_array. Order by order_id.\n\n⚠️ PostgreSQL required.",
     "hint": "Use ARRAY_AGG(product_name ORDER BY product_name) with a JOIN.",
     "explanation": "Order 1 bought Laptop+Mouse, Order 2 bought Jeans+Shirt, Order 3 bought Book+Headphones, Order 4 bought Book+Laptop.",
     "tables_meta": [
@@ -107766,7 +107766,7 @@
     "category": "Array Functions"
   },
   {
-    "id": "sql-192",
+    "id": "sql-192_dup_8q61n",
     "title": "ARRAY_AGG DISTINCT: Unique Categories Per Customer",
     "dataset_theme": "E-Commerce / Shopping",
     "company_tag": "Google",
@@ -107776,7 +107776,7 @@
     ],
     "difficulty": "medium",
     "topic": "Array Functions: ARRAY_AGG DISTINCT",
-    "problem_statement": "For each customer, list the distinct product categories they have ordered as a sorted array.\n\nReturn customer_id, categories. Order by customer_id.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "For each customer, list the distinct product categories they have ordered as a sorted array.\n\nReturn customer_id, categories. Order by customer_id.\n\n⚠️ PostgreSQL required.",
     "hint": "Use ARRAY_AGG(DISTINCT category ORDER BY category) across JOINs.",
     "explanation": "Customer 101 ordered Electronics+Books. Customer 102 ordered Clothing. Customer 103 ordered Electronics+Books.",
     "tables_meta": [
@@ -108006,7 +108006,7 @@
     "category": "Array Functions"
   },
   {
-    "id": "sql-193",
+    "id": "sql-193_dup_gdl8m",
     "title": "UNNEST: Expand Tags to Rows",
     "dataset_theme": "E-Commerce / Shopping",
     "company_tag": "Meta",
@@ -108016,9 +108016,9 @@
     ],
     "difficulty": "medium",
     "topic": "Array Functions: UNNEST",
-    "problem_statement": "Given a table of products with a tags array column, expand (unnest) each product's tags into individual rows.\n\nReturn product_name and tag. Order by product_name, tag.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "Given a table of products with a tags array column, expand (unnest) each product's tags into individual rows.\n\nReturn product_name and tag. Order by product_name, tag.\n\n⚠️ PostgreSQL required.",
     "hint": "Use UNNEST(tags) to transform array elements into rows.",
-    "explanation": "Each tag becomes its own row. 3 products \u00d7 multiple tags = expanded rows.",
+    "explanation": "Each tag becomes its own row. 3 products × multiple tags = expanded rows.",
     "tables_meta": [
       {
         "name": "tagged_products",
@@ -108154,7 +108154,7 @@
     "category": "Array Functions"
   },
   {
-    "id": "sql-194",
+    "id": "sql-194_dup_47abt",
     "title": "array_length: Count Tags Per Product",
     "dataset_theme": "E-Commerce / Shopping",
     "company_tag": "Deloitte",
@@ -108164,7 +108164,7 @@
     ],
     "difficulty": "easy",
     "topic": "Array Functions: array_length",
-    "problem_statement": "For each product, show how many tags it has. Return name, tag_count. Order by tag_count DESC, name.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "For each product, show how many tags it has. Return name, tag_count. Order by tag_count DESC, name.\n\n⚠️ PostgreSQL required.",
     "hint": "Use array_length(tags, 1) to count elements in the first dimension.",
     "explanation": "Laptop and Novel have 3 tags each, Running Shoes has 2.",
     "tables_meta": [
@@ -108262,7 +108262,7 @@
     "category": "Array Functions"
   },
   {
-    "id": "sql-195",
+    "id": "sql-195_dup_fiv03",
     "title": "ANY + ARRAY_AGG: Cross-Selling",
     "dataset_theme": "E-Commerce / Shopping",
     "company_tag": "Amazon",
@@ -108273,7 +108273,7 @@
     ],
     "difficulty": "hard",
     "topic": "Array Functions: Cross-Sell Analysis",
-    "problem_statement": "Find pairs of products that were bought together in at least one order. Return product_a, product_b (alphabetically: product_a < product_b) and times_together. Order by times_together DESC, product_a.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "Find pairs of products that were bought together in at least one order. Return product_a, product_b (alphabetically: product_a < product_b) and times_together. Order by times_together DESC, product_a.\n\n⚠️ PostgreSQL required.",
     "hint": "Self-join order_items on order_id, filter product_a < product_b, then count.",
     "explanation": "Laptop+Mouse in order 1, Jeans+Shirt in order 2, Book+Headphones in order 3, Book+Laptop in order 4.",
     "tables_meta": [
@@ -108521,7 +108521,7 @@
     "category": "Array Functions"
   },
   {
-    "id": "sql-196",
+    "id": "sql-196_dup_3r18v",
     "title": "generate_series: Number Sequence",
     "dataset_theme": "Utility / General",
     "company_tag": "TCS NQT",
@@ -108531,12 +108531,12 @@
     ],
     "difficulty": "easy",
     "topic": "Data Generation: generate_series",
-    "problem_statement": "Generate a sequence of numbers from 1 to 10. Return a single column 'n'.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "Generate a sequence of numbers from 1 to 10. Return a single column 'n'.\n\n⚠️ PostgreSQL required.",
     "hint": "Use generate_series(1, 10) to produce a row for each number.",
     "explanation": "Simple: 10 rows, one per number 1 through 10.",
     "tables_meta": [
       {
-        "name": "(none \u2014 uses generate_series)",
+        "name": "(none — uses generate_series)",
         "columns": [
           {
             "name": "n",
@@ -108628,7 +108628,7 @@
     "category": "Data Generation"
   },
   {
-    "id": "sql-197",
+    "id": "sql-197_dup_kytwc",
     "title": "generate_series: Date Calendar",
     "dataset_theme": "Utility / General",
     "company_tag": "Wipro",
@@ -108638,12 +108638,12 @@
     ],
     "difficulty": "easy",
     "topic": "Data Generation: Date Calendar",
-    "problem_statement": "Generate all dates in January 2024 (2024-01-01 through 2024-01-31). Return a single column 'day'.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "Generate all dates in January 2024 (2024-01-01 through 2024-01-31). Return a single column 'day'.\n\n⚠️ PostgreSQL required.",
     "hint": "Use generate_series with DATE type and interval '1 day'.",
     "explanation": "January has 31 days, so 31 rows.",
     "tables_meta": [
       {
-        "name": "(none \u2014 uses generate_series)",
+        "name": "(none — uses generate_series)",
         "columns": [
           {
             "name": "day",
@@ -108861,7 +108861,7 @@
     "category": "Data Generation"
   },
   {
-    "id": "sql-198",
+    "id": "sql-198_dup_gvnqt",
     "title": "generate_series: Fill Missing Months",
     "dataset_theme": "Banking / Finance",
     "company_tag": "HDFC",
@@ -108872,7 +108872,7 @@
     ],
     "difficulty": "medium",
     "topic": "Data Generation: Fill Missing Periods",
-    "problem_statement": "Show monthly transaction totals for January\u2013March 2024. Include months with zero transactions.\n\nReturn month (YYYY-MM), total_amount. Order by month.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "Show monthly transaction totals for January–March 2024. Include months with zero transactions.\n\nReturn month (YYYY-MM), total_amount. Order by month.\n\n⚠️ PostgreSQL required.",
     "hint": "Use generate_series for months, then LEFT JOIN transactions to fill gaps.",
     "explanation": "Jan=22000, Feb=33000, Mar=0. Even though March has no transactions, it must appear.",
     "tables_meta": [
@@ -109016,11 +109016,11 @@
       "rows": [
         [
           "2024-01",
-          22000.0
+          22000
         ],
         [
           "2024-02",
-          33000.0
+          33000
         ],
         [
           "2024-03",
@@ -109038,11 +109038,11 @@
         "values": [
           [
             "2024-01",
-            22000.0
+            22000
           ],
           [
             "2024-02",
-            33000.0
+            33000
           ],
           [
             "2024-03",
@@ -109056,7 +109056,7 @@
     "category": "Data Generation"
   },
   {
-    "id": "sql-199",
+    "id": "sql-199_dup_xh08e",
     "title": "generate_series: Hourly Slots",
     "dataset_theme": "Healthcare / Hospital",
     "company_tag": "Practo",
@@ -109066,7 +109066,7 @@
     ],
     "difficulty": "medium",
     "topic": "Data Generation: Hourly Slots",
-    "problem_statement": "Generate all hourly appointment slots from 9 AM to 5 PM (9:00, 10:00, ..., 17:00) for 2024-01-10. Show which slots have appointments booked.\n\nReturn slot_time, is_booked ('Yes'/'No'). Order by slot_time.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "Generate all hourly appointment slots from 9 AM to 5 PM (9:00, 10:00, ..., 17:00) for 2024-01-10. Show which slots have appointments booked.\n\nReturn slot_time, is_booked ('Yes'/'No'). Order by slot_time.\n\n⚠️ PostgreSQL required.",
     "hint": "Generate timestamps with interval '1 hour', LEFT JOIN to appointments.",
     "explanation": "Only 1 appointment exists on 2024-01-10 (appointment 1001). Most slots are unbooked.",
     "tables_meta": [
@@ -109334,7 +109334,7 @@
     "category": "Data Generation"
   },
   {
-    "id": "sql-200",
+    "id": "sql-200_dup_ysnkp",
     "title": "generate_series: Gap Detection",
     "dataset_theme": "E-Commerce / Shopping",
     "company_tag": "Amazon",
@@ -109345,9 +109345,9 @@
     ],
     "difficulty": "hard",
     "topic": "Data Generation: Gap Detection",
-    "problem_statement": "Detect missing order IDs in the orders_pg table. Orders should be sequential (1,2,3,...). Find all IDs in the expected range that are missing.\n\nReturn missing_id. Order by missing_id.\n\n\u26a0\ufe0f PostgreSQL required.",
+    "problem_statement": "Detect missing order IDs in the orders_pg table. Orders should be sequential (1,2,3,...). Find all IDs in the expected range that are missing.\n\nReturn missing_id. Order by missing_id.\n\n⚠️ PostgreSQL required.",
     "hint": "Use generate_series(min_id, max_id) and EXCEPT or LEFT JOIN to find gaps.",
-    "explanation": "Orders 1\u20134 exist. No gaps in this dataset, but the technique works for any sparse sequence.",
+    "explanation": "Orders 1–4 exist. No gaps in this dataset, but the technique works for any sparse sequence.",
     "tables_meta": [
       {
         "name": "products",
@@ -113793,17 +113793,17 @@
       "rows": [
         [
           "Bangalore",
-          75000.0,
+          75000,
           null
         ],
         [
           "Delhi",
           null,
-          120000.0
+          120000
         ],
         [
           "Mumbai",
-          80000.0,
+          80000,
           null
         ]
       ]
@@ -113819,17 +113819,17 @@
         "values": [
           [
             "Bangalore",
-            75000.0,
+            75000,
             null
           ],
           [
             "Delhi",
             null,
-            120000.0
+            120000
           ],
           [
             "Mumbai",
-            80000.0,
+            80000,
             null
           ]
         ]
@@ -114186,18 +114186,18 @@
       "rows": [
         [
           "2024-01-10",
-          5000.0,
-          5000.0
+          5000,
+          5000
         ],
         [
           "2024-01-15",
-          2000.0,
-          7000.0
+          2000,
+          7000
         ],
         [
           "2024-02-15",
-          3000.0,
-          10000.0
+          3000,
+          10000
         ]
       ]
     },
@@ -114212,18 +114212,18 @@
         "values": [
           [
             "2024-01-10",
-            5000.0,
-            5000.0
+            5000,
+            5000
           ],
           [
             "2024-01-15",
-            2000.0,
-            7000.0
+            2000,
+            7000
           ],
           [
             "2024-02-15",
-            3000.0,
-            10000.0
+            3000,
+            10000
           ]
         ]
       }
@@ -116302,14 +116302,14 @@
       "rows": [
         [
           4,
-          750.0,
+          750,
           "Refunded",
           "PayPal",
           "2023-08-20"
         ],
         [
           1,
-          600.0,
+          600,
           "Disputed",
           "Debit Card",
           "2023-05-12"
@@ -116329,14 +116329,14 @@
         "values": [
           [
             4,
-            750.0,
+            750,
             "Refunded",
             "PayPal",
             "2023-08-20"
           ],
           [
             1,
-            600.0,
+            600,
             "Disputed",
             "Debit Card",
             "2023-05-12"
@@ -116743,13 +116743,13 @@
         [
           1,
           "Electronics",
-          800.0,
+          800,
           2
         ],
         [
           3,
           "Furniture",
-          200.0,
+          200,
           60
         ]
       ]
@@ -116767,13 +116767,13 @@
           [
             1,
             "Electronics",
-            800.0,
+            800,
             2
           ],
           [
             3,
             "Furniture",
-            200.0,
+            200,
             60
           ]
         ]
@@ -116877,13 +116877,13 @@
         [
           1,
           "Savings",
-          500.0,
+          500,
           "IN"
         ],
         [
           2,
           "Checking",
-          6000.0,
+          6000,
           "SG"
         ]
       ]
@@ -116901,13 +116901,13 @@
           [
             1,
             "Savings",
-            500.0,
+            500,
             "IN"
           ],
           [
             2,
             "Checking",
-            6000.0,
+            6000,
             "SG"
           ]
         ]
@@ -117237,15 +117237,15 @@
       "rows": [
         [
           1,
-          50.0
+          50
         ],
         [
           2,
-          0.0
+          0
         ],
         [
           3,
-          100.0
+          100
         ]
       ]
     },
@@ -117259,15 +117259,15 @@
         "values": [
           [
             1,
-            50.0
+            50
           ],
           [
             2,
-            0.0
+            0
           ],
           [
             3,
-            100.0
+            100
           ]
         ]
       }
@@ -117517,7 +117517,7 @@
     "category": "Conditional Logic"
   },
   {
-    "id": "FILT_MED_01",
+    "id": "FILT_MED_01_dup_5ph3s",
     "title": "Complex Multi-Condition Access Logs",
     "dataset_theme": "Security",
     "company_tag": "Cisco",
@@ -117637,7 +117637,7 @@
     "category": "Filtering & Sorting"
   },
   {
-    "id": "FILT_MED_02",
+    "id": "FILT_MED_02_dup_b0oac",
     "title": "E-commerce Fraud Detection Filter",
     "dataset_theme": "E-commerce",
     "company_tag": "PayPal",
@@ -117747,7 +117747,7 @@
     "category": "Filtering & Sorting"
   },
   {
-    "id": "FILT_MED_03",
+    "id": "FILT_MED_03_dup_y5ul0",
     "title": "Targeted Marketing Campaign Cohort",
     "dataset_theme": "Marketing",
     "company_tag": "HubSpot",
@@ -117849,7 +117849,7 @@
     "category": "Filtering & Sorting"
   },
   {
-    "id": "FILT_MED_04",
+    "id": "FILT_MED_04_dup_0280l",
     "title": "Inventory Alert Complex Filtering",
     "dataset_theme": "Retail",
     "company_tag": "Amazon",
@@ -117957,7 +117957,7 @@
     "category": "Filtering & Sorting"
   },
   {
-    "id": "FILT_MED_05",
+    "id": "FILT_MED_05_dup_zdjzl",
     "title": "Patient Triage Priority",
     "dataset_theme": "Healthcare",
     "company_tag": "Epic Systems",
