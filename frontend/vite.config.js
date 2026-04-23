@@ -10,7 +10,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['@mediapipe/tasks-vision'],
+    exclude: ['@mediapipe/tasks-vision', 'webr'],
   },
   server: {
     port: 3000,
