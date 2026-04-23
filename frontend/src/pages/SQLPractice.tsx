@@ -788,6 +788,7 @@ const SQLPractice = ({ navigate, user }: any) => {
           </div>
         </div>
         </div>
+        </div>
       )}
     </>
   );
