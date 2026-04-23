@@ -4,6 +4,7 @@ import { Toast } from '@capacitor/toast';
 import { Capacitor } from '@capacitor/core';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Analytics } from '@vercel/analytics/react';
 import AlertModal from './components/AlertModal';
 import PageTransition from './components/PageTransition';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -584,6 +585,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AppShell />
+        <Analytics />
       </BrowserRouter>
     </QueryClientProvider>
   );
