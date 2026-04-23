@@ -30,13 +30,10 @@ const companyLogos: Record<string, string> = {
   'Zoho': 'zoho.com',
 };
 
-// Wordmark logos (text-based) need more width to be readable
-const logoScale: Record<string, number> = { 'Infosys': 2.2, 'Wipro': 1.8, 'Capgemini': 2, 'HCLTech': 1.8, 'Goldman Sachs': 2, 'Morgan Stanley': 2, 'Deloitte': 2 };
 const CompanyLogo = ({ name, size = 16 }: { name: string; size?: number }) => {
   const domain = companyLogos[name];
   if (!domain) return null;
-  const scale = logoScale[name] || 1;
-  return <img src={`https://img.logo.dev/${domain}?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png`} alt={name} title={name} className="rounded-sm shrink-0 object-contain" style={{ width: size * scale, height: size }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />;
+  return <img src={`https://img.logo.dev/${domain}?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png`} alt={name} title={name} className="rounded-sm shrink-0 object-contain" style={{ width: size, height: size }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />;
 };
 
 /* ── Custom Filter Dropdown (replaces native <select>) ── */
