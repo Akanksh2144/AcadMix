@@ -16,11 +16,13 @@ const diffColors: Record<string, string> = {
 };
 
 const companyLogos: Record<string, string> = {
-  'Accenture': 'accenture.com', 'Amazon': 'amazon.com', 'Capgemini': 'capgemini.com',
-  'Cognizant': 'cognizant.com', 'Deloitte': 'deloitte.com', 'Flipkart': 'flipkart.com',
-  'Goldman Sachs': 'goldmansachs.com', 'Google': 'google.com', 'HCLTech': 'hcltech.com',
-  'Infosys': 'infosys.com', 'JP Morgan': 'jpmorgan.com', 'Meta': 'meta.com',
-  'Microsoft': 'microsoft.com', 'Morgan Stanley': 'morganstanley.com', 'Paytm': 'paytm.com',
+  'Accenture': 'accenture.com', 'Adobe': 'adobe.com', 'Amazon': 'amazon.com',
+  'Capgemini': 'capgemini.com', 'Cognizant': 'cognizant.com', 'Deloitte': 'deloitte.com',
+  'Flipkart': 'flipkart.com', 'Goldman Sachs': 'goldmansachs.com', 'Google': 'google.com',
+  'HCLTech': 'hcltech.com', 'Infosys': 'infosys.com', 'JP Morgan': 'jpmorgan.com',
+  'Meta': 'meta.com', 'Microsoft': 'microsoft.com', 'Morgan Stanley': 'morganstanley.com',
+  'Oracle': 'oracle.com', 'Paytm': 'paytm.com', 'PhonePe': 'phonepe.com',
+  'Razorpay': 'razorpay.com', 'SAP': 'sap.com', 'Swiggy': 'swiggy.com',
   'TCS Digital': 'tcs.com', 'TCS NQT': 'tcs.com', 'Uber': 'uber.com', 'Wipro': 'wipro.com',
 };
 

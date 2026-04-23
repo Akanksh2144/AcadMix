@@ -389,6 +389,122 @@ add("sql-035","EXISTS: Students Enrolled in Data Structures","University / Educa
 UNI_T,UNI_S,(["name"],[["Arjun"],["Nikhil"],["Ravi"]]),
 "SELECT s.name FROM students s WHERE EXISTS(SELECT 1 FROM enrollments e JOIN courses c ON e.course_id=c.id WHERE e.student_id=s.id AND c.course_name='Data Structures') ORDER BY s.name;",topic="EXISTS / Correlated Subquery")
 
+# ═══ NEW SCHEMA: E-Commerce ═══
+
+ECOM_S = """CREATE TABLE customers(id INT PRIMARY KEY,name VARCHAR,email VARCHAR,city VARCHAR,signup_date DATE);
+CREATE TABLE products(id INT PRIMARY KEY,product_name VARCHAR,category VARCHAR,price REAL);
+CREATE TABLE orders(id INT PRIMARY KEY,customer_id INT,order_date DATE,total REAL,status VARCHAR);
+CREATE TABLE order_items(id INT PRIMARY KEY,order_id INT,product_id INT,qty INT,price REAL);
+INSERT INTO customers VALUES(1,'Ankit','ankit@gmail.com','Mumbai','2023-01-15');
+INSERT INTO customers VALUES(2,'Priya','priya@yahoo.com','Delhi','2023-03-20');
+INSERT INTO customers VALUES(3,'Rohan','rohan@gmail.com','Bangalore','2023-06-10');
+INSERT INTO customers VALUES(4,'Sneha','sneha@outlook.com','Mumbai','2024-01-05');
+INSERT INTO customers VALUES(5,'Vikram','vikram@gmail.com','Chennai','2023-09-12');
+INSERT INTO products VALUES(101,'Laptop',  'Electronics',55000);
+INSERT INTO products VALUES(102,'Headphones','Electronics',2500);
+INSERT INTO products VALUES(103,'T-Shirt','Fashion',799);
+INSERT INTO products VALUES(104,'Sneakers','Fashion',3200);
+INSERT INTO products VALUES(105,'Python Book','Books',450);
+INSERT INTO orders VALUES(1001,1,'2024-01-10',57500,'delivered');
+INSERT INTO orders VALUES(1002,2,'2024-01-15',3299,'delivered');
+INSERT INTO orders VALUES(1003,1,'2024-02-05',799,'delivered');
+INSERT INTO orders VALUES(1004,3,'2024-02-20',55450,'shipped');
+INSERT INTO orders VALUES(1005,2,'2024-03-01',2500,'cancelled');
+INSERT INTO orders VALUES(1006,4,'2024-03-10',6900,'delivered');
+INSERT INTO orders VALUES(1007,5,'2024-03-15',450,'delivered');
+INSERT INTO order_items VALUES(1,1001,101,1,55000);
+INSERT INTO order_items VALUES(2,1001,102,1,2500);
+INSERT INTO order_items VALUES(3,1002,103,1,799);
+INSERT INTO order_items VALUES(4,1002,102,1,2500);
+INSERT INTO order_items VALUES(5,1003,103,1,799);
+INSERT INTO order_items VALUES(6,1004,101,1,55000);
+INSERT INTO order_items VALUES(7,1004,105,1,450);
+INSERT INTO order_items VALUES(8,1005,102,1,2500);
+INSERT INTO order_items VALUES(9,1006,104,1,3200);
+INSERT INTO order_items VALUES(10,1006,103,1,799);
+INSERT INTO order_items VALUES(11,1006,102,1,2500);
+INSERT INTO order_items VALUES(12,1007,105,1,450);"""
+ECOM_T = [{"name":"customers","columns":[{"name":"id","type":"int"},{"name":"name","type":"varchar"},{"name":"email","type":"varchar"},{"name":"city","type":"varchar"},{"name":"signup_date","type":"date"}],
+"sample_input":[[1,"Ankit","ankit@gmail.com","Mumbai","2023-01-15"],[2,"Priya","priya@yahoo.com","Delhi","2023-03-20"],[3,"Rohan","rohan@gmail.com","Bangalore","2023-06-10"],[4,"Sneha","sneha@outlook.com","Mumbai","2024-01-05"],[5,"Vikram","vikram@gmail.com","Chennai","2023-09-12"]]},
+{"name":"products","columns":[{"name":"id","type":"int"},{"name":"product_name","type":"varchar"},{"name":"category","type":"varchar"},{"name":"price","type":"real"}],
+"sample_input":[[101,"Laptop","Electronics",55000],[102,"Headphones","Electronics",2500],[103,"T-Shirt","Fashion",799],[104,"Sneakers","Fashion",3200],[105,"Python Book","Books",450]]},
+{"name":"orders","columns":[{"name":"id","type":"int"},{"name":"customer_id","type":"int"},{"name":"order_date","type":"date"},{"name":"total","type":"real"},{"name":"status","type":"varchar"}],
+"sample_input":[[1001,1,"2024-01-10",57500,"delivered"],[1002,2,"2024-01-15",3299,"delivered"],[1003,1,"2024-02-05",799,"delivered"],[1004,3,"2024-02-20",55450,"shipped"],[1005,2,"2024-03-01",2500,"cancelled"],[1006,4,"2024-03-10",6900,"delivered"],[1007,5,"2024-03-15",450,"delivered"]]},
+{"name":"order_items","columns":[{"name":"id","type":"int"},{"name":"order_id","type":"int"},{"name":"product_id","type":"int"},{"name":"qty","type":"int"},{"name":"price","type":"real"}],
+"sample_input":[[1,1001,101,1,55000],[2,1001,102,1,2500],[3,1002,103,1,799],[4,1002,102,1,2500],[5,1003,103,1,799],[6,1004,101,1,55000],[7,1004,105,1,450],[8,1005,102,1,2500],[9,1006,104,1,3200],[10,1006,103,1,799],[11,1006,102,1,2500],[12,1007,105,1,450]]}]
+
+# ═══ BATCH 4: E-Commerce + Advanced Concepts ═══
+
+add("sql-036","Next Order Date (LEAD)","E-Commerce (Flipkart)","Adobe","hard",
+"For each customer order, show the date of their NEXT order using LEAD.\n\nReturn customer_id, order_date, and next_order_date (NULL if last). Order by customer_id, order_date.",
+"Use LEAD(order_date) OVER (PARTITION BY customer_id ORDER BY order_date).",
+"Ankit: Jan10→Feb05, Feb05→NULL. Priya: Jan15→Mar01, Mar01→NULL.",
+ECOM_T,ECOM_S,(["customer_id","order_date","next_order_date"],[[1,"2024-01-10","2024-02-05"],[1,"2024-02-05",None],[2,"2024-01-15","2024-03-01"],[2,"2024-03-01",None],[3,"2024-02-20",None],[4,"2024-03-10",None],[5,"2024-03-15",None]]),
+"SELECT customer_id,order_date,LEAD(order_date) OVER(PARTITION BY customer_id ORDER BY order_date)AS next_order_date FROM orders ORDER BY customer_id,order_date;",topic="Window Functions (LEAD)")
+
+add("sql-037","Top Product Per Category (ROW_NUMBER)","E-Commerce (Flipkart)","Razorpay","hard",
+"Find the most expensive product in each category using ROW_NUMBER.\n\nReturn category, product_name, and price.",
+"Use ROW_NUMBER() OVER (PARTITION BY category ORDER BY price DESC), filter rn=1.",
+"Electronics: Laptop(55000). Fashion: Sneakers(3200). Books: Python Book(450).",
+ECOM_T,ECOM_S,(["category","product_name","price"],[["Books","Python Book",450.0],["Electronics","Laptop",55000.0],["Fashion","Sneakers",3200.0]]),
+"SELECT category,product_name,price FROM(SELECT category,product_name,price,ROW_NUMBER() OVER(PARTITION BY category ORDER BY price DESC)AS rn FROM products)WHERE rn=1;",topic="Window Functions (ROW_NUMBER)")
+
+add("sql-038","Gmail Users Only","E-Commerce (Flipkart)","Swiggy","easy",
+"Find all customers whose email ends with '@gmail.com'.\n\nReturn name and email, ordered by name.",
+"Use LIKE '%@gmail.com'.",
+"Ankit, Rohan, Vikram have gmail addresses.",
+ECOM_T,ECOM_S,(["name","email"],[["Ankit","ankit@gmail.com"],["Rohan","rohan@gmail.com"],["Vikram","vikram@gmail.com"]]),
+"SELECT name,email FROM customers WHERE email LIKE '%@gmail.com' ORDER BY name;",topic="String / LIKE")
+
+add("sql-039","Orders in Date Range (BETWEEN)","E-Commerce (Flipkart)","PhonePe","easy",
+"Find all orders placed in February 2024.\n\nReturn order id, customer_id, order_date, and total. Order by order_date.",
+"Use BETWEEN '2024-02-01' AND '2024-02-29'.",
+"Orders 1003(Feb05) and 1004(Feb20) fall in February.",
+ECOM_T,ECOM_S,(["id","customer_id","order_date","total"],[[1003,1,"2024-02-05",799.0],[1004,3,"2024-02-20",55450.0]]),
+"SELECT id,customer_id,order_date,total FROM orders WHERE order_date BETWEEN '2024-02-01' AND '2024-02-29' ORDER BY order_date;",topic="BETWEEN / Date Range")
+
+add("sql-040","Multi-CTE: Customer Lifetime Value","E-Commerce (Flipkart)","Oracle","hard",
+"Using multiple CTEs, find each customer's total spending and order count (exclude cancelled orders), then rank them.\n\nReturn name, total_spent, order_count, and spending_rank.",
+"WITH order_stats AS (...), ranked AS (... DENSE_RANK() OVER ...).",
+"Ankit: 57500+799=58299(2 orders). Rohan: 55450(1). Sneha: 6900(1). Priya: 3299(1). Vikram: 450(1).",
+ECOM_T,ECOM_S,(["name","total_spent","order_count","spending_rank"],[["Ankit",58299.0,2,1],["Rohan",55450.0,1,2],["Sneha",6900.0,1,3],["Priya",3299.0,1,4],["Vikram",450.0,1,5]]),
+"WITH order_stats AS(SELECT customer_id,SUM(total)AS total_spent,COUNT(*)AS order_count FROM orders WHERE status!='cancelled' GROUP BY customer_id),ranked AS(SELECT os.*,DENSE_RANK() OVER(ORDER BY total_spent DESC)AS spending_rank FROM order_stats os)SELECT c.name,r.total_spent,r.order_count,r.spending_rank FROM ranked r JOIN customers c ON r.customer_id=c.id ORDER BY r.spending_rank;",topic="Multiple CTEs")
+
+add("sql-041","Cross Join: All Customer-Product Pairs","E-Commerce (Flipkart)","SAP","medium",
+"Generate all possible customer-product combinations.\n\nReturn customer name, product_name. Order by customer name, product_name. LIMIT 10.",
+"Use CROSS JOIN between customers and products.",
+"5 customers × 5 products = 25 total pairs. First 10 shown.",
+ECOM_T,ECOM_S,(["name","product_name"],[["Ankit","Headphones"],["Ankit","Laptop"],["Ankit","Python Book"],["Ankit","Sneakers"],["Ankit","T-Shirt"],["Priya","Headphones"],["Priya","Laptop"],["Priya","Python Book"],["Priya","Sneakers"],["Priya","T-Shirt"]]),
+"SELECT c.name,p.product_name FROM customers c CROSS JOIN products p ORDER BY c.name,p.product_name LIMIT 10;",topic="Cross Join")
+
+add("sql-042","EXCEPT: Products Never Ordered","E-Commerce (Flipkart)","Adobe","medium",
+"Find products that have never been ordered by any customer.\n\nReturn product_name.",
+"Use EXCEPT or NOT IN between products and order_items.",
+"All products appear in order_items, so result is empty (Sneakers=104 appears in order 1006).",
+ECOM_T,ECOM_S,(["product_name"],[]),
+"SELECT product_name FROM products WHERE id NOT IN(SELECT DISTINCT product_id FROM order_items);",topic="EXCEPT / NOT IN")
+
+add("sql-043","Duplicate Email Domains","E-Commerce (Flipkart)","Razorpay","medium",
+"Find email domains that are used by more than one customer.\n\nReturn domain and user_count, ordered descending.",
+"Use SUBSTR + INSTR to extract domain, then GROUP BY + HAVING > 1.",
+"gmail.com: Ankit,Rohan,Vikram=3. Others have 1 each.",
+ECOM_T,ECOM_S,(["domain","user_count"],[["gmail.com",3]]),
+"SELECT SUBSTR(email,INSTR(email,'@')+1)AS domain,COUNT(*)AS user_count FROM customers GROUP BY domain HAVING COUNT(*)>1 ORDER BY user_count DESC;",topic="String Functions & HAVING")
+
+add("sql-044","IFNULL: Safe Division","Banking / Finance","PhonePe","easy",
+"For each account, show the average transaction amount. If an account has no transactions, show 0.\n\nReturn holder and avg_txn, ordered by holder.",
+"LEFT JOIN accounts to transactions, use IFNULL(AVG(amount), 0).",
+"All accounts have transactions. Kiran: avg=8000. Meena: avg=17500. Ravi: avg=3333.33. Suresh: avg=5000.",
+BANK_T,BANK_S,(["holder","avg_txn"],[["Kiran",8000.0],["Meena",17500.0],["Ravi",3333.33],["Suresh",5000.0]]),
+"SELECT a.holder,ROUND(IFNULL(AVG(t.amount),0),2)AS avg_txn FROM accounts a LEFT JOIN transactions t ON a.id=t.acc_id GROUP BY a.holder ORDER BY a.holder;",topic="IFNULL / NULL Handling")
+
+add("sql-045","Custom Sort: Priority Status","E-Commerce (Flipkart)","Swiggy","medium",
+"List all orders sorted by status priority: 'shipped' first, then 'delivered', then 'cancelled'.\n\nReturn order id, order_date, total, and status.",
+"Use ORDER BY CASE WHEN status='shipped' THEN 1 WHEN status='delivered' THEN 2 ELSE 3 END.",
+"Shipped(1004) → Delivered(1001,1002,1003,1006,1007) → Cancelled(1005).",
+ECOM_T,ECOM_S,(["id","order_date","total","status"],[[1004,"2024-02-20",55450.0,"shipped"],[1001,"2024-01-10",57500.0,"delivered"],[1002,"2024-01-15",3299.0,"delivered"],[1003,"2024-02-05",799.0,"delivered"],[1006,"2024-03-10",6900.0,"delivered"],[1007,"2024-03-15",450.0,"delivered"],[1005,"2024-03-01",2500.0,"cancelled"]]),
+"SELECT id,order_date,total,status FROM orders ORDER BY CASE WHEN status='shipped' THEN 1 WHEN status='delivered' THEN 2 ELSE 3 END,order_date;",topic="ORDER BY with CASE")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
