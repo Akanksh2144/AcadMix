@@ -2173,6 +2173,78 @@ add("sql-260","Products Ordered More Than Once","E-Commerce (Flipkart)","Infosys
 ECOM_T,ECOM_S,(["name","order_count"],[["iPhone 15",3],["MacBook Pro",2],["Running Shoes",2],["SQL Book",2]]),
 "SELECT p.name,COUNT(DISTINCT oi.order_id)AS order_count FROM products p JOIN order_items oi ON p.id=oi.product_id GROUP BY p.name HAVING COUNT(DISTINCT oi.order_id)>1 ORDER BY order_count DESC;",topic="HAVING COUNT DISTINCT")
 
+# ═══ BATCH 26: Infosys Scale-Up (10 of 21) ═══
+
+add("sql-261","Customer Total Spending Rank","E-Commerce (Flipkart)","Infosys","medium",
+"Rank customers by their total spending using DENSE_RANK.\n\nReturn name, total_spent, spending_rank. Order by spending_rank.",
+"CTE/subquery for SUM, then DENSE_RANK OVER(ORDER BY total DESC).",
+"Ankit=60799(#1), Rohan=55450(#2), etc.",
+ECOM_T,ECOM_S,(["name","total_spent","spending_rank"],[["Ankit",60799.0,1],["Rohan",55450.0,2],["Sneha",6900.0,3],["Priya",3299.0,4],["Vikram",450.0,5]]),
+"SELECT name,total_spent,DENSE_RANK() OVER(ORDER BY total_spent DESC)AS spending_rank FROM(SELECT c.name,SUM(o.total)AS total_spent FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name)t ORDER BY spending_rank;",topic="DENSE_RANK on Aggregate")
+
+add("sql-262","Employees With No Subordinates","HR / Employee","Infosys","medium",
+"Find employees who are not a manager to anyone (no one reports to them).\n\nReturn name, dept. Order by name.",
+"LEFT JOIN employees e2 ON e1.id = e2.mgr_id WHERE e2.id IS NULL.",
+"Bob, Diana, Eve, Frank have no one reporting to them.",
+EMP_T,EMP_S,(["name","dept"],[["Bob","Eng"],["Diana","Sales"],["Eve","Eng"],["Frank","HR"]]),
+"SELECT e1.name,e1.dept FROM employees e1 LEFT JOIN employees e2 ON e1.id=e2.mgr_id WHERE e2.id IS NULL ORDER BY e1.name;",topic="Self LEFT JOIN: No Reports")
+
+add("sql-263","Restaurants With Below-Average Rating","Food Delivery (Zomato)","Infosys","easy",
+"Find restaurants whose rating is below the overall average.\n\nReturn name, rating. Order by rating.",
+"WHERE rating < (SELECT AVG(rating) FROM restaurants).",
+"Avg=4.14. Dragon Wok(3.8) and Burger Barn(3.5) are below.",
+ZOMATO_T,ZOMATO_S,(["name","rating"],[["Burger Barn",3.5],["Dragon Wok",3.8]]),
+"SELECT name,rating FROM restaurants WHERE rating<(SELECT AVG(rating) FROM restaurants) ORDER BY rating;",topic="Subquery: Below Average")
+
+add("sql-264","Top Selling Product by Quantity","E-Commerce (Flipkart)","Infosys","medium",
+"Find the product with the highest total quantity sold.\n\nReturn product name, total_qty.",
+"JOIN products + order_items, SUM(qty), ORDER DESC LIMIT 1.",
+"Sum quantities across all orders per product.",
+ECOM_T,ECOM_S,(["name","total_qty"],[["Cotton T-Shirt",3]]),
+"SELECT p.name,SUM(oi.qty)AS total_qty FROM products p JOIN order_items oi ON p.id=oi.product_id GROUP BY p.name ORDER BY total_qty DESC LIMIT 1;",topic="Top by SUM Quantity")
+
+add("sql-265","Unique Cities of Riders","Ride-Sharing (Ola)","Infosys","easy",
+"List all unique cities where riders are located.\n\nReturn city. Order by city.",
+"SELECT DISTINCT city FROM riders.",
+"Bangalore, Delhi, Mumbai, Pune.",
+RIDE_T,RIDE_S,(["city"],[["Bangalore"],["Delhi"],["Mumbai"],["Pune"]]),
+"SELECT DISTINCT city FROM riders ORDER BY city;",topic="DISTINCT Cities")
+
+add("sql-266","Count Products Per Category","E-Commerce (Flipkart)","Infosys","easy",
+"Count the number of products in each category.\n\nReturn category, product_count. Order by product_count DESC.",
+"GROUP BY category, COUNT.",
+"Electronics=2, Fashion=2, Books=1.",
+ECOM_T,ECOM_S,(["category","product_count"],[["Electronics",2],["Fashion",2],["Books",1]]),
+"SELECT category,COUNT(*)AS product_count FROM products GROUP BY category ORDER BY product_count DESC;",topic="COUNT Per Category")
+
+add("sql-267","Accounts With No Transactions","Banking / Finance","Infosys","medium",
+"Find bank accounts that have zero transactions.\n\nReturn holder, branch. Order by holder.",
+"LEFT JOIN transactions WHERE t.id IS NULL.",
+"Find accounts with no transaction records.",
+BANK_T,BANK_S,(["holder","branch"],[]),
+"SELECT a.holder,a.branch FROM accounts a LEFT JOIN transactions t ON a.id=t.acc_id WHERE t.id IS NULL ORDER BY a.holder;",topic="LEFT JOIN: No Transactions")
+
+add("sql-268","Employee Tenure in Days","HR / Employee","Infosys","medium",
+"Calculate how many days each employee has been with the company (from hire_date to '2024-06-01').\n\nReturn name, hire_date, tenure_days. Order by tenure_days DESC.",
+"JULIANDAY('2024-06-01') - JULIANDAY(hire_date).",
+"Alice hired earliest, so highest tenure.",
+EMP_T,EMP_S,(["name","hire_date","tenure_days"],[["Alice","2019-01-15",1964],["Bob","2020-03-01",1553],["Charlie","2020-06-10",1452],["Diana","2021-01-20",1228],["Eve","2021-08-05",1031],["Frank","2022-02-14",838]]),
+"SELECT name,hire_date,CAST(JULIANDAY('2024-06-01')-JULIANDAY(hire_date)AS INT)AS tenure_days FROM employees ORDER BY tenure_days DESC;",topic="Date Diff: Tenure Calc")
+
+add("sql-269","Find Duplicate Customer Emails","E-Commerce (Flipkart)","Infosys","medium",
+"Find email domains that are used by more than one customer.\n\nReturn domain, customer_count. Order by customer_count DESC.",
+"SUBSTR email after @, GROUP BY, HAVING COUNT > 1.",
+"gmail.com used by multiple customers.",
+ECOM_T,ECOM_S,(["domain","customer_count"],[["gmail.com",3]]),
+"SELECT SUBSTR(email,INSTR(email,'@')+1)AS domain,COUNT(*)AS customer_count FROM customers GROUP BY SUBSTR(email,INSTR(email,'@')+1) HAVING COUNT(*)>1 ORDER BY customer_count DESC;",topic="Email Domain Duplicates")
+
+add("sql-270","Courses With Most Enrollments","University / Education","Infosys","easy",
+"Find the course with the most student enrollments.\n\nReturn course name, enrollment_count.",
+"JOIN courses + enrollments, COUNT, ORDER DESC LIMIT 1.",
+"Course with highest enrollment count.",
+UNI_T,UNI_S,(["name","enrollment_count"],[]),
+"SELECT c.name,COUNT(e.id)AS enrollment_count FROM courses c JOIN enrollments e ON c.id=e.course_id GROUP BY c.name ORDER BY enrollment_count DESC LIMIT 1;",topic="Most Enrolled Course")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
