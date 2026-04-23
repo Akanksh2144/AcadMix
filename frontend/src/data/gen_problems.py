@@ -2537,6 +2537,80 @@ add("sql-310","Riders Sorted by Total Fare","Ride-Sharing (Ola)","HCLTech","easy
 RIDE_T,RIDE_S,(["name","total_fare"],[]),
 "SELECT ri.name,SUM(r.fare)AS total_fare FROM riders ri JOIN rides r ON ri.id=r.rider_id GROUP BY ri.name ORDER BY total_fare DESC;",topic="SUM Fare Per Rider")
 
+# ═══ BATCH 31: HCLTech Final 8 + Cognizant First 2 ═══
+
+# --- HCLTech (8 remaining → completes to 30) ---
+add("sql-311","Inactive Users (No Recent Login)","Login / Activity","HCLTech","medium",
+"Find users who have not logged in since '2024-01-15'.\n\nReturn user_id, last_login. Order by last_login.",
+"GROUP BY user_id, HAVING MAX(login_date) < '2024-01-15'.",
+"Users whose last login was before the cutoff date.",
+LOGIN_T,LOGIN_S,(["user_id","last_login"],[]),
+"SELECT user_id,MAX(login_date)AS last_login FROM logins GROUP BY user_id HAVING MAX(login_date)<'2024-01-15' ORDER BY last_login;",topic="HAVING MAX Date Filter")
+
+add("sql-312","Student Average Grade","University / Education","HCLTech","easy",
+"Calculate the average grade for each student.\n\nReturn student name, avg_grade (rounded to 1). Order by avg_grade DESC.",
+"JOIN students + enrollments, AVG(grade), GROUP BY.",
+"Average grade per student.",
+UNI_T,UNI_S,(["name","avg_grade"],[]),
+"SELECT s.name,ROUND(AVG(e.grade),1)AS avg_grade FROM students s JOIN enrollments e ON s.id=e.student_id GROUP BY s.name ORDER BY avg_grade DESC;",topic="AVG Grade Per Student")
+
+add("sql-313","Average Order Quantity Per Product","E-Commerce (Flipkart)","HCLTech","easy",
+"Find the average quantity ordered per product.\n\nReturn product name, avg_qty (rounded to 1). Order by avg_qty DESC.",
+"JOIN products + order_items, AVG(qty), GROUP BY.",
+"Average qty per product across all orders.",
+ECOM_T,ECOM_S,(["name","avg_qty"],[["SQL Book",1.5],["Cotton T-Shirt",3.0],["Running Shoes",1.5],["MacBook Pro",1.0],["iPhone 15",1.0]]),
+"SELECT p.name,ROUND(AVG(oi.qty),1)AS avg_qty FROM products p JOIN order_items oi ON p.id=oi.product_id GROUP BY p.name ORDER BY avg_qty DESC;",topic="AVG Qty Per Product")
+
+add("sql-314","Credit vs Debit Ratio Per Account","Banking / Finance","HCLTech","hard",
+"For each account, show total credits, total debits, and the credit-to-debit ratio.\n\nReturn holder, total_credit, total_debit, ratio (rounded to 2). Order by ratio DESC.",
+"CASE WHEN type='credit' then SUM, CASE WHEN type='debit' then SUM.",
+"Calculate ratio of credits to debits per account.",
+BANK_T,BANK_S,(["holder","total_credit","total_debit","ratio"],[["Meena",20000.0,15000.0,1.33],["Ravi",5000.0,5000.0,1.0],["Kavita",0.0,8000.0,0.0]]),
+"SELECT a.holder,SUM(CASE WHEN t.type='credit' THEN t.amount ELSE 0 END)AS total_credit,SUM(CASE WHEN t.type='debit' THEN t.amount ELSE 0 END)AS total_debit,ROUND(CAST(SUM(CASE WHEN t.type='credit' THEN t.amount ELSE 0 END)AS FLOAT)/NULLIF(SUM(CASE WHEN t.type='debit' THEN t.amount ELSE 0 END),0),2)AS ratio FROM accounts a JOIN transactions t ON a.id=t.acc_id GROUP BY a.holder ORDER BY ratio DESC;",topic="Credit/Debit Ratio")
+
+add("sql-315","Multi-City Restaurant Chains","Food Delivery (Zomato)","HCLTech","medium",
+"Find cuisines that have restaurants in more than 1 city.\n\nReturn cuisine, city_count. Order by city_count DESC.",
+"GROUP BY cuisine HAVING COUNT(DISTINCT city) > 1.",
+"Cuisines present in multiple cities.",
+ZOMATO_T,ZOMATO_S,(["cuisine","city_count"],[["Indian",2]]),
+"SELECT cuisine,COUNT(DISTINCT city)AS city_count FROM restaurants GROUP BY cuisine HAVING COUNT(DISTINCT city)>1 ORDER BY city_count DESC;",topic="HAVING DISTINCT Cities")
+
+add("sql-316","Posts Without Any Comments","Social Media (Instagram)","HCLTech","medium",
+"Find posts that have received no comments.\n\nReturn post_id, content (first 30 chars), likes. Order by likes DESC.",
+"LEFT JOIN comments WHERE comment.id IS NULL.",
+"Posts with zero comments.",
+SOCIAL_T,SOCIAL_S,(["post_id","content","likes"],[]),
+"SELECT p.id AS post_id,SUBSTR(p.content,1,30)AS content,p.likes FROM posts p LEFT JOIN comments c ON p.id=c.post_id WHERE c.id IS NULL ORDER BY p.likes DESC;",topic="LEFT JOIN: No Comments")
+
+add("sql-317","Consecutive ID Gaps in Employees","HR / Employee","HCLTech","hard",
+"Find gaps in the employee ID sequence (missing IDs between min and max).\n\nReturn gap_start where an ID is missing. Use a self-referencing approach.",
+"WHERE id+1 NOT IN (SELECT id FROM employees) AND id < MAX.",
+"Check for non-consecutive IDs.",
+EMP_T,EMP_S,(["gap_after"],[]),
+"SELECT e1.id AS gap_after FROM employees e1 WHERE e1.id+1 NOT IN(SELECT id FROM employees) AND e1.id<(SELECT MAX(id) FROM employees) ORDER BY gap_after;",topic="ID Gap Detection")
+
+add("sql-318","Average Experience Per Specialty","Healthcare / Hospital","HCLTech","easy",
+"Calculate average years of experience per medical specialty.\n\nReturn specialty, avg_exp (rounded to 0). Order by avg_exp DESC.",
+"GROUP BY specialty, AVG(experience_yrs).",
+"Cardiology: 15. Orthopedics: 10. Dermatology: 5.",
+HOSPITAL_T,HOSPITAL_S,(["specialty","avg_exp"],[["Cardiology",15],["Orthopedics",10],["Dermatology",5]]),
+"SELECT specialty,ROUND(AVG(experience_yrs),0)AS avg_exp FROM doctors GROUP BY specialty ORDER BY avg_exp DESC;",topic="AVG Experience Per Specialty")
+
+# --- Cognizant (2 of 22 needed) ---
+add("sql-319","Employees in Sales Department","HR / Employee","Cognizant","easy",
+"Find all employees in the Sales department.\n\nReturn name, salary. Order by salary DESC.",
+"WHERE dept = 'Sales'.",
+"Charlie(55K), Diana(50K).",
+EMP_T,EMP_S,(["name","salary"],[["Charlie",55000],["Diana",50000]]),
+"SELECT name,salary FROM employees WHERE dept='Sales' ORDER BY salary DESC;",topic="WHERE Department Filter")
+
+add("sql-320","Count Appointments Per Specialty","Healthcare / Hospital","Cognizant","easy",
+"Count the number of appointments for each medical specialty.\n\nReturn specialty, appt_count. Order by appt_count DESC.",
+"JOIN doctors + appointments, GROUP BY specialty, COUNT.",
+"Cardiology: 3, Orthopedics: 2, Dermatology: 1.",
+HOSPITAL_T,HOSPITAL_S,(["specialty","appt_count"],[["Cardiology",3],["Orthopedics",2],["Dermatology",1]]),
+"SELECT d.specialty,COUNT(a.id)AS appt_count FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.specialty ORDER BY appt_count DESC;",topic="COUNT Per Specialty")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
