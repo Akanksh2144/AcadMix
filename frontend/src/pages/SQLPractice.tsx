@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Editor from '@monaco-editor/react';
-import { Database, Play, CheckCircle, XCircle, List, ArrowLeft, Lightbulb, Table as TableIcon, Eye, EyeSlash, Timer, CircleHalf, BookmarkSimple, MagnifyingGlass } from '@phosphor-icons/react';
+import { Database, Play, CheckCircle, XCircle, List, ArrowLeft, Lightbulb, Table as TableIcon, Eye, EyeSlash, Timer, CircleHalf, BookmarkSimple, MagnifyingGlass, Info } from '@phosphor-icons/react';
 import { useTheme } from '../contexts/ThemeContext';
 import { placementPrepAPI } from '../services/api';
 import PageHeader from '../components/PageHeader';
@@ -603,6 +603,14 @@ const SQLPractice = ({ navigate, user }: any) => {
             {questionTab === 'question' ? (
               <>
                 {/* Problem Statement */}
+                {sp.category === 'Date-Time Functions' && !sp.backend_only && (
+                  <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl flex gap-3 items-start">
+                    <Info size={18} weight="fill" className="text-blue-500 mt-0.5 shrink-0" />
+                    <p className="text-xs text-blue-800 dark:text-blue-200 leading-relaxed">
+                      <strong>Date-Time Quirks:</strong> This sandbox uses SQLite. On test day (MySQL/SQL Server), you might use <code className="bg-blue-100 dark:bg-blue-900/30 px-1 rounded font-mono text-[10px]">DATEADD</code> or <code className="bg-blue-100 dark:bg-blue-900/30 px-1 rounded font-mono text-[10px]">DATEDIFF</code>. Here, you'll need SQLite's <code className="bg-blue-100 dark:bg-blue-900/30 px-1 rounded font-mono text-[10px]">strftime()</code> or <code className="bg-blue-100 dark:bg-blue-900/30 px-1 rounded font-mono text-[10px]">julianday()</code>.
+                    </p>
+                  </div>
+                )}
                 <div className="prose prose-slate dark:prose-invert prose-sm max-w-none whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-300 mb-6">
                   {sp.problem_statement}
                 </div>

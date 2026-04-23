@@ -1,19 +1,19 @@
 # AcadMix SQL Practice Arena — Complete Problem Catalog
 
-> **475 problems** across **19 concept categories** for mass recruiter placement prep.
+> **485 problems** across **19 concept categories** for mass recruiter placement prep.
 > Generated on 2026-04-23 | DataLemur-style challenges
 
 ## Summary Statistics
 
 | Metric | Value |
 |--------|-------|
-| Total Problems | 475 |
+| Total Problems | 485 |
 | Easy | 155 |
-| Medium | 208 |
-| Hard | 112 |
+| Medium | 213 |
+| Hard | 117 |
 | Categories | 19 |
-| Companies | 42 |
-| SQLite WASM | 456 |
+| Companies | 44 |
+| SQLite WASM | 466 |
 | PostgreSQL-only | 19 |
 
 ## Category Breakdown
@@ -24,13 +24,13 @@
 | Aggregate Functions | 42 | 24 | 6 | 72 |
 | Array Functions | 2 | 2 | 1 | 5 |
 | Common Table Expressions (CTE) or Subquery | 5 | 13 | 7 | 25 |
-| Conditional Logic | 14 | 19 | 1 | 34 |
+| Conditional Logic | 14 | 19 | 6 | 39 |
 | Control Flow Functions | 3 | 4 | 2 | 9 |
 | Data Generation | 2 | 2 | 1 | 5 |
 | Date-Time Functions | 9 | 20 | 10 | 39 |
 | Distinct and Unique Handling | 5 | 6 | 0 | 11 |
 | Existence Check | 0 | 2 | 3 | 5 |
-| Filtering & Sorting | 22 | 2 | 4 | 28 |
+| Filtering & Sorting | 22 | 7 | 4 | 33 |
 | General SQL | 1 | 1 | 0 | 2 |
 | Joins | 17 | 46 | 13 | 76 |
 | Mathematical Functions | 1 | 7 | 11 | 19 |
@@ -54,12 +54,12 @@
 | Accenture | 39 |
 | Zoho | 37 |
 | TCS Digital | 32 |
-| Amazon | 23 |
-| Google | 16 |
-| Flipkart | 14 |
+| Amazon | 25 |
+| Google | 17 |
+| Flipkart | 15 |
+| Goldman Sachs | 10 |
 | Meta | 10 |
 | Swiggy | 10 |
-| Goldman Sachs | 9 |
 | JP Morgan | 8 |
 | Microsoft | 8 |
 | Freshworks | 7 |
@@ -68,24 +68,26 @@
 | Adobe | 5 |
 | Razorpay | 5 |
 | SAP | 5 |
+| Salesforce | 5 |
+| ServiceNow | 5 |
+| Morgan Stanley | 4 |
 | Paytm | 4 |
 | PhonePe | 4 |
 | Oracle | 4 |
 | Atlassian | 4 |
-| Salesforce | 4 |
-| ServiceNow | 4 |
 | Myntra | 4 |
 | Juspay | 4 |
 | Ola | 4 |
 | CRED | 4 |
 | HDFC | 4 |
-| Morgan Stanley | 3 |
 | Kotak | 3 |
 | Practo | 3 |
 | Apollo | 3 |
 | ICICI | 2 |
 | Tech Mahindra | 1 |
 | Walmart | 1 |
+| Cisco | 1 |
+| TCS | 1 |
 
 ---
 
@@ -553,7 +555,7 @@
 
 ---
 
-## Conditional Logic (34 problems)
+## Conditional Logic (39 problems)
 
 | # | ID | Title | Difficulty | Companies | Dataset | Engine |
 |---|-----|-------|------------|-----------|---------|--------|
@@ -591,6 +593,11 @@
 | 32 | sql-415 | Employee Seniority Band | MEDIUM | Zoho | HR / Employee | SQLite |
 | 33 | sql-418 | Order Item Count Distribution | MEDIUM | Zoho | E-Commerce (Flipkart) | SQLite |
 | 34 | sql-462 | Conditional Aggregation: Order Status | MEDIUM | Flipkart, Amazon | Food Delivery (Zomato) | SQLite |
+| 35 | COND_HRD_01 | Pivot: Monthly Sales Matrix | HARD | Amazon | Sales | SQLite |
+| 36 | COND_HRD_02 | Pivot: Employee Attendance Track | HARD | TCS | HR | SQLite |
+| 37 | COND_HRD_03 | Complex Conditional Conversion | HARD | Google | Marketing | SQLite |
+| 38 | COND_HRD_04 | Pivot: Transaction Type Breakdown | HARD | Morgan Stanley | Finance | SQLite |
+| 39 | COND_HRD_05 | Cross-Tabulation of Feedback | HARD | Salesforce | Customer Success | SQLite |
 
 ### Problem Descriptions
 
@@ -695,6 +702,21 @@
 
 **sql-462. Conditional Aggregation: Order Status** 🟡
 > For each customer, count their total orders, and separately count how many orders had an amount > 500.
+
+**COND_HRD_01. Pivot: Monthly Sales Matrix** 🔴
+> Pivot the sales data to show total sales per store. Create columns for 'Jan', 'Feb', and 'Mar' containing the total sales amount for that month. Return store_id, Jan, Feb, Mar.
+
+**COND_HRD_02. Pivot: Employee Attendance Track** 🔴
+> Generate an attendance matrix for employees showing the count of 'Present', 'Absent', and 'Leave' days as separate columns. Return emp_id, Present, Absent, Leave.
+
+**COND_HRD_03. Complex Conditional Conversion** 🔴
+> Calculate the conversion rate per campaign. A conversion is when status = 'Converted'. The rate is (Converted / Total) * 100. Return campaign_id and conversion_rate rounded to 2 decimal places.
+
+**COND_HRD_04. Pivot: Transaction Type Breakdown** 🔴
+> Show each user's total 'Credit' amount and 'Debit' amount in separate columns. Also compute net_balance (Credit - Debit). Return user_id, total_credit, total_debit, net_balance.
+
+**COND_HRD_05. Cross-Tabulation of Feedback** 🔴
+> Create a matrix showing how many pieces of feedback were given per feature, pivoted by sentiment ('Positive', 'Neutral', 'Negative').
 
 ---
 
@@ -1019,7 +1041,7 @@
 
 ---
 
-## Filtering & Sorting (28 problems)
+## Filtering & Sorting (33 problems)
 
 | # | ID | Title | Difficulty | Companies | Dataset | Engine |
 |---|-----|-------|------------|-----------|---------|--------|
@@ -1051,6 +1073,11 @@
 | 26 | sql-328 | Employees Earning 50K to 65K | EASY | Cognizant | HR / Employee | SQLite |
 | 27 | sql-389 | Rides Costing Above 200 | EASY | Deloitte | Ride-Sharing (Ola) | SQLite |
 | 28 | sql-406 | Restaurants Serving Indian Cuisine | EASY | Zoho | Food Delivery (Zomato) | SQLite |
+| 29 | FILT_MED_01 | High-Value Disputed Orders | MEDIUM | Amazon | E-Commerce | SQLite |
+| 30 | FILT_MED_02 | Complex Access Logs Filtering | MEDIUM | Cisco | IT Services | SQLite |
+| 31 | FILT_MED_03 | Custom Sorting by Priority | MEDIUM | ServiceNow | Support | SQLite |
+| 32 | FILT_MED_04 | Product Compatibility Matrix | MEDIUM | Flipkart | Retail | SQLite |
+| 33 | FILT_MED_05 | Complex Inclusion Rules | MEDIUM | Goldman Sachs | Finance | SQLite |
 
 ### Problem Descriptions
 
@@ -1137,6 +1164,21 @@
 
 **sql-406. Restaurants Serving Indian Cuisine** 🟢
 > Find all restaurants that serve Indian cuisine.
+
+**FILT_MED_01. High-Value Disputed Orders** 🟡
+> Find all orders placed in 2023 where the order amount is greater than 500, the status is either 'Disputed' or 'Refunded', and the payment method was NOT 'Credit Card'. Sort by order amount descending.
+
+**FILT_MED_02. Complex Access Logs Filtering** 🟡
+> Filter access logs to find entries where the IP starts with '192.168.', the action is 'DENIED', and either the port is 22 or the protocol is 'SSH'. Ensure you only include logs from after 8 AM. Sort by log_time ascending.
+
+**FILT_MED_03. Custom Sorting by Priority** 🟡
+> Retrieve all support tickets that are 'Open' or 'In Progress'. Sort them by priority: 'Critical' first, then 'High', 'Medium', and 'Low'. For tickets with the same priority, sort by ticket_date ascending.
+
+**FILT_MED_04. Product Compatibility Matrix** 🟡
+> Find products that are either (Category = 'Electronics' AND price < 1000) OR (Category = 'Furniture' AND weight > 50). Do not include any products that are marked as 'Discontinued'.
+
+**FILT_MED_05. Complex Inclusion Rules** 🟡
+> Select active accounts where the account_type is 'Savings' or 'Checking', the balance is not between 1000 and 5000, and the country is neither 'US' nor 'UK'.
 
 ---
 
