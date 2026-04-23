@@ -169,10 +169,13 @@ const CodePlayground = ({ navigate, user }) => {
   // Resizable Pane State
   const [leftWidth, setLeftWidth] = useState(40); // Initial 40% width for left pane
   const [topHeight, setTopHeight] = useState(66); // Initial height for top code editor pane
+  const [adHocLeftWidth, setAdHocLeftWidth] = useState(66); // Initial 66% width for ad-hoc editor pane
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingH, setIsDraggingH] = useState(false);
+  const [isDraggingAdHoc, setIsDraggingAdHoc] = useState(false);
   const containerRef = useRef(null);
   const rightPaneRef = useRef(null);
+  const adHocContainerRef = useRef(null);
   
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -182,6 +185,12 @@ const CodePlayground = ({ navigate, user }) => {
         if (newWidth < 20) newWidth = 20;
         if (newWidth > 80) newWidth = 80;
         setLeftWidth(newWidth);
+      } else if (isDraggingAdHoc && adHocContainerRef.current) {
+        const containerRect = adHocContainerRef.current.getBoundingClientRect();
+        let newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+        if (newWidth < 20) newWidth = 20;
+        if (newWidth > 80) newWidth = 80;
+        setAdHocLeftWidth(newWidth);
       } else if (isDraggingH && rightPaneRef.current) {
         const rightRect = rightPaneRef.current.getBoundingClientRect();
         let newHeight = ((e.clientY - rightRect.top) / rightRect.height) * 100;
@@ -193,13 +202,14 @@ const CodePlayground = ({ navigate, user }) => {
     const handleMouseUp = () => {
       if (isDragging) setIsDragging(false);
       if (isDraggingH) setIsDraggingH(false);
+      if (isDraggingAdHoc) setIsDraggingAdHoc(false);
     };
     
-    if (isDragging || isDraggingH) {
+    if (isDragging || isDraggingH || isDraggingAdHoc) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'none';
-      if (isDragging) document.body.style.cursor = 'col-resize';
+      if (isDragging || isDraggingAdHoc) document.body.style.cursor = 'col-resize';
       if (isDraggingH) document.body.style.cursor = 'row-resize';
     }
     
@@ -209,7 +219,7 @@ const CodePlayground = ({ navigate, user }) => {
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isDragging, isDraggingH]);
+  }, [isDragging, isDraggingH, isDraggingAdHoc]);
 
   const editorRef = useRef(null);
 
@@ -1040,11 +1050,11 @@ const CodePlayground = ({ navigate, user }) => {
         </div>
       ) : (
         // Original layout (Grid) for ad-hoc coding (No challenge active)
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto lg:overflow-hidden">
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6 lg:h-full">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-full">
+            <div className="flex flex-col lg:flex-row gap-4 lg:gap-0 lg:h-full" ref={adHocContainerRef}>
               {/* Left Column: Editor Panel */}
-              <div className="lg:col-span-2 flex flex-col space-y-4">
+              <div style={{ width: window.innerWidth >= 1024 ? `calc(${adHocLeftWidth}% - 12px)` : '100%' }} className="flex flex-col space-y-4">
                 <div className="soft-card p-3 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-3">
                     <div className="relative" ref={langMenuRef}>
@@ -1111,8 +1121,17 @@ const CodePlayground = ({ navigate, user }) => {
                 </div>
               </div>
 
+              {/* Vertical Splitter / Resizer (Hidden on mobile) */}
+              <div 
+                className="hidden lg:flex w-6 shrink-0 flex-col justify-center items-center cursor-col-resize group z-10"
+                onMouseDown={(e) => { e.preventDefault(); setIsDraggingAdHoc(true); }}
+                title="Drag to resize panes"
+              >
+                <div className={`h-16 w-1 rounded-full transition-colors ${isDraggingAdHoc ? 'bg-indigo-50 dark:bg-indigo-500/150' : 'bg-slate-200 dark:bg-slate-700 group-hover:bg-indigo-300'}`}></div>
+              </div>
+
               {/* Right Column: Output & History Panel */}
-              <div className="space-y-4 flex flex-col lg:h-full lg:overflow-hidden pb-10 lg:pb-0">
+              <div style={{ width: window.innerWidth >= 1024 ? `calc(${100 - adHocLeftWidth}% - 12px)` : '100%' }} className="space-y-4 flex flex-col lg:h-full lg:overflow-hidden pb-10 lg:pb-0">
                 <div className="soft-card flex flex-col flex-1 min-h-[300px]">
                   <div className="p-5 pb-3 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-2">
