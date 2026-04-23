@@ -2027,6 +2027,78 @@ add("sql-240","Mark Old Orders as Archived","E-Commerce (Flipkart)","TCS Digital
 ECOM_T,ECOM_S,(["order_id","order_date","archive_status"],[[1,"2024-01-10","Archived"],[2,"2024-01-15","Archived"],[3,"2024-01-15","Archived"],[4,"2024-02-20","Active"],[5,"2024-03-15","Active"],[6,"2024-03-10","Active"],[7,"2024-03-15","Active"]]),
 "SELECT id AS order_id,order_date,CASE WHEN order_date<'2024-02-01' THEN 'Archived' ELSE 'Active' END AS archive_status FROM orders ORDER BY order_date;",topic="CASE Date Classification")
 
+# ═══ BATCH 24: TCS Digital Scale-Up (10 of 25) ═══
+
+add("sql-241","Average Rating Per Cuisine","Food Delivery (Zomato)","TCS Digital","easy",
+"Calculate the average restaurant rating for each cuisine type.\n\nReturn cuisine, avg_rating (rounded to 1). Order by avg_rating DESC.",
+"GROUP BY cuisine, AVG(rating).",
+"Indian avg=(4.5+4.7)/2=4.6. Italian=4.2. Chinese=3.8. American=3.5.",
+ZOMATO_T,ZOMATO_S,(["cuisine","avg_rating"],[["Indian",4.6],["Italian",4.2],["Chinese",3.8],["American",3.5]]),
+"SELECT cuisine,ROUND(AVG(rating),1)AS avg_rating FROM restaurants GROUP BY cuisine ORDER BY avg_rating DESC;",topic="AVG Per Cuisine")
+
+add("sql-242","Patients Diagnosed With Hypertension","Healthcare / Hospital","TCS Digital","easy",
+"Find all patients who were diagnosed with Hypertension.\n\nReturn patient name, visit_date. Order by visit_date.",
+"JOIN patients + appointments WHERE diagnosis='Hypertension'.",
+"Rahul diagnosed with Hypertension on 2024-01-10.",
+HOSPITAL_T,HOSPITAL_S,(["name","visit_date"],[["Rahul","2024-01-10"]]),
+"SELECT p.name,a.visit_date FROM patients p JOIN appointments a ON p.id=a.patient_id WHERE a.diagnosis='Hypertension' ORDER BY a.visit_date;",topic="JOIN + WHERE Diagnosis")
+
+add("sql-243","Rides in February 2024","Ride-Sharing (Ola)","TCS Digital","easy",
+"Find all rides that took place in February 2024.\n\nReturn ride_id, ride_date, fare. Order by ride_date.",
+"WHERE ride_date BETWEEN '2024-02-01' AND '2024-02-28'.",
+"Filter rides by February date range.",
+RIDE_T,RIDE_S,(["ride_id","ride_date","fare"],[]),
+"SELECT id AS ride_id,ride_date,fare FROM rides WHERE ride_date BETWEEN '2024-02-01' AND '2024-02-29' ORDER BY ride_date;",topic="Date Range: Feb Filter")
+
+add("sql-244","Products Costing Above Average","E-Commerce (Flipkart)","TCS Digital","medium",
+"Find products whose price is above the average product price.\n\nReturn name, price. Order by price DESC.",
+"WHERE price > (SELECT AVG(price) FROM products).",
+"Average price, then filter above it.",
+ECOM_T,ECOM_S,(["name","price"],[["MacBook Pro",120000.0],["iPhone 15",79999.0]]),
+"SELECT name,price FROM products WHERE price>(SELECT AVG(price) FROM products) ORDER BY price DESC;",topic="Subquery: Above Avg Price")
+
+add("sql-245","Student With Highest GPA","University / Education","TCS Digital","easy",
+"Find the student with the highest GPA.\n\nReturn student name, gpa.",
+"ORDER BY gpa DESC LIMIT 1.",
+"Find top GPA student.",
+UNI_T,UNI_S,(["name","gpa"],[]),
+"SELECT s.name,s.gpa FROM students s ORDER BY s.gpa DESC LIMIT 1;",topic="ORDER BY DESC LIMIT 1")
+
+add("sql-246","Count Logins Per User","Login / Activity","TCS Digital","easy",
+"Count the number of login events for each user.\n\nReturn user_id, login_count. Order by login_count DESC.",
+"GROUP BY user_id, COUNT.",
+"Count login activity per user.",
+LOGIN_T,LOGIN_S,(["user_id","login_count"],[]),
+"SELECT user_id,COUNT(*)AS login_count FROM logins GROUP BY user_id ORDER BY login_count DESC;",topic="COUNT Logins Per User")
+
+add("sql-247","Monthly Revenue for Restaurants","Food Delivery (Zomato)","TCS Digital","medium",
+"Calculate total order revenue per month for restaurants.\n\nReturn month, total_revenue. Order by month.",
+"SUBSTR(order_date,1,7) + SUM(amount) GROUP BY.",
+"Group orders by year-month and sum amounts.",
+ZOMATO_T,ZOMATO_S,(["month","total_revenue"],[["2024-01",1480.0],["2024-02",730.0],["2024-03",1020.0]]),
+"SELECT SUBSTR(order_date,1,7)AS month,SUM(amount)AS total_revenue FROM orders GROUP BY SUBSTR(order_date,1,7) ORDER BY month;",topic="Monthly Revenue Grouping")
+
+add("sql-248","Doctors With 10+ Years Experience","Healthcare / Hospital","TCS Digital","easy",
+"Find doctors who have 10 or more years of experience.\n\nReturn name, specialty, experience_yrs. Order by experience_yrs DESC.",
+"WHERE experience_yrs >= 10.",
+"Dr. Sharma(15), Dr. Patel(10).",
+HOSPITAL_T,HOSPITAL_S,(["name","specialty","experience_yrs"],[["Dr. Sharma","Cardiology",15],["Dr. Patel","Orthopedics",10]]),
+"SELECT name,specialty,experience_yrs FROM doctors WHERE experience_yrs>=10 ORDER BY experience_yrs DESC;",topic="WHERE >= Threshold")
+
+add("sql-249","Customers Who Placed 2+ Orders","E-Commerce (Flipkart)","TCS Digital","medium",
+"Find customers who have placed 2 or more orders.\n\nReturn name, order_count. Order by order_count DESC.",
+"JOIN + GROUP BY + HAVING COUNT >= 2.",
+"Ankit has 3 orders. Others have 1.",
+ECOM_T,ECOM_S,(["name","order_count"],[["Ankit",3]]),
+"SELECT c.name,COUNT(o.id)AS order_count FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name HAVING COUNT(o.id)>=2 ORDER BY order_count DESC;",topic="HAVING COUNT >= N")
+
+add("sql-250","Combine Name and Department","HR / Employee","TCS Digital","easy",
+"Create a display string combining name and department like 'Alice (Eng)'.\n\nReturn display. Order by name.",
+"Use || for string concatenation.",
+"Alice (Eng), Bob (Eng), Charlie (Sales), etc.",
+EMP_T,EMP_S,(["display"],[["Alice (Eng)"],["Bob (Eng)"],["Charlie (Sales)"],["Diana (Sales)"],["Eve (Eng)"],["Frank (HR)"]]),
+"SELECT name||' ('||dept||')'AS display FROM employees ORDER BY name;",topic="String Concat Display")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
