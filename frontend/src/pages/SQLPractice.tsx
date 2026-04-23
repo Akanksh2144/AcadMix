@@ -33,7 +33,7 @@ const companyLogos: Record<string, string> = {
 const CompanyLogo = ({ name, size = 16 }: { name: string; size?: number }) => {
   const domain = companyLogos[name];
   if (!domain) return null;
-  return <img src={`https://img.logo.dev/${domain}?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png`} alt="" className="rounded-sm shrink-0 object-contain" style={{ width: size, height: size }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />;
+  return <img src={`https://img.logo.dev/${domain}?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png`} alt={name} title={name} className="rounded-sm shrink-0 object-contain" style={{ width: size, height: size }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />;
 };
 
 /* ── Custom Filter Dropdown (replaces native <select>) ── */
@@ -453,7 +453,7 @@ const SQLPractice = ({ navigate, user }: any) => {
               <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 min-h-[2.5rem]">{p.problem_statement?.split('\n')[0]}</p>
               <div className="flex items-center gap-2 text-xs font-bold text-slate-400 flex-nowrap overflow-hidden">
                 <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 py-1 px-2 rounded whitespace-nowrap shrink-0"><TableIcon size={14} /> {p.dataset_theme}</span>
-                {(p.company_tags || [p.company_tag]).filter(Boolean).map((c: string, ci: number) => <span key={ci} className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 py-1 px-2 rounded whitespace-nowrap shrink-0"><CompanyLogo name={c} size={14} /> {c}</span>)}
+                {(p.company_tags || [p.company_tag]).filter(Boolean).map((c: string, ci: number) => <CompanyLogo key={ci} name={c} size={20} />)}
                 {tagLabel && <span className={`ml-auto py-1 px-2 rounded whitespace-nowrap shrink-0 ${tagColor}`}>{tagLabel}</span>}
               </div>
               {p.topic && <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 truncate">📘 {p.topic}</p>}
