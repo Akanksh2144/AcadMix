@@ -2319,6 +2319,78 @@ add("sql-280","Employee Names in Uppercase","HR / Employee","Wipro","easy",
 EMP_T,EMP_S,(["upper_name","dept"],[["ALICE","Eng"],["BOB","Eng"],["CHARLIE","Sales"],["DIANA","Sales"],["EVE","Eng"],["FRANK","HR"]]),
 "SELECT UPPER(name)AS upper_name,dept FROM employees ORDER BY upper_name;",topic="UPPER() Transform")
 
+# ═══ BATCH 28: Wipro Scale-Up (10 of 19) ═══
+
+add("sql-281","Latest Order Per Customer","E-Commerce (Flipkart)","Wipro","medium",
+"Find the most recent order for each customer.\n\nReturn name, order_date, total. Order by order_date DESC.",
+"ROW_NUMBER() PARTITION BY customer_id ORDER BY order_date DESC, rn=1.",
+"Most recent order per customer.",
+ECOM_T,ECOM_S,(["name","order_date","total"],[["Ankit","2024-01-15",55000.0],["Priya","2024-03-15",3299.0],["Rohan","2024-02-20",55450.0],["Sneha","2024-03-10",6900.0],["Vikram","2024-03-15",450.0]]),
+"SELECT name,order_date,total FROM(SELECT c.name,o.order_date,o.total,ROW_NUMBER() OVER(PARTITION BY c.id ORDER BY o.order_date DESC)AS rn FROM customers c JOIN orders o ON c.id=o.customer_id)t WHERE rn=1 ORDER BY order_date DESC;",topic="Latest Per Customer (Window)")
+
+add("sql-282","Total Fee Per Doctor","Healthcare / Hospital","Wipro","easy",
+"Calculate total appointment fees collected by each doctor.\n\nReturn doctor name, total_fee. Order by total_fee DESC.",
+"JOIN doctors + appointments, SUM(fee), GROUP BY.",
+"Sum fees per doctor.",
+HOSPITAL_T,HOSPITAL_S,(["name","total_fee"],[["Dr. Patel",1400],["Dr. Sharma",1300],["Dr. Gupta",400]]),
+"SELECT d.name,SUM(a.fee)AS total_fee FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.name ORDER BY total_fee DESC;",topic="SUM Fee Per Doctor")
+
+add("sql-283","Shortest and Longest Employee Name","HR / Employee","Wipro","easy",
+"Find the employee with the shortest name and the one with the longest name.\n\nReturn type, name, name_length.",
+"UNION with MIN/MAX LENGTH.",
+"Shortest: Bob/Eve (3). Longest: Charlie (7).",
+EMP_T,EMP_S,(["type","name","name_length"],[["Shortest","Bob",3],["Longest","Charlie",7]]),
+"SELECT 'Shortest'AS type,name,LENGTH(name)AS name_length FROM employees WHERE LENGTH(name)=(SELECT MIN(LENGTH(name)) FROM employees) UNION ALL SELECT 'Longest',name,LENGTH(name) FROM employees WHERE LENGTH(name)=(SELECT MAX(LENGTH(name)) FROM employees) LIMIT 2;",topic="MIN/MAX LENGTH")
+
+add("sql-284","Restaurants Not in Mumbai","Food Delivery (Zomato)","Wipro","easy",
+"Find all restaurants that are NOT located in Mumbai.\n\nReturn name, city. Order by name.",
+"WHERE city != 'Mumbai'.",
+"Filter out Mumbai restaurants.",
+ZOMATO_T,ZOMATO_S,(["name","city"],[["Burger Barn","Bangalore"],["Dosa Corner","Chennai"],["Dragon Wok","Kolkata"],["Pizza Palace","Delhi"]]),
+"SELECT name,city FROM restaurants WHERE city!='Mumbai' ORDER BY name;",topic="WHERE Not Equal City")
+
+add("sql-285","Average Transaction Amount Per Branch","Banking / Finance","Wipro","medium",
+"Calculate the average transaction amount for each bank branch.\n\nReturn branch, avg_amount (rounded to 0). Order by avg_amount DESC.",
+"JOIN accounts + transactions, AVG(amount), GROUP BY branch.",
+"Average transaction size per branch.",
+BANK_T,BANK_S,(["branch","avg_amount"],[["Delhi",11667],["Mumbai",4500],["Bangalore",8000]]),
+"SELECT a.branch,ROUND(AVG(t.amount),0)AS avg_amount FROM accounts a JOIN transactions t ON a.id=t.acc_id GROUP BY a.branch ORDER BY avg_amount DESC;",topic="AVG Transaction Per Branch")
+
+add("sql-286","Rider and Driver From Same City","Ride-Sharing (Ola)","Wipro","medium",
+"Find all rider-driver pairs where both are from the same city.\n\nReturn rider_name, driver_name, city. Order by city, rider_name.",
+"JOIN riders r, drivers d ON r.city = d.city.",
+"Cross-table city matching.",
+RIDE_T,RIDE_S,(["rider_name","driver_name","city"],[]),
+"SELECT r.name AS rider_name,d.name AS driver_name,r.city FROM riders r JOIN drivers d ON r.city=d.city ORDER BY r.city,r.name;",topic="Cross-Table City Match")
+
+add("sql-287","Replace Dept Code With Full Name","HR / Employee","Wipro","easy",
+"Replace department abbreviations: 'Eng' → 'Engineering', 'HR' → 'Human Resources'.\n\nReturn name, full_dept. Order by name.",
+"CASE or REPLACE for dept name expansion.",
+"Map short codes to full names.",
+EMP_T,EMP_S,(["name","full_dept"],[["Alice","Engineering"],["Bob","Engineering"],["Charlie","Sales"],["Diana","Sales"],["Eve","Engineering"],["Frank","Human Resources"]]),
+"SELECT name,CASE dept WHEN 'Eng' THEN 'Engineering' WHEN 'HR' THEN 'Human Resources' ELSE dept END AS full_dept FROM employees ORDER BY name;",topic="CASE Value Mapping")
+
+add("sql-288","First Order Date Per Customer","E-Commerce (Flipkart)","Wipro","easy",
+"Find the date of each customer's first order.\n\nReturn name, first_order. Order by first_order.",
+"JOIN + MIN(order_date) GROUP BY.",
+"Earliest order date per customer.",
+ECOM_T,ECOM_S,(["name","first_order"],[["Ankit","2024-01-10"],["Rohan","2024-02-20"],["Sneha","2024-03-10"],["Priya","2024-03-15"],["Vikram","2024-03-15"]]),
+"SELECT c.name,MIN(o.order_date)AS first_order FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name ORDER BY first_order;",topic="MIN Date Per Group")
+
+add("sql-289","Drivers With Rating Above 4.5","Ride-Sharing (Ola)","Wipro","easy",
+"Find drivers whose rating exceeds 4.5.\n\nReturn name, rating. Order by rating DESC.",
+"WHERE rating > 4.5.",
+"High-rated drivers.",
+RIDE_T,RIDE_S,(["name","rating"],[]),
+"SELECT name,rating FROM drivers WHERE rating>4.5 ORDER BY rating DESC;",topic="WHERE Rating Filter")
+
+add("sql-290","Total Orders Per City","E-Commerce (Flipkart)","Wipro","medium",
+"Count total orders placed from each customer city.\n\nReturn city, order_count. Order by order_count DESC.",
+"JOIN customers + orders, GROUP BY city, COUNT.",
+"Mumbai: Ankit(3)+Sneha(1)=4. Others have fewer.",
+ECOM_T,ECOM_S,(["city","order_count"],[["Mumbai",4],["Delhi",1],["Pune",1],["Bangalore",1]]),
+"SELECT c.city,COUNT(o.id)AS order_count FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.city ORDER BY order_count DESC;",topic="Orders Per City")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
