@@ -1883,6 +1883,77 @@ add("sql-220","Employees With 'a' in Name","HR / Employee","TCS NQT","easy",
 EMP_T,EMP_S,(["name"],[["Alice"],["Charlie"],["Diana"],["Frank"]]),
 "SELECT name FROM employees WHERE LOWER(name) LIKE '%a%' ORDER BY name;",topic="LIKE Case-Insensitive")
 
+# ═══ BATCH 22: TCS NQT Scale-Up (10 of 20) — COMPLETES TCS NQT to 30 ═══
+
+add("sql-221","Total Revenue Per Restaurant","Food Delivery (Zomato)","TCS NQT","medium",
+"Find total order revenue for each restaurant.\n\nReturn restaurant name, total_revenue. Order by total_revenue DESC.",
+"JOIN restaurants + orders, SUM(amount), GROUP BY.",
+"Biryani House: 450+380+400=1230. Pizza Palace: 650+700=1350.",
+ZOMATO_T,ZOMATO_S,(["name","total_revenue"],[["Pizza Palace",1350.0],["Biryani House",1230.0],["Dragon Wok",510.0],["Burger Barn",320.0],["Dosa Corner",220.0]]),
+"SELECT r.name,SUM(o.amount)AS total_revenue FROM restaurants r JOIN orders o ON r.id=o.rest_id GROUP BY r.name ORDER BY total_revenue DESC;",topic="JOIN + SUM Revenue")
+
+add("sql-222","Customers From Mumbai or Delhi","E-Commerce (Flipkart)","TCS NQT","easy",
+"Find customers who live in Mumbai or Delhi.\n\nReturn name, city. Order by name.",
+"WHERE city IN ('Mumbai','Delhi').",
+"Ankit=Mumbai, Priya=Delhi, Sneha=Mumbai.",
+ECOM_T,ECOM_S,(["name","city"],[["Ankit","Mumbai"],["Priya","Delhi"],["Sneha","Mumbai"]]),
+"SELECT name,city FROM customers WHERE city IN('Mumbai','Delhi') ORDER BY name;",topic="WHERE IN Filter")
+
+add("sql-223","Latest Hire Per Department","HR / Employee","TCS NQT","medium",
+"Find the most recently hired employee in each department.\n\nReturn dept, name, hire_date. Order by dept.",
+"ROW_NUMBER() PARTITION BY dept ORDER BY hire_date DESC, filter rn=1.",
+"Eng: Eve(2021-08). Sales: Diana(2021-01). HR: Frank(2022-02).",
+EMP_T,EMP_S,(["dept","name","hire_date"],[["Eng","Eve","2021-08-05"],["HR","Frank","2022-02-14"],["Sales","Diana","2021-01-20"]]),
+"SELECT dept,name,hire_date FROM(SELECT dept,name,hire_date,ROW_NUMBER() OVER(PARTITION BY dept ORDER BY hire_date DESC)AS rn FROM employees)t WHERE rn=1 ORDER BY dept;",topic="Latest Per Group (Window)")
+
+add("sql-224","Count NULL vs Non-NULL Managers","HR / Employee","TCS NQT","easy",
+"Count how many employees have a manager vs those who don't.\n\nReturn has_manager, count. Order by has_manager.",
+"CASE WHEN mgr_id IS NULL THEN 'No' ELSE 'Yes' + GROUP BY.",
+"3 with manager, 3 without.",
+EMP_T,EMP_S,(["has_manager","count"],[["No",3],["Yes",3]]),
+"SELECT CASE WHEN mgr_id IS NULL THEN 'No' ELSE 'Yes' END AS has_manager,COUNT(*)AS count FROM employees GROUP BY has_manager ORDER BY has_manager;",topic="CASE NULL Classification")
+
+add("sql-225","Rides With Above-Average Fare","Ride-Sharing (Ola)","TCS NQT","medium",
+"Find all rides where the fare exceeds the overall average fare.\n\nReturn rider name, fare. Order by fare DESC.",
+"Subquery: WHERE fare > (SELECT AVG(fare) FROM rides).",
+"Filter rides above the average.",
+RIDE_T,RIDE_S,(["name","fare"],[]),
+"SELECT ri.name,r.fare FROM rides r JOIN riders ri ON r.rider_id=ri.id WHERE r.fare>(SELECT AVG(fare) FROM rides) ORDER BY r.fare DESC;",topic="Subquery: Above Avg Fare")
+
+add("sql-226","Orders in January 2024","E-Commerce (Flipkart)","TCS NQT","easy",
+"Find all orders placed in January 2024.\n\nReturn order_id, order_date, total. Order by order_date.",
+"WHERE order_date BETWEEN '2024-01-01' AND '2024-01-31'.",
+"Orders 1,2,3 are in January.",
+ECOM_T,ECOM_S,(["order_id","order_date","total"],[[1,"2024-01-10",2500.0],[2,"2024-01-15",55000.0],[3,"2024-01-15",3299.0]]),
+"SELECT id AS order_id,order_date,total FROM orders WHERE order_date BETWEEN '2024-01-01' AND '2024-01-31' ORDER BY order_date;",topic="Date Range: Month Filter")
+
+add("sql-227","Rank Employees by Salary","HR / Employee","TCS NQT","medium",
+"Assign a rank to each employee based on salary (highest=1). Use DENSE_RANK.\n\nReturn name, salary, salary_rank. Order by salary_rank.",
+"DENSE_RANK() OVER(ORDER BY salary DESC).",
+"Alice=1, Eve=2, Bob=3, Charlie=4, Diana=5, Frank=6.",
+EMP_T,EMP_S,(["name","salary","salary_rank"],[["Alice",70000,1],["Eve",65000,2],["Bob",60000,3],["Charlie",55000,4],["Diana",50000,5],["Frank",45000,6]]),
+"SELECT name,salary,DENSE_RANK() OVER(ORDER BY salary DESC)AS salary_rank FROM employees ORDER BY salary_rank;",topic="DENSE_RANK Ranking")
+
+add("sql-228","Top 2 Cuisines by Restaurant Count","Food Delivery (Zomato)","TCS NQT","medium",
+"Find the top 2 cuisines that have the most restaurants.\n\nReturn cuisine, restaurant_count. Order by count DESC.",
+"GROUP BY cuisine, COUNT, ORDER BY DESC LIMIT 2.",
+"Indian=2, others=1 each.",
+ZOMATO_T,ZOMATO_S,(["cuisine","restaurant_count"],[["Indian",2],["American",1]]),
+"SELECT cuisine,COUNT(*)AS restaurant_count FROM restaurants GROUP BY cuisine ORDER BY restaurant_count DESC LIMIT 2;",topic="Top-N by COUNT")
+
+add("sql-229","Patients With Exactly One Visit","Healthcare / Hospital","TCS NQT","easy",
+"Find patients who visited the doctor exactly once.\n\nReturn name, visit_count. Order by name.",
+"GROUP BY patient_id HAVING COUNT = 1.",
+"Priya and Sneha have exactly 1 appointment each.",
+HOSPITAL_T,HOSPITAL_S,(["name","visit_count"],[["Priya",1],["Sneha",1]]),
+"SELECT p.name,COUNT(a.id)AS visit_count FROM patients p JOIN appointments a ON p.id=a.patient_id GROUP BY p.name HAVING COUNT(a.id)=1 ORDER BY p.name;",topic="HAVING COUNT Exact")
+
+add("sql-230","Total Employee Count","HR / Employee","TCS NQT","easy",
+"Count the total number of employees in the company.\n\nReturn total_employees.",
+"Simple COUNT(*).",
+"6 employees total.",
+EMP_T,EMP_S,(["total_employees"],[[6]]),
+"SELECT COUNT(*)AS total_employees FROM employees;",topic="Simple COUNT")
 
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
