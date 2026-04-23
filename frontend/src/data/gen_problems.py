@@ -2245,6 +2245,80 @@ add("sql-270","Courses With Most Enrollments","University / Education","Infosys"
 UNI_T,UNI_S,(["name","enrollment_count"],[]),
 "SELECT c.name,COUNT(e.id)AS enrollment_count FROM courses c JOIN enrollments e ON c.id=e.course_id GROUP BY c.name ORDER BY enrollment_count DESC LIMIT 1;",topic="Most Enrolled Course")
 
+# ═══ BATCH 27: Infosys Final 6 + Wipro First 4 ═══
+
+# --- Infosys (6 remaining → completes to 30) ---
+add("sql-271","Salary Percentile Ranking","HR / Employee","Infosys","hard",
+"Calculate the percentile rank of each employee's salary.\n\nReturn name, salary, percentile (rounded to 2). Order by percentile DESC.",
+"PERCENT_RANK() OVER(ORDER BY salary).",
+"Alice at 100th percentile, Frank at 0th.",
+EMP_T,EMP_S,(["name","salary","percentile"],[["Alice",70000,1.0],["Eve",65000,0.8],["Bob",60000,0.6],["Charlie",55000,0.4],["Diana",50000,0.2],["Frank",45000,0.0]]),
+"SELECT name,salary,ROUND(PERCENT_RANK() OVER(ORDER BY salary),2)AS percentile FROM employees ORDER BY percentile DESC;",topic="PERCENT_RANK Percentile")
+
+add("sql-272","Revenue Per City From E-Commerce","E-Commerce (Flipkart)","Infosys","medium",
+"Calculate total order revenue per customer city.\n\nReturn city, total_revenue. Order by total_revenue DESC.",
+"JOIN customers + orders, GROUP BY city, SUM(total).",
+"Mumbai: Ankit+Sneha orders. Delhi: Priya. Pune: Rohan. Bangalore: Vikram.",
+ECOM_T,ECOM_S,(["city","total_revenue"],[["Mumbai",67699.0],["Pune",55450.0],["Delhi",3299.0],["Bangalore",450.0]]),
+"SELECT c.city,SUM(o.total)AS total_revenue FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.city ORDER BY total_revenue DESC;",topic="Revenue Per City")
+
+add("sql-273","Average Likes Per User","Social Media (Instagram)","Infosys","easy",
+"Calculate the average number of likes per user's posts.\n\nReturn username, avg_likes (rounded to 0). Order by avg_likes DESC.",
+"JOIN profiles + posts, AVG(likes), GROUP BY user.",
+"Average likes each user gets on their posts.",
+SOCIAL_T,SOCIAL_S,(["username","avg_likes"],[]),
+"SELECT pr.username,ROUND(AVG(p.likes),0)AS avg_likes FROM profiles pr JOIN posts p ON pr.id=p.user_id GROUP BY pr.username ORDER BY avg_likes DESC;",topic="AVG Likes Per User")
+
+add("sql-274","Doctors Who Treated Only Female Patients","Healthcare / Hospital","Infosys","hard",
+"Find doctors who have ONLY treated female patients (never treated a male).\n\nReturn doctor name. Order by name.",
+"NOT EXISTS: no appointment with male patient.",
+"Check each doctor's patient gender distribution.",
+HOSPITAL_T,HOSPITAL_S,(["name"],[]),
+"SELECT DISTINCT d.name FROM doctors d JOIN appointments a ON d.id=a.doc_id JOIN patients p ON a.patient_id=p.id WHERE NOT EXISTS(SELECT 1 FROM appointments a2 JOIN patients p2 ON a2.patient_id=p2.id WHERE a2.doc_id=d.id AND p2.gender='M') ORDER BY d.name;",topic="NOT EXISTS: Exclusive Filter")
+
+add("sql-275","Average Post Likes Above 100","Social Media (Instagram)","Infosys","medium",
+"Find users whose average post likes exceed 100.\n\nReturn username, avg_likes. Order by avg_likes DESC.",
+"JOIN + GROUP BY + HAVING AVG(likes) > 100.",
+"Filter users with high avg engagement.",
+SOCIAL_T,SOCIAL_S,(["username","avg_likes"],[]),
+"SELECT pr.username,ROUND(AVG(p.likes),0)AS avg_likes FROM profiles pr JOIN posts p ON pr.id=p.user_id GROUP BY pr.username HAVING AVG(p.likes)>100 ORDER BY avg_likes DESC;",topic="HAVING AVG Engagement")
+
+add("sql-276","Total Fees Collected Per Specialty","Healthcare / Hospital","Infosys","medium",
+"Calculate total fees collected per medical specialty.\n\nReturn specialty, total_fees. Order by total_fees DESC.",
+"JOIN doctors + appointments, SUM(fee), GROUP BY specialty.",
+"Orthopedics=1400, Cardiology=1300, Dermatology=400.",
+HOSPITAL_T,HOSPITAL_S,(["specialty","total_fees"],[["Orthopedics",1400],["Cardiology",1300],["Dermatology",400]]),
+"SELECT d.specialty,SUM(a.fee)AS total_fees FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.specialty ORDER BY total_fees DESC;",topic="SUM Fees Per Specialty")
+
+# --- Wipro (4 of 19 needed) ---
+add("sql-277","Employees Earning Exactly 60000","HR / Employee","Wipro","easy",
+"Find employees whose salary is exactly 60,000.\n\nReturn name, dept. Order by name.",
+"WHERE salary = 60000.",
+"Bob earns exactly 60000.",
+EMP_T,EMP_S,(["name","dept"],[["Bob","Eng"]]),
+"SELECT name,dept FROM employees WHERE salary=60000 ORDER BY name;",topic="WHERE Exact Match")
+
+add("sql-278","Count Male vs Female Patients","Healthcare / Hospital","Wipro","easy",
+"Count how many patients are male vs female.\n\nReturn gender, patient_count. Order by gender.",
+"GROUP BY gender, COUNT.",
+"M=2 (Rahul, Amit). F=2 (Priya, Sneha).",
+HOSPITAL_T,HOSPITAL_S,(["gender","patient_count"],[["F",2],["M",2]]),
+"SELECT gender,COUNT(*)AS patient_count FROM patients GROUP BY gender ORDER BY gender;",topic="COUNT Per Gender")
+
+add("sql-279","Products in Price Range 1K-10K","E-Commerce (Flipkart)","Wipro","easy",
+"Find products priced between 1,000 and 10,000.\n\nReturn name, price. Order by price.",
+"WHERE price BETWEEN 1000 AND 10000.",
+"Running Shoes(3499).",
+ECOM_T,ECOM_S,(["name","price"],[["Running Shoes",3499.0]]),
+"SELECT name,price FROM products WHERE price BETWEEN 1000 AND 10000 ORDER BY price;",topic="BETWEEN Price Range")
+
+add("sql-280","Employee Names in Uppercase","HR / Employee","Wipro","easy",
+"Display all employee names in uppercase.\n\nReturn upper_name, dept. Order by upper_name.",
+"UPPER(name).",
+"ALICE, BOB, CHARLIE, etc.",
+EMP_T,EMP_S,(["upper_name","dept"],[["ALICE","Eng"],["BOB","Eng"],["CHARLIE","Sales"],["DIANA","Sales"],["EVE","Eng"],["FRANK","HR"]]),
+"SELECT UPPER(name)AS upper_name,dept FROM employees ORDER BY upper_name;",topic="UPPER() Transform")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.

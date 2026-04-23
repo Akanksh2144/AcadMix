@@ -64890,6 +64890,2358 @@
     "solution_sql": "SELECT c.name,COUNT(e.id)AS enrollment_count FROM courses c JOIN enrollments e ON c.id=e.course_id GROUP BY c.name ORDER BY enrollment_count DESC LIMIT 1;"
   },
   {
+    "id": "sql-271",
+    "title": "Salary Percentile Ranking",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "Infosys",
+    "difficulty": "hard",
+    "topic": "PERCENT_RANK Percentile",
+    "problem_statement": "Calculate the percentile rank of each employee's salary.\n\nReturn name, salary, percentile (rounded to 2). Order by percentile DESC.",
+    "hint": "PERCENT_RANK() OVER(ORDER BY salary).",
+    "explanation": "Alice at 100th percentile, Frank at 0th.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "dept",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "mgr_id",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Eng",
+            70000,
+            null,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Eng",
+            60000,
+            1,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Sales",
+            55000,
+            null,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Sales",
+            50000,
+            3,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Eng",
+            65000,
+            1,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "HR",
+            45000,
+            null,
+            "2022-02-14"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "salary",
+        "percentile"
+      ],
+      "rows": [
+        [
+          "Alice",
+          70000,
+          1.0
+        ],
+        [
+          "Eve",
+          65000,
+          0.8
+        ],
+        [
+          "Bob",
+          60000,
+          0.6
+        ],
+        [
+          "Charlie",
+          55000,
+          0.4
+        ],
+        [
+          "Diana",
+          50000,
+          0.2
+        ],
+        [
+          "Frank",
+          45000,
+          0.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR,dept VARCHAR,salary INT,mgr_id INT,hire_date DATE);\nINSERT INTO employees VALUES(1,'Alice','Eng',70000,NULL,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Eng',60000,1,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Sales',55000,NULL,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Sales',50000,3,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Eng',65000,1,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','HR',45000,NULL,'2022-02-14');",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "salary",
+          "percentile"
+        ],
+        "values": [
+          [
+            "Alice",
+            70000,
+            1.0
+          ],
+          [
+            "Eve",
+            65000,
+            0.8
+          ],
+          [
+            "Bob",
+            60000,
+            0.6
+          ],
+          [
+            "Charlie",
+            55000,
+            0.4
+          ],
+          [
+            "Diana",
+            50000,
+            0.2
+          ],
+          [
+            "Frank",
+            45000,
+            0.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT name,salary,ROUND(PERCENT_RANK() OVER(ORDER BY salary),2)AS percentile FROM employees ORDER BY percentile DESC;"
+  },
+  {
+    "id": "sql-272",
+    "title": "Revenue Per City From E-Commerce",
+    "dataset_theme": "E-Commerce (Flipkart)",
+    "company_tag": "Infosys",
+    "difficulty": "medium",
+    "topic": "Revenue Per City",
+    "problem_statement": "Calculate total order revenue per customer city.\n\nReturn city, total_revenue. Order by total_revenue DESC.",
+    "hint": "JOIN customers + orders, GROUP BY city, SUM(total).",
+    "explanation": "Mumbai: Ankit+Sneha orders. Delhi: Priya. Pune: Rohan. Bangalore: Vikram.",
+    "tables_meta": [
+      {
+        "name": "customers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "email",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ankit",
+            "ankit@gmail.com",
+            "Mumbai",
+            "2023-01-15"
+          ],
+          [
+            2,
+            "Priya",
+            "priya@yahoo.com",
+            "Delhi",
+            "2023-03-20"
+          ],
+          [
+            3,
+            "Rohan",
+            "rohan@gmail.com",
+            "Bangalore",
+            "2023-06-10"
+          ],
+          [
+            4,
+            "Sneha",
+            "sneha@outlook.com",
+            "Mumbai",
+            "2024-01-05"
+          ],
+          [
+            5,
+            "Vikram",
+            "vikram@gmail.com",
+            "Chennai",
+            "2023-09-12"
+          ]
+        ]
+      },
+      {
+        "name": "products",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "product_name",
+            "type": "varchar"
+          },
+          {
+            "name": "category",
+            "type": "varchar"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Laptop",
+            "Electronics",
+            55000
+          ],
+          [
+            102,
+            "Headphones",
+            "Electronics",
+            2500
+          ],
+          [
+            103,
+            "T-Shirt",
+            "Fashion",
+            799
+          ],
+          [
+            104,
+            "Sneakers",
+            "Fashion",
+            3200
+          ],
+          [
+            105,
+            "Python Book",
+            "Books",
+            450
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "customer_id",
+            "type": "int"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          },
+          {
+            "name": "total",
+            "type": "real"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            "2024-01-10",
+            57500,
+            "delivered"
+          ],
+          [
+            1002,
+            2,
+            "2024-01-15",
+            3299,
+            "delivered"
+          ],
+          [
+            1003,
+            1,
+            "2024-02-05",
+            799,
+            "delivered"
+          ],
+          [
+            1004,
+            3,
+            "2024-02-20",
+            55450,
+            "shipped"
+          ],
+          [
+            1005,
+            2,
+            "2024-03-01",
+            2500,
+            "cancelled"
+          ],
+          [
+            1006,
+            4,
+            "2024-03-10",
+            6900,
+            "delivered"
+          ],
+          [
+            1007,
+            5,
+            "2024-03-15",
+            450,
+            "delivered"
+          ]
+        ]
+      },
+      {
+        "name": "order_items",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "order_id",
+            "type": "int"
+          },
+          {
+            "name": "product_id",
+            "type": "int"
+          },
+          {
+            "name": "qty",
+            "type": "int"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1001,
+            101,
+            1,
+            55000
+          ],
+          [
+            2,
+            1001,
+            102,
+            1,
+            2500
+          ],
+          [
+            3,
+            1002,
+            103,
+            1,
+            799
+          ],
+          [
+            4,
+            1002,
+            102,
+            1,
+            2500
+          ],
+          [
+            5,
+            1003,
+            103,
+            1,
+            799
+          ],
+          [
+            6,
+            1004,
+            101,
+            1,
+            55000
+          ],
+          [
+            7,
+            1004,
+            105,
+            1,
+            450
+          ],
+          [
+            8,
+            1005,
+            102,
+            1,
+            2500
+          ],
+          [
+            9,
+            1006,
+            104,
+            1,
+            3200
+          ],
+          [
+            10,
+            1006,
+            103,
+            1,
+            799
+          ],
+          [
+            11,
+            1006,
+            102,
+            1,
+            2500
+          ],
+          [
+            12,
+            1007,
+            105,
+            1,
+            450
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "city",
+        "total_revenue"
+      ],
+      "rows": [
+        [
+          "Mumbai",
+          67699.0
+        ],
+        [
+          "Pune",
+          55450.0
+        ],
+        [
+          "Delhi",
+          3299.0
+        ],
+        [
+          "Bangalore",
+          450.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE customers(id INT PRIMARY KEY,name VARCHAR,email VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE products(id INT PRIMARY KEY,product_name VARCHAR,category VARCHAR,price REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,customer_id INT,order_date DATE,total REAL,status VARCHAR);\nCREATE TABLE order_items(id INT PRIMARY KEY,order_id INT,product_id INT,qty INT,price REAL);\nINSERT INTO customers VALUES(1,'Ankit','ankit@gmail.com','Mumbai','2023-01-15');\nINSERT INTO customers VALUES(2,'Priya','priya@yahoo.com','Delhi','2023-03-20');\nINSERT INTO customers VALUES(3,'Rohan','rohan@gmail.com','Bangalore','2023-06-10');\nINSERT INTO customers VALUES(4,'Sneha','sneha@outlook.com','Mumbai','2024-01-05');\nINSERT INTO customers VALUES(5,'Vikram','vikram@gmail.com','Chennai','2023-09-12');\nINSERT INTO products VALUES(101,'Laptop',  'Electronics',55000);\nINSERT INTO products VALUES(102,'Headphones','Electronics',2500);\nINSERT INTO products VALUES(103,'T-Shirt','Fashion',799);\nINSERT INTO products VALUES(104,'Sneakers','Fashion',3200);\nINSERT INTO products VALUES(105,'Python Book','Books',450);\nINSERT INTO orders VALUES(1001,1,'2024-01-10',57500,'delivered');\nINSERT INTO orders VALUES(1002,2,'2024-01-15',3299,'delivered');\nINSERT INTO orders VALUES(1003,1,'2024-02-05',799,'delivered');\nINSERT INTO orders VALUES(1004,3,'2024-02-20',55450,'shipped');\nINSERT INTO orders VALUES(1005,2,'2024-03-01',2500,'cancelled');\nINSERT INTO orders VALUES(1006,4,'2024-03-10',6900,'delivered');\nINSERT INTO orders VALUES(1007,5,'2024-03-15',450,'delivered');\nINSERT INTO order_items VALUES(1,1001,101,1,55000);\nINSERT INTO order_items VALUES(2,1001,102,1,2500);\nINSERT INTO order_items VALUES(3,1002,103,1,799);\nINSERT INTO order_items VALUES(4,1002,102,1,2500);\nINSERT INTO order_items VALUES(5,1003,103,1,799);\nINSERT INTO order_items VALUES(6,1004,101,1,55000);\nINSERT INTO order_items VALUES(7,1004,105,1,450);\nINSERT INTO order_items VALUES(8,1005,102,1,2500);\nINSERT INTO order_items VALUES(9,1006,104,1,3200);\nINSERT INTO order_items VALUES(10,1006,103,1,799);\nINSERT INTO order_items VALUES(11,1006,102,1,2500);\nINSERT INTO order_items VALUES(12,1007,105,1,450);",
+    "expected_output": [
+      {
+        "columns": [
+          "city",
+          "total_revenue"
+        ],
+        "values": [
+          [
+            "Mumbai",
+            67699.0
+          ],
+          [
+            "Pune",
+            55450.0
+          ],
+          [
+            "Delhi",
+            3299.0
+          ],
+          [
+            "Bangalore",
+            450.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT c.city,SUM(o.total)AS total_revenue FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.city ORDER BY total_revenue DESC;"
+  },
+  {
+    "id": "sql-273",
+    "title": "Average Likes Per User",
+    "dataset_theme": "Social Media (Instagram)",
+    "company_tag": "Infosys",
+    "difficulty": "easy",
+    "topic": "AVG Likes Per User",
+    "problem_statement": "Calculate the average number of likes per user's posts.\n\nReturn username, avg_likes (rounded to 0). Order by avg_likes DESC.",
+    "hint": "JOIN profiles + posts, AVG(likes), GROUP BY user.",
+    "explanation": "Average likes each user gets on their posts.",
+    "tables_meta": [
+      {
+        "name": "profiles",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "username",
+            "type": "varchar"
+          },
+          {
+            "name": "full_name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "joined",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "ankit_dev",
+            "Ankit Sharma",
+            "Mumbai",
+            "2023-01-10"
+          ],
+          [
+            2,
+            "priya_codes",
+            "Priya Patel",
+            "Delhi",
+            "2023-02-15"
+          ],
+          [
+            3,
+            "rohan_js",
+            "Rohan Gupta",
+            "Bangalore",
+            "2023-04-20"
+          ],
+          [
+            4,
+            "sneha_ml",
+            "Sneha Iyer",
+            "Chennai",
+            "2023-07-01"
+          ],
+          [
+            5,
+            "vikram_sql",
+            "Vikram Singh",
+            "Mumbai",
+            "2023-09-05"
+          ]
+        ]
+      },
+      {
+        "name": "posts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "content",
+            "type": "varchar"
+          },
+          {
+            "name": "post_date",
+            "type": "date"
+          },
+          {
+            "name": "likes",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            "Learning React today!",
+            "2024-01-10",
+            25
+          ],
+          [
+            2,
+            1,
+            "SQL is amazing",
+            "2024-01-15",
+            42
+          ],
+          [
+            3,
+            2,
+            "My first open source PR!",
+            "2024-01-20",
+            88
+          ],
+          [
+            4,
+            3,
+            "Built a REST API",
+            "2024-02-05",
+            15
+          ],
+          [
+            5,
+            2,
+            "Python vs JavaScript",
+            "2024-02-10",
+            56
+          ]
+        ]
+      },
+      {
+        "name": "follows",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "follower_id",
+            "type": "int"
+          },
+          {
+            "name": "following_id",
+            "type": "int"
+          },
+          {
+            "name": "follow_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            2,
+            "2023-03-01"
+          ],
+          [
+            2,
+            1,
+            3,
+            "2023-05-10"
+          ],
+          [
+            3,
+            2,
+            1,
+            "2023-03-05"
+          ],
+          [
+            4,
+            2,
+            4,
+            "2023-08-15"
+          ],
+          [
+            5,
+            3,
+            1,
+            "2023-06-01"
+          ],
+          [
+            6,
+            3,
+            2,
+            "2023-06-01"
+          ]
+        ]
+      },
+      {
+        "name": "comments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "post_id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "comment",
+            "type": "varchar"
+          },
+          {
+            "name": "comment_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            2,
+            2,
+            "Great post!",
+            "2024-01-15"
+          ],
+          [
+            2,
+            3,
+            1,
+            "Congrats!",
+            "2024-01-20"
+          ],
+          [
+            3,
+            3,
+            4,
+            "Amazing work",
+            "2024-01-21"
+          ],
+          [
+            4,
+            5,
+            3,
+            "I prefer Python",
+            "2024-02-11"
+          ],
+          [
+            5,
+            7,
+            1,
+            "Nice writeup",
+            "2024-03-01"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "username",
+        "avg_likes"
+      ],
+      "rows": []
+    },
+    "schema_sql": "CREATE TABLE profiles(id INT PRIMARY KEY,username VARCHAR,full_name VARCHAR,city VARCHAR,joined DATE);\nCREATE TABLE posts(id INT PRIMARY KEY,user_id INT,content VARCHAR,post_date DATE,likes INT);\nCREATE TABLE follows(id INT PRIMARY KEY,follower_id INT,following_id INT,follow_date DATE);\nCREATE TABLE comments(id INT PRIMARY KEY,post_id INT,user_id INT,comment VARCHAR,comment_date DATE);\nINSERT INTO profiles VALUES(1,'ankit_dev','Ankit Sharma','Mumbai','2023-01-10');\nINSERT INTO profiles VALUES(2,'priya_codes','Priya Patel','Delhi','2023-02-15');\nINSERT INTO profiles VALUES(3,'rohan_js','Rohan Gupta','Bangalore','2023-04-20');\nINSERT INTO profiles VALUES(4,'sneha_ml','Sneha Iyer','Chennai','2023-07-01');\nINSERT INTO profiles VALUES(5,'vikram_sql','Vikram Singh','Mumbai','2023-09-05');\nINSERT INTO posts VALUES(1,1,'Learning React today!','2024-01-10',25);\nINSERT INTO posts VALUES(2,1,'SQL is amazing','2024-01-15',42);\nINSERT INTO posts VALUES(3,2,'My first open source PR!','2024-01-20',88);\nINSERT INTO posts VALUES(4,3,'Built a REST API','2024-02-05',15);\nINSERT INTO posts VALUES(5,2,'Python vs JavaScript','2024-02-10',56);\nINSERT INTO posts VALUES(6,4,'Deep learning notes','2024-02-15',33);\nINSERT INTO posts VALUES(7,5,'SQL window functions','2024-03-01',71);\nINSERT INTO posts VALUES(8,1,'Deployed to production!','2024-03-05',95);\nINSERT INTO follows VALUES(1,1,2,'2023-03-01');\nINSERT INTO follows VALUES(2,1,3,'2023-05-10');\nINSERT INTO follows VALUES(3,2,1,'2023-03-05');\nINSERT INTO follows VALUES(4,2,4,'2023-08-15');\nINSERT INTO follows VALUES(5,3,1,'2023-06-01');\nINSERT INTO follows VALUES(6,3,2,'2023-06-01');\nINSERT INTO follows VALUES(7,4,2,'2023-09-01');\nINSERT INTO follows VALUES(8,5,1,'2023-10-01');\nINSERT INTO follows VALUES(9,5,3,'2023-10-01');\nINSERT INTO comments VALUES(1,2,2,'Great post!','2024-01-15');\nINSERT INTO comments VALUES(2,3,1,'Congrats!','2024-01-20');\nINSERT INTO comments VALUES(3,3,4,'Amazing work','2024-01-21');\nINSERT INTO comments VALUES(4,5,3,'I prefer Python','2024-02-11');\nINSERT INTO comments VALUES(5,7,1,'Nice writeup','2024-03-01');\nINSERT INTO comments VALUES(6,8,2,'Awesome!','2024-03-05');\nINSERT INTO comments VALUES(7,8,3,'Well done','2024-03-06');\nINSERT INTO comments VALUES(8,8,5,'Ship it!','2024-03-06');",
+    "expected_output": [
+      {
+        "columns": [
+          "username",
+          "avg_likes"
+        ],
+        "values": []
+      }
+    ],
+    "solution_sql": "SELECT pr.username,ROUND(AVG(p.likes),0)AS avg_likes FROM profiles pr JOIN posts p ON pr.id=p.user_id GROUP BY pr.username ORDER BY avg_likes DESC;"
+  },
+  {
+    "id": "sql-274",
+    "title": "Doctors Who Treated Only Female Patients",
+    "dataset_theme": "Healthcare / Hospital",
+    "company_tag": "Infosys",
+    "difficulty": "hard",
+    "topic": "NOT EXISTS: Exclusive Filter",
+    "problem_statement": "Find doctors who have ONLY treated female patients (never treated a male).\n\nReturn doctor name. Order by name.",
+    "hint": "NOT EXISTS: no appointment with male patient.",
+    "explanation": "Check each doctor's patient gender distribution.",
+    "tables_meta": [
+      {
+        "name": "doctors",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "specialty",
+            "type": "varchar"
+          },
+          {
+            "name": "experience_yrs",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Dr. Sharma",
+            "Cardiology",
+            15
+          ],
+          [
+            2,
+            "Dr. Patel",
+            "Orthopedics",
+            10
+          ],
+          [
+            3,
+            "Dr. Gupta",
+            "Dermatology",
+            8
+          ]
+        ]
+      },
+      {
+        "name": "patients",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "age",
+            "type": "int"
+          },
+          {
+            "name": "gender",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Rahul",
+            35,
+            "M"
+          ],
+          [
+            102,
+            "Priya",
+            28,
+            "F"
+          ],
+          [
+            103,
+            "Amit",
+            45,
+            "M"
+          ],
+          [
+            104,
+            "Sneha",
+            32,
+            "F"
+          ]
+        ]
+      },
+      {
+        "name": "appointments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "doc_id",
+            "type": "int"
+          },
+          {
+            "name": "patient_id",
+            "type": "int"
+          },
+          {
+            "name": "visit_date",
+            "type": "date"
+          },
+          {
+            "name": "diagnosis",
+            "type": "varchar"
+          },
+          {
+            "name": "fee",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            101,
+            "2024-01-10",
+            "Hypertension",
+            500
+          ],
+          [
+            1002,
+            2,
+            102,
+            "2024-01-12",
+            "Fracture",
+            800
+          ],
+          [
+            1003,
+            1,
+            103,
+            "2024-01-15",
+            "Arrhythmia",
+            500
+          ],
+          [
+            1004,
+            3,
+            104,
+            "2024-02-01",
+            "Eczema",
+            400
+          ],
+          [
+            1005,
+            1,
+            101,
+            "2024-02-10",
+            "Follow-up",
+            300
+          ],
+          [
+            1006,
+            2,
+            103,
+            "2024-02-15",
+            "Joint Pain",
+            600
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name"
+      ],
+      "rows": []
+    },
+    "schema_sql": "CREATE TABLE doctors(id INT PRIMARY KEY,name VARCHAR,specialty VARCHAR,experience_yrs INT);\nCREATE TABLE patients(id INT PRIMARY KEY,name VARCHAR,age INT,gender VARCHAR);\nCREATE TABLE appointments(id INT PRIMARY KEY,doc_id INT,patient_id INT,visit_date DATE,diagnosis VARCHAR,fee INT);\nINSERT INTO doctors VALUES(1,'Dr. Sharma','Cardiology',15);\nINSERT INTO doctors VALUES(2,'Dr. Patel','Orthopedics',10);\nINSERT INTO doctors VALUES(3,'Dr. Gupta','Dermatology',8);\nINSERT INTO patients VALUES(101,'Rahul',35,'M');\nINSERT INTO patients VALUES(102,'Priya',28,'F');\nINSERT INTO patients VALUES(103,'Amit',45,'M');\nINSERT INTO patients VALUES(104,'Sneha',32,'F');\nINSERT INTO appointments VALUES(1001,1,101,'2024-01-10','Hypertension',500);\nINSERT INTO appointments VALUES(1002,2,102,'2024-01-12','Fracture',800);\nINSERT INTO appointments VALUES(1003,1,103,'2024-01-15','Arrhythmia',500);\nINSERT INTO appointments VALUES(1004,3,104,'2024-02-01','Eczema',400);\nINSERT INTO appointments VALUES(1005,1,101,'2024-02-10','Follow-up',300);\nINSERT INTO appointments VALUES(1006,2,103,'2024-02-15','Joint Pain',600);",
+    "expected_output": [
+      {
+        "columns": [
+          "name"
+        ],
+        "values": []
+      }
+    ],
+    "solution_sql": "SELECT DISTINCT d.name FROM doctors d JOIN appointments a ON d.id=a.doc_id JOIN patients p ON a.patient_id=p.id WHERE NOT EXISTS(SELECT 1 FROM appointments a2 JOIN patients p2 ON a2.patient_id=p2.id WHERE a2.doc_id=d.id AND p2.gender='M') ORDER BY d.name;"
+  },
+  {
+    "id": "sql-275",
+    "title": "Average Post Likes Above 100",
+    "dataset_theme": "Social Media (Instagram)",
+    "company_tag": "Infosys",
+    "difficulty": "medium",
+    "topic": "HAVING AVG Engagement",
+    "problem_statement": "Find users whose average post likes exceed 100.\n\nReturn username, avg_likes. Order by avg_likes DESC.",
+    "hint": "JOIN + GROUP BY + HAVING AVG(likes) > 100.",
+    "explanation": "Filter users with high avg engagement.",
+    "tables_meta": [
+      {
+        "name": "profiles",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "username",
+            "type": "varchar"
+          },
+          {
+            "name": "full_name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "joined",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "ankit_dev",
+            "Ankit Sharma",
+            "Mumbai",
+            "2023-01-10"
+          ],
+          [
+            2,
+            "priya_codes",
+            "Priya Patel",
+            "Delhi",
+            "2023-02-15"
+          ],
+          [
+            3,
+            "rohan_js",
+            "Rohan Gupta",
+            "Bangalore",
+            "2023-04-20"
+          ],
+          [
+            4,
+            "sneha_ml",
+            "Sneha Iyer",
+            "Chennai",
+            "2023-07-01"
+          ],
+          [
+            5,
+            "vikram_sql",
+            "Vikram Singh",
+            "Mumbai",
+            "2023-09-05"
+          ]
+        ]
+      },
+      {
+        "name": "posts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "content",
+            "type": "varchar"
+          },
+          {
+            "name": "post_date",
+            "type": "date"
+          },
+          {
+            "name": "likes",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            "Learning React today!",
+            "2024-01-10",
+            25
+          ],
+          [
+            2,
+            1,
+            "SQL is amazing",
+            "2024-01-15",
+            42
+          ],
+          [
+            3,
+            2,
+            "My first open source PR!",
+            "2024-01-20",
+            88
+          ],
+          [
+            4,
+            3,
+            "Built a REST API",
+            "2024-02-05",
+            15
+          ],
+          [
+            5,
+            2,
+            "Python vs JavaScript",
+            "2024-02-10",
+            56
+          ]
+        ]
+      },
+      {
+        "name": "follows",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "follower_id",
+            "type": "int"
+          },
+          {
+            "name": "following_id",
+            "type": "int"
+          },
+          {
+            "name": "follow_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            2,
+            "2023-03-01"
+          ],
+          [
+            2,
+            1,
+            3,
+            "2023-05-10"
+          ],
+          [
+            3,
+            2,
+            1,
+            "2023-03-05"
+          ],
+          [
+            4,
+            2,
+            4,
+            "2023-08-15"
+          ],
+          [
+            5,
+            3,
+            1,
+            "2023-06-01"
+          ],
+          [
+            6,
+            3,
+            2,
+            "2023-06-01"
+          ]
+        ]
+      },
+      {
+        "name": "comments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "post_id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "comment",
+            "type": "varchar"
+          },
+          {
+            "name": "comment_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            2,
+            2,
+            "Great post!",
+            "2024-01-15"
+          ],
+          [
+            2,
+            3,
+            1,
+            "Congrats!",
+            "2024-01-20"
+          ],
+          [
+            3,
+            3,
+            4,
+            "Amazing work",
+            "2024-01-21"
+          ],
+          [
+            4,
+            5,
+            3,
+            "I prefer Python",
+            "2024-02-11"
+          ],
+          [
+            5,
+            7,
+            1,
+            "Nice writeup",
+            "2024-03-01"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "username",
+        "avg_likes"
+      ],
+      "rows": []
+    },
+    "schema_sql": "CREATE TABLE profiles(id INT PRIMARY KEY,username VARCHAR,full_name VARCHAR,city VARCHAR,joined DATE);\nCREATE TABLE posts(id INT PRIMARY KEY,user_id INT,content VARCHAR,post_date DATE,likes INT);\nCREATE TABLE follows(id INT PRIMARY KEY,follower_id INT,following_id INT,follow_date DATE);\nCREATE TABLE comments(id INT PRIMARY KEY,post_id INT,user_id INT,comment VARCHAR,comment_date DATE);\nINSERT INTO profiles VALUES(1,'ankit_dev','Ankit Sharma','Mumbai','2023-01-10');\nINSERT INTO profiles VALUES(2,'priya_codes','Priya Patel','Delhi','2023-02-15');\nINSERT INTO profiles VALUES(3,'rohan_js','Rohan Gupta','Bangalore','2023-04-20');\nINSERT INTO profiles VALUES(4,'sneha_ml','Sneha Iyer','Chennai','2023-07-01');\nINSERT INTO profiles VALUES(5,'vikram_sql','Vikram Singh','Mumbai','2023-09-05');\nINSERT INTO posts VALUES(1,1,'Learning React today!','2024-01-10',25);\nINSERT INTO posts VALUES(2,1,'SQL is amazing','2024-01-15',42);\nINSERT INTO posts VALUES(3,2,'My first open source PR!','2024-01-20',88);\nINSERT INTO posts VALUES(4,3,'Built a REST API','2024-02-05',15);\nINSERT INTO posts VALUES(5,2,'Python vs JavaScript','2024-02-10',56);\nINSERT INTO posts VALUES(6,4,'Deep learning notes','2024-02-15',33);\nINSERT INTO posts VALUES(7,5,'SQL window functions','2024-03-01',71);\nINSERT INTO posts VALUES(8,1,'Deployed to production!','2024-03-05',95);\nINSERT INTO follows VALUES(1,1,2,'2023-03-01');\nINSERT INTO follows VALUES(2,1,3,'2023-05-10');\nINSERT INTO follows VALUES(3,2,1,'2023-03-05');\nINSERT INTO follows VALUES(4,2,4,'2023-08-15');\nINSERT INTO follows VALUES(5,3,1,'2023-06-01');\nINSERT INTO follows VALUES(6,3,2,'2023-06-01');\nINSERT INTO follows VALUES(7,4,2,'2023-09-01');\nINSERT INTO follows VALUES(8,5,1,'2023-10-01');\nINSERT INTO follows VALUES(9,5,3,'2023-10-01');\nINSERT INTO comments VALUES(1,2,2,'Great post!','2024-01-15');\nINSERT INTO comments VALUES(2,3,1,'Congrats!','2024-01-20');\nINSERT INTO comments VALUES(3,3,4,'Amazing work','2024-01-21');\nINSERT INTO comments VALUES(4,5,3,'I prefer Python','2024-02-11');\nINSERT INTO comments VALUES(5,7,1,'Nice writeup','2024-03-01');\nINSERT INTO comments VALUES(6,8,2,'Awesome!','2024-03-05');\nINSERT INTO comments VALUES(7,8,3,'Well done','2024-03-06');\nINSERT INTO comments VALUES(8,8,5,'Ship it!','2024-03-06');",
+    "expected_output": [
+      {
+        "columns": [
+          "username",
+          "avg_likes"
+        ],
+        "values": []
+      }
+    ],
+    "solution_sql": "SELECT pr.username,ROUND(AVG(p.likes),0)AS avg_likes FROM profiles pr JOIN posts p ON pr.id=p.user_id GROUP BY pr.username HAVING AVG(p.likes)>100 ORDER BY avg_likes DESC;"
+  },
+  {
+    "id": "sql-276",
+    "title": "Total Fees Collected Per Specialty",
+    "dataset_theme": "Healthcare / Hospital",
+    "company_tag": "Infosys",
+    "difficulty": "medium",
+    "topic": "SUM Fees Per Specialty",
+    "problem_statement": "Calculate total fees collected per medical specialty.\n\nReturn specialty, total_fees. Order by total_fees DESC.",
+    "hint": "JOIN doctors + appointments, SUM(fee), GROUP BY specialty.",
+    "explanation": "Orthopedics=1400, Cardiology=1300, Dermatology=400.",
+    "tables_meta": [
+      {
+        "name": "doctors",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "specialty",
+            "type": "varchar"
+          },
+          {
+            "name": "experience_yrs",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Dr. Sharma",
+            "Cardiology",
+            15
+          ],
+          [
+            2,
+            "Dr. Patel",
+            "Orthopedics",
+            10
+          ],
+          [
+            3,
+            "Dr. Gupta",
+            "Dermatology",
+            8
+          ]
+        ]
+      },
+      {
+        "name": "patients",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "age",
+            "type": "int"
+          },
+          {
+            "name": "gender",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Rahul",
+            35,
+            "M"
+          ],
+          [
+            102,
+            "Priya",
+            28,
+            "F"
+          ],
+          [
+            103,
+            "Amit",
+            45,
+            "M"
+          ],
+          [
+            104,
+            "Sneha",
+            32,
+            "F"
+          ]
+        ]
+      },
+      {
+        "name": "appointments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "doc_id",
+            "type": "int"
+          },
+          {
+            "name": "patient_id",
+            "type": "int"
+          },
+          {
+            "name": "visit_date",
+            "type": "date"
+          },
+          {
+            "name": "diagnosis",
+            "type": "varchar"
+          },
+          {
+            "name": "fee",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            101,
+            "2024-01-10",
+            "Hypertension",
+            500
+          ],
+          [
+            1002,
+            2,
+            102,
+            "2024-01-12",
+            "Fracture",
+            800
+          ],
+          [
+            1003,
+            1,
+            103,
+            "2024-01-15",
+            "Arrhythmia",
+            500
+          ],
+          [
+            1004,
+            3,
+            104,
+            "2024-02-01",
+            "Eczema",
+            400
+          ],
+          [
+            1005,
+            1,
+            101,
+            "2024-02-10",
+            "Follow-up",
+            300
+          ],
+          [
+            1006,
+            2,
+            103,
+            "2024-02-15",
+            "Joint Pain",
+            600
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "specialty",
+        "total_fees"
+      ],
+      "rows": [
+        [
+          "Orthopedics",
+          1400
+        ],
+        [
+          "Cardiology",
+          1300
+        ],
+        [
+          "Dermatology",
+          400
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE doctors(id INT PRIMARY KEY,name VARCHAR,specialty VARCHAR,experience_yrs INT);\nCREATE TABLE patients(id INT PRIMARY KEY,name VARCHAR,age INT,gender VARCHAR);\nCREATE TABLE appointments(id INT PRIMARY KEY,doc_id INT,patient_id INT,visit_date DATE,diagnosis VARCHAR,fee INT);\nINSERT INTO doctors VALUES(1,'Dr. Sharma','Cardiology',15);\nINSERT INTO doctors VALUES(2,'Dr. Patel','Orthopedics',10);\nINSERT INTO doctors VALUES(3,'Dr. Gupta','Dermatology',8);\nINSERT INTO patients VALUES(101,'Rahul',35,'M');\nINSERT INTO patients VALUES(102,'Priya',28,'F');\nINSERT INTO patients VALUES(103,'Amit',45,'M');\nINSERT INTO patients VALUES(104,'Sneha',32,'F');\nINSERT INTO appointments VALUES(1001,1,101,'2024-01-10','Hypertension',500);\nINSERT INTO appointments VALUES(1002,2,102,'2024-01-12','Fracture',800);\nINSERT INTO appointments VALUES(1003,1,103,'2024-01-15','Arrhythmia',500);\nINSERT INTO appointments VALUES(1004,3,104,'2024-02-01','Eczema',400);\nINSERT INTO appointments VALUES(1005,1,101,'2024-02-10','Follow-up',300);\nINSERT INTO appointments VALUES(1006,2,103,'2024-02-15','Joint Pain',600);",
+    "expected_output": [
+      {
+        "columns": [
+          "specialty",
+          "total_fees"
+        ],
+        "values": [
+          [
+            "Orthopedics",
+            1400
+          ],
+          [
+            "Cardiology",
+            1300
+          ],
+          [
+            "Dermatology",
+            400
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT d.specialty,SUM(a.fee)AS total_fees FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.specialty ORDER BY total_fees DESC;"
+  },
+  {
+    "id": "sql-277",
+    "title": "Employees Earning Exactly 60000",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "Wipro",
+    "difficulty": "easy",
+    "topic": "WHERE Exact Match",
+    "problem_statement": "Find employees whose salary is exactly 60,000.\n\nReturn name, dept. Order by name.",
+    "hint": "WHERE salary = 60000.",
+    "explanation": "Bob earns exactly 60000.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "dept",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "mgr_id",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Eng",
+            70000,
+            null,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Eng",
+            60000,
+            1,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Sales",
+            55000,
+            null,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Sales",
+            50000,
+            3,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Eng",
+            65000,
+            1,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "HR",
+            45000,
+            null,
+            "2022-02-14"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "dept"
+      ],
+      "rows": [
+        [
+          "Bob",
+          "Eng"
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR,dept VARCHAR,salary INT,mgr_id INT,hire_date DATE);\nINSERT INTO employees VALUES(1,'Alice','Eng',70000,NULL,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Eng',60000,1,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Sales',55000,NULL,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Sales',50000,3,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Eng',65000,1,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','HR',45000,NULL,'2022-02-14');",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "dept"
+        ],
+        "values": [
+          [
+            "Bob",
+            "Eng"
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT name,dept FROM employees WHERE salary=60000 ORDER BY name;"
+  },
+  {
+    "id": "sql-278",
+    "title": "Count Male vs Female Patients",
+    "dataset_theme": "Healthcare / Hospital",
+    "company_tag": "Wipro",
+    "difficulty": "easy",
+    "topic": "COUNT Per Gender",
+    "problem_statement": "Count how many patients are male vs female.\n\nReturn gender, patient_count. Order by gender.",
+    "hint": "GROUP BY gender, COUNT.",
+    "explanation": "M=2 (Rahul, Amit). F=2 (Priya, Sneha).",
+    "tables_meta": [
+      {
+        "name": "doctors",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "specialty",
+            "type": "varchar"
+          },
+          {
+            "name": "experience_yrs",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Dr. Sharma",
+            "Cardiology",
+            15
+          ],
+          [
+            2,
+            "Dr. Patel",
+            "Orthopedics",
+            10
+          ],
+          [
+            3,
+            "Dr. Gupta",
+            "Dermatology",
+            8
+          ]
+        ]
+      },
+      {
+        "name": "patients",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "age",
+            "type": "int"
+          },
+          {
+            "name": "gender",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Rahul",
+            35,
+            "M"
+          ],
+          [
+            102,
+            "Priya",
+            28,
+            "F"
+          ],
+          [
+            103,
+            "Amit",
+            45,
+            "M"
+          ],
+          [
+            104,
+            "Sneha",
+            32,
+            "F"
+          ]
+        ]
+      },
+      {
+        "name": "appointments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "doc_id",
+            "type": "int"
+          },
+          {
+            "name": "patient_id",
+            "type": "int"
+          },
+          {
+            "name": "visit_date",
+            "type": "date"
+          },
+          {
+            "name": "diagnosis",
+            "type": "varchar"
+          },
+          {
+            "name": "fee",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            101,
+            "2024-01-10",
+            "Hypertension",
+            500
+          ],
+          [
+            1002,
+            2,
+            102,
+            "2024-01-12",
+            "Fracture",
+            800
+          ],
+          [
+            1003,
+            1,
+            103,
+            "2024-01-15",
+            "Arrhythmia",
+            500
+          ],
+          [
+            1004,
+            3,
+            104,
+            "2024-02-01",
+            "Eczema",
+            400
+          ],
+          [
+            1005,
+            1,
+            101,
+            "2024-02-10",
+            "Follow-up",
+            300
+          ],
+          [
+            1006,
+            2,
+            103,
+            "2024-02-15",
+            "Joint Pain",
+            600
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "gender",
+        "patient_count"
+      ],
+      "rows": [
+        [
+          "F",
+          2
+        ],
+        [
+          "M",
+          2
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE doctors(id INT PRIMARY KEY,name VARCHAR,specialty VARCHAR,experience_yrs INT);\nCREATE TABLE patients(id INT PRIMARY KEY,name VARCHAR,age INT,gender VARCHAR);\nCREATE TABLE appointments(id INT PRIMARY KEY,doc_id INT,patient_id INT,visit_date DATE,diagnosis VARCHAR,fee INT);\nINSERT INTO doctors VALUES(1,'Dr. Sharma','Cardiology',15);\nINSERT INTO doctors VALUES(2,'Dr. Patel','Orthopedics',10);\nINSERT INTO doctors VALUES(3,'Dr. Gupta','Dermatology',8);\nINSERT INTO patients VALUES(101,'Rahul',35,'M');\nINSERT INTO patients VALUES(102,'Priya',28,'F');\nINSERT INTO patients VALUES(103,'Amit',45,'M');\nINSERT INTO patients VALUES(104,'Sneha',32,'F');\nINSERT INTO appointments VALUES(1001,1,101,'2024-01-10','Hypertension',500);\nINSERT INTO appointments VALUES(1002,2,102,'2024-01-12','Fracture',800);\nINSERT INTO appointments VALUES(1003,1,103,'2024-01-15','Arrhythmia',500);\nINSERT INTO appointments VALUES(1004,3,104,'2024-02-01','Eczema',400);\nINSERT INTO appointments VALUES(1005,1,101,'2024-02-10','Follow-up',300);\nINSERT INTO appointments VALUES(1006,2,103,'2024-02-15','Joint Pain',600);",
+    "expected_output": [
+      {
+        "columns": [
+          "gender",
+          "patient_count"
+        ],
+        "values": [
+          [
+            "F",
+            2
+          ],
+          [
+            "M",
+            2
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT gender,COUNT(*)AS patient_count FROM patients GROUP BY gender ORDER BY gender;"
+  },
+  {
+    "id": "sql-279",
+    "title": "Products in Price Range 1K-10K",
+    "dataset_theme": "E-Commerce (Flipkart)",
+    "company_tag": "Wipro",
+    "difficulty": "easy",
+    "topic": "BETWEEN Price Range",
+    "problem_statement": "Find products priced between 1,000 and 10,000.\n\nReturn name, price. Order by price.",
+    "hint": "WHERE price BETWEEN 1000 AND 10000.",
+    "explanation": "Running Shoes(3499).",
+    "tables_meta": [
+      {
+        "name": "customers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "email",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ankit",
+            "ankit@gmail.com",
+            "Mumbai",
+            "2023-01-15"
+          ],
+          [
+            2,
+            "Priya",
+            "priya@yahoo.com",
+            "Delhi",
+            "2023-03-20"
+          ],
+          [
+            3,
+            "Rohan",
+            "rohan@gmail.com",
+            "Bangalore",
+            "2023-06-10"
+          ],
+          [
+            4,
+            "Sneha",
+            "sneha@outlook.com",
+            "Mumbai",
+            "2024-01-05"
+          ],
+          [
+            5,
+            "Vikram",
+            "vikram@gmail.com",
+            "Chennai",
+            "2023-09-12"
+          ]
+        ]
+      },
+      {
+        "name": "products",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "product_name",
+            "type": "varchar"
+          },
+          {
+            "name": "category",
+            "type": "varchar"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Laptop",
+            "Electronics",
+            55000
+          ],
+          [
+            102,
+            "Headphones",
+            "Electronics",
+            2500
+          ],
+          [
+            103,
+            "T-Shirt",
+            "Fashion",
+            799
+          ],
+          [
+            104,
+            "Sneakers",
+            "Fashion",
+            3200
+          ],
+          [
+            105,
+            "Python Book",
+            "Books",
+            450
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "customer_id",
+            "type": "int"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          },
+          {
+            "name": "total",
+            "type": "real"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            "2024-01-10",
+            57500,
+            "delivered"
+          ],
+          [
+            1002,
+            2,
+            "2024-01-15",
+            3299,
+            "delivered"
+          ],
+          [
+            1003,
+            1,
+            "2024-02-05",
+            799,
+            "delivered"
+          ],
+          [
+            1004,
+            3,
+            "2024-02-20",
+            55450,
+            "shipped"
+          ],
+          [
+            1005,
+            2,
+            "2024-03-01",
+            2500,
+            "cancelled"
+          ],
+          [
+            1006,
+            4,
+            "2024-03-10",
+            6900,
+            "delivered"
+          ],
+          [
+            1007,
+            5,
+            "2024-03-15",
+            450,
+            "delivered"
+          ]
+        ]
+      },
+      {
+        "name": "order_items",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "order_id",
+            "type": "int"
+          },
+          {
+            "name": "product_id",
+            "type": "int"
+          },
+          {
+            "name": "qty",
+            "type": "int"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1001,
+            101,
+            1,
+            55000
+          ],
+          [
+            2,
+            1001,
+            102,
+            1,
+            2500
+          ],
+          [
+            3,
+            1002,
+            103,
+            1,
+            799
+          ],
+          [
+            4,
+            1002,
+            102,
+            1,
+            2500
+          ],
+          [
+            5,
+            1003,
+            103,
+            1,
+            799
+          ],
+          [
+            6,
+            1004,
+            101,
+            1,
+            55000
+          ],
+          [
+            7,
+            1004,
+            105,
+            1,
+            450
+          ],
+          [
+            8,
+            1005,
+            102,
+            1,
+            2500
+          ],
+          [
+            9,
+            1006,
+            104,
+            1,
+            3200
+          ],
+          [
+            10,
+            1006,
+            103,
+            1,
+            799
+          ],
+          [
+            11,
+            1006,
+            102,
+            1,
+            2500
+          ],
+          [
+            12,
+            1007,
+            105,
+            1,
+            450
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "price"
+      ],
+      "rows": [
+        [
+          "Running Shoes",
+          3499.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE customers(id INT PRIMARY KEY,name VARCHAR,email VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE products(id INT PRIMARY KEY,product_name VARCHAR,category VARCHAR,price REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,customer_id INT,order_date DATE,total REAL,status VARCHAR);\nCREATE TABLE order_items(id INT PRIMARY KEY,order_id INT,product_id INT,qty INT,price REAL);\nINSERT INTO customers VALUES(1,'Ankit','ankit@gmail.com','Mumbai','2023-01-15');\nINSERT INTO customers VALUES(2,'Priya','priya@yahoo.com','Delhi','2023-03-20');\nINSERT INTO customers VALUES(3,'Rohan','rohan@gmail.com','Bangalore','2023-06-10');\nINSERT INTO customers VALUES(4,'Sneha','sneha@outlook.com','Mumbai','2024-01-05');\nINSERT INTO customers VALUES(5,'Vikram','vikram@gmail.com','Chennai','2023-09-12');\nINSERT INTO products VALUES(101,'Laptop',  'Electronics',55000);\nINSERT INTO products VALUES(102,'Headphones','Electronics',2500);\nINSERT INTO products VALUES(103,'T-Shirt','Fashion',799);\nINSERT INTO products VALUES(104,'Sneakers','Fashion',3200);\nINSERT INTO products VALUES(105,'Python Book','Books',450);\nINSERT INTO orders VALUES(1001,1,'2024-01-10',57500,'delivered');\nINSERT INTO orders VALUES(1002,2,'2024-01-15',3299,'delivered');\nINSERT INTO orders VALUES(1003,1,'2024-02-05',799,'delivered');\nINSERT INTO orders VALUES(1004,3,'2024-02-20',55450,'shipped');\nINSERT INTO orders VALUES(1005,2,'2024-03-01',2500,'cancelled');\nINSERT INTO orders VALUES(1006,4,'2024-03-10',6900,'delivered');\nINSERT INTO orders VALUES(1007,5,'2024-03-15',450,'delivered');\nINSERT INTO order_items VALUES(1,1001,101,1,55000);\nINSERT INTO order_items VALUES(2,1001,102,1,2500);\nINSERT INTO order_items VALUES(3,1002,103,1,799);\nINSERT INTO order_items VALUES(4,1002,102,1,2500);\nINSERT INTO order_items VALUES(5,1003,103,1,799);\nINSERT INTO order_items VALUES(6,1004,101,1,55000);\nINSERT INTO order_items VALUES(7,1004,105,1,450);\nINSERT INTO order_items VALUES(8,1005,102,1,2500);\nINSERT INTO order_items VALUES(9,1006,104,1,3200);\nINSERT INTO order_items VALUES(10,1006,103,1,799);\nINSERT INTO order_items VALUES(11,1006,102,1,2500);\nINSERT INTO order_items VALUES(12,1007,105,1,450);",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "price"
+        ],
+        "values": [
+          [
+            "Running Shoes",
+            3499.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT name,price FROM products WHERE price BETWEEN 1000 AND 10000 ORDER BY price;"
+  },
+  {
+    "id": "sql-280",
+    "title": "Employee Names in Uppercase",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "Wipro",
+    "difficulty": "easy",
+    "topic": "UPPER() Transform",
+    "problem_statement": "Display all employee names in uppercase.\n\nReturn upper_name, dept. Order by upper_name.",
+    "hint": "UPPER(name).",
+    "explanation": "ALICE, BOB, CHARLIE, etc.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "dept",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "mgr_id",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Eng",
+            70000,
+            null,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Eng",
+            60000,
+            1,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Sales",
+            55000,
+            null,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Sales",
+            50000,
+            3,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Eng",
+            65000,
+            1,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "HR",
+            45000,
+            null,
+            "2022-02-14"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "upper_name",
+        "dept"
+      ],
+      "rows": [
+        [
+          "ALICE",
+          "Eng"
+        ],
+        [
+          "BOB",
+          "Eng"
+        ],
+        [
+          "CHARLIE",
+          "Sales"
+        ],
+        [
+          "DIANA",
+          "Sales"
+        ],
+        [
+          "EVE",
+          "Eng"
+        ],
+        [
+          "FRANK",
+          "HR"
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR,dept VARCHAR,salary INT,mgr_id INT,hire_date DATE);\nINSERT INTO employees VALUES(1,'Alice','Eng',70000,NULL,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Eng',60000,1,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Sales',55000,NULL,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Sales',50000,3,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Eng',65000,1,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','HR',45000,NULL,'2022-02-14');",
+    "expected_output": [
+      {
+        "columns": [
+          "upper_name",
+          "dept"
+        ],
+        "values": [
+          [
+            "ALICE",
+            "Eng"
+          ],
+          [
+            "BOB",
+            "Eng"
+          ],
+          [
+            "CHARLIE",
+            "Sales"
+          ],
+          [
+            "DIANA",
+            "Sales"
+          ],
+          [
+            "EVE",
+            "Eng"
+          ],
+          [
+            "FRANK",
+            "HR"
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT UPPER(name)AS upper_name,dept FROM employees ORDER BY upper_name;"
+  },
+  {
     "id": "sql-181",
     "title": "FULL OUTER JOIN: All Employees & Departments",
     "dataset_theme": "HR / Employee",
