@@ -451,12 +451,12 @@ const SQLPractice = ({ navigate, user }: any) => {
                 <span className={`px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-widest shrink-0 ${diffColors[p.difficulty]}`}>{p.difficulty}</span>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 min-h-[2.5rem]">{p.problem_statement?.split('\n')[0]}</p>
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 overflow-hidden max-h-[1.75rem]">
-                <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 py-1 px-2 rounded"><TableIcon size={14} /> {p.dataset_theme}</span>
-                {p.company_tag && <span className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 py-1 px-2 rounded"><CompanyLogo name={p.company_tag} size={14} /> {p.company_tag}</span>}
-                {p.topic && <span className="bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 py-1 px-2 rounded">📘 {p.topic}</span>}
-                {p.backend_only && <span className="bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 py-1 px-2 rounded font-bold">🐘 PostgreSQL</span>}
-                {tagLabel && <span className={`ml-auto py-1 px-2 rounded ${tagColor}`}>{tagLabel}</span>}
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 flex-nowrap overflow-hidden">
+                <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 py-1 px-2 rounded whitespace-nowrap shrink-0"><TableIcon size={14} /> {p.dataset_theme}</span>
+                {p.company_tag && <span className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 py-1 px-2 rounded whitespace-nowrap shrink-0"><CompanyLogo name={p.company_tag} size={14} /> {p.company_tag}</span>}
+                {p.topic && <span className="bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 py-1 px-2 rounded whitespace-nowrap shrink-0">📘 {p.topic}</span>}
+                {p.backend_only && <span className="bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 py-1 px-2 rounded font-bold whitespace-nowrap shrink-0">🐘 PostgreSQL</span>}
+                {tagLabel && <span className={`ml-auto py-1 px-2 rounded whitespace-nowrap shrink-0 ${tagColor}`}>{tagLabel}</span>}
               </div>
             </motion.div>);
           })}
