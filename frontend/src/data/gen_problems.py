@@ -1623,6 +1623,194 @@ ECOM_T,ECOM_S,(["name","city","domain","orders","spent","avg_order","first_order
 "WITH stats AS(SELECT c.id,c.name,c.city,SUBSTR(c.email,INSTR(c.email,'@')+1)AS domain,COUNT(*)AS orders,SUM(o.total)AS spent,ROUND(AVG(o.total))AS avg_order,MIN(o.order_date)AS first_order,MAX(o.order_date)AS last_order,CAST(JULIANDAY(MAX(o.order_date))-JULIANDAY(MIN(o.order_date))AS INT)AS days_active FROM customers c JOIN orders o ON c.id=o.customer_id WHERE o.status!='cancelled' GROUP BY c.id),cats AS(SELECT o.customer_id,p.category,SUM(oi.qty)AS qty,ROW_NUMBER() OVER(PARTITION BY o.customer_id ORDER BY SUM(oi.qty) DESC)AS rn FROM orders o JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id WHERE o.status!='cancelled' GROUP BY o.customer_id,p.category)SELECT s.name,s.city,s.domain,s.orders,s.spent,s.avg_order,s.first_order,s.last_order,s.days_active,cat.category AS top_category,CASE WHEN s.spent>10000 THEN 'VIP' WHEN s.spent>1000 THEN 'Regular' ELSE 'New' END AS segment FROM stats s LEFT JOIN cats cat ON s.id=cat.customer_id AND cat.rn=1 ORDER BY s.spent DESC;",topic="Cross-Schema BI Report (Grand Finale)")
 
 
+# ═══ BATCH 20: Mass Recruiter Deep-Dive (Glassdoor/PrepInsta Research) ═══
+# 25 problems covering the MOST FREQUENTLY asked patterns at mass hiring companies.
+
+# --- TCS NQT (3 new) ---
+add("sql-186","Employee Earns More Than Manager","HR / Employee","TCS NQT","medium",
+"Find employees who earn MORE than their direct manager.\n\nReturn employee name, employee salary, manager name, manager salary. Order by employee salary DESC.",
+"Self-join: employees e1 JOIN employees e2 ON e1.mgr_id = e2.id WHERE e1.salary > e2.salary.",
+"Bob(60K) has manager Alice(70K) — no. Eve(65K) has manager Alice(70K) — no. Diana(50K) has manager Charlie(55K) — no.",
+EMP_T,EMP_S,(["emp_name","emp_salary","mgr_name","mgr_salary"],[]),
+"SELECT e1.name AS emp_name,e1.salary AS emp_salary,e2.name AS mgr_name,e2.salary AS mgr_salary FROM employees e1 JOIN employees e2 ON e1.mgr_id=e2.id WHERE e1.salary>e2.salary ORDER BY e1.salary DESC;",topic="Employee vs Manager Salary")
+
+add("sql-187","Odd-Numbered Rows Only","HR / Employee","TCS NQT","easy",
+"Select only odd-numbered rows from the employees table (by id).\n\nReturn id, name. Order by id.",
+"Use MOD or % operator: WHERE id % 2 != 0.",
+"IDs 1,3,5 are odd.",
+EMP_T,EMP_S,(["id","name"],[[1,"Alice"],[3,"Charlie"],[5,"Eve"]]),
+"SELECT id,name FROM employees WHERE id%2!=0 ORDER BY id;",topic="Odd/Even Row Selection")
+
+add("sql-188","Departments With More Than 2 Employees","HR / Employee","TCS NQT","easy",
+"Find departments that have more than 2 employees.\n\nReturn dept, emp_count. Order by emp_count DESC.",
+"GROUP BY dept HAVING COUNT(*) > 2.",
+"Eng has 3 employees (Alice, Bob, Eve).",
+EMP_T,EMP_S,(["dept","emp_count"],[["Eng",3]]),
+"SELECT dept,COUNT(*)AS emp_count FROM employees GROUP BY dept HAVING COUNT(*)>2 ORDER BY emp_count DESC;",topic="GROUP BY + HAVING Count")
+
+# --- TCS Digital (2 new) ---
+add("sql-189","Employees Hired Before 2021","HR / Employee","TCS Digital","easy",
+"Find all employees hired before January 1, 2021.\n\nReturn name, hire_date. Order by hire_date.",
+"WHERE hire_date < '2021-01-01'.",
+"Alice(2019), Bob(2020), Charlie(2020).",
+EMP_T,EMP_S,(["name","hire_date"],[["Alice","2019-01-15"],["Bob","2020-03-01"],["Charlie","2020-06-10"]]),
+"SELECT name,hire_date FROM employees WHERE hire_date<'2021-01-01' ORDER BY hire_date;",topic="Date Filtering (Before/After)")
+
+add("sql-190","Total Salary Expense Per Department","HR / Employee","TCS Digital","easy",
+"Calculate the total salary expense for each department.\n\nReturn dept, total_salary. Order by total_salary DESC.",
+"GROUP BY dept + SUM(salary).",
+"Eng: 70K+60K+65K=195K. Sales: 55K+50K=105K. HR: 45K.",
+EMP_T,EMP_S,(["dept","total_salary"],[["Eng",195000],["Sales",105000],["HR",45000]]),
+"SELECT dept,SUM(salary)AS total_salary FROM employees GROUP BY dept ORDER BY total_salary DESC;",topic="SUM Per Department")
+
+# --- Infosys (3 new) ---
+add("sql-191","Salary Above Company Average","HR / Employee","Infosys","easy",
+"Find employees whose salary is above the company-wide average.\n\nReturn name, salary. Order by salary DESC.",
+"Subquery: WHERE salary > (SELECT AVG(salary) FROM employees). Avg = 57500.",
+"Alice(70K), Eve(65K), Bob(60K) are above 57500.",
+EMP_T,EMP_S,(["name","salary"],[["Alice",70000],["Eve",65000],["Bob",60000]]),
+"SELECT name,salary FROM employees WHERE salary>(SELECT AVG(salary) FROM employees) ORDER BY salary DESC;",topic="Subquery: Above Average")
+
+add("sql-192","Highest Salary Per Department","HR / Employee","Infosys","medium",
+"Find the employee with the highest salary in each department.\n\nReturn dept, name, salary. Order by salary DESC.",
+"Use RANK() or DENSE_RANK() PARTITION BY dept ORDER BY salary DESC, filter rank=1.",
+"Eng: Alice(70K), Sales: Charlie(55K), HR: Frank(45K).",
+EMP_T,EMP_S,(["dept","name","salary"],[["Eng","Alice",70000],["Sales","Charlie",55000],["HR","Frank",45000]]),
+"SELECT dept,name,salary FROM(SELECT dept,name,salary,RANK() OVER(PARTITION BY dept ORDER BY salary DESC)AS rk FROM employees)t WHERE rk=1 ORDER BY salary DESC;",topic="Top Salary Per Department")
+
+add("sql-193","Employees Never Assigned a Project","E-Commerce (Flipkart)","Infosys","medium",
+"Find customers who have never placed an order.\n\nReturn name, city. Order by name.",
+"LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.id IS NULL.",
+"All customers have at least one order in our dataset.",
+ECOM_T,ECOM_S,(["name","city"],[]),
+"SELECT c.name,c.city FROM customers c LEFT JOIN orders o ON c.id=o.customer_id WHERE o.id IS NULL ORDER BY c.name;",topic="LEFT JOIN: Find Unmatched")
+
+# --- Wipro (3 new) ---
+add("sql-194","DELETE vs TRUNCATE Simulation: Count After Filter","HR / Employee","Wipro","easy",
+"Count how many employees would remain if we deleted all employees in 'HR' department.\n\nReturn remaining_count.",
+"COUNT with WHERE dept != 'HR'.",
+"6 total - 1 HR = 5.",
+EMP_T,EMP_S,(["remaining_count"],[[5]]),
+"SELECT COUNT(*)AS remaining_count FROM employees WHERE dept!='HR';",topic="Conditional Count (DELETE Sim)")
+
+add("sql-195","DISTINCT Departments","HR / Employee","Wipro","easy",
+"List all unique departments from the employees table.\n\nReturn dept. Order alphabetically.",
+"SELECT DISTINCT dept.",
+"Eng, HR, Sales.",
+EMP_T,EMP_S,(["dept"],[["Eng"],["HR"],["Sales"]]),
+"SELECT DISTINCT dept FROM employees ORDER BY dept;",topic="DISTINCT Values")
+
+add("sql-196","Employees With NULL Manager","HR / Employee","Wipro","easy",
+"Find employees who have no manager (mgr_id is NULL).\n\nReturn name, dept. Order by name.",
+"WHERE mgr_id IS NULL.",
+"Alice, Charlie, Frank have no manager.",
+EMP_T,EMP_S,(["name","dept"],[["Alice","Eng"],["Charlie","Sales"],["Frank","HR"]]),
+"SELECT name,dept FROM employees WHERE mgr_id IS NULL ORDER BY name;",topic="IS NULL Filtering")
+
+# --- HCLTech (3 new) ---
+add("sql-197","COUNT(*) vs COUNT(column) Difference","HR / Employee","HCLTech","easy",
+"Show the difference between COUNT(*) and COUNT(mgr_id) on the employees table.\n\nReturn total_rows, non_null_managers.",
+"COUNT(*) counts all rows. COUNT(mgr_id) skips NULLs.",
+"6 total rows, 3 have non-null mgr_id.",
+EMP_T,EMP_S,(["total_rows","non_null_managers"],[[6,3]]),
+"SELECT COUNT(*)AS total_rows,COUNT(mgr_id)AS non_null_managers FROM employees;",topic="COUNT(*) vs COUNT(col)")
+
+add("sql-198","Employees Joined in Each Year","HR / Employee","HCLTech","easy",
+"Count how many employees were hired in each year.\n\nReturn hire_year, count. Order by hire_year.",
+"Use SUBSTR or strftime to extract year from hire_date.",
+"2019:1, 2020:2, 2021:2, 2022:1.",
+EMP_T,EMP_S,(["hire_year","count"],[["2019",1],["2020",2],["2021",2],["2022",1]]),
+"SELECT SUBSTR(hire_date,1,4)AS hire_year,COUNT(*)AS count FROM employees GROUP BY SUBSTR(hire_date,1,4) ORDER BY hire_year;",topic="Year Extraction + GROUP BY")
+
+add("sql-199","Min and Max Salary Per Department","HR / Employee","HCLTech","easy",
+"Find the minimum and maximum salary in each department.\n\nReturn dept, min_sal, max_sal. Order by dept.",
+"GROUP BY dept + MIN(salary) + MAX(salary).",
+"Eng: 60K-70K. HR: 45K-45K. Sales: 50K-55K.",
+EMP_T,EMP_S,(["dept","min_sal","max_sal"],[["Eng",60000,70000],["HR",45000,45000],["Sales",50000,55000]]),
+"SELECT dept,MIN(salary)AS min_sal,MAX(salary)AS max_sal FROM employees GROUP BY dept ORDER BY dept;",topic="MIN/MAX Per Group")
+
+# --- Cognizant (3 new) ---
+add("sql-200","Concatenate First and Last Name","Social Media (Instagram)","Cognizant","easy",
+"Create a full display name by combining username with ' (@' and username and ')' format.\n\nReturn profile display as 'name (@username)'. Order by username.",
+"Use || operator for string concatenation.",
+"Builds display strings from profiles table.",
+SOCIAL_T,SOCIAL_S,(["display"],[["ankit_dev (@ankit_dev)"],["priya_codes (@priya_codes)"],["rohan_js (@rohan_js)"],["sneha_ml (@sneha_ml)"],["vikram_sql (@vikram_sql)"]]),
+"SELECT username||' (@'||username||')'AS display FROM profiles ORDER BY username;",topic="String Concatenation")
+
+add("sql-201","Average Salary Comparison: Above vs Below","HR / Employee","Cognizant","medium",
+"Classify each employee as 'Above Average' or 'Below Average' based on company-wide average salary.\n\nReturn name, salary, classification. Order by salary DESC.",
+"CASE WHEN salary > (SELECT AVG(salary)...) THEN 'Above Average' ELSE 'Below Average'.",
+"Avg is 57500. Alice,Eve,Bob above. Charlie,Diana,Frank below.",
+EMP_T,EMP_S,(["name","salary","classification"],[["Alice",70000,"Above Average"],["Eve",65000,"Above Average"],["Bob",60000,"Above Average"],["Charlie",55000,"Below Average"],["Diana",50000,"Below Average"],["Frank",45000,"Below Average"]]),
+"SELECT name,salary,CASE WHEN salary>(SELECT AVG(salary) FROM employees) THEN 'Above Average' ELSE 'Below Average' END AS classification FROM employees ORDER BY salary DESC;",topic="CASE + Subquery Classification")
+
+add("sql-202","Employees Sharing Same Department as 'Alice'","HR / Employee","Cognizant","easy",
+"Find all employees in the same department as Alice (excluding Alice herself).\n\nReturn name, dept. Order by name.",
+"Subquery to get Alice's dept, then WHERE dept = that AND name != 'Alice'.",
+"Bob and Eve are in Eng with Alice.",
+EMP_T,EMP_S,(["name","dept"],[["Bob","Eng"],["Eve","Eng"]]),
+"SELECT name,dept FROM employees WHERE dept=(SELECT dept FROM employees WHERE name='Alice') AND name!='Alice' ORDER BY name;",topic="Subquery: Same Group As")
+
+# --- Accenture (3 new) ---
+add("sql-203","Multi-Table: Customer Orders With Product Names","E-Commerce (Flipkart)","Accenture","medium",
+"Join customers, orders, order_items, and products to show who bought what.\n\nReturn customer name, product name, qty, order_date. Order by order_date, customer name.",
+"4-table join: customers -> orders -> order_items -> products.",
+"Multi-table join across the full e-commerce schema.",
+ECOM_T,ECOM_S,(["name","product_name","qty","order_date"],[["Ankit","iPhone 15",1,"2024-01-10"],["Ankit","MacBook Pro",1,"2024-01-15"],["Ankit","Running Shoes",1,"2024-01-15"],["Ankit","SQL Book",2,"2024-01-15"],["Rohan","MacBook Pro",1,"2024-02-20"],["Rohan","iPhone 15",1,"2024-02-20"],["Priya","iPhone 15",1,"2024-03-15"],["Sneha","Running Shoes",2,"2024-03-10"],["Sneha","Cotton T-Shirt",3,"2024-03-10"],["Vikram","SQL Book",1,"2024-03-15"]]),
+"SELECT c.name,p.name AS product_name,oi.qty,o.order_date FROM customers c JOIN orders o ON c.id=o.customer_id JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id ORDER BY o.order_date,c.name;",topic="Multi-Table JOIN (4 Tables)")
+
+add("sql-204","Weekend Orders Only","E-Commerce (Flipkart)","Accenture","medium",
+"Find orders placed on weekends (Saturday=6 or Sunday=0 in SQLite strftime('%w')).\n\nReturn order_id, order_date, day_of_week. Order by order_date.",
+"strftime('%w', order_date) returns 0 (Sun) to 6 (Sat).",
+"Check which order dates fall on weekends.",
+ECOM_T,ECOM_S,(["order_id","order_date","day_of_week"],[]),
+"SELECT id AS order_id,order_date,CASE CAST(strftime('%w',order_date)AS INT) WHEN 0 THEN 'Sunday' WHEN 6 THEN 'Saturday' END AS day_of_week FROM orders WHERE CAST(strftime('%w',order_date)AS INT) IN(0,6) ORDER BY order_date;",topic="Day-of-Week Filtering")
+
+add("sql-205","Customers With Orders Above Average Total","E-Commerce (Flipkart)","Accenture","medium",
+"Find customers whose order total exceeds the average order total across all orders.\n\nReturn customer name, order total. Order by total DESC.",
+"Subquery: WHERE o.total > (SELECT AVG(total) FROM orders).",
+"Avg order total, then filter above it.",
+ECOM_T,ECOM_S,(["name","total"],[["Rohan",55450.0],["Ankit",55000.0]]),
+"SELECT c.name,o.total FROM customers c JOIN orders o ON c.id=o.customer_id WHERE o.total>(SELECT AVG(total) FROM orders) ORDER BY o.total DESC;",topic="Subquery: Above Avg Order")
+
+# --- Capgemini (2 new) ---
+add("sql-206","UNION: Combine Riders and Drivers","Ride-Sharing (Ola)","Capgemini","easy",
+"Create a unified list of all people in the ride-sharing system (both riders and drivers).\n\nReturn name, role ('Rider' or 'Driver'). Order by name.",
+"SELECT name, 'Rider' FROM riders UNION ALL SELECT name, 'Driver' FROM drivers.",
+"Combines both tables with a role label.",
+RIDE_T,RIDE_S,(["name","role"],[["Aarav","Rider"],["Bhavna","Rider"],["Chirag","Rider"],["Diya","Rider"],["Eshan","Rider"],["Kiran","Driver"],["Lakshmi","Driver"],["Manoj","Driver"],["Neha","Driver"]]),
+"SELECT name,'Rider'AS role FROM riders UNION ALL SELECT name,'Driver'AS role FROM drivers ORDER BY name;",topic="UNION ALL with Labels")
+
+add("sql-207","Employees in Same City as Company HQ","Ride-Sharing (Ola)","Capgemini","medium",
+"Find riders whose city matches any driver's city.\n\nReturn rider name, city. Order by name.",
+"WHERE city IN (SELECT city FROM drivers).",
+"Check city overlap between riders and drivers.",
+RIDE_T,RIDE_S,(["name","city"],[["Aarav","Mumbai"],["Bhavna","Delhi"],["Chirag","Mumbai"],["Diya","Bangalore"],["Eshan","Delhi"]]),
+"SELECT r.name,r.city FROM riders r WHERE r.city IN(SELECT d.city FROM drivers d) ORDER BY r.name;",topic="IN Subquery: City Match")
+
+# --- Deloitte (2 new) ---
+add("sql-208","Revenue Trend: Orders Per Month","E-Commerce (Flipkart)","Deloitte","medium",
+"Calculate total revenue and order count per month.\n\nReturn month, order_count, total_revenue. Order by month.",
+"GROUP BY SUBSTR(order_date,1,7) for year-month grouping.",
+"Jan: 2 orders, Feb: 1, Mar: 4.",
+ECOM_T,ECOM_S,(["month","order_count","total_revenue"],[["2024-01",2,57500.0],["2024-02",1,55450.0],["2024-03",4,13948.0]]),
+"SELECT SUBSTR(order_date,1,7)AS month,COUNT(*)AS order_count,SUM(total)AS total_revenue FROM orders WHERE status!='cancelled' GROUP BY SUBSTR(order_date,1,7) ORDER BY month;",topic="Monthly Revenue Trend")
+
+add("sql-209","Customer Segmentation by Order Count","E-Commerce (Flipkart)","Deloitte","medium",
+"Segment customers into 'Frequent' (3+ orders), 'Regular' (2 orders), or 'New' (1 order).\n\nReturn name, order_count, segment. Order by order_count DESC.",
+"CASE WHEN COUNT >= 3 THEN 'Frequent' WHEN COUNT = 2 THEN 'Regular' ELSE 'New'.",
+"Ankit has 3 orders, others have 1.",
+ECOM_T,ECOM_S,(["name","order_count","segment"],[["Ankit",3,"Frequent"],["Priya",1,"New"],["Rohan",1,"New"],["Sneha",1,"New"],["Vikram",1,"New"]]),
+"SELECT c.name,COUNT(o.id)AS order_count,CASE WHEN COUNT(o.id)>=3 THEN 'Frequent' WHEN COUNT(o.id)=2 THEN 'Regular' ELSE 'New' END AS segment FROM customers c JOIN orders o ON c.id=o.customer_id WHERE o.status!='cancelled' GROUP BY c.id,c.name ORDER BY order_count DESC;",topic="CASE Segmentation")
+
+# --- Zoho (2 new) ---
+add("sql-210","Library Schema: Books Not Borrowed","University / Education","Zoho","medium",
+"Find courses that have zero enrollments.\n\nReturn course_name. Order by course_name.",
+"LEFT JOIN enrollments, WHERE enrollment.id IS NULL.",
+"Check for courses without any student enrollment.",
+UNI_T,UNI_S,(["course_name"],[]),
+"SELECT c.name AS course_name FROM courses c LEFT JOIN enrollments e ON c.id=e.course_id WHERE e.id IS NULL ORDER BY c.name;",topic="LEFT JOIN: Orphan Detection")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
