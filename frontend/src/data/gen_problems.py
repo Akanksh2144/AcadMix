@@ -1257,6 +1257,78 @@ add("sql-130","Fiscal Quarter Revenue Report","E-Commerce (Flipkart)","Deloitte"
 ECOM_T,ECOM_S,(["quarter","order_count","total_revenue"],[["Q1",7,126898.0]]),
 "SELECT CASE WHEN CAST(strftime('%m',order_date)AS INT) BETWEEN 1 AND 3 THEN 'Q1' WHEN CAST(strftime('%m',order_date)AS INT) BETWEEN 4 AND 6 THEN 'Q2' WHEN CAST(strftime('%m',order_date)AS INT) BETWEEN 7 AND 9 THEN 'Q3' ELSE 'Q4' END AS quarter,COUNT(*)AS order_count,SUM(total)AS total_revenue FROM orders GROUP BY quarter ORDER BY quarter;",topic="Fiscal Quarter Reporting")
 
+# ═══ BATCH 14: Indian IT Classics + Enterprise Patterns ═══
+
+add("sql-131","Employees Starting With 'A'","HR / Employee","Wipro","easy",
+"Find all employees whose name starts with the letter 'A'.\n\nReturn name and department. Order by name.",
+"Use LIKE 'A%'.",
+"Alice is the only one starting with A.",
+EMP_T,EMP_S,(["name","department"],[["Alice","Engineering"]]),
+"SELECT name,department FROM employees WHERE name LIKE 'A%' ORDER BY name;",topic="LIKE Pattern Matching")
+
+add("sql-132","Employees With Same Salary","HR / Employee","Cognizant","medium",
+"Find pairs of employees who have the same salary.\n\nReturn emp_a, emp_b, salary. No duplicate pairs. Order by salary descending.",
+"Self-join WHERE e1.salary = e2.salary AND e1.name < e2.name.",
+"No employees share a salary in our dataset, so result is empty.",
+EMP_T,EMP_S,(["emp_a","emp_b","salary"],[]),
+"SELECT e1.name AS emp_a,e2.name AS emp_b,e1.salary FROM employees e1 JOIN employees e2 ON e1.salary=e2.salary AND e1.name<e2.name ORDER BY e1.salary DESC;",topic="Self-Join (Same Value)")
+
+add("sql-133","Department-Wise Employee Count","HR / Employee","Infosys","easy",
+"Count the number of employees in each department.\n\nReturn department and emp_count. Order by emp_count descending.",
+"Simple GROUP BY department with COUNT.",
+"Engineering: 3. Marketing: 2. Sales: 1.",
+EMP_T,EMP_S,(["department","emp_count"],[["Engineering",3],["Marketing",2],["Sales",1]]),
+"SELECT department,COUNT(*)AS emp_count FROM employees GROUP BY department ORDER BY emp_count DESC;",topic="GROUP BY with COUNT")
+
+add("sql-134","Lead Conversion: Order Status Pipeline","E-Commerce (Flipkart)","Salesforce","medium",
+"Create a sales pipeline view: show how many orders are at each stage, and what percentage each stage is of total.\n\nReturn status, count, pct (rounded to 1). Order by count descending.",
+"GROUP BY status, divide by total COUNT.",
+"delivered=5(71.4%), shipped=1(14.3%), cancelled=1(14.3%).",
+ECOM_T,ECOM_S,(["status","cnt","pct"],[["delivered",5,71.4],["cancelled",1,14.3],["shipped",1,14.3]]),
+"SELECT status,COUNT(*)AS cnt,ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM orders),1)AS pct FROM orders GROUP BY status ORDER BY cnt DESC;",topic="Pipeline / Status Distribution")
+
+add("sql-135","Payment Resolution: Time to Retry","Payments (Paytm)","Freshworks","hard",
+"For users who had a failed payment followed by a successful one, calculate the time gap in days between failure and next success.\n\nReturn user name, failed_date, next_success_date, days_gap. Order by days_gap.",
+"LEAD on payments partitioned by user_id, filter failed→success pairs.",
+"Bhavna: failed Jan12, success Jan13 = 1 day. Chirag: failed Jan22, success Jan22 = 0 days.",
+PAY_T,PAY_S,(["name","failed_date","next_success_date","days_gap"],[["Chirag","2024-01-22","2024-01-22",0],["Bhavna","2024-01-12","2024-01-13",1]]),
+"WITH sequenced AS(SELECT p.*,LEAD(pay_date) OVER(PARTITION BY user_id ORDER BY pay_date,id)AS next_date,LEAD(status) OVER(PARTITION BY user_id ORDER BY pay_date,id)AS next_status FROM payments p)SELECT u.name,s.pay_date AS failed_date,s.next_date AS next_success_date,CAST(JULIANDAY(s.next_date)-JULIANDAY(s.pay_date)AS INT)AS days_gap FROM sequenced s JOIN pay_users u ON s.user_id=u.id WHERE s.status='failed' AND s.next_status='success' ORDER BY days_gap;",topic="Event Sequence Analysis")
+
+add("sql-136","Payment Method Preference Per User","Payments (Paytm)","Juspay","medium",
+"Find each user's most-used payment method (by count of successful payments).\n\nReturn user name, preferred_method, and usage_count. Order by name.",
+"GROUP BY user_id, method → ROW_NUMBER per user → rn=1.",
+"Aarav prefers UPI (2 times). Bhavna: UPI(1) vs card(1), pick first.",
+PAY_T,PAY_S,(["name","preferred_method","usage_count"],[["Aarav","UPI",2],["Bhavna","UPI",1],["Chirag","card",1],["Diya","card",1],["Eshan","UPI",1]]),
+"SELECT u.name,sub.method AS preferred_method,sub.usage_count FROM(SELECT user_id,method,COUNT(*)AS usage_count,ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY COUNT(*) DESC)AS rn FROM payments WHERE status='success' GROUP BY user_id,method)sub JOIN pay_users u ON sub.user_id=u.id WHERE sub.rn=1 ORDER BY u.name;",topic="Mode / Most Frequent Value")
+
+add("sql-137","Session Gap: Days Between Logins","Login / Activity","Adobe","hard",
+"For each user, calculate the average gap (in days) between consecutive logins.\n\nReturn user name and avg_gap (rounded to 1). Order by avg_gap descending. Exclude users with only 1 login.",
+"LAG to get previous login, JULIANDAY diff, then AVG per user.",
+"Diya: 1 login on Jan10, 1 on Jan20 = gap of 10 days avg. Aarav: gaps 1,1,3 = avg 1.7.",
+LOGIN_T,LOGIN_S,(["name","avg_gap"],[["Diya",10.0],["Aarav",1.7],["Bhavna",1.5],["Chirag",1.0],["Eshan",1.0]]),
+"WITH gaps AS(SELECT user_id,JULIANDAY(login_date)-JULIANDAY(LAG(login_date) OVER(PARTITION BY user_id ORDER BY login_date))AS gap FROM(SELECT DISTINCT user_id,login_date FROM logins))SELECT u.name,ROUND(AVG(g.gap),1)AS avg_gap FROM gaps g JOIN users u ON g.user_id=u.id WHERE g.gap IS NOT NULL GROUP BY u.name ORDER BY avg_gap DESC;",topic="Session Gap Analysis")
+
+add("sql-138","Recursive CTE: Org Chart Levels","HR / Employee","SAP","hard",
+"Using a recursive CTE, simulate organizational levels. Assign level 1 to the highest-paid employee, level 2 to next tier, etc., based on salary bands (each 10K range).\n\nReturn name, salary, and org_level. Order by org_level, name.",
+"Recursive approach: tier = (max_salary - salary) / 10000 + 1.",
+"Alice(70K)=L1. Eve(65K)=L1. Bob(60K)=L2. Charlie(55K)=L2. Diana(50K)=L3. Frank(45K)=L3.",
+EMP_T,EMP_S,(["name","salary","org_level"],[["Alice",70000,1],["Eve",65000,1],["Bob",60000,2],["Charlie",55000,2],["Diana",50000,3],["Frank",45000,3]]),
+"SELECT name,salary,CAST((((SELECT MAX(salary) FROM employees)-salary)/10000)+1 AS INT)AS org_level FROM employees ORDER BY org_level,name;",topic="Hierarchical Level Assignment")
+
+add("sql-139","Suspicious Transactions: Above 3x Personal Average","Payments (Paytm)","Goldman Sachs","hard",
+"Flag successful transactions where the amount exceeds 3 times the user's own average successful payment.\n\nReturn user name, pay_date, amount, user_avg (rounded), and multiplier (rounded to 1). Order by multiplier descending.",
+"JOIN payments to user avg subquery, filter amount > 3 * avg.",
+"Diya: avg=(5000)/1=5000, so nothing exceeds 3x. Chirag: avg=1300, 2500 is 1.9x (below 3x).",
+PAY_T,PAY_S,(["name","pay_date","amount","user_avg","multiplier"],[]),
+"SELECT u.name,p.pay_date,p.amount,ROUND(ua.avg_amt)AS user_avg,ROUND(p.amount/ua.avg_amt,1)AS multiplier FROM payments p JOIN pay_users u ON p.user_id=u.id JOIN(SELECT user_id,AVG(amount)AS avg_amt FROM payments WHERE status='success' GROUP BY user_id)ua ON p.user_id=ua.user_id WHERE p.status='success' AND p.amount>3*ua.avg_amt ORDER BY multiplier DESC;",topic="Anomaly / Fraud Detection")
+
+add("sql-140","YoY Transaction Volume Change","Banking / Finance","Morgan Stanley","hard",
+"Compare total transaction volume per account type (savings/current) between different months, simulating YoY.\n\nReturn acc_type, total_volume, avg_per_txn (rounded). Order by total_volume descending.",
+"GROUP BY type with SUM and AVG.",
+"Savings vs Current account total volumes.",
+BANK_T,BANK_S,(["acc_type","total_volume","avg_per_txn"],[["savings",28000.0,4666.67],["current",10000.0,5000.0]]),
+"SELECT a.type AS acc_type,SUM(t.amount)AS total_volume,ROUND(AVG(t.amount),2)AS avg_per_txn FROM accounts a JOIN transactions t ON a.id=t.acc_id GROUP BY a.type ORDER BY total_volume DESC;",topic="Volume Analysis by Category")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
