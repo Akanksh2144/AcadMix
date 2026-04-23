@@ -1084,6 +1084,106 @@ add("sql-110","DAU over MAU Ratio","Social Media (Instagram)","Meta","hard",
 LOGIN_T,LOGIN_S,(["dau_avg","mau","dau_mau_ratio"],[[3.2,5,0.64]]),
 "WITH daily AS(SELECT login_date,COUNT(DISTINCT user_id)AS dau FROM logins WHERE login_date BETWEEN '2024-01-01' AND '2024-01-31' GROUP BY login_date),monthly AS(SELECT COUNT(DISTINCT user_id)AS mau FROM logins WHERE login_date BETWEEN '2024-01-01' AND '2024-01-31')SELECT ROUND(AVG(d.dau),1)AS dau_avg,m.mau,ROUND(AVG(d.dau)*1.0/m.mau,2)AS dau_mau_ratio FROM daily d,monthly m;",topic="DAU / MAU Ratio")
 
+# ═══ NEW SCHEMA: Payments / Transactions ═══
+
+PAY_S = """CREATE TABLE pay_users(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,signup_date DATE);
+CREATE TABLE payments(id INT PRIMARY KEY,user_id INT,amount REAL,method VARCHAR,status VARCHAR,pay_date DATE);
+INSERT INTO pay_users VALUES(1,'Aarav','Mumbai','2023-01-01');
+INSERT INTO pay_users VALUES(2,'Bhavna','Delhi','2023-03-15');
+INSERT INTO pay_users VALUES(3,'Chirag','Bangalore','2023-06-01');
+INSERT INTO pay_users VALUES(4,'Diya','Chennai','2023-09-10');
+INSERT INTO pay_users VALUES(5,'Eshan','Mumbai','2024-01-01');
+INSERT INTO payments VALUES(1,1,500,'UPI','success','2024-01-10');
+INSERT INTO payments VALUES(2,1,1200,'card','success','2024-01-15');
+INSERT INTO payments VALUES(3,2,300,'UPI','failed','2024-01-12');
+INSERT INTO payments VALUES(4,2,800,'UPI','success','2024-01-13');
+INSERT INTO payments VALUES(5,3,2500,'card','success','2024-01-20');
+INSERT INTO payments VALUES(6,3,100,'wallet','failed','2024-01-22');
+INSERT INTO payments VALUES(7,3,100,'wallet','success','2024-01-22');
+INSERT INTO payments VALUES(8,4,5000,'card','success','2024-02-01');
+INSERT INTO payments VALUES(9,4,200,'UPI','failed','2024-02-05');
+INSERT INTO payments VALUES(10,1,700,'UPI','success','2024-02-10');
+INSERT INTO payments VALUES(11,2,1500,'card','success','2024-02-15');
+INSERT INTO payments VALUES(12,5,350,'UPI','success','2024-03-01');
+INSERT INTO payments VALUES(13,1,900,'wallet','success','2024-03-05');
+INSERT INTO payments VALUES(14,3,3000,'card','failed','2024-03-10');"""
+PAY_T = [{"name":"pay_users","columns":[{"name":"id","type":"int"},{"name":"name","type":"varchar"},{"name":"city","type":"varchar"},{"name":"signup_date","type":"date"}],
+"sample_input":[[1,"Aarav","Mumbai","2023-01-01"],[2,"Bhavna","Delhi","2023-03-15"],[3,"Chirag","Bangalore","2023-06-01"],[4,"Diya","Chennai","2023-09-10"],[5,"Eshan","Mumbai","2024-01-01"]]},
+{"name":"payments","columns":[{"name":"id","type":"int"},{"name":"user_id","type":"int"},{"name":"amount","type":"real"},{"name":"method","type":"varchar"},{"name":"status","type":"varchar"},{"name":"pay_date","type":"date"}],
+"sample_input":[[1,1,500,"UPI","success","2024-01-10"],[2,1,1200,"card","success","2024-01-15"],[3,2,300,"UPI","failed","2024-01-12"],[4,2,800,"UPI","success","2024-01-13"],[5,3,2500,"card","success","2024-01-20"]]}]
+
+# ═══ BATCH 12: Startups + Funnel/Churn/Retention ═══
+
+add("sql-111","Funnel: Cart to Purchase","E-Commerce (Flipkart)","Flipkart","hard",
+"Simulate a conversion funnel. From the orders table, count orders by status to show: total_orders, delivered (purchased), shipped (in progress), cancelled (dropped).\n\nReturn stage, count, and conversion_pct (relative to total, rounded to 1).",
+"Use COUNT(*) for total, then CASE WHEN for each stage.",
+"Total=7. Delivered=5(71.4%). Shipped=1(14.3%). Cancelled=1(14.3%).",
+ECOM_T,ECOM_S,(["stage","cnt","conversion_pct"],[["Total",7,100.0],["Delivered",5,71.4],["Shipped",1,14.3],["Cancelled",1,14.3]]),
+"SELECT 'Total' AS stage,COUNT(*)AS cnt,100.0 AS conversion_pct FROM orders UNION ALL SELECT status,COUNT(*),ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM orders),1) FROM orders GROUP BY status ORDER BY cnt DESC;",topic="Funnel / Conversion Analysis")
+
+add("sql-112","Customer Churn: No Order in 30+ Days","E-Commerce (Flipkart)","Flipkart","hard",
+"Find customers whose last order was more than 30 days before the most recent order date in the system (2024-03-15).\n\nReturn name, last_order_date, days_since. Order by days_since descending.",
+"MAX(order_date) per customer, then JULIANDAY diff from system max.",
+"Priya last ordered Feb 05 = 39 days. Diya never ordered via this schema.",
+ECOM_T,ECOM_S,(["name","last_order_date","days_since"],[["Priya","2024-02-05",39],["Ankit","2024-01-15",60]]),
+"WITH last_orders AS(SELECT c.name,MAX(o.order_date)AS last_order_date FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.id),max_date AS(SELECT MAX(order_date)AS md FROM orders)SELECT lo.name,lo.last_order_date,CAST(JULIANDAY(mx.md)-JULIANDAY(lo.last_order_date) AS INT)AS days_since FROM last_orders lo,max_date mx WHERE JULIANDAY(mx.md)-JULIANDAY(lo.last_order_date)>30 ORDER BY days_since DESC;",topic="Customer Churn Detection")
+
+add("sql-113","User's First Transaction","Payments (Paytm)","Paytm","medium",
+"Find each user's first successful payment.\n\nReturn user name, first_pay_date, amount, method. Order by first_pay_date.",
+"ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY pay_date) = 1, filter success.",
+"Aarav's first success: Jan 10, 500, UPI.",
+PAY_T,PAY_S,(["name","first_pay_date","amount","method"],[["Aarav","2024-01-10",500.0,"UPI"],["Bhavna","2024-01-13",800.0,"UPI"],["Chirag","2024-01-20",2500.0,"card"],["Diya","2024-02-01",5000.0,"card"],["Eshan","2024-03-01",350.0,"UPI"]]),
+"SELECT u.name,p.pay_date AS first_pay_date,p.amount,p.method FROM(SELECT *,ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY pay_date)AS rn FROM payments WHERE status='success')p JOIN pay_users u ON p.user_id=u.id WHERE p.rn=1 ORDER BY first_pay_date;",topic="First Transaction per User")
+
+add("sql-114","Failed Transactions by Payment Method","Payments (Paytm)","Razorpay","medium",
+"Count total and failed transactions per payment method. Calculate failure rate.\n\nReturn method, total_txns, failed_txns, failure_rate_pct (rounded to 1). Order by failure_rate descending.",
+"GROUP BY method, conditional COUNT for failures.",
+"UPI: 6 total, 1 failed = 16.7%. Card: 5 total, 1 failed = 20%. Wallet: 3 total, 1 failed = 33.3%.",
+PAY_T,PAY_S,(["method","total_txns","failed_txns","failure_rate_pct"],[["wallet",3,1,33.3],["card",5,1,20.0],["UPI",6,1,16.7]]),
+"SELECT method,COUNT(*)AS total_txns,SUM(CASE WHEN status='failed' THEN 1 ELSE 0 END)AS failed_txns,ROUND(SUM(CASE WHEN status='failed' THEN 1 ELSE 0 END)*100.0/COUNT(*),1)AS failure_rate_pct FROM payments GROUP BY method ORDER BY failure_rate_pct DESC;",topic="Failure Rate by Category")
+
+add("sql-115","Peak Order Hours","Food Delivery (Zomato)","Swiggy","easy",
+"Find which hour of the day has the most orders. Since our orders use dates not times, find the day with the most orders.\n\nReturn order_date and order_count. Show only the busiest day.",
+"GROUP BY date, ORDER BY count DESC, LIMIT 1.",
+"Multiple orders on the busiest day.",
+ZOMATO_T,ZOMATO_S,(["order_date","order_count"],[["2024-01-15",2]]),
+"SELECT order_date,COUNT(*)AS order_count FROM orders GROUP BY order_date ORDER BY order_count DESC LIMIT 1;",topic="Peak Activity Detection")
+
+add("sql-116","Rolling 3-Payment Average","Payments (Paytm)","PhonePe","hard",
+"For each successful payment by Aarav (user_id=1), show a rolling average of the last 3 payments.\n\nReturn pay_date, amount, and rolling_avg (rounded to 0). Order by pay_date.",
+"AVG(amount) OVER (ORDER BY pay_date ROWS BETWEEN 2 PRECEDING AND CURRENT ROW).",
+"Jan10:500→500. Jan15:1200→(500+1200)/2=850. Feb10:700→(500+1200+700)/3=800. Mar05:900→(1200+700+900)/3=933.",
+PAY_T,PAY_S,(["pay_date","amount","rolling_avg"],[["2024-01-10",500.0,500],["2024-01-15",1200.0,850],["2024-02-10",700.0,800],["2024-03-05",900.0,933]]),
+"SELECT pay_date,amount,ROUND(AVG(amount) OVER(ORDER BY pay_date ROWS BETWEEN 2 PRECEDING AND CURRENT ROW))AS rolling_avg FROM payments WHERE user_id=1 AND status='success' ORDER BY pay_date;",topic="Rolling Average (N-Window)")
+
+add("sql-117","Longest Consecutive Login Streak","Login / Activity","Google","hard",
+"Find the longest consecutive login streak for each user.\n\nReturn user name and max_streak. Order by max_streak descending.",
+"Gaps & Islands: date - ROW_NUMBER() groups consecutive dates. Then MAX(COUNT) per user.",
+"Chirag: 5 consecutive days (Jan 10-14). Eshan: 4 days. Aarav: 3 days.",
+LOGIN_T,LOGIN_S,(["name","max_streak"],[["Chirag",5],["Eshan",4],["Aarav",3],["Bhavna",2],["Diya",1]]),
+"WITH dated AS(SELECT user_id,login_date,JULIANDAY(login_date)-ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY login_date)AS grp FROM(SELECT DISTINCT user_id,login_date FROM logins)),streaks AS(SELECT user_id,COUNT(*)AS streak FROM dated GROUP BY user_id,grp)SELECT u.name,MAX(s.streak)AS max_streak FROM streaks s JOIN users u ON s.user_id=u.id GROUP BY u.name ORDER BY max_streak DESC;",topic="Longest Consecutive Streak")
+
+add("sql-118","Friend Request Acceptance Rate","Social Media (Instagram)","Meta","medium",
+"From the follows table, calculate the mutual follow (acceptance) rate: what percentage of follows are reciprocated?\n\nReturn total_follows, mutual_follows, acceptance_rate_pct (rounded to 1).",
+"Self-join follows to find reciprocated pairs, then divide by total.",
+"Total follows=9. Mutual pairs: (1↔2),(1↔3),(2↔1),(3↔1),(2↔3 not mutual). Count reciprocated follow rows.",
+SOCIAL_T,SOCIAL_S,(["total_follows","mutual_follows","acceptance_rate_pct"],[[9,4,44.4]]),
+"WITH mutual AS(SELECT f1.id FROM follows f1 WHERE EXISTS(SELECT 1 FROM follows f2 WHERE f2.follower_id=f1.following_id AND f2.following_id=f1.follower_id))SELECT(SELECT COUNT(*) FROM follows)AS total_follows,COUNT(*)AS mutual_follows,ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM follows),1)AS acceptance_rate_pct FROM mutual;",topic="Acceptance / Reciprocation Rate")
+
+add("sql-119","Credit Score Bucketing","Payments (Paytm)","CRED","easy",
+"Classify users by their total successful spending into credit buckets: 'Platinum' (>3000), 'Gold' (1000-3000), 'Silver' (<1000).\n\nReturn name, total_spent, and tier. Order by total_spent descending.",
+"SUM with CASE WHEN for tier classification.",
+"Diya: 5000=Platinum. Chirag: 2600=Gold. Aarav: 3300=Platinum. etc.",
+PAY_T,PAY_S,(["name","total_spent","tier"],[["Diya",5000.0,"Platinum"],["Aarav",3300.0,"Platinum"],["Chirag",2600.0,"Gold"],["Bhavna",2300.0,"Gold"],["Eshan",350.0,"Silver"]]),
+"SELECT u.name,SUM(p.amount)AS total_spent,CASE WHEN SUM(p.amount)>3000 THEN 'Platinum' WHEN SUM(p.amount)>=1000 THEN 'Gold' ELSE 'Silver' END AS tier FROM pay_users u JOIN payments p ON u.id=p.user_id WHERE p.status='success' GROUP BY u.name ORDER BY total_spent DESC;",topic="Bucketing / Tier Classification")
+
+add("sql-120","Surge Pricing: Rides Above 2x Average","Ride-Sharing (Ola)","Uber","medium",
+"Identify completed rides where the fare exceeded twice the overall average fare (surge-priced).\n\nReturn ride_id, rider name, fare, avg_fare (rounded), and surge_multiple (rounded to 1). Order by fare descending.",
+"Scalar subquery for average, then fare > 2 * avg.",
+"Avg completed fare ≈ 291. 2x = 582. Only ride #6 (550) is close but below. Actually 550 < 582.",
+RIDE_T,RIDE_S,(["id","name","fare","avg_fare","surge_multiple"],[]),
+"SELECT r.id,r2.name,r.fare,ROUND((SELECT AVG(fare) FROM rides WHERE status='completed'))AS avg_fare,ROUND(r.fare/(SELECT AVG(fare) FROM rides WHERE status='completed'),1)AS surge_multiple FROM rides r JOIN riders r2 ON r.rider_id=r2.id WHERE r.status='completed' AND r.fare>2*(SELECT AVG(fare) FROM rides WHERE status='completed')ORDER BY r.fare DESC;",topic="Surge / Outlier Detection")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
