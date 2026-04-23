@@ -82098,6 +82098,2628 @@
     "solution_sql": "SELECT d.name,COUNT(DISTINCT a.patient_id)AS patient_count FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.name HAVING COUNT(DISTINCT a.patient_id)>=2 ORDER BY patient_count DESC;"
   },
   {
+    "id": "sql-341",
+    "title": "Customer Full Order History",
+    "dataset_theme": "E-Commerce (Flipkart)",
+    "company_tag": "Accenture",
+    "difficulty": "medium",
+    "topic": "Customer Summary Report",
+    "problem_statement": "Show each customer's order count, total spent, and average order value.\n\nReturn name, orders, total_spent, avg_order. Order by total_spent DESC.",
+    "hint": "JOIN + GROUP BY + COUNT + SUM + AVG.",
+    "explanation": "Comprehensive customer summary.",
+    "tables_meta": [
+      {
+        "name": "customers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "email",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ankit",
+            "ankit@gmail.com",
+            "Mumbai",
+            "2023-01-15"
+          ],
+          [
+            2,
+            "Priya",
+            "priya@yahoo.com",
+            "Delhi",
+            "2023-03-20"
+          ],
+          [
+            3,
+            "Rohan",
+            "rohan@gmail.com",
+            "Bangalore",
+            "2023-06-10"
+          ],
+          [
+            4,
+            "Sneha",
+            "sneha@outlook.com",
+            "Mumbai",
+            "2024-01-05"
+          ],
+          [
+            5,
+            "Vikram",
+            "vikram@gmail.com",
+            "Chennai",
+            "2023-09-12"
+          ]
+        ]
+      },
+      {
+        "name": "products",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "product_name",
+            "type": "varchar"
+          },
+          {
+            "name": "category",
+            "type": "varchar"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Laptop",
+            "Electronics",
+            55000
+          ],
+          [
+            102,
+            "Headphones",
+            "Electronics",
+            2500
+          ],
+          [
+            103,
+            "T-Shirt",
+            "Fashion",
+            799
+          ],
+          [
+            104,
+            "Sneakers",
+            "Fashion",
+            3200
+          ],
+          [
+            105,
+            "Python Book",
+            "Books",
+            450
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "customer_id",
+            "type": "int"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          },
+          {
+            "name": "total",
+            "type": "real"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            "2024-01-10",
+            57500,
+            "delivered"
+          ],
+          [
+            1002,
+            2,
+            "2024-01-15",
+            3299,
+            "delivered"
+          ],
+          [
+            1003,
+            1,
+            "2024-02-05",
+            799,
+            "delivered"
+          ],
+          [
+            1004,
+            3,
+            "2024-02-20",
+            55450,
+            "shipped"
+          ],
+          [
+            1005,
+            2,
+            "2024-03-01",
+            2500,
+            "cancelled"
+          ],
+          [
+            1006,
+            4,
+            "2024-03-10",
+            6900,
+            "delivered"
+          ],
+          [
+            1007,
+            5,
+            "2024-03-15",
+            450,
+            "delivered"
+          ]
+        ]
+      },
+      {
+        "name": "order_items",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "order_id",
+            "type": "int"
+          },
+          {
+            "name": "product_id",
+            "type": "int"
+          },
+          {
+            "name": "qty",
+            "type": "int"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1001,
+            101,
+            1,
+            55000
+          ],
+          [
+            2,
+            1001,
+            102,
+            1,
+            2500
+          ],
+          [
+            3,
+            1002,
+            103,
+            1,
+            799
+          ],
+          [
+            4,
+            1002,
+            102,
+            1,
+            2500
+          ],
+          [
+            5,
+            1003,
+            103,
+            1,
+            799
+          ],
+          [
+            6,
+            1004,
+            101,
+            1,
+            55000
+          ],
+          [
+            7,
+            1004,
+            105,
+            1,
+            450
+          ],
+          [
+            8,
+            1005,
+            102,
+            1,
+            2500
+          ],
+          [
+            9,
+            1006,
+            104,
+            1,
+            3200
+          ],
+          [
+            10,
+            1006,
+            103,
+            1,
+            799
+          ],
+          [
+            11,
+            1006,
+            102,
+            1,
+            2500
+          ],
+          [
+            12,
+            1007,
+            105,
+            1,
+            450
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "orders",
+        "total_spent",
+        "avg_order"
+      ],
+      "rows": [
+        [
+          "Ankit",
+          3,
+          60799.0,
+          20266
+        ],
+        [
+          "Rohan",
+          1,
+          55450.0,
+          55450
+        ],
+        [
+          "Sneha",
+          1,
+          6900.0,
+          6900
+        ],
+        [
+          "Priya",
+          1,
+          3299.0,
+          3299
+        ],
+        [
+          "Vikram",
+          1,
+          450.0,
+          450
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE customers(id INT PRIMARY KEY,name VARCHAR,email VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE products(id INT PRIMARY KEY,product_name VARCHAR,category VARCHAR,price REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,customer_id INT,order_date DATE,total REAL,status VARCHAR);\nCREATE TABLE order_items(id INT PRIMARY KEY,order_id INT,product_id INT,qty INT,price REAL);\nINSERT INTO customers VALUES(1,'Ankit','ankit@gmail.com','Mumbai','2023-01-15');\nINSERT INTO customers VALUES(2,'Priya','priya@yahoo.com','Delhi','2023-03-20');\nINSERT INTO customers VALUES(3,'Rohan','rohan@gmail.com','Bangalore','2023-06-10');\nINSERT INTO customers VALUES(4,'Sneha','sneha@outlook.com','Mumbai','2024-01-05');\nINSERT INTO customers VALUES(5,'Vikram','vikram@gmail.com','Chennai','2023-09-12');\nINSERT INTO products VALUES(101,'Laptop',  'Electronics',55000);\nINSERT INTO products VALUES(102,'Headphones','Electronics',2500);\nINSERT INTO products VALUES(103,'T-Shirt','Fashion',799);\nINSERT INTO products VALUES(104,'Sneakers','Fashion',3200);\nINSERT INTO products VALUES(105,'Python Book','Books',450);\nINSERT INTO orders VALUES(1001,1,'2024-01-10',57500,'delivered');\nINSERT INTO orders VALUES(1002,2,'2024-01-15',3299,'delivered');\nINSERT INTO orders VALUES(1003,1,'2024-02-05',799,'delivered');\nINSERT INTO orders VALUES(1004,3,'2024-02-20',55450,'shipped');\nINSERT INTO orders VALUES(1005,2,'2024-03-01',2500,'cancelled');\nINSERT INTO orders VALUES(1006,4,'2024-03-10',6900,'delivered');\nINSERT INTO orders VALUES(1007,5,'2024-03-15',450,'delivered');\nINSERT INTO order_items VALUES(1,1001,101,1,55000);\nINSERT INTO order_items VALUES(2,1001,102,1,2500);\nINSERT INTO order_items VALUES(3,1002,103,1,799);\nINSERT INTO order_items VALUES(4,1002,102,1,2500);\nINSERT INTO order_items VALUES(5,1003,103,1,799);\nINSERT INTO order_items VALUES(6,1004,101,1,55000);\nINSERT INTO order_items VALUES(7,1004,105,1,450);\nINSERT INTO order_items VALUES(8,1005,102,1,2500);\nINSERT INTO order_items VALUES(9,1006,104,1,3200);\nINSERT INTO order_items VALUES(10,1006,103,1,799);\nINSERT INTO order_items VALUES(11,1006,102,1,2500);\nINSERT INTO order_items VALUES(12,1007,105,1,450);",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "orders",
+          "total_spent",
+          "avg_order"
+        ],
+        "values": [
+          [
+            "Ankit",
+            3,
+            60799.0,
+            20266
+          ],
+          [
+            "Rohan",
+            1,
+            55450.0,
+            55450
+          ],
+          [
+            "Sneha",
+            1,
+            6900.0,
+            6900
+          ],
+          [
+            "Priya",
+            1,
+            3299.0,
+            3299
+          ],
+          [
+            "Vikram",
+            1,
+            450.0,
+            450
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT c.name,COUNT(o.id)AS orders,SUM(o.total)AS total_spent,ROUND(AVG(o.total),0)AS avg_order FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name ORDER BY total_spent DESC;"
+  },
+  {
+    "id": "sql-342",
+    "title": "Highest Rated Restaurant Per City",
+    "dataset_theme": "Food Delivery (Zomato)",
+    "company_tag": "Accenture",
+    "difficulty": "medium",
+    "topic": "Top Per City (Window)",
+    "problem_statement": "Find the highest-rated restaurant in each city.\n\nReturn city, name, rating. Order by city.",
+    "hint": "ROW_NUMBER PARTITION BY city ORDER BY rating DESC, rn=1.",
+    "explanation": "Best restaurant per city.",
+    "tables_meta": [
+      {
+        "name": "restaurants",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "cuisine",
+            "type": "varchar"
+          },
+          {
+            "name": "rating",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Biryani House",
+            "Mumbai",
+            "Indian",
+            4.5
+          ],
+          [
+            2,
+            "Pizza Palace",
+            "Delhi",
+            "Italian",
+            4.2
+          ],
+          [
+            3,
+            "Dragon Wok",
+            "Mumbai",
+            "Chinese",
+            3.8
+          ],
+          [
+            4,
+            "Dosa Corner",
+            "Bangalore",
+            "Indian",
+            4.7
+          ],
+          [
+            5,
+            "Burger Barn",
+            "Delhi",
+            "American",
+            3.5
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "rest_id",
+            "type": "int"
+          },
+          {
+            "name": "cust_id",
+            "type": "int"
+          },
+          {
+            "name": "amount",
+            "type": "real"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            1,
+            201,
+            450,
+            "2024-01-15"
+          ],
+          [
+            102,
+            2,
+            202,
+            650,
+            "2024-01-16"
+          ],
+          [
+            103,
+            1,
+            203,
+            380,
+            "2024-01-17"
+          ],
+          [
+            104,
+            4,
+            201,
+            220,
+            "2024-02-01"
+          ],
+          [
+            105,
+            3,
+            204,
+            510,
+            "2024-02-05"
+          ],
+          [
+            106,
+            1,
+            202,
+            400,
+            "2024-02-10"
+          ],
+          [
+            107,
+            5,
+            205,
+            320,
+            "2024-03-01"
+          ],
+          [
+            108,
+            2,
+            201,
+            700,
+            "2024-03-05"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "city",
+        "name",
+        "rating"
+      ],
+      "rows": [
+        [
+          "Bangalore",
+          "Burger Barn",
+          3.5
+        ],
+        [
+          "Chennai",
+          "Dosa Corner",
+          4.7
+        ],
+        [
+          "Delhi",
+          "Pizza Palace",
+          4.2
+        ],
+        [
+          "Kolkata",
+          "Dragon Wok",
+          3.8
+        ],
+        [
+          "Mumbai",
+          "Biryani House",
+          4.5
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE restaurants(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,cuisine VARCHAR,rating REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,rest_id INT,cust_id INT,amount REAL,order_date DATE);\nINSERT INTO restaurants VALUES(1,'Biryani House','Mumbai','Indian',4.5);\nINSERT INTO restaurants VALUES(2,'Pizza Palace','Delhi','Italian',4.2);\nINSERT INTO restaurants VALUES(3,'Dragon Wok','Mumbai','Chinese',3.8);\nINSERT INTO restaurants VALUES(4,'Dosa Corner','Bangalore','Indian',4.7);\nINSERT INTO restaurants VALUES(5,'Burger Barn','Delhi','American',3.5);\nINSERT INTO orders VALUES(101,1,201,450,'2024-01-15');\nINSERT INTO orders VALUES(102,2,202,650,'2024-01-16');\nINSERT INTO orders VALUES(103,1,203,380,'2024-01-17');\nINSERT INTO orders VALUES(104,4,201,220,'2024-02-01');\nINSERT INTO orders VALUES(105,3,204,510,'2024-02-05');\nINSERT INTO orders VALUES(106,1,202,400,'2024-02-10');\nINSERT INTO orders VALUES(107,5,205,320,'2024-03-01');\nINSERT INTO orders VALUES(108,2,201,700,'2024-03-05');",
+    "expected_output": [
+      {
+        "columns": [
+          "city",
+          "name",
+          "rating"
+        ],
+        "values": [
+          [
+            "Bangalore",
+            "Burger Barn",
+            3.5
+          ],
+          [
+            "Chennai",
+            "Dosa Corner",
+            4.7
+          ],
+          [
+            "Delhi",
+            "Pizza Palace",
+            4.2
+          ],
+          [
+            "Kolkata",
+            "Dragon Wok",
+            3.8
+          ],
+          [
+            "Mumbai",
+            "Biryani House",
+            4.5
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT city,name,rating FROM(SELECT city,name,rating,ROW_NUMBER() OVER(PARTITION BY city ORDER BY rating DESC)AS rn FROM restaurants)t WHERE rn=1 ORDER BY city;"
+  },
+  {
+    "id": "sql-343",
+    "title": "Employee Salary Quartile",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "Accenture",
+    "difficulty": "hard",
+    "topic": "NTILE Quartile",
+    "problem_statement": "Divide employees into 4 salary quartiles using NTILE.\n\nReturn name, salary, quartile. Order by quartile, salary DESC.",
+    "hint": "NTILE(4) OVER(ORDER BY salary DESC).",
+    "explanation": "Split 6 employees into 4 quartiles.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "dept",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "mgr_id",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Eng",
+            70000,
+            null,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Eng",
+            60000,
+            1,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Sales",
+            55000,
+            null,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Sales",
+            50000,
+            3,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Eng",
+            65000,
+            1,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "HR",
+            45000,
+            null,
+            "2022-02-14"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "salary",
+        "quartile"
+      ],
+      "rows": [
+        [
+          "Alice",
+          70000,
+          1
+        ],
+        [
+          "Eve",
+          65000,
+          1
+        ],
+        [
+          "Bob",
+          60000,
+          2
+        ],
+        [
+          "Charlie",
+          55000,
+          2
+        ],
+        [
+          "Diana",
+          50000,
+          3
+        ],
+        [
+          "Frank",
+          45000,
+          4
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR,dept VARCHAR,salary INT,mgr_id INT,hire_date DATE);\nINSERT INTO employees VALUES(1,'Alice','Eng',70000,NULL,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Eng',60000,1,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Sales',55000,NULL,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Sales',50000,3,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Eng',65000,1,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','HR',45000,NULL,'2022-02-14');",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "salary",
+          "quartile"
+        ],
+        "values": [
+          [
+            "Alice",
+            70000,
+            1
+          ],
+          [
+            "Eve",
+            65000,
+            1
+          ],
+          [
+            "Bob",
+            60000,
+            2
+          ],
+          [
+            "Charlie",
+            55000,
+            2
+          ],
+          [
+            "Diana",
+            50000,
+            3
+          ],
+          [
+            "Frank",
+            45000,
+            4
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT name,salary,NTILE(4) OVER(ORDER BY salary DESC)AS quartile FROM employees ORDER BY quartile,salary DESC;"
+  },
+  {
+    "id": "sql-344",
+    "title": "Total Revenue Per Product",
+    "dataset_theme": "E-Commerce (Flipkart)",
+    "company_tag": "Accenture",
+    "difficulty": "medium",
+    "topic": "Revenue = Price \u00d7 Qty",
+    "problem_statement": "Calculate total revenue per product (price \u00d7 quantity sold).\n\nReturn product name, total_revenue. Order by total_revenue DESC.",
+    "hint": "JOIN products + order_items, SUM(price * qty).",
+    "explanation": "Revenue = price \u00d7 total qty across all orders.",
+    "tables_meta": [
+      {
+        "name": "customers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "email",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ankit",
+            "ankit@gmail.com",
+            "Mumbai",
+            "2023-01-15"
+          ],
+          [
+            2,
+            "Priya",
+            "priya@yahoo.com",
+            "Delhi",
+            "2023-03-20"
+          ],
+          [
+            3,
+            "Rohan",
+            "rohan@gmail.com",
+            "Bangalore",
+            "2023-06-10"
+          ],
+          [
+            4,
+            "Sneha",
+            "sneha@outlook.com",
+            "Mumbai",
+            "2024-01-05"
+          ],
+          [
+            5,
+            "Vikram",
+            "vikram@gmail.com",
+            "Chennai",
+            "2023-09-12"
+          ]
+        ]
+      },
+      {
+        "name": "products",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "product_name",
+            "type": "varchar"
+          },
+          {
+            "name": "category",
+            "type": "varchar"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Laptop",
+            "Electronics",
+            55000
+          ],
+          [
+            102,
+            "Headphones",
+            "Electronics",
+            2500
+          ],
+          [
+            103,
+            "T-Shirt",
+            "Fashion",
+            799
+          ],
+          [
+            104,
+            "Sneakers",
+            "Fashion",
+            3200
+          ],
+          [
+            105,
+            "Python Book",
+            "Books",
+            450
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "customer_id",
+            "type": "int"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          },
+          {
+            "name": "total",
+            "type": "real"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            "2024-01-10",
+            57500,
+            "delivered"
+          ],
+          [
+            1002,
+            2,
+            "2024-01-15",
+            3299,
+            "delivered"
+          ],
+          [
+            1003,
+            1,
+            "2024-02-05",
+            799,
+            "delivered"
+          ],
+          [
+            1004,
+            3,
+            "2024-02-20",
+            55450,
+            "shipped"
+          ],
+          [
+            1005,
+            2,
+            "2024-03-01",
+            2500,
+            "cancelled"
+          ],
+          [
+            1006,
+            4,
+            "2024-03-10",
+            6900,
+            "delivered"
+          ],
+          [
+            1007,
+            5,
+            "2024-03-15",
+            450,
+            "delivered"
+          ]
+        ]
+      },
+      {
+        "name": "order_items",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "order_id",
+            "type": "int"
+          },
+          {
+            "name": "product_id",
+            "type": "int"
+          },
+          {
+            "name": "qty",
+            "type": "int"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1001,
+            101,
+            1,
+            55000
+          ],
+          [
+            2,
+            1001,
+            102,
+            1,
+            2500
+          ],
+          [
+            3,
+            1002,
+            103,
+            1,
+            799
+          ],
+          [
+            4,
+            1002,
+            102,
+            1,
+            2500
+          ],
+          [
+            5,
+            1003,
+            103,
+            1,
+            799
+          ],
+          [
+            6,
+            1004,
+            101,
+            1,
+            55000
+          ],
+          [
+            7,
+            1004,
+            105,
+            1,
+            450
+          ],
+          [
+            8,
+            1005,
+            102,
+            1,
+            2500
+          ],
+          [
+            9,
+            1006,
+            104,
+            1,
+            3200
+          ],
+          [
+            10,
+            1006,
+            103,
+            1,
+            799
+          ],
+          [
+            11,
+            1006,
+            102,
+            1,
+            2500
+          ],
+          [
+            12,
+            1007,
+            105,
+            1,
+            450
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "total_revenue"
+      ],
+      "rows": [
+        [
+          "MacBook Pro",
+          240000.0
+        ],
+        [
+          "iPhone 15",
+          239997.0
+        ],
+        [
+          "Running Shoes",
+          10497.0
+        ],
+        [
+          "Cotton T-Shirt",
+          2397.0
+        ],
+        [
+          "SQL Book",
+          1350.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE customers(id INT PRIMARY KEY,name VARCHAR,email VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE products(id INT PRIMARY KEY,product_name VARCHAR,category VARCHAR,price REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,customer_id INT,order_date DATE,total REAL,status VARCHAR);\nCREATE TABLE order_items(id INT PRIMARY KEY,order_id INT,product_id INT,qty INT,price REAL);\nINSERT INTO customers VALUES(1,'Ankit','ankit@gmail.com','Mumbai','2023-01-15');\nINSERT INTO customers VALUES(2,'Priya','priya@yahoo.com','Delhi','2023-03-20');\nINSERT INTO customers VALUES(3,'Rohan','rohan@gmail.com','Bangalore','2023-06-10');\nINSERT INTO customers VALUES(4,'Sneha','sneha@outlook.com','Mumbai','2024-01-05');\nINSERT INTO customers VALUES(5,'Vikram','vikram@gmail.com','Chennai','2023-09-12');\nINSERT INTO products VALUES(101,'Laptop',  'Electronics',55000);\nINSERT INTO products VALUES(102,'Headphones','Electronics',2500);\nINSERT INTO products VALUES(103,'T-Shirt','Fashion',799);\nINSERT INTO products VALUES(104,'Sneakers','Fashion',3200);\nINSERT INTO products VALUES(105,'Python Book','Books',450);\nINSERT INTO orders VALUES(1001,1,'2024-01-10',57500,'delivered');\nINSERT INTO orders VALUES(1002,2,'2024-01-15',3299,'delivered');\nINSERT INTO orders VALUES(1003,1,'2024-02-05',799,'delivered');\nINSERT INTO orders VALUES(1004,3,'2024-02-20',55450,'shipped');\nINSERT INTO orders VALUES(1005,2,'2024-03-01',2500,'cancelled');\nINSERT INTO orders VALUES(1006,4,'2024-03-10',6900,'delivered');\nINSERT INTO orders VALUES(1007,5,'2024-03-15',450,'delivered');\nINSERT INTO order_items VALUES(1,1001,101,1,55000);\nINSERT INTO order_items VALUES(2,1001,102,1,2500);\nINSERT INTO order_items VALUES(3,1002,103,1,799);\nINSERT INTO order_items VALUES(4,1002,102,1,2500);\nINSERT INTO order_items VALUES(5,1003,103,1,799);\nINSERT INTO order_items VALUES(6,1004,101,1,55000);\nINSERT INTO order_items VALUES(7,1004,105,1,450);\nINSERT INTO order_items VALUES(8,1005,102,1,2500);\nINSERT INTO order_items VALUES(9,1006,104,1,3200);\nINSERT INTO order_items VALUES(10,1006,103,1,799);\nINSERT INTO order_items VALUES(11,1006,102,1,2500);\nINSERT INTO order_items VALUES(12,1007,105,1,450);",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "total_revenue"
+        ],
+        "values": [
+          [
+            "MacBook Pro",
+            240000.0
+          ],
+          [
+            "iPhone 15",
+            239997.0
+          ],
+          [
+            "Running Shoes",
+            10497.0
+          ],
+          [
+            "Cotton T-Shirt",
+            2397.0
+          ],
+          [
+            "SQL Book",
+            1350.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT p.name,SUM(p.price*oi.qty)AS total_revenue FROM products p JOIN order_items oi ON p.id=oi.product_id GROUP BY p.name ORDER BY total_revenue DESC;"
+  },
+  {
+    "id": "sql-345",
+    "title": "Most Popular Cuisine",
+    "dataset_theme": "Food Delivery (Zomato)",
+    "company_tag": "Accenture",
+    "difficulty": "easy",
+    "topic": "Most Popular (COUNT+LIMIT)",
+    "problem_statement": "Find the cuisine with the most restaurants.\n\nReturn cuisine, count.",
+    "hint": "GROUP BY cuisine, COUNT, ORDER DESC LIMIT 1.",
+    "explanation": "Indian has 2 restaurants.",
+    "tables_meta": [
+      {
+        "name": "restaurants",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "cuisine",
+            "type": "varchar"
+          },
+          {
+            "name": "rating",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Biryani House",
+            "Mumbai",
+            "Indian",
+            4.5
+          ],
+          [
+            2,
+            "Pizza Palace",
+            "Delhi",
+            "Italian",
+            4.2
+          ],
+          [
+            3,
+            "Dragon Wok",
+            "Mumbai",
+            "Chinese",
+            3.8
+          ],
+          [
+            4,
+            "Dosa Corner",
+            "Bangalore",
+            "Indian",
+            4.7
+          ],
+          [
+            5,
+            "Burger Barn",
+            "Delhi",
+            "American",
+            3.5
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "rest_id",
+            "type": "int"
+          },
+          {
+            "name": "cust_id",
+            "type": "int"
+          },
+          {
+            "name": "amount",
+            "type": "real"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            1,
+            201,
+            450,
+            "2024-01-15"
+          ],
+          [
+            102,
+            2,
+            202,
+            650,
+            "2024-01-16"
+          ],
+          [
+            103,
+            1,
+            203,
+            380,
+            "2024-01-17"
+          ],
+          [
+            104,
+            4,
+            201,
+            220,
+            "2024-02-01"
+          ],
+          [
+            105,
+            3,
+            204,
+            510,
+            "2024-02-05"
+          ],
+          [
+            106,
+            1,
+            202,
+            400,
+            "2024-02-10"
+          ],
+          [
+            107,
+            5,
+            205,
+            320,
+            "2024-03-01"
+          ],
+          [
+            108,
+            2,
+            201,
+            700,
+            "2024-03-05"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "cuisine",
+        "count"
+      ],
+      "rows": [
+        [
+          "Indian",
+          2
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE restaurants(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,cuisine VARCHAR,rating REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,rest_id INT,cust_id INT,amount REAL,order_date DATE);\nINSERT INTO restaurants VALUES(1,'Biryani House','Mumbai','Indian',4.5);\nINSERT INTO restaurants VALUES(2,'Pizza Palace','Delhi','Italian',4.2);\nINSERT INTO restaurants VALUES(3,'Dragon Wok','Mumbai','Chinese',3.8);\nINSERT INTO restaurants VALUES(4,'Dosa Corner','Bangalore','Indian',4.7);\nINSERT INTO restaurants VALUES(5,'Burger Barn','Delhi','American',3.5);\nINSERT INTO orders VALUES(101,1,201,450,'2024-01-15');\nINSERT INTO orders VALUES(102,2,202,650,'2024-01-16');\nINSERT INTO orders VALUES(103,1,203,380,'2024-01-17');\nINSERT INTO orders VALUES(104,4,201,220,'2024-02-01');\nINSERT INTO orders VALUES(105,3,204,510,'2024-02-05');\nINSERT INTO orders VALUES(106,1,202,400,'2024-02-10');\nINSERT INTO orders VALUES(107,5,205,320,'2024-03-01');\nINSERT INTO orders VALUES(108,2,201,700,'2024-03-05');",
+    "expected_output": [
+      {
+        "columns": [
+          "cuisine",
+          "count"
+        ],
+        "values": [
+          [
+            "Indian",
+            2
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT cuisine,COUNT(*)AS count FROM restaurants GROUP BY cuisine ORDER BY count DESC LIMIT 1;"
+  },
+  {
+    "id": "sql-346",
+    "title": "Orders Placed on Same Date",
+    "dataset_theme": "E-Commerce (Flipkart)",
+    "company_tag": "Accenture",
+    "difficulty": "medium",
+    "topic": "HAVING Same-Date Orders",
+    "problem_statement": "Find dates where multiple orders were placed.\n\nReturn order_date, order_count. Order by order_count DESC.",
+    "hint": "GROUP BY order_date HAVING COUNT > 1.",
+    "explanation": "Jan 15: 2 orders. Mar 15: 2 orders.",
+    "tables_meta": [
+      {
+        "name": "customers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "email",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ankit",
+            "ankit@gmail.com",
+            "Mumbai",
+            "2023-01-15"
+          ],
+          [
+            2,
+            "Priya",
+            "priya@yahoo.com",
+            "Delhi",
+            "2023-03-20"
+          ],
+          [
+            3,
+            "Rohan",
+            "rohan@gmail.com",
+            "Bangalore",
+            "2023-06-10"
+          ],
+          [
+            4,
+            "Sneha",
+            "sneha@outlook.com",
+            "Mumbai",
+            "2024-01-05"
+          ],
+          [
+            5,
+            "Vikram",
+            "vikram@gmail.com",
+            "Chennai",
+            "2023-09-12"
+          ]
+        ]
+      },
+      {
+        "name": "products",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "product_name",
+            "type": "varchar"
+          },
+          {
+            "name": "category",
+            "type": "varchar"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Laptop",
+            "Electronics",
+            55000
+          ],
+          [
+            102,
+            "Headphones",
+            "Electronics",
+            2500
+          ],
+          [
+            103,
+            "T-Shirt",
+            "Fashion",
+            799
+          ],
+          [
+            104,
+            "Sneakers",
+            "Fashion",
+            3200
+          ],
+          [
+            105,
+            "Python Book",
+            "Books",
+            450
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "customer_id",
+            "type": "int"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          },
+          {
+            "name": "total",
+            "type": "real"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            "2024-01-10",
+            57500,
+            "delivered"
+          ],
+          [
+            1002,
+            2,
+            "2024-01-15",
+            3299,
+            "delivered"
+          ],
+          [
+            1003,
+            1,
+            "2024-02-05",
+            799,
+            "delivered"
+          ],
+          [
+            1004,
+            3,
+            "2024-02-20",
+            55450,
+            "shipped"
+          ],
+          [
+            1005,
+            2,
+            "2024-03-01",
+            2500,
+            "cancelled"
+          ],
+          [
+            1006,
+            4,
+            "2024-03-10",
+            6900,
+            "delivered"
+          ],
+          [
+            1007,
+            5,
+            "2024-03-15",
+            450,
+            "delivered"
+          ]
+        ]
+      },
+      {
+        "name": "order_items",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "order_id",
+            "type": "int"
+          },
+          {
+            "name": "product_id",
+            "type": "int"
+          },
+          {
+            "name": "qty",
+            "type": "int"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1001,
+            101,
+            1,
+            55000
+          ],
+          [
+            2,
+            1001,
+            102,
+            1,
+            2500
+          ],
+          [
+            3,
+            1002,
+            103,
+            1,
+            799
+          ],
+          [
+            4,
+            1002,
+            102,
+            1,
+            2500
+          ],
+          [
+            5,
+            1003,
+            103,
+            1,
+            799
+          ],
+          [
+            6,
+            1004,
+            101,
+            1,
+            55000
+          ],
+          [
+            7,
+            1004,
+            105,
+            1,
+            450
+          ],
+          [
+            8,
+            1005,
+            102,
+            1,
+            2500
+          ],
+          [
+            9,
+            1006,
+            104,
+            1,
+            3200
+          ],
+          [
+            10,
+            1006,
+            103,
+            1,
+            799
+          ],
+          [
+            11,
+            1006,
+            102,
+            1,
+            2500
+          ],
+          [
+            12,
+            1007,
+            105,
+            1,
+            450
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "order_date",
+        "order_count"
+      ],
+      "rows": [
+        [
+          "2024-01-15",
+          2
+        ],
+        [
+          "2024-03-15",
+          2
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE customers(id INT PRIMARY KEY,name VARCHAR,email VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE products(id INT PRIMARY KEY,product_name VARCHAR,category VARCHAR,price REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,customer_id INT,order_date DATE,total REAL,status VARCHAR);\nCREATE TABLE order_items(id INT PRIMARY KEY,order_id INT,product_id INT,qty INT,price REAL);\nINSERT INTO customers VALUES(1,'Ankit','ankit@gmail.com','Mumbai','2023-01-15');\nINSERT INTO customers VALUES(2,'Priya','priya@yahoo.com','Delhi','2023-03-20');\nINSERT INTO customers VALUES(3,'Rohan','rohan@gmail.com','Bangalore','2023-06-10');\nINSERT INTO customers VALUES(4,'Sneha','sneha@outlook.com','Mumbai','2024-01-05');\nINSERT INTO customers VALUES(5,'Vikram','vikram@gmail.com','Chennai','2023-09-12');\nINSERT INTO products VALUES(101,'Laptop',  'Electronics',55000);\nINSERT INTO products VALUES(102,'Headphones','Electronics',2500);\nINSERT INTO products VALUES(103,'T-Shirt','Fashion',799);\nINSERT INTO products VALUES(104,'Sneakers','Fashion',3200);\nINSERT INTO products VALUES(105,'Python Book','Books',450);\nINSERT INTO orders VALUES(1001,1,'2024-01-10',57500,'delivered');\nINSERT INTO orders VALUES(1002,2,'2024-01-15',3299,'delivered');\nINSERT INTO orders VALUES(1003,1,'2024-02-05',799,'delivered');\nINSERT INTO orders VALUES(1004,3,'2024-02-20',55450,'shipped');\nINSERT INTO orders VALUES(1005,2,'2024-03-01',2500,'cancelled');\nINSERT INTO orders VALUES(1006,4,'2024-03-10',6900,'delivered');\nINSERT INTO orders VALUES(1007,5,'2024-03-15',450,'delivered');\nINSERT INTO order_items VALUES(1,1001,101,1,55000);\nINSERT INTO order_items VALUES(2,1001,102,1,2500);\nINSERT INTO order_items VALUES(3,1002,103,1,799);\nINSERT INTO order_items VALUES(4,1002,102,1,2500);\nINSERT INTO order_items VALUES(5,1003,103,1,799);\nINSERT INTO order_items VALUES(6,1004,101,1,55000);\nINSERT INTO order_items VALUES(7,1004,105,1,450);\nINSERT INTO order_items VALUES(8,1005,102,1,2500);\nINSERT INTO order_items VALUES(9,1006,104,1,3200);\nINSERT INTO order_items VALUES(10,1006,103,1,799);\nINSERT INTO order_items VALUES(11,1006,102,1,2500);\nINSERT INTO order_items VALUES(12,1007,105,1,450);",
+    "expected_output": [
+      {
+        "columns": [
+          "order_date",
+          "order_count"
+        ],
+        "values": [
+          [
+            "2024-01-15",
+            2
+          ],
+          [
+            "2024-03-15",
+            2
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT order_date,COUNT(*)AS order_count FROM orders GROUP BY order_date HAVING COUNT(*)>1 ORDER BY order_count DESC;"
+  },
+  {
+    "id": "sql-347",
+    "title": "Account Balance Summary",
+    "dataset_theme": "Banking / Finance",
+    "company_tag": "Accenture",
+    "difficulty": "hard",
+    "topic": "Account Balance Summary",
+    "problem_statement": "Show each account's balance, total credits, total debits, and net balance.\n\nReturn holder, balance, credits, debits, net. Order by net DESC.",
+    "hint": "CASE credit/debit SUM + balance calculation.",
+    "explanation": "Full account financial summary.",
+    "tables_meta": [
+      {
+        "name": "accounts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "holder",
+            "type": "varchar"
+          },
+          {
+            "name": "type",
+            "type": "varchar"
+          },
+          {
+            "name": "balance",
+            "type": "real"
+          },
+          {
+            "name": "branch",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ravi",
+            "savings",
+            50000,
+            "Mumbai"
+          ],
+          [
+            2,
+            "Meena",
+            "current",
+            120000,
+            "Delhi"
+          ],
+          [
+            3,
+            "Kiran",
+            "savings",
+            30000,
+            "Mumbai"
+          ],
+          [
+            4,
+            "Suresh",
+            "savings",
+            75000,
+            "Bangalore"
+          ]
+        ]
+      },
+      {
+        "name": "transactions",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "acc_id",
+            "type": "int"
+          },
+          {
+            "name": "type",
+            "type": "varchar"
+          },
+          {
+            "name": "amount",
+            "type": "real"
+          },
+          {
+            "name": "txn_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            "credit",
+            5000,
+            "2024-01-10"
+          ],
+          [
+            2,
+            1,
+            "debit",
+            2000,
+            "2024-01-15"
+          ],
+          [
+            3,
+            2,
+            "debit",
+            15000,
+            "2024-01-20"
+          ],
+          [
+            4,
+            3,
+            "credit",
+            8000,
+            "2024-02-01"
+          ],
+          [
+            5,
+            4,
+            "debit",
+            5000,
+            "2024-02-05"
+          ],
+          [
+            6,
+            2,
+            "credit",
+            20000,
+            "2024-02-10"
+          ],
+          [
+            7,
+            1,
+            "debit",
+            3000,
+            "2024-02-15"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "holder",
+        "balance",
+        "credits",
+        "debits",
+        "net"
+      ],
+      "rows": [
+        [
+          "Meena",
+          150000.0,
+          20000.0,
+          15000.0,
+          5000.0
+        ],
+        [
+          "Ravi",
+          75000.0,
+          5000.0,
+          5000.0,
+          0.0
+        ],
+        [
+          "Kavita",
+          30000.0,
+          0.0,
+          8000.0,
+          -8000.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE accounts(id INT PRIMARY KEY,holder VARCHAR,type VARCHAR,balance REAL,branch VARCHAR);\nCREATE TABLE transactions(id INT PRIMARY KEY,acc_id INT,type VARCHAR,amount REAL,txn_date DATE);\nINSERT INTO accounts VALUES(1,'Ravi','savings',50000,'Mumbai');\nINSERT INTO accounts VALUES(2,'Meena','current',120000,'Delhi');\nINSERT INTO accounts VALUES(3,'Kiran','savings',30000,'Mumbai');\nINSERT INTO accounts VALUES(4,'Suresh','savings',75000,'Bangalore');\nINSERT INTO transactions VALUES(1,1,'credit',5000,'2024-01-10');\nINSERT INTO transactions VALUES(2,1,'debit',2000,'2024-01-15');\nINSERT INTO transactions VALUES(3,2,'debit',15000,'2024-01-20');\nINSERT INTO transactions VALUES(4,3,'credit',8000,'2024-02-01');\nINSERT INTO transactions VALUES(5,4,'debit',5000,'2024-02-05');\nINSERT INTO transactions VALUES(6,2,'credit',20000,'2024-02-10');\nINSERT INTO transactions VALUES(7,1,'debit',3000,'2024-02-15');",
+    "expected_output": [
+      {
+        "columns": [
+          "holder",
+          "balance",
+          "credits",
+          "debits",
+          "net"
+        ],
+        "values": [
+          [
+            "Meena",
+            150000.0,
+            20000.0,
+            15000.0,
+            5000.0
+          ],
+          [
+            "Ravi",
+            75000.0,
+            5000.0,
+            5000.0,
+            0.0
+          ],
+          [
+            "Kavita",
+            30000.0,
+            0.0,
+            8000.0,
+            -8000.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT a.holder,a.balance,SUM(CASE WHEN t.type='credit' THEN t.amount ELSE 0 END)AS credits,SUM(CASE WHEN t.type='debit' THEN t.amount ELSE 0 END)AS debits,SUM(CASE WHEN t.type='credit' THEN t.amount ELSE -t.amount END)AS net FROM accounts a JOIN transactions t ON a.id=t.acc_id GROUP BY a.holder,a.balance ORDER BY net DESC;"
+  },
+  {
+    "id": "sql-348",
+    "title": "Employee Name Starting With Vowel",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "Accenture",
+    "difficulty": "easy",
+    "topic": "Vowel Start Filter",
+    "problem_statement": "Find employees whose name starts with a vowel (A, E, I, O, U).\n\nReturn name, dept. Order by name.",
+    "hint": "WHERE SUBSTR(name,1,1) IN ('A','E','I','O','U').",
+    "explanation": "Alice, Eve start with vowels.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "dept",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "mgr_id",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Eng",
+            70000,
+            null,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Eng",
+            60000,
+            1,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Sales",
+            55000,
+            null,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Sales",
+            50000,
+            3,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Eng",
+            65000,
+            1,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "HR",
+            45000,
+            null,
+            "2022-02-14"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "dept"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "Eng"
+        ],
+        [
+          "Eve",
+          "Eng"
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR,dept VARCHAR,salary INT,mgr_id INT,hire_date DATE);\nINSERT INTO employees VALUES(1,'Alice','Eng',70000,NULL,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Eng',60000,1,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Sales',55000,NULL,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Sales',50000,3,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Eng',65000,1,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','HR',45000,NULL,'2022-02-14');",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "dept"
+        ],
+        "values": [
+          [
+            "Alice",
+            "Eng"
+          ],
+          [
+            "Eve",
+            "Eng"
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT name,dept FROM employees WHERE SUBSTR(UPPER(name),1,1) IN('A','E','I','O','U') ORDER BY name;"
+  },
+  {
+    "id": "sql-349",
+    "title": "Top 3 Products by Revenue",
+    "dataset_theme": "E-Commerce (Flipkart)",
+    "company_tag": "Accenture",
+    "difficulty": "medium",
+    "topic": "Top 3 by Revenue",
+    "problem_statement": "Find the top 3 products by total revenue.\n\nReturn product name, total_revenue. Order by total_revenue DESC.",
+    "hint": "JOIN + SUM(price*qty) + LIMIT 3.",
+    "explanation": "Top 3 revenue generators.",
+    "tables_meta": [
+      {
+        "name": "customers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "email",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ankit",
+            "ankit@gmail.com",
+            "Mumbai",
+            "2023-01-15"
+          ],
+          [
+            2,
+            "Priya",
+            "priya@yahoo.com",
+            "Delhi",
+            "2023-03-20"
+          ],
+          [
+            3,
+            "Rohan",
+            "rohan@gmail.com",
+            "Bangalore",
+            "2023-06-10"
+          ],
+          [
+            4,
+            "Sneha",
+            "sneha@outlook.com",
+            "Mumbai",
+            "2024-01-05"
+          ],
+          [
+            5,
+            "Vikram",
+            "vikram@gmail.com",
+            "Chennai",
+            "2023-09-12"
+          ]
+        ]
+      },
+      {
+        "name": "products",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "product_name",
+            "type": "varchar"
+          },
+          {
+            "name": "category",
+            "type": "varchar"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Laptop",
+            "Electronics",
+            55000
+          ],
+          [
+            102,
+            "Headphones",
+            "Electronics",
+            2500
+          ],
+          [
+            103,
+            "T-Shirt",
+            "Fashion",
+            799
+          ],
+          [
+            104,
+            "Sneakers",
+            "Fashion",
+            3200
+          ],
+          [
+            105,
+            "Python Book",
+            "Books",
+            450
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "customer_id",
+            "type": "int"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          },
+          {
+            "name": "total",
+            "type": "real"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            "2024-01-10",
+            57500,
+            "delivered"
+          ],
+          [
+            1002,
+            2,
+            "2024-01-15",
+            3299,
+            "delivered"
+          ],
+          [
+            1003,
+            1,
+            "2024-02-05",
+            799,
+            "delivered"
+          ],
+          [
+            1004,
+            3,
+            "2024-02-20",
+            55450,
+            "shipped"
+          ],
+          [
+            1005,
+            2,
+            "2024-03-01",
+            2500,
+            "cancelled"
+          ],
+          [
+            1006,
+            4,
+            "2024-03-10",
+            6900,
+            "delivered"
+          ],
+          [
+            1007,
+            5,
+            "2024-03-15",
+            450,
+            "delivered"
+          ]
+        ]
+      },
+      {
+        "name": "order_items",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "order_id",
+            "type": "int"
+          },
+          {
+            "name": "product_id",
+            "type": "int"
+          },
+          {
+            "name": "qty",
+            "type": "int"
+          },
+          {
+            "name": "price",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1001,
+            101,
+            1,
+            55000
+          ],
+          [
+            2,
+            1001,
+            102,
+            1,
+            2500
+          ],
+          [
+            3,
+            1002,
+            103,
+            1,
+            799
+          ],
+          [
+            4,
+            1002,
+            102,
+            1,
+            2500
+          ],
+          [
+            5,
+            1003,
+            103,
+            1,
+            799
+          ],
+          [
+            6,
+            1004,
+            101,
+            1,
+            55000
+          ],
+          [
+            7,
+            1004,
+            105,
+            1,
+            450
+          ],
+          [
+            8,
+            1005,
+            102,
+            1,
+            2500
+          ],
+          [
+            9,
+            1006,
+            104,
+            1,
+            3200
+          ],
+          [
+            10,
+            1006,
+            103,
+            1,
+            799
+          ],
+          [
+            11,
+            1006,
+            102,
+            1,
+            2500
+          ],
+          [
+            12,
+            1007,
+            105,
+            1,
+            450
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "total_revenue"
+      ],
+      "rows": [
+        [
+          "MacBook Pro",
+          240000.0
+        ],
+        [
+          "iPhone 15",
+          239997.0
+        ],
+        [
+          "Running Shoes",
+          10497.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE customers(id INT PRIMARY KEY,name VARCHAR,email VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE products(id INT PRIMARY KEY,product_name VARCHAR,category VARCHAR,price REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,customer_id INT,order_date DATE,total REAL,status VARCHAR);\nCREATE TABLE order_items(id INT PRIMARY KEY,order_id INT,product_id INT,qty INT,price REAL);\nINSERT INTO customers VALUES(1,'Ankit','ankit@gmail.com','Mumbai','2023-01-15');\nINSERT INTO customers VALUES(2,'Priya','priya@yahoo.com','Delhi','2023-03-20');\nINSERT INTO customers VALUES(3,'Rohan','rohan@gmail.com','Bangalore','2023-06-10');\nINSERT INTO customers VALUES(4,'Sneha','sneha@outlook.com','Mumbai','2024-01-05');\nINSERT INTO customers VALUES(5,'Vikram','vikram@gmail.com','Chennai','2023-09-12');\nINSERT INTO products VALUES(101,'Laptop',  'Electronics',55000);\nINSERT INTO products VALUES(102,'Headphones','Electronics',2500);\nINSERT INTO products VALUES(103,'T-Shirt','Fashion',799);\nINSERT INTO products VALUES(104,'Sneakers','Fashion',3200);\nINSERT INTO products VALUES(105,'Python Book','Books',450);\nINSERT INTO orders VALUES(1001,1,'2024-01-10',57500,'delivered');\nINSERT INTO orders VALUES(1002,2,'2024-01-15',3299,'delivered');\nINSERT INTO orders VALUES(1003,1,'2024-02-05',799,'delivered');\nINSERT INTO orders VALUES(1004,3,'2024-02-20',55450,'shipped');\nINSERT INTO orders VALUES(1005,2,'2024-03-01',2500,'cancelled');\nINSERT INTO orders VALUES(1006,4,'2024-03-10',6900,'delivered');\nINSERT INTO orders VALUES(1007,5,'2024-03-15',450,'delivered');\nINSERT INTO order_items VALUES(1,1001,101,1,55000);\nINSERT INTO order_items VALUES(2,1001,102,1,2500);\nINSERT INTO order_items VALUES(3,1002,103,1,799);\nINSERT INTO order_items VALUES(4,1002,102,1,2500);\nINSERT INTO order_items VALUES(5,1003,103,1,799);\nINSERT INTO order_items VALUES(6,1004,101,1,55000);\nINSERT INTO order_items VALUES(7,1004,105,1,450);\nINSERT INTO order_items VALUES(8,1005,102,1,2500);\nINSERT INTO order_items VALUES(9,1006,104,1,3200);\nINSERT INTO order_items VALUES(10,1006,103,1,799);\nINSERT INTO order_items VALUES(11,1006,102,1,2500);\nINSERT INTO order_items VALUES(12,1007,105,1,450);",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "total_revenue"
+        ],
+        "values": [
+          [
+            "MacBook Pro",
+            240000.0
+          ],
+          [
+            "iPhone 15",
+            239997.0
+          ],
+          [
+            "Running Shoes",
+            10497.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT p.name,SUM(p.price*oi.qty)AS total_revenue FROM products p JOIN order_items oi ON p.id=oi.product_id GROUP BY p.name ORDER BY total_revenue DESC LIMIT 3;"
+  },
+  {
+    "id": "sql-350",
+    "title": "Patients Treated by Multiple Doctors",
+    "dataset_theme": "Healthcare / Hospital",
+    "company_tag": "Accenture",
+    "difficulty": "medium",
+    "topic": "HAVING Multiple Doctors",
+    "problem_statement": "Find patients who have been treated by more than 1 different doctor.\n\nReturn patient name, doctor_count. Order by doctor_count DESC.",
+    "hint": "GROUP BY patient_id HAVING COUNT(DISTINCT doc_id) > 1.",
+    "explanation": "Amit has seen Dr. Sharma and Dr. Patel.",
+    "tables_meta": [
+      {
+        "name": "doctors",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "specialty",
+            "type": "varchar"
+          },
+          {
+            "name": "experience_yrs",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Dr. Sharma",
+            "Cardiology",
+            15
+          ],
+          [
+            2,
+            "Dr. Patel",
+            "Orthopedics",
+            10
+          ],
+          [
+            3,
+            "Dr. Gupta",
+            "Dermatology",
+            8
+          ]
+        ]
+      },
+      {
+        "name": "patients",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "age",
+            "type": "int"
+          },
+          {
+            "name": "gender",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Rahul",
+            35,
+            "M"
+          ],
+          [
+            102,
+            "Priya",
+            28,
+            "F"
+          ],
+          [
+            103,
+            "Amit",
+            45,
+            "M"
+          ],
+          [
+            104,
+            "Sneha",
+            32,
+            "F"
+          ]
+        ]
+      },
+      {
+        "name": "appointments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "doc_id",
+            "type": "int"
+          },
+          {
+            "name": "patient_id",
+            "type": "int"
+          },
+          {
+            "name": "visit_date",
+            "type": "date"
+          },
+          {
+            "name": "diagnosis",
+            "type": "varchar"
+          },
+          {
+            "name": "fee",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            101,
+            "2024-01-10",
+            "Hypertension",
+            500
+          ],
+          [
+            1002,
+            2,
+            102,
+            "2024-01-12",
+            "Fracture",
+            800
+          ],
+          [
+            1003,
+            1,
+            103,
+            "2024-01-15",
+            "Arrhythmia",
+            500
+          ],
+          [
+            1004,
+            3,
+            104,
+            "2024-02-01",
+            "Eczema",
+            400
+          ],
+          [
+            1005,
+            1,
+            101,
+            "2024-02-10",
+            "Follow-up",
+            300
+          ],
+          [
+            1006,
+            2,
+            103,
+            "2024-02-15",
+            "Joint Pain",
+            600
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "doctor_count"
+      ],
+      "rows": [
+        [
+          "Amit",
+          2
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE doctors(id INT PRIMARY KEY,name VARCHAR,specialty VARCHAR,experience_yrs INT);\nCREATE TABLE patients(id INT PRIMARY KEY,name VARCHAR,age INT,gender VARCHAR);\nCREATE TABLE appointments(id INT PRIMARY KEY,doc_id INT,patient_id INT,visit_date DATE,diagnosis VARCHAR,fee INT);\nINSERT INTO doctors VALUES(1,'Dr. Sharma','Cardiology',15);\nINSERT INTO doctors VALUES(2,'Dr. Patel','Orthopedics',10);\nINSERT INTO doctors VALUES(3,'Dr. Gupta','Dermatology',8);\nINSERT INTO patients VALUES(101,'Rahul',35,'M');\nINSERT INTO patients VALUES(102,'Priya',28,'F');\nINSERT INTO patients VALUES(103,'Amit',45,'M');\nINSERT INTO patients VALUES(104,'Sneha',32,'F');\nINSERT INTO appointments VALUES(1001,1,101,'2024-01-10','Hypertension',500);\nINSERT INTO appointments VALUES(1002,2,102,'2024-01-12','Fracture',800);\nINSERT INTO appointments VALUES(1003,1,103,'2024-01-15','Arrhythmia',500);\nINSERT INTO appointments VALUES(1004,3,104,'2024-02-01','Eczema',400);\nINSERT INTO appointments VALUES(1005,1,101,'2024-02-10','Follow-up',300);\nINSERT INTO appointments VALUES(1006,2,103,'2024-02-15','Joint Pain',600);",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "doctor_count"
+        ],
+        "values": [
+          [
+            "Amit",
+            2
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT p.name,COUNT(DISTINCT a.doc_id)AS doctor_count FROM patients p JOIN appointments a ON p.id=a.patient_id GROUP BY p.name HAVING COUNT(DISTINCT a.doc_id)>1 ORDER BY doctor_count DESC;"
+  },
+  {
     "id": "sql-181",
     "title": "FULL OUTER JOIN: All Employees & Departments",
     "dataset_theme": "HR / Employee",

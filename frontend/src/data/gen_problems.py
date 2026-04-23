@@ -2755,6 +2755,78 @@ add("sql-340","Doctors Treating Multiple Patients","Healthcare / Hospital","Cogn
 HOSPITAL_T,HOSPITAL_S,(["name","patient_count"],[["Dr. Sharma",2],["Dr. Patel",2]]),
 "SELECT d.name,COUNT(DISTINCT a.patient_id)AS patient_count FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.name HAVING COUNT(DISTINCT a.patient_id)>=2 ORDER BY patient_count DESC;",topic="HAVING DISTINCT Patients")
 
+# ═══ BATCH 34: Accenture Scale-Up (10 of 21) ═══
+
+add("sql-341","Customer Full Order History","E-Commerce (Flipkart)","Accenture","medium",
+"Show each customer's order count, total spent, and average order value.\n\nReturn name, orders, total_spent, avg_order. Order by total_spent DESC.",
+"JOIN + GROUP BY + COUNT + SUM + AVG.",
+"Comprehensive customer summary.",
+ECOM_T,ECOM_S,(["name","orders","total_spent","avg_order"],[["Ankit",3,60799.0,20266],["Rohan",1,55450.0,55450],["Sneha",1,6900.0,6900],["Priya",1,3299.0,3299],["Vikram",1,450.0,450]]),
+"SELECT c.name,COUNT(o.id)AS orders,SUM(o.total)AS total_spent,ROUND(AVG(o.total),0)AS avg_order FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name ORDER BY total_spent DESC;",topic="Customer Summary Report")
+
+add("sql-342","Highest Rated Restaurant Per City","Food Delivery (Zomato)","Accenture","medium",
+"Find the highest-rated restaurant in each city.\n\nReturn city, name, rating. Order by city.",
+"ROW_NUMBER PARTITION BY city ORDER BY rating DESC, rn=1.",
+"Best restaurant per city.",
+ZOMATO_T,ZOMATO_S,(["city","name","rating"],[["Bangalore","Burger Barn",3.5],["Chennai","Dosa Corner",4.7],["Delhi","Pizza Palace",4.2],["Kolkata","Dragon Wok",3.8],["Mumbai","Biryani House",4.5]]),
+"SELECT city,name,rating FROM(SELECT city,name,rating,ROW_NUMBER() OVER(PARTITION BY city ORDER BY rating DESC)AS rn FROM restaurants)t WHERE rn=1 ORDER BY city;",topic="Top Per City (Window)")
+
+add("sql-343","Employee Salary Quartile","HR / Employee","Accenture","hard",
+"Divide employees into 4 salary quartiles using NTILE.\n\nReturn name, salary, quartile. Order by quartile, salary DESC.",
+"NTILE(4) OVER(ORDER BY salary DESC).",
+"Split 6 employees into 4 quartiles.",
+EMP_T,EMP_S,(["name","salary","quartile"],[["Alice",70000,1],["Eve",65000,1],["Bob",60000,2],["Charlie",55000,2],["Diana",50000,3],["Frank",45000,4]]),
+"SELECT name,salary,NTILE(4) OVER(ORDER BY salary DESC)AS quartile FROM employees ORDER BY quartile,salary DESC;",topic="NTILE Quartile")
+
+add("sql-344","Total Revenue Per Product","E-Commerce (Flipkart)","Accenture","medium",
+"Calculate total revenue per product (price × quantity sold).\n\nReturn product name, total_revenue. Order by total_revenue DESC.",
+"JOIN products + order_items, SUM(price * qty).",
+"Revenue = price × total qty across all orders.",
+ECOM_T,ECOM_S,(["name","total_revenue"],[["MacBook Pro",240000.0],["iPhone 15",239997.0],["Running Shoes",10497.0],["Cotton T-Shirt",2397.0],["SQL Book",1350.0]]),
+"SELECT p.name,SUM(p.price*oi.qty)AS total_revenue FROM products p JOIN order_items oi ON p.id=oi.product_id GROUP BY p.name ORDER BY total_revenue DESC;",topic="Revenue = Price × Qty")
+
+add("sql-345","Most Popular Cuisine","Food Delivery (Zomato)","Accenture","easy",
+"Find the cuisine with the most restaurants.\n\nReturn cuisine, count.",
+"GROUP BY cuisine, COUNT, ORDER DESC LIMIT 1.",
+"Indian has 2 restaurants.",
+ZOMATO_T,ZOMATO_S,(["cuisine","count"],[["Indian",2]]),
+"SELECT cuisine,COUNT(*)AS count FROM restaurants GROUP BY cuisine ORDER BY count DESC LIMIT 1;",topic="Most Popular (COUNT+LIMIT)")
+
+add("sql-346","Orders Placed on Same Date","E-Commerce (Flipkart)","Accenture","medium",
+"Find dates where multiple orders were placed.\n\nReturn order_date, order_count. Order by order_count DESC.",
+"GROUP BY order_date HAVING COUNT > 1.",
+"Jan 15: 2 orders. Mar 15: 2 orders.",
+ECOM_T,ECOM_S,(["order_date","order_count"],[["2024-01-15",2],["2024-03-15",2]]),
+"SELECT order_date,COUNT(*)AS order_count FROM orders GROUP BY order_date HAVING COUNT(*)>1 ORDER BY order_count DESC;",topic="HAVING Same-Date Orders")
+
+add("sql-347","Account Balance Summary","Banking / Finance","Accenture","hard",
+"Show each account's balance, total credits, total debits, and net balance.\n\nReturn holder, balance, credits, debits, net. Order by net DESC.",
+"CASE credit/debit SUM + balance calculation.",
+"Full account financial summary.",
+BANK_T,BANK_S,(["holder","balance","credits","debits","net"],[["Meena",150000.0,20000.0,15000.0,5000.0],["Ravi",75000.0,5000.0,5000.0,0.0],["Kavita",30000.0,0.0,8000.0,-8000.0]]),
+"SELECT a.holder,a.balance,SUM(CASE WHEN t.type='credit' THEN t.amount ELSE 0 END)AS credits,SUM(CASE WHEN t.type='debit' THEN t.amount ELSE 0 END)AS debits,SUM(CASE WHEN t.type='credit' THEN t.amount ELSE -t.amount END)AS net FROM accounts a JOIN transactions t ON a.id=t.acc_id GROUP BY a.holder,a.balance ORDER BY net DESC;",topic="Account Balance Summary")
+
+add("sql-348","Employee Name Starting With Vowel","HR / Employee","Accenture","easy",
+"Find employees whose name starts with a vowel (A, E, I, O, U).\n\nReturn name, dept. Order by name.",
+"WHERE SUBSTR(name,1,1) IN ('A','E','I','O','U').",
+"Alice, Eve start with vowels.",
+EMP_T,EMP_S,(["name","dept"],[["Alice","Eng"],["Eve","Eng"]]),
+"SELECT name,dept FROM employees WHERE SUBSTR(UPPER(name),1,1) IN('A','E','I','O','U') ORDER BY name;",topic="Vowel Start Filter")
+
+add("sql-349","Top 3 Products by Revenue","E-Commerce (Flipkart)","Accenture","medium",
+"Find the top 3 products by total revenue.\n\nReturn product name, total_revenue. Order by total_revenue DESC.",
+"JOIN + SUM(price*qty) + LIMIT 3.",
+"Top 3 revenue generators.",
+ECOM_T,ECOM_S,(["name","total_revenue"],[["MacBook Pro",240000.0],["iPhone 15",239997.0],["Running Shoes",10497.0]]),
+"SELECT p.name,SUM(p.price*oi.qty)AS total_revenue FROM products p JOIN order_items oi ON p.id=oi.product_id GROUP BY p.name ORDER BY total_revenue DESC LIMIT 3;",topic="Top 3 by Revenue")
+
+add("sql-350","Patients Treated by Multiple Doctors","Healthcare / Hospital","Accenture","medium",
+"Find patients who have been treated by more than 1 different doctor.\n\nReturn patient name, doctor_count. Order by doctor_count DESC.",
+"GROUP BY patient_id HAVING COUNT(DISTINCT doc_id) > 1.",
+"Amit has seen Dr. Sharma and Dr. Patel.",
+HOSPITAL_T,HOSPITAL_S,(["name","doctor_count"],[["Amit",2]]),
+"SELECT p.name,COUNT(DISTINCT a.doc_id)AS doctor_count FROM patients p JOIN appointments a ON p.id=a.patient_id GROUP BY p.name HAVING COUNT(DISTINCT a.doc_id)>1 ORDER BY doctor_count DESC;",topic="HAVING Multiple Doctors")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
