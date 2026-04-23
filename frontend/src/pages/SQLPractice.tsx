@@ -573,7 +573,7 @@ const SQLPractice = ({ navigate, user }: any) => {
                 <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 py-1 px-2 rounded whitespace-nowrap shrink-0"><TableIcon size={14} /> {p.dataset_theme}</span>
                 {(() => {
                   const tags = (p.company_tags || [p.company_tag]).filter(Boolean);
-                  if (tags.length >= 6) {
+                  if (tags.length > 6) {
                     return (
                       <div className="flex-1 overflow-hidden">
                         <div className="logo-marquee">
