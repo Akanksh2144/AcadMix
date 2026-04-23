@@ -339,15 +339,18 @@ const CodePlayground = ({ navigate, user }) => {
              } catch (e) {}
              
              setOutput(outText || '(Execution completed with no textual output)');
-             if (svgContent) {
+             const hasPlot = svgContent && (svgContent.includes('<path') || svgContent.includes('<polyline') || svgContent.includes('<circle') || svgContent.includes('<polygon') || svgContent.includes('<text'));
+             if (hasPlot) {
                  setRPlots([svgContent]);
                  setActiveConsoleTab('plots');
              } else {
+                 setRPlots([]);
                  setActiveConsoleTab('results');
              }
              setExecTime(Date.now() - startTime);
-             setRunHistory(prev => [{
+             setHistory(prev => [{
                 status: 'Accepted',
+                success: true,
                 language: 'r',
                 code: code,
                 output: outText,
@@ -356,8 +359,9 @@ const CodePlayground = ({ navigate, user }) => {
          } catch (e) {
              setOutput(`Error: ${e.message}`);
              setExecTime(Date.now() - startTime);
-             setRunHistory(prev => [{
+             setHistory(prev => [{
                 status: 'Error',
+                success: false,
                 language: 'r',
                 code: code,
                 output: e.message,
