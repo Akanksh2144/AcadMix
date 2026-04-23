@@ -10,6 +10,8 @@ import initSqlJs from 'sql.js';
 import sqlWasm from 'sql.js/dist/sql-wasm.wasm?url';
 import LOCAL_PROBLEMS from '../data/sql_problems.json';
 
+let CACHED_PROBLEMS: any[] | null = null;
+
 const diffColors: Record<string, string> = {
   easy: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/15 border-emerald-100 dark:border-emerald-500/20',
   medium: 'text-amber-600 bg-amber-50 dark:bg-amber-500/15 border-amber-100 dark:border-amber-500/20',
@@ -275,9 +277,23 @@ const SQLPractice = ({ navigate, user }: any) => {
 
   // Fetch problems — API first, fallback to local JSON
   useEffect(() => {
+    if (CACHED_PROBLEMS) {
+      setProblems(CACHED_PROBLEMS);
+      setLoading(false);
+      return;
+    }
     placementPrepAPI.sqlProblems()
-      .then((res: any) => { setProblems(res.data?.length ? res.data : LOCAL_PROBLEMS); setLoading(false); })
-      .catch(() => { setProblems(LOCAL_PROBLEMS); setLoading(false); });
+      .then((res: any) => {
+        const data = res.data?.length ? res.data : LOCAL_PROBLEMS;
+        CACHED_PROBLEMS = data;
+        setProblems(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        CACHED_PROBLEMS = LOCAL_PROBLEMS;
+        setProblems(LOCAL_PROBLEMS);
+        setLoading(false);
+      });
   }, []);
 
   const loadProblem = (prob: any) => {
@@ -301,6 +317,17 @@ const SQLPractice = ({ navigate, user }: any) => {
         setDb(() => freshDb);
       } catch (e: any) { toast.error('Schema loading failed: ' + e.message); }
     }
+  };
+
+  const handleBackToList = () => {
+    const params = new URLSearchParams(window.location.search);
+    params.delete('pid');
+    const newSearch = params.toString();
+    const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '');
+    window.history.replaceState(null, '', newUrl);
+    
+    setSelectedProblem(null);
+    setTimeout(() => window.scrollTo(0, scrollYRef.current), 10);
   };
 
   const isResultCorrect = (actual: any[], exp: any[]) => {
