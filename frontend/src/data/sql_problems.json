@@ -2645,5 +2645,2221 @@
       }
     ],
     "solution_sql": "SELECT r.name,sub.order_date,sub.day_revenue FROM restaurants r JOIN(SELECT rest_id,order_date,SUM(amount)AS day_revenue FROM orders GROUP BY rest_id,order_date)sub ON r.id=sub.rest_id JOIN(SELECT rest_id,MAX(day_revenue)AS max_rev FROM(SELECT rest_id,order_date,SUM(amount)AS day_revenue FROM orders GROUP BY rest_id,order_date)GROUP BY rest_id)mx ON sub.rest_id=mx.rest_id AND sub.day_revenue=mx.max_rev;"
+  },
+  {
+    "id": "sql-016",
+    "title": "Most Watched Show",
+    "dataset_theme": "Streaming (Netflix)",
+    "company_tag": "Google",
+    "difficulty": "easy",
+    "problem_statement": "Find the show with the most total watch time (sum of duration_min).\n\nReturn show title and total_minutes.",
+    "hint": "JOIN shows with watch_history, SUM duration, ORDER DESC LIMIT 1.",
+    "explanation": "Dark: 120+45=165. Money Heist: 90+95=185. Stranger Things: 60+70=130. Sacred Games: 110. Mirzapur: 80. Money Heist wins.",
+    "tables_meta": [
+      {
+        "name": "users",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "plan",
+            "type": "varchar"
+          },
+          {
+            "name": "join_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Aarav",
+            "premium",
+            "2023-01-10"
+          ],
+          [
+            2,
+            "Bhavna",
+            "basic",
+            "2023-03-15"
+          ],
+          [
+            3,
+            "Chirag",
+            "premium",
+            "2023-06-01"
+          ],
+          [
+            4,
+            "Diya",
+            "basic",
+            "2024-01-05"
+          ]
+        ]
+      },
+      {
+        "name": "shows",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "title",
+            "type": "varchar"
+          },
+          {
+            "name": "genre",
+            "type": "varchar"
+          },
+          {
+            "name": "release_year",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Dark",
+            "Thriller",
+            2017
+          ],
+          [
+            2,
+            "Money Heist",
+            "Action",
+            2017
+          ],
+          [
+            3,
+            "Stranger Things",
+            "Sci-Fi",
+            2016
+          ],
+          [
+            4,
+            "Sacred Games",
+            "Thriller",
+            2018
+          ],
+          [
+            5,
+            "Mirzapur",
+            "Action",
+            2018
+          ]
+        ]
+      },
+      {
+        "name": "watch_history",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "show_id",
+            "type": "int"
+          },
+          {
+            "name": "watch_date",
+            "type": "date"
+          },
+          {
+            "name": "duration_min",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            1,
+            "2024-01-10",
+            120
+          ],
+          [
+            2,
+            1,
+            2,
+            "2024-01-12",
+            90
+          ],
+          [
+            3,
+            2,
+            3,
+            "2024-01-15",
+            60
+          ],
+          [
+            4,
+            1,
+            4,
+            "2024-02-01",
+            110
+          ],
+          [
+            5,
+            3,
+            2,
+            "2024-02-05",
+            95
+          ],
+          [
+            6,
+            3,
+            5,
+            "2024-02-10",
+            80
+          ],
+          [
+            7,
+            2,
+            1,
+            "2024-02-15",
+            45
+          ],
+          [
+            8,
+            4,
+            3,
+            "2024-03-01",
+            70
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "title",
+        "total_minutes"
+      ],
+      "rows": [
+        [
+          "Money Heist",
+          185
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE users(id INT PRIMARY KEY,name VARCHAR,plan VARCHAR,join_date DATE);\nCREATE TABLE shows(id INT PRIMARY KEY,title VARCHAR,genre VARCHAR,release_year INT);\nCREATE TABLE watch_history(id INT PRIMARY KEY,user_id INT,show_id INT,watch_date DATE,duration_min INT);\nINSERT INTO users VALUES(1,'Aarav','premium','2023-01-10');\nINSERT INTO users VALUES(2,'Bhavna','basic','2023-03-15');\nINSERT INTO users VALUES(3,'Chirag','premium','2023-06-01');\nINSERT INTO users VALUES(4,'Diya','basic','2024-01-05');\nINSERT INTO shows VALUES(1,'Dark','Thriller',2017);\nINSERT INTO shows VALUES(2,'Money Heist','Action',2017);\nINSERT INTO shows VALUES(3,'Stranger Things','Sci-Fi',2016);\nINSERT INTO shows VALUES(4,'Sacred Games','Thriller',2018);\nINSERT INTO shows VALUES(5,'Mirzapur','Action',2018);\nINSERT INTO watch_history VALUES(1,1,1,'2024-01-10',120);\nINSERT INTO watch_history VALUES(2,1,2,'2024-01-12',90);\nINSERT INTO watch_history VALUES(3,2,3,'2024-01-15',60);\nINSERT INTO watch_history VALUES(4,1,4,'2024-02-01',110);\nINSERT INTO watch_history VALUES(5,3,2,'2024-02-05',95);\nINSERT INTO watch_history VALUES(6,3,5,'2024-02-10',80);\nINSERT INTO watch_history VALUES(7,2,1,'2024-02-15',45);\nINSERT INTO watch_history VALUES(8,4,3,'2024-03-01',70);",
+    "expected_output": [
+      {
+        "columns": [
+          "title",
+          "total_minutes"
+        ],
+        "values": [
+          [
+            "Money Heist",
+            185
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT s.title,SUM(w.duration_min)AS total_minutes FROM shows s JOIN watch_history w ON s.id=w.show_id GROUP BY s.title ORDER BY total_minutes DESC LIMIT 1;"
+  },
+  {
+    "id": "sql-017",
+    "title": "Users Who Never Watched",
+    "dataset_theme": "Streaming (Netflix)",
+    "company_tag": "TCS NQT",
+    "difficulty": "easy",
+    "problem_statement": "Find users who have no entries in the watch history.\n\nReturn user name.",
+    "hint": "LEFT JOIN users to watch_history, WHERE watch_history.id IS NULL.",
+    "explanation": "All users have at least one watch. So result is empty.",
+    "tables_meta": [
+      {
+        "name": "users",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "plan",
+            "type": "varchar"
+          },
+          {
+            "name": "join_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Aarav",
+            "premium",
+            "2023-01-10"
+          ],
+          [
+            2,
+            "Bhavna",
+            "basic",
+            "2023-03-15"
+          ],
+          [
+            3,
+            "Chirag",
+            "premium",
+            "2023-06-01"
+          ],
+          [
+            4,
+            "Diya",
+            "basic",
+            "2024-01-05"
+          ]
+        ]
+      },
+      {
+        "name": "shows",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "title",
+            "type": "varchar"
+          },
+          {
+            "name": "genre",
+            "type": "varchar"
+          },
+          {
+            "name": "release_year",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Dark",
+            "Thriller",
+            2017
+          ],
+          [
+            2,
+            "Money Heist",
+            "Action",
+            2017
+          ],
+          [
+            3,
+            "Stranger Things",
+            "Sci-Fi",
+            2016
+          ],
+          [
+            4,
+            "Sacred Games",
+            "Thriller",
+            2018
+          ],
+          [
+            5,
+            "Mirzapur",
+            "Action",
+            2018
+          ]
+        ]
+      },
+      {
+        "name": "watch_history",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "show_id",
+            "type": "int"
+          },
+          {
+            "name": "watch_date",
+            "type": "date"
+          },
+          {
+            "name": "duration_min",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            1,
+            "2024-01-10",
+            120
+          ],
+          [
+            2,
+            1,
+            2,
+            "2024-01-12",
+            90
+          ],
+          [
+            3,
+            2,
+            3,
+            "2024-01-15",
+            60
+          ],
+          [
+            4,
+            1,
+            4,
+            "2024-02-01",
+            110
+          ],
+          [
+            5,
+            3,
+            2,
+            "2024-02-05",
+            95
+          ],
+          [
+            6,
+            3,
+            5,
+            "2024-02-10",
+            80
+          ],
+          [
+            7,
+            2,
+            1,
+            "2024-02-15",
+            45
+          ],
+          [
+            8,
+            4,
+            3,
+            "2024-03-01",
+            70
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name"
+      ],
+      "rows": []
+    },
+    "schema_sql": "CREATE TABLE users(id INT PRIMARY KEY,name VARCHAR,plan VARCHAR,join_date DATE);\nCREATE TABLE shows(id INT PRIMARY KEY,title VARCHAR,genre VARCHAR,release_year INT);\nCREATE TABLE watch_history(id INT PRIMARY KEY,user_id INT,show_id INT,watch_date DATE,duration_min INT);\nINSERT INTO users VALUES(1,'Aarav','premium','2023-01-10');\nINSERT INTO users VALUES(2,'Bhavna','basic','2023-03-15');\nINSERT INTO users VALUES(3,'Chirag','premium','2023-06-01');\nINSERT INTO users VALUES(4,'Diya','basic','2024-01-05');\nINSERT INTO shows VALUES(1,'Dark','Thriller',2017);\nINSERT INTO shows VALUES(2,'Money Heist','Action',2017);\nINSERT INTO shows VALUES(3,'Stranger Things','Sci-Fi',2016);\nINSERT INTO shows VALUES(4,'Sacred Games','Thriller',2018);\nINSERT INTO shows VALUES(5,'Mirzapur','Action',2018);\nINSERT INTO watch_history VALUES(1,1,1,'2024-01-10',120);\nINSERT INTO watch_history VALUES(2,1,2,'2024-01-12',90);\nINSERT INTO watch_history VALUES(3,2,3,'2024-01-15',60);\nINSERT INTO watch_history VALUES(4,1,4,'2024-02-01',110);\nINSERT INTO watch_history VALUES(5,3,2,'2024-02-05',95);\nINSERT INTO watch_history VALUES(6,3,5,'2024-02-10',80);\nINSERT INTO watch_history VALUES(7,2,1,'2024-02-15',45);\nINSERT INTO watch_history VALUES(8,4,3,'2024-03-01',70);",
+    "expected_output": [
+      {
+        "columns": [
+          "name"
+        ],
+        "values": []
+      }
+    ],
+    "solution_sql": "SELECT u.name FROM users u LEFT JOIN watch_history w ON u.id=w.user_id WHERE w.id IS NULL;"
+  },
+  {
+    "id": "sql-018",
+    "title": "Genre Popularity Ranking",
+    "dataset_theme": "Streaming (Netflix)",
+    "company_tag": "Meta",
+    "difficulty": "medium",
+    "problem_statement": "Rank genres by total watch count (number of watch_history entries).\n\nReturn genre, watch_count, ordered descending.",
+    "hint": "JOIN shows to watch_history, GROUP BY genre, COUNT(*).",
+    "explanation": "Thriller: Dark(2)+Sacred Games(1)=3. Action: Money Heist(2)+Mirzapur(1)=3. Sci-Fi: Stranger Things(2)=2.",
+    "tables_meta": [
+      {
+        "name": "users",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "plan",
+            "type": "varchar"
+          },
+          {
+            "name": "join_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Aarav",
+            "premium",
+            "2023-01-10"
+          ],
+          [
+            2,
+            "Bhavna",
+            "basic",
+            "2023-03-15"
+          ],
+          [
+            3,
+            "Chirag",
+            "premium",
+            "2023-06-01"
+          ],
+          [
+            4,
+            "Diya",
+            "basic",
+            "2024-01-05"
+          ]
+        ]
+      },
+      {
+        "name": "shows",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "title",
+            "type": "varchar"
+          },
+          {
+            "name": "genre",
+            "type": "varchar"
+          },
+          {
+            "name": "release_year",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Dark",
+            "Thriller",
+            2017
+          ],
+          [
+            2,
+            "Money Heist",
+            "Action",
+            2017
+          ],
+          [
+            3,
+            "Stranger Things",
+            "Sci-Fi",
+            2016
+          ],
+          [
+            4,
+            "Sacred Games",
+            "Thriller",
+            2018
+          ],
+          [
+            5,
+            "Mirzapur",
+            "Action",
+            2018
+          ]
+        ]
+      },
+      {
+        "name": "watch_history",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "show_id",
+            "type": "int"
+          },
+          {
+            "name": "watch_date",
+            "type": "date"
+          },
+          {
+            "name": "duration_min",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            1,
+            "2024-01-10",
+            120
+          ],
+          [
+            2,
+            1,
+            2,
+            "2024-01-12",
+            90
+          ],
+          [
+            3,
+            2,
+            3,
+            "2024-01-15",
+            60
+          ],
+          [
+            4,
+            1,
+            4,
+            "2024-02-01",
+            110
+          ],
+          [
+            5,
+            3,
+            2,
+            "2024-02-05",
+            95
+          ],
+          [
+            6,
+            3,
+            5,
+            "2024-02-10",
+            80
+          ],
+          [
+            7,
+            2,
+            1,
+            "2024-02-15",
+            45
+          ],
+          [
+            8,
+            4,
+            3,
+            "2024-03-01",
+            70
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "genre",
+        "watch_count"
+      ],
+      "rows": [
+        [
+          "Thriller",
+          3
+        ],
+        [
+          "Action",
+          3
+        ],
+        [
+          "Sci-Fi",
+          2
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE users(id INT PRIMARY KEY,name VARCHAR,plan VARCHAR,join_date DATE);\nCREATE TABLE shows(id INT PRIMARY KEY,title VARCHAR,genre VARCHAR,release_year INT);\nCREATE TABLE watch_history(id INT PRIMARY KEY,user_id INT,show_id INT,watch_date DATE,duration_min INT);\nINSERT INTO users VALUES(1,'Aarav','premium','2023-01-10');\nINSERT INTO users VALUES(2,'Bhavna','basic','2023-03-15');\nINSERT INTO users VALUES(3,'Chirag','premium','2023-06-01');\nINSERT INTO users VALUES(4,'Diya','basic','2024-01-05');\nINSERT INTO shows VALUES(1,'Dark','Thriller',2017);\nINSERT INTO shows VALUES(2,'Money Heist','Action',2017);\nINSERT INTO shows VALUES(3,'Stranger Things','Sci-Fi',2016);\nINSERT INTO shows VALUES(4,'Sacred Games','Thriller',2018);\nINSERT INTO shows VALUES(5,'Mirzapur','Action',2018);\nINSERT INTO watch_history VALUES(1,1,1,'2024-01-10',120);\nINSERT INTO watch_history VALUES(2,1,2,'2024-01-12',90);\nINSERT INTO watch_history VALUES(3,2,3,'2024-01-15',60);\nINSERT INTO watch_history VALUES(4,1,4,'2024-02-01',110);\nINSERT INTO watch_history VALUES(5,3,2,'2024-02-05',95);\nINSERT INTO watch_history VALUES(6,3,5,'2024-02-10',80);\nINSERT INTO watch_history VALUES(7,2,1,'2024-02-15',45);\nINSERT INTO watch_history VALUES(8,4,3,'2024-03-01',70);",
+    "expected_output": [
+      {
+        "columns": [
+          "genre",
+          "watch_count"
+        ],
+        "values": [
+          [
+            "Thriller",
+            3
+          ],
+          [
+            "Action",
+            3
+          ],
+          [
+            "Sci-Fi",
+            2
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT s.genre,COUNT(w.id)AS watch_count FROM shows s JOIN watch_history w ON s.id=w.show_id GROUP BY s.genre ORDER BY watch_count DESC;"
+  },
+  {
+    "id": "sql-019",
+    "title": "Premium vs Basic Avg Watch Time",
+    "dataset_theme": "Streaming (Netflix)",
+    "company_tag": "Deloitte",
+    "difficulty": "medium",
+    "problem_statement": "Compare the average watch duration between premium and basic plan users.\n\nReturn plan and avg_duration rounded to 1 decimal.",
+    "hint": "JOIN users to watch_history, GROUP BY plan, AVG(duration_min).",
+    "explanation": "Premium(Aarav,Chirag): (120+90+110+95+80)/5=99.0. Basic(Bhavna,Diya): (60+45+70)/3=58.3.",
+    "tables_meta": [
+      {
+        "name": "users",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "plan",
+            "type": "varchar"
+          },
+          {
+            "name": "join_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Aarav",
+            "premium",
+            "2023-01-10"
+          ],
+          [
+            2,
+            "Bhavna",
+            "basic",
+            "2023-03-15"
+          ],
+          [
+            3,
+            "Chirag",
+            "premium",
+            "2023-06-01"
+          ],
+          [
+            4,
+            "Diya",
+            "basic",
+            "2024-01-05"
+          ]
+        ]
+      },
+      {
+        "name": "shows",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "title",
+            "type": "varchar"
+          },
+          {
+            "name": "genre",
+            "type": "varchar"
+          },
+          {
+            "name": "release_year",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Dark",
+            "Thriller",
+            2017
+          ],
+          [
+            2,
+            "Money Heist",
+            "Action",
+            2017
+          ],
+          [
+            3,
+            "Stranger Things",
+            "Sci-Fi",
+            2016
+          ],
+          [
+            4,
+            "Sacred Games",
+            "Thriller",
+            2018
+          ],
+          [
+            5,
+            "Mirzapur",
+            "Action",
+            2018
+          ]
+        ]
+      },
+      {
+        "name": "watch_history",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "show_id",
+            "type": "int"
+          },
+          {
+            "name": "watch_date",
+            "type": "date"
+          },
+          {
+            "name": "duration_min",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            1,
+            "2024-01-10",
+            120
+          ],
+          [
+            2,
+            1,
+            2,
+            "2024-01-12",
+            90
+          ],
+          [
+            3,
+            2,
+            3,
+            "2024-01-15",
+            60
+          ],
+          [
+            4,
+            1,
+            4,
+            "2024-02-01",
+            110
+          ],
+          [
+            5,
+            3,
+            2,
+            "2024-02-05",
+            95
+          ],
+          [
+            6,
+            3,
+            5,
+            "2024-02-10",
+            80
+          ],
+          [
+            7,
+            2,
+            1,
+            "2024-02-15",
+            45
+          ],
+          [
+            8,
+            4,
+            3,
+            "2024-03-01",
+            70
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "plan",
+        "avg_duration"
+      ],
+      "rows": [
+        [
+          "premium",
+          99.0
+        ],
+        [
+          "basic",
+          58.3
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE users(id INT PRIMARY KEY,name VARCHAR,plan VARCHAR,join_date DATE);\nCREATE TABLE shows(id INT PRIMARY KEY,title VARCHAR,genre VARCHAR,release_year INT);\nCREATE TABLE watch_history(id INT PRIMARY KEY,user_id INT,show_id INT,watch_date DATE,duration_min INT);\nINSERT INTO users VALUES(1,'Aarav','premium','2023-01-10');\nINSERT INTO users VALUES(2,'Bhavna','basic','2023-03-15');\nINSERT INTO users VALUES(3,'Chirag','premium','2023-06-01');\nINSERT INTO users VALUES(4,'Diya','basic','2024-01-05');\nINSERT INTO shows VALUES(1,'Dark','Thriller',2017);\nINSERT INTO shows VALUES(2,'Money Heist','Action',2017);\nINSERT INTO shows VALUES(3,'Stranger Things','Sci-Fi',2016);\nINSERT INTO shows VALUES(4,'Sacred Games','Thriller',2018);\nINSERT INTO shows VALUES(5,'Mirzapur','Action',2018);\nINSERT INTO watch_history VALUES(1,1,1,'2024-01-10',120);\nINSERT INTO watch_history VALUES(2,1,2,'2024-01-12',90);\nINSERT INTO watch_history VALUES(3,2,3,'2024-01-15',60);\nINSERT INTO watch_history VALUES(4,1,4,'2024-02-01',110);\nINSERT INTO watch_history VALUES(5,3,2,'2024-02-05',95);\nINSERT INTO watch_history VALUES(6,3,5,'2024-02-10',80);\nINSERT INTO watch_history VALUES(7,2,1,'2024-02-15',45);\nINSERT INTO watch_history VALUES(8,4,3,'2024-03-01',70);",
+    "expected_output": [
+      {
+        "columns": [
+          "plan",
+          "avg_duration"
+        ],
+        "values": [
+          [
+            "premium",
+            99.0
+          ],
+          [
+            "basic",
+            58.3
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT u.plan,ROUND(AVG(w.duration_min),1)AS avg_duration FROM users u JOIN watch_history w ON u.id=w.user_id GROUP BY u.plan ORDER BY avg_duration DESC;"
+  },
+  {
+    "id": "sql-020",
+    "title": "Students With All A Grades",
+    "dataset_theme": "University / Education",
+    "company_tag": "Infosys",
+    "difficulty": "medium",
+    "problem_statement": "Find students who received grade 'A' in ALL their enrolled courses.\n\nReturn student name.",
+    "hint": "Compare COUNT of enrollments to COUNT of 'A' grades per student.",
+    "explanation": "Meera: 1 course, 1 A. Others have mixed grades.",
+    "tables_meta": [
+      {
+        "name": "students",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "branch",
+            "type": "varchar"
+          },
+          {
+            "name": "year",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ravi",
+            "CSE",
+            3
+          ],
+          [
+            2,
+            "Meera",
+            "ECE",
+            2
+          ],
+          [
+            3,
+            "Arjun",
+            "CSE",
+            3
+          ],
+          [
+            4,
+            "Kavya",
+            "ME",
+            4
+          ],
+          [
+            5,
+            "Nikhil",
+            "CSE",
+            2
+          ]
+        ]
+      },
+      {
+        "name": "courses",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "course_name",
+            "type": "varchar"
+          },
+          {
+            "name": "credits",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Data Structures",
+            4
+          ],
+          [
+            102,
+            "DBMS",
+            3
+          ],
+          [
+            103,
+            "OS",
+            4
+          ],
+          [
+            104,
+            "Signals",
+            3
+          ]
+        ]
+      },
+      {
+        "name": "enrollments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "student_id",
+            "type": "int"
+          },
+          {
+            "name": "course_id",
+            "type": "int"
+          },
+          {
+            "name": "grade",
+            "type": "varchar"
+          },
+          {
+            "name": "semester",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            101,
+            "A",
+            "Fall2024"
+          ],
+          [
+            2,
+            1,
+            102,
+            "B",
+            "Fall2024"
+          ],
+          [
+            3,
+            2,
+            104,
+            "A",
+            "Fall2024"
+          ],
+          [
+            4,
+            3,
+            101,
+            "A",
+            "Fall2024"
+          ],
+          [
+            5,
+            3,
+            103,
+            "B",
+            "Fall2024"
+          ],
+          [
+            6,
+            4,
+            103,
+            "C",
+            "Fall2024"
+          ],
+          [
+            7,
+            5,
+            101,
+            "B",
+            "Fall2024"
+          ],
+          [
+            8,
+            5,
+            102,
+            "A",
+            "Fall2024"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name"
+      ],
+      "rows": [
+        [
+          "Meera"
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE students(id INT PRIMARY KEY,name VARCHAR,branch VARCHAR,year INT);\nCREATE TABLE courses(id INT PRIMARY KEY,course_name VARCHAR,credits INT);\nCREATE TABLE enrollments(id INT PRIMARY KEY,student_id INT,course_id INT,grade VARCHAR,semester VARCHAR);\nINSERT INTO students VALUES(1,'Ravi','CSE',3);\nINSERT INTO students VALUES(2,'Meera','ECE',2);\nINSERT INTO students VALUES(3,'Arjun','CSE',3);\nINSERT INTO students VALUES(4,'Kavya','ME',4);\nINSERT INTO students VALUES(5,'Nikhil','CSE',2);\nINSERT INTO courses VALUES(101,'Data Structures',4);\nINSERT INTO courses VALUES(102,'DBMS',3);\nINSERT INTO courses VALUES(103,'OS',4);\nINSERT INTO courses VALUES(104,'Signals',3);\nINSERT INTO enrollments VALUES(1,1,101,'A','Fall2024');\nINSERT INTO enrollments VALUES(2,1,102,'B','Fall2024');\nINSERT INTO enrollments VALUES(3,2,104,'A','Fall2024');\nINSERT INTO enrollments VALUES(4,3,101,'A','Fall2024');\nINSERT INTO enrollments VALUES(5,3,103,'B','Fall2024');\nINSERT INTO enrollments VALUES(6,4,103,'C','Fall2024');\nINSERT INTO enrollments VALUES(7,5,101,'B','Fall2024');\nINSERT INTO enrollments VALUES(8,5,102,'A','Fall2024');",
+    "expected_output": [
+      {
+        "columns": [
+          "name"
+        ],
+        "values": [
+          [
+            "Meera"
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT s.name FROM students s JOIN enrollments e ON s.id=e.student_id GROUP BY s.name HAVING COUNT(e.id)=SUM(CASE WHEN e.grade='A' THEN 1 ELSE 0 END);"
+  },
+  {
+    "id": "sql-021",
+    "title": "Course Enrollment Count",
+    "dataset_theme": "University / Education",
+    "company_tag": "Wipro",
+    "difficulty": "easy",
+    "problem_statement": "Find how many students are enrolled in each course.\n\nReturn course_name and student_count, ordered descending.",
+    "hint": "JOIN courses with enrollments, GROUP BY course, COUNT.",
+    "explanation": "Data Structures: 3 (Ravi,Arjun,Nikhil). DBMS: 2 (Ravi,Nikhil). OS: 2 (Arjun,Kavya). Signals: 1 (Meera).",
+    "tables_meta": [
+      {
+        "name": "students",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "branch",
+            "type": "varchar"
+          },
+          {
+            "name": "year",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ravi",
+            "CSE",
+            3
+          ],
+          [
+            2,
+            "Meera",
+            "ECE",
+            2
+          ],
+          [
+            3,
+            "Arjun",
+            "CSE",
+            3
+          ],
+          [
+            4,
+            "Kavya",
+            "ME",
+            4
+          ],
+          [
+            5,
+            "Nikhil",
+            "CSE",
+            2
+          ]
+        ]
+      },
+      {
+        "name": "courses",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "course_name",
+            "type": "varchar"
+          },
+          {
+            "name": "credits",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Data Structures",
+            4
+          ],
+          [
+            102,
+            "DBMS",
+            3
+          ],
+          [
+            103,
+            "OS",
+            4
+          ],
+          [
+            104,
+            "Signals",
+            3
+          ]
+        ]
+      },
+      {
+        "name": "enrollments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "student_id",
+            "type": "int"
+          },
+          {
+            "name": "course_id",
+            "type": "int"
+          },
+          {
+            "name": "grade",
+            "type": "varchar"
+          },
+          {
+            "name": "semester",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            101,
+            "A",
+            "Fall2024"
+          ],
+          [
+            2,
+            1,
+            102,
+            "B",
+            "Fall2024"
+          ],
+          [
+            3,
+            2,
+            104,
+            "A",
+            "Fall2024"
+          ],
+          [
+            4,
+            3,
+            101,
+            "A",
+            "Fall2024"
+          ],
+          [
+            5,
+            3,
+            103,
+            "B",
+            "Fall2024"
+          ],
+          [
+            6,
+            4,
+            103,
+            "C",
+            "Fall2024"
+          ],
+          [
+            7,
+            5,
+            101,
+            "B",
+            "Fall2024"
+          ],
+          [
+            8,
+            5,
+            102,
+            "A",
+            "Fall2024"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "course_name",
+        "student_count"
+      ],
+      "rows": [
+        [
+          "Data Structures",
+          3
+        ],
+        [
+          "DBMS",
+          2
+        ],
+        [
+          "OS",
+          2
+        ],
+        [
+          "Signals",
+          1
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE students(id INT PRIMARY KEY,name VARCHAR,branch VARCHAR,year INT);\nCREATE TABLE courses(id INT PRIMARY KEY,course_name VARCHAR,credits INT);\nCREATE TABLE enrollments(id INT PRIMARY KEY,student_id INT,course_id INT,grade VARCHAR,semester VARCHAR);\nINSERT INTO students VALUES(1,'Ravi','CSE',3);\nINSERT INTO students VALUES(2,'Meera','ECE',2);\nINSERT INTO students VALUES(3,'Arjun','CSE',3);\nINSERT INTO students VALUES(4,'Kavya','ME',4);\nINSERT INTO students VALUES(5,'Nikhil','CSE',2);\nINSERT INTO courses VALUES(101,'Data Structures',4);\nINSERT INTO courses VALUES(102,'DBMS',3);\nINSERT INTO courses VALUES(103,'OS',4);\nINSERT INTO courses VALUES(104,'Signals',3);\nINSERT INTO enrollments VALUES(1,1,101,'A','Fall2024');\nINSERT INTO enrollments VALUES(2,1,102,'B','Fall2024');\nINSERT INTO enrollments VALUES(3,2,104,'A','Fall2024');\nINSERT INTO enrollments VALUES(4,3,101,'A','Fall2024');\nINSERT INTO enrollments VALUES(5,3,103,'B','Fall2024');\nINSERT INTO enrollments VALUES(6,4,103,'C','Fall2024');\nINSERT INTO enrollments VALUES(7,5,101,'B','Fall2024');\nINSERT INTO enrollments VALUES(8,5,102,'A','Fall2024');",
+    "expected_output": [
+      {
+        "columns": [
+          "course_name",
+          "student_count"
+        ],
+        "values": [
+          [
+            "Data Structures",
+            3
+          ],
+          [
+            "DBMS",
+            2
+          ],
+          [
+            "OS",
+            2
+          ],
+          [
+            "Signals",
+            1
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT c.course_name,COUNT(e.student_id)AS student_count FROM courses c JOIN enrollments e ON c.id=e.course_id GROUP BY c.course_name ORDER BY student_count DESC;"
+  },
+  {
+    "id": "sql-022",
+    "title": "Branch Topper",
+    "dataset_theme": "University / Education",
+    "company_tag": "Amazon",
+    "difficulty": "hard",
+    "problem_statement": "Find the student with the most 'A' grades in each branch.\n\nReturn branch, student name, and a_count.",
+    "hint": "COUNT grade='A' per student, then pick max per branch.",
+    "explanation": "CSE: Ravi has 1A, Arjun has 1A, Nikhil has 1A (tie). ECE: Meera 1A. ME: Kavya 0A.",
+    "tables_meta": [
+      {
+        "name": "students",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "branch",
+            "type": "varchar"
+          },
+          {
+            "name": "year",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ravi",
+            "CSE",
+            3
+          ],
+          [
+            2,
+            "Meera",
+            "ECE",
+            2
+          ],
+          [
+            3,
+            "Arjun",
+            "CSE",
+            3
+          ],
+          [
+            4,
+            "Kavya",
+            "ME",
+            4
+          ],
+          [
+            5,
+            "Nikhil",
+            "CSE",
+            2
+          ]
+        ]
+      },
+      {
+        "name": "courses",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "course_name",
+            "type": "varchar"
+          },
+          {
+            "name": "credits",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Data Structures",
+            4
+          ],
+          [
+            102,
+            "DBMS",
+            3
+          ],
+          [
+            103,
+            "OS",
+            4
+          ],
+          [
+            104,
+            "Signals",
+            3
+          ]
+        ]
+      },
+      {
+        "name": "enrollments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "student_id",
+            "type": "int"
+          },
+          {
+            "name": "course_id",
+            "type": "int"
+          },
+          {
+            "name": "grade",
+            "type": "varchar"
+          },
+          {
+            "name": "semester",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            101,
+            "A",
+            "Fall2024"
+          ],
+          [
+            2,
+            1,
+            102,
+            "B",
+            "Fall2024"
+          ],
+          [
+            3,
+            2,
+            104,
+            "A",
+            "Fall2024"
+          ],
+          [
+            4,
+            3,
+            101,
+            "A",
+            "Fall2024"
+          ],
+          [
+            5,
+            3,
+            103,
+            "B",
+            "Fall2024"
+          ],
+          [
+            6,
+            4,
+            103,
+            "C",
+            "Fall2024"
+          ],
+          [
+            7,
+            5,
+            101,
+            "B",
+            "Fall2024"
+          ],
+          [
+            8,
+            5,
+            102,
+            "A",
+            "Fall2024"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "branch",
+        "name",
+        "a_count"
+      ],
+      "rows": [
+        [
+          "CSE",
+          "Ravi",
+          1
+        ],
+        [
+          "CSE",
+          "Arjun",
+          1
+        ],
+        [
+          "CSE",
+          "Nikhil",
+          1
+        ],
+        [
+          "ECE",
+          "Meera",
+          1
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE students(id INT PRIMARY KEY,name VARCHAR,branch VARCHAR,year INT);\nCREATE TABLE courses(id INT PRIMARY KEY,course_name VARCHAR,credits INT);\nCREATE TABLE enrollments(id INT PRIMARY KEY,student_id INT,course_id INT,grade VARCHAR,semester VARCHAR);\nINSERT INTO students VALUES(1,'Ravi','CSE',3);\nINSERT INTO students VALUES(2,'Meera','ECE',2);\nINSERT INTO students VALUES(3,'Arjun','CSE',3);\nINSERT INTO students VALUES(4,'Kavya','ME',4);\nINSERT INTO students VALUES(5,'Nikhil','CSE',2);\nINSERT INTO courses VALUES(101,'Data Structures',4);\nINSERT INTO courses VALUES(102,'DBMS',3);\nINSERT INTO courses VALUES(103,'OS',4);\nINSERT INTO courses VALUES(104,'Signals',3);\nINSERT INTO enrollments VALUES(1,1,101,'A','Fall2024');\nINSERT INTO enrollments VALUES(2,1,102,'B','Fall2024');\nINSERT INTO enrollments VALUES(3,2,104,'A','Fall2024');\nINSERT INTO enrollments VALUES(4,3,101,'A','Fall2024');\nINSERT INTO enrollments VALUES(5,3,103,'B','Fall2024');\nINSERT INTO enrollments VALUES(6,4,103,'C','Fall2024');\nINSERT INTO enrollments VALUES(7,5,101,'B','Fall2024');\nINSERT INTO enrollments VALUES(8,5,102,'A','Fall2024');",
+    "expected_output": [
+      {
+        "columns": [
+          "branch",
+          "name",
+          "a_count"
+        ],
+        "values": [
+          [
+            "CSE",
+            "Ravi",
+            1
+          ],
+          [
+            "CSE",
+            "Arjun",
+            1
+          ],
+          [
+            "CSE",
+            "Nikhil",
+            1
+          ],
+          [
+            "ECE",
+            "Meera",
+            1
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT s.branch,s.name,COUNT(CASE WHEN e.grade='A' THEN 1 END)AS a_count FROM students s JOIN enrollments e ON s.id=e.student_id GROUP BY s.branch,s.name HAVING a_count>0 ORDER BY s.branch,a_count DESC;"
+  },
+  {
+    "id": "sql-023",
+    "title": "Department Salary Rank",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "Google",
+    "difficulty": "hard",
+    "problem_statement": "Rank employees within each department by salary (highest first).\n\nReturn dept, name, salary, and salary_rank. Use dense ranking.",
+    "hint": "Use a subquery to count distinct higher salaries +1 as rank.",
+    "explanation": "Eng: Alice=1, Eve=2, Bob=3. Sales: Charlie=1, Diana=2. HR: Frank=1.",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "dept",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "mgr_id",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Eng",
+            70000,
+            null,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Eng",
+            60000,
+            1,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Sales",
+            55000,
+            null,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Sales",
+            50000,
+            3,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Eng",
+            65000,
+            1,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "HR",
+            45000,
+            null,
+            "2022-02-14"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "dept",
+        "name",
+        "salary",
+        "salary_rank"
+      ],
+      "rows": [
+        [
+          "Eng",
+          "Alice",
+          70000,
+          1
+        ],
+        [
+          "Eng",
+          "Eve",
+          65000,
+          2
+        ],
+        [
+          "Eng",
+          "Bob",
+          60000,
+          3
+        ],
+        [
+          "Sales",
+          "Charlie",
+          55000,
+          1
+        ],
+        [
+          "Sales",
+          "Diana",
+          50000,
+          2
+        ],
+        [
+          "HR",
+          "Frank",
+          45000,
+          1
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR,dept VARCHAR,salary INT,mgr_id INT,hire_date DATE);\nINSERT INTO employees VALUES(1,'Alice','Eng',70000,NULL,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Eng',60000,1,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Sales',55000,NULL,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Sales',50000,3,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Eng',65000,1,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','HR',45000,NULL,'2022-02-14');",
+    "expected_output": [
+      {
+        "columns": [
+          "dept",
+          "name",
+          "salary",
+          "salary_rank"
+        ],
+        "values": [
+          [
+            "Eng",
+            "Alice",
+            70000,
+            1
+          ],
+          [
+            "Eng",
+            "Eve",
+            65000,
+            2
+          ],
+          [
+            "Eng",
+            "Bob",
+            60000,
+            3
+          ],
+          [
+            "Sales",
+            "Charlie",
+            55000,
+            1
+          ],
+          [
+            "Sales",
+            "Diana",
+            50000,
+            2
+          ],
+          [
+            "HR",
+            "Frank",
+            45000,
+            1
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT e.dept,e.name,e.salary,(SELECT COUNT(DISTINCT e2.salary)+1 FROM employees e2 WHERE e2.dept=e.dept AND e2.salary>e.salary)AS salary_rank FROM employees e ORDER BY e.dept,salary_rank;"
+  },
+  {
+    "id": "sql-024",
+    "title": "Shows Not Watched by Premium Users",
+    "dataset_theme": "Streaming (Netflix)",
+    "company_tag": "Capgemini",
+    "difficulty": "hard",
+    "problem_statement": "Find shows that no premium-plan user has ever watched.\n\nReturn show title.",
+    "hint": "Use NOT EXISTS or NOT IN with a subquery joining users and watch_history.",
+    "explanation": "Premium users (Aarav,Chirag) watched: Dark,Money Heist,Sacred Games,Mirzapur. Not watched: Stranger Things.",
+    "tables_meta": [
+      {
+        "name": "users",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "plan",
+            "type": "varchar"
+          },
+          {
+            "name": "join_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Aarav",
+            "premium",
+            "2023-01-10"
+          ],
+          [
+            2,
+            "Bhavna",
+            "basic",
+            "2023-03-15"
+          ],
+          [
+            3,
+            "Chirag",
+            "premium",
+            "2023-06-01"
+          ],
+          [
+            4,
+            "Diya",
+            "basic",
+            "2024-01-05"
+          ]
+        ]
+      },
+      {
+        "name": "shows",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "title",
+            "type": "varchar"
+          },
+          {
+            "name": "genre",
+            "type": "varchar"
+          },
+          {
+            "name": "release_year",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Dark",
+            "Thriller",
+            2017
+          ],
+          [
+            2,
+            "Money Heist",
+            "Action",
+            2017
+          ],
+          [
+            3,
+            "Stranger Things",
+            "Sci-Fi",
+            2016
+          ],
+          [
+            4,
+            "Sacred Games",
+            "Thriller",
+            2018
+          ],
+          [
+            5,
+            "Mirzapur",
+            "Action",
+            2018
+          ]
+        ]
+      },
+      {
+        "name": "watch_history",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "show_id",
+            "type": "int"
+          },
+          {
+            "name": "watch_date",
+            "type": "date"
+          },
+          {
+            "name": "duration_min",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            1,
+            "2024-01-10",
+            120
+          ],
+          [
+            2,
+            1,
+            2,
+            "2024-01-12",
+            90
+          ],
+          [
+            3,
+            2,
+            3,
+            "2024-01-15",
+            60
+          ],
+          [
+            4,
+            1,
+            4,
+            "2024-02-01",
+            110
+          ],
+          [
+            5,
+            3,
+            2,
+            "2024-02-05",
+            95
+          ],
+          [
+            6,
+            3,
+            5,
+            "2024-02-10",
+            80
+          ],
+          [
+            7,
+            2,
+            1,
+            "2024-02-15",
+            45
+          ],
+          [
+            8,
+            4,
+            3,
+            "2024-03-01",
+            70
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "title"
+      ],
+      "rows": [
+        [
+          "Stranger Things"
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE users(id INT PRIMARY KEY,name VARCHAR,plan VARCHAR,join_date DATE);\nCREATE TABLE shows(id INT PRIMARY KEY,title VARCHAR,genre VARCHAR,release_year INT);\nCREATE TABLE watch_history(id INT PRIMARY KEY,user_id INT,show_id INT,watch_date DATE,duration_min INT);\nINSERT INTO users VALUES(1,'Aarav','premium','2023-01-10');\nINSERT INTO users VALUES(2,'Bhavna','basic','2023-03-15');\nINSERT INTO users VALUES(3,'Chirag','premium','2023-06-01');\nINSERT INTO users VALUES(4,'Diya','basic','2024-01-05');\nINSERT INTO shows VALUES(1,'Dark','Thriller',2017);\nINSERT INTO shows VALUES(2,'Money Heist','Action',2017);\nINSERT INTO shows VALUES(3,'Stranger Things','Sci-Fi',2016);\nINSERT INTO shows VALUES(4,'Sacred Games','Thriller',2018);\nINSERT INTO shows VALUES(5,'Mirzapur','Action',2018);\nINSERT INTO watch_history VALUES(1,1,1,'2024-01-10',120);\nINSERT INTO watch_history VALUES(2,1,2,'2024-01-12',90);\nINSERT INTO watch_history VALUES(3,2,3,'2024-01-15',60);\nINSERT INTO watch_history VALUES(4,1,4,'2024-02-01',110);\nINSERT INTO watch_history VALUES(5,3,2,'2024-02-05',95);\nINSERT INTO watch_history VALUES(6,3,5,'2024-02-10',80);\nINSERT INTO watch_history VALUES(7,2,1,'2024-02-15',45);\nINSERT INTO watch_history VALUES(8,4,3,'2024-03-01',70);",
+    "expected_output": [
+      {
+        "columns": [
+          "title"
+        ],
+        "values": [
+          [
+            "Stranger Things"
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT s.title FROM shows s WHERE s.id NOT IN(SELECT w.show_id FROM watch_history w JOIN users u ON w.user_id=u.id WHERE u.plan='premium');"
+  },
+  {
+    "id": "sql-025",
+    "title": "Patients Older Than Average",
+    "dataset_theme": "Healthcare / Hospital",
+    "company_tag": "Cognizant",
+    "difficulty": "easy",
+    "problem_statement": "Find patients whose age is above the average patient age.\n\nReturn name and age, ordered by age descending.",
+    "hint": "Subquery with AVG(age).",
+    "explanation": "Avg=(35+28+45+32)/4=35. Amit(45) is above average.",
+    "tables_meta": [
+      {
+        "name": "doctors",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "specialty",
+            "type": "varchar"
+          },
+          {
+            "name": "experience_yrs",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Dr. Sharma",
+            "Cardiology",
+            15
+          ],
+          [
+            2,
+            "Dr. Patel",
+            "Orthopedics",
+            10
+          ],
+          [
+            3,
+            "Dr. Gupta",
+            "Dermatology",
+            8
+          ]
+        ]
+      },
+      {
+        "name": "patients",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "age",
+            "type": "int"
+          },
+          {
+            "name": "gender",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Rahul",
+            35,
+            "M"
+          ],
+          [
+            102,
+            "Priya",
+            28,
+            "F"
+          ],
+          [
+            103,
+            "Amit",
+            45,
+            "M"
+          ],
+          [
+            104,
+            "Sneha",
+            32,
+            "F"
+          ]
+        ]
+      },
+      {
+        "name": "appointments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "doc_id",
+            "type": "int"
+          },
+          {
+            "name": "patient_id",
+            "type": "int"
+          },
+          {
+            "name": "visit_date",
+            "type": "date"
+          },
+          {
+            "name": "diagnosis",
+            "type": "varchar"
+          },
+          {
+            "name": "fee",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            101,
+            "2024-01-10",
+            "Hypertension",
+            500
+          ],
+          [
+            1002,
+            2,
+            102,
+            "2024-01-12",
+            "Fracture",
+            800
+          ],
+          [
+            1003,
+            1,
+            103,
+            "2024-01-15",
+            "Arrhythmia",
+            500
+          ],
+          [
+            1004,
+            3,
+            104,
+            "2024-02-01",
+            "Eczema",
+            400
+          ],
+          [
+            1005,
+            1,
+            101,
+            "2024-02-10",
+            "Follow-up",
+            300
+          ],
+          [
+            1006,
+            2,
+            103,
+            "2024-02-15",
+            "Joint Pain",
+            600
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "age"
+      ],
+      "rows": [
+        [
+          "Amit",
+          45
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE doctors(id INT PRIMARY KEY,name VARCHAR,specialty VARCHAR,experience_yrs INT);\nCREATE TABLE patients(id INT PRIMARY KEY,name VARCHAR,age INT,gender VARCHAR);\nCREATE TABLE appointments(id INT PRIMARY KEY,doc_id INT,patient_id INT,visit_date DATE,diagnosis VARCHAR,fee INT);\nINSERT INTO doctors VALUES(1,'Dr. Sharma','Cardiology',15);\nINSERT INTO doctors VALUES(2,'Dr. Patel','Orthopedics',10);\nINSERT INTO doctors VALUES(3,'Dr. Gupta','Dermatology',8);\nINSERT INTO patients VALUES(101,'Rahul',35,'M');\nINSERT INTO patients VALUES(102,'Priya',28,'F');\nINSERT INTO patients VALUES(103,'Amit',45,'M');\nINSERT INTO patients VALUES(104,'Sneha',32,'F');\nINSERT INTO appointments VALUES(1001,1,101,'2024-01-10','Hypertension',500);\nINSERT INTO appointments VALUES(1002,2,102,'2024-01-12','Fracture',800);\nINSERT INTO appointments VALUES(1003,1,103,'2024-01-15','Arrhythmia',500);\nINSERT INTO appointments VALUES(1004,3,104,'2024-02-01','Eczema',400);\nINSERT INTO appointments VALUES(1005,1,101,'2024-02-10','Follow-up',300);\nINSERT INTO appointments VALUES(1006,2,103,'2024-02-15','Joint Pain',600);",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "age"
+        ],
+        "values": [
+          [
+            "Amit",
+            45
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT name,age FROM patients WHERE age>(SELECT AVG(age) FROM patients) ORDER BY age DESC;"
   }
 ]

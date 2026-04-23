@@ -189,8 +189,137 @@ add("sql-015","Highest Revenue Day Per Restaurant","Food Delivery (Zomato)","Mic
 ZOMATO_T,ZOMATO_S,(["name","order_date","day_revenue"],[["Biryani House","2024-01-15",450.0],["Pizza Palace","2024-03-05",700.0],["Dragon Wok","2024-02-05",510.0],["Dosa Corner","2024-02-01",220.0],["Burger Barn","2024-03-01",320.0]]),
 "SELECT r.name,sub.order_date,sub.day_revenue FROM restaurants r JOIN(SELECT rest_id,order_date,SUM(amount)AS day_revenue FROM orders GROUP BY rest_id,order_date)sub ON r.id=sub.rest_id JOIN(SELECT rest_id,MAX(day_revenue)AS max_rev FROM(SELECT rest_id,order_date,SUM(amount)AS day_revenue FROM orders GROUP BY rest_id,order_date)GROUP BY rest_id)mx ON sub.rest_id=mx.rest_id AND sub.day_revenue=mx.max_rev;")
 
+# ═══ NEW SCHEMAS: Batch 2 ═══
+
+STREAM_S = """CREATE TABLE users(id INT PRIMARY KEY,name VARCHAR,plan VARCHAR,join_date DATE);
+CREATE TABLE shows(id INT PRIMARY KEY,title VARCHAR,genre VARCHAR,release_year INT);
+CREATE TABLE watch_history(id INT PRIMARY KEY,user_id INT,show_id INT,watch_date DATE,duration_min INT);
+INSERT INTO users VALUES(1,'Aarav','premium','2023-01-10');
+INSERT INTO users VALUES(2,'Bhavna','basic','2023-03-15');
+INSERT INTO users VALUES(3,'Chirag','premium','2023-06-01');
+INSERT INTO users VALUES(4,'Diya','basic','2024-01-05');
+INSERT INTO shows VALUES(1,'Dark','Thriller',2017);
+INSERT INTO shows VALUES(2,'Money Heist','Action',2017);
+INSERT INTO shows VALUES(3,'Stranger Things','Sci-Fi',2016);
+INSERT INTO shows VALUES(4,'Sacred Games','Thriller',2018);
+INSERT INTO shows VALUES(5,'Mirzapur','Action',2018);
+INSERT INTO watch_history VALUES(1,1,1,'2024-01-10',120);
+INSERT INTO watch_history VALUES(2,1,2,'2024-01-12',90);
+INSERT INTO watch_history VALUES(3,2,3,'2024-01-15',60);
+INSERT INTO watch_history VALUES(4,1,4,'2024-02-01',110);
+INSERT INTO watch_history VALUES(5,3,2,'2024-02-05',95);
+INSERT INTO watch_history VALUES(6,3,5,'2024-02-10',80);
+INSERT INTO watch_history VALUES(7,2,1,'2024-02-15',45);
+INSERT INTO watch_history VALUES(8,4,3,'2024-03-01',70);"""
+STREAM_T = [{"name":"users","columns":[{"name":"id","type":"int"},{"name":"name","type":"varchar"},{"name":"plan","type":"varchar"},{"name":"join_date","type":"date"}],
+"sample_input":[[1,"Aarav","premium","2023-01-10"],[2,"Bhavna","basic","2023-03-15"],[3,"Chirag","premium","2023-06-01"],[4,"Diya","basic","2024-01-05"]]},
+{"name":"shows","columns":[{"name":"id","type":"int"},{"name":"title","type":"varchar"},{"name":"genre","type":"varchar"},{"name":"release_year","type":"int"}],
+"sample_input":[[1,"Dark","Thriller",2017],[2,"Money Heist","Action",2017],[3,"Stranger Things","Sci-Fi",2016],[4,"Sacred Games","Thriller",2018],[5,"Mirzapur","Action",2018]]},
+{"name":"watch_history","columns":[{"name":"id","type":"int"},{"name":"user_id","type":"int"},{"name":"show_id","type":"int"},{"name":"watch_date","type":"date"},{"name":"duration_min","type":"int"}],
+"sample_input":[[1,1,1,"2024-01-10",120],[2,1,2,"2024-01-12",90],[3,2,3,"2024-01-15",60],[4,1,4,"2024-02-01",110],[5,3,2,"2024-02-05",95],[6,3,5,"2024-02-10",80],[7,2,1,"2024-02-15",45],[8,4,3,"2024-03-01",70]]}]
+
+UNI_S = """CREATE TABLE students(id INT PRIMARY KEY,name VARCHAR,branch VARCHAR,year INT);
+CREATE TABLE courses(id INT PRIMARY KEY,course_name VARCHAR,credits INT);
+CREATE TABLE enrollments(id INT PRIMARY KEY,student_id INT,course_id INT,grade VARCHAR,semester VARCHAR);
+INSERT INTO students VALUES(1,'Ravi','CSE',3);
+INSERT INTO students VALUES(2,'Meera','ECE',2);
+INSERT INTO students VALUES(3,'Arjun','CSE',3);
+INSERT INTO students VALUES(4,'Kavya','ME',4);
+INSERT INTO students VALUES(5,'Nikhil','CSE',2);
+INSERT INTO courses VALUES(101,'Data Structures',4);
+INSERT INTO courses VALUES(102,'DBMS',3);
+INSERT INTO courses VALUES(103,'OS',4);
+INSERT INTO courses VALUES(104,'Signals',3);
+INSERT INTO enrollments VALUES(1,1,101,'A','Fall2024');
+INSERT INTO enrollments VALUES(2,1,102,'B','Fall2024');
+INSERT INTO enrollments VALUES(3,2,104,'A','Fall2024');
+INSERT INTO enrollments VALUES(4,3,101,'A','Fall2024');
+INSERT INTO enrollments VALUES(5,3,103,'B','Fall2024');
+INSERT INTO enrollments VALUES(6,4,103,'C','Fall2024');
+INSERT INTO enrollments VALUES(7,5,101,'B','Fall2024');
+INSERT INTO enrollments VALUES(8,5,102,'A','Fall2024');"""
+UNI_T = [{"name":"students","columns":[{"name":"id","type":"int"},{"name":"name","type":"varchar"},{"name":"branch","type":"varchar"},{"name":"year","type":"int"}],
+"sample_input":[[1,"Ravi","CSE",3],[2,"Meera","ECE",2],[3,"Arjun","CSE",3],[4,"Kavya","ME",4],[5,"Nikhil","CSE",2]]},
+{"name":"courses","columns":[{"name":"id","type":"int"},{"name":"course_name","type":"varchar"},{"name":"credits","type":"int"}],
+"sample_input":[[101,"Data Structures",4],[102,"DBMS",3],[103,"OS",4],[104,"Signals",3]]},
+{"name":"enrollments","columns":[{"name":"id","type":"int"},{"name":"student_id","type":"int"},{"name":"course_id","type":"int"},{"name":"grade","type":"varchar"},{"name":"semester","type":"varchar"}],
+"sample_input":[[1,1,101,"A","Fall2024"],[2,1,102,"B","Fall2024"],[3,2,104,"A","Fall2024"],[4,3,101,"A","Fall2024"],[5,3,103,"B","Fall2024"],[6,4,103,"C","Fall2024"],[7,5,101,"B","Fall2024"],[8,5,102,"A","Fall2024"]]}]
+
+# ═══ BATCH 2 PROBLEMS ═══
+
+add("sql-016","Most Watched Show","Streaming (Netflix)","Google","easy",
+"Find the show with the most total watch time (sum of duration_min).\n\nReturn show title and total_minutes.",
+"JOIN shows with watch_history, SUM duration, ORDER DESC LIMIT 1.",
+"Dark: 120+45=165. Money Heist: 90+95=185. Stranger Things: 60+70=130. Sacred Games: 110. Mirzapur: 80. Money Heist wins.",
+STREAM_T,STREAM_S,(["title","total_minutes"],[["Money Heist",185]]),
+"SELECT s.title,SUM(w.duration_min)AS total_minutes FROM shows s JOIN watch_history w ON s.id=w.show_id GROUP BY s.title ORDER BY total_minutes DESC LIMIT 1;")
+
+add("sql-017","Users Who Never Watched","Streaming (Netflix)","TCS NQT","easy",
+"Find users who have no entries in the watch history.\n\nReturn user name.",
+"LEFT JOIN users to watch_history, WHERE watch_history.id IS NULL.",
+"All users have at least one watch. So result is empty.",
+STREAM_T,STREAM_S,(["name"],[]),
+"SELECT u.name FROM users u LEFT JOIN watch_history w ON u.id=w.user_id WHERE w.id IS NULL;")
+
+add("sql-018","Genre Popularity Ranking","Streaming (Netflix)","Meta","medium",
+"Rank genres by total watch count (number of watch_history entries).\n\nReturn genre, watch_count, ordered descending.",
+"JOIN shows to watch_history, GROUP BY genre, COUNT(*).",
+"Thriller: Dark(2)+Sacred Games(1)=3. Action: Money Heist(2)+Mirzapur(1)=3. Sci-Fi: Stranger Things(2)=2.",
+STREAM_T,STREAM_S,(["genre","watch_count"],[["Thriller",3],["Action",3],["Sci-Fi",2]]),
+"SELECT s.genre,COUNT(w.id)AS watch_count FROM shows s JOIN watch_history w ON s.id=w.show_id GROUP BY s.genre ORDER BY watch_count DESC;")
+
+add("sql-019","Premium vs Basic Avg Watch Time","Streaming (Netflix)","Deloitte","medium",
+"Compare the average watch duration between premium and basic plan users.\n\nReturn plan and avg_duration rounded to 1 decimal.",
+"JOIN users to watch_history, GROUP BY plan, AVG(duration_min).",
+"Premium(Aarav,Chirag): (120+90+110+95+80)/5=99.0. Basic(Bhavna,Diya): (60+45+70)/3=58.3.",
+STREAM_T,STREAM_S,(["plan","avg_duration"],[["premium",99.0],["basic",58.3]]),
+"SELECT u.plan,ROUND(AVG(w.duration_min),1)AS avg_duration FROM users u JOIN watch_history w ON u.id=w.user_id GROUP BY u.plan ORDER BY avg_duration DESC;")
+
+add("sql-020","Students With All A Grades","University / Education","Infosys","medium",
+"Find students who received grade 'A' in ALL their enrolled courses.\n\nReturn student name.",
+"Compare COUNT of enrollments to COUNT of 'A' grades per student.",
+"Meera: 1 course, 1 A. Others have mixed grades.",
+UNI_T,UNI_S,(["name"],[["Meera"]]),
+"SELECT s.name FROM students s JOIN enrollments e ON s.id=e.student_id GROUP BY s.name HAVING COUNT(e.id)=SUM(CASE WHEN e.grade='A' THEN 1 ELSE 0 END);")
+
+add("sql-021","Course Enrollment Count","University / Education","Wipro","easy",
+"Find how many students are enrolled in each course.\n\nReturn course_name and student_count, ordered descending.",
+"JOIN courses with enrollments, GROUP BY course, COUNT.",
+"Data Structures: 3 (Ravi,Arjun,Nikhil). DBMS: 2 (Ravi,Nikhil). OS: 2 (Arjun,Kavya). Signals: 1 (Meera).",
+UNI_T,UNI_S,(["course_name","student_count"],[["Data Structures",3],["DBMS",2],["OS",2],["Signals",1]]),
+"SELECT c.course_name,COUNT(e.student_id)AS student_count FROM courses c JOIN enrollments e ON c.id=e.course_id GROUP BY c.course_name ORDER BY student_count DESC;")
+
+add("sql-022","Branch Topper","University / Education","Amazon","hard",
+"Find the student with the most 'A' grades in each branch.\n\nReturn branch, student name, and a_count.",
+"COUNT grade='A' per student, then pick max per branch.",
+"CSE: Ravi has 1A, Arjun has 1A, Nikhil has 1A (tie). ECE: Meera 1A. ME: Kavya 0A.",
+UNI_T,UNI_S,(["branch","name","a_count"],[["CSE","Ravi",1],["CSE","Arjun",1],["CSE","Nikhil",1],["ECE","Meera",1]]),
+"SELECT s.branch,s.name,COUNT(CASE WHEN e.grade='A' THEN 1 END)AS a_count FROM students s JOIN enrollments e ON s.id=e.student_id GROUP BY s.branch,s.name HAVING a_count>0 ORDER BY s.branch,a_count DESC;")
+
+add("sql-023","Department Salary Rank","HR / Employee","Google","hard",
+"Rank employees within each department by salary (highest first).\n\nReturn dept, name, salary, and salary_rank. Use dense ranking.",
+"Use a subquery to count distinct higher salaries +1 as rank.",
+"Eng: Alice=1, Eve=2, Bob=3. Sales: Charlie=1, Diana=2. HR: Frank=1.",
+EMP_T,EMP_S,(["dept","name","salary","salary_rank"],[["Eng","Alice",70000,1],["Eng","Eve",65000,2],["Eng","Bob",60000,3],["Sales","Charlie",55000,1],["Sales","Diana",50000,2],["HR","Frank",45000,1]]),
+"SELECT e.dept,e.name,e.salary,(SELECT COUNT(DISTINCT e2.salary)+1 FROM employees e2 WHERE e2.dept=e.dept AND e2.salary>e.salary)AS salary_rank FROM employees e ORDER BY e.dept,salary_rank;")
+
+add("sql-024","Shows Not Watched by Premium Users","Streaming (Netflix)","Capgemini","hard",
+"Find shows that no premium-plan user has ever watched.\n\nReturn show title.",
+"Use NOT EXISTS or NOT IN with a subquery joining users and watch_history.",
+"Premium users (Aarav,Chirag) watched: Dark,Money Heist,Sacred Games,Mirzapur. Not watched: Stranger Things.",
+STREAM_T,STREAM_S,(["title"],[["Stranger Things"]]),
+"SELECT s.title FROM shows s WHERE s.id NOT IN(SELECT w.show_id FROM watch_history w JOIN users u ON w.user_id=u.id WHERE u.plan='premium');")
+
+add("sql-025","Patients Older Than Average","Healthcare / Hospital","Cognizant","easy",
+"Find patients whose age is above the average patient age.\n\nReturn name and age, ordered by age descending.",
+"Subquery with AVG(age).",
+"Avg=(35+28+45+32)/4=35. Amit(45) is above average.",
+HOSPITAL_T,HOSPITAL_S,(["name","age"],[["Amit",45]]),
+"SELECT name,age FROM patients WHERE age>(SELECT AVG(age) FROM patients) ORDER BY age DESC;")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
     json.dump(P, f, indent=2, default=str)
-print(f"✅ Generated {len(P)} problems → {out}")
+print(f"Done: Generated {len(P)} problems")
+
