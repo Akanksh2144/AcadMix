@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Editor from '@monaco-editor/react';
-import { Database, Play, CheckCircle, XCircle, List, ArrowLeft, Lightbulb, Table as TableIcon, Eye, EyeSlash, Timer } from '@phosphor-icons/react';
+import { Database, Play, CheckCircle, XCircle, List, ArrowLeft, Lightbulb, Table as TableIcon, Eye, EyeSlash, Timer, CircleHalf } from '@phosphor-icons/react';
 import { useTheme } from '../contexts/ThemeContext';
 import { placementPrepAPI } from '../services/api';
 import { toast } from 'sonner';
@@ -294,13 +294,13 @@ const SQLPractice = ({ navigate, user }: any) => {
           {problems.map((p: any, i: number) => {
             const status = statusMap[p.id] || 'unsolved'; // 'unsolved' | 'started' | 'solved'
             const badgeColor = status === 'solved' ? 'bg-emerald-500 shadow-emerald-500/30'
-              : status === 'started' ? 'bg-amber-500 shadow-amber-500/30'
+              : status === 'started' ? 'bg-red-500 shadow-red-500/30'
               : 'bg-slate-300 dark:bg-slate-600 shadow-slate-300/30';
             const borderColor = status === 'solved' ? 'border-emerald-300 dark:border-emerald-500/30 hover:border-emerald-400'
-              : status === 'started' ? 'border-amber-300 dark:border-amber-500/30 hover:border-amber-400'
+              : status === 'started' ? 'border-red-300 dark:border-red-500/30 hover:border-red-400'
               : 'border-slate-200 dark:border-white/10 hover:border-indigo-500';
             const titleColor = status === 'solved' ? 'text-emerald-700 dark:text-emerald-400'
-              : status === 'started' ? 'text-amber-700 dark:text-amber-400'
+              : status === 'started' ? 'text-red-700 dark:text-red-400'
               : 'text-slate-800 dark:text-white';
             const tagLabel = status === 'solved' ? '✓ Solved' : null;
             const tagColor = 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
@@ -310,7 +310,7 @@ const SQLPractice = ({ navigate, user }: any) => {
               className={`relative bg-white dark:bg-[#1E293B] border rounded-2xl p-5 cursor-pointer hover:shadow-xl hover:shadow-indigo-500/10 transition-all group ${borderColor}`}>
               {/* Status badge */}
               <div className={`absolute top-3 right-3 w-7 h-7 rounded-full ${badgeColor} flex items-center justify-center shadow-md`}>
-                <CheckCircle size={16} weight="fill" className="text-white" />
+                {status === 'started' ? <CircleHalf size={16} weight="fill" className="text-white" /> : <CheckCircle size={16} weight="fill" className="text-white" />}
               </div>
               <div className="flex items-start justify-between mb-3 pr-8">
                 <h3 className={`font-extrabold text-lg group-hover:text-indigo-500 transition-colors line-clamp-2 pr-2 ${titleColor}`}>{p.title}</h3>
