@@ -1955,6 +1955,78 @@ add("sql-230","Total Employee Count","HR / Employee","TCS NQT","easy",
 EMP_T,EMP_S,(["total_employees"],[[6]]),
 "SELECT COUNT(*)AS total_employees FROM employees;",topic="Simple COUNT")
 
+# ═══ BATCH 23: TCS Digital Scale-Up (10 of 25) ═══
+
+add("sql-231","Average Order Value Per Customer","E-Commerce (Flipkart)","TCS Digital","easy",
+"Calculate the average order value for each customer.\n\nReturn name, avg_order_value (rounded to 0). Order by avg_order_value DESC.",
+"JOIN customers + orders, AVG(total), GROUP BY.",
+"Rohan=55450, Ankit avg of 3 orders, etc.",
+ECOM_T,ECOM_S,(["name","avg_order_value"],[["Rohan",55450],["Ankit",20266],["Sneha",6900],["Priya",3299],["Vikram",450]]),
+"SELECT c.name,ROUND(AVG(o.total),0)AS avg_order_value FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name ORDER BY avg_order_value DESC;",topic="AVG Per Customer")
+
+add("sql-232","Restaurants Rated Above 4.0","Food Delivery (Zomato)","TCS Digital","easy",
+"Find all restaurants with a rating above 4.0.\n\nReturn name, rating. Order by rating DESC.",
+"WHERE rating > 4.0.",
+"Dosa Corner(4.7), Biryani House(4.5), Pizza Palace(4.2).",
+ZOMATO_T,ZOMATO_S,(["name","rating"],[["Dosa Corner",4.7],["Biryani House",4.5],["Pizza Palace",4.2]]),
+"SELECT name,rating FROM restaurants WHERE rating>4.0 ORDER BY rating DESC;",topic="Simple WHERE Filter")
+
+add("sql-233","Count Rides Per Driver","Ride-Sharing (Ola)","TCS Digital","easy",
+"Count how many rides each driver has completed.\n\nReturn driver name, ride_count. Order by ride_count DESC.",
+"JOIN drivers + rides, GROUP BY, COUNT.",
+"Count from rides table grouped by driver.",
+RIDE_T,RIDE_S,(["name","ride_count"],[]),
+"SELECT d.name,COUNT(r.id)AS ride_count FROM drivers d JOIN rides r ON d.id=r.driver_id GROUP BY d.name ORDER BY ride_count DESC;",topic="JOIN + COUNT Rides")
+
+add("sql-234","Employees With Same Salary","HR / Employee","TCS Digital","medium",
+"Find pairs of employees who have the exact same salary.\n\nReturn emp1, emp2, salary. Order by salary DESC.",
+"Self-join: e1.salary = e2.salary AND e1.id < e2.id.",
+"Check for duplicate salary values.",
+EMP_T,EMP_S,(["emp1","emp2","salary"],[]),
+"SELECT e1.name AS emp1,e2.name AS emp2,e1.salary FROM employees e1 JOIN employees e2 ON e1.salary=e2.salary AND e1.id<e2.id ORDER BY e1.salary DESC;",topic="Self-Join: Same Salary")
+
+add("sql-235","Most Expensive Product Per Category","E-Commerce (Flipkart)","TCS Digital","medium",
+"Find the most expensive product in each category.\n\nReturn category, product name, price. Order by price DESC.",
+"ROW_NUMBER PARTITION BY category ORDER BY price DESC, rn=1.",
+"Electronics: MacBook(120K). Fashion: Running Shoes(3499). Books: SQL Book(450).",
+ECOM_T,ECOM_S,(["category","name","price"],[["Electronics","MacBook Pro",120000.0],["Fashion","Running Shoes",3499.0],["Fashion","Cotton T-Shirt",799.0],["Books","SQL Book",450.0]]),
+"SELECT category,name,price FROM(SELECT category,name,price,ROW_NUMBER() OVER(PARTITION BY category ORDER BY price DESC)AS rn FROM products)t WHERE rn=1 ORDER BY price DESC;",topic="Top Per Category (Window)")
+
+add("sql-236","Customers Who Ordered Electronics","E-Commerce (Flipkart)","TCS Digital","medium",
+"Find customers who ordered at least one product in the 'Electronics' category.\n\nReturn DISTINCT customer name. Order by name.",
+"Multi-join: customers->orders->order_items->products WHERE category='Electronics'.",
+"Join through 4 tables and filter by category.",
+ECOM_T,ECOM_S,(["name"],[["Ankit"],["Priya"],["Rohan"]]),
+"SELECT DISTINCT c.name FROM customers c JOIN orders o ON c.id=o.customer_id JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id WHERE p.category='Electronics' ORDER BY c.name;",topic="Multi-Join Category Filter")
+
+add("sql-237","All Departments Even Empty Ones","HR / Employee","TCS Digital","easy",
+"List all departments. If a department has employees, show the count; otherwise show 0.\n\nReturn dept, emp_count. Order by dept.",
+"Use a subquery or GROUP BY on existing data.",
+"Eng=3, HR=1, Sales=2. All depts have employees here.",
+EMP_T,EMP_S,(["dept","emp_count"],[["Eng",3],["HR",1],["Sales",2]]),
+"SELECT dept,COUNT(*)AS emp_count FROM employees GROUP BY dept ORDER BY dept;",topic="Department Employee Count")
+
+add("sql-238","Cancelled Orders","E-Commerce (Flipkart)","TCS Digital","easy",
+"Find all orders with status 'cancelled'.\n\nReturn order_id, customer_id, total. Order by order_id.",
+"WHERE status = 'cancelled'.",
+"Check which orders are cancelled.",
+ECOM_T,ECOM_S,(["order_id","customer_id","total"],[]),
+"SELECT id AS order_id,customer_id,total FROM orders WHERE status='cancelled' ORDER BY id;",topic="WHERE Status Filter")
+
+add("sql-239","Driver With Highest Total Earnings","Ride-Sharing (Ola)","TCS Digital","medium",
+"Find the driver who earned the most total fare across all rides.\n\nReturn driver name, total_fare.",
+"JOIN drivers + rides, SUM(fare), ORDER BY DESC LIMIT 1.",
+"Sum fares per driver and pick the top one.",
+RIDE_T,RIDE_S,(["name","total_fare"],[]),
+"SELECT d.name,SUM(r.fare)AS total_fare FROM drivers d JOIN rides r ON d.id=r.driver_id GROUP BY d.name ORDER BY total_fare DESC LIMIT 1;",topic="TOP 1 by SUM")
+
+add("sql-240","Mark Old Orders as Archived","E-Commerce (Flipkart)","TCS Digital","medium",
+"Simulate marking orders before Feb 2024 as 'Archived' and others as 'Active'.\n\nReturn order_id, order_date, archive_status. Order by order_date.",
+"CASE WHEN order_date < '2024-02-01' THEN 'Archived' ELSE 'Active'.",
+"Jan orders = Archived, Feb+ = Active.",
+ECOM_T,ECOM_S,(["order_id","order_date","archive_status"],[[1,"2024-01-10","Archived"],[2,"2024-01-15","Archived"],[3,"2024-01-15","Archived"],[4,"2024-02-20","Active"],[5,"2024-03-15","Active"],[6,"2024-03-10","Active"],[7,"2024-03-15","Active"]]),
+"SELECT id AS order_id,order_date,CASE WHEN order_date<'2024-02-01' THEN 'Archived' ELSE 'Active' END AS archive_status FROM orders ORDER BY order_date;",topic="CASE Date Classification")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
