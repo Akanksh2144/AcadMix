@@ -2899,6 +2899,80 @@ add("sql-360","Customers Without Any Orders","E-Commerce (Flipkart)","Accenture"
 ECOM_T,ECOM_S,(["name","city"],[]),
 "SELECT c.name,c.city FROM customers c LEFT JOIN orders o ON c.id=o.customer_id WHERE o.id IS NULL ORDER BY c.name;",topic="LEFT JOIN: No Orders")
 
+# ═══ BATCH 36: Accenture Final 1 + Capgemini 9 ═══
+
+# --- Accenture (1 remaining → completes to 30) ---
+add("sql-361","Salary Difference From Company Average","HR / Employee","Accenture","medium",
+"Show each employee's salary difference from the company-wide average.\n\nReturn name, salary, company_avg, diff. Order by diff DESC.",
+"salary - AVG(salary) OVER().",
+"Compare individual to company average.",
+EMP_T,EMP_S,(["name","salary","company_avg","diff"],[["Alice",70000,57500,12500],["Eve",65000,57500,7500],["Bob",60000,57500,2500],["Charlie",55000,57500,-2500],["Diana",50000,57500,-7500],["Frank",45000,57500,-12500]]),
+"SELECT name,salary,ROUND(AVG(salary) OVER(),0)AS company_avg,salary-ROUND(AVG(salary) OVER(),0)AS diff FROM employees ORDER BY diff DESC;",topic="Window AVG() OVER()")
+
+# --- Capgemini (9 of 23 needed) ---
+add("sql-362","Employees Hired After 2020","HR / Employee","Capgemini","easy",
+"Find employees hired after January 1, 2020.\n\nReturn name, hire_date, dept. Order by hire_date.",
+"WHERE hire_date > '2020-01-01'.",
+"Bob, Charlie, Diana, Eve, Frank.",
+EMP_T,EMP_S,(["name","hire_date","dept"],[["Bob","2020-03-01","Eng"],["Charlie","2020-06-10","Sales"],["Diana","2021-01-20","Sales"],["Eve","2021-08-05","Eng"],["Frank","2022-02-14","HR"]]),
+"SELECT name,hire_date,dept FROM employees WHERE hire_date>'2020-01-01' ORDER BY hire_date;",topic="WHERE Date After")
+
+add("sql-363","Total Quantity Sold Per Product","E-Commerce (Flipkart)","Capgemini","easy",
+"Find total quantity sold for each product.\n\nReturn product name, total_qty. Order by total_qty DESC.",
+"JOIN products + order_items, SUM(qty), GROUP BY.",
+"Total units sold per product.",
+ECOM_T,ECOM_S,(["name","total_qty"],[["Cotton T-Shirt",3],["iPhone 15",3],["SQL Book",3],["MacBook Pro",2],["Running Shoes",3]]),
+"SELECT p.name,SUM(oi.qty)AS total_qty FROM products p JOIN order_items oi ON p.id=oi.product_id GROUP BY p.name ORDER BY total_qty DESC;",topic="SUM Qty Per Product")
+
+add("sql-364","Patients With Multiple Appointments","Healthcare / Hospital","Capgemini","medium",
+"Find patients who have had more than 1 appointment.\n\nReturn patient name, appt_count. Order by appt_count DESC.",
+"GROUP BY patient_id HAVING COUNT > 1.",
+"Amit=2, Rahul=2 appointments.",
+HOSPITAL_T,HOSPITAL_S,(["name","appt_count"],[["Amit",2],["Rahul",2]]),
+"SELECT p.name,COUNT(a.id)AS appt_count FROM patients p JOIN appointments a ON p.id=a.patient_id GROUP BY p.name HAVING COUNT(a.id)>1 ORDER BY appt_count DESC;",topic="HAVING Multiple Appts")
+
+add("sql-365","Restaurant City Distribution","Food Delivery (Zomato)","Capgemini","easy",
+"Count restaurants per city.\n\nReturn city, restaurant_count. Order by restaurant_count DESC.",
+"GROUP BY city, COUNT.",
+"Each city has 1 restaurant.",
+ZOMATO_T,ZOMATO_S,(["city","restaurant_count"],[["Bangalore",1],["Chennai",1],["Delhi",1],["Kolkata",1],["Mumbai",1]]),
+"SELECT city,COUNT(*)AS restaurant_count FROM restaurants GROUP BY city ORDER BY restaurant_count DESC;",topic="COUNT Per City")
+
+add("sql-366","Employee Salary Cumulative Percent","HR / Employee","Capgemini","hard",
+"Show each employee's salary as a percentage of the total payroll.\n\nReturn name, salary, pct_of_total (rounded to 1). Order by pct_of_total DESC.",
+"salary * 100.0 / SUM(salary) OVER().",
+"Alice: 70K/345K = 20.3%.",
+EMP_T,EMP_S,(["name","salary","pct_of_total"],[["Alice",70000,20.3],["Eve",65000,18.8],["Bob",60000,17.4],["Charlie",55000,15.9],["Diana",50000,14.5],["Frank",45000,13.0]]),
+"SELECT name,salary,ROUND(salary*100.0/SUM(salary) OVER(),1)AS pct_of_total FROM employees ORDER BY pct_of_total DESC;",topic="Percent of Total (Window)")
+
+add("sql-367","Orders With Electronics Only","E-Commerce (Flipkart)","Capgemini","hard",
+"Find orders that contain ONLY electronics products (no other category).\n\nReturn order_id. Order by order_id.",
+"NOT EXISTS non-electronics items in that order.",
+"Orders with all items in Electronics category.",
+ECOM_T,ECOM_S,(["order_id"],[]),
+"SELECT DISTINCT oi.order_id FROM order_items oi WHERE NOT EXISTS(SELECT 1 FROM order_items oi2 JOIN products p ON oi2.product_id=p.id WHERE oi2.order_id=oi.order_id AND p.category!='Electronics') ORDER BY oi.order_id;",topic="NOT EXISTS: Exclusive Category")
+
+add("sql-368","Average Rating vs City Average","Food Delivery (Zomato)","Capgemini","medium",
+"For each restaurant, show its rating and the average rating of its city.\n\nReturn name, city, rating, city_avg (rounded to 1). Order by name.",
+"AVG(rating) OVER(PARTITION BY city).",
+"Compare restaurant to its city peers.",
+ZOMATO_T,ZOMATO_S,(["name","city","rating","city_avg"],[["Biryani House","Mumbai",4.5,4.5],["Burger Barn","Bangalore",3.5,3.5],["Dosa Corner","Chennai",4.7,4.7],["Dragon Wok","Kolkata",3.8,3.8],["Pizza Palace","Delhi",4.2,4.2]]),
+"SELECT name,city,rating,ROUND(AVG(rating) OVER(PARTITION BY city),1)AS city_avg FROM restaurants ORDER BY name;",topic="Window AVG Per City")
+
+add("sql-369","Riders Who Never Took a Ride","Ride-Sharing (Ola)","Capgemini","medium",
+"Find riders who have never taken a ride.\n\nReturn name, city. Order by name.",
+"LEFT JOIN rides WHERE ride.id IS NULL.",
+"Riders with zero ride records.",
+RIDE_T,RIDE_S,(["name","city"],[]),
+"SELECT ri.name,ri.city FROM riders ri LEFT JOIN rides r ON ri.id=r.rider_id WHERE r.id IS NULL ORDER BY ri.name;",topic="LEFT JOIN: No Rides")
+
+add("sql-370","Doctors With Below-Average Fees","Healthcare / Hospital","Capgemini","medium",
+"Find doctors whose average appointment fee is below the overall average fee.\n\nReturn doctor name, avg_fee (rounded to 0). Order by avg_fee.",
+"HAVING AVG(fee) < (SELECT AVG(fee) FROM appointments).",
+"Compare per-doctor avg to overall avg.",
+HOSPITAL_T,HOSPITAL_S,(["name","avg_fee"],[["Dr. Gupta",400]]),
+"SELECT d.name,ROUND(AVG(a.fee),0)AS avg_fee FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.name HAVING AVG(a.fee)<(SELECT AVG(fee) FROM appointments) ORDER BY avg_fee;",topic="HAVING vs Global AVG")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
