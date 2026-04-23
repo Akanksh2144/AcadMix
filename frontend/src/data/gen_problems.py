@@ -3119,6 +3119,78 @@ add("sql-390","Products With Price Rank","E-Commerce (Flipkart)","Deloitte","med
 ECOM_T,ECOM_S,(["category","name","price","category_rank"],[["Books","SQL Book",450.0,1],["Electronics","MacBook Pro",120000.0,1],["Electronics","iPhone 15",79999.0,2],["Fashion","Running Shoes",3499.0,1],["Fashion","Cotton T-Shirt",799.0,2]]),
 "SELECT category,name,price,DENSE_RANK() OVER(PARTITION BY category ORDER BY price DESC)AS category_rank FROM products ORDER BY category,category_rank;",topic="Rank Within Category")
 
+# ═══ BATCH 39: Deloitte Scale-Up (10 of 14) — 400 MILESTONE ═══
+
+add("sql-391","Customer Lifetime Value Tier","E-Commerce (Flipkart)","Deloitte","medium",
+"Classify customers by total spending: 'Platinum' (>50K), 'Gold' (>5K), 'Silver' (<=5K).\n\nReturn name, total_spent, tier. Order by total_spent DESC.",
+"CASE on SUM(total).",
+"Ankit=Platinum, Rohan=Platinum, Sneha=Gold, etc.",
+ECOM_T,ECOM_S,(["name","total_spent","tier"],[["Ankit",60799.0,"Platinum"],["Rohan",55450.0,"Platinum"],["Sneha",6900.0,"Gold"],["Priya",3299.0,"Silver"],["Vikram",450.0,"Silver"]]),
+"SELECT c.name,SUM(o.total)AS total_spent,CASE WHEN SUM(o.total)>50000 THEN 'Platinum' WHEN SUM(o.total)>5000 THEN 'Gold' ELSE 'Silver' END AS tier FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name ORDER BY total_spent DESC;",topic="CASE Lifetime Value Tier")
+
+add("sql-392","Employee Hire Month Distribution","HR / Employee","Deloitte","easy",
+"Count how many employees were hired in each month (1-12).\n\nReturn hire_month, count. Order by hire_month.",
+"SUBSTR or CAST month from hire_date, GROUP BY.",
+"Distribution across calendar months.",
+EMP_T,EMP_S,(["hire_month","count"],[["01",2],["02",1],["03",1],["06",1],["08",1]]),
+"SELECT SUBSTR(hire_date,6,2)AS hire_month,COUNT(*)AS count FROM employees GROUP BY SUBSTR(hire_date,6,2) ORDER BY hire_month;",topic="Monthly Hire Distribution")
+
+add("sql-393","Average Order Value Trend","E-Commerce (Flipkart)","Deloitte","medium",
+"Show average order value per month with month-over-month change.\n\nReturn month, avg_val, prev_avg, change. Order by month.",
+"AVG + LAG on monthly aggregation.",
+"Monthly avg order value with trend.",
+ECOM_T,ECOM_S,(["month","avg_val","prev_avg","change"],[["2024-01",20266,None,None],["2024-02",55450,20266,35184],["2024-03",3550,55450,-51900]]),
+"SELECT month,avg_val,LAG(avg_val) OVER(ORDER BY month)AS prev_avg,avg_val-LAG(avg_val) OVER(ORDER BY month)AS change FROM(SELECT SUBSTR(order_date,1,7)AS month,ROUND(AVG(total),0)AS avg_val FROM orders GROUP BY SUBSTR(order_date,1,7))t ORDER BY month;",topic="LAG Avg Value Trend")
+
+add("sql-394","Top 2 Earners Per Department","HR / Employee","Deloitte","hard",
+"Find the top 2 highest-paid employees in each department.\n\nReturn dept, name, salary. Order by dept, salary DESC.",
+"DENSE_RANK PARTITION BY dept ORDER BY salary DESC, filter rk<=2.",
+"Top 2 per dept.",
+EMP_T,EMP_S,(["dept","name","salary"],[["Eng","Alice",70000],["Eng","Eve",65000],["HR","Frank",45000],["Sales","Charlie",55000],["Sales","Diana",50000]]),
+"SELECT dept,name,salary FROM(SELECT dept,name,salary,DENSE_RANK() OVER(PARTITION BY dept ORDER BY salary DESC)AS rk FROM employees)t WHERE rk<=2 ORDER BY dept,salary DESC;",topic="Top N Per Group")
+
+add("sql-395","Restaurants With No Orders","Food Delivery (Zomato)","Deloitte","medium",
+"Find restaurants that have received zero orders.\n\nReturn name, city. Order by name.",
+"LEFT JOIN orders WHERE o.id IS NULL.",
+"Restaurants with no order records.",
+ZOMATO_T,ZOMATO_S,(["name","city"],[]),
+"SELECT r.name,r.city FROM restaurants r LEFT JOIN orders o ON r.id=o.rest_id WHERE o.id IS NULL ORDER BY r.name;",topic="LEFT JOIN: No Restaurant Orders")
+
+add("sql-396","Patient Readmission Check","Healthcare / Hospital","Deloitte","hard",
+"Find patients who visited the same doctor more than once (potential readmission).\n\nReturn patient_name, doctor_name, visit_count. Order by visit_count DESC.",
+"GROUP BY patient_id, doc_id HAVING COUNT > 1.",
+"Same patient-doctor pair with multiple visits.",
+HOSPITAL_T,HOSPITAL_S,(["patient_name","doctor_name","visit_count"],[["Amit","Dr. Sharma",2]]),
+"SELECT p.name AS patient_name,d.name AS doctor_name,COUNT(*)AS visit_count FROM appointments a JOIN patients p ON a.patient_id=p.id JOIN doctors d ON a.doc_id=d.id GROUP BY p.name,d.name HAVING COUNT(*)>1 ORDER BY visit_count DESC;",topic="Readmission Detection")
+
+add("sql-397","Total Credits Per Branch","Banking / Finance","Deloitte","medium",
+"Calculate total credit amount per bank branch.\n\nReturn branch, total_credits. Order by total_credits DESC.",
+"JOIN accounts + transactions WHERE type='credit', GROUP BY branch.",
+"Sum credits per branch.",
+BANK_T,BANK_S,(["branch","total_credits"],[["Mumbai",20000.0],["Delhi",5000.0]]),
+"SELECT a.branch,SUM(t.amount)AS total_credits FROM accounts a JOIN transactions t ON a.id=t.acc_id WHERE t.type='credit' GROUP BY a.branch ORDER BY total_credits DESC;",topic="Credits Per Branch")
+
+add("sql-398","Employee Next Salary (LEAD)","HR / Employee","Deloitte","medium",
+"Show each employee and the next employee's salary (by hire date) using LEAD.\n\nReturn name, salary, next_salary. Order by hire_date.",
+"LEAD(salary) OVER(ORDER BY hire_date).",
+"Peek at the next hire's salary.",
+EMP_T,EMP_S,(["name","salary","next_salary"],[["Alice",70000,60000],["Bob",60000,55000],["Charlie",55000,50000],["Diana",50000,65000],["Eve",65000,45000],["Frank",45000,None]]),
+"SELECT name,salary,LEAD(salary) OVER(ORDER BY hire_date)AS next_salary FROM employees ORDER BY hire_date;",topic="LEAD Window Function")
+
+add("sql-399","Distinct Categories Ordered Per Customer","E-Commerce (Flipkart)","Deloitte","medium",
+"Count how many distinct product categories each customer has ordered from.\n\nReturn name, category_count. Order by category_count DESC.",
+"4-table join + COUNT DISTINCT category.",
+"Breadth of shopping per customer.",
+ECOM_T,ECOM_S,(["name","category_count"],[["Ankit",3],["Rohan",1],["Sneha",1],["Priya",1],["Vikram",1]]),
+"SELECT c.name,COUNT(DISTINCT p.category)AS category_count FROM customers c JOIN orders o ON c.id=o.customer_id JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id GROUP BY c.name ORDER BY category_count DESC;",topic="DISTINCT Categories Per Customer")
+
+add("sql-400","Customer Recency Score","E-Commerce (Flipkart)","Deloitte","medium",
+"Calculate days since each customer's last order (from '2024-04-01').\n\nReturn name, last_order, days_since. Order by days_since.",
+"MAX(order_date), JULIANDAY diff.",
+"How recently each customer ordered.",
+ECOM_T,ECOM_S,(["name","last_order","days_since"],[["Priya","2024-03-15",17],["Vikram","2024-03-15",17],["Sneha","2024-03-10",22],["Rohan","2024-02-20",41],["Ankit","2024-01-15",77]]),
+"SELECT c.name,MAX(o.order_date)AS last_order,CAST(JULIANDAY('2024-04-01')-JULIANDAY(MAX(o.order_date))AS INT)AS days_since FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name ORDER BY days_since;",topic="Recency Score (JULIANDAY)")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
