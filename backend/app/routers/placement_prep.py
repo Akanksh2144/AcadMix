@@ -287,25 +287,18 @@ async def execute_sql_backend(
     if not user_upper.startswith('SELECT') and not user_upper.startswith('WITH'):
         raise HTTPException(400, "Only SELECT queries are allowed")
     
-    # ── Create sandboxed schema ──
-    schema_name = f"sql_sandbox_{uuid.uuid4().hex[:12]}"
+    table_names = re.findall(r'(?i)CREATE\s+TABLE\s+([A-Za-z0-9_]+)', req.schema_sql)
     
     try:
         # Use raw connection for full control
         raw_conn = await session.connection()
         
-        # Create temp schema + set search path
-        await raw_conn.execute(text(f'CREATE SCHEMA "{schema_name}"'))
-        await raw_conn.execute(text(f'SET search_path TO "{schema_name}", public'))
-        
-        # Run schema setup (CREATE TABLEs + INSERTs)
-        for stmt in req.schema_sql.split(';'):
+        # Create temp tables instead of a dedicated schema
+        schema_sql = re.sub(r'(?i)CREATE\s+TABLE', 'CREATE TEMPORARY TABLE', req.schema_sql)
+        for stmt in schema_sql.split(';'):
             stmt = stmt.strip()
             if stmt:
-                try:
-                    await raw_conn.execute(text(stmt))
-                except Exception as e:
-                    logger.warning(f"Schema setup error: {e}")
+                await raw_conn.execute(text(stmt))
         
         # Execute user query with timeout
         try:
@@ -324,13 +317,15 @@ async def execute_sql_backend(
         logger.error(f"SQL execution error: {e}")
         raise HTTPException(500, f"Execution error: {str(e)}")
     finally:
-        # Always clean up the temp schema
-        try:
-            await raw_conn.execute(text(f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE'))
+        # Clean up temporary tables
+        if 'raw_conn' in locals():
+            for t in table_names:
+                try:
+                    await raw_conn.execute(text(f"DROP TABLE IF EXISTS {t}"))
+                except Exception:
+                    pass
             await raw_conn.execute(text('SET search_path TO public'))
-            await session.rollback()  # rollback any uncommitted changes
-        except Exception as cleanup_err:
-            logger.error(f"Schema cleanup error: {cleanup_err}")
+            await session.rollback()
 
 
 async def _execute_user_query(conn, query: str):
