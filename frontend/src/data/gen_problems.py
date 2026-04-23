@@ -3191,6 +3191,80 @@ add("sql-400","Customer Recency Score","E-Commerce (Flipkart)","Deloitte","mediu
 ECOM_T,ECOM_S,(["name","last_order","days_since"],[["Priya","2024-03-15",17],["Vikram","2024-03-15",17],["Sneha","2024-03-10",22],["Rohan","2024-02-20",41],["Ankit","2024-01-15",77]]),
 "SELECT c.name,MAX(o.order_date)AS last_order,CAST(JULIANDAY('2024-04-01')-JULIANDAY(MAX(o.order_date))AS INT)AS days_since FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name ORDER BY days_since;",topic="Recency Score (JULIANDAY)")
 
+# ═══ BATCH 40: Deloitte Final 4 + Zoho First 6 ═══
+
+# --- Deloitte (4 remaining → completes to 30) ---
+add("sql-401","Account Type Distribution","Banking / Finance","Deloitte","easy",
+"Count accounts by account type.\n\nReturn type, account_count. Order by account_count DESC.",
+"GROUP BY type, COUNT.",
+"savings vs current counts.",
+BANK_T,BANK_S,(["type","account_count"],[["savings",3],["current",1]]),
+"SELECT type,COUNT(*)AS account_count FROM accounts GROUP BY type ORDER BY account_count DESC;",topic="COUNT Per Account Type")
+
+add("sql-402","Manager Hierarchy Depth","HR / Employee","Deloitte","hard",
+"Find the management chain depth for each employee (how many levels above them).\n\nReturn name, depth. Order by depth DESC, name.",
+"Recursive CTE or iterative self-join counting.",
+"Alice/Frank=0 (no mgr), Bob/Charlie=1, Diana/Eve=2.",
+EMP_T,EMP_S,(["name","depth"],[["Diana",2],["Eve",2],["Bob",1],["Charlie",1],["Alice",0],["Frank",0]]),
+"WITH RECURSIVE chain(id,name,depth) AS(SELECT id,name,0 FROM employees WHERE mgr_id IS NULL UNION ALL SELECT e.id,e.name,c.depth+1 FROM employees e JOIN chain c ON e.mgr_id=c.id) SELECT name,depth FROM chain ORDER BY depth DESC,name;",topic="Recursive CTE Hierarchy")
+
+add("sql-403","Monthly Active Users","Login / Activity","Deloitte","medium",
+"Count unique users who logged in each month.\n\nReturn month, active_users. Order by month.",
+"SUBSTR(login_date,1,7), COUNT DISTINCT user_id.",
+"Monthly active user count.",
+LOGIN_T,LOGIN_S,(["month","active_users"],[]),
+"SELECT SUBSTR(login_date,1,7)AS month,COUNT(DISTINCT user_id)AS active_users FROM logins GROUP BY SUBSTR(login_date,1,7) ORDER BY month;",topic="Monthly Active Users")
+
+add("sql-404","Courses With No Enrollments","University / Education","Deloitte","medium",
+"Find courses that have zero student enrollments.\n\nReturn course name, credits. Order by name.",
+"LEFT JOIN enrollments WHERE e.id IS NULL.",
+"Courses nobody signed up for.",
+UNI_T,UNI_S,(["name","credits"],[]),
+"SELECT c.name,c.credits FROM courses c LEFT JOIN enrollments e ON c.id=e.course_id WHERE e.id IS NULL ORDER BY c.name;",topic="LEFT JOIN: No Enrollments")
+
+# --- Zoho (6 of 25 needed) ---
+add("sql-405","Employee Salary Summary Statistics","HR / Employee","Zoho","medium",
+"Show min, max, average, and total salary across all employees.\n\nReturn min_sal, max_sal, avg_sal, total_sal.",
+"MIN, MAX, AVG, SUM aggregations.",
+"Company-wide salary statistics.",
+EMP_T,EMP_S,(["min_sal","max_sal","avg_sal","total_sal"],[[45000,70000,57500,345000]]),
+"SELECT MIN(salary)AS min_sal,MAX(salary)AS max_sal,ROUND(AVG(salary),0)AS avg_sal,SUM(salary)AS total_sal FROM employees;",topic="Aggregate Summary Stats")
+
+add("sql-406","Restaurants Serving Indian Cuisine","Food Delivery (Zomato)","Zoho","easy",
+"Find all restaurants that serve Indian cuisine.\n\nReturn name, city, rating. Order by rating DESC.",
+"WHERE cuisine = 'Indian'.",
+"Biryani House and Dosa Corner.",
+ZOMATO_T,ZOMATO_S,(["name","city","rating"],[["Dosa Corner","Chennai",4.7],["Biryani House","Mumbai",4.5]]),
+"SELECT name,city,rating FROM restaurants WHERE cuisine='Indian' ORDER BY rating DESC;",topic="WHERE Cuisine Filter")
+
+add("sql-407","Employees Earning More Than Manager","HR / Employee","Zoho","hard",
+"Find employees who earn more than their direct manager.\n\nReturn employee, emp_salary, manager, mgr_salary. Order by emp_salary DESC.",
+"Self-join ON e.mgr_id = m.id WHERE e.salary > m.salary.",
+"Compare employee salary to manager salary.",
+EMP_T,EMP_S,(["employee","emp_salary","manager","mgr_salary"],[["Eve",65000,"Bob",60000]]),
+"SELECT e.name AS employee,e.salary AS emp_salary,m.name AS manager,m.salary AS mgr_salary FROM employees e JOIN employees m ON e.mgr_id=m.id WHERE e.salary>m.salary ORDER BY e.salary DESC;",topic="Self-Join: Salary > Manager")
+
+add("sql-408","Order Items Revenue Breakdown","E-Commerce (Flipkart)","Zoho","medium",
+"Show total revenue per order with product breakdown count.\n\nReturn order_id, items, total_revenue. Order by total_revenue DESC.",
+"GROUP BY order_id, COUNT items, SUM(price*qty).",
+"Revenue breakdown per order.",
+ECOM_T,ECOM_S,(["order_id","items","total_revenue"],[]),
+"SELECT oi.order_id,COUNT(*)AS items,SUM(p.price*oi.qty)AS total_revenue FROM order_items oi JOIN products p ON oi.product_id=p.id GROUP BY oi.order_id ORDER BY total_revenue DESC;",topic="Order Revenue Breakdown")
+
+add("sql-409","Riders With Rides in Multiple Cities","Ride-Sharing (Ola)","Zoho","medium",
+"Find riders who have taken rides from more than 1 pickup city.\n\nReturn rider name, city_count. Order by city_count DESC.",
+"JOIN + GROUP BY + HAVING COUNT(DISTINCT pickup) > 1.",
+"Multi-city riders.",
+RIDE_T,RIDE_S,(["name","city_count"],[]),
+"SELECT ri.name,COUNT(DISTINCT r.pickup)AS city_count FROM riders ri JOIN rides r ON ri.id=r.rider_id GROUP BY ri.name HAVING COUNT(DISTINCT r.pickup)>1 ORDER BY city_count DESC;",topic="HAVING Multi-City Riders")
+
+add("sql-410","Employee Salary Deviation From Median","HR / Employee","Zoho","hard",
+"Show each employee's salary deviation from the company median salary.\n\nReturn name, salary, median_sal, deviation. Order by deviation DESC.",
+"Window function to find median position.",
+"Compare to middle value.",
+EMP_T,EMP_S,(["name","salary","median_sal","deviation"],[["Alice",70000,57500,12500],["Eve",65000,57500,7500],["Bob",60000,57500,2500],["Charlie",55000,57500,-2500],["Diana",50000,57500,-7500],["Frank",45000,57500,-12500]]),
+"SELECT name,salary,(SELECT salary FROM employees ORDER BY salary LIMIT 1 OFFSET(SELECT COUNT(*)/2 FROM employees))AS median_sal,salary-(SELECT salary FROM employees ORDER BY salary LIMIT 1 OFFSET(SELECT COUNT(*)/2 FROM employees))AS deviation FROM employees ORDER BY deviation DESC;",topic="Median Deviation")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
