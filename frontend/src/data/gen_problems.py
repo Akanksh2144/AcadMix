@@ -3265,6 +3265,78 @@ add("sql-410","Employee Salary Deviation From Median","HR / Employee","Zoho","ha
 EMP_T,EMP_S,(["name","salary","median_sal","deviation"],[["Alice",70000,57500,12500],["Eve",65000,57500,7500],["Bob",60000,57500,2500],["Charlie",55000,57500,-2500],["Diana",50000,57500,-7500],["Frank",45000,57500,-12500]]),
 "SELECT name,salary,(SELECT salary FROM employees ORDER BY salary LIMIT 1 OFFSET(SELECT COUNT(*)/2 FROM employees))AS median_sal,salary-(SELECT salary FROM employees ORDER BY salary LIMIT 1 OFFSET(SELECT COUNT(*)/2 FROM employees))AS deviation FROM employees ORDER BY deviation DESC;",topic="Median Deviation")
 
+# ═══ BATCH 41: Zoho Scale-Up (10 of 19) ═══
+
+add("sql-411","Restaurant Order Frequency","Food Delivery (Zomato)","Zoho","medium",
+"Count how many orders each restaurant received and label frequency: 'High' (3+), 'Medium' (2), 'Low' (1).\n\nReturn name, orders, frequency. Order by orders DESC.",
+"JOIN + GROUP BY + CASE on COUNT.",
+"Order frequency classification.",
+ZOMATO_T,ZOMATO_S,(["name","orders","frequency"],[["Biryani House",3,"High"],["Pizza Palace",2,"Medium"],["Dragon Wok",2,"Medium"],["Burger Barn",1,"Low"],["Dosa Corner",1,"Low"]]),
+"SELECT r.name,COUNT(o.id)AS orders,CASE WHEN COUNT(o.id)>=3 THEN 'High' WHEN COUNT(o.id)=2 THEN 'Medium' ELSE 'Low' END AS frequency FROM restaurants r JOIN orders o ON r.id=o.rest_id GROUP BY r.name ORDER BY orders DESC;",topic="CASE Order Frequency")
+
+add("sql-412","Top Earning Department","HR / Employee","Zoho","easy",
+"Find the department with the highest total salary.\n\nReturn dept, total_salary.",
+"GROUP BY dept, SUM(salary), ORDER DESC LIMIT 1.",
+"Engineering: 70K+60K+65K=195K.",
+EMP_T,EMP_S,(["dept","total_salary"],[["Eng",195000]]),
+"SELECT dept,SUM(salary)AS total_salary FROM employees GROUP BY dept ORDER BY total_salary DESC LIMIT 1;",topic="Top Dept by SUM")
+
+add("sql-413","Patient Appointment Timeline","Healthcare / Hospital","Zoho","medium",
+"Show each patient's appointments in chronological order with a row number.\n\nReturn patient_name, visit_date, diagnosis, visit_num. Order by patient_name, visit_num.",
+"ROW_NUMBER PARTITION BY patient_id ORDER BY visit_date.",
+"Sequential visit numbering per patient.",
+HOSPITAL_T,HOSPITAL_S,(["patient_name","visit_date","diagnosis","visit_num"],[]),
+"SELECT p.name AS patient_name,a.visit_date,a.diagnosis,ROW_NUMBER() OVER(PARTITION BY p.id ORDER BY a.visit_date)AS visit_num FROM patients p JOIN appointments a ON p.id=a.patient_id ORDER BY p.name,visit_num;",topic="ROW_NUMBER Timeline")
+
+add("sql-414","Product Price Tier Count","E-Commerce (Flipkart)","Zoho","easy",
+"Count products in each price tier: 'Budget' (<1000), 'Mid' (1000-50000), 'Premium' (>50000).\n\nReturn tier, product_count. Order by product_count DESC.",
+"CASE WHEN price > 50000 THEN 'Premium'...",
+"Budget=2, Mid=1, Premium=2.",
+ECOM_T,ECOM_S,(["tier","product_count"],[["Budget",2],["Premium",2],["Mid",1]]),
+"SELECT CASE WHEN price>50000 THEN 'Premium' WHEN price>=1000 THEN 'Mid' ELSE 'Budget' END AS tier,COUNT(*)AS product_count FROM products GROUP BY tier ORDER BY product_count DESC;",topic="CASE Price Tier Count")
+
+add("sql-415","Employee Seniority Band","HR / Employee","Zoho","medium",
+"Classify employees by tenure: 'Senior' (hired before 2020), 'Mid' (2020-2021), 'Junior' (2022+).\n\nReturn name, hire_date, band. Order by hire_date.",
+"CASE on hire_date year ranges.",
+"Alice=Senior, Bob/Charlie/Diana/Eve=Mid, Frank=Junior.",
+EMP_T,EMP_S,(["name","hire_date","band"],[["Alice","2019-01-15","Senior"],["Bob","2020-03-01","Mid"],["Charlie","2020-06-10","Mid"],["Diana","2021-01-20","Mid"],["Eve","2021-08-05","Mid"],["Frank","2022-02-14","Junior"]]),
+"SELECT name,hire_date,CASE WHEN hire_date<'2020-01-01' THEN 'Senior' WHEN hire_date<'2022-01-01' THEN 'Mid' ELSE 'Junior' END AS band FROM employees ORDER BY hire_date;",topic="CASE Seniority Band")
+
+add("sql-416","Total Amount Per Transaction Type","Banking / Finance","Zoho","easy",
+"Calculate total amount for credits vs debits.\n\nReturn type, total_amount. Order by total_amount DESC.",
+"GROUP BY type, SUM(amount).",
+"debit total vs credit total.",
+BANK_T,BANK_S,(["type","total_amount"],[["debit",28000.0],["credit",25000.0]]),
+"SELECT type,SUM(amount)AS total_amount FROM transactions GROUP BY type ORDER BY total_amount DESC;",topic="SUM Per Txn Type")
+
+add("sql-417","Show Genre Popularity","Streaming (Netflix)","Zoho","medium",
+"Count watch events per show genre.\n\nReturn genre, watch_count. Order by watch_count DESC.",
+"JOIN shows + watch_history, GROUP BY genre, COUNT.",
+"Most watched genres.",
+STREAM_T,STREAM_S,(["genre","watch_count"],[]),
+"SELECT s.genre,COUNT(w.id)AS watch_count FROM shows s JOIN watch_history w ON s.id=w.show_id GROUP BY s.genre ORDER BY watch_count DESC;",topic="Genre Watch Popularity")
+
+add("sql-418","Order Item Count Distribution","E-Commerce (Flipkart)","Zoho","medium",
+"Show how many orders have 1 item, 2 items, 3+ items.\n\nReturn item_bucket, order_count. Order by item_bucket.",
+"Subquery for items per order, then CASE bucket.",
+"Distribution of order sizes.",
+ECOM_T,ECOM_S,(["item_bucket","order_count"],[["1 item",5],["2 items",1],["3+ items",1]]),
+"SELECT CASE WHEN cnt>=3 THEN '3+ items' WHEN cnt=2 THEN '2 items' ELSE '1 item' END AS item_bucket,COUNT(*)AS order_count FROM(SELECT order_id,COUNT(*)AS cnt FROM order_items GROUP BY order_id)t GROUP BY item_bucket ORDER BY item_bucket;",topic="CASE Bucket Distribution")
+
+add("sql-419","Account Balance vs Branch Average","Banking / Finance","Zoho","medium",
+"Show each account's balance compared to its branch average.\n\nReturn holder, balance, branch_avg, diff. Order by diff DESC.",
+"AVG(balance) OVER(PARTITION BY branch).",
+"Compare to branch peers.",
+BANK_T,BANK_S,(["holder","balance","branch_avg","diff"],[["Meena",150000.0,112500,37500],["Ravi",75000.0,112500,-37500],["Kavita",30000.0,30000,0],["Suresh",45000.0,45000,0]]),
+"SELECT holder,balance,ROUND(AVG(balance) OVER(PARTITION BY branch),0)AS branch_avg,balance-ROUND(AVG(balance) OVER(PARTITION BY branch),0)AS diff FROM accounts ORDER BY diff DESC;",topic="Window AVG Branch Compare")
+
+add("sql-420","Doctors Sorted by Unique Patient Count","Healthcare / Hospital","Zoho","easy",
+"Sort doctors by the number of unique patients they've treated.\n\nReturn doctor name, patient_count. Order by patient_count DESC.",
+"JOIN + COUNT(DISTINCT patient_id) GROUP BY.",
+"Unique patients per doctor.",
+HOSPITAL_T,HOSPITAL_S,(["name","patient_count"],[["Dr. Sharma",2],["Dr. Patel",2],["Dr. Gupta",1]]),
+"SELECT d.name,COUNT(DISTINCT a.patient_id)AS patient_count FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.name ORDER BY patient_count DESC;",topic="DISTINCT Patient Count")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
