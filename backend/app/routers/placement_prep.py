@@ -96,6 +96,9 @@ async def get_sql_problems(
             "schema_sql": p.schema_sql,
             "hint": p.hint,
             "expected_output": p.expected_output,
+            "tables_meta": p.tables_meta,
+            "example_output": p.example_output,
+            "explanation": p.explanation,
             "created_at": p.created_at
         })
     return sanitized
@@ -123,6 +126,10 @@ async def get_sql_problem(
         "schema_sql": p.schema_sql,
         "hint": p.hint,
         "expected_output": p.expected_output,
+        "tables_meta": p.tables_meta,
+        "example_output": p.example_output,
+        "explanation": p.explanation,
+        "solution_sql": p.solution_sql,
         "created_at": p.created_at
     }
 

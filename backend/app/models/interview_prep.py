@@ -149,6 +149,11 @@ class SQLProblem(Base, SoftDeleteMixin):
     hint             = Column(Text, nullable=True)
     expected_query   = Column(Text, nullable=False)                                     # Server-side validation logic
     expected_output  = Column(JSONB, nullable=False)                                    # JSON array format of output rows
+    # ── New DataLemur-style fields ──
+    tables_meta      = Column(JSONB, nullable=True)                                     # [{name, columns:[{name,type}], sample_input:[[val,...]]}]
+    example_output   = Column(JSONB, nullable=True)                                     # [{col: val, ...}] display-only example
+    explanation      = Column(Text, nullable=True)                                      # Walkthrough text
+    solution_sql     = Column(Text, nullable=True)                                      # Revealed solution query
     created_at       = Column(DateTime(timezone=True), server_default=func.now())
 
 
