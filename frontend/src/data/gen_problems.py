@@ -2827,6 +2827,78 @@ add("sql-350","Patients Treated by Multiple Doctors","Healthcare / Hospital","Ac
 HOSPITAL_T,HOSPITAL_S,(["name","doctor_count"],[["Amit",2]]),
 "SELECT p.name,COUNT(DISTINCT a.doc_id)AS doctor_count FROM patients p JOIN appointments a ON p.id=a.patient_id GROUP BY p.name HAVING COUNT(DISTINCT a.doc_id)>1 ORDER BY doctor_count DESC;",topic="HAVING Multiple Doctors")
 
+# ═══ BATCH 35: Accenture Scale-Up 2 (10 more) ═══
+
+add("sql-351","Employee Salary vs Previous (LAG)","HR / Employee","Accenture","hard",
+"Show each employee's salary and the previous employee's salary (ordered by hire date) using LAG.\n\nReturn name, salary, prev_salary. Order by hire_date.",
+"LAG(salary) OVER(ORDER BY hire_date).",
+"Alice has no previous. Bob's prev is Alice's 70K.",
+EMP_T,EMP_S,(["name","salary","prev_salary"],[["Alice",70000,None],["Bob",60000,70000],["Charlie",55000,60000],["Diana",50000,55000],["Eve",65000,50000],["Frank",45000,65000]]),
+"SELECT name,salary,LAG(salary) OVER(ORDER BY hire_date)AS prev_salary FROM employees ORDER BY hire_date;",topic="LAG Window Function")
+
+add("sql-352","Cheapest and Most Expensive Per Order","E-Commerce (Flipkart)","Accenture","medium",
+"For each order, find the cheapest and most expensive product.\n\nReturn order_id, min_price, max_price. Order by order_id.",
+"JOIN order_items+products, GROUP BY order_id, MIN/MAX price.",
+"Price range within each order.",
+ECOM_T,ECOM_S,(["order_id","min_price","max_price"],[]),
+"SELECT oi.order_id,MIN(p.price)AS min_price,MAX(p.price)AS max_price FROM order_items oi JOIN products p ON oi.product_id=p.id GROUP BY oi.order_id ORDER BY oi.order_id;",topic="MIN/MAX Per Order")
+
+add("sql-353","Restaurant Revenue Rank Per City","Food Delivery (Zomato)","Accenture","hard",
+"Rank restaurants by revenue within their city.\n\nReturn city, name, revenue, city_rank. Order by city, city_rank.",
+"DENSE_RANK PARTITION BY city ORDER BY SUM(amount) DESC.",
+"Rank by revenue within each city.",
+ZOMATO_T,ZOMATO_S,(["city","name","revenue","city_rank"],[]),
+"SELECT city,name,revenue,DENSE_RANK() OVER(PARTITION BY city ORDER BY revenue DESC)AS city_rank FROM(SELECT r.city,r.name,SUM(o.amount)AS revenue FROM restaurants r JOIN orders o ON r.id=o.rest_id GROUP BY r.city,r.name)t ORDER BY city,city_rank;",topic="Rank Within City")
+
+add("sql-354","Monthly Order Trend","E-Commerce (Flipkart)","Accenture","medium",
+"Count orders per month and show the month-over-month difference.\n\nReturn month, orders, prev_orders, diff. Order by month.",
+"LAG on monthly COUNT.",
+"Monthly order count with trend.",
+ECOM_T,ECOM_S,(["month","orders","prev_orders","diff"],[["2024-01",3,None,None],["2024-02",1,3,-2],["2024-03",3,1,2]]),
+"SELECT month,orders,LAG(orders) OVER(ORDER BY month)AS prev_orders,orders-LAG(orders) OVER(ORDER BY month)AS diff FROM(SELECT SUBSTR(order_date,1,7)AS month,COUNT(*)AS orders FROM orders GROUP BY SUBSTR(order_date,1,7))t ORDER BY month;",topic="LAG Monthly Trend")
+
+add("sql-355","Employee Salary Band","HR / Employee","Accenture","easy",
+"Classify employees into salary bands: 'High' (>=65K), 'Medium' (>=50K), 'Low' (<50K).\n\nReturn name, salary, band. Order by salary DESC.",
+"CASE WHEN salary >= 65000...",
+"Alice=High, Eve=High, Bob=Medium, etc.",
+EMP_T,EMP_S,(["name","salary","band"],[["Alice",70000,"High"],["Eve",65000,"High"],["Bob",60000,"Medium"],["Charlie",55000,"Medium"],["Diana",50000,"Medium"],["Frank",45000,"Low"]]),
+"SELECT name,salary,CASE WHEN salary>=65000 THEN 'High' WHEN salary>=50000 THEN 'Medium' ELSE 'Low' END AS band FROM employees ORDER BY salary DESC;",topic="CASE Salary Band")
+
+add("sql-356","Most Commented Post","Social Media (Instagram)","Accenture","medium",
+"Find the post with the most comments.\n\nReturn post_id, content (first 30 chars), comment_count.",
+"JOIN posts + comments, COUNT, ORDER DESC LIMIT 1.",
+"Most discussed post.",
+SOCIAL_T,SOCIAL_S,(["post_id","content","comment_count"],[]),
+"SELECT p.id AS post_id,SUBSTR(p.content,1,30)AS content,COUNT(c.id)AS comment_count FROM posts p JOIN comments c ON p.id=c.post_id GROUP BY p.id,p.content ORDER BY comment_count DESC LIMIT 1;",topic="Most Commented (LIMIT)")
+
+add("sql-357","Show With Most Watch Events","Streaming (Netflix)","Accenture","easy",
+"Find the show that has been watched the most times.\n\nReturn title, watch_count.",
+"JOIN shows + watch_history, COUNT, ORDER DESC LIMIT 1.",
+"Most watched show.",
+STREAM_T,STREAM_S,(["title","watch_count"],[]),
+"SELECT s.title,COUNT(w.id)AS watch_count FROM shows s JOIN watch_history w ON s.id=w.show_id GROUP BY s.title ORDER BY watch_count DESC LIMIT 1;",topic="Most Watched Show")
+
+add("sql-358","Cumulative Account Balance","Banking / Finance","Accenture","hard",
+"Show running balance per account: add credits, subtract debits.\n\nReturn holder, txn_date, type, amount, running_bal. Order by holder, txn_date.",
+"SUM(CASE credit/debit) OVER(PARTITION BY acc_id ORDER BY txn_date).",
+"Running balance tracking.",
+BANK_T,BANK_S,(["holder","txn_date","type","amount","running_bal"],[]),
+"SELECT a.holder,t.txn_date,t.type,t.amount,SUM(CASE WHEN t.type='credit' THEN t.amount ELSE -t.amount END) OVER(PARTITION BY a.id ORDER BY t.txn_date)AS running_bal FROM accounts a JOIN transactions t ON a.id=t.acc_id ORDER BY a.holder,t.txn_date;",topic="Running Balance Window")
+
+add("sql-359","Driver Ride Count Rank","Ride-Sharing (Ola)","Accenture","medium",
+"Rank drivers by their total number of completed rides.\n\nReturn driver name, ride_count, driver_rank. Order by driver_rank.",
+"DENSE_RANK on COUNT of rides.",
+"Rank drivers by ride volume.",
+RIDE_T,RIDE_S,(["name","ride_count","driver_rank"],[]),
+"SELECT name,ride_count,DENSE_RANK() OVER(ORDER BY ride_count DESC)AS driver_rank FROM(SELECT d.name,COUNT(r.id)AS ride_count FROM drivers d JOIN rides r ON d.id=r.driver_id GROUP BY d.name)t ORDER BY driver_rank;",topic="DENSE_RANK Driver Rides")
+
+add("sql-360","Customers Without Any Orders","E-Commerce (Flipkart)","Accenture","easy",
+"Find customers who have never placed an order.\n\nReturn name, city. Order by name.",
+"LEFT JOIN orders WHERE o.id IS NULL.",
+"Check for customers with zero orders.",
+ECOM_T,ECOM_S,(["name","city"],[]),
+"SELECT c.name,c.city FROM customers c LEFT JOIN orders o ON c.id=o.customer_id WHERE o.id IS NULL ORDER BY c.name;",topic="LEFT JOIN: No Orders")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
