@@ -4,6 +4,7 @@ import Editor from '@monaco-editor/react';
 import { Database, Play, CheckCircle, XCircle, List, ArrowLeft, Lightbulb, Table as TableIcon, Eye, EyeSlash, Timer, CircleHalf, BookmarkSimple, MagnifyingGlass } from '@phosphor-icons/react';
 import { useTheme } from '../contexts/ThemeContext';
 import { placementPrepAPI } from '../services/api';
+import PageHeader from '../components/PageHeader';
 import { toast } from 'sonner';
 import initSqlJs from 'sql.js';
 import sqlWasm from 'sql.js/dist/sql-wasm.wasm?url';
@@ -364,23 +365,11 @@ const SQLPractice = ({ navigate, user }: any) => {
 
   /* ── Problem List ─────────────────────────────────────── */
   if (!selectedProblem) return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0F172A] px-4 lg:px-10 py-4 lg:py-6">
-      <div className="space-y-6">
-        <button onClick={() => navigate('placement-hub')} className="flex items-center gap-2 text-slate-500 hover:text-indigo-500 transition-colors font-bold text-sm">
-          <ArrowLeft size={16} weight="bold" /> Back to Placement Hub
-        </button>
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Database size={32} weight="fill" className="text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">SQL Practice Arena</h1>
-              <p className="text-slate-500">DataLemur-style challenges from mass recruiters.</p>
-            </div>
-          </div>
-          {/* ── Progress Dashboard ── */}
-          {(() => {
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0F172A]">
+      <PageHeader navigate={navigate} user={user} title="SQL Practice Arena" subtitle="DataLemur-style challenges from mass recruiters" backTo="placement-hub" hideNotifications />
+      <div className="px-4 lg:px-10 py-4 lg:py-6 space-y-5">
+        {/* ── Progress Dashboard ── */}
+        {(() => {
             const solved = Object.values(statusMap).filter(s => s === 'solved').length;
             const total = problems.length;
             const pct = total ? Math.round((solved / total) * 100) : 0;
@@ -396,7 +385,7 @@ const SQLPractice = ({ navigate, user }: any) => {
               return { ...d, solved: s, total: t, pct: t ? Math.round((s / t) * 100) : 0 };
             });
             return (
-              <div className="soft-card p-5 flex items-stretch gap-5 min-w-[340px]">
+              <div className="soft-card p-5 flex items-stretch gap-5 max-w-lg">
                 {/* Hero stat */}
                 <div className="flex flex-col items-center justify-center px-4 border-r border-slate-200/60 dark:border-white/5">
                   <span className="text-4xl font-black bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent leading-none">{pct}%</span>
@@ -430,7 +419,6 @@ const SQLPractice = ({ navigate, user }: any) => {
               </div>
             );
           })()}
-        </div>
 
         {/* ── Filters ── */}
         {(() => {
