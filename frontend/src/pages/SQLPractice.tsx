@@ -371,53 +371,47 @@ const SQLPractice = ({ navigate, user }: any) => {
             const solved = Object.values(statusMap).filter(s => s === 'solved').length;
             const total = problems.length;
             const pct = total ? Math.round((solved / total) * 100) : 0;
-            const easySolved = problems.filter((p: any) => p.difficulty === 'easy' && statusMap[p.id] === 'solved').length;
-            const easyTotal = problems.filter((p: any) => p.difficulty === 'easy').length;
-            const medSolved = problems.filter((p: any) => p.difficulty === 'medium' && statusMap[p.id] === 'solved').length;
-            const medTotal = problems.filter((p: any) => p.difficulty === 'medium').length;
-            const hardSolved = problems.filter((p: any) => p.difficulty === 'hard' && statusMap[p.id] === 'solved').length;
-            const hardTotal = problems.filter((p: any) => p.difficulty === 'hard').length;
-            const ring = (r: number, pctVal: number, color: string, width: number) => {
-              const circ = 2 * Math.PI * r;
-              return (
-                <>
-                  <circle cx="80" cy="80" r={r} fill="none" strokeWidth={width} className="stroke-slate-200 dark:stroke-white/5" />
-                  <circle cx="80" cy="80" r={r} fill="none" strokeWidth={width} stroke={color}
-                    strokeDasharray={`${circ * (pctVal / 100)} ${circ}`}
-                    strokeLinecap="round" transform="rotate(-90 80 80)"
-                    className="transition-all duration-1000 ease-out" />
-                </>
-              );
-            };
+            const started = Object.values(statusMap).filter(s => s === 'started').length;
+            const diffs = [
+              { key: 'easy', label: 'Easy', color: 'bg-emerald-500', track: 'bg-emerald-100 dark:bg-emerald-500/10' },
+              { key: 'medium', label: 'Medium', color: 'bg-amber-500', track: 'bg-amber-100 dark:bg-amber-500/10' },
+              { key: 'hard', label: 'Hard', color: 'bg-red-500', track: 'bg-red-100 dark:bg-red-500/10' },
+            ];
+            const stats = diffs.map(d => {
+              const t = problems.filter((p: any) => p.difficulty === d.key).length;
+              const s = problems.filter((p: any) => p.difficulty === d.key && statusMap[p.id] === 'solved').length;
+              return { ...d, solved: s, total: t, pct: t ? Math.round((s / t) * 100) : 0 };
+            });
             return (
-              <div className="soft-card px-6 py-5 flex items-center gap-6 min-w-[320px]">
-                <div className="relative shrink-0">
-                  <svg width="160" height="160" viewBox="0 0 160 160">
-                    {ring(70, easyTotal ? (easySolved / easyTotal) * 100 : 0, '#10b981', 10)}
-                    {ring(56, medTotal ? (medSolved / medTotal) * 100 : 0, '#f59e0b', 10)}
-                    {ring(42, hardTotal ? (hardSolved / hardTotal) * 100 : 0, '#ef4444', 10)}
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-black text-slate-900 dark:text-white">{pct}%</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{solved}/{total}</span>
-                  </div>
+              <div className="soft-card p-5 flex items-stretch gap-5 min-w-[340px]">
+                {/* Hero stat */}
+                <div className="flex flex-col items-center justify-center px-4 border-r border-slate-200/60 dark:border-white/5">
+                  <span className="text-4xl font-black bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent leading-none">{pct}%</span>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mt-1">{solved} solved</span>
+                  {started > 0 && <span className="text-[10px] font-bold text-amber-500 mt-0.5">{started} in progress</span>}
                 </div>
-                <div className="space-y-3">
-                  <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">Your Progress</p>
-                  <div className="flex items-center gap-3">
-                    <span className="w-3 h-3 rounded-full bg-emerald-500 shrink-0" />
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 w-16">Easy</span>
-                    <span className="text-sm font-extrabold text-slate-900 dark:text-white tabular-nums">{easySolved}/{easyTotal}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="w-3 h-3 rounded-full bg-amber-500 shrink-0" />
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 w-16">Medium</span>
-                    <span className="text-sm font-extrabold text-slate-900 dark:text-white tabular-nums">{medSolved}/{medTotal}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 w-16">Hard</span>
-                    <span className="text-sm font-extrabold text-slate-900 dark:text-white tabular-nums">{hardSolved}/{hardTotal}</span>
+                {/* Per-difficulty bars */}
+                <div className="flex-1 space-y-3 py-1">
+                  {stats.map(s => (
+                    <div key={s.key}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{s.label}</span>
+                        <span className="text-xs font-extrabold tabular-nums text-slate-800 dark:text-white">{s.solved}<span className="text-slate-400 font-medium">/{s.total}</span></span>
+                      </div>
+                      <div className={`h-2 rounded-full overflow-hidden ${s.track}`}>
+                        <div className={`h-full rounded-full ${s.color} transition-all duration-700 ease-out`} style={{ width: `${s.pct}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                  {/* Overall bar */}
+                  <div className="pt-1 border-t border-slate-100 dark:border-white/5">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Overall</span>
+                      <span className="text-[10px] font-extrabold tabular-nums text-slate-500">{solved}/{total}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-white/5">
+                      <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-700 ease-out" style={{ width: `${pct}%` }} />
+                    </div>
                   </div>
                 </div>
               </div>
