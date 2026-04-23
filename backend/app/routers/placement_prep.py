@@ -280,7 +280,10 @@ async def execute_sql_backend(
             raise HTTPException(400, f"Forbidden SQL pattern detected: {pattern}")
     
     # Only allow SELECT in user query (no DML/DDL)
-    user_upper = req.user_query.strip().upper()
+    import re
+    clean_query = re.sub(r'/\*.*?\*/', '', req.user_query, flags=re.DOTALL)
+    clean_query = re.sub(r'--.*$', '', clean_query, flags=re.MULTILINE)
+    user_upper = clean_query.strip().upper()
     if not user_upper.startswith('SELECT') and not user_upper.startswith('WITH'):
         raise HTTPException(400, "Only SELECT queries are allowed")
     

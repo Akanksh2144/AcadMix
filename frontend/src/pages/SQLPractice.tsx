@@ -679,7 +679,7 @@ const SQLPractice = ({ navigate, user }: any) => {
         <div ref={rightRef} className="flex-1 flex flex-col min-w-0">
           <div style={{ height: `${editorPct}%` }} className="relative shrink-0 overflow-hidden">
             <div className="absolute top-3 right-4 z-10 flex items-center gap-2">
-              <span className="bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest">SQLite</span>
+              <span className="bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest">{sp.backend_only ? 'PostgreSQL' : 'SQLite'}</span>
             </div>
             <Editor
               defaultLanguage="sql"
