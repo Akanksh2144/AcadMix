@@ -281,12 +281,8 @@ const CodePlayground = ({ navigate, user }) => {
              setWebrLoading(true);
              setOutput("Booting R Virtual Environment (WASM). This may take 3-8 seconds on first load...");
              try {
-                if (!window.WebR) {
-                  // Use new Function to completely hide the dynamic import from Vite's static analysis
-                  const module = await new Function('return import("https://webr.r-wasm.org/latest/webr.mjs")')();
-                  window.WebR = module.WebR;
-                }
-                const webr = new window.WebR();
+                const { WebR } = await import('webr');
+                const webr = new WebR();
                 await webr.init();
                 webrRef.current = webr;
              } catch (e) {
@@ -304,7 +300,7 @@ const CodePlayground = ({ navigate, user }) => {
          
          try {
              await webr.evalRVoid(`svg("acadmix_plot.svg", width=8, height=5)`);
-             const shelter = await webr.Shelter();
+             const shelter = await new webr.Shelter();
              const capture = await shelter.captureR(code, { withAutoprint: true, catchStreams: true });
              await webr.evalRVoid(`dev.off()`);
              
