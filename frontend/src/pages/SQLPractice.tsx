@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Editor from '@monaco-editor/react';
-import { Database, Play, CheckCircle, XCircle, List, ArrowLeft, Lightbulb, Table as TableIcon, Eye, EyeSlash, Timer, CircleHalf, BookmarkSimple, MagnifyingGlass, Info } from '@phosphor-icons/react';
+import { Database, Play, CheckCircle, XCircle, List, ArrowLeft, Lightbulb, Table as TableIcon, Eye, EyeSlash, Timer, CircleHalf, BookmarkSimple, MagnifyingGlass, Info, CaretUp } from '@phosphor-icons/react';
 import { useTheme } from '../contexts/ThemeContext';
 import { placementPrepAPI } from '../services/api';
 import PageHeader from '../components/PageHeader';
@@ -175,6 +175,13 @@ const SQLPractice = ({ navigate, user }: any) => {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [showBookmarked, setShowBookmarked] = useState(false);
+  const [showScroll, setShowScroll] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setShowScroll(window.scrollY > 400);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const scrollYRef = useRef(0);
 
@@ -417,8 +424,9 @@ const SQLPractice = ({ navigate, user }: any) => {
   );
 
   /* ── Problem List ─────────────────────────────────────── */
-  if (!selectedProblem) return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0F172A]">
+  return (
+    <>
+      <div className={`min-h-screen bg-slate-50 dark:bg-[#0F172A] ${selectedProblem ? 'hidden' : 'block'}`}>
       <PageHeader navigate={navigate} user={user} title="SQL Practice Arena" subtitle="DataLemur-style challenges from mass recruiters" backTo="placement-hub" hideNotifications />
       <div className="px-4 lg:px-10 py-4 lg:py-6 space-y-5">
         {/* ── Progress Dashboard ── */}
@@ -595,14 +603,24 @@ const SQLPractice = ({ navigate, user }: any) => {
           );
         })()}
       </div>
+
+      {/* Scroll to Top FAB */}
+      <AnimatePresence>
+        {showScroll && !selectedProblem && (
+          <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+            className="fixed bottom-8 right-8 z-50 p-3.5 bg-indigo-600 text-white rounded-full shadow-xl shadow-indigo-500/30 hover:bg-indigo-700 hover:scale-110 active:scale-95 transition-all">
+            <CaretUp size={24} weight="bold" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
-  );
 
   const sp = selectedProblem;
 
   /* ── Arena (Split Panel) ──────────────────────────────── */
-  return (
-    <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#0F172A]">
+      {selectedProblem && (
+        <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#0F172A]">
       {/* Header */}
       <header className="h-14 shrink-0 bg-white dark:bg-[#1E293B] border-b border-slate-200 dark:border-white/10 px-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -769,8 +787,9 @@ const SQLPractice = ({ navigate, user }: any) => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 };
 
