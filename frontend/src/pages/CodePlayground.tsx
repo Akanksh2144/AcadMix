@@ -650,6 +650,7 @@ const CodePlayground = ({ navigate, user }) => {
   };
 
   const handlePasteCapture = (e) => {
+    /*
     let pastedText = e.clipboardData.getData('text') || '';
     let copiedText = window.__editorCopiedText || '';
     
@@ -664,6 +665,7 @@ const CodePlayground = ({ navigate, user }) => {
       e.stopPropagation();
       toast.error("🛡️ Integrity Lock Active: Pasting from external sources is disabled during this session. You may only move code copied from within this editor.", { duration: 5000 });
     }
+    */
   };
 
   const dashboardPage = user?.role === 'teacher' ? 'teacher-dashboard' : user?.role === 'admin' ? 'admin-dashboard' : 'student-dashboard';
