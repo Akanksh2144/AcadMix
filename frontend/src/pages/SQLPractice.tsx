@@ -526,9 +526,21 @@ const SQLPractice = ({ navigate, user }: any) => {
                 <span className={`px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-widest shrink-0 ${diffColors[p.difficulty]}`}>{p.difficulty}</span>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 min-h-[2.5rem]">{p.problem_statement?.split('\n')[0]}</p>
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 flex-nowrap overflow-x-auto hide-scrollbar">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 flex-nowrap overflow-hidden">
                 <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 py-1 px-2 rounded whitespace-nowrap shrink-0"><TableIcon size={14} /> {p.dataset_theme}</span>
-                {(p.company_tags || [p.company_tag]).filter(Boolean).map((c: string, ci: number) => <CompanyLogo key={ci} name={c} size={20} />)}
+                {(() => {
+                  const tags = (p.company_tags || [p.company_tag]).filter(Boolean);
+                  if (tags.length >= 3) {
+                    return (
+                      <div className="flex-1 overflow-hidden">
+                        <div className="logo-marquee">
+                          {[...tags, ...tags].map((c: string, ci: number) => <CompanyLogo key={ci} name={c} size={20} />)}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return tags.map((c: string, ci: number) => <CompanyLogo key={ci} name={c} size={20} />);
+                })()}
                 {tagLabel && <span className={`ml-auto py-1 px-2 rounded whitespace-nowrap shrink-0 ${tagColor}`}>{tagLabel}</span>}
               </div>
               {p.topic && <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 truncate">📘 {p.topic}</p>}

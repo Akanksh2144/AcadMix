@@ -307,6 +307,21 @@ html.dark .filling-fast-badge {
   scrollbar-width: none;
 }
 
+/* Logo marquee — GPU-accelerated auto-scroll for multi-company tags */
+@keyframes logo-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.logo-marquee {
+  display: flex;
+  gap: 8px;
+  animation: logo-scroll 8s linear infinite;
+  will-change: transform;
+}
+.logo-marquee:hover {
+  animation-play-state: paused;
+}
+
 /* ══════════════════════════════════════════════
    DARK MODE OVERRIDES
    ══════════════════════════════════════════════ */
