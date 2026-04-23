@@ -726,6 +726,78 @@ add("sql-065","Engagement Score: Posts + Comments","Social Media (Instagram)","F
 SOCIAL_T,SOCIAL_S,(["username","total_likes","comments_received","engagement_score"],[["ankit_dev",162,4,182],["priya_codes",144,1,149],["vikram_sql",71,1,76],["sneha_ml",33,0,33],["rohan_js",15,0,15]]),
 "SELECT pr.username,IFNULL(SUM(DISTINCT p.likes),0)AS total_likes,COUNT(DISTINCT c.id)AS comments_received,IFNULL(SUM(DISTINCT p.likes),0)+COUNT(DISTINCT c.id)*5 AS engagement_score FROM profiles pr LEFT JOIN posts p ON pr.id=p.user_id LEFT JOIN comments c ON p.id=c.post_id GROUP BY pr.username ORDER BY engagement_score DESC;",topic="Complex Aggregation")
 
+# ═══ BATCH 7: Mixed Advanced (Existing Companies Only) ═══
+
+add("sql-066","LENGTH: Short Usernames","Social Media (Instagram)","Meta","easy",
+"Find profiles where the username is shorter than 10 characters.\n\nReturn username and name_length, ordered by name_length.",
+"Use LENGTH(username) < 10.",
+"rohan_js=8, sneha_ml=8, ankit_dev=9.",
+SOCIAL_T,SOCIAL_S,(["username","name_length"],[["rohan_js",8],["sneha_ml",8],["ankit_dev",9]]),
+"SELECT username,LENGTH(username)AS name_length FROM profiles WHERE LENGTH(username)<10 ORDER BY name_length;",topic="String Functions (LENGTH)")
+
+add("sql-067","COUNT DISTINCT vs COUNT(*)","Food Delivery (Zomato)","Wipro","easy",
+"Show the total number of orders vs the number of unique customers who ordered.\n\nReturn total_orders and unique_customers.",
+"COUNT(*) vs COUNT(DISTINCT cust_id).",
+"8 total orders, 5 unique customers.",
+ZOMATO_T,ZOMATO_S,(["total_orders","unique_customers"],[[8,5]]),
+"SELECT COUNT(*)AS total_orders,COUNT(DISTINCT cust_id)AS unique_customers FROM orders;",topic="COUNT DISTINCT vs COUNT(*)")
+
+add("sql-068","IN Subquery: Doctors Who Treated Seniors","Healthcare / Hospital","HCLTech","medium",
+"Find doctors who have treated patients older than 35.\n\nReturn doctor name, ordered alphabetically.",
+"Use WHERE id IN (SELECT doc_id FROM appointments WHERE patient_id IN (...)).",
+"Patients >35: Amit(45). Amit was treated by Dr. Sharma and Dr. Patel.",
+HOSPITAL_T,HOSPITAL_S,(["name"],[["Dr. Patel"],["Dr. Sharma"]]),
+"SELECT DISTINCT d.name FROM doctors d WHERE d.id IN(SELECT a.doc_id FROM appointments a WHERE a.patient_id IN(SELECT id FROM patients WHERE age>35))ORDER BY d.name;",topic="IN with Subquery")
+
+add("sql-069","PERCENT_RANK: Salary Percentile","HR / Employee","Goldman Sachs","hard",
+"Calculate the percent rank of each employee's salary.\n\nReturn name, salary, and pct_rank (rounded to 2 decimal). Order by salary descending.",
+"Use PERCENT_RANK() OVER (ORDER BY salary).",
+"Alice(70K)=1.0, Eve(65K)=0.8, Bob(60K)=0.6, ...",
+EMP_T,EMP_S,(["name","salary","pct_rank"],[["Alice",70000,1.0],["Eve",65000,0.8],["Bob",60000,0.6],["Charlie",55000,0.4],["Diana",50000,0.2],["Frank",45000,0.0]]),
+"SELECT name,salary,ROUND(PERCENT_RANK() OVER(ORDER BY salary),2)AS pct_rank FROM employees ORDER BY salary DESC;",topic="Window Functions (PERCENT_RANK)")
+
+add("sql-070","HAVING Multiple Conditions","Banking / Finance","JP Morgan","medium",
+"Find branches where total credits exceed 10000 AND total debits exceed 2000.\n\nReturn branch, total_credits, total_debits.",
+"GROUP BY branch with two HAVING conditions using AND.",
+"Mumbai: credits=13000, debits=5000 (both pass).",
+BANK_T,BANK_S,(["branch","total_credits","total_debits"],[["Mumbai",13000.0,5000.0]]),
+"SELECT a.branch,SUM(CASE WHEN t.type='credit' THEN t.amount ELSE 0 END)AS total_credits,SUM(CASE WHEN t.type='debit' THEN t.amount ELSE 0 END)AS total_debits FROM accounts a JOIN transactions t ON a.id=t.acc_id GROUP BY a.branch HAVING total_credits>10000 AND total_debits>2000;",topic="HAVING Multiple Conditions")
+
+add("sql-071","MIN and MAX in Same Query","Ride-Sharing (Ola)","Uber","easy",
+"Find the cheapest and most expensive completed ride fare, plus the fare range.\n\nReturn min_fare, max_fare, and fare_range.",
+"Use MIN(), MAX(), and MAX()-MIN().",
+"Min=150, Max=550, Range=400.",
+RIDE_T,RIDE_S,(["min_fare","max_fare","fare_range"],[[150.0,550.0,400.0]]),
+"SELECT MIN(fare)AS min_fare,MAX(fare)AS max_fare,MAX(fare)-MIN(fare)AS fare_range FROM rides WHERE status='completed';",topic="MIN / MAX Aggregation")
+
+add("sql-072","Nested CASE: Grade Classification","University / Education","Infosys","medium",
+"Classify each enrollment into 'Excellent' (A), 'Good' (B), 'Average' (C), or 'Below Average' (other).\n\nReturn student name, course_name, grade, and classification. Order by student name.",
+"Use CASE WHEN grade='A' THEN 'Excellent' WHEN 'B' THEN 'Good' ...",
+"Map each grade to a label.",
+UNI_T,UNI_S,(["name","course_name","grade","classification"],[["Arjun","Data Structures","A","Excellent"],["Arjun","OS","B","Good"],["Kavya","OS","C","Average"],["Meera","Signals","A","Excellent"],["Nikhil","Data Structures","B","Good"],["Nikhil","DBMS","A","Excellent"],["Ravi","Data Structures","A","Excellent"],["Ravi","DBMS","B","Good"]]),
+"SELECT s.name,c.course_name,e.grade,CASE WHEN e.grade='A' THEN 'Excellent' WHEN e.grade='B' THEN 'Good' WHEN e.grade='C' THEN 'Average' ELSE 'Below Average' END AS classification FROM enrollments e JOIN students s ON e.student_id=s.id JOIN courses c ON e.course_id=c.id ORDER BY s.name;",topic="Nested CASE WHEN")
+
+add("sql-073","Multi-Table CTE: Top Driver Per City","Ride-Sharing (Ola)","Microsoft","hard",
+"Using CTEs, find the top-earning driver in each city from completed rides.\n\nReturn city, driver_name, and total_earnings.",
+"WITH earnings AS (...), ranked AS (... ROW_NUMBER() ...) WHERE rn=1.",
+"Mumbai: Ramesh(1070). Delhi: Kavita(600). Bangalore: Mohan(550). Chennai: Lakshmi(150).",
+RIDE_T,RIDE_S,(["city","driver_name","total_earnings"],[["Bangalore","Mohan",550.0],["Chennai","Lakshmi",150.0],["Delhi","Kavita",600.0],["Mumbai","Ramesh",1070.0]]),
+"WITH earnings AS(SELECT d.id,d.name,d.city,SUM(r.fare)AS total_earnings FROM drivers d JOIN rides r ON d.id=r.driver_id WHERE r.status='completed' GROUP BY d.id),ranked AS(SELECT *,ROW_NUMBER() OVER(PARTITION BY city ORDER BY total_earnings DESC)AS rn FROM earnings)SELECT city,name AS driver_name,total_earnings FROM ranked WHERE rn=1 ORDER BY city;",topic="Multi-Table CTE + ROW_NUMBER")
+
+add("sql-074","OR/AND Precedence: Filter Rides","Ride-Sharing (Ola)","Capgemini","medium",
+"Find rides that are either: (completed AND fare > 300) OR (cancelled).\n\nReturn ride_id, status, fare. Order by ride_id.",
+"Parentheses matter: (status='completed' AND fare>300) OR status='cancelled'.",
+"Completed>300: rides 3,4,6,9. Cancelled: ride 7.",
+RIDE_T,RIDE_S,(["id","status","fare"],[[3,"completed",320.0],[4,"completed",400.0],[6,"completed",550.0],[7,"cancelled",280.0],[9,"completed",350.0]]),
+"SELECT id,status,fare FROM rides WHERE(status='completed' AND fare>300)OR status='cancelled' ORDER BY id;",topic="WHERE OR/AND Precedence")
+
+add("sql-075","Derived Table: Above-Avg Riders","Ride-Sharing (Ola)","Deloitte","medium",
+"Using a derived table (inline subquery in FROM), find riders whose average fare exceeds the overall average.\n\nReturn rider name and avg_fare (rounded to 0). Order by avg_fare descending.",
+"SELECT FROM (SELECT rider_id, AVG(fare) ...) WHERE avg_fare > (overall avg).",
+"Overall avg ≈ 291. Diya(550), Chirag(375), Bhavna(300) are above.",
+RIDE_T,RIDE_S,(["name","avg_fare"],[["Diya",550],["Chirag",375],["Bhavna",300]]),
+"SELECT r2.name,ROUND(sub.avg_fare)AS avg_fare FROM(SELECT rider_id,AVG(fare)AS avg_fare FROM rides WHERE status='completed' GROUP BY rider_id)sub JOIN riders r2 ON sub.rider_id=r2.id WHERE sub.avg_fare>(SELECT AVG(fare) FROM rides WHERE status='completed')ORDER BY avg_fare DESC;",topic="Derived Table / Inline View")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:

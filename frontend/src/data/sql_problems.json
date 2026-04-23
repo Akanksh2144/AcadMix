@@ -17238,5 +17238,2475 @@
       }
     ],
     "solution_sql": "SELECT pr.username,IFNULL(SUM(DISTINCT p.likes),0)AS total_likes,COUNT(DISTINCT c.id)AS comments_received,IFNULL(SUM(DISTINCT p.likes),0)+COUNT(DISTINCT c.id)*5 AS engagement_score FROM profiles pr LEFT JOIN posts p ON pr.id=p.user_id LEFT JOIN comments c ON p.id=c.post_id GROUP BY pr.username ORDER BY engagement_score DESC;"
+  },
+  {
+    "id": "sql-066",
+    "title": "LENGTH: Short Usernames",
+    "dataset_theme": "Social Media (Instagram)",
+    "company_tag": "Meta",
+    "difficulty": "easy",
+    "topic": "String Functions (LENGTH)",
+    "problem_statement": "Find profiles where the username is shorter than 10 characters.\n\nReturn username and name_length, ordered by name_length.",
+    "hint": "Use LENGTH(username) < 10.",
+    "explanation": "rohan_js=8, sneha_ml=8, ankit_dev=9.",
+    "tables_meta": [
+      {
+        "name": "profiles",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "username",
+            "type": "varchar"
+          },
+          {
+            "name": "full_name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "joined",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "ankit_dev",
+            "Ankit Sharma",
+            "Mumbai",
+            "2023-01-10"
+          ],
+          [
+            2,
+            "priya_codes",
+            "Priya Patel",
+            "Delhi",
+            "2023-02-15"
+          ],
+          [
+            3,
+            "rohan_js",
+            "Rohan Gupta",
+            "Bangalore",
+            "2023-04-20"
+          ],
+          [
+            4,
+            "sneha_ml",
+            "Sneha Iyer",
+            "Chennai",
+            "2023-07-01"
+          ],
+          [
+            5,
+            "vikram_sql",
+            "Vikram Singh",
+            "Mumbai",
+            "2023-09-05"
+          ]
+        ]
+      },
+      {
+        "name": "posts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "content",
+            "type": "varchar"
+          },
+          {
+            "name": "post_date",
+            "type": "date"
+          },
+          {
+            "name": "likes",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            "Learning React today!",
+            "2024-01-10",
+            25
+          ],
+          [
+            2,
+            1,
+            "SQL is amazing",
+            "2024-01-15",
+            42
+          ],
+          [
+            3,
+            2,
+            "My first open source PR!",
+            "2024-01-20",
+            88
+          ],
+          [
+            4,
+            3,
+            "Built a REST API",
+            "2024-02-05",
+            15
+          ],
+          [
+            5,
+            2,
+            "Python vs JavaScript",
+            "2024-02-10",
+            56
+          ]
+        ]
+      },
+      {
+        "name": "follows",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "follower_id",
+            "type": "int"
+          },
+          {
+            "name": "following_id",
+            "type": "int"
+          },
+          {
+            "name": "follow_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            2,
+            "2023-03-01"
+          ],
+          [
+            2,
+            1,
+            3,
+            "2023-05-10"
+          ],
+          [
+            3,
+            2,
+            1,
+            "2023-03-05"
+          ],
+          [
+            4,
+            2,
+            4,
+            "2023-08-15"
+          ],
+          [
+            5,
+            3,
+            1,
+            "2023-06-01"
+          ],
+          [
+            6,
+            3,
+            2,
+            "2023-06-01"
+          ]
+        ]
+      },
+      {
+        "name": "comments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "post_id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "comment",
+            "type": "varchar"
+          },
+          {
+            "name": "comment_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            2,
+            2,
+            "Great post!",
+            "2024-01-15"
+          ],
+          [
+            2,
+            3,
+            1,
+            "Congrats!",
+            "2024-01-20"
+          ],
+          [
+            3,
+            3,
+            4,
+            "Amazing work",
+            "2024-01-21"
+          ],
+          [
+            4,
+            5,
+            3,
+            "I prefer Python",
+            "2024-02-11"
+          ],
+          [
+            5,
+            7,
+            1,
+            "Nice writeup",
+            "2024-03-01"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "username",
+        "name_length"
+      ],
+      "rows": [
+        [
+          "rohan_js",
+          8
+        ],
+        [
+          "sneha_ml",
+          8
+        ],
+        [
+          "ankit_dev",
+          9
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE profiles(id INT PRIMARY KEY,username VARCHAR,full_name VARCHAR,city VARCHAR,joined DATE);\nCREATE TABLE posts(id INT PRIMARY KEY,user_id INT,content VARCHAR,post_date DATE,likes INT);\nCREATE TABLE follows(id INT PRIMARY KEY,follower_id INT,following_id INT,follow_date DATE);\nCREATE TABLE comments(id INT PRIMARY KEY,post_id INT,user_id INT,comment VARCHAR,comment_date DATE);\nINSERT INTO profiles VALUES(1,'ankit_dev','Ankit Sharma','Mumbai','2023-01-10');\nINSERT INTO profiles VALUES(2,'priya_codes','Priya Patel','Delhi','2023-02-15');\nINSERT INTO profiles VALUES(3,'rohan_js','Rohan Gupta','Bangalore','2023-04-20');\nINSERT INTO profiles VALUES(4,'sneha_ml','Sneha Iyer','Chennai','2023-07-01');\nINSERT INTO profiles VALUES(5,'vikram_sql','Vikram Singh','Mumbai','2023-09-05');\nINSERT INTO posts VALUES(1,1,'Learning React today!','2024-01-10',25);\nINSERT INTO posts VALUES(2,1,'SQL is amazing','2024-01-15',42);\nINSERT INTO posts VALUES(3,2,'My first open source PR!','2024-01-20',88);\nINSERT INTO posts VALUES(4,3,'Built a REST API','2024-02-05',15);\nINSERT INTO posts VALUES(5,2,'Python vs JavaScript','2024-02-10',56);\nINSERT INTO posts VALUES(6,4,'Deep learning notes','2024-02-15',33);\nINSERT INTO posts VALUES(7,5,'SQL window functions','2024-03-01',71);\nINSERT INTO posts VALUES(8,1,'Deployed to production!','2024-03-05',95);\nINSERT INTO follows VALUES(1,1,2,'2023-03-01');\nINSERT INTO follows VALUES(2,1,3,'2023-05-10');\nINSERT INTO follows VALUES(3,2,1,'2023-03-05');\nINSERT INTO follows VALUES(4,2,4,'2023-08-15');\nINSERT INTO follows VALUES(5,3,1,'2023-06-01');\nINSERT INTO follows VALUES(6,3,2,'2023-06-01');\nINSERT INTO follows VALUES(7,4,2,'2023-09-01');\nINSERT INTO follows VALUES(8,5,1,'2023-10-01');\nINSERT INTO follows VALUES(9,5,3,'2023-10-01');\nINSERT INTO comments VALUES(1,2,2,'Great post!','2024-01-15');\nINSERT INTO comments VALUES(2,3,1,'Congrats!','2024-01-20');\nINSERT INTO comments VALUES(3,3,4,'Amazing work','2024-01-21');\nINSERT INTO comments VALUES(4,5,3,'I prefer Python','2024-02-11');\nINSERT INTO comments VALUES(5,7,1,'Nice writeup','2024-03-01');\nINSERT INTO comments VALUES(6,8,2,'Awesome!','2024-03-05');\nINSERT INTO comments VALUES(7,8,3,'Well done','2024-03-06');\nINSERT INTO comments VALUES(8,8,5,'Ship it!','2024-03-06');",
+    "expected_output": [
+      {
+        "columns": [
+          "username",
+          "name_length"
+        ],
+        "values": [
+          [
+            "rohan_js",
+            8
+          ],
+          [
+            "sneha_ml",
+            8
+          ],
+          [
+            "ankit_dev",
+            9
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT username,LENGTH(username)AS name_length FROM profiles WHERE LENGTH(username)<10 ORDER BY name_length;"
+  },
+  {
+    "id": "sql-067",
+    "title": "COUNT DISTINCT vs COUNT(*)",
+    "dataset_theme": "Food Delivery (Zomato)",
+    "company_tag": "Wipro",
+    "difficulty": "easy",
+    "topic": "COUNT DISTINCT vs COUNT(*)",
+    "problem_statement": "Show the total number of orders vs the number of unique customers who ordered.\n\nReturn total_orders and unique_customers.",
+    "hint": "COUNT(*) vs COUNT(DISTINCT cust_id).",
+    "explanation": "8 total orders, 5 unique customers.",
+    "tables_meta": [
+      {
+        "name": "restaurants",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "cuisine",
+            "type": "varchar"
+          },
+          {
+            "name": "rating",
+            "type": "real"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Biryani House",
+            "Mumbai",
+            "Indian",
+            4.5
+          ],
+          [
+            2,
+            "Pizza Palace",
+            "Delhi",
+            "Italian",
+            4.2
+          ],
+          [
+            3,
+            "Dragon Wok",
+            "Mumbai",
+            "Chinese",
+            3.8
+          ],
+          [
+            4,
+            "Dosa Corner",
+            "Bangalore",
+            "Indian",
+            4.7
+          ],
+          [
+            5,
+            "Burger Barn",
+            "Delhi",
+            "American",
+            3.5
+          ]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "rest_id",
+            "type": "int"
+          },
+          {
+            "name": "cust_id",
+            "type": "int"
+          },
+          {
+            "name": "amount",
+            "type": "real"
+          },
+          {
+            "name": "order_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            1,
+            201,
+            450,
+            "2024-01-15"
+          ],
+          [
+            102,
+            2,
+            202,
+            650,
+            "2024-01-16"
+          ],
+          [
+            103,
+            1,
+            203,
+            380,
+            "2024-01-17"
+          ],
+          [
+            104,
+            4,
+            201,
+            220,
+            "2024-02-01"
+          ],
+          [
+            105,
+            3,
+            204,
+            510,
+            "2024-02-05"
+          ],
+          [
+            106,
+            1,
+            202,
+            400,
+            "2024-02-10"
+          ],
+          [
+            107,
+            5,
+            205,
+            320,
+            "2024-03-01"
+          ],
+          [
+            108,
+            2,
+            201,
+            700,
+            "2024-03-05"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "total_orders",
+        "unique_customers"
+      ],
+      "rows": [
+        [
+          8,
+          5
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE restaurants(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,cuisine VARCHAR,rating REAL);\nCREATE TABLE orders(id INT PRIMARY KEY,rest_id INT,cust_id INT,amount REAL,order_date DATE);\nINSERT INTO restaurants VALUES(1,'Biryani House','Mumbai','Indian',4.5);\nINSERT INTO restaurants VALUES(2,'Pizza Palace','Delhi','Italian',4.2);\nINSERT INTO restaurants VALUES(3,'Dragon Wok','Mumbai','Chinese',3.8);\nINSERT INTO restaurants VALUES(4,'Dosa Corner','Bangalore','Indian',4.7);\nINSERT INTO restaurants VALUES(5,'Burger Barn','Delhi','American',3.5);\nINSERT INTO orders VALUES(101,1,201,450,'2024-01-15');\nINSERT INTO orders VALUES(102,2,202,650,'2024-01-16');\nINSERT INTO orders VALUES(103,1,203,380,'2024-01-17');\nINSERT INTO orders VALUES(104,4,201,220,'2024-02-01');\nINSERT INTO orders VALUES(105,3,204,510,'2024-02-05');\nINSERT INTO orders VALUES(106,1,202,400,'2024-02-10');\nINSERT INTO orders VALUES(107,5,205,320,'2024-03-01');\nINSERT INTO orders VALUES(108,2,201,700,'2024-03-05');",
+    "expected_output": [
+      {
+        "columns": [
+          "total_orders",
+          "unique_customers"
+        ],
+        "values": [
+          [
+            8,
+            5
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT COUNT(*)AS total_orders,COUNT(DISTINCT cust_id)AS unique_customers FROM orders;"
+  },
+  {
+    "id": "sql-068",
+    "title": "IN Subquery: Doctors Who Treated Seniors",
+    "dataset_theme": "Healthcare / Hospital",
+    "company_tag": "HCLTech",
+    "difficulty": "medium",
+    "topic": "IN with Subquery",
+    "problem_statement": "Find doctors who have treated patients older than 35.\n\nReturn doctor name, ordered alphabetically.",
+    "hint": "Use WHERE id IN (SELECT doc_id FROM appointments WHERE patient_id IN (...)).",
+    "explanation": "Patients >35: Amit(45). Amit was treated by Dr. Sharma and Dr. Patel.",
+    "tables_meta": [
+      {
+        "name": "doctors",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "specialty",
+            "type": "varchar"
+          },
+          {
+            "name": "experience_yrs",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Dr. Sharma",
+            "Cardiology",
+            15
+          ],
+          [
+            2,
+            "Dr. Patel",
+            "Orthopedics",
+            10
+          ],
+          [
+            3,
+            "Dr. Gupta",
+            "Dermatology",
+            8
+          ]
+        ]
+      },
+      {
+        "name": "patients",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "age",
+            "type": "int"
+          },
+          {
+            "name": "gender",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Rahul",
+            35,
+            "M"
+          ],
+          [
+            102,
+            "Priya",
+            28,
+            "F"
+          ],
+          [
+            103,
+            "Amit",
+            45,
+            "M"
+          ],
+          [
+            104,
+            "Sneha",
+            32,
+            "F"
+          ]
+        ]
+      },
+      {
+        "name": "appointments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "doc_id",
+            "type": "int"
+          },
+          {
+            "name": "patient_id",
+            "type": "int"
+          },
+          {
+            "name": "visit_date",
+            "type": "date"
+          },
+          {
+            "name": "diagnosis",
+            "type": "varchar"
+          },
+          {
+            "name": "fee",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1001,
+            1,
+            101,
+            "2024-01-10",
+            "Hypertension",
+            500
+          ],
+          [
+            1002,
+            2,
+            102,
+            "2024-01-12",
+            "Fracture",
+            800
+          ],
+          [
+            1003,
+            1,
+            103,
+            "2024-01-15",
+            "Arrhythmia",
+            500
+          ],
+          [
+            1004,
+            3,
+            104,
+            "2024-02-01",
+            "Eczema",
+            400
+          ],
+          [
+            1005,
+            1,
+            101,
+            "2024-02-10",
+            "Follow-up",
+            300
+          ],
+          [
+            1006,
+            2,
+            103,
+            "2024-02-15",
+            "Joint Pain",
+            600
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name"
+      ],
+      "rows": [
+        [
+          "Dr. Patel"
+        ],
+        [
+          "Dr. Sharma"
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE doctors(id INT PRIMARY KEY,name VARCHAR,specialty VARCHAR,experience_yrs INT);\nCREATE TABLE patients(id INT PRIMARY KEY,name VARCHAR,age INT,gender VARCHAR);\nCREATE TABLE appointments(id INT PRIMARY KEY,doc_id INT,patient_id INT,visit_date DATE,diagnosis VARCHAR,fee INT);\nINSERT INTO doctors VALUES(1,'Dr. Sharma','Cardiology',15);\nINSERT INTO doctors VALUES(2,'Dr. Patel','Orthopedics',10);\nINSERT INTO doctors VALUES(3,'Dr. Gupta','Dermatology',8);\nINSERT INTO patients VALUES(101,'Rahul',35,'M');\nINSERT INTO patients VALUES(102,'Priya',28,'F');\nINSERT INTO patients VALUES(103,'Amit',45,'M');\nINSERT INTO patients VALUES(104,'Sneha',32,'F');\nINSERT INTO appointments VALUES(1001,1,101,'2024-01-10','Hypertension',500);\nINSERT INTO appointments VALUES(1002,2,102,'2024-01-12','Fracture',800);\nINSERT INTO appointments VALUES(1003,1,103,'2024-01-15','Arrhythmia',500);\nINSERT INTO appointments VALUES(1004,3,104,'2024-02-01','Eczema',400);\nINSERT INTO appointments VALUES(1005,1,101,'2024-02-10','Follow-up',300);\nINSERT INTO appointments VALUES(1006,2,103,'2024-02-15','Joint Pain',600);",
+    "expected_output": [
+      {
+        "columns": [
+          "name"
+        ],
+        "values": [
+          [
+            "Dr. Patel"
+          ],
+          [
+            "Dr. Sharma"
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT DISTINCT d.name FROM doctors d WHERE d.id IN(SELECT a.doc_id FROM appointments a WHERE a.patient_id IN(SELECT id FROM patients WHERE age>35))ORDER BY d.name;"
+  },
+  {
+    "id": "sql-069",
+    "title": "PERCENT_RANK: Salary Percentile",
+    "dataset_theme": "HR / Employee",
+    "company_tag": "Goldman Sachs",
+    "difficulty": "hard",
+    "topic": "Window Functions (PERCENT_RANK)",
+    "problem_statement": "Calculate the percent rank of each employee's salary.\n\nReturn name, salary, and pct_rank (rounded to 2 decimal). Order by salary descending.",
+    "hint": "Use PERCENT_RANK() OVER (ORDER BY salary).",
+    "explanation": "Alice(70K)=1.0, Eve(65K)=0.8, Bob(60K)=0.6, ...",
+    "tables_meta": [
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "dept",
+            "type": "varchar"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          },
+          {
+            "name": "mgr_id",
+            "type": "int"
+          },
+          {
+            "name": "hire_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Alice",
+            "Eng",
+            70000,
+            null,
+            "2019-01-15"
+          ],
+          [
+            2,
+            "Bob",
+            "Eng",
+            60000,
+            1,
+            "2020-03-01"
+          ],
+          [
+            3,
+            "Charlie",
+            "Sales",
+            55000,
+            null,
+            "2020-06-10"
+          ],
+          [
+            4,
+            "Diana",
+            "Sales",
+            50000,
+            3,
+            "2021-01-20"
+          ],
+          [
+            5,
+            "Eve",
+            "Eng",
+            65000,
+            1,
+            "2021-08-05"
+          ],
+          [
+            6,
+            "Frank",
+            "HR",
+            45000,
+            null,
+            "2022-02-14"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "salary",
+        "pct_rank"
+      ],
+      "rows": [
+        [
+          "Alice",
+          70000,
+          1.0
+        ],
+        [
+          "Eve",
+          65000,
+          0.8
+        ],
+        [
+          "Bob",
+          60000,
+          0.6
+        ],
+        [
+          "Charlie",
+          55000,
+          0.4
+        ],
+        [
+          "Diana",
+          50000,
+          0.2
+        ],
+        [
+          "Frank",
+          45000,
+          0.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE employees(id INT PRIMARY KEY,name VARCHAR,dept VARCHAR,salary INT,mgr_id INT,hire_date DATE);\nINSERT INTO employees VALUES(1,'Alice','Eng',70000,NULL,'2019-01-15');\nINSERT INTO employees VALUES(2,'Bob','Eng',60000,1,'2020-03-01');\nINSERT INTO employees VALUES(3,'Charlie','Sales',55000,NULL,'2020-06-10');\nINSERT INTO employees VALUES(4,'Diana','Sales',50000,3,'2021-01-20');\nINSERT INTO employees VALUES(5,'Eve','Eng',65000,1,'2021-08-05');\nINSERT INTO employees VALUES(6,'Frank','HR',45000,NULL,'2022-02-14');",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "salary",
+          "pct_rank"
+        ],
+        "values": [
+          [
+            "Alice",
+            70000,
+            1.0
+          ],
+          [
+            "Eve",
+            65000,
+            0.8
+          ],
+          [
+            "Bob",
+            60000,
+            0.6
+          ],
+          [
+            "Charlie",
+            55000,
+            0.4
+          ],
+          [
+            "Diana",
+            50000,
+            0.2
+          ],
+          [
+            "Frank",
+            45000,
+            0.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT name,salary,ROUND(PERCENT_RANK() OVER(ORDER BY salary),2)AS pct_rank FROM employees ORDER BY salary DESC;"
+  },
+  {
+    "id": "sql-070",
+    "title": "HAVING Multiple Conditions",
+    "dataset_theme": "Banking / Finance",
+    "company_tag": "JP Morgan",
+    "difficulty": "medium",
+    "topic": "HAVING Multiple Conditions",
+    "problem_statement": "Find branches where total credits exceed 10000 AND total debits exceed 2000.\n\nReturn branch, total_credits, total_debits.",
+    "hint": "GROUP BY branch with two HAVING conditions using AND.",
+    "explanation": "Mumbai: credits=13000, debits=5000 (both pass).",
+    "tables_meta": [
+      {
+        "name": "accounts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "holder",
+            "type": "varchar"
+          },
+          {
+            "name": "type",
+            "type": "varchar"
+          },
+          {
+            "name": "balance",
+            "type": "real"
+          },
+          {
+            "name": "branch",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ravi",
+            "savings",
+            50000,
+            "Mumbai"
+          ],
+          [
+            2,
+            "Meena",
+            "current",
+            120000,
+            "Delhi"
+          ],
+          [
+            3,
+            "Kiran",
+            "savings",
+            30000,
+            "Mumbai"
+          ],
+          [
+            4,
+            "Suresh",
+            "savings",
+            75000,
+            "Bangalore"
+          ]
+        ]
+      },
+      {
+        "name": "transactions",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "acc_id",
+            "type": "int"
+          },
+          {
+            "name": "type",
+            "type": "varchar"
+          },
+          {
+            "name": "amount",
+            "type": "real"
+          },
+          {
+            "name": "txn_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            "credit",
+            5000,
+            "2024-01-10"
+          ],
+          [
+            2,
+            1,
+            "debit",
+            2000,
+            "2024-01-15"
+          ],
+          [
+            3,
+            2,
+            "debit",
+            15000,
+            "2024-01-20"
+          ],
+          [
+            4,
+            3,
+            "credit",
+            8000,
+            "2024-02-01"
+          ],
+          [
+            5,
+            4,
+            "debit",
+            5000,
+            "2024-02-05"
+          ],
+          [
+            6,
+            2,
+            "credit",
+            20000,
+            "2024-02-10"
+          ],
+          [
+            7,
+            1,
+            "debit",
+            3000,
+            "2024-02-15"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "branch",
+        "total_credits",
+        "total_debits"
+      ],
+      "rows": [
+        [
+          "Mumbai",
+          13000.0,
+          5000.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE accounts(id INT PRIMARY KEY,holder VARCHAR,type VARCHAR,balance REAL,branch VARCHAR);\nCREATE TABLE transactions(id INT PRIMARY KEY,acc_id INT,type VARCHAR,amount REAL,txn_date DATE);\nINSERT INTO accounts VALUES(1,'Ravi','savings',50000,'Mumbai');\nINSERT INTO accounts VALUES(2,'Meena','current',120000,'Delhi');\nINSERT INTO accounts VALUES(3,'Kiran','savings',30000,'Mumbai');\nINSERT INTO accounts VALUES(4,'Suresh','savings',75000,'Bangalore');\nINSERT INTO transactions VALUES(1,1,'credit',5000,'2024-01-10');\nINSERT INTO transactions VALUES(2,1,'debit',2000,'2024-01-15');\nINSERT INTO transactions VALUES(3,2,'debit',15000,'2024-01-20');\nINSERT INTO transactions VALUES(4,3,'credit',8000,'2024-02-01');\nINSERT INTO transactions VALUES(5,4,'debit',5000,'2024-02-05');\nINSERT INTO transactions VALUES(6,2,'credit',20000,'2024-02-10');\nINSERT INTO transactions VALUES(7,1,'debit',3000,'2024-02-15');",
+    "expected_output": [
+      {
+        "columns": [
+          "branch",
+          "total_credits",
+          "total_debits"
+        ],
+        "values": [
+          [
+            "Mumbai",
+            13000.0,
+            5000.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT a.branch,SUM(CASE WHEN t.type='credit' THEN t.amount ELSE 0 END)AS total_credits,SUM(CASE WHEN t.type='debit' THEN t.amount ELSE 0 END)AS total_debits FROM accounts a JOIN transactions t ON a.id=t.acc_id GROUP BY a.branch HAVING total_credits>10000 AND total_debits>2000;"
+  },
+  {
+    "id": "sql-071",
+    "title": "MIN and MAX in Same Query",
+    "dataset_theme": "Ride-Sharing (Ola)",
+    "company_tag": "Uber",
+    "difficulty": "easy",
+    "topic": "MIN / MAX Aggregation",
+    "problem_statement": "Find the cheapest and most expensive completed ride fare, plus the fare range.\n\nReturn min_fare, max_fare, and fare_range.",
+    "hint": "Use MIN(), MAX(), and MAX()-MIN().",
+    "explanation": "Min=150, Max=550, Range=400.",
+    "tables_meta": [
+      {
+        "name": "drivers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "rating",
+            "type": "real"
+          },
+          {
+            "name": "joined",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ramesh",
+            "Mumbai",
+            4.8,
+            "2022-06-01"
+          ],
+          [
+            2,
+            "Sunil",
+            "Mumbai",
+            4.5,
+            "2023-01-10"
+          ],
+          [
+            3,
+            "Kavita",
+            "Delhi",
+            4.9,
+            "2022-03-15"
+          ],
+          [
+            4,
+            "Mohan",
+            "Bangalore",
+            4.2,
+            "2023-05-20"
+          ],
+          [
+            5,
+            "Lakshmi",
+            "Chennai",
+            4.7,
+            "2022-11-01"
+          ]
+        ]
+      },
+      {
+        "name": "riders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Aarav",
+            "Mumbai",
+            "2023-01-05"
+          ],
+          [
+            2,
+            "Bhavna",
+            "Delhi",
+            "2023-03-15"
+          ],
+          [
+            3,
+            "Chirag",
+            "Mumbai",
+            "2023-06-01"
+          ],
+          [
+            4,
+            "Diya",
+            "Bangalore",
+            "2023-09-10"
+          ],
+          [
+            5,
+            "Eshan",
+            "Chennai",
+            "2024-01-01"
+          ]
+        ]
+      },
+      {
+        "name": "rides",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "rider_id",
+            "type": "int"
+          },
+          {
+            "name": "driver_id",
+            "type": "int"
+          },
+          {
+            "name": "pickup",
+            "type": "varchar"
+          },
+          {
+            "name": "dropoff",
+            "type": "varchar"
+          },
+          {
+            "name": "fare",
+            "type": "real"
+          },
+          {
+            "name": "distance_km",
+            "type": "real"
+          },
+          {
+            "name": "ride_date",
+            "type": "date"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            1,
+            "Andheri",
+            "Bandra",
+            250,
+            8.5,
+            "2024-01-10",
+            "completed"
+          ],
+          [
+            2,
+            1,
+            2,
+            "Bandra",
+            "Dadar",
+            180,
+            5.2,
+            "2024-01-12",
+            "completed"
+          ],
+          [
+            3,
+            2,
+            3,
+            "CP",
+            "Nehru Place",
+            320,
+            12.0,
+            "2024-01-15",
+            "completed"
+          ],
+          [
+            4,
+            3,
+            1,
+            "Worli",
+            "Andheri",
+            400,
+            15.3,
+            "2024-01-20",
+            "completed"
+          ],
+          [
+            5,
+            1,
+            1,
+            "Dadar",
+            "Andheri",
+            200,
+            7.0,
+            "2024-02-01",
+            "completed"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "min_fare",
+        "max_fare",
+        "fare_range"
+      ],
+      "rows": [
+        [
+          150.0,
+          550.0,
+          400.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE drivers(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,rating REAL,joined DATE);\nCREATE TABLE riders(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE rides(id INT PRIMARY KEY,rider_id INT,driver_id INT,pickup VARCHAR,dropoff VARCHAR,fare REAL,distance_km REAL,ride_date DATE,status VARCHAR);\nINSERT INTO drivers VALUES(1,'Ramesh','Mumbai',4.8,'2022-06-01');\nINSERT INTO drivers VALUES(2,'Sunil','Mumbai',4.5,'2023-01-10');\nINSERT INTO drivers VALUES(3,'Kavita','Delhi',4.9,'2022-03-15');\nINSERT INTO drivers VALUES(4,'Mohan','Bangalore',4.2,'2023-05-20');\nINSERT INTO drivers VALUES(5,'Lakshmi','Chennai',4.7,'2022-11-01');\nINSERT INTO riders VALUES(1,'Aarav','Mumbai','2023-01-05');\nINSERT INTO riders VALUES(2,'Bhavna','Delhi','2023-03-15');\nINSERT INTO riders VALUES(3,'Chirag','Mumbai','2023-06-01');\nINSERT INTO riders VALUES(4,'Diya','Bangalore','2023-09-10');\nINSERT INTO riders VALUES(5,'Eshan','Chennai','2024-01-01');\nINSERT INTO rides VALUES(1,1,1,'Andheri','Bandra',250,8.5,'2024-01-10','completed');\nINSERT INTO rides VALUES(2,1,2,'Bandra','Dadar',180,5.2,'2024-01-12','completed');\nINSERT INTO rides VALUES(3,2,3,'CP','Nehru Place',320,12.0,'2024-01-15','completed');\nINSERT INTO rides VALUES(4,3,1,'Worli','Andheri',400,15.3,'2024-01-20','completed');\nINSERT INTO rides VALUES(5,1,1,'Dadar','Andheri',200,7.0,'2024-02-01','completed');\nINSERT INTO rides VALUES(6,4,4,'Koramangala','Whitefield',550,22.0,'2024-02-05','completed');\nINSERT INTO rides VALUES(7,2,3,'Saket','CP',280,10.5,'2024-02-10','cancelled');\nINSERT INTO rides VALUES(8,5,5,'T Nagar','Adyar',150,4.0,'2024-02-15','completed');\nINSERT INTO rides VALUES(9,3,2,'Andheri','Powai',350,13.0,'2024-03-01','completed');\nINSERT INTO rides VALUES(10,1,1,'Bandra','Worli',220,6.5,'2024-03-05','completed');",
+    "expected_output": [
+      {
+        "columns": [
+          "min_fare",
+          "max_fare",
+          "fare_range"
+        ],
+        "values": [
+          [
+            150.0,
+            550.0,
+            400.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT MIN(fare)AS min_fare,MAX(fare)AS max_fare,MAX(fare)-MIN(fare)AS fare_range FROM rides WHERE status='completed';"
+  },
+  {
+    "id": "sql-072",
+    "title": "Nested CASE: Grade Classification",
+    "dataset_theme": "University / Education",
+    "company_tag": "Infosys",
+    "difficulty": "medium",
+    "topic": "Nested CASE WHEN",
+    "problem_statement": "Classify each enrollment into 'Excellent' (A), 'Good' (B), 'Average' (C), or 'Below Average' (other).\n\nReturn student name, course_name, grade, and classification. Order by student name.",
+    "hint": "Use CASE WHEN grade='A' THEN 'Excellent' WHEN 'B' THEN 'Good' ...",
+    "explanation": "Map each grade to a label.",
+    "tables_meta": [
+      {
+        "name": "students",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "branch",
+            "type": "varchar"
+          },
+          {
+            "name": "year",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ravi",
+            "CSE",
+            3
+          ],
+          [
+            2,
+            "Meera",
+            "ECE",
+            2
+          ],
+          [
+            3,
+            "Arjun",
+            "CSE",
+            3
+          ],
+          [
+            4,
+            "Kavya",
+            "ME",
+            4
+          ],
+          [
+            5,
+            "Nikhil",
+            "CSE",
+            2
+          ]
+        ]
+      },
+      {
+        "name": "courses",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "course_name",
+            "type": "varchar"
+          },
+          {
+            "name": "credits",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Data Structures",
+            4
+          ],
+          [
+            102,
+            "DBMS",
+            3
+          ],
+          [
+            103,
+            "OS",
+            4
+          ],
+          [
+            104,
+            "Signals",
+            3
+          ]
+        ]
+      },
+      {
+        "name": "enrollments",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "student_id",
+            "type": "int"
+          },
+          {
+            "name": "course_id",
+            "type": "int"
+          },
+          {
+            "name": "grade",
+            "type": "varchar"
+          },
+          {
+            "name": "semester",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            101,
+            "A",
+            "Fall2024"
+          ],
+          [
+            2,
+            1,
+            102,
+            "B",
+            "Fall2024"
+          ],
+          [
+            3,
+            2,
+            104,
+            "A",
+            "Fall2024"
+          ],
+          [
+            4,
+            3,
+            101,
+            "A",
+            "Fall2024"
+          ],
+          [
+            5,
+            3,
+            103,
+            "B",
+            "Fall2024"
+          ],
+          [
+            6,
+            4,
+            103,
+            "C",
+            "Fall2024"
+          ],
+          [
+            7,
+            5,
+            101,
+            "B",
+            "Fall2024"
+          ],
+          [
+            8,
+            5,
+            102,
+            "A",
+            "Fall2024"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "course_name",
+        "grade",
+        "classification"
+      ],
+      "rows": [
+        [
+          "Arjun",
+          "Data Structures",
+          "A",
+          "Excellent"
+        ],
+        [
+          "Arjun",
+          "OS",
+          "B",
+          "Good"
+        ],
+        [
+          "Kavya",
+          "OS",
+          "C",
+          "Average"
+        ],
+        [
+          "Meera",
+          "Signals",
+          "A",
+          "Excellent"
+        ],
+        [
+          "Nikhil",
+          "Data Structures",
+          "B",
+          "Good"
+        ],
+        [
+          "Nikhil",
+          "DBMS",
+          "A",
+          "Excellent"
+        ],
+        [
+          "Ravi",
+          "Data Structures",
+          "A",
+          "Excellent"
+        ],
+        [
+          "Ravi",
+          "DBMS",
+          "B",
+          "Good"
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE students(id INT PRIMARY KEY,name VARCHAR,branch VARCHAR,year INT);\nCREATE TABLE courses(id INT PRIMARY KEY,course_name VARCHAR,credits INT);\nCREATE TABLE enrollments(id INT PRIMARY KEY,student_id INT,course_id INT,grade VARCHAR,semester VARCHAR);\nINSERT INTO students VALUES(1,'Ravi','CSE',3);\nINSERT INTO students VALUES(2,'Meera','ECE',2);\nINSERT INTO students VALUES(3,'Arjun','CSE',3);\nINSERT INTO students VALUES(4,'Kavya','ME',4);\nINSERT INTO students VALUES(5,'Nikhil','CSE',2);\nINSERT INTO courses VALUES(101,'Data Structures',4);\nINSERT INTO courses VALUES(102,'DBMS',3);\nINSERT INTO courses VALUES(103,'OS',4);\nINSERT INTO courses VALUES(104,'Signals',3);\nINSERT INTO enrollments VALUES(1,1,101,'A','Fall2024');\nINSERT INTO enrollments VALUES(2,1,102,'B','Fall2024');\nINSERT INTO enrollments VALUES(3,2,104,'A','Fall2024');\nINSERT INTO enrollments VALUES(4,3,101,'A','Fall2024');\nINSERT INTO enrollments VALUES(5,3,103,'B','Fall2024');\nINSERT INTO enrollments VALUES(6,4,103,'C','Fall2024');\nINSERT INTO enrollments VALUES(7,5,101,'B','Fall2024');\nINSERT INTO enrollments VALUES(8,5,102,'A','Fall2024');",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "course_name",
+          "grade",
+          "classification"
+        ],
+        "values": [
+          [
+            "Arjun",
+            "Data Structures",
+            "A",
+            "Excellent"
+          ],
+          [
+            "Arjun",
+            "OS",
+            "B",
+            "Good"
+          ],
+          [
+            "Kavya",
+            "OS",
+            "C",
+            "Average"
+          ],
+          [
+            "Meera",
+            "Signals",
+            "A",
+            "Excellent"
+          ],
+          [
+            "Nikhil",
+            "Data Structures",
+            "B",
+            "Good"
+          ],
+          [
+            "Nikhil",
+            "DBMS",
+            "A",
+            "Excellent"
+          ],
+          [
+            "Ravi",
+            "Data Structures",
+            "A",
+            "Excellent"
+          ],
+          [
+            "Ravi",
+            "DBMS",
+            "B",
+            "Good"
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT s.name,c.course_name,e.grade,CASE WHEN e.grade='A' THEN 'Excellent' WHEN e.grade='B' THEN 'Good' WHEN e.grade='C' THEN 'Average' ELSE 'Below Average' END AS classification FROM enrollments e JOIN students s ON e.student_id=s.id JOIN courses c ON e.course_id=c.id ORDER BY s.name;"
+  },
+  {
+    "id": "sql-073",
+    "title": "Multi-Table CTE: Top Driver Per City",
+    "dataset_theme": "Ride-Sharing (Ola)",
+    "company_tag": "Microsoft",
+    "difficulty": "hard",
+    "topic": "Multi-Table CTE + ROW_NUMBER",
+    "problem_statement": "Using CTEs, find the top-earning driver in each city from completed rides.\n\nReturn city, driver_name, and total_earnings.",
+    "hint": "WITH earnings AS (...), ranked AS (... ROW_NUMBER() ...) WHERE rn=1.",
+    "explanation": "Mumbai: Ramesh(1070). Delhi: Kavita(600). Bangalore: Mohan(550). Chennai: Lakshmi(150).",
+    "tables_meta": [
+      {
+        "name": "drivers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "rating",
+            "type": "real"
+          },
+          {
+            "name": "joined",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ramesh",
+            "Mumbai",
+            4.8,
+            "2022-06-01"
+          ],
+          [
+            2,
+            "Sunil",
+            "Mumbai",
+            4.5,
+            "2023-01-10"
+          ],
+          [
+            3,
+            "Kavita",
+            "Delhi",
+            4.9,
+            "2022-03-15"
+          ],
+          [
+            4,
+            "Mohan",
+            "Bangalore",
+            4.2,
+            "2023-05-20"
+          ],
+          [
+            5,
+            "Lakshmi",
+            "Chennai",
+            4.7,
+            "2022-11-01"
+          ]
+        ]
+      },
+      {
+        "name": "riders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Aarav",
+            "Mumbai",
+            "2023-01-05"
+          ],
+          [
+            2,
+            "Bhavna",
+            "Delhi",
+            "2023-03-15"
+          ],
+          [
+            3,
+            "Chirag",
+            "Mumbai",
+            "2023-06-01"
+          ],
+          [
+            4,
+            "Diya",
+            "Bangalore",
+            "2023-09-10"
+          ],
+          [
+            5,
+            "Eshan",
+            "Chennai",
+            "2024-01-01"
+          ]
+        ]
+      },
+      {
+        "name": "rides",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "rider_id",
+            "type": "int"
+          },
+          {
+            "name": "driver_id",
+            "type": "int"
+          },
+          {
+            "name": "pickup",
+            "type": "varchar"
+          },
+          {
+            "name": "dropoff",
+            "type": "varchar"
+          },
+          {
+            "name": "fare",
+            "type": "real"
+          },
+          {
+            "name": "distance_km",
+            "type": "real"
+          },
+          {
+            "name": "ride_date",
+            "type": "date"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            1,
+            "Andheri",
+            "Bandra",
+            250,
+            8.5,
+            "2024-01-10",
+            "completed"
+          ],
+          [
+            2,
+            1,
+            2,
+            "Bandra",
+            "Dadar",
+            180,
+            5.2,
+            "2024-01-12",
+            "completed"
+          ],
+          [
+            3,
+            2,
+            3,
+            "CP",
+            "Nehru Place",
+            320,
+            12.0,
+            "2024-01-15",
+            "completed"
+          ],
+          [
+            4,
+            3,
+            1,
+            "Worli",
+            "Andheri",
+            400,
+            15.3,
+            "2024-01-20",
+            "completed"
+          ],
+          [
+            5,
+            1,
+            1,
+            "Dadar",
+            "Andheri",
+            200,
+            7.0,
+            "2024-02-01",
+            "completed"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "city",
+        "driver_name",
+        "total_earnings"
+      ],
+      "rows": [
+        [
+          "Bangalore",
+          "Mohan",
+          550.0
+        ],
+        [
+          "Chennai",
+          "Lakshmi",
+          150.0
+        ],
+        [
+          "Delhi",
+          "Kavita",
+          600.0
+        ],
+        [
+          "Mumbai",
+          "Ramesh",
+          1070.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE drivers(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,rating REAL,joined DATE);\nCREATE TABLE riders(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE rides(id INT PRIMARY KEY,rider_id INT,driver_id INT,pickup VARCHAR,dropoff VARCHAR,fare REAL,distance_km REAL,ride_date DATE,status VARCHAR);\nINSERT INTO drivers VALUES(1,'Ramesh','Mumbai',4.8,'2022-06-01');\nINSERT INTO drivers VALUES(2,'Sunil','Mumbai',4.5,'2023-01-10');\nINSERT INTO drivers VALUES(3,'Kavita','Delhi',4.9,'2022-03-15');\nINSERT INTO drivers VALUES(4,'Mohan','Bangalore',4.2,'2023-05-20');\nINSERT INTO drivers VALUES(5,'Lakshmi','Chennai',4.7,'2022-11-01');\nINSERT INTO riders VALUES(1,'Aarav','Mumbai','2023-01-05');\nINSERT INTO riders VALUES(2,'Bhavna','Delhi','2023-03-15');\nINSERT INTO riders VALUES(3,'Chirag','Mumbai','2023-06-01');\nINSERT INTO riders VALUES(4,'Diya','Bangalore','2023-09-10');\nINSERT INTO riders VALUES(5,'Eshan','Chennai','2024-01-01');\nINSERT INTO rides VALUES(1,1,1,'Andheri','Bandra',250,8.5,'2024-01-10','completed');\nINSERT INTO rides VALUES(2,1,2,'Bandra','Dadar',180,5.2,'2024-01-12','completed');\nINSERT INTO rides VALUES(3,2,3,'CP','Nehru Place',320,12.0,'2024-01-15','completed');\nINSERT INTO rides VALUES(4,3,1,'Worli','Andheri',400,15.3,'2024-01-20','completed');\nINSERT INTO rides VALUES(5,1,1,'Dadar','Andheri',200,7.0,'2024-02-01','completed');\nINSERT INTO rides VALUES(6,4,4,'Koramangala','Whitefield',550,22.0,'2024-02-05','completed');\nINSERT INTO rides VALUES(7,2,3,'Saket','CP',280,10.5,'2024-02-10','cancelled');\nINSERT INTO rides VALUES(8,5,5,'T Nagar','Adyar',150,4.0,'2024-02-15','completed');\nINSERT INTO rides VALUES(9,3,2,'Andheri','Powai',350,13.0,'2024-03-01','completed');\nINSERT INTO rides VALUES(10,1,1,'Bandra','Worli',220,6.5,'2024-03-05','completed');",
+    "expected_output": [
+      {
+        "columns": [
+          "city",
+          "driver_name",
+          "total_earnings"
+        ],
+        "values": [
+          [
+            "Bangalore",
+            "Mohan",
+            550.0
+          ],
+          [
+            "Chennai",
+            "Lakshmi",
+            150.0
+          ],
+          [
+            "Delhi",
+            "Kavita",
+            600.0
+          ],
+          [
+            "Mumbai",
+            "Ramesh",
+            1070.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "WITH earnings AS(SELECT d.id,d.name,d.city,SUM(r.fare)AS total_earnings FROM drivers d JOIN rides r ON d.id=r.driver_id WHERE r.status='completed' GROUP BY d.id),ranked AS(SELECT *,ROW_NUMBER() OVER(PARTITION BY city ORDER BY total_earnings DESC)AS rn FROM earnings)SELECT city,name AS driver_name,total_earnings FROM ranked WHERE rn=1 ORDER BY city;"
+  },
+  {
+    "id": "sql-074",
+    "title": "OR/AND Precedence: Filter Rides",
+    "dataset_theme": "Ride-Sharing (Ola)",
+    "company_tag": "Capgemini",
+    "difficulty": "medium",
+    "topic": "WHERE OR/AND Precedence",
+    "problem_statement": "Find rides that are either: (completed AND fare > 300) OR (cancelled).\n\nReturn ride_id, status, fare. Order by ride_id.",
+    "hint": "Parentheses matter: (status='completed' AND fare>300) OR status='cancelled'.",
+    "explanation": "Completed>300: rides 3,4,6,9. Cancelled: ride 7.",
+    "tables_meta": [
+      {
+        "name": "drivers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "rating",
+            "type": "real"
+          },
+          {
+            "name": "joined",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ramesh",
+            "Mumbai",
+            4.8,
+            "2022-06-01"
+          ],
+          [
+            2,
+            "Sunil",
+            "Mumbai",
+            4.5,
+            "2023-01-10"
+          ],
+          [
+            3,
+            "Kavita",
+            "Delhi",
+            4.9,
+            "2022-03-15"
+          ],
+          [
+            4,
+            "Mohan",
+            "Bangalore",
+            4.2,
+            "2023-05-20"
+          ],
+          [
+            5,
+            "Lakshmi",
+            "Chennai",
+            4.7,
+            "2022-11-01"
+          ]
+        ]
+      },
+      {
+        "name": "riders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Aarav",
+            "Mumbai",
+            "2023-01-05"
+          ],
+          [
+            2,
+            "Bhavna",
+            "Delhi",
+            "2023-03-15"
+          ],
+          [
+            3,
+            "Chirag",
+            "Mumbai",
+            "2023-06-01"
+          ],
+          [
+            4,
+            "Diya",
+            "Bangalore",
+            "2023-09-10"
+          ],
+          [
+            5,
+            "Eshan",
+            "Chennai",
+            "2024-01-01"
+          ]
+        ]
+      },
+      {
+        "name": "rides",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "rider_id",
+            "type": "int"
+          },
+          {
+            "name": "driver_id",
+            "type": "int"
+          },
+          {
+            "name": "pickup",
+            "type": "varchar"
+          },
+          {
+            "name": "dropoff",
+            "type": "varchar"
+          },
+          {
+            "name": "fare",
+            "type": "real"
+          },
+          {
+            "name": "distance_km",
+            "type": "real"
+          },
+          {
+            "name": "ride_date",
+            "type": "date"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            1,
+            "Andheri",
+            "Bandra",
+            250,
+            8.5,
+            "2024-01-10",
+            "completed"
+          ],
+          [
+            2,
+            1,
+            2,
+            "Bandra",
+            "Dadar",
+            180,
+            5.2,
+            "2024-01-12",
+            "completed"
+          ],
+          [
+            3,
+            2,
+            3,
+            "CP",
+            "Nehru Place",
+            320,
+            12.0,
+            "2024-01-15",
+            "completed"
+          ],
+          [
+            4,
+            3,
+            1,
+            "Worli",
+            "Andheri",
+            400,
+            15.3,
+            "2024-01-20",
+            "completed"
+          ],
+          [
+            5,
+            1,
+            1,
+            "Dadar",
+            "Andheri",
+            200,
+            7.0,
+            "2024-02-01",
+            "completed"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "id",
+        "status",
+        "fare"
+      ],
+      "rows": [
+        [
+          3,
+          "completed",
+          320.0
+        ],
+        [
+          4,
+          "completed",
+          400.0
+        ],
+        [
+          6,
+          "completed",
+          550.0
+        ],
+        [
+          7,
+          "cancelled",
+          280.0
+        ],
+        [
+          9,
+          "completed",
+          350.0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE drivers(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,rating REAL,joined DATE);\nCREATE TABLE riders(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE rides(id INT PRIMARY KEY,rider_id INT,driver_id INT,pickup VARCHAR,dropoff VARCHAR,fare REAL,distance_km REAL,ride_date DATE,status VARCHAR);\nINSERT INTO drivers VALUES(1,'Ramesh','Mumbai',4.8,'2022-06-01');\nINSERT INTO drivers VALUES(2,'Sunil','Mumbai',4.5,'2023-01-10');\nINSERT INTO drivers VALUES(3,'Kavita','Delhi',4.9,'2022-03-15');\nINSERT INTO drivers VALUES(4,'Mohan','Bangalore',4.2,'2023-05-20');\nINSERT INTO drivers VALUES(5,'Lakshmi','Chennai',4.7,'2022-11-01');\nINSERT INTO riders VALUES(1,'Aarav','Mumbai','2023-01-05');\nINSERT INTO riders VALUES(2,'Bhavna','Delhi','2023-03-15');\nINSERT INTO riders VALUES(3,'Chirag','Mumbai','2023-06-01');\nINSERT INTO riders VALUES(4,'Diya','Bangalore','2023-09-10');\nINSERT INTO riders VALUES(5,'Eshan','Chennai','2024-01-01');\nINSERT INTO rides VALUES(1,1,1,'Andheri','Bandra',250,8.5,'2024-01-10','completed');\nINSERT INTO rides VALUES(2,1,2,'Bandra','Dadar',180,5.2,'2024-01-12','completed');\nINSERT INTO rides VALUES(3,2,3,'CP','Nehru Place',320,12.0,'2024-01-15','completed');\nINSERT INTO rides VALUES(4,3,1,'Worli','Andheri',400,15.3,'2024-01-20','completed');\nINSERT INTO rides VALUES(5,1,1,'Dadar','Andheri',200,7.0,'2024-02-01','completed');\nINSERT INTO rides VALUES(6,4,4,'Koramangala','Whitefield',550,22.0,'2024-02-05','completed');\nINSERT INTO rides VALUES(7,2,3,'Saket','CP',280,10.5,'2024-02-10','cancelled');\nINSERT INTO rides VALUES(8,5,5,'T Nagar','Adyar',150,4.0,'2024-02-15','completed');\nINSERT INTO rides VALUES(9,3,2,'Andheri','Powai',350,13.0,'2024-03-01','completed');\nINSERT INTO rides VALUES(10,1,1,'Bandra','Worli',220,6.5,'2024-03-05','completed');",
+    "expected_output": [
+      {
+        "columns": [
+          "id",
+          "status",
+          "fare"
+        ],
+        "values": [
+          [
+            3,
+            "completed",
+            320.0
+          ],
+          [
+            4,
+            "completed",
+            400.0
+          ],
+          [
+            6,
+            "completed",
+            550.0
+          ],
+          [
+            7,
+            "cancelled",
+            280.0
+          ],
+          [
+            9,
+            "completed",
+            350.0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT id,status,fare FROM rides WHERE(status='completed' AND fare>300)OR status='cancelled' ORDER BY id;"
+  },
+  {
+    "id": "sql-075",
+    "title": "Derived Table: Above-Avg Riders",
+    "dataset_theme": "Ride-Sharing (Ola)",
+    "company_tag": "Deloitte",
+    "difficulty": "medium",
+    "topic": "Derived Table / Inline View",
+    "problem_statement": "Using a derived table (inline subquery in FROM), find riders whose average fare exceeds the overall average.\n\nReturn rider name and avg_fare (rounded to 0). Order by avg_fare descending.",
+    "hint": "SELECT FROM (SELECT rider_id, AVG(fare) ...) WHERE avg_fare > (overall avg).",
+    "explanation": "Overall avg \u2248 291. Diya(550), Chirag(375), Bhavna(300) are above.",
+    "tables_meta": [
+      {
+        "name": "drivers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "rating",
+            "type": "real"
+          },
+          {
+            "name": "joined",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Ramesh",
+            "Mumbai",
+            4.8,
+            "2022-06-01"
+          ],
+          [
+            2,
+            "Sunil",
+            "Mumbai",
+            4.5,
+            "2023-01-10"
+          ],
+          [
+            3,
+            "Kavita",
+            "Delhi",
+            4.9,
+            "2022-03-15"
+          ],
+          [
+            4,
+            "Mohan",
+            "Bangalore",
+            4.2,
+            "2023-05-20"
+          ],
+          [
+            5,
+            "Lakshmi",
+            "Chennai",
+            4.7,
+            "2022-11-01"
+          ]
+        ]
+      },
+      {
+        "name": "riders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "varchar"
+          },
+          {
+            "name": "city",
+            "type": "varchar"
+          },
+          {
+            "name": "signup_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Aarav",
+            "Mumbai",
+            "2023-01-05"
+          ],
+          [
+            2,
+            "Bhavna",
+            "Delhi",
+            "2023-03-15"
+          ],
+          [
+            3,
+            "Chirag",
+            "Mumbai",
+            "2023-06-01"
+          ],
+          [
+            4,
+            "Diya",
+            "Bangalore",
+            "2023-09-10"
+          ],
+          [
+            5,
+            "Eshan",
+            "Chennai",
+            "2024-01-01"
+          ]
+        ]
+      },
+      {
+        "name": "rides",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "rider_id",
+            "type": "int"
+          },
+          {
+            "name": "driver_id",
+            "type": "int"
+          },
+          {
+            "name": "pickup",
+            "type": "varchar"
+          },
+          {
+            "name": "dropoff",
+            "type": "varchar"
+          },
+          {
+            "name": "fare",
+            "type": "real"
+          },
+          {
+            "name": "distance_km",
+            "type": "real"
+          },
+          {
+            "name": "ride_date",
+            "type": "date"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            1,
+            1,
+            "Andheri",
+            "Bandra",
+            250,
+            8.5,
+            "2024-01-10",
+            "completed"
+          ],
+          [
+            2,
+            1,
+            2,
+            "Bandra",
+            "Dadar",
+            180,
+            5.2,
+            "2024-01-12",
+            "completed"
+          ],
+          [
+            3,
+            2,
+            3,
+            "CP",
+            "Nehru Place",
+            320,
+            12.0,
+            "2024-01-15",
+            "completed"
+          ],
+          [
+            4,
+            3,
+            1,
+            "Worli",
+            "Andheri",
+            400,
+            15.3,
+            "2024-01-20",
+            "completed"
+          ],
+          [
+            5,
+            1,
+            1,
+            "Dadar",
+            "Andheri",
+            200,
+            7.0,
+            "2024-02-01",
+            "completed"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "name",
+        "avg_fare"
+      ],
+      "rows": [
+        [
+          "Diya",
+          550
+        ],
+        [
+          "Chirag",
+          375
+        ],
+        [
+          "Bhavna",
+          300
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE drivers(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,rating REAL,joined DATE);\nCREATE TABLE riders(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,signup_date DATE);\nCREATE TABLE rides(id INT PRIMARY KEY,rider_id INT,driver_id INT,pickup VARCHAR,dropoff VARCHAR,fare REAL,distance_km REAL,ride_date DATE,status VARCHAR);\nINSERT INTO drivers VALUES(1,'Ramesh','Mumbai',4.8,'2022-06-01');\nINSERT INTO drivers VALUES(2,'Sunil','Mumbai',4.5,'2023-01-10');\nINSERT INTO drivers VALUES(3,'Kavita','Delhi',4.9,'2022-03-15');\nINSERT INTO drivers VALUES(4,'Mohan','Bangalore',4.2,'2023-05-20');\nINSERT INTO drivers VALUES(5,'Lakshmi','Chennai',4.7,'2022-11-01');\nINSERT INTO riders VALUES(1,'Aarav','Mumbai','2023-01-05');\nINSERT INTO riders VALUES(2,'Bhavna','Delhi','2023-03-15');\nINSERT INTO riders VALUES(3,'Chirag','Mumbai','2023-06-01');\nINSERT INTO riders VALUES(4,'Diya','Bangalore','2023-09-10');\nINSERT INTO riders VALUES(5,'Eshan','Chennai','2024-01-01');\nINSERT INTO rides VALUES(1,1,1,'Andheri','Bandra',250,8.5,'2024-01-10','completed');\nINSERT INTO rides VALUES(2,1,2,'Bandra','Dadar',180,5.2,'2024-01-12','completed');\nINSERT INTO rides VALUES(3,2,3,'CP','Nehru Place',320,12.0,'2024-01-15','completed');\nINSERT INTO rides VALUES(4,3,1,'Worli','Andheri',400,15.3,'2024-01-20','completed');\nINSERT INTO rides VALUES(5,1,1,'Dadar','Andheri',200,7.0,'2024-02-01','completed');\nINSERT INTO rides VALUES(6,4,4,'Koramangala','Whitefield',550,22.0,'2024-02-05','completed');\nINSERT INTO rides VALUES(7,2,3,'Saket','CP',280,10.5,'2024-02-10','cancelled');\nINSERT INTO rides VALUES(8,5,5,'T Nagar','Adyar',150,4.0,'2024-02-15','completed');\nINSERT INTO rides VALUES(9,3,2,'Andheri','Powai',350,13.0,'2024-03-01','completed');\nINSERT INTO rides VALUES(10,1,1,'Bandra','Worli',220,6.5,'2024-03-05','completed');",
+    "expected_output": [
+      {
+        "columns": [
+          "name",
+          "avg_fare"
+        ],
+        "values": [
+          [
+            "Diya",
+            550
+          ],
+          [
+            "Chirag",
+            375
+          ],
+          [
+            "Bhavna",
+            300
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT r2.name,ROUND(sub.avg_fare)AS avg_fare FROM(SELECT rider_id,AVG(fare)AS avg_fare FROM rides WHERE status='completed' GROUP BY rider_id)sub JOIN riders r2 ON sub.rider_id=r2.id WHERE sub.avg_fare>(SELECT AVG(fare) FROM rides WHERE status='completed')ORDER BY avg_fare DESC;"
   }
 ]
