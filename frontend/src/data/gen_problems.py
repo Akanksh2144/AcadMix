@@ -3045,6 +3045,80 @@ add("sql-380","Delivered vs Pending Revenue","E-Commerce (Flipkart)","Capgemini"
 ECOM_T,ECOM_S,(["status_group","total_revenue"],[["Delivered",120350.0],["Other",6598.0]]),
 "SELECT CASE WHEN status='delivered' THEN 'Delivered' ELSE 'Other' END AS status_group,SUM(total)AS total_revenue FROM orders GROUP BY status_group ORDER BY total_revenue DESC;",topic="CASE Status Grouping")
 
+# ═══ BATCH 38: Capgemini Final 4 + Deloitte 6 ═══
+
+# --- Capgemini (4 remaining → completes to 30) ---
+add("sql-381","Employees With Manager Name","HR / Employee","Capgemini","medium",
+"Show each employee alongside their manager's name.\n\nReturn employee, manager. Order by employee.",
+"Self-join: e1 LEFT JOIN e1 AS mgr ON e1.mgr_id = mgr.id.",
+"Alice managed by no one. Bob managed by Alice.",
+EMP_T,EMP_S,(["employee","manager"],[["Alice",None],["Bob","Alice"],["Charlie","Alice"],["Diana","Charlie"],["Eve","Bob"],["Frank",None]]),
+"SELECT e.name AS employee,m.name AS manager FROM employees e LEFT JOIN employees m ON e.mgr_id=m.id ORDER BY e.name;",topic="Self-Join: Manager Name")
+
+add("sql-382","Nth Highest Salary (3rd)","HR / Employee","Capgemini","hard",
+"Find the employee with the 3rd highest salary.\n\nReturn name, salary.",
+"DENSE_RANK OVER(ORDER BY salary DESC), filter rank=3.",
+"3rd highest: Bob at 60K.",
+EMP_T,EMP_S,(["name","salary"],[["Bob",60000]]),
+"SELECT name,salary FROM(SELECT name,salary,DENSE_RANK() OVER(ORDER BY salary DESC)AS rk FROM employees)t WHERE rk=3;",topic="Nth Highest (DENSE_RANK)")
+
+add("sql-383","Products Not Ordered By Anyone","E-Commerce (Flipkart)","Capgemini","medium",
+"Find products that have never been ordered.\n\nReturn name, category. Order by name.",
+"LEFT JOIN order_items WHERE oi.id IS NULL.",
+"Products with zero orders.",
+ECOM_T,ECOM_S,(["name","category"],[]),
+"SELECT p.name,p.category FROM products p LEFT JOIN order_items oi ON p.id=oi.product_id WHERE oi.id IS NULL ORDER BY p.name;",topic="LEFT JOIN: Never Ordered")
+
+add("sql-384","Employees Earning Above Dept Median","HR / Employee","Capgemini","hard",
+"Find employees whose salary exceeds the median salary of their department.\n\nReturn name, dept, salary. Order by dept, salary DESC.",
+"Compare salary to department median using window percentile.",
+"Above median within their dept.",
+EMP_T,EMP_S,(["name","dept","salary"],[["Alice",70000],["Charlie",55000]]),
+"SELECT name,dept,salary FROM(SELECT name,dept,salary,ROW_NUMBER() OVER(PARTITION BY dept ORDER BY salary DESC)AS rn,COUNT(*) OVER(PARTITION BY dept)AS cnt FROM employees)t WHERE rn<=cnt/2 ORDER BY dept,salary DESC;",topic="Above Dept Median")
+
+# --- Deloitte (6 of 20 needed) ---
+add("sql-385","Total Revenue by Order Status","E-Commerce (Flipkart)","Deloitte","easy",
+"Calculate total revenue grouped by order status.\n\nReturn status, total_revenue. Order by total_revenue DESC.",
+"GROUP BY status, SUM(total).",
+"delivered, shipped, cancelled totals.",
+ECOM_T,ECOM_S,(["status","total_revenue"],[["delivered",120350.0],["shipped",3299.0],["cancelled",3299.0]]),
+"SELECT status,SUM(total)AS total_revenue FROM orders GROUP BY status ORDER BY total_revenue DESC;",topic="SUM Per Status")
+
+add("sql-386","Employees With No Manager","HR / Employee","Deloitte","easy",
+"Find employees who have no manager (mgr_id IS NULL).\n\nReturn name, dept. Order by name.",
+"WHERE mgr_id IS NULL.",
+"Alice and Frank have no manager.",
+EMP_T,EMP_S,(["name","dept"],[["Alice","Eng"],["Frank","HR"]]),
+"SELECT name,dept FROM employees WHERE mgr_id IS NULL ORDER BY name;",topic="WHERE IS NULL Manager")
+
+add("sql-387","Orders Per Customer With Running Total","E-Commerce (Flipkart)","Deloitte","hard",
+"For each customer, show orders with a running total of their spending.\n\nReturn name, order_date, total, running_spent. Order by name, order_date.",
+"SUM(total) OVER(PARTITION BY customer_id ORDER BY order_date).",
+"Cumulative spend per customer.",
+ECOM_T,ECOM_S,(["name","order_date","total","running_spent"],[]),
+"SELECT c.name,o.order_date,o.total,SUM(o.total) OVER(PARTITION BY c.id ORDER BY o.order_date)AS running_spent FROM customers c JOIN orders o ON c.id=o.customer_id ORDER BY c.name,o.order_date;",topic="Running Sum Per Customer")
+
+add("sql-388","Doctor Appointment Count Summary","Healthcare / Hospital","Deloitte","easy",
+"Count total appointments per doctor.\n\nReturn doctor name, appt_count. Order by appt_count DESC.",
+"JOIN + GROUP BY + COUNT.",
+"Dr. Sharma=3, Dr. Patel=2, Dr. Gupta=1.",
+HOSPITAL_T,HOSPITAL_S,(["name","appt_count"],[["Dr. Sharma",3],["Dr. Patel",2],["Dr. Gupta",1]]),
+"SELECT d.name,COUNT(a.id)AS appt_count FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.name ORDER BY appt_count DESC;",topic="Doctor Appt Summary")
+
+add("sql-389","Rides Costing Above 200","Ride-Sharing (Ola)","Deloitte","easy",
+"Find all rides with fare above 200.\n\nReturn ride_id, pickup, dropoff, fare. Order by fare DESC.",
+"WHERE fare > 200.",
+"Filter expensive rides.",
+RIDE_T,RIDE_S,(["ride_id","pickup","dropoff","fare"],[]),
+"SELECT id AS ride_id,pickup,dropoff,fare FROM rides WHERE fare>200 ORDER BY fare DESC;",topic="WHERE Fare Filter")
+
+add("sql-390","Products With Price Rank","E-Commerce (Flipkart)","Deloitte","medium",
+"Rank products by price within their category.\n\nReturn category, name, price, category_rank. Order by category, category_rank.",
+"DENSE_RANK PARTITION BY category ORDER BY price DESC.",
+"Rank within each product category.",
+ECOM_T,ECOM_S,(["category","name","price","category_rank"],[["Books","SQL Book",450.0,1],["Electronics","MacBook Pro",120000.0,1],["Electronics","iPhone 15",79999.0,2],["Fashion","Running Shoes",3499.0,1],["Fashion","Cotton T-Shirt",799.0,2]]),
+"SELECT category,name,price,DENSE_RANK() OVER(PARTITION BY category ORDER BY price DESC)AS category_rank FROM products ORDER BY category,category_rank;",topic="Rank Within Category")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
