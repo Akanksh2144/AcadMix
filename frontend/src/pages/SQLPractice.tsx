@@ -714,8 +714,8 @@ const SQLPractice = ({ navigate, user }: any) => {
                 </AnimatePresence>
               </>
             ) : (
-              {/* Solution Tab */}
               <div>
+                {/* Solution Tab */}
                 {sp.solution_sql ? (
                   <>
                     <div className="flex items-center justify-between mb-3">
