@@ -4,7 +4,7 @@ import {
   FileText, Briefcase, Envelope, ChartPolar, Users, Code, Path,
   Sparkle, Copy, Check, CaretDown, CaretRight, ArrowRight, Lightning, Target,
   Star, Trophy, Warning, MagnifyingGlass, BookOpen, GraduationCap,
-  ClipboardText, Lightbulb, Rocket, Fire, Clock
+  ClipboardText, Lightbulb, Rocket, Fire, Clock, Buildings
 } from '@phosphor-icons/react';
 import { careerAPI, resumeAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
