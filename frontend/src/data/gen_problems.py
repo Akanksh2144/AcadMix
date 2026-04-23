@@ -3465,6 +3465,155 @@ add("sql-185","FULL OUTER JOIN: Cross-Table Coverage Report","HR / Employee","SA
 PG_EMP_T,PG_EMP_S,(["dept","emp_count","budget","status"],[["Engineering",3,500000,"Staffed"],["Finance",0,300000,"Empty"],["HR",0,100000,"Empty"],["Marketing",2,200000,"Staffed"],["Sales",1,150000,"Staffed"]]),
 "SELECT COALESCE(e.department,d.dept_name)AS dept,COUNT(e.id)AS emp_count,COALESCE(d.budget,0)AS budget,CASE WHEN COUNT(e.id)>0 AND d.id IS NOT NULL THEN 'Staffed' WHEN COUNT(e.id)=0 AND d.id IS NOT NULL THEN 'Empty' ELSE 'Unbudgeted' END AS status FROM employees e FULL OUTER JOIN departments d ON e.department=d.dept_name GROUP BY COALESCE(e.department,d.dept_name),d.id,d.budget ORDER BY dept;",topic="FULL OUTER JOIN: Coverage Report",backend_only=True)
 
+# ═══════════════════════════════════════════════════════════════════════
+#  CONTROL FLOW FUNCTIONS (DataLemur tag coverage)
+#  SQLite supports: COALESCE, NULLIF, IIF (3.32+), CASE
+# ═══════════════════════════════════════════════════════════════════════
+
+add("sql-186","COALESCE: Fill Missing Manager","HR / Employee","TCS NQT, Infosys, Cognizant","easy",
+"List every employee with their manager's name. If an employee has no manager (mgr_id IS NULL), display 'Self' instead of NULL.\n\nReturn emp_name, manager_name. Order by emp_name.",
+"Use COALESCE with a LEFT JOIN to replace NULL manager names.",
+"Alice, Charlie, Frank have no manager (mgr_id IS NULL), so they show 'Self'. Bob and Eve report to Alice; Diana reports to Charlie.",
+EMP_T,EMP_S,(["emp_name","manager_name"],[["Alice","Self"],["Bob","Alice"],["Charlie","Self"],["Diana","Charlie"],["Eve","Alice"],["Frank","Self"]]),
+"SELECT e.name AS emp_name, COALESCE(m.name,'Self') AS manager_name FROM employees e LEFT JOIN employees m ON e.mgr_id=m.id ORDER BY e.name;",topic="Control Flow: COALESCE")
+
+add("sql-187","IIF: Pass/Fail Salary Check","HR / Employee","Wipro, HCLTech, Tech Mahindra","easy",
+"Mark each employee as 'Above Avg' if their salary is above the company average, otherwise 'Below Avg'.\n\nReturn name, salary, status. Order by salary DESC.",
+"Use IIF() or CASE to compare salary against a subquery AVG.",
+"Avg salary = 57500. Alice(70k), Eve(65k), Bob(60k) are Above Avg. Others are Below Avg.",
+EMP_T,EMP_S,(["name","salary","status"],[["Alice",70000,"Above Avg"],["Eve",65000,"Above Avg"],["Bob",60000,"Above Avg"],["Charlie",55000,"Below Avg"],["Diana",50000,"Below Avg"],["Frank",45000,"Below Avg"]]),
+"SELECT name, salary, IIF(salary>(SELECT AVG(salary) FROM employees),'Above Avg','Below Avg') AS status FROM employees ORDER BY salary DESC;",topic="Control Flow: IIF")
+
+add("sql-188","NULLIF: Avoid Division by Zero","Banking / Finance","HDFC, ICICI, Kotak","medium",
+"For each account, calculate the ratio of total credits to total debits. If an account has zero debits, show NULL instead of causing a division error.\n\nReturn holder, credit_total, debit_total, ratio (rounded to 2 decimals). Order by holder.",
+"Use NULLIF(debit_total, 0) in the denominator to safely return NULL.",
+"Kiran has 8000 credits and 0 debits -> ratio is NULL. Ravi: 5000/5000=1.0. Meena: 20000/15000=1.33. Suresh: 0/5000=0.0.",
+BANK_T,BANK_S,(["holder","credit_total","debit_total","ratio"],[["Kiran",8000.0,0,None],["Meena",20000.0,15000.0,1.33],["Ravi",5000.0,5000.0,1.0],["Suresh",0,5000.0,0.0]]),
+"SELECT a.holder, COALESCE(SUM(CASE WHEN t.type='credit' THEN t.amount END),0) AS credit_total, COALESCE(SUM(CASE WHEN t.type='debit' THEN t.amount END),0) AS debit_total, ROUND(COALESCE(SUM(CASE WHEN t.type='credit' THEN t.amount END),0)*1.0 / NULLIF(COALESCE(SUM(CASE WHEN t.type='debit' THEN t.amount END),0),0), 2) AS ratio FROM accounts a LEFT JOIN transactions t ON a.id=t.acc_id GROUP BY a.holder ORDER BY a.holder;",topic="Control Flow: NULLIF")
+
+add("sql-189","COALESCE Chain: Multi-Field Fallback","Healthcare / Hospital","Deloitte, Accenture","medium",
+"Show each patient's primary contact info. Use the diagnosis from their latest appointment, falling back to 'No visits' if they have none. Also show fee with a default of 0.\n\nReturn patient_name, latest_diagnosis, fee. Order by patient_name.",
+"Use COALESCE to provide defaults when LEFT JOIN returns NULLs.",
+"All 4 patients have appointments. Their latest diagnoses: Rahul=Follow-up(300), Priya=Fracture(800), Amit=Joint Pain(600), Sneha=Eczema(400).",
+HOSPITAL_T,HOSPITAL_S,(["patient_name","latest_diagnosis","fee"],[["Amit","Joint Pain",600],["Priya","Fracture",800],["Rahul","Follow-up",300],["Sneha","Eczema",400]]),
+"SELECT p.name AS patient_name, COALESCE(a.diagnosis,'No visits') AS latest_diagnosis, COALESCE(a.fee,0) AS fee FROM patients p LEFT JOIN (SELECT patient_id, diagnosis, fee, ROW_NUMBER() OVER(PARTITION BY patient_id ORDER BY visit_date DESC) AS rn FROM appointments) a ON p.id=a.patient_id AND a.rn=1 ORDER BY p.name;",topic="Control Flow: COALESCE Chain")
+
+add("sql-190","IIF + COALESCE: Tiered Commission","Food Delivery / Zomato","Zomato, Swiggy, Flipkart","hard",
+"Calculate commission for each restaurant: 5% on orders above 500, 3% on orders between 300–500, 1% on orders below 300. For restaurants with no orders, show commission as 0.\n\nReturn restaurant_name, total_orders, total_revenue, commission. Order by commission DESC.",
+"Combine IIF/CASE for tiered rates, COALESCE for NULL handling on LEFT JOIN.",
+"Biryani House: 3 orders (450+380+400=1230), commission = 450*0.03+380*0.03+400*0.03=36.9. Pizza Palace: 2 orders (650+700=1350), commission = 650*0.05+700*0.05=67.5.",
+ZOMATO_T,ZOMATO_S,(["restaurant_name","total_orders","total_revenue","commission"],[["Pizza Palace",2,1350.0,67.5],["Dragon Wok",1,510.0,25.5],["Biryani House",3,1230.0,36.9],["Burger Barn",1,320.0,9.6],["Dosa Corner",1,220.0,2.2]]),
+"SELECT r.name AS restaurant_name, COUNT(o.id) AS total_orders, COALESCE(SUM(o.amount),0) AS total_revenue, COALESCE(SUM(IIF(o.amount>500, o.amount*0.05, IIF(o.amount>=300, o.amount*0.03, o.amount*0.01))),0) AS commission FROM restaurants r LEFT JOIN orders o ON r.id=o.rest_id GROUP BY r.name ORDER BY commission DESC;",topic="Control Flow: IIF + COALESCE")
+
+# ═══════════════════════════════════════════════════════════════════════
+#  ARRAY FUNCTIONS (DataLemur tag coverage) — PostgreSQL only
+#  ARRAY_AGG, UNNEST, array_length, ANY
+# ═══════════════════════════════════════════════════════════════════════
+
+PG_ECOM_S = """CREATE TABLE products(id INT PRIMARY KEY, name VARCHAR, category VARCHAR, price NUMERIC);
+CREATE TABLE order_items(id INT PRIMARY KEY, order_id INT, product_id INT, quantity INT);
+CREATE TABLE orders_pg(id INT PRIMARY KEY, customer_id INT, order_date DATE, status VARCHAR);
+INSERT INTO products VALUES(1,'Laptop','Electronics',75000),(2,'Mouse','Electronics',1500),(3,'Shirt','Clothing',2000),(4,'Jeans','Clothing',3500),(5,'Book','Books',500),(6,'Headphones','Electronics',5000);
+INSERT INTO orders_pg VALUES(1,101,'2024-01-15','delivered'),(2,102,'2024-01-20','delivered'),(3,101,'2024-02-01','pending'),(4,103,'2024-02-10','delivered');
+INSERT INTO order_items VALUES(1,1,1,1),(2,1,2,2),(3,2,3,1),(4,2,4,1),(5,3,6,1),(6,3,5,3),(7,4,1,1),(8,4,5,2);"""
+PG_ECOM_T = [{"name":"products","columns":[{"name":"id","type":"int"},{"name":"name","type":"varchar"},{"name":"category","type":"varchar"},{"name":"price","type":"numeric"}],
+"sample_input":[[1,"Laptop","Electronics",75000],[2,"Mouse","Electronics",1500],[3,"Shirt","Clothing",2000],[4,"Jeans","Clothing",3500],[5,"Book","Books",500],[6,"Headphones","Electronics",5000]]},
+{"name":"orders_pg","columns":[{"name":"id","type":"int"},{"name":"customer_id","type":"int"},{"name":"order_date","type":"date"},{"name":"status","type":"varchar"}],
+"sample_input":[[1,101,"2024-01-15","delivered"],[2,102,"2024-01-20","delivered"],[3,101,"2024-02-01","pending"],[4,103,"2024-02-10","delivered"]]},
+{"name":"order_items","columns":[{"name":"id","type":"int"},{"name":"order_id","type":"int"},{"name":"product_id","type":"int"},{"name":"quantity","type":"int"}],
+"sample_input":[[1,1,1,1],[2,1,2,2],[3,2,3,1],[4,2,4,1],[5,3,6,1],[6,3,5,3],[7,4,1,1],[8,4,5,2]]}]
+
+add("sql-191","ARRAY_AGG: Products Per Order","E-Commerce / Shopping","Amazon, Flipkart","easy",
+"For each order, list all product names purchased as a sorted array.\n\nReturn order_id and products_array. Order by order_id.\n\n⚠️ PostgreSQL required.",
+"Use ARRAY_AGG(product_name ORDER BY product_name) with a JOIN.",
+"Order 1 bought Laptop+Mouse, Order 2 bought Jeans+Shirt, Order 3 bought Book+Headphones, Order 4 bought Book+Laptop.",
+PG_ECOM_T,PG_ECOM_S,(["order_id","products_array"],[[1,"{Laptop,Mouse}"],[2,"{Jeans,Shirt}"],[3,"{Book,Headphones}"],[4,"{Book,Laptop}"]]),
+"SELECT oi.order_id, ARRAY_AGG(p.name ORDER BY p.name) AS products_array FROM order_items oi JOIN products p ON oi.product_id=p.id GROUP BY oi.order_id ORDER BY oi.order_id;",topic="Array Functions: ARRAY_AGG",backend_only=True)
+
+add("sql-192","ARRAY_AGG DISTINCT: Unique Categories Per Customer","E-Commerce / Shopping","Google, Microsoft","medium",
+"For each customer, list the distinct product categories they have ordered as a sorted array.\n\nReturn customer_id, categories. Order by customer_id.\n\n⚠️ PostgreSQL required.",
+"Use ARRAY_AGG(DISTINCT category ORDER BY category) across JOINs.",
+"Customer 101 ordered Electronics+Books. Customer 102 ordered Clothing. Customer 103 ordered Electronics+Books.",
+PG_ECOM_T,PG_ECOM_S,(["customer_id","categories"],[[101,"{Books,Electronics}"],[102,"{Clothing}"],[103,"{Books,Electronics}"]]),
+"SELECT o.customer_id, ARRAY_AGG(DISTINCT p.category ORDER BY p.category) AS categories FROM orders_pg o JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id GROUP BY o.customer_id ORDER BY o.customer_id;",topic="Array Functions: ARRAY_AGG DISTINCT",backend_only=True)
+
+add("sql-193","UNNEST: Expand Tags to Rows","E-Commerce / Shopping","Meta, Uber","medium",
+"Given a table of products with a tags array column, expand (unnest) each product's tags into individual rows.\n\nReturn product_name and tag. Order by product_name, tag.\n\n⚠️ PostgreSQL required.",
+"Use UNNEST(tags) to transform array elements into rows.",
+"Each tag becomes its own row. 3 products × multiple tags = expanded rows.",
+[{"name":"tagged_products","columns":[{"name":"id","type":"int"},{"name":"name","type":"varchar"},{"name":"tags","type":"text[]"}],
+"sample_input":[[1,"Laptop",["electronics","portable","work"]],[2,"Running Shoes",["sports","footwear"]],[3,"Novel",["books","fiction","bestseller"]]]}],
+"""CREATE TABLE tagged_products(id INT PRIMARY KEY, name VARCHAR, tags TEXT[]);
+INSERT INTO tagged_products VALUES(1,'Laptop',ARRAY['electronics','portable','work']);
+INSERT INTO tagged_products VALUES(2,'Running Shoes',ARRAY['sports','footwear']);
+INSERT INTO tagged_products VALUES(3,'Novel',ARRAY['books','fiction','bestseller']);""",
+(["product_name","tag"],[["Laptop","electronics"],["Laptop","portable"],["Laptop","work"],["Novel","bestseller"],["Novel","books"],["Novel","fiction"],["Running Shoes","footwear"],["Running Shoes","sports"]]),
+"SELECT name AS product_name, UNNEST(tags) AS tag FROM tagged_products ORDER BY name, tag;",topic="Array Functions: UNNEST",backend_only=True)
+
+add("sql-194","array_length: Count Tags Per Product","E-Commerce / Shopping","Deloitte, Cognizant","easy",
+"For each product, show how many tags it has. Return name, tag_count. Order by tag_count DESC, name.\n\n⚠️ PostgreSQL required.",
+"Use array_length(tags, 1) to count elements in the first dimension.",
+"Laptop and Novel have 3 tags each, Running Shoes has 2.",
+[{"name":"tagged_products","columns":[{"name":"id","type":"int"},{"name":"name","type":"varchar"},{"name":"tags","type":"text[]"}],
+"sample_input":[[1,"Laptop",["electronics","portable","work"]],[2,"Running Shoes",["sports","footwear"]],[3,"Novel",["books","fiction","bestseller"]]]}],
+"""CREATE TABLE tagged_products(id INT PRIMARY KEY, name VARCHAR, tags TEXT[]);
+INSERT INTO tagged_products VALUES(1,'Laptop',ARRAY['electronics','portable','work']);
+INSERT INTO tagged_products VALUES(2,'Running Shoes',ARRAY['sports','footwear']);
+INSERT INTO tagged_products VALUES(3,'Novel',ARRAY['books','fiction','bestseller']);""",
+(["name","tag_count"],[["Laptop",3],["Novel",3],["Running Shoes",2]]),
+"SELECT name, array_length(tags,1) AS tag_count FROM tagged_products ORDER BY tag_count DESC, name;",topic="Array Functions: array_length",backend_only=True)
+
+add("sql-195","ANY + ARRAY_AGG: Cross-Selling","E-Commerce / Shopping","Amazon, Google, Walmart","hard",
+"Find pairs of products that were bought together in at least one order. Return product_a, product_b (alphabetically: product_a < product_b) and times_together. Order by times_together DESC, product_a.\n\n⚠️ PostgreSQL required.",
+"Self-join order_items on order_id, filter product_a < product_b, then count.",
+"Laptop+Mouse in order 1, Jeans+Shirt in order 2, Book+Headphones in order 3, Book+Laptop in order 4.",
+PG_ECOM_T,PG_ECOM_S,(["product_a","product_b","times_together"],[["Book","Headphones",1],["Book","Laptop",1],["Jeans","Shirt",1],["Laptop","Mouse",1]]),
+"SELECT p1.name AS product_a, p2.name AS product_b, COUNT(*) AS times_together FROM order_items oi1 JOIN order_items oi2 ON oi1.order_id=oi2.order_id AND oi1.product_id<oi2.product_id JOIN products p1 ON oi1.product_id=p1.id JOIN products p2 ON oi2.product_id=p2.id GROUP BY p1.name,p2.name ORDER BY times_together DESC, product_a;",topic="Array Functions: Cross-Sell Analysis",backend_only=True)
+
+# ═══════════════════════════════════════════════════════════════════════
+#  DATA GENERATION FUNCTIONS (DataLemur tag coverage) — PostgreSQL only
+#  generate_series for dates, numbers, gap-filling
+# ═══════════════════════════════════════════════════════════════════════
+
+add("sql-196","generate_series: Number Sequence","Utility / General","TCS NQT, Infosys","easy",
+"Generate a sequence of numbers from 1 to 10. Return a single column 'n'.\n\n⚠️ PostgreSQL required.",
+"Use generate_series(1, 10) to produce a row for each number.",
+"Simple: 10 rows, one per number 1 through 10.",
+[{"name":"(none — uses generate_series)","columns":[{"name":"n","type":"int"}],"sample_input":[]}],
+"SELECT 1;",
+(["n"],[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10]]),
+"SELECT generate_series(1,10) AS n;",topic="Data Generation: generate_series",backend_only=True)
+
+add("sql-197","generate_series: Date Calendar","Utility / General","Wipro, Capgemini","easy",
+"Generate all dates in January 2024 (2024-01-01 through 2024-01-31). Return a single column 'day'.\n\n⚠️ PostgreSQL required.",
+"Use generate_series with DATE type and interval '1 day'.",
+"January has 31 days, so 31 rows.",
+[{"name":"(none — uses generate_series)","columns":[{"name":"day","type":"date"}],"sample_input":[]}],
+"SELECT 1;",
+(["day"],[["2024-01-01"],["2024-01-02"],["2024-01-03"],["2024-01-04"],["2024-01-05"],["2024-01-06"],["2024-01-07"],["2024-01-08"],["2024-01-09"],["2024-01-10"],["2024-01-11"],["2024-01-12"],["2024-01-13"],["2024-01-14"],["2024-01-15"],["2024-01-16"],["2024-01-17"],["2024-01-18"],["2024-01-19"],["2024-01-20"],["2024-01-21"],["2024-01-22"],["2024-01-23"],["2024-01-24"],["2024-01-25"],["2024-01-26"],["2024-01-27"],["2024-01-28"],["2024-01-29"],["2024-01-30"],["2024-01-31"]]),
+"SELECT d::date AS day FROM generate_series('2024-01-01'::date,'2024-01-31'::date,'1 day'::interval) AS d;",topic="Data Generation: Date Calendar",backend_only=True)
+
+add("sql-198","generate_series: Fill Missing Months","Banking / Finance","HDFC, ICICI, Goldman Sachs","medium",
+"Show monthly transaction totals for January–March 2024. Include months with zero transactions.\n\nReturn month (YYYY-MM), total_amount. Order by month.\n\n⚠️ PostgreSQL required.",
+"Use generate_series for months, then LEFT JOIN transactions to fill gaps.",
+"Jan=22000, Feb=33000, Mar=0. Even though March has no transactions, it must appear.",
+BANK_T,BANK_S,(["month","total_amount"],[["2024-01",22000.0],["2024-02",33000.0],["2024-03",0]]),
+"SELECT TO_CHAR(m,'YYYY-MM') AS month, COALESCE(SUM(t.amount),0) AS total_amount FROM generate_series('2024-01-01'::date,'2024-03-01'::date,'1 month'::interval) AS m LEFT JOIN transactions t ON TO_CHAR(t.txn_date,'YYYY-MM')=TO_CHAR(m,'YYYY-MM') GROUP BY m ORDER BY m;",topic="Data Generation: Fill Missing Periods",backend_only=True)
+
+add("sql-199","generate_series: Hourly Slots","Healthcare / Hospital","Practo, Apollo","medium",
+"Generate all hourly appointment slots from 9 AM to 5 PM (9:00, 10:00, ..., 17:00) for 2024-01-10. Show which slots have appointments booked.\n\nReturn slot_time, is_booked ('Yes'/'No'). Order by slot_time.\n\n⚠️ PostgreSQL required.",
+"Generate timestamps with interval '1 hour', LEFT JOIN to appointments.",
+"Only 1 appointment exists on 2024-01-10 (appointment 1001). Most slots are unbooked.",
+HOSPITAL_T,HOSPITAL_S,(["slot_time","is_booked"],[["09:00","No"],["10:00","No"],["11:00","No"],["12:00","No"],["13:00","No"],["14:00","No"],["15:00","No"],["16:00","No"],["17:00","No"]]),
+"SELECT TO_CHAR(s,'HH24:MI') AS slot_time, CASE WHEN COUNT(a.id)>0 THEN 'Yes' ELSE 'No' END AS is_booked FROM generate_series('2024-01-10 09:00'::timestamp,'2024-01-10 17:00'::timestamp,'1 hour'::interval) AS s LEFT JOIN appointments a ON a.visit_date::date='2024-01-10' AND EXTRACT(HOUR FROM s)=EXTRACT(HOUR FROM a.visit_date::timestamp) GROUP BY s ORDER BY s;",topic="Data Generation: Hourly Slots",backend_only=True)
+
+add("sql-200","generate_series: Gap Detection","E-Commerce / Shopping","Amazon, Microsoft, Uber","hard",
+"Detect missing order IDs in the orders_pg table. Orders should be sequential (1,2,3,...). Find all IDs in the expected range that are missing.\n\nReturn missing_id. Order by missing_id.\n\n⚠️ PostgreSQL required.",
+"Use generate_series(min_id, max_id) and EXCEPT or LEFT JOIN to find gaps.",
+"Orders 1–4 exist. No gaps in this dataset, but the technique works for any sparse sequence.",
+PG_ECOM_T,PG_ECOM_S,(["missing_id"],[]),
+"SELECT s AS missing_id FROM generate_series((SELECT MIN(id) FROM orders_pg),(SELECT MAX(id) FROM orders_pg)) s WHERE s NOT IN (SELECT id FROM orders_pg) ORDER BY s;",topic="Data Generation: Gap Detection",backend_only=True)
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
