@@ -544,13 +544,14 @@ const SQLPractice = ({ navigate, user }: any) => {
                 {tagLabel && <span className={`ml-auto py-1 px-2 rounded whitespace-nowrap shrink-0 ${tagColor}`}>{tagLabel}</span>}
               </div>
               {p.topic && <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 truncate">📘 {p.topic}</p>}
-              {/* Bookmark toggle — bottom left */}
-              <button onClick={(e) => { e.stopPropagation(); toggleBookmark(p.id); }}
-                className={`absolute bottom-3 left-3 p-1 rounded-lg transition-all ${bookmarks[p.id] ? 'text-amber-500 hover:text-amber-600' : 'text-slate-300 dark:text-slate-600 hover:text-amber-400 dark:hover:text-amber-500'}`}>
-                <BookmarkSimple size={18} weight={bookmarks[p.id] ? 'fill' : 'regular'} />
-              </button>
-              {/* DB engine logo — bottom right */}
-              <img src={p.backend_only ? 'https://img.logo.dev/postgresql.org?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png' : 'https://img.logo.dev/sqlite.org?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png'} alt={p.backend_only ? 'PostgreSQL' : 'SQLite'} className="absolute bottom-3 right-3 w-5 h-5 opacity-40 group-hover:opacity-70 transition-opacity object-contain" />
+              {/* Bottom row: bookmark + DB logo */}
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-white/5">
+                <button onClick={(e) => { e.stopPropagation(); toggleBookmark(p.id); }}
+                  className={`p-1 rounded-lg transition-all ${bookmarks[p.id] ? 'text-amber-500 hover:text-amber-600' : 'text-slate-300 dark:text-slate-600 hover:text-amber-400 dark:hover:text-amber-500'}`}>
+                  <BookmarkSimple size={16} weight={bookmarks[p.id] ? 'fill' : 'regular'} />
+                </button>
+                <img src={p.backend_only ? 'https://img.logo.dev/postgresql.org?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png' : 'https://img.logo.dev/sqlite.org?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png'} alt={p.backend_only ? 'PostgreSQL' : 'SQLite'} className="w-4 h-4 opacity-40 group-hover:opacity-70 transition-opacity object-contain" />
+              </div>
             </motion.div>);
           })}
           </div>
