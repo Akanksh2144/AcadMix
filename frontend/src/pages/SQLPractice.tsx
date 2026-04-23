@@ -526,7 +526,7 @@ const SQLPractice = ({ navigate, user }: any) => {
                 <span className={`px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-widest shrink-0 ${diffColors[p.difficulty]}`}>{p.difficulty}</span>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 min-h-[2.5rem]">{p.problem_statement?.split('\n')[0]}</p>
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 flex-nowrap overflow-hidden">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 flex-nowrap overflow-x-auto hide-scrollbar">
                 <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 py-1 px-2 rounded whitespace-nowrap shrink-0"><TableIcon size={14} /> {p.dataset_theme}</span>
                 {(p.company_tags || [p.company_tag]).filter(Boolean).map((c: string, ci: number) => <CompanyLogo key={ci} name={c} size={20} />)}
                 {tagLabel && <span className={`ml-auto py-1 px-2 rounded whitespace-nowrap shrink-0 ${tagColor}`}>{tagLabel}</span>}
