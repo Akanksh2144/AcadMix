@@ -300,7 +300,8 @@ const CodePlayground = ({ navigate, user }) => {
          
          try {
              // Prepend the svg device creation directly to the user's code so captureR evaluates it in the same context
-             const finalCode = `svg("acadmix_plot.svg", width=8, height=5)\n` + code;
+             // Also append dev.off() so the graphics buffer is flushed to disk before captureR finishes
+             const finalCode = `svg("acadmix_plot.svg", width=8, height=5)\n` + code + `\ninvisible(dev.off())`;
              const shelter = await new webr.Shelter();
              const capture = await shelter.captureR(finalCode, { withAutoprint: true, catchStreams: true });
              // Force close the device in case user code threw an error and didn't close it naturally
@@ -326,9 +327,23 @@ const CodePlayground = ({ navigate, user }) => {
                  setActiveConsoleTab('results');
              }
              setExecTime(Date.now() - startTime);
+             setRunHistory(prev => [{
+                status: 'Accepted',
+                language: 'r',
+                code: code,
+                output: outText,
+                timestamp: new Date().toLocaleTimeString()
+             }, ...prev]);
          } catch (e) {
              setOutput(`Error: ${e.message}`);
              setExecTime(Date.now() - startTime);
+             setRunHistory(prev => [{
+                status: 'Error',
+                language: 'r',
+                code: code,
+                output: e.message,
+                timestamp: new Date().toLocaleTimeString()
+             }, ...prev]);
          }
          setRunning(false);
          return;
