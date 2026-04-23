@@ -117515,5 +117515,1327 @@
     ],
     "solution_sql": "SELECT feature_name, SUM(CASE WHEN sentiment = 'Positive' THEN 1 ELSE 0 END) AS Positive, SUM(CASE WHEN sentiment = 'Neutral' THEN 1 ELSE 0 END) AS Neutral, SUM(CASE WHEN sentiment = 'Negative' THEN 1 ELSE 0 END) AS Negative FROM feedback GROUP BY feature_name;",
     "category": "Conditional Logic"
+  },
+  {
+    "id": "FILT_MED_01",
+    "title": "Complex Multi-Condition Access Logs",
+    "dataset_theme": "Security",
+    "company_tag": "Cisco",
+    "company_tags": [
+      "Cisco",
+      "Palo Alto Networks",
+      "CrowdStrike"
+    ],
+    "difficulty": "medium",
+    "topic": "Filtering & Sorting",
+    "problem_statement": "Find all successful login attempts ('SUCCESS') from the 'Engineering' department that occurred between '2023-01-01' and '2023-03-31', OR any failed attempts ('FAILED') from the 'Admin' department during the entire year of 2023. Sort by login_date descending.",
+    "hint": "Use AND/OR logic with parentheses to group conditions correctly.",
+    "explanation": "Requires careful grouping of conditions using parentheses to avoid logical errors.",
+    "tables_meta": [
+      {
+        "name": "access_logs",
+        "columns": [
+          {
+            "name": "log_id",
+            "type": "int"
+          },
+          {
+            "name": "department",
+            "type": "varchar"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          },
+          {
+            "name": "login_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Engineering",
+            "SUCCESS",
+            "2023-02-15"
+          ],
+          [
+            2,
+            "Engineering",
+            "FAILED",
+            "2023-02-20"
+          ],
+          [
+            3,
+            "Admin",
+            "FAILED",
+            "2023-06-10"
+          ],
+          [
+            4,
+            "Admin",
+            "SUCCESS",
+            "2023-08-01"
+          ],
+          [
+            5,
+            "Engineering",
+            "SUCCESS",
+            "2023-05-10"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "log_id",
+        "department",
+        "status",
+        "login_date"
+      ],
+      "rows": [
+        [
+          3,
+          "Admin",
+          "FAILED",
+          "2023-06-10"
+        ],
+        [
+          1,
+          "Engineering",
+          "SUCCESS",
+          "2023-02-15"
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE access_logs (log_id INT, department VARCHAR(50), status VARCHAR(20), login_date DATE); INSERT INTO access_logs VALUES (1, 'Engineering', 'SUCCESS', '2023-02-15'), (2, 'Engineering', 'FAILED', '2023-02-20'), (3, 'Admin', 'FAILED', '2023-06-10'), (4, 'Admin', 'SUCCESS', '2023-08-01'), (5, 'Engineering', 'SUCCESS', '2023-05-10');",
+    "expected_output": [
+      {
+        "columns": [
+          "log_id",
+          "department",
+          "status",
+          "login_date"
+        ],
+        "values": [
+          [
+            3,
+            "Admin",
+            "FAILED",
+            "2023-06-10"
+          ],
+          [
+            1,
+            "Engineering",
+            "SUCCESS",
+            "2023-02-15"
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT log_id, department, status, login_date FROM access_logs WHERE (department = 'Engineering' AND status = 'SUCCESS' AND login_date BETWEEN '2023-01-01' AND '2023-03-31') OR (department = 'Admin' AND status = 'FAILED' AND login_date BETWEEN '2023-01-01' AND '2023-12-31') ORDER BY login_date DESC;",
+    "category": "Filtering & Sorting"
+  },
+  {
+    "id": "FILT_MED_02",
+    "title": "E-commerce Fraud Detection Filter",
+    "dataset_theme": "E-commerce",
+    "company_tag": "PayPal",
+    "company_tags": [
+      "PayPal",
+      "Stripe",
+      "Visa"
+    ],
+    "difficulty": "medium",
+    "topic": "Filtering & Sorting",
+    "problem_statement": "Identify potential fraudulent transactions. A transaction is suspicious if it meets ALL of the following criteria: amount is strictly greater than 1000, the user's country is either 'RU', 'BR', or 'CN', AND the payment_method is NOT 'Credit Card'. Return transaction_id and user_id sorted by amount descending.",
+    "hint": "Use IN for country list and != for payment_method.",
+    "explanation": "Filters on numeric ranges, sets, and negations.",
+    "tables_meta": [
+      {
+        "name": "transactions",
+        "columns": [
+          {
+            "name": "transaction_id",
+            "type": "int"
+          },
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "amount",
+            "type": "decimal"
+          },
+          {
+            "name": "country",
+            "type": "varchar"
+          },
+          {
+            "name": "payment_method",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            1,
+            1500,
+            "RU",
+            "Crypto"
+          ],
+          [
+            102,
+            2,
+            800,
+            "BR",
+            "Wire"
+          ],
+          [
+            103,
+            3,
+            2000,
+            "CN",
+            "Credit Card"
+          ],
+          [
+            104,
+            4,
+            1200,
+            "BR",
+            "Bank Transfer"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "transaction_id",
+        "user_id"
+      ],
+      "rows": [
+        [
+          101,
+          1
+        ],
+        [
+          104,
+          4
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE transactions (transaction_id INT, user_id INT, amount DECIMAL(10,2), country VARCHAR(2), payment_method VARCHAR(50)); INSERT INTO transactions VALUES (101, 1, 1500, 'RU', 'Crypto'), (102, 2, 800, 'BR', 'Wire'), (103, 3, 2000, 'CN', 'Credit Card'), (104, 4, 1200, 'BR', 'Bank Transfer');",
+    "expected_output": [
+      {
+        "columns": [
+          "transaction_id",
+          "user_id"
+        ],
+        "values": [
+          [
+            101,
+            1
+          ],
+          [
+            104,
+            4
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT transaction_id, user_id FROM transactions WHERE amount > 1000 AND country IN ('RU', 'BR', 'CN') AND payment_method != 'Credit Card' ORDER BY amount DESC;",
+    "category": "Filtering & Sorting"
+  },
+  {
+    "id": "FILT_MED_03",
+    "title": "Targeted Marketing Campaign Cohort",
+    "dataset_theme": "Marketing",
+    "company_tag": "HubSpot",
+    "company_tags": [
+      "HubSpot",
+      "Mailchimp",
+      "Salesforce"
+    ],
+    "difficulty": "medium",
+    "topic": "Filtering & Sorting",
+    "problem_statement": "Find users to target for a new campaign. Select users who signed up before '2022-01-01', have made at least 5 purchases, AND whose email address ends with '@gmail.com' OR '@yahoo.com'. Return user_id and email sorted by sign_up_date ascending.",
+    "hint": "Use LIKE for wildcard matching and group the OR conditions.",
+    "explanation": "Requires grouping LIKE conditions with OR inside parentheses.",
+    "tables_meta": [
+      {
+        "name": "users",
+        "columns": [
+          {
+            "name": "user_id",
+            "type": "int"
+          },
+          {
+            "name": "email",
+            "type": "varchar"
+          },
+          {
+            "name": "sign_up_date",
+            "type": "date"
+          },
+          {
+            "name": "purchases",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "john@gmail.com",
+            "2021-05-10",
+            6
+          ],
+          [
+            2,
+            "jane@yahoo.com",
+            "2021-11-20",
+            4
+          ],
+          [
+            3,
+            "bob@hotmail.com",
+            "2020-08-15",
+            10
+          ],
+          [
+            4,
+            "alice@yahoo.com",
+            "2021-12-01",
+            8
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "user_id",
+        "email"
+      ],
+      "rows": [
+        [
+          1,
+          "john@gmail.com"
+        ],
+        [
+          4,
+          "alice@yahoo.com"
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE users (user_id INT, email VARCHAR(100), sign_up_date DATE, purchases INT); INSERT INTO users VALUES (1, 'john@gmail.com', '2021-05-10', 6), (2, 'jane@yahoo.com', '2021-11-20', 4), (3, 'bob@hotmail.com', '2020-08-15', 10), (4, 'alice@yahoo.com', '2021-12-01', 8);",
+    "expected_output": [
+      {
+        "columns": [
+          "user_id",
+          "email"
+        ],
+        "values": [
+          [
+            1,
+            "john@gmail.com"
+          ],
+          [
+            4,
+            "alice@yahoo.com"
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT user_id, email FROM users WHERE sign_up_date < '2022-01-01' AND purchases >= 5 AND (email LIKE '%@gmail.com' OR email LIKE '%@yahoo.com') ORDER BY sign_up_date ASC;",
+    "category": "Filtering & Sorting"
+  },
+  {
+    "id": "FILT_MED_04",
+    "title": "Inventory Alert Complex Filtering",
+    "dataset_theme": "Retail",
+    "company_tag": "Amazon",
+    "company_tags": [
+      "Amazon",
+      "Walmart",
+      "Target"
+    ],
+    "difficulty": "medium",
+    "topic": "Filtering & Sorting",
+    "problem_statement": "List products that need restocking. A product needs restocking if its stock_quantity is below 50 AND category is 'Electronics', OR if its stock_quantity is below 20 AND category is IN ('Apparel', 'Home'). Exclude any products marked as 'Discontinued'. Sort by stock_quantity ascending.",
+    "hint": "Group OR conditions and apply the status filter to both.",
+    "explanation": "Requires applying a global NOT condition alongside grouped OR logic.",
+    "tables_meta": [
+      {
+        "name": "inventory",
+        "columns": [
+          {
+            "name": "product_id",
+            "type": "int"
+          },
+          {
+            "name": "category",
+            "type": "varchar"
+          },
+          {
+            "name": "stock_quantity",
+            "type": "int"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Electronics",
+            40,
+            "Active"
+          ],
+          [
+            2,
+            "Apparel",
+            15,
+            "Active"
+          ],
+          [
+            3,
+            "Home",
+            25,
+            "Active"
+          ],
+          [
+            4,
+            "Electronics",
+            30,
+            "Discontinued"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "product_id",
+        "category",
+        "stock_quantity"
+      ],
+      "rows": [
+        [
+          2,
+          "Apparel",
+          15
+        ],
+        [
+          1,
+          "Electronics",
+          40
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE inventory (product_id INT, category VARCHAR(50), stock_quantity INT, status VARCHAR(20)); INSERT INTO inventory VALUES (1, 'Electronics', 40, 'Active'), (2, 'Apparel', 15, 'Active'), (3, 'Home', 25, 'Active'), (4, 'Electronics', 30, 'Discontinued');",
+    "expected_output": [
+      {
+        "columns": [
+          "product_id",
+          "category",
+          "stock_quantity"
+        ],
+        "values": [
+          [
+            2,
+            "Apparel",
+            15
+          ],
+          [
+            1,
+            "Electronics",
+            40
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT product_id, category, stock_quantity FROM inventory WHERE status != 'Discontinued' AND ((stock_quantity < 50 AND category = 'Electronics') OR (stock_quantity < 20 AND category IN ('Apparel', 'Home'))) ORDER BY stock_quantity ASC;",
+    "category": "Filtering & Sorting"
+  },
+  {
+    "id": "FILT_MED_05",
+    "title": "Patient Triage Priority",
+    "dataset_theme": "Healthcare",
+    "company_tag": "Epic Systems",
+    "company_tags": [
+      "Cerner",
+      "Epic Systems",
+      "UnitedHealth"
+    ],
+    "difficulty": "medium",
+    "topic": "Filtering & Sorting",
+    "problem_statement": "Filter patients for immediate review. Select patients who are over 65 years old with 'High' blood pressure, OR patients of any age who have a 'Critical' condition status and were admitted in the last 7 days (after '2023-10-01'). Sort by admission_date descending.",
+    "hint": "Use OR to separate the two distinct criteria groups.",
+    "explanation": "Mixes age ranges with status conditions across two distinct priority rules.",
+    "tables_meta": [
+      {
+        "name": "patients",
+        "columns": [
+          {
+            "name": "patient_id",
+            "type": "int"
+          },
+          {
+            "name": "age",
+            "type": "int"
+          },
+          {
+            "name": "blood_pressure",
+            "type": "varchar"
+          },
+          {
+            "name": "condition_status",
+            "type": "varchar"
+          },
+          {
+            "name": "admission_date",
+            "type": "date"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            70,
+            "High",
+            "Stable",
+            "2023-09-15"
+          ],
+          [
+            2,
+            45,
+            "Normal",
+            "Critical",
+            "2023-10-05"
+          ],
+          [
+            3,
+            80,
+            "Normal",
+            "Stable",
+            "2023-09-20"
+          ],
+          [
+            4,
+            50,
+            "High",
+            "Critical",
+            "2023-09-01"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "patient_id",
+        "age"
+      ],
+      "rows": [
+        [
+          2,
+          45
+        ],
+        [
+          1,
+          70
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE patients (patient_id INT, age INT, blood_pressure VARCHAR(20), condition_status VARCHAR(20), admission_date DATE); INSERT INTO patients VALUES (1, 70, 'High', 'Stable', '2023-09-15'), (2, 45, 'Normal', 'Critical', '2023-10-05'), (3, 80, 'Normal', 'Stable', '2023-09-20'), (4, 50, 'High', 'Critical', '2023-09-01');",
+    "expected_output": [
+      {
+        "columns": [
+          "patient_id",
+          "age"
+        ],
+        "values": [
+          [
+            2,
+            45
+          ],
+          [
+            1,
+            70
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT patient_id, age FROM patients WHERE (age > 65 AND blood_pressure = 'High') OR (condition_status = 'Critical' AND admission_date > '2023-10-01') ORDER BY admission_date DESC;",
+    "category": "Filtering & Sorting"
+  },
+  {
+    "id": "FILT_MED_06",
+    "title": "Logistics Route Optimization Filter",
+    "dataset_theme": "Logistics",
+    "company_tag": "FedEx",
+    "company_tags": [
+      "FedEx",
+      "UPS",
+      "Uber Freight"
+    ],
+    "difficulty": "medium",
+    "topic": "Filtering & Sorting",
+    "problem_statement": "Find delayed shipments requiring rerouting. Select shipments where the status is 'In Transit', the weight is between 500 and 1000 kg, AND the destination city starts with 'New' or 'San'. Sort by weight descending.",
+    "hint": "Combine BETWEEN with LIKE wildcards for city prefixes.",
+    "explanation": "Requires matching multiple prefix patterns inside a group.",
+    "tables_meta": [
+      {
+        "name": "shipments",
+        "columns": [
+          {
+            "name": "shipment_id",
+            "type": "int"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          },
+          {
+            "name": "weight",
+            "type": "int"
+          },
+          {
+            "name": "destination_city",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "In Transit",
+            750,
+            "New York"
+          ],
+          [
+            2,
+            "Delivered",
+            600,
+            "San Francisco"
+          ],
+          [
+            3,
+            "In Transit",
+            400,
+            "New Orleans"
+          ],
+          [
+            4,
+            "In Transit",
+            900,
+            "San Diego"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "shipment_id",
+        "destination_city",
+        "weight"
+      ],
+      "rows": [
+        [
+          4,
+          "San Diego",
+          900
+        ],
+        [
+          1,
+          "New York",
+          750
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE shipments (shipment_id INT, status VARCHAR(20), weight INT, destination_city VARCHAR(50)); INSERT INTO shipments VALUES (1, 'In Transit', 750, 'New York'), (2, 'Delivered', 600, 'San Francisco'), (3, 'In Transit', 400, 'New Orleans'), (4, 'In Transit', 900, 'San Diego');",
+    "expected_output": [
+      {
+        "columns": [
+          "shipment_id",
+          "destination_city",
+          "weight"
+        ],
+        "values": [
+          [
+            4,
+            "San Diego",
+            900
+          ],
+          [
+            1,
+            "New York",
+            750
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT shipment_id, destination_city, weight FROM shipments WHERE status = 'In Transit' AND weight BETWEEN 500 AND 1000 AND (destination_city LIKE 'New%' OR destination_city LIKE 'San%') ORDER BY weight DESC;",
+    "category": "Filtering & Sorting"
+  },
+  {
+    "id": "COND_HRD_06",
+    "title": "Quarterly Revenue Pivot",
+    "dataset_theme": "Sales",
+    "company_tag": "Oracle",
+    "company_tags": [
+      "Oracle",
+      "SAP",
+      "Tableau"
+    ],
+    "difficulty": "hard",
+    "topic": "Conditional Logic",
+    "problem_statement": "Pivot the sales data to show total revenue per region for each quarter. Return columns: region, q1_revenue, q2_revenue, q3_revenue, q4_revenue. Quarter is given as an integer 1-4.",
+    "hint": "Use SUM(CASE WHEN quarter = X THEN revenue ELSE 0 END) for each quarter.",
+    "explanation": "A classic pivot table operation using conditional aggregation.",
+    "tables_meta": [
+      {
+        "name": "sales",
+        "columns": [
+          {
+            "name": "region",
+            "type": "varchar"
+          },
+          {
+            "name": "quarter",
+            "type": "int"
+          },
+          {
+            "name": "revenue",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            "North",
+            1,
+            5000
+          ],
+          [
+            "North",
+            2,
+            6000
+          ],
+          [
+            "South",
+            1,
+            4000
+          ],
+          [
+            "South",
+            3,
+            4500
+          ],
+          [
+            "North",
+            1,
+            1000
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "region",
+        "q1_revenue",
+        "q2_revenue",
+        "q3_revenue",
+        "q4_revenue"
+      ],
+      "rows": [
+        [
+          "North",
+          6000,
+          6000,
+          0,
+          0
+        ],
+        [
+          "South",
+          4000,
+          0,
+          4500,
+          0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE sales (region VARCHAR(50), quarter INT, revenue INT); INSERT INTO sales VALUES ('North', 1, 5000), ('North', 2, 6000), ('South', 1, 4000), ('South', 3, 4500), ('North', 1, 1000);",
+    "expected_output": [
+      {
+        "columns": [
+          "region",
+          "q1_revenue",
+          "q2_revenue",
+          "q3_revenue",
+          "q4_revenue"
+        ],
+        "values": [
+          [
+            "North",
+            6000,
+            6000,
+            0,
+            0
+          ],
+          [
+            "South",
+            4000,
+            0,
+            4500,
+            0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT region, SUM(CASE WHEN quarter = 1 THEN revenue ELSE 0 END) AS q1_revenue, SUM(CASE WHEN quarter = 2 THEN revenue ELSE 0 END) AS q2_revenue, SUM(CASE WHEN quarter = 3 THEN revenue ELSE 0 END) AS q3_revenue, SUM(CASE WHEN quarter = 4 THEN revenue ELSE 0 END) AS q4_revenue FROM sales GROUP BY region ORDER BY region;",
+    "category": "Conditional Logic"
+  },
+  {
+    "id": "COND_HRD_07",
+    "title": "Employee Attendance Matrix",
+    "dataset_theme": "HR",
+    "company_tag": "Workday",
+    "company_tags": [
+      "Workday",
+      "ADP",
+      "Atlassian"
+    ],
+    "difficulty": "hard",
+    "topic": "Conditional Logic",
+    "problem_statement": "Create an attendance matrix showing the count of 'Present', 'Absent', and 'Leave' days for each employee_id. Pivot the status column into three separate columns: total_present, total_absent, total_leave.",
+    "hint": "Group by employee_id and count each status using SUM and CASE.",
+    "explanation": "Pivoting categorical rows into numeric metric columns.",
+    "tables_meta": [
+      {
+        "name": "attendance",
+        "columns": [
+          {
+            "name": "employee_id",
+            "type": "int"
+          },
+          {
+            "name": "record_date",
+            "type": "date"
+          },
+          {
+            "name": "status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "2023-01-01",
+            "Present"
+          ],
+          [
+            1,
+            "2023-01-02",
+            "Absent"
+          ],
+          [
+            2,
+            "2023-01-01",
+            "Present"
+          ],
+          [
+            2,
+            "2023-01-02",
+            "Leave"
+          ],
+          [
+            1,
+            "2023-01-03",
+            "Present"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "employee_id",
+        "total_present",
+        "total_absent",
+        "total_leave"
+      ],
+      "rows": [
+        [
+          1,
+          2,
+          1,
+          0
+        ],
+        [
+          2,
+          1,
+          0,
+          1
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE attendance (employee_id INT, record_date DATE, status VARCHAR(20)); INSERT INTO attendance VALUES (1, '2023-01-01', 'Present'), (1, '2023-01-02', 'Absent'), (2, '2023-01-01', 'Present'), (2, '2023-01-02', 'Leave'), (1, '2023-01-03', 'Present');",
+    "expected_output": [
+      {
+        "columns": [
+          "employee_id",
+          "total_present",
+          "total_absent",
+          "total_leave"
+        ],
+        "values": [
+          [
+            1,
+            2,
+            1,
+            0
+          ],
+          [
+            2,
+            1,
+            0,
+            1
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT employee_id, SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS total_present, SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) AS total_absent, SUM(CASE WHEN status = 'Leave' THEN 1 ELSE 0 END) AS total_leave FROM attendance GROUP BY employee_id ORDER BY employee_id;",
+    "category": "Conditional Logic"
+  },
+  {
+    "id": "COND_HRD_08",
+    "title": "Product Category Sales by Device Type",
+    "dataset_theme": "E-commerce",
+    "company_tag": "Shopify",
+    "company_tags": [
+      "Shopify",
+      "Amazon",
+      "eBay"
+    ],
+    "difficulty": "hard",
+    "topic": "Conditional Logic",
+    "problem_statement": "Pivot the e-commerce sales data to show the total sales amount for each product_category split by device_type ('Mobile', 'Desktop', 'Tablet'). Return columns: product_category, mobile_sales, desktop_sales, tablet_sales.",
+    "hint": "SUM the amount conditionally based on the device_type.",
+    "explanation": "Aggregates monetary values conditionally across a pivot.",
+    "tables_meta": [
+      {
+        "name": "device_sales",
+        "columns": [
+          {
+            "name": "product_category",
+            "type": "varchar"
+          },
+          {
+            "name": "device_type",
+            "type": "varchar"
+          },
+          {
+            "name": "amount",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            "Electronics",
+            "Mobile",
+            200
+          ],
+          [
+            "Electronics",
+            "Desktop",
+            500
+          ],
+          [
+            "Clothing",
+            "Mobile",
+            150
+          ],
+          [
+            "Clothing",
+            "Tablet",
+            50
+          ],
+          [
+            "Electronics",
+            "Mobile",
+            300
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "product_category",
+        "mobile_sales",
+        "desktop_sales",
+        "tablet_sales"
+      ],
+      "rows": [
+        [
+          "Clothing",
+          150,
+          0,
+          50
+        ],
+        [
+          "Electronics",
+          500,
+          500,
+          0
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE device_sales (product_category VARCHAR(50), device_type VARCHAR(20), amount INT); INSERT INTO device_sales VALUES ('Electronics', 'Mobile', 200), ('Electronics', 'Desktop', 500), ('Clothing', 'Mobile', 150), ('Clothing', 'Tablet', 50), ('Electronics', 'Mobile', 300);",
+    "expected_output": [
+      {
+        "columns": [
+          "product_category",
+          "mobile_sales",
+          "desktop_sales",
+          "tablet_sales"
+        ],
+        "values": [
+          [
+            "Clothing",
+            150,
+            0,
+            50
+          ],
+          [
+            "Electronics",
+            500,
+            500,
+            0
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT product_category, SUM(CASE WHEN device_type = 'Mobile' THEN amount ELSE 0 END) AS mobile_sales, SUM(CASE WHEN device_type = 'Desktop' THEN amount ELSE 0 END) AS desktop_sales, SUM(CASE WHEN device_type = 'Tablet' THEN amount ELSE 0 END) AS tablet_sales FROM device_sales GROUP BY product_category ORDER BY product_category;",
+    "category": "Conditional Logic"
+  },
+  {
+    "id": "COND_HRD_09",
+    "title": "Call Center Escalation Pivot",
+    "dataset_theme": "Customer Support",
+    "company_tag": "Zendesk",
+    "company_tags": [
+      "Zendesk",
+      "ServiceNow",
+      "Twilio"
+    ],
+    "difficulty": "hard",
+    "topic": "Conditional Logic",
+    "problem_statement": "Generate a report for the call center showing the number of tickets handled by each agent_id, pivoted by the resolution_status ('Resolved', 'Escalated', 'Pending'). Return columns: agent_id, resolved_count, escalated_count, pending_count.",
+    "hint": "Pivot by mapping the string statuses to numeric counts.",
+    "explanation": "Provides visibility into agent performance dimensions via pivoting.",
+    "tables_meta": [
+      {
+        "name": "support_tickets",
+        "columns": [
+          {
+            "name": "agent_id",
+            "type": "int"
+          },
+          {
+            "name": "resolution_status",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "Resolved"
+          ],
+          [
+            101,
+            "Escalated"
+          ],
+          [
+            102,
+            "Resolved"
+          ],
+          [
+            102,
+            "Pending"
+          ],
+          [
+            101,
+            "Resolved"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "agent_id",
+        "resolved_count",
+        "escalated_count",
+        "pending_count"
+      ],
+      "rows": [
+        [
+          101,
+          2,
+          1,
+          0
+        ],
+        [
+          102,
+          1,
+          0,
+          1
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE support_tickets (agent_id INT, resolution_status VARCHAR(20)); INSERT INTO support_tickets VALUES (101, 'Resolved'), (101, 'Escalated'), (102, 'Resolved'), (102, 'Pending'), (101, 'Resolved');",
+    "expected_output": [
+      {
+        "columns": [
+          "agent_id",
+          "resolved_count",
+          "escalated_count",
+          "pending_count"
+        ],
+        "values": [
+          [
+            101,
+            2,
+            1,
+            0
+          ],
+          [
+            102,
+            1,
+            0,
+            1
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT agent_id, SUM(CASE WHEN resolution_status = 'Resolved' THEN 1 ELSE 0 END) AS resolved_count, SUM(CASE WHEN resolution_status = 'Escalated' THEN 1 ELSE 0 END) AS escalated_count, SUM(CASE WHEN resolution_status = 'Pending' THEN 1 ELSE 0 END) AS pending_count FROM support_tickets GROUP BY agent_id ORDER BY agent_id;",
+    "category": "Conditional Logic"
+  },
+  {
+    "id": "COND_HRD_10",
+    "title": "Marketing Channel Conversion Matrix",
+    "dataset_theme": "Marketing",
+    "company_tag": "Meta",
+    "company_tags": [
+      "Meta",
+      "Google",
+      "Adobe"
+    ],
+    "difficulty": "hard",
+    "topic": "Conditional Logic",
+    "problem_statement": "Create a conversion matrix showing the total number of conversions for each campaign_id, pivoted by marketing_channel ('Email', 'Social', 'Search'). Return columns: campaign_id, email_conversions, social_conversions, search_conversions.",
+    "hint": "Sum conversions using conditional CASE WHEN channel matches.",
+    "explanation": "Aggregates quantitative metrics across pivot dimensions.",
+    "tables_meta": [
+      {
+        "name": "campaign_metrics",
+        "columns": [
+          {
+            "name": "campaign_id",
+            "type": "int"
+          },
+          {
+            "name": "marketing_channel",
+            "type": "varchar"
+          },
+          {
+            "name": "conversions",
+            "type": "int"
+          }
+        ],
+        "sample_input": [
+          [
+            1,
+            "Email",
+            50
+          ],
+          [
+            1,
+            "Social",
+            120
+          ],
+          [
+            2,
+            "Search",
+            300
+          ],
+          [
+            1,
+            "Email",
+            20
+          ],
+          [
+            2,
+            "Social",
+            50
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "campaign_id",
+        "email_conversions",
+        "social_conversions",
+        "search_conversions"
+      ],
+      "rows": [
+        [
+          1,
+          70,
+          120,
+          0
+        ],
+        [
+          2,
+          0,
+          50,
+          300
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE campaign_metrics (campaign_id INT, marketing_channel VARCHAR(20), conversions INT); INSERT INTO campaign_metrics VALUES (1, 'Email', 50), (1, 'Social', 120), (2, 'Search', 300), (1, 'Email', 20), (2, 'Social', 50);",
+    "expected_output": [
+      {
+        "columns": [
+          "campaign_id",
+          "email_conversions",
+          "social_conversions",
+          "search_conversions"
+        ],
+        "values": [
+          [
+            1,
+            70,
+            120,
+            0
+          ],
+          [
+            2,
+            0,
+            50,
+            300
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT campaign_id, SUM(CASE WHEN marketing_channel = 'Email' THEN conversions ELSE 0 END) AS email_conversions, SUM(CASE WHEN marketing_channel = 'Social' THEN conversions ELSE 0 END) AS social_conversions, SUM(CASE WHEN marketing_channel = 'Search' THEN conversions ELSE 0 END) AS search_conversions FROM campaign_metrics GROUP BY campaign_id ORDER BY campaign_id;",
+    "category": "Conditional Logic"
+  },
+  {
+    "id": "COND_HRD_11",
+    "title": "Student Grade Distribution Pivot",
+    "dataset_theme": "Education",
+    "company_tag": "Coursera",
+    "company_tags": [
+      "Coursera",
+      "Udemy",
+      "Chegg"
+    ],
+    "difficulty": "hard",
+    "topic": "Conditional Logic",
+    "problem_statement": "Pivot the student grades table to show the count of each grade ('A', 'B', 'C', 'F') per course_id. Return columns: course_id, grade_a, grade_b, grade_c, grade_f.",
+    "hint": "Count occurrences of each string grade category per course.",
+    "explanation": "Provides an academic distribution pivot using sum and case.",
+    "tables_meta": [
+      {
+        "name": "student_grades",
+        "columns": [
+          {
+            "name": "course_id",
+            "type": "int"
+          },
+          {
+            "name": "grade",
+            "type": "varchar"
+          }
+        ],
+        "sample_input": [
+          [
+            101,
+            "A"
+          ],
+          [
+            101,
+            "B"
+          ],
+          [
+            101,
+            "A"
+          ],
+          [
+            102,
+            "C"
+          ],
+          [
+            102,
+            "F"
+          ],
+          [
+            101,
+            "C"
+          ]
+        ]
+      }
+    ],
+    "example_output": {
+      "columns": [
+        "course_id",
+        "grade_a",
+        "grade_b",
+        "grade_c",
+        "grade_f"
+      ],
+      "rows": [
+        [
+          101,
+          2,
+          1,
+          1,
+          0
+        ],
+        [
+          102,
+          0,
+          0,
+          1,
+          1
+        ]
+      ]
+    },
+    "schema_sql": "CREATE TABLE student_grades (course_id INT, grade VARCHAR(2)); INSERT INTO student_grades VALUES (101, 'A'), (101, 'B'), (101, 'A'), (102, 'C'), (102, 'F'), (101, 'C');",
+    "expected_output": [
+      {
+        "columns": [
+          "course_id",
+          "grade_a",
+          "grade_b",
+          "grade_c",
+          "grade_f"
+        ],
+        "values": [
+          [
+            101,
+            2,
+            1,
+            1,
+            0
+          ],
+          [
+            102,
+            0,
+            0,
+            1,
+            1
+          ]
+        ]
+      }
+    ],
+    "solution_sql": "SELECT course_id, SUM(CASE WHEN grade = 'A' THEN 1 ELSE 0 END) AS grade_a, SUM(CASE WHEN grade = 'B' THEN 1 ELSE 0 END) AS grade_b, SUM(CASE WHEN grade = 'C' THEN 1 ELSE 0 END) AS grade_c, SUM(CASE WHEN grade = 'F' THEN 1 ELSE 0 END) AS grade_f FROM student_grades GROUP BY course_id ORDER BY course_id;",
+    "category": "Conditional Logic"
   }
 ]
