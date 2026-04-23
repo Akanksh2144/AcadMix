@@ -1184,6 +1184,79 @@ add("sql-120","Surge Pricing: Rides Above 2x Average","Ride-Sharing (Ola)","Uber
 RIDE_T,RIDE_S,(["id","name","fare","avg_fare","surge_multiple"],[]),
 "SELECT r.id,r2.name,r.fare,ROUND((SELECT AVG(fare) FROM rides WHERE status='completed'))AS avg_fare,ROUND(r.fare/(SELECT AVG(fare) FROM rides WHERE status='completed'),1)AS surge_multiple FROM rides r JOIN riders r2 ON r.rider_id=r2.id WHERE r.status='completed' AND r.fare>2*(SELECT AVG(fare) FROM rides WHERE status='completed')ORDER BY r.fare DESC;",topic="Surge / Outlier Detection")
 
+
+# ═══ BATCH 13: Enterprise + Indian IT + More Startup Patterns ═══
+
+add("sql-121","Best-Selling Product Per Month","E-Commerce (Flipkart)","Amazon","hard",
+"Find the best-selling product (by quantity) for each month.\n\nReturn month_num, product_name, total_qty. Order by month_num.",
+"CTE: SUM qty per product per month, ROW_NUMBER per month partition.",
+"Jan: which product sold most? Feb? Mar?",
+ECOM_T,ECOM_S,(["month_num","product_name","total_qty"],[["01","Laptop",1],["02","Laptop",1],["03","Sneakers",1]]),
+"WITH monthly_sales AS(SELECT strftime('%m',o.order_date)AS month_num,p.product_name,SUM(oi.qty)AS total_qty FROM orders o JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id GROUP BY strftime('%m',o.order_date),p.product_name),ranked AS(SELECT *,ROW_NUMBER() OVER(PARTITION BY month_num ORDER BY total_qty DESC)AS rn FROM monthly_sales)SELECT month_num,product_name,total_qty FROM ranked WHERE rn=1 ORDER BY month_num;",topic="Best-Selling per Period")
+
+add("sql-122","Items Frequently Bought Together","E-Commerce (Flipkart)","Amazon","hard",
+"Find pairs of products that appear in the same order. Show each unique pair once.\n\nReturn product_a, product_b, times_together. Order by times_together descending.",
+"Self-join order_items on order_id where product_id differs, deduplicate pairs.",
+"Which products co-occur in orders?",
+ECOM_T,ECOM_S,(["product_a","product_b","times_together"],[["Headphones","Laptop",2],["Laptop","T-Shirt",1],["Headphones","T-Shirt",1],["Python Book","Sneakers",1],["Python Book","T-Shirt",1],["Sneakers","T-Shirt",1]]),
+"SELECT p1.product_name AS product_a,p2.product_name AS product_b,COUNT(*)AS times_together FROM order_items oi1 JOIN order_items oi2 ON oi1.order_id=oi2.order_id AND oi1.product_id<oi2.product_id JOIN products p1 ON oi1.product_id=p1.id JOIN products p2 ON oi2.product_id=p2.id GROUP BY p1.product_name,p2.product_name ORDER BY times_together DESC;",topic="Market Basket Analysis")
+
+add("sql-123","Restaurant With Highest Average Order","Food Delivery (Zomato)","Swiggy","medium",
+"Find the restaurant with the highest average order amount.\n\nReturn restaurant name, avg_order (rounded to 0), and total_orders.",
+"JOIN restaurants to orders, GROUP BY, ORDER BY AVG DESC LIMIT 1.",
+"Which restaurant has the richest orders on average?",
+ZOMATO_T,ZOMATO_S,(["name","avg_order","total_orders"],[["Dosa Corner",600,1]]),
+"SELECT r.name,ROUND(AVG(o.amount))AS avg_order,COUNT(*)AS total_orders FROM restaurants r JOIN orders o ON r.id=o.rest_id GROUP BY r.name ORDER BY avg_order DESC LIMIT 1;",topic="Highest Average per Group")
+
+add("sql-124","Cuisine-Wise Revenue Share","Food Delivery (Zomato)","Zomato","medium",
+"Calculate what percentage of total revenue each cuisine type generates.\n\nReturn cuisine, total_revenue, and pct (rounded to 1). Order by pct descending.",
+"SUM per cuisine / grand total * 100.",
+"Indian, Chinese, etc. revenue shares.",
+ZOMATO_T,ZOMATO_S,(["cuisine","total_revenue","pct"],[["Indian",1900.0,35.5],["South Indian",1400.0,26.2],["Chinese",1200.0,22.4],["American",450.0,8.4],["Italian",400.0,7.5]]),
+"SELECT r.cuisine,SUM(o.amount)AS total_revenue,ROUND(SUM(o.amount)*100.0/(SELECT SUM(amount) FROM orders),1)AS pct FROM restaurants r JOIN orders o ON r.id=o.rest_id GROUP BY r.cuisine ORDER BY pct DESC;",topic="Revenue Share by Category")
+
+add("sql-125","Simulate Return Rate by Category","E-Commerce (Flipkart)","Myntra","medium",
+"Treat 'cancelled' orders as returns. Calculate the return rate per product category.\n\nReturn category, total_orders, cancelled_orders, return_rate_pct (rounded to 1). Order by return_rate descending.",
+"JOIN orders→order_items→products. Conditional count of cancelled.",
+"Which category has the most cancellations?",
+ECOM_T,ECOM_S,(["category","total_orders","cancelled_orders","return_rate_pct"],[["Fashion",3,1,33.3],["Electronics",6,0,0.0],["Books",2,0,0.0]]),
+"SELECT p.category,COUNT(*)AS total_orders,SUM(CASE WHEN o.status='cancelled' THEN 1 ELSE 0 END)AS cancelled_orders,ROUND(SUM(CASE WHEN o.status='cancelled' THEN 1 ELSE 0 END)*100.0/COUNT(*),1)AS return_rate_pct FROM orders o JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id GROUP BY p.category ORDER BY return_rate_pct DESC;",topic="Return / Cancellation Rate")
+
+add("sql-126","Daily Active Transacting Users","Payments (Paytm)","Paytm","easy",
+"Count the number of distinct users who made a successful payment on each day.\n\nReturn pay_date and active_users. Order by pay_date.",
+"COUNT(DISTINCT user_id) WHERE status='success' GROUP BY pay_date.",
+"Jan 10: Aarav. Jan 13: Bhavna. Jan 15: Aarav. etc.",
+PAY_T,PAY_S,(["pay_date","active_users"],[["2024-01-10",1],["2024-01-13",1],["2024-01-15",1],["2024-01-20",1],["2024-01-22",1],["2024-02-01",1],["2024-02-10",1],["2024-02-15",1],["2024-03-01",1],["2024-03-05",1]]),
+"SELECT pay_date,COUNT(DISTINCT user_id)AS active_users FROM payments WHERE status='success' GROUP BY pay_date ORDER BY pay_date;",topic="Daily Active Users (Transacting)")
+
+add("sql-127","Driver Utilization: Rides Per Driver Per Month","Ride-Sharing (Ola)","Uber","hard",
+"Calculate each driver's ride count per month and their utilization rate compared to the busiest driver that month.\n\nReturn month, driver_name, rides, max_rides_that_month, utilization_pct (rounded). Order by month, rides descending.",
+"CTE for monthly rides, window MAX for max per month.",
+"Ramesh dominates in January.",
+RIDE_T,RIDE_S,(["month","driver_name","rides","max_rides","utilization_pct"],[["01","Ramesh",3,3,100],["01","Kavita",1,3,33],["01","Sunil",1,3,33],["02","Mohan",1,2,50],["02","Ramesh",1,2,50],["02","Lakshmi",1,2,50],["03","Ramesh",1,2,50],["03","Sunil",1,2,50]]),
+"WITH monthly AS(SELECT strftime('%m',r.ride_date)AS month,d.name AS driver_name,COUNT(*)AS rides FROM rides r JOIN drivers d ON r.driver_id=d.id GROUP BY strftime('%m',r.ride_date),d.name)SELECT month,driver_name,rides,MAX(rides) OVER(PARTITION BY month)AS max_rides,ROUND(rides*100/MAX(rides) OVER(PARTITION BY month))AS utilization_pct FROM monthly ORDER BY month,rides DESC;",topic="Utilization Rate Analysis")
+
+add("sql-128","SLA Breach: Late Appointments","Healthcare / Hospital","ServiceNow","medium",
+"Find appointments where the doctor saw the patient more than 2 days after the appointment date (simulated SLA breach). Since we only have appointment_date, find appointments where the date is before '2024-01-10' as overdue.\n\nReturn patient name, doctor name, date. Order by date.",
+"Simple date filter as SLA simulation.",
+"Early appointments that could be 'overdue'.",
+HOSPITAL_T,HOSPITAL_S,(["patient","doctor","appointment_date"],[["Amit","Dr. Sharma","2024-01-05"],["Priya","Dr. Gupta","2024-01-08"]]),
+"SELECT p.name AS patient,d.name AS doctor,a.appointment_date FROM appointments a JOIN patients p ON a.patient_id=p.id JOIN doctors d ON a.doc_id=d.id WHERE a.appointment_date<'2024-01-10' ORDER BY a.appointment_date;",topic="SLA Breach Detection")
+
+add("sql-129","Salary Above Department Average (Correlated)","HR / Employee","Accenture","medium",
+"Using a correlated subquery, find employees whose salary is above their department's average.\n\nReturn name, department, salary. Order by department, salary descending.",
+"WHERE salary > (SELECT AVG(salary) FROM employees e2 WHERE e2.department = e.department).",
+"Uses correlated subquery instead of JOIN.",
+EMP_T,EMP_S,(["name","department","salary"],[["Alice","Engineering",70000],["Eve","Engineering",65000],["Bob","Marketing",60000]]),
+"SELECT name,department,salary FROM employees e WHERE salary>(SELECT AVG(salary) FROM employees e2 WHERE e2.department=e.department)ORDER BY department,salary DESC;",topic="Correlated Subquery")
+
+add("sql-130","Fiscal Quarter Revenue Report","E-Commerce (Flipkart)","Deloitte","medium",
+"Generate a quarterly revenue report. Map months to fiscal quarters: Q1(Jan-Mar), Q2(Apr-Jun), Q3(Jul-Sep), Q4(Oct-Dec).\n\nReturn quarter, order_count, and total_revenue. Order by quarter.",
+"CASE on strftime('%m') to assign quarter, GROUP BY quarter.",
+"All our orders are in Q1 2024.",
+ECOM_T,ECOM_S,(["quarter","order_count","total_revenue"],[["Q1",7,126898.0]]),
+"SELECT CASE WHEN CAST(strftime('%m',order_date)AS INT) BETWEEN 1 AND 3 THEN 'Q1' WHEN CAST(strftime('%m',order_date)AS INT) BETWEEN 4 AND 6 THEN 'Q2' WHEN CAST(strftime('%m',order_date)AS INT) BETWEEN 7 AND 9 THEN 'Q3' ELSE 'Q4' END AS quarter,COUNT(*)AS order_count,SUM(total)AS total_revenue FROM orders GROUP BY quarter ORDER BY quarter;",topic="Fiscal Quarter Reporting")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
