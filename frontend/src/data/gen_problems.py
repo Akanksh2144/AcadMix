@@ -966,12 +966,12 @@ add("sql-098","Top-2 Posts Per User (With Ties)","Social Media (Instagram)","Met
 SOCIAL_T,SOCIAL_S,(["username","content","likes","post_rank"],[["ankit_dev","Deployed to production!",95,1],["ankit_dev","SQL is amazing",42,2],["priya_codes","My first open source PR!",88,1],["priya_codes","Python vs JavaScript",56,2],["rohan_js","Built a REST API",15,1],["sneha_ml","Deep learning notes",33,1],["vikram_sql","SQL window functions",71,1]]),
 "SELECT username,content,likes,post_rank FROM(SELECT pr.username,p.content,p.likes,DENSE_RANK() OVER(PARTITION BY p.user_id ORDER BY p.likes DESC)AS post_rank FROM posts p JOIN profiles pr ON p.user_id=pr.id)WHERE post_rank<=2 ORDER BY username,post_rank;",topic="Top-N Per Group with Ties")
 
-add("sql-099","Cross-Domain: Riders Who Are Customers","Ride-Sharing (Ola)","Flipkart","hard",
-"Find people whose name appears in BOTH the riders table (Ride-Sharing) AND the customers table (E-Commerce) by matching on name.\n\nReturn name and both their city from riders and city from customers.",
-"JOIN riders r ON r.name = customers c.name — cross-schema name match.",
-"No names match between the two schemas, so result is empty.",
+add("sql-099","Riders Who Are Also Drivers (Name Match)","Ride-Sharing (Ola)","Flipkart","hard",
+"Find people whose name appears in BOTH the riders table AND the drivers table.\n\nReturn name.",
+"Use INTERSECT or IN subquery to find overlapping names.",
+"No names overlap between riders and drivers.",
 RIDE_T,RIDE_S,(["name"],[]),
-"SELECT r.name FROM riders r WHERE r.name IN(SELECT c.name FROM customers c);",topic="Cross-Schema Matching")
+"SELECT r.name FROM riders r WHERE r.name IN(SELECT d.name FROM drivers d);",topic="Cross-Table Name Matching")
 
 add("sql-100","Grand Pipeline: Complete E-Commerce Report","E-Commerce (Flipkart)","Goldman Sachs","hard",
 "Build a complete business report using a multi-CTE pipeline:\n1. Calculate per-customer stats (orders, spending)\n2. Rank customers by spending\n3. Add their most-bought category\n\nReturn name, total_orders, total_spent, spending_rank, top_category. Order by spending_rank.",
@@ -1047,7 +1047,7 @@ add("sql-105","Consecutive Numbers (LC #180)","Social Media (Instagram)","Google
 "Use LAG/LEAD to check consecutive dates, or row_number gap technique.",
 "Aarav: Jan10,11,12(3 consecutive✓). Chirag: not posting on consecutive days.",
 LOGIN_T,LOGIN_S,(["name"],[["Aarav"],["Chirag"],["Eshan"]]),
-"WITH dated AS(SELECT user_id,login_date,login_date - ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY login_date) AS grp FROM(SELECT DISTINCT user_id,login_date FROM logins)),streaks AS(SELECT user_id,grp,COUNT(*)AS streak FROM dated GROUP BY user_id,grp HAVING COUNT(*)>=3)SELECT DISTINCT u.name FROM streaks s JOIN users u ON s.user_id=u.id ORDER BY u.name;",topic="Gaps & Islands: Consecutive Days")
+"WITH dated AS(SELECT user_id,login_date,JULIANDAY(login_date)-ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY login_date)AS grp FROM(SELECT DISTINCT user_id,login_date FROM logins)),streaks AS(SELECT user_id,grp,COUNT(*)AS streak FROM dated GROUP BY user_id,grp HAVING COUNT(*)>=3)SELECT DISTINCT u.name FROM streaks s JOIN users u ON s.user_id=u.id ORDER BY u.name;",topic="Gaps & Islands: Consecutive Days")
 
 add("sql-106","Month-over-Month Revenue Growth","E-Commerce (Flipkart)","Goldman Sachs","hard",
 "Calculate MoM revenue growth percentage.\n\nReturn month_num, revenue, prev_month_revenue, and growth_pct (rounded to 1). Order by month_num.",
@@ -1591,12 +1591,12 @@ add("sql-176","Window: Difference From Previous Row","Payments (Paytm)","Juspay"
 PAY_T,PAY_S,(["pay_date","amount","prev_amount","difference"],[["2024-01-10",500.0,None,None],["2024-01-15",1200.0,500.0,700.0],["2024-02-10",700.0,1200.0,-500.0],["2024-03-05",900.0,700.0,200.0]]),
 "SELECT pay_date,amount,LAG(amount) OVER(ORDER BY pay_date)AS prev_amount,amount-LAG(amount) OVER(ORDER BY pay_date)AS difference FROM payments WHERE user_id=1 AND status='success' ORDER BY pay_date;",topic="Row-to-Row Difference")
 
-add("sql-177","INTERSECT: Users in Both Schemas","Login / Activity","Microsoft","medium",
-"Find names that appear in BOTH the users table (Login schema) and the riders table (Ride-Sharing schema).\n\nReturn name.",
-"SELECT name FROM users INTERSECT SELECT name FROM riders.",
-"Check for overlapping names.",
-LOGIN_T,LOGIN_S,(["name"],[["Aarav"],["Bhavna"],["Chirag"],["Diya"],["Eshan"]]),
-"SELECT name FROM users INTERSECT SELECT name FROM riders ORDER BY name;",topic="INTERSECT / Set Intersection")
+add("sql-177","INTERSECT: Users Who Logged In Jan 10 AND Jan 11","Login / Activity","Microsoft","medium",
+"Find users who logged in on BOTH January 10 AND January 11 using INTERSECT.\n\nReturn name. Order by name.",
+"SELECT user_id FROM logins WHERE date='Jan10' INTERSECT SELECT user_id FROM logins WHERE date='Jan11'.",
+"Users active on both consecutive days.",
+LOGIN_T,LOGIN_S,(["name"],[["Aarav"],["Chirag"],["Eshan"]]),
+"SELECT u.name FROM users u WHERE u.id IN(SELECT user_id FROM logins WHERE login_date='2024-01-10' INTERSECT SELECT user_id FROM logins WHERE login_date='2024-01-11')ORDER BY u.name;",topic="INTERSECT / Set Intersection")
 
 add("sql-178","Conditional Aggregation: Pass/Fail Count","University / Education","Zoho","easy",
 "Count students who passed (grade A or B) vs failed (grade C or below) per course.\n\nReturn course_name, passed, failed. Order by course_name.",

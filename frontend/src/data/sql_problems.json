@@ -26541,14 +26541,14 @@
   },
   {
     "id": "sql-099",
-    "title": "Cross-Domain: Riders Who Are Customers",
+    "title": "Riders Who Are Also Drivers (Name Match)",
     "dataset_theme": "Ride-Sharing (Ola)",
     "company_tag": "Flipkart",
     "difficulty": "hard",
-    "topic": "Cross-Schema Matching",
-    "problem_statement": "Find people whose name appears in BOTH the riders table (Ride-Sharing) AND the customers table (E-Commerce) by matching on name.\n\nReturn name and both their city from riders and city from customers.",
-    "hint": "JOIN riders r ON r.name = customers c.name \u2014 cross-schema name match.",
-    "explanation": "No names match between the two schemas, so result is empty.",
+    "topic": "Cross-Table Name Matching",
+    "problem_statement": "Find people whose name appears in BOTH the riders table AND the drivers table.\n\nReturn name.",
+    "hint": "Use INTERSECT or IN subquery to find overlapping names.",
+    "explanation": "No names overlap between riders and drivers.",
     "tables_meta": [
       {
         "name": "drivers",
@@ -26779,7 +26779,7 @@
         "values": []
       }
     ],
-    "solution_sql": "SELECT r.name FROM riders r WHERE r.name IN(SELECT c.name FROM customers c);"
+    "solution_sql": "SELECT r.name FROM riders r WHERE r.name IN(SELECT d.name FROM drivers d);"
   },
   {
     "id": "sql-100",
@@ -27919,7 +27919,7 @@
         ]
       }
     ],
-    "solution_sql": "WITH dated AS(SELECT user_id,login_date,login_date - ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY login_date) AS grp FROM(SELECT DISTINCT user_id,login_date FROM logins)),streaks AS(SELECT user_id,grp,COUNT(*)AS streak FROM dated GROUP BY user_id,grp HAVING COUNT(*)>=3)SELECT DISTINCT u.name FROM streaks s JOIN users u ON s.user_id=u.id ORDER BY u.name;"
+    "solution_sql": "WITH dated AS(SELECT user_id,login_date,JULIANDAY(login_date)-ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY login_date)AS grp FROM(SELECT DISTINCT user_id,login_date FROM logins)),streaks AS(SELECT user_id,grp,COUNT(*)AS streak FROM dated GROUP BY user_id,grp HAVING COUNT(*)>=3)SELECT DISTINCT u.name FROM streaks s JOIN users u ON s.user_id=u.id ORDER BY u.name;"
   },
   {
     "id": "sql-106",
@@ -44474,14 +44474,14 @@
   },
   {
     "id": "sql-177",
-    "title": "INTERSECT: Users in Both Schemas",
+    "title": "INTERSECT: Users Who Logged In Jan 10 AND Jan 11",
     "dataset_theme": "Login / Activity",
     "company_tag": "Microsoft",
     "difficulty": "medium",
     "topic": "INTERSECT / Set Intersection",
-    "problem_statement": "Find names that appear in BOTH the users table (Login schema) and the riders table (Ride-Sharing schema).\n\nReturn name.",
-    "hint": "SELECT name FROM users INTERSECT SELECT name FROM riders.",
-    "explanation": "Check for overlapping names.",
+    "problem_statement": "Find users who logged in on BOTH January 10 AND January 11 using INTERSECT.\n\nReturn name. Order by name.",
+    "hint": "SELECT user_id FROM logins WHERE date='Jan10' INTERSECT SELECT user_id FROM logins WHERE date='Jan11'.",
+    "explanation": "Users active on both consecutive days.",
     "tables_meta": [
       {
         "name": "users",
@@ -44615,13 +44615,7 @@
           "Aarav"
         ],
         [
-          "Bhavna"
-        ],
-        [
           "Chirag"
-        ],
-        [
-          "Diya"
         ],
         [
           "Eshan"
@@ -44639,13 +44633,7 @@
             "Aarav"
           ],
           [
-            "Bhavna"
-          ],
-          [
             "Chirag"
-          ],
-          [
-            "Diya"
           ],
           [
             "Eshan"
@@ -44653,7 +44641,7 @@
         ]
       }
     ],
-    "solution_sql": "SELECT name FROM users INTERSECT SELECT name FROM riders ORDER BY name;"
+    "solution_sql": "SELECT u.name FROM users u WHERE u.id IN(SELECT user_id FROM logins WHERE login_date='2024-01-10' INTERSECT SELECT user_id FROM logins WHERE login_date='2024-01-11')ORDER BY u.name;"
   },
   {
     "id": "sql-178",
