@@ -2973,6 +2973,78 @@ add("sql-370","Doctors With Below-Average Fees","Healthcare / Hospital","Capgemi
 HOSPITAL_T,HOSPITAL_S,(["name","avg_fee"],[["Dr. Gupta",400]]),
 "SELECT d.name,ROUND(AVG(a.fee),0)AS avg_fee FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.name HAVING AVG(a.fee)<(SELECT AVG(fee) FROM appointments) ORDER BY avg_fee;",topic="HAVING vs Global AVG")
 
+# ═══ BATCH 37: Capgemini Scale-Up (10 of 14) ═══
+
+add("sql-371","Order Size Classification","E-Commerce (Flipkart)","Capgemini","easy",
+"Classify orders: 'Small' (<1000), 'Medium' (1000-10000), 'Large' (>10000).\n\nReturn order_id, total, size. Order by total DESC.",
+"CASE WHEN total > 10000 THEN 'Large'...",
+"55450=Large, 55000=Large, 6900=Medium, etc.",
+ECOM_T,ECOM_S,(["order_id","total","size"],[[4,55450.0,"Large"],[2,55000.0,"Large"],[6,6900.0,"Medium"],[3,3299.0,"Medium"],[1,2500.0,"Medium"],[5,450.0,"Small"],[7,3299.0,"Medium"]]),
+"SELECT id AS order_id,total,CASE WHEN total>10000 THEN 'Large' WHEN total>=1000 THEN 'Medium' ELSE 'Small' END AS size FROM orders ORDER BY total DESC;",topic="CASE Order Size")
+
+add("sql-372","Unique Diagnoses in Hospital","Healthcare / Hospital","Capgemini","easy",
+"List all unique diagnoses recorded in appointments.\n\nReturn diagnosis. Order by diagnosis.",
+"SELECT DISTINCT diagnosis.",
+"All unique medical conditions.",
+HOSPITAL_T,HOSPITAL_S,(["diagnosis"],[["Back Pain"],["Flu"],["Heart Checkup"],["Hypertension"],["Skin Allergy"],["Sprain"]]),
+"SELECT DISTINCT diagnosis FROM appointments ORDER BY diagnosis;",topic="DISTINCT Diagnoses")
+
+add("sql-373","Employee Row Number by Hire Date","HR / Employee","Capgemini","easy",
+"Assign row numbers to employees ordered by hire date.\n\nReturn row_num, name, hire_date. Order by row_num.",
+"ROW_NUMBER() OVER(ORDER BY hire_date).",
+"Sequential numbering by seniority.",
+EMP_T,EMP_S,(["row_num","name","hire_date"],[[1,"Alice","2019-01-15"],[2,"Bob","2020-03-01"],[3,"Charlie","2020-06-10"],[4,"Diana","2021-01-20"],[5,"Eve","2021-08-05"],[6,"Frank","2022-02-14"]]),
+"SELECT ROW_NUMBER() OVER(ORDER BY hire_date)AS row_num,name,hire_date FROM employees ORDER BY row_num;",topic="ROW_NUMBER by Seniority")
+
+add("sql-374","Days Between Restaurant Orders","Food Delivery (Zomato)","Capgemini","hard",
+"For each order, show the number of days since the previous order (for the same restaurant).\n\nReturn restaurant name, order_date, days_gap. Order by name, order_date.",
+"LAG(order_date) OVER(PARTITION BY rest_id ORDER BY order_date).",
+"Track order frequency per restaurant.",
+ZOMATO_T,ZOMATO_S,(["name","order_date","days_gap"],[]),
+"SELECT r.name,o.order_date,CAST(JULIANDAY(o.order_date)-JULIANDAY(LAG(o.order_date) OVER(PARTITION BY o.rest_id ORDER BY o.order_date))AS INT)AS days_gap FROM orders o JOIN restaurants r ON o.rest_id=r.id ORDER BY r.name,o.order_date;",topic="LAG Date Gap Per Group")
+
+add("sql-375","Top Rider by Total Spend","Ride-Sharing (Ola)","Capgemini","easy",
+"Find the rider who spent the most on rides.\n\nReturn name, total_spent.",
+"JOIN + SUM + ORDER DESC LIMIT 1.",
+"Highest total fare across all rides.",
+RIDE_T,RIDE_S,(["name","total_spent"],[]),
+"SELECT ri.name,SUM(r.fare)AS total_spent FROM riders ri JOIN rides r ON ri.id=r.rider_id GROUP BY ri.name ORDER BY total_spent DESC LIMIT 1;",topic="Top Rider Spend")
+
+add("sql-376","Average Salary by Hire Year","HR / Employee","Capgemini","medium",
+"Calculate average salary per hire year.\n\nReturn hire_year, avg_salary (rounded to 0). Order by hire_year.",
+"SUBSTR(hire_date,1,4) GROUP BY, AVG.",
+"Average salary grouped by year of hire.",
+EMP_T,EMP_S,(["hire_year","avg_salary"],[["2019",70000],["2020",57500],["2021",57500],["2022",45000]]),
+"SELECT SUBSTR(hire_date,1,4)AS hire_year,ROUND(AVG(salary),0)AS avg_salary FROM employees GROUP BY SUBSTR(hire_date,1,4) ORDER BY hire_year;",topic="AVG Per Hire Year")
+
+add("sql-377","Cheapest Product in Each Order","E-Commerce (Flipkart)","Capgemini","medium",
+"Find the cheapest product in each order.\n\nReturn order_id, product name, price. Order by order_id.",
+"ROW_NUMBER PARTITION BY order_id ORDER BY price ASC, rn=1.",
+"Lowest-price item per order.",
+ECOM_T,ECOM_S,(["order_id","name","price"],[]),
+"SELECT order_id,name,price FROM(SELECT oi.order_id,p.name,p.price,ROW_NUMBER() OVER(PARTITION BY oi.order_id ORDER BY p.price ASC)AS rn FROM order_items oi JOIN products p ON oi.product_id=p.id)t WHERE rn=1 ORDER BY order_id;",topic="Cheapest Per Order (Window)")
+
+add("sql-378","High-Frequency Login Users","Login / Activity","Capgemini","medium",
+"Find users who logged in more than 3 times.\n\nReturn user_id, login_count. Order by login_count DESC.",
+"GROUP BY user_id HAVING COUNT > 3.",
+"High-frequency users.",
+LOGIN_T,LOGIN_S,(["user_id","login_count"],[]),
+"SELECT user_id,COUNT(*)AS login_count FROM logins GROUP BY user_id HAVING COUNT(*)>3 ORDER BY login_count DESC;",topic="HAVING Frequent Logins")
+
+add("sql-379","Restaurant Revenue Share Percent","Food Delivery (Zomato)","Capgemini","hard",
+"Show each restaurant's revenue as a percentage of total platform revenue.\n\nReturn name, revenue, pct (rounded to 1). Order by pct DESC.",
+"SUM(amount) / SUM(amount) OVER() * 100.",
+"Each restaurant's share of total revenue.",
+ZOMATO_T,ZOMATO_S,(["name","revenue","pct"],[["Pizza Palace",1350.0,41.9],["Biryani House",1230.0,38.1],["Dragon Wok",510.0,15.8],["Burger Barn",130.0,4.0],["Dosa Corner",10.0,0.3]]),
+"SELECT name,revenue,ROUND(revenue*100.0/SUM(revenue) OVER(),1)AS pct FROM(SELECT r.name,SUM(o.amount)AS revenue FROM restaurants r JOIN orders o ON r.id=o.rest_id GROUP BY r.name)t ORDER BY pct DESC;",topic="Revenue Share Percent")
+
+add("sql-380","Delivered vs Pending Revenue","E-Commerce (Flipkart)","Capgemini","medium",
+"Compare total revenue from delivered orders vs non-delivered.\n\nReturn status_group, total_revenue. Order by total_revenue DESC.",
+"CASE status='delivered' then 'Delivered' else 'Other'.",
+"Delivered total vs all other statuses.",
+ECOM_T,ECOM_S,(["status_group","total_revenue"],[["Delivered",120350.0],["Other",6598.0]]),
+"SELECT CASE WHEN status='delivered' THEN 'Delivered' ELSE 'Other' END AS status_group,SUM(total)AS total_revenue FROM orders GROUP BY status_group ORDER BY total_revenue DESC;",topic="CASE Status Grouping")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
