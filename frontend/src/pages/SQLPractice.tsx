@@ -100,6 +100,9 @@ const SQLPractice = ({ navigate, user }: any) => {
   const [problems, setProblems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProblem, setSelectedProblem] = useState<any>(null);
+  const [filterDiff, setFilterDiff] = useState('all');
+  const [filterCompany, setFilterCompany] = useState('all');
+  const [filterTopic, setFilterTopic] = useState('all');
   const [statusMap, setStatusMap] = useState<Record<string, 'started' | 'solved'>>(() => {
     try { return JSON.parse(localStorage.getItem('sql_status') || '{}'); } catch { return {}; }
   });
@@ -290,9 +293,49 @@ const SQLPractice = ({ navigate, user }: any) => {
             <CheckCircle size={24} weight="fill" className="text-emerald-500 shrink-0" />
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {problems.map((p: any, i: number) => {
-            const status = statusMap[p.id] || 'unsolved'; // 'unsolved' | 'started' | 'solved'
+
+        {/* ── Filters ── */}
+        {(() => {
+          const companies = ['all', ...Array.from(new Set(problems.map((p: any) => p.company_tag).filter(Boolean))).sort()];
+          const topics = ['all', ...Array.from(new Set(problems.map((p: any) => p.topic).filter(Boolean))).sort()];
+          const selectCls = 'bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer';
+          return (
+            <div className="flex flex-wrap gap-3 items-center">
+              <select value={filterDiff} onChange={e => setFilterDiff(e.target.value)} className={selectCls}>
+                <option value="all">All Difficulties</option>
+                <option value="easy">🟢 Easy</option>
+                <option value="medium">🟡 Medium</option>
+                <option value="hard">🔴 Hard</option>
+              </select>
+              <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} className={selectCls}>
+                {companies.map(c => <option key={c} value={c}>{c === 'all' ? 'All Companies' : `🏢 ${c}`}</option>)}
+              </select>
+              <select value={filterTopic} onChange={e => setFilterTopic(e.target.value)} className={selectCls}>
+                {topics.map(t => <option key={t} value={t}>{t === 'all' ? 'All Topics' : `📘 ${t}`}</option>)}
+              </select>
+              {(filterDiff !== 'all' || filterCompany !== 'all' || filterTopic !== 'all') && (
+                <button onClick={() => { setFilterDiff('all'); setFilterCompany('all'); setFilterTopic('all'); }}
+                  className="text-xs font-bold text-red-500 hover:text-red-400 transition-colors px-2 py-1">
+                  ✕ Clear Filters
+                </button>
+              )}
+            </div>
+          );
+        })()}
+
+        {(() => {
+          const filtered = problems.filter((p: any) => {
+            if (filterDiff !== 'all' && p.difficulty !== filterDiff) return false;
+            if (filterCompany !== 'all' && p.company_tag !== filterCompany) return false;
+            if (filterTopic !== 'all' && p.topic !== filterTopic) return false;
+            return true;
+          });
+          return (
+          <>
+          <p className="text-xs font-bold text-slate-400">{filtered.length} of {problems.length} problems</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filtered.map((p: any, i: number) => {
+            const status = statusMap[p.id] || 'unsolved';
             const badgeColor = status === 'solved' ? 'bg-emerald-500 shadow-emerald-500/30'
               : status === 'started' ? 'bg-red-500 shadow-red-500/30'
               : 'bg-slate-300 dark:bg-slate-600 shadow-slate-300/30';
@@ -320,11 +363,15 @@ const SQLPractice = ({ navigate, user }: any) => {
               <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
                 <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 py-1 px-2 rounded"><TableIcon size={14} /> {p.dataset_theme}</span>
                 {p.company_tag && <span className="bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 py-1 px-2 rounded">🏢 {p.company_tag}</span>}
+                {p.topic && <span className="bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 py-1 px-2 rounded">📘 {p.topic}</span>}
                 {tagLabel && <span className={`ml-auto py-1 px-2 rounded ${tagColor}`}>{tagLabel}</span>}
               </div>
             </motion.div>);
           })}
-        </div>
+          </div>
+          </>
+          );
+        })()}
       </div>
     </div>
   );
