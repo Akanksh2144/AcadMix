@@ -493,27 +493,19 @@ const SQLPractice = ({ navigate, user }: any) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filtered.map((p: any, i: number) => {
             const status = statusMap[p.id] || 'unsolved';
-            const badgeColor = status === 'solved' ? 'bg-emerald-500 shadow-emerald-500/30'
-              : status === 'started' ? 'bg-red-500 shadow-red-500/30'
-              : 'bg-slate-300 dark:bg-slate-600 shadow-slate-300/30';
             const borderColor = status === 'solved' ? 'border-emerald-300 dark:border-emerald-500/30 hover:border-emerald-400'
               : status === 'started' ? 'border-red-300 dark:border-red-500/30 hover:border-red-400'
               : 'border-slate-200 dark:border-white/10 hover:border-indigo-500';
             const titleColor = status === 'solved' ? 'text-emerald-700 dark:text-emerald-400'
               : status === 'started' ? 'text-red-700 dark:text-red-400'
               : 'text-slate-800 dark:text-white';
-            const tagLabel = status === 'solved' ? '✓ Solved' : null;
-            const tagColor = 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
             return (
             <motion.div key={p.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
               onClick={() => loadProblem(p)}
               className={`relative bg-white dark:bg-[#1E293B] border rounded-2xl p-5 cursor-pointer hover:shadow-xl hover:shadow-indigo-500/10 transition-all group ${borderColor}`}>
-              {/* Status badge */}
-              <div className={`absolute top-3 right-3 w-7 h-7 rounded-full ${badgeColor} flex items-center justify-center shadow-md`}>
-                {status === 'started' ? <CircleHalf size={16} weight="fill" className="text-white" /> : <CheckCircle size={16} weight="fill" className="text-white" />}
-              </div>
-              <div className="flex items-start justify-between mb-3 pr-8 min-h-[3.5rem]">
-                <h3 className={`font-extrabold text-lg group-hover:text-indigo-500 transition-colors line-clamp-2 pr-2 ${titleColor}`}>{p.title}</h3>
+
+              <div className="flex items-start justify-between mb-3 min-h-[3.5rem] gap-2">
+                <h3 className={`font-extrabold text-lg group-hover:text-indigo-500 transition-colors line-clamp-2 ${titleColor}`}>{p.title}</h3>
                 <span className={`px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-widest shrink-0 ${diffColors[p.difficulty]}`}>{p.difficulty}</span>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 min-h-[2.5rem]">{p.problem_statement?.split('\n')[0]}</p>
@@ -532,15 +524,18 @@ const SQLPractice = ({ navigate, user }: any) => {
                   }
                   return tags.map((c: string, ci: number) => <CompanyLogo key={ci} name={c} size={20} />);
                 })()}
-                {tagLabel && <span className={`ml-auto py-1 px-2 rounded whitespace-nowrap shrink-0 ${tagColor}`}>{tagLabel}</span>}
               </div>
               {p.topic && <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 truncate">📘 {p.topic}</p>}
               {/* Bottom row: bookmark + DB logo */}
               <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-white/5">
-                <button onClick={(e) => { e.stopPropagation(); toggleBookmark(p.id); }}
-                  className={`p-1 rounded-lg transition-all ${bookmarks[p.id] ? 'text-amber-500 hover:text-amber-600' : 'text-slate-300 dark:text-slate-600 hover:text-amber-400 dark:hover:text-amber-500'}`}>
-                  <BookmarkSimple size={20} weight={bookmarks[p.id] ? 'fill' : 'regular'} />
-                </button>
+                <div className="flex items-center gap-3">
+                  <button onClick={(e) => { e.stopPropagation(); toggleBookmark(p.id); }}
+                    className={`p-1 -ml-1 rounded-lg transition-all ${bookmarks[p.id] ? 'text-amber-500 hover:text-amber-600' : 'text-slate-300 dark:text-slate-600 hover:text-amber-400 dark:hover:text-amber-500'}`}>
+                    <BookmarkSimple size={20} weight={bookmarks[p.id] ? 'fill' : 'regular'} />
+                  </button>
+                  {status === 'solved' && <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-500 uppercase tracking-wider"><CheckCircle size={14} weight="bold" /> Solved</span>}
+                  {status === 'started' && <span className="flex items-center gap-1 text-[10px] font-bold text-amber-500 uppercase tracking-wider"><CircleHalf size={14} weight="bold" /> Started</span>}
+                </div>
                 <img src={p.backend_only ? 'https://img.logo.dev/postgresql.org?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png' : 'https://img.logo.dev/sqlite.org?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png'} alt={p.backend_only ? 'PostgreSQL' : 'SQLite'} className="w-4 h-4 opacity-40 group-hover:opacity-70 transition-opacity object-contain" />
               </div>
             </motion.div>);
