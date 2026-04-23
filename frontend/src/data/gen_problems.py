@@ -505,6 +505,123 @@ add("sql-045","Custom Sort: Priority Status","E-Commerce (Flipkart)","Swiggy","m
 ECOM_T,ECOM_S,(["id","order_date","total","status"],[[1004,"2024-02-20",55450.0,"shipped"],[1001,"2024-01-10",57500.0,"delivered"],[1002,"2024-01-15",3299.0,"delivered"],[1003,"2024-02-05",799.0,"delivered"],[1006,"2024-03-10",6900.0,"delivered"],[1007,"2024-03-15",450.0,"delivered"],[1005,"2024-03-01",2500.0,"cancelled"]]),
 "SELECT id,order_date,total,status FROM orders ORDER BY CASE WHEN status='shipped' THEN 1 WHEN status='delivered' THEN 2 ELSE 3 END,order_date;",topic="ORDER BY with CASE")
 
+# ═══ NEW SCHEMA: Social Media ═══
+
+SOCIAL_S = """CREATE TABLE profiles(id INT PRIMARY KEY,username VARCHAR,full_name VARCHAR,city VARCHAR,joined DATE);
+CREATE TABLE posts(id INT PRIMARY KEY,user_id INT,content VARCHAR,post_date DATE,likes INT);
+CREATE TABLE follows(id INT PRIMARY KEY,follower_id INT,following_id INT,follow_date DATE);
+CREATE TABLE comments(id INT PRIMARY KEY,post_id INT,user_id INT,comment VARCHAR,comment_date DATE);
+INSERT INTO profiles VALUES(1,'ankit_dev','Ankit Sharma','Mumbai','2023-01-10');
+INSERT INTO profiles VALUES(2,'priya_codes','Priya Patel','Delhi','2023-02-15');
+INSERT INTO profiles VALUES(3,'rohan_js','Rohan Gupta','Bangalore','2023-04-20');
+INSERT INTO profiles VALUES(4,'sneha_ml','Sneha Iyer','Chennai','2023-07-01');
+INSERT INTO profiles VALUES(5,'vikram_sql','Vikram Singh','Mumbai','2023-09-05');
+INSERT INTO posts VALUES(1,1,'Learning React today!','2024-01-10',25);
+INSERT INTO posts VALUES(2,1,'SQL is amazing','2024-01-15',42);
+INSERT INTO posts VALUES(3,2,'My first open source PR!','2024-01-20',88);
+INSERT INTO posts VALUES(4,3,'Built a REST API','2024-02-05',15);
+INSERT INTO posts VALUES(5,2,'Python vs JavaScript','2024-02-10',56);
+INSERT INTO posts VALUES(6,4,'Deep learning notes','2024-02-15',33);
+INSERT INTO posts VALUES(7,5,'SQL window functions','2024-03-01',71);
+INSERT INTO posts VALUES(8,1,'Deployed to production!','2024-03-05',95);
+INSERT INTO follows VALUES(1,1,2,'2023-03-01');
+INSERT INTO follows VALUES(2,1,3,'2023-05-10');
+INSERT INTO follows VALUES(3,2,1,'2023-03-05');
+INSERT INTO follows VALUES(4,2,4,'2023-08-15');
+INSERT INTO follows VALUES(5,3,1,'2023-06-01');
+INSERT INTO follows VALUES(6,3,2,'2023-06-01');
+INSERT INTO follows VALUES(7,4,2,'2023-09-01');
+INSERT INTO follows VALUES(8,5,1,'2023-10-01');
+INSERT INTO follows VALUES(9,5,3,'2023-10-01');
+INSERT INTO comments VALUES(1,2,2,'Great post!','2024-01-15');
+INSERT INTO comments VALUES(2,3,1,'Congrats!','2024-01-20');
+INSERT INTO comments VALUES(3,3,4,'Amazing work','2024-01-21');
+INSERT INTO comments VALUES(4,5,3,'I prefer Python','2024-02-11');
+INSERT INTO comments VALUES(5,7,1,'Nice writeup','2024-03-01');
+INSERT INTO comments VALUES(6,8,2,'Awesome!','2024-03-05');
+INSERT INTO comments VALUES(7,8,3,'Well done','2024-03-06');
+INSERT INTO comments VALUES(8,8,5,'Ship it!','2024-03-06');"""
+SOCIAL_T = [{"name":"profiles","columns":[{"name":"id","type":"int"},{"name":"username","type":"varchar"},{"name":"full_name","type":"varchar"},{"name":"city","type":"varchar"},{"name":"joined","type":"date"}],
+"sample_input":[[1,"ankit_dev","Ankit Sharma","Mumbai","2023-01-10"],[2,"priya_codes","Priya Patel","Delhi","2023-02-15"],[3,"rohan_js","Rohan Gupta","Bangalore","2023-04-20"],[4,"sneha_ml","Sneha Iyer","Chennai","2023-07-01"],[5,"vikram_sql","Vikram Singh","Mumbai","2023-09-05"]]},
+{"name":"posts","columns":[{"name":"id","type":"int"},{"name":"user_id","type":"int"},{"name":"content","type":"varchar"},{"name":"post_date","type":"date"},{"name":"likes","type":"int"}],
+"sample_input":[[1,1,"Learning React today!","2024-01-10",25],[2,1,"SQL is amazing","2024-01-15",42],[3,2,"My first open source PR!","2024-01-20",88],[4,3,"Built a REST API","2024-02-05",15],[5,2,"Python vs JavaScript","2024-02-10",56]]},
+{"name":"follows","columns":[{"name":"id","type":"int"},{"name":"follower_id","type":"int"},{"name":"following_id","type":"int"},{"name":"follow_date","type":"date"}],
+"sample_input":[[1,1,2,"2023-03-01"],[2,1,3,"2023-05-10"],[3,2,1,"2023-03-05"],[4,2,4,"2023-08-15"],[5,3,1,"2023-06-01"],[6,3,2,"2023-06-01"]]},
+{"name":"comments","columns":[{"name":"id","type":"int"},{"name":"post_id","type":"int"},{"name":"user_id","type":"int"},{"name":"comment","type":"varchar"},{"name":"comment_date","type":"date"}],
+"sample_input":[[1,2,2,"Great post!","2024-01-15"],[2,3,1,"Congrats!","2024-01-20"],[3,3,4,"Amazing work","2024-01-21"],[4,5,3,"I prefer Python","2024-02-11"],[5,7,1,"Nice writeup","2024-03-01"]]}]
+
+# ═══ BATCH 5: Social Media + Advanced ═══
+
+add("sql-046","GROUP_CONCAT: List All Followers","Social Media (Instagram)","Atlassian","medium",
+"For each user, show a comma-separated list of their followers' usernames.\n\nReturn username and followers_list, ordered by username.",
+"JOIN follows with profiles, use GROUP_CONCAT.",
+"ankit_dev is followed by priya_codes,rohan_js,vikram_sql.",
+SOCIAL_T,SOCIAL_S,(["username","followers_list"],[["ankit_dev","priya_codes,rohan_js,vikram_sql"],["priya_codes","ankit_dev,rohan_js,sneha_ml"],["rohan_js","ankit_dev,vikram_sql"],["sneha_ml","priya_codes"]]),
+"SELECT p.username,GROUP_CONCAT(fp.username)AS followers_list FROM profiles p JOIN follows f ON p.id=f.following_id JOIN profiles fp ON f.follower_id=fp.id GROUP BY p.username ORDER BY p.username;",topic="GROUP_CONCAT / String Aggregation")
+
+add("sql-047","Days Since Last Post","Social Media (Instagram)","Salesforce","hard",
+"For each user's post, calculate days since their previous post using LAG and JULIANDAY.\n\nReturn username, post_date, content, and days_gap (NULL for first). Order by username, post_date.",
+"Use LAG(post_date) OVER (...) and JULIANDAY difference.",
+"Ankit: Jan10→NULL, Jan15→5, Mar05→50.",
+SOCIAL_T,SOCIAL_S,(["username","post_date","content","days_gap"],[["ankit_dev","2024-01-10","Learning React today!",None],["ankit_dev","2024-01-15","SQL is amazing",5],["ankit_dev","2024-03-05","Deployed to production!",50],["priya_codes","2024-01-20","My first open source PR!",None],["priya_codes","2024-02-10","Python vs JavaScript",21],["rohan_js","2024-02-05","Built a REST API",None],["sneha_ml","2024-02-15","Deep learning notes",None],["vikram_sql","2024-03-01","SQL window functions",None]]),
+"SELECT p2.username,p.post_date,p.content,CAST(JULIANDAY(p.post_date)-JULIANDAY(LAG(p.post_date) OVER(PARTITION BY p.user_id ORDER BY p.post_date))AS INT)AS days_gap FROM posts p JOIN profiles p2 ON p.user_id=p2.id ORDER BY p2.username,p.post_date;",topic="Date Arithmetic (JULIANDAY)")
+
+add("sql-048","4-Table Join: Post Comments","Social Media (Instagram)","Zomato","medium",
+"Join all four tables to show post author username, content, commenter full name, and comment.\n\nOrder by comment_date.",
+"JOIN posts→profiles (author), comments→profiles (commenter).",
+"4-way join across profiles, posts, comments, and profiles again.",
+SOCIAL_T,SOCIAL_S,(["author","content","commenter","comment"],[["ankit_dev","SQL is amazing","Priya Patel","Great post!"],["priya_codes","My first open source PR!","Ankit Sharma","Congrats!"],["priya_codes","My first open source PR!","Sneha Iyer","Amazing work"],["priya_codes","Python vs JavaScript","Rohan Gupta","I prefer Python"],["vikram_sql","SQL window functions","Ankit Sharma","Nice writeup"],["ankit_dev","Deployed to production!","Priya Patel","Awesome!"],["ankit_dev","Deployed to production!","Rohan Gupta","Well done"],["ankit_dev","Deployed to production!","Vikram Singh","Ship it!"]]),
+"SELECT author_p.username AS author,po.content,cp.full_name AS commenter,c.comment FROM comments c JOIN posts po ON c.post_id=po.id JOIN profiles author_p ON po.user_id=author_p.id JOIN profiles cp ON c.user_id=cp.id ORDER BY c.comment_date;",topic="Multi-Join (4 Tables)")
+
+add("sql-049","NTILE: Salary Quartiles","HR / Employee","ServiceNow","hard",
+"Divide employees into salary quartiles using NTILE(4).\n\nReturn name, salary, and quartile, ordered by salary descending.",
+"Use NTILE(4) OVER (ORDER BY salary DESC).",
+"6 employees into 4 tiles: Q1 gets 2, Q2 gets 2, Q3 gets 1, Q4 gets 1.",
+EMP_T,EMP_S,(["name","salary","quartile"],[["Alice",70000,1],["Eve",65000,1],["Bob",60000,2],["Charlie",55000,2],["Diana",50000,3],["Frank",45000,3]]),
+"SELECT name,salary,NTILE(4) OVER(ORDER BY salary DESC)AS quartile FROM employees ORDER BY salary DESC;",topic="Window Functions (NTILE)")
+
+add("sql-050","FIRST_VALUE: Cheapest In Category","E-Commerce (Flipkart)","Myntra","medium",
+"For each product, show the cheapest product name in its category using FIRST_VALUE.\n\nReturn product_name, category, price, cheapest_in_category. Order by category, price.",
+"Use FIRST_VALUE(product_name) OVER (PARTITION BY category ORDER BY price).",
+"Electronics cheapest=Headphones. Fashion cheapest=T-Shirt. Books=Python Book.",
+ECOM_T,ECOM_S,(["product_name","category","price","cheapest_in_category"],[["Python Book","Books",450.0,"Python Book"],["Headphones","Electronics",2500.0,"Headphones"],["Laptop","Electronics",55000.0,"Headphones"],["T-Shirt","Fashion",799.0,"T-Shirt"],["Sneakers","Fashion",3200.0,"T-Shirt"]]),
+"SELECT product_name,category,price,FIRST_VALUE(product_name) OVER(PARTITION BY category ORDER BY price)AS cheapest_in_category FROM products ORDER BY category,price;",topic="Window Functions (FIRST_VALUE)")
+
+add("sql-051","Pivot: Orders by Status","E-Commerce (Flipkart)","Salesforce","medium",
+"Pivot report: each customer's order count by status.\n\nReturn name, delivered_count, shipped_count, cancelled_count. Order by name.",
+"Use SUM(CASE WHEN status=... THEN 1 ELSE 0 END).",
+"Ankit: 2 delivered. Priya: 1 delivered, 1 cancelled.",
+ECOM_T,ECOM_S,(["name","delivered_count","shipped_count","cancelled_count"],[["Ankit",2,0,0],["Priya",1,0,1],["Rohan",0,1,0],["Sneha",1,0,0],["Vikram",1,0,0]]),
+"SELECT c.name,SUM(CASE WHEN o.status='delivered' THEN 1 ELSE 0 END)AS delivered_count,SUM(CASE WHEN o.status='shipped' THEN 1 ELSE 0 END)AS shipped_count,SUM(CASE WHEN o.status='cancelled' THEN 1 ELSE 0 END)AS cancelled_count FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name ORDER BY c.name;",topic="Pivot with CASE WHEN")
+
+add("sql-052","Pagination: Page 2 of Posts","Social Media (Instagram)","Atlassian","easy",
+"Get the 2nd page of posts (3 per page) ordered by likes descending.\n\nReturn content and likes.",
+"Use ORDER BY likes DESC LIMIT 3 OFFSET 3.",
+"Page 1: 95,88,71. Page 2: 56,42,33.",
+SOCIAL_T,SOCIAL_S,(["content","likes"],[["Python vs JavaScript",56],["SQL is amazing",42],["Deep learning notes",33]]),
+"SELECT content,likes FROM posts ORDER BY likes DESC LIMIT 3 OFFSET 3;",topic="LIMIT / OFFSET Pagination")
+
+add("sql-053","Find Duplicate Cities","E-Commerce (Flipkart)","Myntra","easy",
+"Find cities with more than one customer.\n\nReturn city and customer_count, ordered descending.",
+"GROUP BY city, HAVING COUNT > 1.",
+"Mumbai: Ankit,Sneha = 2.",
+ECOM_T,ECOM_S,(["city","customer_count"],[["Mumbai",2]]),
+"SELECT city,COUNT(*)AS customer_count FROM customers GROUP BY city HAVING COUNT(*)>1 ORDER BY customer_count DESC;",topic="Duplicate Detection")
+
+add("sql-054","Mutual Followers","Social Media (Instagram)","Google","hard",
+"Find pairs of users who mutually follow each other.\n\nReturn user_a and user_b (alphabetically), no duplicates.",
+"Self-join follows on follower↔following symmetry.",
+"ankit_dev↔priya_codes, ankit_dev↔rohan_js are mutual.",
+SOCIAL_T,SOCIAL_S,(["user_a","user_b"],[["ankit_dev","priya_codes"],["ankit_dev","rohan_js"]]),
+"SELECT p1.username AS user_a,p2.username AS user_b FROM follows f1 JOIN follows f2 ON f1.follower_id=f2.following_id AND f1.following_id=f2.follower_id JOIN profiles p1 ON f1.follower_id=p1.id JOIN profiles p2 ON f1.following_id=p2.id WHERE p1.username<p2.username ORDER BY user_a;",topic="Self-Join / INTERSECT Logic")
+
+add("sql-055","Category Revenue Percentage","E-Commerce (Flipkart)","ServiceNow","hard",
+"Calculate what percentage of total order_items revenue each category contributes.\n\nReturn category, category_revenue, pct (rounded to 1 decimal). Order by pct descending.",
+"SUM per category / total SUM * 100.",
+"Electronics dominates with ~94.8%.",
+ECOM_T,ECOM_S,(["category","category_revenue","pct"],[["Electronics",117500.0,94.8],["Fashion",5597.0,4.5],["Books",900.0,0.7]]),
+"SELECT p.category,SUM(oi.price)AS category_revenue,ROUND(SUM(oi.price)*100.0/(SELECT SUM(price) FROM order_items),1)AS pct FROM order_items oi JOIN products p ON oi.product_id=p.id GROUP BY p.category ORDER BY pct DESC;",topic="Percentage Calculation")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
