@@ -36,9 +36,29 @@ const companyLogos: Record<string, string> = {
 };
 
 const CompanyLogo = ({ name, size = 16 }: { name: string; size?: number }) => {
+  const [error, setError] = React.useState(false);
   const domain = companyLogos[name] || `${name.toLowerCase().replace(/\s+/g, '')}.com`;
   if (!domain) return null;
-  return <img src={`https://img.logo.dev/${domain}?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png`} alt={name} title={name} className="rounded-sm shrink-0 object-contain" style={{ width: size, height: size }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />;
+  
+  if (error) {
+    return (
+      <div 
+        className="flex items-center justify-center font-bold text-white shrink-0 rounded-sm"
+        style={{ 
+          width: size, 
+          height: size, 
+          backgroundColor: `hsl(${name.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 360}, 70%, 60%)`,
+          fontSize: size * 0.6,
+          lineHeight: 1
+        }}
+        title={name}
+      >
+        {name.charAt(0).toUpperCase()}
+      </div>
+    );
+  }
+
+  return <img src={`https://img.logo.dev/${domain}?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png`} alt={name} title={name} className="rounded-sm shrink-0 object-contain bg-white" style={{ width: size, height: size }} onError={() => setError(true)} />;
 };
 
 /* ── Custom Filter Dropdown (replaces native <select>) ── */
