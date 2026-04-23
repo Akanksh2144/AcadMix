@@ -623,7 +623,7 @@ const SQLPractice = ({ navigate, user }: any) => {
       </AnimatePresence>
     </div>
 
-  /* ── Arena (Split Panel) ──────────────────────────────── */
+      {/* ── Arena (Split Panel) ──────────────────────────────── */}
       {selectedProblem && (
         <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#0F172A]">
       {/* Header */}
@@ -714,7 +714,7 @@ const SQLPractice = ({ navigate, user }: any) => {
                 </AnimatePresence>
               </>
             ) : (
-              /* Solution Tab */
+              {/* Solution Tab */}
               <div>
                 {sp.solution_sql ? (
                   <>
