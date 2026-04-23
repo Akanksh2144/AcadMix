@@ -173,6 +173,24 @@ const SQLPractice = ({ navigate, user }: any) => {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [showBookmarked, setShowBookmarked] = useState(false);
+
+  const scrollYRef = useRef(0);
+
+  // Initialize selected problem from URL on mount/refresh
+  useEffect(() => {
+    if (problems.length > 0 && !selectedProblem) {
+      const params = new URLSearchParams(window.location.search);
+      const pid = params.get('pid');
+      if (pid) {
+        const p = problems.find(x => x.id === pid);
+        if (p) {
+          setSelectedProblem(p);
+          setTimeout(() => window.scrollTo(0, 0), 10);
+        }
+      }
+    }
+  }, [problems]); // Intentionally not including selectedProblem to avoid re-triggering
+
   const toggleBookmark = (id: string) => {
     setBookmarks(prev => {
       const next = { ...prev };
@@ -263,6 +281,11 @@ const SQLPractice = ({ navigate, user }: any) => {
   }, []);
 
   const loadProblem = (prob: any) => {
+    scrollYRef.current = window.scrollY;
+    const params = new URLSearchParams(window.location.search);
+    params.set('pid', prob.id);
+    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+    
     setSelectedProblem(prob);
     const tableNames = (prob.tables_meta || []).map((t: any) => t.name);
     const starter = tableNames.length > 0
@@ -556,7 +579,7 @@ const SQLPractice = ({ navigate, user }: any) => {
       {/* Header */}
       <header className="h-14 shrink-0 bg-white dark:bg-[#1E293B] border-b border-slate-200 dark:border-white/10 px-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => setSelectedProblem(null)} className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
+          <button onClick={handleBackToList} className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
             <List size={20} weight="bold" />
           </button>
           <div className="w-7 h-7 bg-indigo-500 rounded-lg flex items-center justify-center"><Database size={14} weight="fill" className="text-white" /></div>
