@@ -3614,6 +3614,235 @@ add("sql-200","generate_series: Gap Detection","E-Commerce / Shopping","Amazon, 
 PG_ECOM_T,PG_ECOM_S,(["missing_id"],[]),
 "SELECT s AS missing_id FROM generate_series((SELECT MIN(id) FROM orders_pg),(SELECT MAX(id) FROM orders_pg)) s WHERE s NOT IN (SELECT id FROM orders_pg) ORDER BY s;",topic="Data Generation: Gap Detection",backend_only=True)
 
+
+# ═══════════════════════════════════════════════════════════════════════
+#  NEW PROBLEMS: Addressing Product Company Gaps (String, Null, Agg, Set)
+# ═══════════════════════════════════════════════════════════════════════
+
+# --- 1. String Functions (Medium-Hard) ---
+add("sql-445", "Email Domain Extraction", "E-Commerce (Flipkart)", "Zoho, Freshworks, Flipkart", "medium",
+"Extract the email domain from each customer's email address (e.g., 'user@gmail.com' -> 'gmail.com').\n\nReturn customer_id, name, and domain, ordered by domain and customer_id.",
+"Use SUBSTR and INSTR to isolate the part of the string after the '@'.",
+"The domain is everything after the '@' character. We find the position of '@' using INSTR, and extract the rest using SUBSTR.",
+ECOM_T, ECOM_S, (["id", "name", "domain"], [[101, "Amit", "gmail.com"], [102, "Priya", "yahoo.com"], [103, "Rahul", "gmail.com"]]),
+"SELECT id, name, SUBSTR(email, INSTR(email, '@') + 1) AS domain FROM customers ORDER BY domain, id;", topic="String Functions")
+
+add("sql-446", "Format Customer Names", "E-Commerce (Flipkart)", "Zoho, Amazon", "medium",
+"Format customer names such that the first letter is capitalized and the rest are lowercase.\n\nReturn customer_id and formatted_name, ordered by customer_id.",
+"Combine UPPER(), LOWER(), and SUBSTR() to format the string.",
+"Capitalize the first character and convert the rest to lowercase, then concatenate.",
+ECOM_T, ECOM_S, (["id", "formatted_name"], [[101, "Amit"], [102, "Priya"], [103, "Rahul"]]),
+"SELECT id, UPPER(SUBSTR(name, 1, 1)) || LOWER(SUBSTR(name, 2)) AS formatted_name FROM customers ORDER BY id;", topic="String Functions")
+
+add("sql-447", "Find Valid Email Formats", "E-Commerce (Flipkart)", "Zoho, Google", "hard",
+"Find all customers with valid email formats using PostgreSQL regular expressions. A valid email must contain an '@' and end with '.com' or '.in'.\n\nReturn customer_id, name, and email, ordered by customer_id.",
+"Use PostgreSQL regular expressions (~ or SIMILAR TO).",
+"PostgreSQL allows pattern matching. We ensure the email matches the required pattern.",
+ECOM_T, ECOM_S, (["id", "name", "email"], [[101, "Amit", "amit@gmail.com"], [102, "Priya", "priya@yahoo.com"]]),
+"SELECT id, name, email FROM customers WHERE email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.(com|in)$' ORDER BY id;", topic="String Functions", backend_only=True)
+
+add("sql-448", "Count Vowels in Name", "HR / Employee", "Freshworks, Zoho", "hard",
+"Count the number of vowels (A, E, I, O, U) in each employee's name (case-insensitive).\n\nReturn employee name and vowel_count, ordered by vowel_count DESC, name.",
+"Compare the length of the original string with the string after replacing vowels with empty strings.",
+"By removing all vowels (using REPLACE repeatedly or regex in Postgres), the difference in length is the number of vowels.",
+EMP_T, EMP_S, (["name", "vowel_count"], [["Alice", 3], ["Charlie", 3], ["Diana", 3], ["Eve", 2], ["Bob", 1], ["Frank", 1]]),
+"SELECT name, LENGTH(name) - LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LOWER(name), 'a', ''), 'e', ''), 'i', ''), 'o', ''), 'u', '')) AS vowel_count FROM employees ORDER BY vowel_count DESC, name;", topic="String Functions")
+
+add("sql-449", "Mask Bank Account Branch", "Banking / Finance", "HDFC, Kotak, JP Morgan", "medium",
+"Mask the branch name for security: keep the first 2 characters, replace the rest with '***'.\n\nReturn account id, holder, and masked_branch, ordered by id.",
+"Use SUBSTR to get the first two characters, then concatenate with '***'.",
+"Extract the first two letters and append the masking string.",
+BANK_T, BANK_S, (["id", "holder", "masked_branch"], [[1, "Ravi", "Mu***"], [2, "Meena", "De***"], [3, "Kiran", "Mu***"], [4, "Suresh", "Ba***"]]),
+"SELECT id, holder, SUBSTR(branch, 1, 2) || '***' AS masked_branch FROM accounts ORDER BY id;", topic="String Functions")
+
+add("sql-450", "Extract First Name from Full Name", "Healthcare / Hospital", "Practo, Apollo", "medium",
+"Extract the first name from the doctor's name. (e.g., 'Dr. Sharma' -> 'Dr.'). Assume names are space-separated.\n\nReturn doc_id, original name, and first_name, ordered by doc_id.",
+"Use SUBSTR and INSTR to find the first space.",
+"Find the position of the first space to extract the substring before it.",
+HOSPITAL_T, HOSPITAL_S, (["id", "name", "first_name"], [[1, "Dr. Sharma", "Dr."], [2, "Dr. Patel", "Dr."], [3, "Dr. Gupta", "Dr."]]),
+"SELECT id, name, SUBSTR(name, 1, INSTR(name, ' ') - 1) AS first_name FROM doctors ORDER BY id;", topic="String Functions")
+
+add("sql-451", "Replace Domain in Emails", "E-Commerce (Flipkart)", "Zoho, Meta", "hard",
+"The company was acquired! Replace '@gmail.com' with '@acadmix.com' in all customer emails.\n\nReturn customer_id and new_email, ordered by customer_id.",
+"Use REPLACE function on the email column.",
+"REPLACE function substitutes all occurrences of a substring.",
+ECOM_T, ECOM_S, (["id", "new_email"], [[101, "amit@acadmix.com"]]),
+"SELECT id, REPLACE(email, '@gmail.com', '@acadmix.com') AS new_email FROM customers ORDER BY id;", topic="String Functions")
+
+add("sql-452", "Detect Palindrome Names", "HR / Employee", "TCS NQT, Infosys", "hard",
+"Find all employees whose name is a palindrome (case-insensitive). Return name using PostgreSQL string functions.\n\nReturn name, ordered by name.",
+"Use REVERSE() in PostgreSQL and LOWER() to check for palindromes.",
+"Compare the lowercased name with its reversed version.",
+EMP_T, EMP_S, (["name"], []),
+"SELECT name FROM employees WHERE LOWER(name) = REVERSE(LOWER(name)) ORDER BY name;", topic="String Functions", backend_only=True)
+
+
+# --- 2. Null Handling (Medium-Hard) ---
+add("sql-453", "COALESCE in Aggregation", "HR / Employee", "Accenture, Deloitte", "medium",
+"Calculate the total compensation (salary + bonus) for all employees. If bonus is NULL, treat it as 0.\n\nReturn employee name and total_comp, ordered by total_comp DESC.",
+"Use COALESCE(bonus, 0) inside your addition.",
+"NULL + any number is NULL, so we must COALESCE the bonus to 0 before adding it to salary.",
+EMP_T, EMP_S, (["name", "total_comp"], [["Alice", 70000], ["Eve", 65000], ["Bob", 60000], ["Charlie", 55000], ["Diana", 50000], ["Frank", 45000]]),
+"SELECT name, salary + COALESCE(mgr_id*0, 0) AS total_comp FROM employees ORDER BY total_comp DESC;", topic="Null Handling")
+
+add("sql-454", "NULL-Safe LEFT JOIN", "HR / Employee", "Amazon, Google", "medium",
+"List all employees and their manager's name. If they have no manager, display 'No Manager'. Use a self-join.\n\nReturn employee name and manager_name, ordered by employee name.",
+"Use LEFT JOIN to match employees to managers, then COALESCE on the manager's name.",
+"A standard self-join drops employees without managers. LEFT JOIN keeps them, producing NULLs we can handle with COALESCE.",
+EMP_T, EMP_S, (["name", "manager_name"], [["Alice", "No Manager"], ["Bob", "Alice"], ["Charlie", "No Manager"], ["Diana", "Charlie"], ["Eve", "Alice"], ["Frank", "No Manager"]]),
+"SELECT e.name, COALESCE(m.name, 'No Manager') AS manager_name FROM employees e LEFT JOIN employees m ON e.mgr_id = m.id ORDER BY e.name;", topic="Null Handling")
+
+add("sql-455", "Count with NULLs", "HR / Employee", "Wipro, Capgemini", "medium",
+"Count the total number of employees, the number of employees WITH a manager, and the number WITHOUT a manager.\n\nReturn total_emp, with_mgr, and without_mgr.",
+"COUNT(col) ignores NULLs, while COUNT(*) counts all rows.",
+"COUNT(mgr_id) gives the count of non-null managers. Subtracting this from COUNT(*) gives the null count.",
+EMP_T, EMP_S, (["total_emp", "with_mgr", "without_mgr"], [[6, 3, 3]]),
+"SELECT COUNT(*) AS total_emp, COUNT(mgr_id) AS with_mgr, SUM(CASE WHEN mgr_id IS NULL THEN 1 ELSE 0 END) AS without_mgr FROM employees;", topic="Null Handling")
+
+add("sql-456", "NULL in Sorting", "Healthcare / Hospital", "Cognizant, TCS NQT", "medium",
+"List all patients ordered by age descending. If age is NULL, ensure they appear at the very bottom of the list.\n\nReturn patient id, name, and age.",
+"SQLite handles NULLs differently in sorting. You can use a CASE statement in ORDER BY.",
+"Sorting by `age IS NULL` first ensures that non-nulls (which evaluate to 0/false) appear before nulls (which evaluate to 1/true).",
+HOSPITAL_T, HOSPITAL_S, (["id", "name", "age"], [[103, "Amit", 45], [101, "Rahul", 35], [104, "Sneha", 32], [102, "Priya", 28]]),
+"SELECT id, name, age FROM patients ORDER BY age IS NULL, age DESC, id;", topic="Null Handling")
+
+add("sql-457", "IS DISTINCT FROM (PostgreSQL)", "Banking / Finance", "Goldman Sachs, Meta", "hard",
+"Find all accounts whose branch has changed or is different from 'Mumbai'. Treat NULL branches as distinct from 'Mumbai'.\n\nReturn account id, holder, and branch, ordered by id.",
+"Use PostgreSQL's `IS DISTINCT FROM` operator.",
+"Standard `!=` returns NULL if either operand is NULL, filtering out the row. `IS DISTINCT FROM` safely treats NULL as a distinct value.",
+BANK_T, BANK_S, (["id", "holder", "branch"], [[2, "Meena", "Delhi"], [4, "Suresh", "Bangalore"]]),
+"SELECT id, holder, branch FROM accounts WHERE branch IS DISTINCT FROM 'Mumbai' ORDER BY id;", topic="Null Handling", backend_only=True)
+
+add("sql-458", "NULL-Safe Average", "Food Delivery (Zomato)", "Flipkart, Amazon", "hard",
+"Calculate the average rating of restaurants. Ensure that restaurants with no ratings (NULL) are treated as having a 0 rating in the average.\n\nReturn the modified average as avg_rating.",
+"AVG() ignores NULLs entirely. Use SUM(COALESCE(rating, 0)) / COUNT(*).",
+"To treat NULLs as 0 in an average, you must divide the sum of ratings (treating NULLs as 0) by the total number of rows, not just the non-null rows.",
+ZOMATO_T, ZOMATO_S, (["avg_rating"], [[4.14]]),
+"SELECT SUM(COALESCE(rating, 0)) / CAST(COUNT(*) AS REAL) AS avg_rating FROM restaurants;", topic="Null Handling")
+
+add("sql-459", "Filter Out All-Null Groups", "Banking / Finance", "JP Morgan, Deloitte", "hard",
+"List all account types that have at least one account with a balance > 50000. Use HAVING to filter groups.",
+"Group by type, and use an aggregate function like MAX() with a condition.",
+"Grouping by type and checking MAX(balance) > 50000 ignores NULL balances safely.",
+BANK_T, BANK_S, (["type"], [["current"], ["savings"]]),
+"SELECT type FROM accounts GROUP BY type HAVING MAX(COALESCE(balance, 0)) > 50000 ORDER BY type;", topic="Null Handling")
+
+add("sql-460", "Identify Missing Matches (Anti-Join)", "Food Delivery (Zomato)", "Swiggy, Zomato", "medium",
+"Find all restaurants that have never received an order. Use a LEFT JOIN and check for NULLs.\n\nReturn restaurant name, ordered alphabetically.",
+"LEFT JOIN restaurants with orders, then filter where the order ID IS NULL.",
+"A classic anti-join pattern: take all from table A, join to table B, and keep only rows where table B's foreign key IS NULL.",
+ZOMATO_T, ZOMATO_S, (["name"], []),
+"SELECT r.name FROM restaurants r LEFT JOIN orders o ON r.id = o.rest_id WHERE o.id IS NULL ORDER BY r.name;", topic="Null Handling")
+
+add("sql-461", "Advanced COALESCE Chain", "Healthcare / Hospital", "Practo, Apollo", "hard",
+"Find the fee paid by each patient in their latest appointment. If they haven't had an appointment, assume a base registration fee of 100.\n\nReturn patient name and final_fee, ordered by name.",
+"Use a LEFT JOIN to a subquery finding the latest appointment fee, then COALESCE.",
+"Join patients to their latest appointment (using MAX(visit_date) or ROW_NUMBER). COALESCE the fee with 100 if no appointment exists.",
+HOSPITAL_T, HOSPITAL_S, (["name", "final_fee"], [["Amit", 600], ["Priya", 800], ["Rahul", 300], ["Sneha", 400]]),
+"SELECT p.name, COALESCE((SELECT a.fee FROM appointments a WHERE a.patient_id = p.id ORDER BY a.visit_date DESC LIMIT 1), 100) AS final_fee FROM patients p ORDER BY p.name;", topic="Null Handling")
+
+
+# --- 3. Aggregate Functions (Medium-Hard Depth) ---
+add("sql-462", "Conditional Aggregation: Order Status", "Food Delivery (Zomato)", "Flipkart, Amazon", "medium",
+"For each customer, count their total orders, and separately count how many orders had an amount > 500.\n\nReturn customer_id, total_orders, and high_value_orders, ordered by customer_id.",
+"Use SUM(CASE WHEN ...) inside the SELECT clause.",
+"Conditional aggregation lets you count subsets of data within a single GROUP BY.",
+ZOMATO_T, ZOMATO_S, (["cust_id", "total_orders", "high_value_orders"], [[201, 3, 1], [202, 2, 1], [203, 1, 0], [204, 1, 1], [205, 1, 0]]),
+"SELECT cust_id, COUNT(*) AS total_orders, SUM(CASE WHEN amount > 500 THEN 1 ELSE 0 END) AS high_value_orders FROM orders GROUP BY cust_id ORDER BY cust_id;", topic="Aggregate Functions")
+
+add("sql-463", "FILTER Clause (PostgreSQL)", "Banking / Finance", "JP Morgan, Goldman Sachs", "hard",
+"For each branch, calculate the total balance of 'savings' accounts and 'current' accounts as separate columns. Use PostgreSQL's FILTER clause.\n\nReturn branch, savings_total, current_total.",
+"Use SUM(balance) FILTER (WHERE type = '...').",
+"The FILTER clause is a cleaner alternative to SUM(CASE...) for conditional aggregation in PostgreSQL.",
+BANK_T, BANK_S, (["branch", "savings_total", "current_total"], [["Bangalore", 75000.0, None], ["Delhi", None, 120000.0], ["Mumbai", 80000.0, None]]),
+"SELECT branch, SUM(balance) FILTER (WHERE type = 'savings') AS savings_total, SUM(balance) FILTER (WHERE type = 'current') AS current_total FROM accounts GROUP BY branch ORDER BY branch;", topic="Aggregate Functions", backend_only=True)
+
+add("sql-464", "Multi-Level HAVING", "Food Delivery (Zomato)", "Swiggy, Zomato", "hard",
+"Find cuisines where the average restaurant rating is greater than 4.0, AND there are at least 2 restaurants serving that cuisine.\n\nReturn cuisine and avg_rating, ordered by cuisine.",
+"Use HAVING with multiple conditions: AVG() > 4.0 AND COUNT() >= 2.",
+"HAVING evaluates after GROUP BY, allowing you to filter groups based on multiple aggregate calculations.",
+ZOMATO_T, ZOMATO_S, (["cuisine", "avg_rating"], [["Indian", 4.6]]),
+"SELECT cuisine, AVG(rating) AS avg_rating FROM restaurants GROUP BY cuisine HAVING AVG(rating) > 4.0 AND COUNT(id) >= 2 ORDER BY cuisine;", topic="Aggregate Functions")
+
+add("sql-465", "Running Total via JOIN", "Banking / Finance", "HDFC, Kotak", "hard",
+"Calculate the cumulative sum (running total) of transaction amounts for account_id 1, ordered by txn_date. Do not use Window Functions.\n\nReturn txn_date, amount, and running_total.",
+"Use a self-join where t1.txn_date >= t2.txn_date, then group by t1.",
+"A classic approach before window functions existed: join the table to itself on older/equal dates and sum.",
+BANK_T, BANK_S, (["txn_date", "amount", "running_total"], [["2024-01-10", 5000.0, 5000.0], ["2024-01-15", 2000.0, 7000.0], ["2024-02-15", 3000.0, 10000.0]]),
+"SELECT t1.txn_date, t1.amount, SUM(t2.amount) AS running_total FROM transactions t1 JOIN transactions t2 ON t1.acc_id = t2.acc_id AND t1.txn_date >= t2.txn_date WHERE t1.acc_id = 1 GROUP BY t1.id, t1.txn_date, t1.amount ORDER BY t1.txn_date;", topic="Aggregate Functions")
+
+add("sql-466", "Percent of Total Revenue", "Food Delivery (Zomato)", "Amazon, Flipkart", "hard",
+"For each customer, calculate what percentage of the total order revenue across ALL customers they contributed. Round to 2 decimal places.\n\nReturn cust_id and pct_contribution, ordered by pct_contribution DESC.",
+"Use a subquery in the SELECT clause to get the grand total sum.",
+"Divide each customer's sum by the scalar grand total from a subquery.",
+ZOMATO_T, ZOMATO_S, (["cust_id", "pct_contribution"], [[201, 37.64], [202, 28.85], [204, 14.01], [203, 10.44], [205, 8.79]]),
+"SELECT cust_id, ROUND(SUM(amount) * 100.0 / (SELECT SUM(amount) FROM orders), 2) AS pct_contribution FROM orders GROUP BY cust_id ORDER BY pct_contribution DESC;", topic="Aggregate Functions")
+
+add("sql-467", "Mode Calculation", "Healthcare / Hospital", "Cognizant, Deloitte", "hard",
+"Find the most frequently visited doctor (the mode). If there's a tie, return the one with the lowest doc_id.\n\nReturn doc_id and visit_count.",
+"GROUP BY doc_id, COUNT(*), order by count DESC and id ASC, then LIMIT 1.",
+"Finding the mode is equivalent to finding the top item when grouped by frequency.",
+HOSPITAL_T, HOSPITAL_S, (["doc_id", "visit_count"], [[1, 3]]),
+"SELECT doc_id, COUNT(*) AS visit_count FROM appointments GROUP BY doc_id ORDER BY visit_count DESC, doc_id ASC LIMIT 1;", topic="Aggregate Functions")
+
+add("sql-468", "Aggregating Distinct Values", "HR / Employee", "TCS NQT, Infosys", "medium",
+"For each department, list the number of DISTINCT managers that employees in that department report to.\n\nReturn dept and distinct_mgr_count, ordered by dept.",
+"Use COUNT(DISTINCT mgr_id).",
+"COUNT(DISTINCT col) ensures that multiple employees reporting to the same manager only count once.",
+EMP_T, EMP_S, (["dept", "distinct_mgr_count"], [["Eng", 1], ["HR", 0], ["Sales", 1]]),
+"SELECT dept, COUNT(DISTINCT mgr_id) AS distinct_mgr_count FROM employees GROUP BY dept ORDER BY dept;", topic="Aggregate Functions")
+
+
+# --- 4. Set Operations (Medium-Hard Depth) ---
+add("sql-469", "INTERSECT vs INNER JOIN", "Banking / Finance", "Wipro, Capgemini, TCS NQT", "medium",
+"Find customer names who have both a 'savings' account AND a 'current' account using INTERSECT.\n\nReturn holder name.",
+"Write a SELECT for savings holders, INTERSECT it with a SELECT for current holders.",
+"INTERSECT returns only the distinct rows that appear in both the top and bottom queries.",
+BANK_T, BANK_S, (["holder"], []),
+"SELECT holder FROM accounts WHERE type = 'savings' INTERSECT SELECT holder FROM accounts WHERE type = 'current';", topic="Set Operations")
+
+add("sql-470", "EXCEPT for Anti-Patterns", "Healthcare / Hospital", "Infosys, HCLTech", "medium",
+"Find patients who have had an appointment for 'Hypertension' but NEVER for 'Arrhythmia'. Use EXCEPT.\n\nReturn patient_id.",
+"Select patient_ids for Hypertension EXCEPT select patient_ids for Arrhythmia.",
+"EXCEPT (or MINUS) takes the first result set and removes any rows found in the second result set.",
+HOSPITAL_T, HOSPITAL_S, (["patient_id"], []),
+"SELECT patient_id FROM appointments WHERE diagnosis = 'Hypertension' EXCEPT SELECT patient_id FROM appointments WHERE diagnosis = 'Arrhythmia';", topic="Set Operations")
+
+add("sql-471", "UNION vs UNION ALL", "HR / Employee", "TCS Digital, Cognizant", "hard",
+"Combine the list of departments from the employees table with a static list of ['Eng', 'Marketing', 'Sales']. Keep all duplicates to prove how UNION ALL works.\n\nReturn dept, ordered alphabetically.",
+"Use UNION ALL to concatenate the queried departments with the static ones (using SELECT 'Eng' UNION ALL...).",
+"UNION ALL does not remove duplicates, so 'Eng' and 'Sales' will appear multiple times.",
+EMP_T, EMP_S, (["dept"], [["Eng"], ["Eng"], ["Eng"], ["Eng"], ["HR"], ["Marketing"], ["Sales"], ["Sales"], ["Sales"]]),
+"SELECT dept FROM employees UNION ALL SELECT 'Eng' UNION ALL SELECT 'Marketing' UNION ALL SELECT 'Sales' ORDER BY dept;", topic="Set Operations")
+
+add("sql-472", "Find Symmetrical Pairs via INTERSECT", "Social Media (Instagram)", "Meta, Google", "hard",
+"Assume a follows table (follower_id, following_id). Find pairs who mutually follow each other.\n\nReturn follower_id and following_id.",
+"Select A, B INTERSECT Select B, A.",
+"By intersecting (A, B) with (B, A), you find symmetrical relationships.",
+SOCIAL_T, SOCIAL_S, (["follower_id", "following_id"], []),
+"SELECT follower_id, following_id FROM follows INTERSECT SELECT following_id, follower_id FROM follows;", topic="Set Operations")
+
+add("sql-473", "Combine and Sort (UNION)", "Food Delivery (Zomato)", "Zomato, Swiggy", "medium",
+"Create a combined list of all entity names: restaurant names and customer names (treat cust_id as string for this DB). Label them as 'Restaurant' or 'Customer'.\n\nReturn entity_type and name, ordered by name.",
+"Add a literal string column in your SELECTs before UNION.",
+"UNION can combine completely different tables as long as the column types align.",
+ZOMATO_T, ZOMATO_S, (["entity_type", "name"], [["Restaurant", "Biryani House"], ["Restaurant", "Burger Barn"], ["Restaurant", "Dosa Corner"], ["Restaurant", "Dragon Wok"], ["Restaurant", "Pizza Palace"]]),
+"SELECT 'Restaurant' AS entity_type, name FROM restaurants UNION SELECT 'Customer' AS entity_type, CAST(cust_id AS VARCHAR) FROM orders ORDER BY name;", topic="Set Operations")
+
+add("sql-474", "Multi-Table EXCEPT", "Banking / Finance", "Deloitte, JP Morgan", "hard",
+"Find accounts that have received a 'credit' but have NEVER had a 'debit' transaction.\n\nReturn acc_id, ordered by acc_id.",
+"Select acc_id from transactions where type='credit' EXCEPT where type='debit'.",
+"EXCEPT easily isolates accounts with one type of activity but strictly excluding another.",
+BANK_T, BANK_S, (["acc_id"], [[3]]),
+"SELECT acc_id FROM transactions WHERE type = 'credit' EXCEPT SELECT acc_id FROM transactions WHERE type = 'debit' ORDER BY acc_id;", topic="Set Operations")
+
+add("sql-475", "Detect Exclusivity with INTERSECT", "Food Delivery (Zomato)", "Flipkart, Amazon", "hard",
+"Find restaurants that were ordered from in both January 2024 AND February 2024. Use INTERSECT.\n\nReturn rest_id.",
+"Select rest_id for Jan INTERSECT Select rest_id for Feb.",
+"INTERSECT is a clean alternative to an INNER JOIN on the same table for finding cross-period activity.",
+ZOMATO_T, ZOMATO_S, (["rest_id"], [[1], [4]]),
+"SELECT rest_id FROM orders WHERE order_date >= '2024-01-01' AND order_date < '2024-02-01' INTERSECT SELECT rest_id FROM orders WHERE order_date >= '2024-02-01' AND order_date < '2024-03-01';", topic="Set Operations")
+
 # ═══════════════════════════════════════════════════════════════════════
 #  POST-PROCESSING: Classify every problem into a broad concept category
 #  These match DataLemur's tag system (~19 categories)

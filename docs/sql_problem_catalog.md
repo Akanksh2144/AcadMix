@@ -1,72 +1,73 @@
 # AcadMix SQL Practice Arena — Complete Problem Catalog
 
-> **444 problems** across **19 concept categories** for mass recruiter placement prep.
+> **475 problems** across **19 concept categories** for mass recruiter placement prep.
 > Generated on 2026-04-23 | DataLemur-style challenges
 
 ## Summary Statistics
 
 | Metric | Value |
 |--------|-------|
-| Total Problems | 444 |
+| Total Problems | 475 |
 | Easy | 155 |
-| Medium | 194 |
-| Hard | 95 |
+| Medium | 208 |
+| Hard | 112 |
 | Categories | 19 |
 | Companies | 42 |
-| SQLite WASM | 429 |
-| PostgreSQL-only | 15 |
+| SQLite WASM | 456 |
+| PostgreSQL-only | 19 |
 
 ## Category Breakdown
 
 | Category | Easy | Medium | Hard | Total |
 |----------|------|--------|------|-------|
 | Advanced Analytics | 0 | 0 | 5 | 5 |
-| Aggregate Functions | 42 | 24 | 3 | 69 |
+| Aggregate Functions | 42 | 24 | 6 | 72 |
 | Array Functions | 2 | 2 | 1 | 5 |
 | Common Table Expressions (CTE) or Subquery | 5 | 13 | 7 | 25 |
-| Conditional Logic | 14 | 18 | 1 | 33 |
-| Control Flow Functions | 3 | 3 | 1 | 7 |
+| Conditional Logic | 14 | 19 | 1 | 34 |
+| Control Flow Functions | 3 | 4 | 2 | 9 |
 | Data Generation | 2 | 2 | 1 | 5 |
 | Date-Time Functions | 9 | 20 | 10 | 39 |
-| Distinct and Unique Handling | 5 | 5 | 0 | 10 |
+| Distinct and Unique Handling | 5 | 6 | 0 | 11 |
 | Existence Check | 0 | 2 | 3 | 5 |
 | Filtering & Sorting | 22 | 2 | 4 | 28 |
 | General SQL | 1 | 1 | 0 | 2 |
-| Joins | 17 | 44 | 13 | 74 |
-| Mathematical Functions | 1 | 7 | 10 | 18 |
-| Null Handling | 3 | 0 | 0 | 3 |
-| Set Operations | 4 | 6 | 1 | 11 |
-| String Functions | 15 | 5 | 0 | 20 |
+| Joins | 17 | 46 | 13 | 76 |
+| Mathematical Functions | 1 | 7 | 11 | 19 |
+| Null Handling | 3 | 2 | 3 | 8 |
+| Set Operations | 4 | 9 | 5 | 18 |
+| String Functions | 15 | 9 | 4 | 28 |
 | Top N Results | 9 | 9 | 4 | 22 |
-| Window Functions | 1 | 31 | 31 | 63 |
+| Window Functions | 1 | 31 | 32 | 64 |
 
 ## Company Coverage
 
 | Company | Problems |
 |---------|----------|
-| TCS NQT | 46 |
-| Infosys | 44 |
-| Wipro | 43 |
-| Capgemini | 40 |
-| Cognizant | 40 |
-| HCLTech | 39 |
-| Accenture | 38 |
-| Deloitte | 38 |
-| Zoho | 32 |
-| TCS Digital | 31 |
-| Amazon | 17 |
-| Google | 13 |
-| Flipkart | 9 |
+| TCS NQT | 50 |
+| Infosys | 47 |
+| Wipro | 45 |
+| Cognizant | 43 |
+| Capgemini | 42 |
+| Deloitte | 42 |
+| HCLTech | 40 |
+| Accenture | 39 |
+| Zoho | 37 |
+| TCS Digital | 32 |
+| Amazon | 23 |
+| Google | 16 |
+| Flipkart | 14 |
+| Meta | 10 |
+| Swiggy | 10 |
+| Goldman Sachs | 9 |
+| JP Morgan | 8 |
 | Microsoft | 8 |
-| Goldman Sachs | 7 |
-| Meta | 7 |
-| Swiggy | 7 |
+| Freshworks | 7 |
 | Uber | 6 |
+| Zomato | 6 |
 | Adobe | 5 |
 | Razorpay | 5 |
 | SAP | 5 |
-| Freshworks | 5 |
-| JP Morgan | 4 |
 | Paytm | 4 |
 | PhonePe | 4 |
 | Oracle | 4 |
@@ -77,15 +78,14 @@
 | Juspay | 4 |
 | Ola | 4 |
 | CRED | 4 |
+| HDFC | 4 |
 | Morgan Stanley | 3 |
-| Zomato | 3 |
-| HDFC | 2 |
+| Kotak | 3 |
+| Practo | 3 |
+| Apollo | 3 |
 | ICICI | 2 |
 | Tech Mahindra | 1 |
-| Kotak | 1 |
 | Walmart | 1 |
-| Practo | 1 |
-| Apollo | 1 |
 
 ---
 
@@ -118,7 +118,7 @@
 
 ---
 
-## Aggregate Functions (69 problems)
+## Aggregate Functions (72 problems)
 
 | # | ID | Title | Difficulty | Companies | Dataset | Engine |
 |---|-----|-------|------------|-----------|---------|--------|
@@ -191,6 +191,9 @@
 | 67 | sql-409 | Riders With Rides in Multiple Cities | MEDIUM | Zoho | Ride-Sharing (Ola) | SQLite |
 | 68 | sql-416 | Total Amount Per Transaction Type | EASY | Zoho | Banking / Finance | SQLite |
 | 69 | sql-425 | Drivers With Above-Average Fare | MEDIUM | Zoho | Ride-Sharing (Ola) | SQLite |
+| 70 | sql-463 | FILTER Clause (PostgreSQL) | HARD | JP Morgan, Goldman Sachs | Banking / Finance | PostgreSQL |
+| 71 | sql-464 | Multi-Level HAVING | HARD | Swiggy, Zomato | Food Delivery (Zomato) | SQLite |
+| 72 | sql-467 | Mode Calculation | HARD | Cognizant, Deloitte | Healthcare / Hospital | SQLite |
 
 ### Problem Descriptions
 
@@ -401,6 +404,15 @@
 **sql-425. Drivers With Above-Average Fare** 🟡
 > Find drivers whose average fare per ride exceeds the overall average fare.
 
+**sql-463. FILTER Clause (PostgreSQL)** 🔴 ⚠️ PostgreSQL
+> For each branch, calculate the total balance of 'savings' accounts and 'current' accounts as separate columns. Use PostgreSQL's FILTER clause.
+
+**sql-464. Multi-Level HAVING** 🔴
+> Find cuisines where the average restaurant rating is greater than 4.0, AND there are at least 2 restaurants serving that cuisine.
+
+**sql-467. Mode Calculation** 🔴
+> Find the most frequently visited doctor (the mode). If there's a tie, return the one with the lowest doc_id.
+
 ---
 
 ## Array Functions (5 problems)
@@ -541,7 +553,7 @@
 
 ---
 
-## Conditional Logic (33 problems)
+## Conditional Logic (34 problems)
 
 | # | ID | Title | Difficulty | Companies | Dataset | Engine |
 |---|-----|-------|------------|-----------|---------|--------|
@@ -578,6 +590,7 @@
 | 31 | sql-414 | Product Price Tier Count | EASY | Zoho | E-Commerce (Flipkart) | SQLite |
 | 32 | sql-415 | Employee Seniority Band | MEDIUM | Zoho | HR / Employee | SQLite |
 | 33 | sql-418 | Order Item Count Distribution | MEDIUM | Zoho | E-Commerce (Flipkart) | SQLite |
+| 34 | sql-462 | Conditional Aggregation: Order Status | MEDIUM | Flipkart, Amazon | Food Delivery (Zomato) | SQLite |
 
 ### Problem Descriptions
 
@@ -680,9 +693,12 @@
 **sql-418. Order Item Count Distribution** 🟡
 > Show how many orders have 1 item, 2 items, 3+ items.
 
+**sql-462. Conditional Aggregation: Order Status** 🟡
+> For each customer, count their total orders, and separately count how many orders had an amount > 500.
+
 ---
 
-## Control Flow Functions (7 problems)
+## Control Flow Functions (9 problems)
 
 | # | ID | Title | Difficulty | Companies | Dataset | Engine |
 |---|-----|-------|------------|-----------|---------|--------|
@@ -693,6 +709,8 @@
 | 5 | sql-188 | NULLIF: Avoid Division by Zero | MEDIUM | HDFC, ICICI, Kotak | Banking / Finance | SQLite |
 | 6 | sql-189 | COALESCE Chain: Multi-Field Fallback | MEDIUM | Deloitte, Accenture | Healthcare / Hospital | SQLite |
 | 7 | sql-190 | IIF + COALESCE: Tiered Commission | HARD | Zomato, Swiggy, Flipkart | Food Delivery / Zomato | SQLite |
+| 8 | sql-453 | COALESCE in Aggregation | MEDIUM | Accenture, Deloitte | HR / Employee | SQLite |
+| 9 | sql-461 | Advanced COALESCE Chain | HARD | Practo, Apollo | Healthcare / Hospital | SQLite |
 
 ### Problem Descriptions
 
@@ -716,6 +734,12 @@
 
 **sql-190. IIF + COALESCE: Tiered Commission** 🔴
 > Calculate commission for each restaurant: 5% on orders above 500, 3% on orders between 300–500, 1% on orders below 300. For restaurants with no orders, show commission as 0.
+
+**sql-453. COALESCE in Aggregation** 🟡
+> Calculate the total compensation (salary + bonus) for all employees. If bonus is NULL, treat it as 0.
+
+**sql-461. Advanced COALESCE Chain** 🔴
+> Find the fee paid by each patient in their latest appointment. If they haven't had an appointment, assume a base registration fee of 100.
 
 ---
 
@@ -913,7 +937,7 @@
 
 ---
 
-## Distinct and Unique Handling (10 problems)
+## Distinct and Unique Handling (11 problems)
 
 | # | ID | Title | Difficulty | Companies | Dataset | Engine |
 |---|-----|-------|------------|-----------|---------|--------|
@@ -927,6 +951,7 @@
 | 8 | sql-372 | Unique Diagnoses in Hospital | EASY | Capgemini | Healthcare / Hospital | SQLite |
 | 9 | sql-399 | Distinct Categories Ordered Per Customer | MEDIUM | Deloitte | E-Commerce (Flipkart) | SQLite |
 | 10 | sql-420 | Doctors Sorted by Unique Patient Count | EASY | Zoho | Healthcare / Hospital | SQLite |
+| 11 | sql-468 | Aggregating Distinct Values | MEDIUM | TCS NQT, Infosys | HR / Employee | SQLite |
 
 ### Problem Descriptions
 
@@ -959,6 +984,9 @@
 
 **sql-420. Doctors Sorted by Unique Patient Count** 🟢
 > Sort doctors by the number of unique patients they've treated.
+
+**sql-468. Aggregating Distinct Values** 🟡
+> For each department, list the number of DISTINCT managers that employees in that department report to.
 
 ---
 
@@ -1129,7 +1157,7 @@
 
 ---
 
-## Joins (74 problems)
+## Joins (76 problems)
 
 | # | ID | Title | Difficulty | Companies | Dataset | Engine |
 |---|-----|-------|------------|-----------|---------|--------|
@@ -1207,6 +1235,8 @@
 | 72 | sql-183 | FULL OUTER JOIN: Budget Utilization | HARD | Deloitte | HR / Employee | PostgreSQL |
 | 73 | sql-184 | FULL OUTER JOIN: Customer-Order Reconciliation | HARD | Amazon | E-Commerce (Flipkart) | PostgreSQL |
 | 74 | sql-185 | FULL OUTER JOIN: Cross-Table Coverage Report | HARD | SAP | HR / Employee | PostgreSQL |
+| 75 | sql-454 | NULL-Safe LEFT JOIN | MEDIUM | Amazon, Google | HR / Employee | SQLite |
+| 76 | sql-460 | Identify Missing Matches (Anti-Join) | MEDIUM | Swiggy, Zomato | Food Delivery (Zomato) | SQLite |
 
 ### Problem Descriptions
 
@@ -1432,9 +1462,15 @@
 **sql-185. FULL OUTER JOIN: Cross-Table Coverage Report** 🔴 ⚠️ PostgreSQL
 > Create a full coverage report: for every department (from both tables), show the department name, count of employees, budget, and whether it's 'Staffed', 'Empty', or 'Unbudgeted'.
 
+**sql-454. NULL-Safe LEFT JOIN** 🟡
+> List all employees and their manager's name. If they have no manager, display 'No Manager'. Use a self-join.
+
+**sql-460. Identify Missing Matches (Anti-Join)** 🟡
+> Find all restaurants that have never received an order. Use a LEFT JOIN and check for NULLs.
+
 ---
 
-## Mathematical Functions (18 problems)
+## Mathematical Functions (19 problems)
 
 | # | ID | Title | Difficulty | Companies | Dataset | Engine |
 |---|-----|-------|------------|-----------|---------|--------|
@@ -1456,6 +1492,7 @@
 | 16 | sql-385 | Total Revenue by Order Status | EASY | Deloitte | E-Commerce (Flipkart) | SQLite |
 | 17 | sql-408 | Order Items Revenue Breakdown | MEDIUM | Zoho | E-Commerce (Flipkart) | SQLite |
 | 18 | sql-410 | Employee Salary Deviation From Median | HARD | Zoho | HR / Employee | SQLite |
+| 19 | sql-466 | Percent of Total Revenue | HARD | Amazon, Flipkart | Food Delivery (Zomato) | SQLite |
 
 ### Problem Descriptions
 
@@ -1513,15 +1550,23 @@
 **sql-410. Employee Salary Deviation From Median** 🔴
 > Show each employee's salary deviation from the company median salary.
 
+**sql-466. Percent of Total Revenue** 🔴
+> For each customer, calculate what percentage of the total order revenue across ALL customers they contributed. Round to 2 decimal places.
+
 ---
 
-## Null Handling (3 problems)
+## Null Handling (8 problems)
 
 | # | ID | Title | Difficulty | Companies | Dataset | Engine |
 |---|-----|-------|------------|-----------|---------|--------|
 | 1 | sql-044 | IFNULL: Safe Division | EASY | PhonePe | Banking / Finance | SQLite |
 | 2 | sql-196 | Employees With NULL Manager | EASY | Wipro, TCS NQT, Cognizant, Deloitte | HR / Employee | SQLite |
 | 3 | sql-386 | Employees With No Manager | EASY | Deloitte | HR / Employee | SQLite |
+| 4 | sql-455 | Count with NULLs | MEDIUM | Wipro, Capgemini | HR / Employee | SQLite |
+| 5 | sql-456 | NULL in Sorting | MEDIUM | Cognizant, TCS NQT | Healthcare / Hospital | SQLite |
+| 6 | sql-457 | IS DISTINCT FROM (PostgreSQL) | HARD | Goldman Sachs, Meta | Banking / Finance | PostgreSQL |
+| 7 | sql-458 | NULL-Safe Average | HARD | Flipkart, Amazon | Food Delivery (Zomato) | SQLite |
+| 8 | sql-459 | Filter Out All-Null Groups | HARD | JP Morgan, Deloitte | Banking / Finance | SQLite |
 
 ### Problem Descriptions
 
@@ -1534,9 +1579,24 @@
 **sql-386. Employees With No Manager** 🟢
 > Find employees who have no manager (mgr_id IS NULL).
 
+**sql-455. Count with NULLs** 🟡
+> Count the total number of employees, the number of employees WITH a manager, and the number WITHOUT a manager.
+
+**sql-456. NULL in Sorting** 🟡
+> List all patients ordered by age descending. If age is NULL, ensure they appear at the very bottom of the list.
+
+**sql-457. IS DISTINCT FROM (PostgreSQL)** 🔴 ⚠️ PostgreSQL
+> Find all accounts whose branch has changed or is different from 'Mumbai'. Treat NULL branches as distinct from 'Mumbai'.
+
+**sql-458. NULL-Safe Average** 🔴
+> Calculate the average rating of restaurants. Ensure that restaurants with no ratings (NULL) are treated as having a 0 rating in the average.
+
+**sql-459. Filter Out All-Null Groups** 🔴
+> List all account types that have at least one account with a balance > 50000. Use HAVING to filter groups.
+
 ---
 
-## Set Operations (11 problems)
+## Set Operations (18 problems)
 
 | # | ID | Title | Difficulty | Companies | Dataset | Engine |
 |---|-----|-------|------------|-----------|---------|--------|
@@ -1551,6 +1611,13 @@
 | 9 | sql-206 | UNION: Combine Riders and Drivers | EASY | Capgemini | Ride-Sharing (Ola) | SQLite |
 | 10 | sql-258 | Youngest and Oldest Patient | EASY | Infosys | Healthcare / Hospital | SQLite |
 | 11 | sql-304 | UNION: All People in Ride System | EASY | HCLTech | Ride-Sharing (Ola) | SQLite |
+| 12 | sql-469 | INTERSECT vs INNER JOIN | MEDIUM | Wipro, Capgemini, TCS NQT | Banking / Finance | SQLite |
+| 13 | sql-470 | EXCEPT for Anti-Patterns | MEDIUM | Infosys, HCLTech | Healthcare / Hospital | SQLite |
+| 14 | sql-471 | UNION vs UNION ALL | HARD | TCS Digital, Cognizant | HR / Employee | SQLite |
+| 15 | sql-472 | Find Symmetrical Pairs via INTERSECT | HARD | Meta, Google | Social Media (Instagram) | SQLite |
+| 16 | sql-473 | Combine and Sort (UNION) | MEDIUM | Zomato, Swiggy | Food Delivery (Zomato) | SQLite |
+| 17 | sql-474 | Multi-Table EXCEPT | HARD | Deloitte, JP Morgan | Banking / Finance | SQLite |
+| 18 | sql-475 | Detect Exclusivity with INTERSECT | HARD | Flipkart, Amazon | Food Delivery (Zomato) | SQLite |
 
 ### Problem Descriptions
 
@@ -1587,9 +1654,30 @@
 **sql-304. UNION: All People in Ride System** 🟢
 > Create a combined list of all riders and drivers with their role.
 
+**sql-469. INTERSECT vs INNER JOIN** 🟡
+> Find customer names who have both a 'savings' account AND a 'current' account using INTERSECT.
+
+**sql-470. EXCEPT for Anti-Patterns** 🟡
+> Find patients who have had an appointment for 'Hypertension' but NEVER for 'Arrhythmia'. Use EXCEPT.
+
+**sql-471. UNION vs UNION ALL** 🔴
+> Combine the list of departments from the employees table with a static list of ['Eng', 'Marketing', 'Sales']. Keep all duplicates to prove how UNION ALL works.
+
+**sql-472. Find Symmetrical Pairs via INTERSECT** 🔴
+> Assume a follows table (follower_id, following_id). Find pairs who mutually follow each other.
+
+**sql-473. Combine and Sort (UNION)** 🟡
+> Create a combined list of all entity names: restaurant names and customer names (treat cust_id as string for this DB). Label them as 'Restaurant' or 'Customer'.
+
+**sql-474. Multi-Table EXCEPT** 🔴
+> Find accounts that have received a 'credit' but have NEVER had a 'debit' transaction.
+
+**sql-475. Detect Exclusivity with INTERSECT** 🔴
+> Find restaurants that were ordered from in both January 2024 AND February 2024. Use INTERSECT.
+
 ---
 
-## String Functions (20 problems)
+## String Functions (28 problems)
 
 | # | ID | Title | Difficulty | Companies | Dataset | Engine |
 |---|-----|-------|------------|-----------|---------|--------|
@@ -1613,6 +1701,14 @@
 | 18 | sql-283 | Shortest and Longest Employee Name | EASY | Wipro | HR / Employee | SQLite |
 | 19 | sql-335 | Employee Name Length | EASY | Cognizant | HR / Employee | SQLite |
 | 20 | sql-348 | Employee Name Starting With Vowel | EASY | Accenture | HR / Employee | SQLite |
+| 21 | sql-445 | Email Domain Extraction | MEDIUM | Zoho, Freshworks, Flipkart | E-Commerce (Flipkart) | SQLite |
+| 22 | sql-446 | Format Customer Names | MEDIUM | Zoho, Amazon | E-Commerce (Flipkart) | SQLite |
+| 23 | sql-447 | Find Valid Email Formats | HARD | Zoho, Google | E-Commerce (Flipkart) | PostgreSQL |
+| 24 | sql-448 | Count Vowels in Name | HARD | Freshworks, Zoho | HR / Employee | SQLite |
+| 25 | sql-449 | Mask Bank Account Branch | MEDIUM | HDFC, Kotak, JP Morgan | Banking / Finance | SQLite |
+| 26 | sql-450 | Extract First Name from Full Name | MEDIUM | Practo, Apollo | Healthcare / Hospital | SQLite |
+| 27 | sql-451 | Replace Domain in Emails | HARD | Zoho, Meta | E-Commerce (Flipkart) | SQLite |
+| 28 | sql-452 | Detect Palindrome Names | HARD | TCS NQT, Infosys | HR / Employee | PostgreSQL |
 
 ### Problem Descriptions
 
@@ -1675,6 +1771,30 @@
 
 **sql-348. Employee Name Starting With Vowel** 🟢
 > Find employees whose name starts with a vowel (A, E, I, O, U).
+
+**sql-445. Email Domain Extraction** 🟡
+> Extract the email domain from each customer's email address (e.g., 'user@gmail.com' -> 'gmail.com').
+
+**sql-446. Format Customer Names** 🟡
+> Format customer names such that the first letter is capitalized and the rest are lowercase.
+
+**sql-447. Find Valid Email Formats** 🔴 ⚠️ PostgreSQL
+> Find all customers with valid email formats using PostgreSQL regular expressions. A valid email must contain an '@' and end with '.com' or '.in'.
+
+**sql-448. Count Vowels in Name** 🔴
+> Count the number of vowels (A, E, I, O, U) in each employee's name (case-insensitive).
+
+**sql-449. Mask Bank Account Branch** 🟡
+> Mask the branch name for security: keep the first 2 characters, replace the rest with '***'.
+
+**sql-450. Extract First Name from Full Name** 🟡
+> Extract the first name from the doctor's name. (e.g., 'Dr. Sharma' -> 'Dr.'). Assume names are space-separated.
+
+**sql-451. Replace Domain in Emails** 🔴
+> The company was acquired! Replace '@gmail.com' with '@acadmix.com' in all customer emails.
+
+**sql-452. Detect Palindrome Names** 🔴 ⚠️ PostgreSQL
+> Find all employees whose name is a palindrome (case-insensitive). Return name using PostgreSQL string functions.
 
 ---
 
@@ -1775,7 +1895,7 @@
 
 ---
 
-## Window Functions (63 problems)
+## Window Functions (64 problems)
 
 | # | ID | Title | Difficulty | Companies | Dataset | Engine |
 |---|-----|-------|------------|-----------|---------|--------|
@@ -1842,6 +1962,7 @@
 | 61 | sql-421 | Cumulative Order Revenue | HARD | Zoho | E-Commerce (Flipkart) | SQLite |
 | 62 | sql-423 | Restaurant Rating Percentile | HARD | Zoho | Food Delivery (Zomato) | SQLite |
 | 63 | sql-426 | Year-Over-Year Employee Growth | MEDIUM | Zoho | HR / Employee | SQLite |
+| 64 | sql-465 | Running Total via JOIN | HARD | HDFC, Kotak | Banking / Finance | SQLite |
 
 ### Problem Descriptions
 
@@ -2033,5 +2154,8 @@
 
 **sql-426. Year-Over-Year Employee Growth** 🟡
 > Count employees hired per year.
+
+**sql-465. Running Total via JOIN** 🔴
+> Calculate the cumulative sum (running total) of transaction amounts for account_id 1, ordered by txn_date. Do not use Window Functions.
 
 ---
