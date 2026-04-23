@@ -60,11 +60,12 @@ const FilterDropdown = ({ value, options, onChange, renderOption }: {
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0, y: -8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.96 }} transition={{ duration: 0.15 }}
-            className="absolute z-50 top-full mt-2 left-0 min-w-[220px] max-h-[320px] overflow-y-auto bg-white dark:bg-[#1E293B] border border-slate-200/70 dark:border-white/10 rounded-2xl shadow-xl shadow-slate-900/10 dark:shadow-black/30 py-2">
+            className="absolute z-50 top-full mt-2 left-0 min-w-[280px] max-h-[320px] overflow-y-auto bg-white dark:bg-[#1E293B] border border-slate-200/70 dark:border-white/10 rounded-2xl shadow-xl shadow-slate-900/10 dark:shadow-black/30 py-2">
             {options.map(o => (
               <button key={o.value} onClick={() => { onChange(o.value); setOpen(false); }}
-                className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-500/10 ${value === o.value ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300'}`}>
-                {o.icon}{renderOption ? renderOption(o) : o.label}
+                className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-left ${value === o.value ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300'}`}>
+                {o.icon && <span className="shrink-0">{o.icon}</span>}
+                <span className="truncate">{renderOption ? renderOption(o) : o.label}</span>
               </button>
             ))}
           </motion.div>
