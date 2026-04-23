@@ -424,6 +424,8 @@ const SQLPractice = ({ navigate, user }: any) => {
   );
 
   /* ── Problem List ─────────────────────────────────────── */
+  const sp = selectedProblem;
+
   return (
     <>
       <div className={`min-h-screen bg-slate-50 dark:bg-[#0F172A] ${selectedProblem ? 'hidden' : 'block'}`}>
@@ -615,8 +617,6 @@ const SQLPractice = ({ navigate, user }: any) => {
         )}
       </AnimatePresence>
     </div>
-
-  const sp = selectedProblem;
 
   /* ── Arena (Split Panel) ──────────────────────────────── */
       {selectedProblem && (
