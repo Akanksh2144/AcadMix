@@ -870,6 +870,79 @@ add("sql-085","Complex Date Filter: Q1 High-Value","E-Commerce (Flipkart)","Acce
 ECOM_T,ECOM_S,(["id","order_date","total"],[[1001,"2024-01-10",57500.0],[1006,"2024-03-10",6900.0],[1002,"2024-01-15",3299.0]]),
 "SELECT id,order_date,total FROM orders WHERE status='delivered' AND order_date BETWEEN '2024-01-01' AND '2024-03-31' AND total>1000 ORDER BY total DESC;",topic="Complex Date Filtering")
 
+
+# ═══ BATCH 9: Final Stretch I ═══
+
+add("sql-086","Moving Average: 2-Ride Window","Ride-Sharing (Ola)","Amazon","hard",
+"For each rider, calculate a 2-ride moving average of fare (current + previous ride).\n\nReturn rider name, ride_date, fare, and moving_avg (rounded to 0). Order by rider name, ride_date.",
+"Use AVG(fare) OVER (PARTITION BY rider_id ORDER BY ride_date ROWS BETWEEN 1 PRECEDING AND CURRENT ROW).",
+"Aarav: Jan10→250, Jan12→(250+180)/2=215, Feb01→(180+200)/2=190...",
+RIDE_T,RIDE_S,(["name","ride_date","fare","moving_avg"],[["Aarav","2024-01-10",250.0,250],["Aarav","2024-01-12",180.0,215],["Aarav","2024-02-01",200.0,190],["Aarav","2024-03-05",220.0,210],["Bhavna","2024-01-15",320.0,320],["Bhavna","2024-02-10",280.0,300],["Chirag","2024-01-20",400.0,400],["Chirag","2024-03-01",350.0,375],["Diya","2024-02-05",550.0,550],["Eshan","2024-02-15",150.0,150]]),
+"SELECT r2.name,r.ride_date,r.fare,ROUND(AVG(r.fare) OVER(PARTITION BY r.rider_id ORDER BY r.ride_date ROWS BETWEEN 1 PRECEDING AND CURRENT ROW))AS moving_avg FROM rides r JOIN riders r2 ON r.rider_id=r2.id ORDER BY r2.name,r.ride_date;",topic="Moving Average Window")
+
+add("sql-087","COALESCE: Multi-Fallback","Healthcare / Hospital","Wipro","easy",
+"Show each patient's diagnosis. If NULL, show 'Under Observation'.\n\nReturn patient name, diagnosis_display. Order by name.",
+"Use COALESCE(diagnosis, 'Under Observation').",
+"All patients in this dataset have diagnoses, so COALESCE acts as a safety net.",
+HOSPITAL_T,HOSPITAL_S,(["name","diagnosis_display"],[["Amit","Diabetes"],["Neha","Fracture"],["Priya","Fever"],["Raj","Cold"],["Sunita","Allergy"]]),
+"SELECT name,COALESCE(diagnosis,'Under Observation')AS diagnosis_display FROM patients ORDER BY name;",topic="COALESCE Multi-Fallback")
+
+add("sql-088","Nested 3-Level Subquery","University / Education","TCS NQT","hard",
+"Find student names who got grade 'A' in courses taught in the 'CSE' department.\n\nReturn student name, ordered alphabetically.",
+"3-level nesting: students → enrollments → courses WHERE dept='CSE'.",
+"CSE courses (101,103). Grade A in CSE: Ravi(101), Nikhil(103), Arjun(101).",
+UNI_T,UNI_S,(["name"],[["Arjun"],["Nikhil"],["Ravi"]]),
+"SELECT s.name FROM students s WHERE s.id IN(SELECT e.student_id FROM enrollments e WHERE e.grade='A' AND e.course_id IN(SELECT c.id FROM courses c WHERE c.department='CSE'))ORDER BY s.name;",topic="Nested 3-Level Subquery")
+
+add("sql-089","Anti-Join: Riders Without Rides","Ride-Sharing (Ola)","Razorpay","medium",
+"Using LEFT JOIN + WHERE NULL pattern, find riders who have no completed rides.\n\nReturn rider name.",
+"LEFT JOIN riders to rides WHERE rides.id IS NULL.",
+"All riders have at least one ride, so result is empty.",
+RIDE_T,RIDE_S,(["name"],[]),
+"SELECT r2.name FROM riders r2 LEFT JOIN rides r ON r2.id=r.rider_id AND r.status='completed' WHERE r.id IS NULL;",topic="Anti-Join Pattern")
+
+add("sql-090","GROUP BY Expression: Order Month","E-Commerce (Flipkart)","Salesforce","medium",
+"Group orders by month name and show total revenue per month.\n\nReturn month_name and monthly_revenue. Order by revenue descending.",
+"Use strftime('%m', order_date) to extract month, CASE to name it.",
+"January: 57500+3299=60799. February: 799+55450+2500=58749. March: 6900+450=7350.",
+ECOM_T,ECOM_S,(["month_name","monthly_revenue"],[["January",60799.0],["February",58749.0],["March",7350.0]]),
+"SELECT CASE strftime('%m',order_date) WHEN '01' THEN 'January' WHEN '02' THEN 'February' WHEN '03' THEN 'March' END AS month_name,SUM(total)AS monthly_revenue FROM orders GROUP BY strftime('%m',order_date) ORDER BY monthly_revenue DESC;",topic="GROUP BY with Expression")
+
+add("sql-091","Running Percentage of Total","Social Media (Instagram)","Adobe","hard",
+"Show each post's likes as a running percentage of total likes across all posts.\n\nReturn content, likes, and running_pct (rounded to 1). Order by likes descending.",
+"SUM(likes) OVER (ORDER BY likes DESC) / total * 100.",
+"Deployed to production!(95)=21.9%, then cumulative grows...",
+SOCIAL_T,SOCIAL_S,(["content","likes","running_pct"],[["Deployed to production!",95,21.9],["My first open source PR!",88,42.2],["SQL window functions",71,58.5],["Python vs JavaScript",56,71.4],["SQL is amazing",42,81.1],["Deep learning notes",33,88.7],["Learning React today!",25,94.5],["Built a REST API",15,100.0]]),
+"SELECT content,likes,ROUND(SUM(likes) OVER(ORDER BY likes DESC)*100.0/(SELECT SUM(likes) FROM posts),1)AS running_pct FROM posts ORDER BY likes DESC;",topic="Running Percentage Window")
+
+add("sql-092","Multiple GROUP BY Columns","Ride-Sharing (Ola)","Freshworks","medium",
+"Count rides grouped by both driver city and ride status.\n\nReturn city, status, and ride_count. Order by city, status.",
+"GROUP BY d.city, r.status.",
+"Breakdown per city per status.",
+RIDE_T,RIDE_S,(["city","status","ride_count"],[["Bangalore","completed",1],["Chennai","completed",1],["Delhi","cancelled",1],["Delhi","completed",1],["Mumbai","completed",6]]),
+"SELECT d.city,r.status,COUNT(*)AS ride_count FROM rides r JOIN drivers d ON r.driver_id=d.id GROUP BY d.city,r.status ORDER BY d.city,r.status;",topic="Multiple GROUP BY Columns")
+
+add("sql-093","CASE in WHERE Clause","Food Delivery (Zomato)","Swiggy","medium",
+"Find restaurants that are considered 'premium' (rating >= 4.5) OR have the cuisine 'Chinese'.\n\nReturn name, cuisine, rating. Order by rating descending.",
+"WHERE (rating >= 4.5) OR (cuisine = 'Chinese').",
+"Dosa Corner(4.7), Biryani House(4.5), Dragon Wok(Chinese,4.2).",
+ZOMATO_T,ZOMATO_S,(["name","cuisine","rating"],[["Dosa Corner","South Indian",4.7],["Biryani House","Indian",4.5],["Dragon Wok","Chinese",4.2]]),
+"SELECT name,cuisine,rating FROM restaurants WHERE rating>=4.5 OR cuisine='Chinese' ORDER BY rating DESC;",topic="Conditional WHERE Filtering")
+
+add("sql-094","Simulated UPDATE: Salary Hike","HR / Employee","Accenture","medium",
+"Show what each employee's salary would be after a 10% hike for Engineering dept and 5% for others.\n\nReturn name, department, current_salary, new_salary. Order by new_salary descending.",
+"Use CASE WHEN department='Engineering' THEN salary*1.10 ELSE salary*1.05.",
+"Engineering gets 10% bump, others 5%.",
+EMP_T,EMP_S,(["name","department","current_salary","new_salary"],[["Alice","Engineering",70000,77000.0],["Eve","Engineering",65000,71500.0],["Bob","Marketing",60000,63000.0],["Charlie","Engineering",55000,60500.0],["Diana","Marketing",50000,52500.0],["Frank","Sales",45000,47250.0]]),
+"SELECT name,department,salary AS current_salary,CASE WHEN department='Engineering' THEN ROUND(salary*1.10) ELSE ROUND(salary*1.05) END AS new_salary FROM employees ORDER BY new_salary DESC;",topic="Simulated UPDATE with CASE")
+
+add("sql-095","CTE + Window Combo: Ranked Monthly Revenue","E-Commerce (Flipkart)","Microsoft","hard",
+"Using a CTE to calculate monthly revenue, then rank months by revenue.\n\nReturn month_num, monthly_revenue, and revenue_rank.",
+"WITH monthly AS (...GROUP BY month), SELECT with DENSE_RANK().",
+"January is #1, February #2, March #3.",
+ECOM_T,ECOM_S,(["month_num","monthly_revenue","revenue_rank"],[["01",60799.0,1],["02",58749.0,2],["03",7350.0,3]]),
+"WITH monthly AS(SELECT strftime('%m',order_date)AS month_num,SUM(total)AS monthly_revenue FROM orders GROUP BY strftime('%m',order_date))SELECT month_num,monthly_revenue,DENSE_RANK() OVER(ORDER BY monthly_revenue DESC)AS revenue_rank FROM monthly;",topic="CTE + Window Combo")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
