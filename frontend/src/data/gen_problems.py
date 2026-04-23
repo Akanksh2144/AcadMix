@@ -2099,6 +2099,80 @@ add("sql-250","Combine Name and Department","HR / Employee","TCS Digital","easy"
 EMP_T,EMP_S,(["display"],[["Alice (Eng)"],["Bob (Eng)"],["Charlie (Sales)"],["Diana (Sales)"],["Eve (Eng)"],["Frank (HR)"]]),
 "SELECT name||' ('||dept||')'AS display FROM employees ORDER BY name;",topic="String Concat Display")
 
+# ═══ BATCH 25: TCS Digital Final 5 + Infosys First 5 ═══
+
+# --- TCS Digital (5 remaining → completes to 30) ---
+add("sql-251","Running Total of Salaries","HR / Employee","TCS Digital","medium",
+"Calculate a running total of salaries ordered by hire date.\n\nReturn name, salary, running_total. Order by hire_date.",
+"SUM(salary) OVER(ORDER BY hire_date).",
+"Cumulative sum as you go down by hire date.",
+EMP_T,EMP_S,(["name","salary","running_total"],[["Alice",70000,70000],["Bob",60000,130000],["Charlie",55000,185000],["Diana",50000,235000],["Eve",65000,300000],["Frank",45000,345000]]),
+"SELECT name,salary,SUM(salary) OVER(ORDER BY hire_date)AS running_total FROM employees ORDER BY hire_date;",topic="Running Total Window")
+
+add("sql-252","Posts With More Than 50 Likes","Social Media (Instagram)","TCS Digital","easy",
+"Find posts that received more than 50 likes.\n\nReturn post_id, content preview (first 30 chars), likes. Order by likes DESC.",
+"WHERE likes > 50.",
+"Filter high-engagement posts.",
+SOCIAL_T,SOCIAL_S,(["post_id","preview","likes"],[]),
+"SELECT id AS post_id,SUBSTR(content,1,30)AS preview,likes FROM posts WHERE likes>50 ORDER BY likes DESC;",topic="WHERE + SUBSTR Preview")
+
+add("sql-253","Shows Watched by User 1","Streaming (Netflix)","TCS Digital","easy",
+"Find all shows watched by user with id=1.\n\nReturn show title, watch_date. Order by watch_date.",
+"JOIN watch_history + shows WHERE user_id=1.",
+"Filter watch history for a specific user.",
+STREAM_T,STREAM_S,(["title","watch_date"],[]),
+"SELECT s.title,w.watch_date FROM watch_history w JOIN shows s ON w.show_id=s.id WHERE w.user_id=1 ORDER BY w.watch_date;",topic="JOIN + User Filter")
+
+add("sql-254","Total Transaction Amount Per Account","Banking / Finance","TCS Digital","medium",
+"Calculate the total transaction amount for each account.\n\nReturn holder name, total_amount. Order by total_amount DESC.",
+"JOIN accounts + transactions, SUM(amount), GROUP BY.",
+"Sum all transactions per account holder.",
+BANK_T,BANK_S,(["holder","total_amount"],[["Meena",35000.0],["Ravi",10000.0],["Suresh",5000.0],["Kavita",8000.0]]),
+"SELECT a.holder,SUM(t.amount)AS total_amount FROM accounts a JOIN transactions t ON a.id=t.acc_id GROUP BY a.holder ORDER BY total_amount DESC;",topic="JOIN + SUM Transactions")
+
+add("sql-255","High-Value Customers Over 10K","E-Commerce (Flipkart)","TCS Digital","medium",
+"Find customers whose total spending exceeds 10,000.\n\nReturn name, total_spent. Order by total_spent DESC.",
+"JOIN + GROUP BY + HAVING SUM > 10000.",
+"Ankit and Rohan are high-value.",
+ECOM_T,ECOM_S,(["name","total_spent"],[["Ankit",60799.0],["Rohan",55450.0]]),
+"SELECT c.name,SUM(o.total)AS total_spent FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name HAVING SUM(o.total)>10000 ORDER BY total_spent DESC;",topic="HAVING SUM Threshold")
+
+# --- Infosys (5 of 21 needed) ---
+add("sql-256","Departments With Avg Salary Above 50K","HR / Employee","Infosys","medium",
+"Find departments where the average salary exceeds 50,000.\n\nReturn dept, avg_salary. Order by avg_salary DESC.",
+"GROUP BY dept HAVING AVG(salary) > 50000.",
+"Eng avg=65K, Sales avg=52.5K. HR avg=45K excluded.",
+EMP_T,EMP_S,(["dept","avg_salary"],[["Eng",65000.0],["Sales",52500.0]]),
+"SELECT dept,AVG(salary)AS avg_salary FROM employees GROUP BY dept HAVING AVG(salary)>50000 ORDER BY avg_salary DESC;",topic="HAVING AVG Threshold")
+
+add("sql-257","Employees Not in Engineering","HR / Employee","Infosys","easy",
+"Find all employees who are NOT in the Engineering department.\n\nReturn name, dept. Order by name.",
+"WHERE dept != 'Eng'.",
+"Charlie(Sales), Diana(Sales), Frank(HR).",
+EMP_T,EMP_S,(["name","dept"],[["Charlie","Sales"],["Diana","Sales"],["Frank","HR"]]),
+"SELECT name,dept FROM employees WHERE dept!='Eng' ORDER BY name;",topic="WHERE Not Equal")
+
+add("sql-258","Youngest and Oldest Patient","Healthcare / Hospital","Infosys","easy",
+"Find the youngest and oldest patient.\n\nReturn type ('Youngest'/'Oldest'), name, age.",
+"Use UNION with MIN and MAX age subqueries.",
+"Youngest: Priya(28). Oldest: Amit(45).",
+HOSPITAL_T,HOSPITAL_S,(["type","name","age"],[["Youngest","Priya",28],["Oldest","Amit",45]]),
+"SELECT 'Youngest'AS type,name,age FROM patients WHERE age=(SELECT MIN(age) FROM patients) UNION ALL SELECT 'Oldest',name,age FROM patients WHERE age=(SELECT MAX(age) FROM patients);",topic="UNION MIN/MAX")
+
+add("sql-259","Second Highest Salary Per Department","HR / Employee","Infosys","hard",
+"Find the second highest salary in each department. If a dept has only 1 employee, exclude it.\n\nReturn dept, name, salary. Order by dept.",
+"DENSE_RANK PARTITION BY dept ORDER BY salary DESC, filter rank=2.",
+"Eng: Eve(65K). Sales: Diana(50K). HR has only 1 employee.",
+EMP_T,EMP_S,(["dept","name","salary"],[["Eng","Eve",65000],["Sales","Diana",50000]]),
+"SELECT dept,name,salary FROM(SELECT dept,name,salary,DENSE_RANK() OVER(PARTITION BY dept ORDER BY salary DESC)AS rk FROM employees)t WHERE rk=2 ORDER BY dept;",topic="2nd Highest Per Dept")
+
+add("sql-260","Products Ordered More Than Once","E-Commerce (Flipkart)","Infosys","medium",
+"Find products that appear in more than one order.\n\nReturn product name, order_count. Order by order_count DESC.",
+"JOIN products + order_items, GROUP BY product, HAVING COUNT DISTINCT order > 1.",
+"Products appearing across multiple orders.",
+ECOM_T,ECOM_S,(["name","order_count"],[["iPhone 15",3],["MacBook Pro",2],["Running Shoes",2],["SQL Book",2]]),
+"SELECT p.name,COUNT(DISTINCT oi.order_id)AS order_count FROM products p JOIN order_items oi ON p.id=oi.product_id GROUP BY p.name HAVING COUNT(DISTINCT oi.order_id)>1 ORDER BY order_count DESC;",topic="HAVING COUNT DISTINCT")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
