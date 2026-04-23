@@ -506,6 +506,14 @@ async def lifespan(app: FastAPI):
     
     yield
     # ── Shutdown cleanup ──────────────────────────────────────────────────
+    import app.core.security as sec
+    if sec.redis_client:
+        try:
+            await sec.redis_client.aclose()
+            logger.info("[shutdown] Redis client closed")
+        except Exception as e:
+            logger.warning("[shutdown] Failed to close Redis client: %s", e)
+            
     # Stop WebSocket Redis subscriber
     await ws_manager.stop_subscriber()
     logger.info("[shutdown] WebSocket Redis subscriber stopped")
