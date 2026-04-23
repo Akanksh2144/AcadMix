@@ -798,6 +798,78 @@ add("sql-075","Derived Table: Above-Avg Riders","Ride-Sharing (Ola)","Deloitte",
 RIDE_T,RIDE_S,(["name","avg_fare"],[["Diya",550],["Chirag",375],["Bhavna",300]]),
 "SELECT r2.name,ROUND(sub.avg_fare)AS avg_fare FROM(SELECT rider_id,AVG(fare)AS avg_fare FROM rides WHERE status='completed' GROUP BY rider_id)sub JOIN riders r2 ON sub.rider_id=r2.id WHERE sub.avg_fare>(SELECT AVG(fare) FROM rides WHERE status='completed')ORDER BY avg_fare DESC;",topic="Derived Table / Inline View")
 
+# ═══ BATCH 8: Mixed Advanced II ═══
+
+add("sql-076","SUBSTR: Extract First Name","HR / Employee","TCS Digital","easy",
+"Extract just the first name from each employee (characters before any space, but since names are single words, just return first 3 characters as initials).\n\nReturn name and initials (first 3 chars). Order by name.",
+"Use SUBSTR(name, 1, 3).",
+"Ali, Bob, Cha, Dia, Eve, Fra.",
+EMP_T,EMP_S,(["name","initials"],[["Alice","Ali"],["Bob","Bob"],["Charlie","Cha"],["Diana","Dia"],["Eve","Eve"],["Frank","Fra"]]),
+"SELECT name,SUBSTR(name,1,3)AS initials FROM employees ORDER BY name;",topic="String Functions (SUBSTR)")
+
+add("sql-077","CAST: Fare as Integer","Ride-Sharing (Ola)","Paytm","easy",
+"Show each completed ride's fare cast as an integer (truncated, not rounded).\n\nReturn ride_id, original fare, and fare_int. Order by ride_id.",
+"Use CAST(fare AS INT).",
+"250.0→250, 180.0→180, etc.",
+RIDE_T,RIDE_S,(["id","fare","fare_int"],[[1,250.0,250],[2,180.0,180],[3,320.0,320],[4,400.0,400],[5,200.0,200],[6,550.0,550],[8,150.0,150],[9,350.0,350],[10,220.0,220]]),
+"SELECT id,fare,CAST(fare AS INT)AS fare_int FROM rides WHERE status='completed' ORDER BY id;",topic="CAST / Type Conversion")
+
+add("sql-078","Cumulative Order Total","E-Commerce (Flipkart)","Amazon","hard",
+"Show each order with a running cumulative total across all orders sorted by date.\n\nReturn order_id, order_date, total, and cumulative_total. Order by order_date.",
+"Use SUM(total) OVER (ORDER BY order_date).",
+"Jan10: 57500. Jan15: 57500+3299=60799. Feb05: 61598...",
+ECOM_T,ECOM_S,(["id","order_date","total","cumulative_total"],[[1001,"2024-01-10",57500.0,57500.0],[1002,"2024-01-15",3299.0,60799.0],[1003,"2024-02-05",799.0,61598.0],[1004,"2024-02-20",55450.0,117048.0],[1005,"2024-03-01",2500.0,119548.0],[1006,"2024-03-10",6900.0,126448.0],[1007,"2024-03-15",450.0,126898.0]]),
+"SELECT id,order_date,total,SUM(total) OVER(ORDER BY order_date)AS cumulative_total FROM orders ORDER BY order_date;",topic="Cumulative SUM Window")
+
+add("sql-079","NOT EXISTS: Idle Drivers","Ride-Sharing (Ola)","Google","medium",
+"Find drivers who have never completed a ride using NOT EXISTS.\n\nReturn driver name.",
+"Use NOT EXISTS with a correlated subquery on rides.",
+"All drivers have at least one completed ride, so result is empty.",
+RIDE_T,RIDE_S,(["name"],[]),
+"SELECT d.name FROM drivers d WHERE NOT EXISTS(SELECT 1 FROM rides r WHERE r.driver_id=d.id AND r.status='completed');",topic="NOT EXISTS")
+
+add("sql-080","Multiple UNION: All Names","Ride-Sharing (Ola)","SAP","medium",
+"Combine all driver names and rider names into a single list with their role.\n\nReturn name and role ('Driver' or 'Rider'). Order by name.",
+"UNION ALL two SELECTs with literal role column.",
+"Combined list of 10 people.",
+RIDE_T,RIDE_S,(["name","role"],[["Aarav","Rider"],["Bhavna","Rider"],["Chirag","Rider"],["Diya","Rider"],["Eshan","Rider"],["Kavita","Driver"],["Lakshmi","Driver"],["Mohan","Driver"],["Ramesh","Driver"],["Sunil","Driver"]]),
+"SELECT name,'Driver' AS role FROM drivers UNION ALL SELECT name,'Rider' FROM riders ORDER BY name;",topic="UNION ALL with Literals")
+
+add("sql-081","Summary Row with UNION","Banking / Finance","Morgan Stanley","medium",
+"Show each branch's total balance AND a grand total row at the bottom.\n\nReturn branch and total_balance. The summary row should have branch='TOTAL'.",
+"Use UNION ALL: per-branch GROUP BY + a second SELECT for grand total.",
+"Mumbai: 80000. Delhi: 120000. Bangalore: 75000. TOTAL: 275000.",
+BANK_T,BANK_S,(["branch","total_balance"],[["Bangalore",75000.0],["Delhi",120000.0],["Mumbai",80000.0],["TOTAL",275000.0]]),
+"SELECT branch,SUM(balance)AS total_balance FROM accounts GROUP BY branch UNION ALL SELECT 'TOTAL',SUM(balance) FROM accounts ORDER BY CASE WHEN branch='TOTAL' THEN 1 ELSE 0 END,branch;",topic="UNION ALL for Summary Rows")
+
+add("sql-082","Same-City Customer Pairs","E-Commerce (Flipkart)","Flipkart","medium",
+"Find all pairs of customers who live in the same city.\n\nReturn city, customer_a, customer_b (alphabetically). No duplicate pairs.",
+"Self-join customers ON city, WHERE c1.name < c2.name.",
+"Mumbai: Ankit & Sneha.",
+ECOM_T,ECOM_S,(["city","customer_a","customer_b"],[["Mumbai","Ankit","Sneha"]]),
+"SELECT c1.city,c1.name AS customer_a,c2.name AS customer_b FROM customers c1 JOIN customers c2 ON c1.city=c2.city AND c1.name<c2.name ORDER BY c1.city;",topic="Self-Join (Same Value Pairs)")
+
+add("sql-083","RANK vs DENSE_RANK","Streaming (Netflix)","Oracle","hard",
+"Compare RANK() and DENSE_RANK() for shows ordered by total watch time.\n\nReturn title, total_minutes, rank_val, dense_rank_val. Order by total_minutes descending.",
+"If two shows tie, RANK skips next number but DENSE_RANK doesn't.",
+"Money Heist(185) and Dark(165) then Stranger Things(130).",
+STREAM_T,STREAM_S,(["title","total_minutes","rank_val","dense_rank_val"],[["Money Heist",185,1,1],["Dark",165,2,2],["Stranger Things",130,3,3],["Sacred Games",110,4,4],["Mirzapur",80,5,5]]),
+"SELECT s.title,SUM(w.duration_min)AS total_minutes,RANK() OVER(ORDER BY SUM(w.duration_min) DESC)AS rank_val,DENSE_RANK() OVER(ORDER BY SUM(w.duration_min) DESC)AS dense_rank_val FROM shows s JOIN watch_history w ON s.id=w.show_id GROUP BY s.title ORDER BY total_minutes DESC;",topic="RANK vs DENSE_RANK")
+
+add("sql-084","Scalar Subquery in SELECT","Food Delivery (Zomato)","Cognizant","medium",
+"For each restaurant, show its rating and the overall average rating using a scalar subquery.\n\nReturn name, rating, and avg_all_rating (rounded to 1). Order by rating descending.",
+"Use (SELECT ROUND(AVG(rating),1) FROM restaurants) in SELECT.",
+"Each row shows the restaurant's rating alongside the global average.",
+ZOMATO_T,ZOMATO_S,(["name","rating","avg_all_rating"],[["Dosa Corner",4.7,4.1],["Biryani House",4.5,4.1],["Dragon Wok",4.2,4.1],["Pizza Palace",3.8,4.1],["Burger Barn",3.5,4.1]]),
+"SELECT name,rating,(SELECT ROUND(AVG(rating),1) FROM restaurants)AS avg_all_rating FROM restaurants ORDER BY rating DESC;",topic="Scalar Subquery in SELECT")
+
+add("sql-085","Complex Date Filter: Q1 High-Value","E-Commerce (Flipkart)","Accenture","medium",
+"Find delivered orders from Q1 2024 (Jan-Mar) with total > 1000.\n\nReturn order_id, order_date, total. Order by total descending.",
+"WHERE status='delivered' AND order_date BETWEEN ... AND total > 1000.",
+"Orders 1001(57500) and 1006(6900) qualify.",
+ECOM_T,ECOM_S,(["id","order_date","total"],[[1001,"2024-01-10",57500.0],[1006,"2024-03-10",6900.0],[1002,"2024-01-15",3299.0]]),
+"SELECT id,order_date,total FROM orders WHERE status='delivered' AND order_date BETWEEN '2024-01-01' AND '2024-03-31' AND total>1000 ORDER BY total DESC;",topic="Complex Date Filtering")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
