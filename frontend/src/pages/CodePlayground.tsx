@@ -15,6 +15,7 @@ const LANGUAGES = [
   { id: 'java', label: 'Java', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/java/java-original.svg" alt="Java" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'c', label: 'C', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/c/c-original.svg" alt="C" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'cpp', label: 'C++', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/cplusplus/cplusplus-original.svg" alt="C++" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
+  { id: 'r', label: 'R (Data Science)', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/r/r-original.svg" alt="R" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
 ];
 
 const DEFAULT_TEMPLATES = {
@@ -22,7 +23,8 @@ const DEFAULT_TEMPLATES = {
   javascript: '// Write your JavaScript code here\n\nfunction main() {\n  console.log("Hello, World!");\n}\n\nmain();\n',
   java: 'public class Solution {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}\n',
   c: '#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}\n',
-  cpp: '#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}\n'
+  cpp: '#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}\n',
+  r: '# Write your R code here\n\n# WebR allows plotting natively! Try running this:\nplot(mtcars$wt, mtcars$mpg, \n     main="Car Weight vs MPG", \n     xlab="Weight (1000 lbs)", ylab="Miles/(US) gallon", \n     col="blue", pch=19)\n'
 };
 
 const CodePlayground = ({ navigate, user }) => {
@@ -63,6 +65,10 @@ const CodePlayground = ({ navigate, user }) => {
   const [execTime, setExecTime] = useState(null);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const langMenuRef = useRef(null);
+
+  const [rPlots, setRPlots] = useState([]);
+  const [webrLoading, setWebrLoading] = useState(false);
+  const webrRef = useRef(null);
 
   // Close language dropdown on outside click
   useEffect(() => {
@@ -270,6 +276,62 @@ const CodePlayground = ({ navigate, user }) => {
     setOutput(null);
     const startTime = Date.now();
     try {
+      if (language === 'r') {
+         if (!webrRef.current) {
+             setWebrLoading(true);
+             setOutput("Booting R Virtual Environment (WASM). This may take 3-8 seconds on first load...");
+             try {
+                const { WebR } = await import('webr');
+                const webr = new WebR();
+                await webr.init();
+                webrRef.current = webr;
+             } catch (e) {
+                setOutput(`Failed to initialize WebR: ${e.message}`);
+                setRunning(false);
+                setWebrLoading(false);
+                return;
+             }
+             setWebrLoading(false);
+         }
+         
+         const webr = webrRef.current;
+         setOutput("Executing R script...");
+         setRPlots([]);
+         
+         try {
+             await webr.evalRVoid(`svg("acadmix_plot.svg", width=8, height=5)`);
+             const shelter = await webr.Shelter();
+             const capture = await shelter.captureR(code, { withAutoprint: true, catchStreams: true });
+             await webr.evalRVoid(`dev.off()`);
+             
+             const outText = capture.output
+                 .filter(msg => msg.type === 'stdout' || msg.type === 'stderr')
+                 .map(msg => msg.data)
+                 .join('\n');
+                 
+             let svgContent = null;
+             try {
+                 const svgData = await webr.FS.readFile('/home/web_user/acadmix_plot.svg');
+                 svgContent = new TextDecoder().decode(svgData);
+                 await webr.evalRVoid(`unlink("acadmix_plot.svg")`);
+             } catch (e) {}
+             
+             setOutput(outText || '(Execution completed with no textual output)');
+             if (svgContent) {
+                 setRPlots([svgContent]);
+                 setActiveConsoleTab('plots');
+             } else {
+                 setActiveConsoleTab('results');
+             }
+             setExecTime(Date.now() - startTime);
+         } catch (e) {
+             setOutput(`Error: ${e.message}`);
+             setExecTime(Date.now() - startTime);
+         }
+         setRunning(false);
+         return;
+      }
+
       let data = {};
       if (activeChallenge) {
         const endpoint = is_submit ? '/challenges/submit' : '/challenges/run';
@@ -805,6 +867,15 @@ const CodePlayground = ({ navigate, user }) => {
                     <Terminal size={16} weight={activeConsoleTab === 'results' ? 'fill' : 'duotone'} />
                     Test Results
                   </button>
+                  {(language === 'r' || rPlots.length > 0) && (
+                    <button 
+                      onClick={() => setActiveConsoleTab('plots')}
+                      className={`px-4 py-1.5 flex items-center gap-2 rounded-xl text-sm font-bold transition-all ${activeConsoleTab === 'plots' ? 'bg-amber-500/15 text-amber-400' : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'}`}
+                    >
+                      <ChartLineUp size={16} weight={activeConsoleTab === 'plots' ? 'fill' : 'duotone'} />
+                      Plots
+                    </button>
+                  )}
                 </div>
                  <div className="flex items-center gap-2 text-slate-400">
                    {execTime && <span className="text-xs mr-2 border-r border-slate-700 pr-4">{execTime}ms</span>}
@@ -890,6 +961,18 @@ const CodePlayground = ({ navigate, user }) => {
                           </div>
                         )}
                       </div>
+                    )}
+                  </div>
+                 ) : activeConsoleTab === 'plots' ? (
+                  <div className="p-5 font-mono text-sm layout-console text-slate-300 flex flex-col items-center">
+                    {rPlots.length > 0 ? (
+                      rPlots.map((plot, idx) => (
+                        <div key={idx} className="bg-white rounded-xl p-2 mb-4 w-full overflow-x-auto shadow-lg">
+                          <div dangerouslySetInnerHTML={{ __html: plot }} className="w-full flex justify-center [&>svg]:max-w-full [&>svg]:h-auto" />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-slate-500 dark:text-slate-400 italic py-10">No plots generated yet. Use plot() or ggplot2 in R!</div>
                     )}
                   </div>
                  ) : (
@@ -1018,6 +1101,23 @@ const CodePlayground = ({ navigate, user }) => {
                     <div className="flex items-center gap-2">
                       <Terminal size={18} weight="duotone" className="text-slate-500 dark:text-slate-400" />
                       <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Output</h3>
+                      {(language === 'r' || rPlots.length > 0) && (
+                        <div className="ml-4 flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                           <button 
+                             onClick={() => setActiveConsoleTab('results')}
+                             className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${activeConsoleTab !== 'plots' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-slate-200' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                           >
+                             Console
+                           </button>
+                           <button 
+                             onClick={() => setActiveConsoleTab('plots')}
+                             className={`px-3 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1 ${activeConsoleTab === 'plots' ? 'bg-amber-50 dark:bg-amber-500/20 shadow-sm text-amber-600 dark:text-amber-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                           >
+                             <ChartLineUp size={14} weight={activeConsoleTab === 'plots' ? 'fill' : 'duotone'} />
+                             Plots
+                           </button>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5">
                       {output && (
@@ -1038,6 +1138,18 @@ const CodePlayground = ({ navigate, user }) => {
                         <div className="flex items-center gap-3 text-slate-400">
                           <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
                           <span className="text-sm font-medium">Executing code...</span>
+                        </div>
+                      ) : activeConsoleTab === 'plots' ? (
+                        <div className="flex flex-col items-center">
+                          {rPlots.length > 0 ? (
+                            rPlots.map((plot, idx) => (
+                              <div key={idx} className="bg-white rounded-xl p-2 mb-4 w-full overflow-x-auto shadow-lg">
+                                <div dangerouslySetInnerHTML={{ __html: plot }} className="w-full flex justify-center [&>svg]:max-w-full [&>svg]:h-auto" />
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-slate-500 dark:text-slate-400 italic py-10">No plots generated yet. Use plot() or ggplot2 in R!</div>
+                          )}
                         </div>
                       ) : output !== null ? (
                         <pre className="text-sm text-slate-200 font-mono whitespace-pre-wrap">{output}</pre>
