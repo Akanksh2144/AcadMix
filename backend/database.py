@@ -29,8 +29,8 @@ from sqlalchemy.pool import NullPool
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _PGBOUNCER_MODE = os.getenv("PGBOUNCER_ENABLED", "false").lower() == "true"
-_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "5" if _PGBOUNCER_MODE else "5"))
-_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "10" if _PGBOUNCER_MODE else "5"))
+_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "5" if _PGBOUNCER_MODE else "20"))
+_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "10" if _PGBOUNCER_MODE else "30"))
 
 engine = create_async_engine(
     DATABASE_URL,
