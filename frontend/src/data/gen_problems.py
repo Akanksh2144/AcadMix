@@ -980,6 +980,110 @@ add("sql-100","Grand Pipeline: Complete E-Commerce Report","E-Commerce (Flipkart
 ECOM_T,ECOM_S,(["name","total_orders","total_spent","spending_rank","top_category"],[["Ankit",2,58299.0,1,"Electronics"],["Rohan",1,55450.0,2,"Electronics"],["Sneha",1,6900.0,3,"Fashion"],["Priya",1,3299.0,4,"Electronics"],["Vikram",1,450.0,5,"Books"]]),
 "WITH customer_stats AS(SELECT c.id,c.name,COUNT(*)AS total_orders,SUM(o.total)AS total_spent FROM customers c JOIN orders o ON c.id=o.customer_id WHERE o.status!='cancelled' GROUP BY c.id),ranked AS(SELECT *,DENSE_RANK() OVER(ORDER BY total_spent DESC)AS spending_rank FROM customer_stats),top_cat AS(SELECT o.customer_id,p.category,SUM(oi.qty)AS cat_qty,ROW_NUMBER() OVER(PARTITION BY o.customer_id ORDER BY SUM(oi.qty) DESC)AS rn FROM orders o JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id WHERE o.status!='cancelled' GROUP BY o.customer_id,p.category)SELECT r.name,r.total_orders,r.total_spent,r.spending_rank,tc.category AS top_category FROM ranked r LEFT JOIN top_cat tc ON r.id=tc.customer_id AND tc.rn=1 ORDER BY r.spending_rank;",topic="Multi-CTE Pipeline (Capstone)")
 
+# ═══ NEW SCHEMA: Login / Activity Tracking ═══
+
+LOGIN_S = """CREATE TABLE users(id INT PRIMARY KEY,name VARCHAR,email VARCHAR,signup_date DATE);
+CREATE TABLE logins(id INT PRIMARY KEY,user_id INT,login_date DATE);
+INSERT INTO users VALUES(1,'Aarav','aarav@gmail.com','2023-01-01');
+INSERT INTO users VALUES(2,'Bhavna','bhavna@gmail.com','2023-02-15');
+INSERT INTO users VALUES(3,'Chirag','chirag@gmail.com','2023-03-01');
+INSERT INTO users VALUES(4,'Diya','diya@gmail.com','2023-06-10');
+INSERT INTO users VALUES(5,'Eshan','eshan@gmail.com','2023-09-01');
+INSERT INTO logins VALUES(1,1,'2024-01-10');
+INSERT INTO logins VALUES(2,1,'2024-01-11');
+INSERT INTO logins VALUES(3,1,'2024-01-12');
+INSERT INTO logins VALUES(4,1,'2024-01-15');
+INSERT INTO logins VALUES(5,2,'2024-01-10');
+INSERT INTO logins VALUES(6,2,'2024-01-12');
+INSERT INTO logins VALUES(7,2,'2024-01-13');
+INSERT INTO logins VALUES(8,3,'2024-01-10');
+INSERT INTO logins VALUES(9,3,'2024-01-11');
+INSERT INTO logins VALUES(10,3,'2024-01-12');
+INSERT INTO logins VALUES(11,3,'2024-01-13');
+INSERT INTO logins VALUES(12,3,'2024-01-14');
+INSERT INTO logins VALUES(13,4,'2024-01-10');
+INSERT INTO logins VALUES(14,4,'2024-01-20');
+INSERT INTO logins VALUES(15,5,'2024-01-10');
+INSERT INTO logins VALUES(16,5,'2024-01-11');
+INSERT INTO logins VALUES(17,5,'2024-01-12');
+INSERT INTO logins VALUES(18,5,'2024-01-13');"""
+LOGIN_T = [{"name":"users","columns":[{"name":"id","type":"int"},{"name":"name","type":"varchar"},{"name":"email","type":"varchar"},{"name":"signup_date","type":"date"}],
+"sample_input":[[1,"Aarav","aarav@gmail.com","2023-01-01"],[2,"Bhavna","bhavna@gmail.com","2023-02-15"],[3,"Chirag","chirag@gmail.com","2023-03-01"],[4,"Diya","diya@gmail.com","2023-06-10"],[5,"Eshan","eshan@gmail.com","2023-09-01"]]},
+{"name":"logins","columns":[{"name":"id","type":"int"},{"name":"user_id","type":"int"},{"name":"login_date","type":"date"}],
+"sample_input":[[1,1,"2024-01-10"],[2,1,"2024-01-11"],[3,1,"2024-01-12"],[4,1,"2024-01-15"],[5,2,"2024-01-10"],[6,2,"2024-01-12"],[7,2,"2024-01-13"],[8,3,"2024-01-10"],[9,3,"2024-01-11"],[10,3,"2024-01-12"]]}]
+
+# ═══ BATCH 11: CRITICAL GAPS — LeetCode Classics + Gaps & Islands ═══
+
+add("sql-101","Nth Highest Salary (N=3)","HR / Employee","TCS NQT","medium",
+"Find the 3rd highest salary from the employees table. If fewer than 3 distinct salaries exist, return NULL.\n\nReturn third_highest_salary.",
+"Use DENSE_RANK or LIMIT/OFFSET with DISTINCT.",
+"Salaries: 70K,65K,60K,55K,50K,45K. 3rd highest = 60000.",
+EMP_T,EMP_S,(["third_highest_salary"],[[60000]]),
+"SELECT DISTINCT salary AS third_highest_salary FROM employees ORDER BY salary DESC LIMIT 1 OFFSET 2;",topic="Nth Highest Salary")
+
+add("sql-102","Second Highest Salary (LC #176)","HR / Employee","Infosys","easy",
+"Find the second highest distinct salary. Return NULL if only one distinct salary exists.\n\nReturn second_highest.",
+"Use DENSE_RANK() or LIMIT 1 OFFSET 1.",
+"Second highest = 65000 (Eve).",
+EMP_T,EMP_S,(["second_highest"],[[65000]]),
+"SELECT MAX(salary)AS second_highest FROM employees WHERE salary<(SELECT MAX(salary) FROM employees);",topic="Second Highest Salary")
+
+add("sql-103","Employee Earns More Than Manager (LC #181)","HR / Employee","Microsoft","easy",
+"Given that employees have a manager_id, find employees who earn more than their manager. Since our schema doesn't have manager_id, use departments: find employees who earn more than the average of their department.\n\nReturn name, salary, department, dept_avg (rounded). Order by salary descending.",
+"Self-referencing comparison: salary vs department average.",
+"Alice(70K) vs Engineering avg(63333)=above. Eve(65K)=above. Bob(60K) vs Marketing avg(55K)=above.",
+EMP_T,EMP_S,(["name","salary","department","dept_avg"],[["Alice",70000,"Engineering",63333],["Eve",65000,"Engineering",63333],["Bob",60000,"Marketing",55000]]),
+"SELECT e.name,e.salary,e.department,ROUND(dept.avg_sal)AS dept_avg FROM employees e JOIN(SELECT department,AVG(salary)AS avg_sal FROM employees GROUP BY department)dept ON e.department=dept.department WHERE e.salary>dept.avg_sal ORDER BY e.salary DESC;",topic="Employee vs Department Average")
+
+add("sql-104","Restaurants With No Orders (LC #183 Pattern)","Food Delivery (Zomato)","Amazon","easy",
+"Find restaurants that have never received an order.\n\nReturn restaurant name.",
+"LEFT JOIN restaurants to orders WHERE order is NULL, or NOT EXISTS.",
+"All restaurants have orders except... let's check.",
+ZOMATO_T,ZOMATO_S,(["name"],[]),
+"SELECT r.name FROM restaurants r LEFT JOIN orders o ON r.id=o.rest_id WHERE o.id IS NULL;",topic="LEFT JOIN Anti-Pattern")
+
+add("sql-105","Consecutive Numbers (LC #180)","Social Media (Instagram)","Google","hard",
+"Find users who posted on at least 3 consecutive days.\n\nReturn distinct username.",
+"Use LAG/LEAD to check consecutive dates, or row_number gap technique.",
+"Aarav: Jan10,11,12(3 consecutive✓). Chirag: not posting on consecutive days.",
+LOGIN_T,LOGIN_S,(["name"],[["Aarav"],["Chirag"],["Eshan"]]),
+"WITH dated AS(SELECT user_id,login_date,login_date - ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY login_date) AS grp FROM(SELECT DISTINCT user_id,login_date FROM logins)),streaks AS(SELECT user_id,grp,COUNT(*)AS streak FROM dated GROUP BY user_id,grp HAVING COUNT(*)>=3)SELECT DISTINCT u.name FROM streaks s JOIN users u ON s.user_id=u.id ORDER BY u.name;",topic="Gaps & Islands: Consecutive Days")
+
+add("sql-106","Month-over-Month Revenue Growth","E-Commerce (Flipkart)","Goldman Sachs","hard",
+"Calculate MoM revenue growth percentage.\n\nReturn month_num, revenue, prev_month_revenue, and growth_pct (rounded to 1). Order by month_num.",
+"Use LAG(revenue) OVER (ORDER BY month) to get previous month, then (current-prev)/prev*100.",
+"Jan→Feb: (58749-60799)/60799*100 = -3.4%. Feb→Mar: (7350-58749)/58749 = -87.5%.",
+ECOM_T,ECOM_S,(["month_num","revenue","prev_month_revenue","growth_pct"],[["01",60799.0,None,None],["02",58749.0,60799.0,-3.4],["03",7350.0,58749.0,-87.5]]),
+"WITH monthly AS(SELECT strftime('%m',order_date)AS month_num,SUM(total)AS revenue FROM orders GROUP BY strftime('%m',order_date))SELECT month_num,revenue,LAG(revenue) OVER(ORDER BY month_num)AS prev_month_revenue,ROUND((revenue-LAG(revenue) OVER(ORDER BY month_num))*100.0/LAG(revenue) OVER(ORDER BY month_num),1)AS growth_pct FROM monthly ORDER BY month_num;",topic="Month-over-Month Growth")
+
+add("sql-107","Exchange Seat IDs (LC #626)","University / Education","Meta","medium",
+"Swap adjacent student seat IDs: student in seat 1↔2, 3↔4, etc. If odd total, last student stays.\n\nReturn student id (swapped) and name. Order by new id.",
+"Use CASE: if id is odd and not last, id+1. If even, id-1. If odd and last, keep id.",
+"Swap adjacent rows using modular arithmetic.",
+UNI_T,UNI_S,(["new_id","name"],[[1,"Kavya"],[2,"Arjun"],[3,"Nikhil"],[4,"Meera"],[5,"Ravi"]]),
+"SELECT CASE WHEN id%2=1 AND id=(SELECT MAX(id) FROM students) THEN id WHEN id%2=1 THEN id+1 ELSE id-1 END AS new_id,name FROM students ORDER BY new_id;",topic="Row Swapping (CASE + MOD)")
+
+add("sql-108","Department Top 3 Salaries (LC #185)","HR / Employee","Amazon","hard",
+"Find the top 3 earners in each department. Include ties.\n\nReturn department, name, salary. Order by department, salary descending.",
+"DENSE_RANK() OVER (PARTITION BY department ORDER BY salary DESC) <= 3.",
+"Engineering: Alice(70K), Eve(65K), Charlie(55K). Marketing: Bob(60K), Diana(50K). Sales: Frank(45K).",
+EMP_T,EMP_S,(["department","name","salary"],[["Engineering","Alice",70000],["Engineering","Eve",65000],["Engineering","Charlie",55000],["Marketing","Bob",60000],["Marketing","Diana",50000],["Sales","Frank",45000]]),
+"SELECT department,name,salary FROM(SELECT department,name,salary,DENSE_RANK() OVER(PARTITION BY department ORDER BY salary DESC)AS rn FROM employees)WHERE rn<=3 ORDER BY department,salary DESC;",topic="Top-N Per Department")
+
+add("sql-109","Delete Duplicate Emails (Keep Lowest ID)","HR / Employee","Wipro","medium",
+"Show which employee records to KEEP if we had duplicates — keep the row with the lowest ID per department.\n\nReturn the employee id and name that would be kept (first employee per department). Order by id.",
+"ROW_NUMBER() OVER (PARTITION BY department ORDER BY id) = 1.",
+"Engineering first=Alice(1). Marketing first=Bob(2). Sales first=Frank(6).",
+EMP_T,EMP_S,(["id","name","department"],[[1,"Alice","Engineering"],[2,"Bob","Marketing"],[6,"Frank","Sales"]]),
+"SELECT id,name,department FROM(SELECT id,name,department,ROW_NUMBER() OVER(PARTITION BY department ORDER BY id)AS rn FROM employees)WHERE rn=1 ORDER BY id;",topic="Deduplication (Keep First)")
+
+add("sql-110","DAU over MAU Ratio","Social Media (Instagram)","Meta","hard",
+"Calculate the Daily Active Users to Monthly Active Users ratio for January 2024. DAU = average distinct daily users. MAU = total distinct users in the month.\n\nReturn dau_avg (rounded to 1), mau, and dau_mau_ratio (rounded to 2).",
+"DAU = COUNT(DISTINCT user_id) per day averaged. MAU = COUNT(DISTINCT user_id) for the month.",
+"MAU=5. Daily counts vary. DAU avg = total daily uniques / num days.",
+LOGIN_T,LOGIN_S,(["dau_avg","mau","dau_mau_ratio"],[[3.2,5,0.64]]),
+"WITH daily AS(SELECT login_date,COUNT(DISTINCT user_id)AS dau FROM logins WHERE login_date BETWEEN '2024-01-01' AND '2024-01-31' GROUP BY login_date),monthly AS(SELECT COUNT(DISTINCT user_id)AS mau FROM logins WHERE login_date BETWEEN '2024-01-01' AND '2024-01-31')SELECT ROUND(AVG(d.dau),1)AS dau_avg,m.mau,ROUND(AVG(d.dau)*1.0/m.mau,2)AS dau_mau_ratio FROM daily d,monthly m;",topic="DAU / MAU Ratio")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
