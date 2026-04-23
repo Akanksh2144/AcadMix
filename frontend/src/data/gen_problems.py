@@ -2465,6 +2465,78 @@ add("sql-300","Products Below Average Price","E-Commerce (Flipkart)","HCLTech","
 ECOM_T,ECOM_S,(["name","price"],[["SQL Book",450.0],["Cotton T-Shirt",799.0],["Running Shoes",3499.0]]),
 "SELECT name,price FROM products WHERE price<(SELECT AVG(price) FROM products) ORDER BY price;",topic="Subquery: Below Avg Price")
 
+# ═══ BATCH 30: HCLTech Scale-Up (10 of 23) ═══
+
+add("sql-301","Doctors With No Appointments","Healthcare / Hospital","HCLTech","medium",
+"Find doctors who have no scheduled appointments.\n\nReturn doctor name, specialty. Order by name.",
+"LEFT JOIN appointments WHERE a.id IS NULL.",
+"Check for doctors with zero appointments.",
+HOSPITAL_T,HOSPITAL_S,(["name","specialty"],[]),
+"SELECT d.name,d.specialty FROM doctors d LEFT JOIN appointments a ON d.id=a.doc_id WHERE a.id IS NULL ORDER BY d.name;",topic="LEFT JOIN: No Appointments")
+
+add("sql-302","Customer Who Spent Most Overall","E-Commerce (Flipkart)","HCLTech","medium",
+"Find the customer who spent the most money across all orders.\n\nReturn name, total_spent.",
+"JOIN + SUM + ORDER DESC LIMIT 1.",
+"Ankit: 2500+55000+3299=60799.",
+ECOM_T,ECOM_S,(["name","total_spent"],[["Ankit",60799.0]]),
+"SELECT c.name,SUM(o.total)AS total_spent FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name ORDER BY total_spent DESC LIMIT 1;",topic="Top Spender (SUM+LIMIT)")
+
+add("sql-303","Rides With Mumbai Pickup","Ride-Sharing (Ola)","HCLTech","easy",
+"Find all rides that started in Mumbai.\n\nReturn ride_id, pickup, dropoff, fare. Order by fare DESC.",
+"WHERE pickup = 'Mumbai'.",
+"Filter by pickup city.",
+RIDE_T,RIDE_S,(["ride_id","pickup","dropoff","fare"],[]),
+"SELECT id AS ride_id,pickup,dropoff,fare FROM rides WHERE pickup='Mumbai' ORDER BY fare DESC;",topic="WHERE Pickup City")
+
+add("sql-304","UNION: All People in Ride System","Ride-Sharing (Ola)","HCLTech","easy",
+"Create a combined list of all riders and drivers with their role.\n\nReturn name, city, role. Order by role, name.",
+"UNION ALL with literal 'Rider'/'Driver'.",
+"Merge both tables.",
+RIDE_T,RIDE_S,(["name","city","role"],[]),
+"SELECT name,city,'Driver'AS role FROM drivers UNION ALL SELECT name,city,'Rider' FROM riders ORDER BY role,name;",topic="UNION ALL Merge")
+
+add("sql-305","Orders With Total Above 5000","E-Commerce (Flipkart)","HCLTech","easy",
+"Find all orders where the total exceeds 5,000.\n\nReturn order_id, total, status. Order by total DESC.",
+"WHERE total > 5000.",
+"Filter high-value orders.",
+ECOM_T,ECOM_S,(["order_id","total","status"],[[2,55000.0,"delivered"],[4,55450.0,"delivered"],[6,6900.0,"delivered"]]),
+"SELECT id AS order_id,total,status FROM orders WHERE total>5000 ORDER BY total DESC;",topic="WHERE High-Value Orders")
+
+add("sql-306","Latest Appointment Per Doctor","Healthcare / Hospital","HCLTech","medium",
+"Find each doctor's most recent appointment date.\n\nReturn doctor name, last_visit. Order by last_visit DESC.",
+"JOIN + MAX(visit_date) GROUP BY.",
+"Most recent appointment per doctor.",
+HOSPITAL_T,HOSPITAL_S,(["name","last_visit"],[["Dr. Gupta","2024-01-20"],["Dr. Patel","2024-01-18"],["Dr. Sharma","2024-01-15"]]),
+"SELECT d.name,MAX(a.visit_date)AS last_visit FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.name ORDER BY last_visit DESC;",topic="MAX Date Per Doctor")
+
+add("sql-307","Employee Salary vs Department Average","HR / Employee","HCLTech","medium",
+"Show each employee's salary compared to their department average.\n\nReturn name, salary, dept_avg (rounded to 0), diff. Order by diff DESC.",
+"Window AVG(salary) OVER(PARTITION BY dept).",
+"Compare individual salary to their dept average.",
+EMP_T,EMP_S,(["name","salary","dept_avg","diff"],[["Alice",70000,65000,5000],["Eve",65000,65000,0],["Charlie",55000,52500,2500],["Bob",60000,65000,-5000],["Diana",50000,52500,-2500],["Frank",45000,45000,0]]),
+"SELECT name,salary,ROUND(AVG(salary) OVER(PARTITION BY dept),0)AS dept_avg,salary-ROUND(AVG(salary) OVER(PARTITION BY dept),0)AS diff FROM employees ORDER BY diff DESC;",topic="Window AVG Comparison")
+
+add("sql-308","Count Transactions Per Type","Banking / Finance","HCLTech","easy",
+"Count how many credit vs debit transactions exist.\n\nReturn type, txn_count. Order by txn_count DESC.",
+"GROUP BY type, COUNT.",
+"Count credits and debits.",
+BANK_T,BANK_S,(["type","txn_count"],[["debit",4],["credit",3]]),
+"SELECT type,COUNT(*)AS txn_count FROM transactions GROUP BY type ORDER BY txn_count DESC;",topic="COUNT Per Type")
+
+add("sql-309","Revenue Per Quarter","E-Commerce (Flipkart)","HCLTech","medium",
+"Calculate total order revenue per quarter of 2024.\n\nReturn quarter, total_revenue. Order by quarter.",
+"CASE month ranges for Q1/Q2/Q3/Q4.",
+"All orders in Q1 2024 (Jan-Mar).",
+ECOM_T,ECOM_S,(["quarter","total_revenue"],[["Q1",126898.0]]),
+"SELECT 'Q'||((CAST(SUBSTR(order_date,6,2)AS INT)-1)/3+1)AS quarter,SUM(total)AS total_revenue FROM orders WHERE status!='cancelled' GROUP BY quarter ORDER BY quarter;",topic="Quarter Revenue Report")
+
+add("sql-310","Riders Sorted by Total Fare","Ride-Sharing (Ola)","HCLTech","easy",
+"Sort riders by their total fare spent across all rides.\n\nReturn rider name, total_fare. Order by total_fare DESC.",
+"JOIN riders + rides, SUM(fare), ORDER BY.",
+"Total ride spend per rider.",
+RIDE_T,RIDE_S,(["name","total_fare"],[]),
+"SELECT ri.name,SUM(r.fare)AS total_fare FROM riders ri JOIN rides r ON ri.id=r.rider_id GROUP BY ri.name ORDER BY total_fare DESC;",topic="SUM Fare Per Rider")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
