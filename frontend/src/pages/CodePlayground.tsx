@@ -281,12 +281,11 @@ const CodePlayground = ({ navigate, user }) => {
              setWebrLoading(true);
              setOutput("Booting R Virtual Environment (WASM). This may take 3-8 seconds on first load...");
              try {
-                if (!window.WebR) {
-                  const module = await import(/* @vite-ignore */ 'https://webr.r-wasm.org/latest/webr.mjs');
-                  window.WebR = module.WebR;
+                // Wait for the script tag to inject initWebR if it hasn't yet
+                while (!window.initWebR) {
+                   await new Promise(r => setTimeout(r, 100));
                 }
-                const webr = new window.WebR();
-                await webr.init();
+                const webr = await window.initWebR();
                 webrRef.current = webr;
              } catch (e) {
                 setOutput(`Failed to initialize WebR: ${e.message}`);
