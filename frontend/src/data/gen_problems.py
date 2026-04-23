@@ -4,7 +4,11 @@ import json, os
 
 P = []
 def add(id,title,theme,company,diff,stmt,hint,expl,tables,schema,expected,solution,topic="Miscellaneous",backend_only=False):
-    entry = {"id":id,"title":title,"dataset_theme":theme,"company_tag":company,"difficulty":diff,
+    # Support comma-separated multi-company tags, e.g. "TCS NQT, Infosys, Wipro"
+    tags = [c.strip() for c in company.split(",")] if "," in company else [company]
+    entry = {"id":id,"title":title,"dataset_theme":theme,
+              "company_tag":tags[0],"company_tags":tags,
+              "difficulty":diff,
               "topic":topic,"problem_statement":stmt,"hint":hint,"explanation":expl,"tables_meta":tables,
               "example_output":{"columns":expected[0],"rows":expected[1]},
               "schema_sql":schema,"expected_output":[{"columns":expected[0],"values":expected[1]}],
@@ -87,21 +91,21 @@ BANK_T = [{"name":"accounts","columns":[{"name":"id","type":"int"},{"name":"hold
 
 # ═══ PROBLEMS ═══
 
-add("sql-001","Employees Above Average Salary","HR / Employee","TCS NQT","easy",
+add("sql-001","Employees Above Average Salary","HR / Employee","TCS NQT, Infosys, Wipro, Capgemini","easy",
 "Find all employees whose salary is strictly above the company average.\n\nReturn name and salary, ordered by salary descending.",
 "Use a subquery with AVG().",
 "Avg=(70000+60000+55000+50000+65000+45000)/6=57500. Alice(70000), Eve(65000), Bob(60000) are above.",
 EMP_T,EMP_S,(["name","salary"],[["Alice",70000],["Eve",65000],["Bob",60000]]),
 "SELECT name,salary FROM employees WHERE salary>(SELECT AVG(salary) FROM employees) ORDER BY salary DESC;",topic="Subqueries")
 
-add("sql-002","Department Highest Salary","HR / Employee","Infosys","medium",
+add("sql-002","Department Highest Salary","HR / Employee","Infosys, TCS NQT, HCLTech","medium",
 "Find the employee with the highest salary in each department.\n\nReturn dept, name, salary ordered by salary descending.",
 "Use a subquery with MAX() grouped by dept, then join back.",
 "Eng max=Alice(70000), Sales max=Charlie(55000), HR max=Frank(45000).",
 EMP_T,EMP_S,(["dept","name","salary"],[["Eng","Alice",70000],["Sales","Charlie",55000],["HR","Frank",45000]]),
 "SELECT e.dept,e.name,e.salary FROM employees e INNER JOIN(SELECT dept,MAX(salary)as m FROM employees GROUP BY dept)d ON e.dept=d.dept AND e.salary=d.m ORDER BY e.salary DESC;",topic="Joins & Subqueries")
 
-add("sql-003","Managers and Their Team Size","HR / Employee","Wipro","medium",
+add("sql-003","Managers and Their Team Size","HR / Employee","Wipro, Cognizant, Accenture","medium",
 "Find all managers and how many direct reports they have.\n\nReturn manager name and report_count, ordered by count descending.",
 "Self-join: join employees to itself on mgr_id = id.",
 "Alice(id=1) manages Bob,Eve (2 reports). Charlie(id=3) manages Diana (1 report).",
@@ -115,7 +119,7 @@ add("sql-004","Top Restaurant by Revenue","Food Delivery (Zomato)","Amazon","med
 ZOMATO_T,ZOMATO_S,(["name","total_revenue"],[["Pizza Palace",1350.0]]),
 "SELECT r.name,SUM(o.amount)AS total_revenue FROM restaurants r JOIN orders o ON r.id=o.rest_id GROUP BY r.name ORDER BY total_revenue DESC LIMIT 1;",topic="Joins & Aggregation")
 
-add("sql-005","Restaurants With No Orders","Food Delivery (Zomato)","TCS NQT","easy",
+add("sql-005","Restaurants With No Orders","Food Delivery (Zomato)","TCS NQT, Infosys, Wipro","easy",
 "Find restaurants that have received zero orders.\n\nReturn the restaurant name.",
 "Use LEFT JOIN and check for NULL order ids.",
 "Dosa Corner(id=4) has order 104. All except... wait, Burger Barn has order 107. Actually all have orders. Let me check... All 5 restaurants have at least one order.",
@@ -164,7 +168,7 @@ add("sql-011","Accounts With Net Outflow","Banking / Finance","JP Morgan","mediu
 BANK_T,BANK_S,(["holder","net_outflow"],[["Suresh",5000.0]]),
 "SELECT a.holder,SUM(CASE WHEN t.type='debit' THEN t.amount ELSE 0 END)-SUM(CASE WHEN t.type='credit' THEN t.amount ELSE 0 END)AS net_outflow FROM accounts a JOIN transactions t ON a.id=t.acc_id GROUP BY a.holder HAVING net_outflow>0;",topic="CASE WHEN")
 
-add("sql-012","Second Highest Salary","HR / Employee","Wipro","medium",
+add("sql-012","Second Highest Salary","HR / Employee","Wipro, TCS NQT, Infosys, Accenture, HCLTech, Cognizant, Capgemini","medium",
 "Find the second highest distinct salary.\n\nReturn it as second_highest_salary. If none, return NULL.",
 "Use MAX with a WHERE < MAX subquery, or LIMIT/OFFSET.",
 "Salaries: 70000,65000,60000,55000,50000,45000. Second highest = 65000.",
@@ -178,7 +182,7 @@ add("sql-013","Repeat Customers","Food Delivery (Zomato)","Amazon","medium",
 ZOMATO_T,ZOMATO_S,(["cust_id","restaurant_count"],[[201,3],[202,2]]),
 "SELECT cust_id,COUNT(DISTINCT rest_id)AS restaurant_count FROM orders GROUP BY cust_id HAVING COUNT(DISTINCT rest_id)>1 ORDER BY restaurant_count DESC;",topic="HAVING & DISTINCT")
 
-add("sql-014","Employees Hired After Their Manager","HR / Employee","Capgemini","hard",
+add("sql-014","Employees Hired After Their Manager","HR / Employee","Capgemini, Deloitte, Accenture","hard",
 "Find employees who were hired after their manager.\n\nReturn employee name, their hire date, and manager name.",
 "Self-join on mgr_id, compare hire_date.",
 "Bob(2020-03-01) hired after Alice(2019-01-15)=manager. Eve(2021-08-05) after Alice. Diana(2021-01-20) after Charlie(2020-06-10).",
@@ -1017,28 +1021,28 @@ LOGIN_T = [{"name":"users","columns":[{"name":"id","type":"int"},{"name":"name",
 
 # ═══ BATCH 11: CRITICAL GAPS — LeetCode Classics + Gaps & Islands ═══
 
-add("sql-101","Nth Highest Salary (N=3)","HR / Employee","TCS NQT","medium",
+add("sql-101","Nth Highest Salary (N=3)","HR / Employee","TCS NQT, Infosys, Wipro, HCLTech, Cognizant, Accenture, Capgemini, Deloitte, Zoho","medium",
 "Find the 3rd highest salary from the employees table. If fewer than 3 distinct salaries exist, return NULL.\n\nReturn third_highest_salary.",
 "Use DENSE_RANK or LIMIT/OFFSET with DISTINCT.",
 "Salaries: 70K,65K,60K,55K,50K,45K. 3rd highest = 60000.",
 EMP_T,EMP_S,(["third_highest_salary"],[[60000]]),
 "SELECT DISTINCT salary AS third_highest_salary FROM employees ORDER BY salary DESC LIMIT 1 OFFSET 2;",topic="Nth Highest Salary")
 
-add("sql-102","Second Highest Salary (LC #176)","HR / Employee","Infosys","easy",
+add("sql-102","Second Highest Salary (LC #176)","HR / Employee","Infosys, TCS NQT, Wipro, HCLTech, Capgemini","easy",
 "Find the second highest distinct salary. Return NULL if only one distinct salary exists.\n\nReturn second_highest.",
 "Use DENSE_RANK() or LIMIT 1 OFFSET 1.",
 "Second highest = 65000 (Eve).",
 EMP_T,EMP_S,(["second_highest"],[[65000]]),
 "SELECT MAX(salary)AS second_highest FROM employees WHERE salary<(SELECT MAX(salary) FROM employees);",topic="Second Highest Salary")
 
-add("sql-103","Employee Earns More Than Manager (LC #181)","HR / Employee","Microsoft","easy",
+add("sql-103","Employee Earns More Than Manager (LC #181)","HR / Employee","Microsoft, TCS NQT, Infosys, Wipro, Accenture, Capgemini","easy",
 "Given that employees have a manager_id, find employees who earn more than their manager. Since our schema doesn't have manager_id, use departments: find employees who earn more than the average of their department.\n\nReturn name, salary, department, dept_avg (rounded). Order by salary descending.",
 "Self-referencing comparison: salary vs department average.",
 "Alice(70K) vs Engineering avg(63333)=above. Eve(65K)=above. Bob(60K) vs Marketing avg(55K)=above.",
 EMP_T,EMP_S,(["name","salary","department","dept_avg"],[["Alice",70000,"Engineering",63333],["Eve",65000,"Engineering",63333],["Bob",60000,"Marketing",55000]]),
 "SELECT e.name,e.salary,e.department,ROUND(dept.avg_sal)AS dept_avg FROM employees e JOIN(SELECT department,AVG(salary)AS avg_sal FROM employees GROUP BY department)dept ON e.department=dept.department WHERE e.salary>dept.avg_sal ORDER BY e.salary DESC;",topic="Employee vs Department Average")
 
-add("sql-104","Restaurants With No Orders (LC #183 Pattern)","Food Delivery (Zomato)","Amazon","easy",
+add("sql-104","Restaurants With No Orders (LC #183 Pattern)","Food Delivery (Zomato)","Amazon, TCS NQT, Infosys, Cognizant","easy",
 "Find restaurants that have never received an order.\n\nReturn restaurant name.",
 "LEFT JOIN restaurants to orders WHERE order is NULL, or NOT EXISTS.",
 "All restaurants have orders except... let's check.",
@@ -1066,14 +1070,14 @@ add("sql-107","Exchange Seat IDs (LC #626)","University / Education","Meta","med
 UNI_T,UNI_S,(["new_id","name"],[[1,"Kavya"],[2,"Arjun"],[3,"Nikhil"],[4,"Meera"],[5,"Ravi"]]),
 "SELECT CASE WHEN id%2=1 AND id=(SELECT MAX(id) FROM students) THEN id WHEN id%2=1 THEN id+1 ELSE id-1 END AS new_id,name FROM students ORDER BY new_id;",topic="Row Swapping (CASE + MOD)")
 
-add("sql-108","Department Top 3 Salaries (LC #185)","HR / Employee","Amazon","hard",
+add("sql-108","Department Top 3 Salaries (LC #185)","HR / Employee","Amazon, TCS Digital, Deloitte, Zoho","hard",
 "Find the top 3 earners in each department. Include ties.\n\nReturn department, name, salary. Order by department, salary descending.",
 "DENSE_RANK() OVER (PARTITION BY department ORDER BY salary DESC) <= 3.",
 "Engineering: Alice(70K), Eve(65K), Charlie(55K). Marketing: Bob(60K), Diana(50K). Sales: Frank(45K).",
 EMP_T,EMP_S,(["department","name","salary"],[["Engineering","Alice",70000],["Engineering","Eve",65000],["Engineering","Charlie",55000],["Marketing","Bob",60000],["Marketing","Diana",50000],["Sales","Frank",45000]]),
 "SELECT department,name,salary FROM(SELECT department,name,salary,DENSE_RANK() OVER(PARTITION BY department ORDER BY salary DESC)AS rn FROM employees)WHERE rn<=3 ORDER BY department,salary DESC;",topic="Top-N Per Department")
 
-add("sql-109","Delete Duplicate Emails (Keep Lowest ID)","HR / Employee","Wipro","medium",
+add("sql-109","Delete Duplicate Emails (Keep Lowest ID)","HR / Employee","Wipro, TCS NQT, Infosys, Cognizant","medium",
 "Show which employee records to KEEP if we had duplicates — keep the row with the lowest ID per department.\n\nReturn the employee id and name that would be kept (first employee per department). Order by id.",
 "ROW_NUMBER() OVER (PARTITION BY department ORDER BY id) = 1.",
 "Engineering first=Alice(1). Marketing first=Bob(2). Sales first=Frank(6).",
@@ -1276,7 +1280,7 @@ add("sql-132","Employees With Same Salary","HR / Employee","Cognizant","medium",
 EMP_T,EMP_S,(["emp_a","emp_b","salary"],[]),
 "SELECT e1.name AS emp_a,e2.name AS emp_b,e1.salary FROM employees e1 JOIN employees e2 ON e1.salary=e2.salary AND e1.name<e2.name ORDER BY e1.salary DESC;",topic="Self-Join (Same Value)")
 
-add("sql-133","Department-Wise Employee Count","HR / Employee","Infosys","easy",
+add("sql-133","Department-Wise Employee Count","HR / Employee","Infosys, TCS NQT, Wipro, HCLTech, Cognizant, Capgemini","easy",
 "Count the number of employees in each department.\n\nReturn department and emp_count. Order by emp_count descending.",
 "Simple GROUP BY department with COUNT.",
 "Engineering: 3. Marketing: 2. Sales: 1.",
@@ -1627,7 +1631,7 @@ ECOM_T,ECOM_S,(["name","city","domain","orders","spent","avg_order","first_order
 # 25 problems covering the MOST FREQUENTLY asked patterns at mass hiring companies.
 
 # --- TCS NQT (3 new) ---
-add("sql-186","Employee Earns More Than Manager","HR / Employee","TCS NQT","medium",
+add("sql-186","Employee Earns More Than Manager","HR / Employee","TCS NQT, Infosys, Wipro, Accenture, Capgemini, Deloitte","medium",
 "Find employees who earn MORE than their direct manager.\n\nReturn employee name, employee salary, manager name, manager salary. Order by employee salary DESC.",
 "Self-join: employees e1 JOIN employees e2 ON e1.mgr_id = e2.id WHERE e1.salary > e2.salary.",
 "Bob(60K) has manager Alice(70K) — no. Eve(65K) has manager Alice(70K) — no. Diana(50K) has manager Charlie(55K) — no.",
@@ -1641,7 +1645,7 @@ add("sql-187","Odd-Numbered Rows Only","HR / Employee","TCS NQT","easy",
 EMP_T,EMP_S,(["id","name"],[[1,"Alice"],[3,"Charlie"],[5,"Eve"]]),
 "SELECT id,name FROM employees WHERE id%2!=0 ORDER BY id;",topic="Odd/Even Row Selection")
 
-add("sql-188","Departments With More Than 2 Employees","HR / Employee","TCS NQT","easy",
+add("sql-188","Departments With More Than 2 Employees","HR / Employee","TCS NQT, Infosys, Wipro, HCLTech","easy",
 "Find departments that have more than 2 employees.\n\nReturn dept, emp_count. Order by emp_count DESC.",
 "GROUP BY dept HAVING COUNT(*) > 2.",
 "Eng has 3 employees (Alice, Bob, Eve).",
@@ -1664,14 +1668,14 @@ EMP_T,EMP_S,(["dept","total_salary"],[["Eng",195000],["Sales",105000],["HR",4500
 "SELECT dept,SUM(salary)AS total_salary FROM employees GROUP BY dept ORDER BY total_salary DESC;",topic="SUM Per Department")
 
 # --- Infosys (3 new) ---
-add("sql-191","Salary Above Company Average","HR / Employee","Infosys","easy",
+add("sql-191","Salary Above Company Average","HR / Employee","Infosys, TCS NQT, Wipro, Accenture, Capgemini","easy",
 "Find employees whose salary is above the company-wide average.\n\nReturn name, salary. Order by salary DESC.",
 "Subquery: WHERE salary > (SELECT AVG(salary) FROM employees). Avg = 57500.",
 "Alice(70K), Eve(65K), Bob(60K) are above 57500.",
 EMP_T,EMP_S,(["name","salary"],[["Alice",70000],["Eve",65000],["Bob",60000]]),
 "SELECT name,salary FROM employees WHERE salary>(SELECT AVG(salary) FROM employees) ORDER BY salary DESC;",topic="Subquery: Above Average")
 
-add("sql-192","Highest Salary Per Department","HR / Employee","Infosys","medium",
+add("sql-192","Highest Salary Per Department","HR / Employee","Infosys, TCS NQT, HCLTech, Cognizant, Deloitte","medium",
 "Find the employee with the highest salary in each department.\n\nReturn dept, name, salary. Order by salary DESC.",
 "Use RANK() or DENSE_RANK() PARTITION BY dept ORDER BY salary DESC, filter rank=1.",
 "Eng: Alice(70K), Sales: Charlie(55K), HR: Frank(45K).",
@@ -1686,21 +1690,21 @@ ECOM_T,ECOM_S,(["name","city"],[]),
 "SELECT c.name,c.city FROM customers c LEFT JOIN orders o ON c.id=o.customer_id WHERE o.id IS NULL ORDER BY c.name;",topic="LEFT JOIN: Find Unmatched")
 
 # --- Wipro (3 new) ---
-add("sql-194","DELETE vs TRUNCATE Simulation: Count After Filter","HR / Employee","Wipro","easy",
+add("sql-194","DELETE vs TRUNCATE Simulation: Count After Filter","HR / Employee","Wipro, TCS NQT, Infosys","easy",
 "Count how many employees would remain if we deleted all employees in 'HR' department.\n\nReturn remaining_count.",
 "COUNT with WHERE dept != 'HR'.",
 "6 total - 1 HR = 5.",
 EMP_T,EMP_S,(["remaining_count"],[[5]]),
 "SELECT COUNT(*)AS remaining_count FROM employees WHERE dept!='HR';",topic="Conditional Count (DELETE Sim)")
 
-add("sql-195","DISTINCT Departments","HR / Employee","Wipro","easy",
+add("sql-195","DISTINCT Departments","HR / Employee","Wipro, TCS NQT, Infosys, HCLTech","easy",
 "List all unique departments from the employees table.\n\nReturn dept. Order alphabetically.",
 "SELECT DISTINCT dept.",
 "Eng, HR, Sales.",
 EMP_T,EMP_S,(["dept"],[["Eng"],["HR"],["Sales"]]),
 "SELECT DISTINCT dept FROM employees ORDER BY dept;",topic="DISTINCT Values")
 
-add("sql-196","Employees With NULL Manager","HR / Employee","Wipro","easy",
+add("sql-196","Employees With NULL Manager","HR / Employee","Wipro, TCS NQT, Cognizant, Deloitte","easy",
 "Find employees who have no manager (mgr_id is NULL).\n\nReturn name, dept. Order by name.",
 "WHERE mgr_id IS NULL.",
 "Alice, Charlie, Frank have no manager.",
@@ -1722,7 +1726,7 @@ add("sql-198","Employees Joined in Each Year","HR / Employee","HCLTech","easy",
 EMP_T,EMP_S,(["hire_year","count"],[["2019",1],["2020",2],["2021",2],["2022",1]]),
 "SELECT SUBSTR(hire_date,1,4)AS hire_year,COUNT(*)AS count FROM employees GROUP BY SUBSTR(hire_date,1,4) ORDER BY hire_year;",topic="Year Extraction + GROUP BY")
 
-add("sql-199","Min and Max Salary Per Department","HR / Employee","HCLTech","easy",
+add("sql-199","Min and Max Salary Per Department","HR / Employee","HCLTech, TCS NQT, Infosys, Wipro, Capgemini","easy",
 "Find the minimum and maximum salary in each department.\n\nReturn dept, min_sal, max_sal. Order by dept.",
 "GROUP BY dept + MIN(salary) + MAX(salary).",
 "Eng: 60K-70K. HR: 45K-45K. Sales: 50K-55K.",
@@ -1744,7 +1748,7 @@ add("sql-201","Average Salary Comparison: Above vs Below","HR / Employee","Cogni
 EMP_T,EMP_S,(["name","salary","classification"],[["Alice",70000,"Above Average"],["Eve",65000,"Above Average"],["Bob",60000,"Above Average"],["Charlie",55000,"Below Average"],["Diana",50000,"Below Average"],["Frank",45000,"Below Average"]]),
 "SELECT name,salary,CASE WHEN salary>(SELECT AVG(salary) FROM employees) THEN 'Above Average' ELSE 'Below Average' END AS classification FROM employees ORDER BY salary DESC;",topic="CASE + Subquery Classification")
 
-add("sql-202","Employees Sharing Same Department as 'Alice'","HR / Employee","Cognizant","easy",
+add("sql-202","Employees Sharing Same Department as 'Alice'","HR / Employee","Cognizant, TCS NQT, Wipro","easy",
 "Find all employees in the same department as Alice (excluding Alice herself).\n\nReturn name, dept. Order by name.",
 "Subquery to get Alice's dept, then WHERE dept = that AND name != 'Alice'.",
 "Bob and Eve are in Eng with Alice.",

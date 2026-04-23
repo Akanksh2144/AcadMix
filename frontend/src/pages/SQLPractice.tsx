@@ -383,7 +383,7 @@ const SQLPractice = ({ navigate, user }: any) => {
 
         {/* ── Filters ── */}
         {(() => {
-          const companies = ['all', ...Array.from(new Set(problems.map((p: any) => p.company_tag).filter(Boolean))).sort()];
+          const companies = ['all', ...Array.from(new Set(problems.flatMap((p: any) => p.company_tags || [p.company_tag]).filter(Boolean))).sort()];
           const topics = ['all', ...Array.from(new Set(problems.map((p: any) => p.topic).filter(Boolean))).sort()];
           const diffOpts = [
             { value: 'all', label: 'All Difficulties' },
@@ -417,7 +417,7 @@ const SQLPractice = ({ navigate, user }: any) => {
         {(() => {
           const filtered = problems.filter((p: any) => {
             if (filterDiff !== 'all' && p.difficulty !== filterDiff) return false;
-            if (filterCompany !== 'all' && p.company_tag !== filterCompany) return false;
+            if (filterCompany !== 'all' && !(p.company_tags || [p.company_tag]).includes(filterCompany)) return false;
             if (filterTopic !== 'all' && p.topic !== filterTopic) return false;
             return true;
           });
@@ -453,7 +453,7 @@ const SQLPractice = ({ navigate, user }: any) => {
               <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 min-h-[2.5rem]">{p.problem_statement?.split('\n')[0]}</p>
               <div className="flex items-center gap-2 text-xs font-bold text-slate-400 flex-nowrap overflow-hidden">
                 <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 py-1 px-2 rounded whitespace-nowrap shrink-0"><TableIcon size={14} /> {p.dataset_theme}</span>
-                {p.company_tag && <span className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 py-1 px-2 rounded whitespace-nowrap shrink-0"><CompanyLogo name={p.company_tag} size={14} /> {p.company_tag}</span>}
+                {(p.company_tags || [p.company_tag]).filter(Boolean).map((c: string, ci: number) => <span key={ci} className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 py-1 px-2 rounded whitespace-nowrap shrink-0"><CompanyLogo name={c} size={14} /> {c}</span>)}
                 {tagLabel && <span className={`ml-auto py-1 px-2 rounded whitespace-nowrap shrink-0 ${tagColor}`}>{tagLabel}</span>}
               </div>
               {p.topic && <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 truncate">📘 {p.topic}</p>}
