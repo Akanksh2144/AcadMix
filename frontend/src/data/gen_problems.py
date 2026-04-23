@@ -1474,6 +1474,151 @@ add("sql-160","Grand Analytics: User 360° View","Payments (Paytm)","Google","ha
 PAY_T,PAY_S,(["name","city","total_txns","success_cnt","fail_cnt","success_rate","total_spent","avg_txn","preferred_method","tier"],[["Diya","Chennai",2,1,1,50.0,5000.0,5000,"card","Platinum"],["Aarav","Mumbai",4,4,0,100.0,3300.0,825,"UPI","Platinum"],["Chirag","Bangalore",4,2,2,50.0,2600.0,1300,"card","Gold"],["Bhavna","Delhi",3,2,1,66.7,2300.0,1150,"UPI","Gold"],["Eshan","Mumbai",1,1,0,100.0,350.0,350,"UPI","Silver"]]),
 "WITH stats AS(SELECT u.name,u.city,COUNT(*)AS total_txns,SUM(CASE WHEN p.status='success' THEN 1 ELSE 0 END)AS success_cnt,SUM(CASE WHEN p.status='failed' THEN 1 ELSE 0 END)AS fail_cnt,ROUND(SUM(CASE WHEN p.status='success' THEN 1 ELSE 0 END)*100.0/COUNT(*),1)AS success_rate,IFNULL(SUM(CASE WHEN p.status='success' THEN p.amount END),0)AS total_spent,ROUND(IFNULL(AVG(CASE WHEN p.status='success' THEN p.amount END),0))AS avg_txn FROM pay_users u JOIN payments p ON u.id=p.user_id GROUP BY u.id),prefs AS(SELECT user_id,method,ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY COUNT(*) DESC)AS rn FROM payments WHERE status='success' GROUP BY user_id,method)SELECT s.name,s.city,s.total_txns,s.success_cnt,s.fail_cnt,s.success_rate,s.total_spent,s.avg_txn,pr.method AS preferred_method,CASE WHEN s.total_spent>3000 THEN 'Platinum' WHEN s.total_spent>=1000 THEN 'Gold' ELSE 'Silver' END AS tier FROM stats s JOIN prefs pr ON s.name=(SELECT name FROM pay_users WHERE id=pr.user_id) AND pr.rn=1 ORDER BY s.total_spent DESC;",topic="User 360° Analytics (Capstone)")
 
+
+# ═══ BATCH 17: Advanced Patterns + Remaining Concepts ═══
+
+add("sql-161","EXCEPT: Riders Not In January","Ride-Sharing (Ola)","Capgemini","medium",
+"Find riders who took rides in February or March but NOT in January.\n\nReturn distinct rider name. Order by name.",
+"EXCEPT: Feb/Mar riders minus Jan riders.",
+"Who started riding after January?",
+RIDE_T,RIDE_S,(["name"],[]),
+"SELECT DISTINCT r2.name FROM rides r JOIN riders r2 ON r.rider_id=r2.id WHERE strftime('%m',r.ride_date) IN('02','03') EXCEPT SELECT DISTINCT r2.name FROM rides r JOIN riders r2 ON r.rider_id=r2.id WHERE strftime('%m',r.ride_date)='01' ORDER BY name;",topic="EXCEPT / Set Difference")
+
+add("sql-162","EXISTS: Departments With High Earners","HR / Employee","Cognizant","medium",
+"Find departments that have at least one employee earning more than 60000 using EXISTS.\n\nReturn distinct department.",
+"WHERE EXISTS (SELECT 1 FROM employees e2 WHERE e2.department = e.department AND e2.salary > 60000).",
+"Engineering has Alice(70K) and Eve(65K).",
+EMP_T,EMP_S,(["department"],[["Engineering"]]),
+"SELECT DISTINCT department FROM employees e WHERE EXISTS(SELECT 1 FROM employees e2 WHERE e2.department=e.department AND e2.salary>60000);",topic="EXISTS Correlated Check")
+
+add("sql-163","HAVING Multiple Conditions","E-Commerce (Flipkart)","Deloitte","medium",
+"Find product categories where the total revenue exceeds 5000 AND the average order amount exceeds 1000.\n\nReturn category, total_revenue, avg_order (rounded). Order by total_revenue descending.",
+"GROUP BY category, HAVING SUM > 5000 AND AVG > 1000.",
+"Electronics has high revenue and avg.",
+ECOM_T,ECOM_S,(["category","total_revenue","avg_order"],[["Electronics",117048.0,19508]]),
+"SELECT p.category,SUM(o.total)AS total_revenue,ROUND(AVG(o.total))AS avg_order FROM orders o JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id GROUP BY p.category HAVING SUM(o.total)>5000 AND AVG(o.total)>1000 ORDER BY total_revenue DESC;",topic="HAVING with Multiple Conditions")
+
+add("sql-164","Conditional ORDER BY","HR / Employee","TCS NQT","easy",
+"Sort employees: Engineers first (by salary descending), then others (by name ascending).\n\nReturn name, department, salary.",
+"ORDER BY CASE to assign priority to Engineering, then salary/name.",
+"Custom sorting logic.",
+EMP_T,EMP_S,(["name","department","salary"],[["Alice","Engineering",70000],["Eve","Engineering",65000],["Charlie","Engineering",55000],["Bob","Marketing",60000],["Diana","Marketing",50000],["Frank","Sales",45000]]),
+"SELECT name,department,salary FROM employees ORDER BY CASE WHEN department='Engineering' THEN 0 ELSE 1 END,CASE WHEN department='Engineering' THEN -salary ELSE 0 END,name;",topic="Conditional ORDER BY")
+
+add("sql-165","Pivot: Monthly Revenue Columns","E-Commerce (Flipkart)","SAP","hard",
+"Pivot monthly revenue into columns: show each customer with their Jan, Feb, Mar spending as separate columns.\n\nReturn name, jan_total, feb_total, mar_total. Order by name.",
+"Use SUM(CASE WHEN month='01' THEN total END) for each month.",
+"Pivot long data to wide format.",
+ECOM_T,ECOM_S,(["name","jan_total","feb_total","mar_total"],[["Ankit",57500.0,None,None],["Priya",None,None,3299.0],["Rohan",None,55450.0,None],["Sneha",None,None,6900.0],["Vikram",None,None,450.0]]),
+"SELECT c.name,SUM(CASE WHEN strftime('%m',o.order_date)='01' THEN o.total END)AS jan_total,SUM(CASE WHEN strftime('%m',o.order_date)='02' THEN o.total END)AS feb_total,SUM(CASE WHEN strftime('%m',o.order_date)='03' THEN o.total END)AS mar_total FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name ORDER BY c.name;",topic="Pivot / Crosstab Query")
+
+add("sql-166","Percentage Change: Salary vs Company Average","HR / Employee","Accenture","medium",
+"For each employee, show how much their salary deviates from the company-wide average, as a percentage.\n\nReturn name, salary, company_avg (rounded), deviation_pct (rounded to 1). Order by deviation_pct descending.",
+"(salary - avg) / avg * 100.",
+"Alice: (70000-57500)/57500*100 = 21.7%.",
+EMP_T,EMP_S,(["name","salary","company_avg","deviation_pct"],[["Alice",70000,57500,21.7],["Eve",65000,57500,13.0],["Bob",60000,57500,4.3],["Charlie",55000,57500,-4.3],["Diana",50000,57500,-13.0],["Frank",45000,57500,-21.7]]),
+"SELECT name,salary,ROUND((SELECT AVG(salary) FROM employees))AS company_avg,ROUND((salary-(SELECT AVG(salary) FROM employees))*100.0/(SELECT AVG(salary) FROM employees),1)AS deviation_pct FROM employees ORDER BY deviation_pct DESC;",topic="Percentage Deviation from Mean")
+
+add("sql-167","NULL-Safe Join: All Patients With Optional Appointments","Healthcare / Hospital","Wipro","easy",
+"List ALL patients with their appointment details. Patients without appointments should still appear with NULL.\n\nReturn patient name, diagnosis, appointment_date. Order by name.",
+"LEFT JOIN patients to appointments.",
+"Shows all patients, even those without appointments.",
+HOSPITAL_T,HOSPITAL_S,(["name","diagnosis","appointment_date"],[["Amit","Diabetes","2024-01-05"],["Amit","Diabetes","2024-01-15"],["Neha","Fracture","2024-01-12"],["Priya","Fever","2024-01-08"],["Raj","Cold","2024-01-10"],["Sunita","Allergy","2024-01-18"]]),
+"SELECT p.name,p.diagnosis,a.appointment_date FROM patients p LEFT JOIN appointments a ON p.id=a.patient_id ORDER BY p.name;",topic="LEFT JOIN (All Rows)")
+
+add("sql-168","String Report: Comma-Separated Employees","HR / Employee","Atlassian","medium",
+"For each department, create a comma-separated list of employee names.\n\nReturn department and employee_list. Order by department.",
+"Use GROUP_CONCAT(name) grouped by department.",
+"Engineering: Alice, Charlie, Eve.",
+EMP_T,EMP_S,(["department","employee_list"],[["Engineering","Alice,Charlie,Eve"],["Marketing","Bob,Diana"],["Sales","Frank"]]),
+"SELECT department,GROUP_CONCAT(name)AS employee_list FROM(SELECT department,name FROM employees ORDER BY name)GROUP BY department ORDER BY department;",topic="GROUP_CONCAT for Reports")
+
+add("sql-169","Median Salary Calculation","HR / Employee","Goldman Sachs","hard",
+"Calculate the median salary from the employees table.\n\nReturn median_salary.",
+"For even N: average of middle two. N=6, median = avg of 3rd and 4th.",
+"Sorted: 45K,50K,55K,60K,65K,70K. Median = (55000+60000)/2 = 57500.",
+EMP_T,EMP_S,(["median_salary"],[[57500.0]]),
+"SELECT AVG(salary)AS median_salary FROM(SELECT salary,ROW_NUMBER() OVER(ORDER BY salary)AS rn,COUNT(*) OVER()AS cnt FROM employees)WHERE rn IN(cnt/2,cnt/2+1);",topic="Median Calculation")
+
+add("sql-170","Complex Analytics: Rider Engagement Score","Ride-Sharing (Ola)","Razorpay","hard",
+"Calculate a rider engagement score: (ride_count * 10) + (avg_fare * 0.1) + (distinct_drivers * 5). Rank riders by score.\n\nReturn name, ride_count, avg_fare (rounded), distinct_drivers, score (rounded), and engagement_rank.",
+"Multi-metric formula combined into a single score.",
+"Weighted engagement scoring.",
+RIDE_T,RIDE_S,(["name","ride_count","avg_fare","distinct_drivers","score","engagement_rank"],[["Aarav",4,213,3,78,1],["Chirag",2,375,2,58,2],["Bhavna",2,300,1,55,3],["Diya",1,550,1,70,4],["Eshan",1,150,1,30,5]]),
+"WITH metrics AS(SELECT r.rider_id,COUNT(*)AS ride_count,ROUND(AVG(r.fare))AS avg_fare,COUNT(DISTINCT r.driver_id)AS distinct_drivers FROM rides r WHERE r.status='completed' GROUP BY r.rider_id),scored AS(SELECT m.*,ROUND(m.ride_count*10+m.avg_fare*0.1+m.distinct_drivers*5)AS score FROM metrics m)SELECT r2.name,s.ride_count,s.avg_fare,s.distinct_drivers,s.score,DENSE_RANK() OVER(ORDER BY s.score DESC)AS engagement_rank FROM scored s JOIN riders r2 ON s.rider_id=r2.id ORDER BY engagement_rank;",topic="Weighted Engagement Score")
+
+# ═══ BATCH 18: Deep Concept Coverage ═══
+
+add("sql-171","BETWEEN With NOT: Exclude Mid-Range","HR / Employee","Infosys","easy",
+"Find employees whose salary is NOT between 50000 and 65000.\n\nReturn name and salary. Order by salary.",
+"WHERE salary NOT BETWEEN 50000 AND 65000.",
+"Frank(45K) and Alice(70K) are outside the range.",
+EMP_T,EMP_S,(["name","salary"],[["Frank",45000],["Alice",70000]]),
+"SELECT name,salary FROM employees WHERE salary NOT BETWEEN 50000 AND 65000 ORDER BY salary;",topic="NOT BETWEEN")
+
+add("sql-172","Count Distinct With Condition","Login / Activity","ServiceNow","easy",
+"Count how many distinct users logged in more than twice in January 2024.\n\nReturn active_power_users.",
+"Subquery: GROUP BY user_id HAVING COUNT >= 3, outer COUNT.",
+"Users with 3+ logins.",
+LOGIN_T,LOGIN_S,(["active_power_users"],[[3]]),
+"SELECT COUNT(*)AS active_power_users FROM(SELECT user_id FROM logins WHERE login_date BETWEEN '2024-01-01' AND '2024-01-31' GROUP BY user_id HAVING COUNT(*)>=3);",topic="Conditional DISTINCT Count")
+
+add("sql-173","Year-Month Grouping","Banking / Finance","JP Morgan","medium",
+"Group transactions by year-month and show count and total per month.\n\nReturn year_month, txn_count, total_amount. Order by year_month.",
+"strftime('%Y-%m', date) for year-month grouping.",
+"Monthly transaction summary.",
+BANK_T,BANK_S,(["year_month","txn_count","total_amount"],[["2024-01",3,10000.0],["2024-02",3,13000.0],["2024-03",2,15000.0]]),
+"SELECT strftime('%Y-%m',txn_date)AS year_month,COUNT(*)AS txn_count,SUM(amount)AS total_amount FROM transactions GROUP BY strftime('%Y-%m',txn_date) ORDER BY year_month;",topic="Year-Month Grouping")
+
+add("sql-174","Customers Who Ordered Every Month","E-Commerce (Flipkart)","Myntra","hard",
+"Find customers who placed at least one order in every month available in the data (Jan, Feb, Mar).\n\nReturn customer name.",
+"COUNT(DISTINCT month) = total distinct months.",
+"Who ordered in all 3 months?",
+ECOM_T,ECOM_S,(["name"],[]),
+"SELECT c.name FROM customers c JOIN orders o ON c.id=o.customer_id GROUP BY c.name HAVING COUNT(DISTINCT strftime('%m',o.order_date))=(SELECT COUNT(DISTINCT strftime('%m',order_date)) FROM orders);",topic="Every-Period Participation")
+
+add("sql-175","Cumulative User Signups","Login / Activity","Freshworks","medium",
+"Show a cumulative count of user signups over time.\n\nReturn signup_date and cumulative_users. Order by signup_date.",
+"COUNT(*) OVER (ORDER BY signup_date).",
+"Running total of new signups.",
+LOGIN_T,LOGIN_S,(["signup_date","cumulative_users"],[["2023-01-01",1],["2023-02-15",2],["2023-03-01",3],["2023-06-10",4],["2023-09-01",5]]),
+"SELECT signup_date,COUNT(*) OVER(ORDER BY signup_date)AS cumulative_users FROM users ORDER BY signup_date;",topic="Cumulative Count")
+
+add("sql-176","Window: Difference From Previous Row","Payments (Paytm)","Juspay","medium",
+"For Aarav's successful payments, show each payment and the difference from the previous payment amount.\n\nReturn pay_date, amount, prev_amount, difference. Order by pay_date.",
+"LAG(amount) OVER(ORDER BY pay_date), then subtract.",
+"Jan10:500→NULL. Jan15:1200→+700. Feb10:700→-500. Mar05:900→+200.",
+PAY_T,PAY_S,(["pay_date","amount","prev_amount","difference"],[["2024-01-10",500.0,None,None],["2024-01-15",1200.0,500.0,700.0],["2024-02-10",700.0,1200.0,-500.0],["2024-03-05",900.0,700.0,200.0]]),
+"SELECT pay_date,amount,LAG(amount) OVER(ORDER BY pay_date)AS prev_amount,amount-LAG(amount) OVER(ORDER BY pay_date)AS difference FROM payments WHERE user_id=1 AND status='success' ORDER BY pay_date;",topic="Row-to-Row Difference")
+
+add("sql-177","INTERSECT: Users in Both Schemas","Login / Activity","Microsoft","medium",
+"Find names that appear in BOTH the users table (Login schema) and the riders table (Ride-Sharing schema).\n\nReturn name.",
+"SELECT name FROM users INTERSECT SELECT name FROM riders.",
+"Check for overlapping names.",
+LOGIN_T,LOGIN_S,(["name"],[["Aarav"],["Bhavna"],["Chirag"],["Diya"],["Eshan"]]),
+"SELECT name FROM users INTERSECT SELECT name FROM riders ORDER BY name;",topic="INTERSECT / Set Intersection")
+
+add("sql-178","Conditional Aggregation: Pass/Fail Count","University / Education","Zoho","easy",
+"Count students who passed (grade A or B) vs failed (grade C or below) per course.\n\nReturn course_name, passed, failed. Order by course_name.",
+"SUM(CASE WHEN grade IN('A','B') THEN 1 ELSE 0 END).",
+"Pass/fail breakdown per course.",
+UNI_T,UNI_S,(["course_name","passed","failed"],[["Algorithms",2,0],["DBMS",0,2],["Data Structures",2,1],["Machine Learning",1,0],["Operating Systems",0,1]]),
+"SELECT c.course_name,SUM(CASE WHEN e.grade IN('A','B') THEN 1 ELSE 0 END)AS passed,SUM(CASE WHEN e.grade NOT IN('A','B') THEN 1 ELSE 0 END)AS failed FROM courses c JOIN enrollments e ON c.id=e.course_id GROUP BY c.course_name ORDER BY c.course_name;",topic="Conditional Aggregation Pass/Fail")
+
+add("sql-179","Dense Data: Fill Gaps in Date Sequence","Login / Activity","Adobe","hard",
+"Identify which dates in January 10-20 had NO logins at all.\n\nReturn missing_date.",
+"Generate date sequence, LEFT JOIN to logins, filter NULLs.",
+"Which days had zero activity?",
+LOGIN_T,LOGIN_S,(["missing_date"],[["2024-01-16"],["2024-01-17"],["2024-01-18"],["2024-01-19"]]),
+"WITH RECURSIVE dates(d) AS(SELECT '2024-01-10' UNION ALL SELECT DATE(d,'+1 day') FROM dates WHERE d<'2024-01-20')SELECT d AS missing_date FROM dates WHERE d NOT IN(SELECT DISTINCT login_date FROM logins) ORDER BY d;",topic="Date Gap Detection (Recursive)")
+
+add("sql-180","Grand Finale: Cross-Schema Business Intelligence","E-Commerce (Flipkart)","Amazon","hard",
+"Build a comprehensive BI report from the E-Commerce schema: for each customer, show their name, city, email domain, total orders, total spent, avg order (rounded), first order date, last order date, days as customer, favorite category, and customer segment (VIP/Regular/New).\n\nReturn all metrics. Order by total_spent descending.",
+"Multi-CTE pipeline: customer stats + favorite category + segmentation.",
+"The ultimate analytical query combining everything learned.",
+ECOM_T,ECOM_S,(["name","city","domain","orders","spent","avg_order","first_order","last_order","days_active","top_category","segment"],[["Ankit","Mumbai","gmail.com",2,60799.0,30400,"2024-01-10","2024-01-15",5,"Electronics","VIP"],["Rohan","Pune","gmail.com",1,55450.0,55450,"2024-02-20","2024-02-20",0,"Electronics","VIP"],["Sneha","Mumbai","outlook.com",1,6900.0,6900,"2024-03-10","2024-03-10",0,"Fashion","Regular"],["Priya","Delhi","yahoo.com",1,3299.0,3299,"2024-03-15","2024-03-15",0,"Electronics","Regular"],["Vikram","Bangalore","gmail.com",1,450.0,450,"2024-03-15","2024-03-15",0,"Books","New"]]),
+"WITH stats AS(SELECT c.id,c.name,c.city,SUBSTR(c.email,INSTR(c.email,'@')+1)AS domain,COUNT(*)AS orders,SUM(o.total)AS spent,ROUND(AVG(o.total))AS avg_order,MIN(o.order_date)AS first_order,MAX(o.order_date)AS last_order,CAST(JULIANDAY(MAX(o.order_date))-JULIANDAY(MIN(o.order_date))AS INT)AS days_active FROM customers c JOIN orders o ON c.id=o.customer_id WHERE o.status!='cancelled' GROUP BY c.id),cats AS(SELECT o.customer_id,p.category,SUM(oi.qty)AS qty,ROW_NUMBER() OVER(PARTITION BY o.customer_id ORDER BY SUM(oi.qty) DESC)AS rn FROM orders o JOIN order_items oi ON o.id=oi.order_id JOIN products p ON oi.product_id=p.id WHERE o.status!='cancelled' GROUP BY o.customer_id,p.category)SELECT s.name,s.city,s.domain,s.orders,s.spent,s.avg_order,s.first_order,s.last_order,s.days_active,cat.category AS top_category,CASE WHEN s.spent>10000 THEN 'VIP' WHEN s.spent>1000 THEN 'Regular' ELSE 'New' END AS segment FROM stats s LEFT JOIN cats cat ON s.id=cat.customer_id AND cat.rn=1 ORDER BY s.spent DESC;",topic="Cross-Schema BI Report (Grand Finale)")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
