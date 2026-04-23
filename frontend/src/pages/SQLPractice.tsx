@@ -446,12 +446,12 @@ const SQLPractice = ({ navigate, user }: any) => {
               <div className={`absolute top-3 right-3 w-7 h-7 rounded-full ${badgeColor} flex items-center justify-center shadow-md`}>
                 {status === 'started' ? <CircleHalf size={16} weight="fill" className="text-white" /> : <CheckCircle size={16} weight="fill" className="text-white" />}
               </div>
-              <div className="flex items-start justify-between mb-3 pr-8">
+              <div className="flex items-start justify-between mb-3 pr-8 min-h-[3.5rem]">
                 <h3 className={`font-extrabold text-lg group-hover:text-indigo-500 transition-colors line-clamp-2 pr-2 ${titleColor}`}>{p.title}</h3>
                 <span className={`px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-widest shrink-0 ${diffColors[p.difficulty]}`}>{p.difficulty}</span>
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">{p.problem_statement?.split('\n')[0]}</p>
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+              <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 min-h-[2.5rem]">{p.problem_statement?.split('\n')[0]}</p>
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 overflow-hidden max-h-[1.75rem]">
                 <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 py-1 px-2 rounded"><TableIcon size={14} /> {p.dataset_theme}</span>
                 {p.company_tag && <span className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 py-1 px-2 rounded"><CompanyLogo name={p.company_tag} size={14} /> {p.company_tag}</span>}
                 {p.topic && <span className="bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 py-1 px-2 rounded">📘 {p.topic}</span>}
