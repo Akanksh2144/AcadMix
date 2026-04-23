@@ -15,6 +15,58 @@ const diffColors: Record<string, string> = {
   hard: 'text-red-600 bg-red-50 dark:bg-red-500/15 border-red-100 dark:border-red-500/20'
 };
 
+const companyLogos: Record<string, string> = {
+  'Accenture': 'accenture.com', 'Amazon': 'amazon.com', 'Capgemini': 'capgemini.com',
+  'Cognizant': 'cognizant.com', 'Deloitte': 'deloitte.com', 'Flipkart': 'flipkart.com',
+  'Goldman Sachs': 'goldmansachs.com', 'Google': 'google.com', 'HCLTech': 'hcltech.com',
+  'Infosys': 'infosys.com', 'JP Morgan': 'jpmorgan.com', 'Meta': 'meta.com',
+  'Microsoft': 'microsoft.com', 'Morgan Stanley': 'morganstanley.com', 'Paytm': 'paytm.com',
+  'TCS Digital': 'tcs.com', 'TCS NQT': 'tcs.com', 'Uber': 'uber.com', 'Wipro': 'wipro.com',
+};
+
+const CompanyLogo = ({ name, size = 16 }: { name: string; size?: number }) => {
+  const domain = companyLogos[name];
+  if (!domain) return null;
+  return <img src={`https://logo.clearbit.com/${domain}`} alt="" className="rounded-sm shrink-0" style={{ width: size, height: size }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />;
+};
+
+/* ── Custom Filter Dropdown (replaces native <select>) ── */
+const FilterDropdown = ({ value, options, onChange, renderOption }: {
+  value: string; options: { value: string; label: string; icon?: React.ReactNode }[];
+  onChange: (v: string) => void; renderOption?: (o: any) => React.ReactNode;
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+  const selected = options.find(o => o.value === value) || options[0];
+  return (
+    <div ref={ref} className="relative">
+      <button onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 bg-white dark:bg-[#1E293B] border border-slate-200/70 dark:border-white/10 rounded-2xl px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500/30 transition-all min-w-[160px]">
+        {selected.icon}{selected.label}
+        <svg className={`w-4 h-4 ml-auto text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ opacity: 0, y: -8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.96 }} transition={{ duration: 0.15 }}
+            className="absolute z-50 top-full mt-2 left-0 min-w-[220px] max-h-[320px] overflow-y-auto bg-white dark:bg-[#1E293B] border border-slate-200/70 dark:border-white/10 rounded-2xl shadow-xl shadow-slate-900/10 dark:shadow-black/30 py-2">
+            {options.map(o => (
+              <button key={o.value} onClick={() => { onChange(o.value); setOpen(false); }}
+                className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-500/10 ${value === o.value ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300'}`}>
+                {o.icon}{renderOption ? renderOption(o) : o.label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 /* ── Schema Table Card (DataLemur-style) ──────────────── */
 const SchemaTable = ({ table }: { table: any }) => (
   <div className="mb-5">
@@ -298,24 +350,28 @@ const SQLPractice = ({ navigate, user }: any) => {
         {(() => {
           const companies = ['all', ...Array.from(new Set(problems.map((p: any) => p.company_tag).filter(Boolean))).sort()];
           const topics = ['all', ...Array.from(new Set(problems.map((p: any) => p.topic).filter(Boolean))).sort()];
-          const selectCls = 'bg-white dark:bg-[#1E293B] border border-slate-200/70 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 cursor-pointer shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500/30 transition-all appearance-none';
+          const diffOpts = [
+            { value: 'all', label: 'All Difficulties' },
+            { value: 'easy', label: 'Easy', icon: <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" /> },
+            { value: 'medium', label: 'Medium', icon: <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" /> },
+            { value: 'hard', label: 'Hard', icon: <span className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" /> },
+          ];
+          const companyOpts = companies.map(c => ({
+            value: c, label: c === 'all' ? 'All Companies' : c,
+            icon: c !== 'all' ? <CompanyLogo name={c} size={18} /> : undefined,
+          }));
+          const topicOpts = topics.map(t => ({
+            value: t, label: t === 'all' ? 'All Topics' : t,
+            icon: t !== 'all' ? <span className="text-violet-500">📘</span> : undefined,
+          }));
           return (
             <div className="flex flex-wrap gap-3 items-center">
-              <select value={filterDiff} onChange={e => setFilterDiff(e.target.value)} className={selectCls}>
-                <option value="all">All Difficulties</option>
-                <option value="easy">🟢 Easy</option>
-                <option value="medium">🟡 Medium</option>
-                <option value="hard">🔴 Hard</option>
-              </select>
-              <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} className={selectCls}>
-                {companies.map(c => <option key={c} value={c}>{c === 'all' ? 'All Companies' : `🏢 ${c}`}</option>)}
-              </select>
-              <select value={filterTopic} onChange={e => setFilterTopic(e.target.value)} className={selectCls}>
-                {topics.map(t => <option key={t} value={t}>{t === 'all' ? 'All Topics' : `📘 ${t}`}</option>)}
-              </select>
+              <FilterDropdown value={filterDiff} options={diffOpts} onChange={setFilterDiff} />
+              <FilterDropdown value={filterCompany} options={companyOpts} onChange={setFilterCompany} />
+              <FilterDropdown value={filterTopic} options={topicOpts} onChange={setFilterTopic} />
               {(filterDiff !== 'all' || filterCompany !== 'all' || filterTopic !== 'all') && (
                 <button onClick={() => { setFilterDiff('all'); setFilterCompany('all'); setFilterTopic('all'); }}
-                  className="text-xs font-bold text-red-500 hover:text-red-400 transition-colors px-2 py-1">
+                  className="text-xs font-bold text-red-500 hover:text-red-400 transition-colors px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10">
                   ✕ Clear Filters
                 </button>
               )}
@@ -362,7 +418,7 @@ const SQLPractice = ({ navigate, user }: any) => {
               <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">{p.problem_statement?.split('\n')[0]}</p>
               <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
                 <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 py-1 px-2 rounded"><TableIcon size={14} /> {p.dataset_theme}</span>
-                {p.company_tag && <span className="bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 py-1 px-2 rounded">🏢 {p.company_tag}</span>}
+                {p.company_tag && <span className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 py-1 px-2 rounded"><CompanyLogo name={p.company_tag} size={14} /> {p.company_tag}</span>}
                 {p.topic && <span className="bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 py-1 px-2 rounded">📘 {p.topic}</span>}
                 {tagLabel && <span className={`ml-auto py-1 px-2 rounded ${tagColor}`}>{tagLabel}</span>}
               </div>
