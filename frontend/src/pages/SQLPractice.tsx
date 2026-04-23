@@ -18,17 +18,19 @@ const diffColors: Record<string, string> = {
 
 const companyLogos: Record<string, string> = {
   'Accenture': 'accenture.com', 'Adobe': 'adobe.com', 'Amazon': 'amazon.com',
-  'Atlassian': 'atlassian.com', 'Capgemini': 'capgemini.com', 'Cognizant': 'cognizant.com',
-  'CRED': 'cred.club', 'Deloitte': 'deloitte.com', 'Flipkart': 'flipkart.com',
-  'Freshworks': 'freshworks.com', 'Goldman Sachs': 'goldmansachs.com', 'Google': 'google.com',
-  'HCLTech': 'hcltech.com', 'Infosys': 'infosys.com', 'JP Morgan': 'jpmorgan.com',
-  'Juspay': 'juspay.in', 'Meta': 'meta.com', 'Microsoft': 'microsoft.com',
+  'Apollo': 'apollohospitals.com', 'Atlassian': 'atlassian.com', 'Capgemini': 'capgemini.com',
+  'Cognizant': 'cognizant.com', 'CRED': 'cred.club', 'Deloitte': 'deloitte.com',
+  'Flipkart': 'flipkart.com', 'Freshworks': 'freshworks.com', 'Goldman Sachs': 'goldmansachs.com',
+  'Google': 'google.com', 'HCLTech': 'hcltech.com', 'HDFC': 'hdfcbank.com',
+  'ICICI': 'icicibank.com', 'Infosys': 'infosys.com', 'JP Morgan': 'jpmorgan.com',
+  'Juspay': 'juspay.in', 'Kotak': 'kotak.com', 'Meta': 'meta.com', 'Microsoft': 'microsoft.com',
   'Morgan Stanley': 'morganstanley.com', 'Myntra': 'myntra.com', 'Ola': 'olacabs.com',
   'Oracle': 'oracle.com', 'Paytm': 'paytm.com', 'PhonePe': 'phonepe.com',
-  'Razorpay': 'razorpay.com', 'Salesforce': 'salesforce.com', 'SAP': 'sap.com',
-  'ServiceNow': 'servicenow.com', 'Swiggy': 'swiggy.com', 'TCS Digital': 'tcs.com',
-  'TCS NQT': 'tcs.com', 'Uber': 'uber.com', 'Wipro': 'wipro.com', 'Zomato': 'zomato.com',
-  'Zoho': 'zoho.com',
+  'Practo': 'practo.com', 'Razorpay': 'razorpay.com', 'Salesforce': 'salesforce.com',
+  'SAP': 'sap.com', 'ServiceNow': 'servicenow.com', 'Swiggy': 'swiggy.com',
+  'TCS Digital': 'tcs.com', 'TCS NQT': 'tcs.com', 'Tech Mahindra': 'techmahindra.com',
+  'Uber': 'uber.com', 'Walmart': 'walmart.com', 'Wipro': 'wipro.com',
+  'Zomato': 'zomato.com', 'Zoho': 'zoho.com',
 };
 
 const CompanyLogo = ({ name, size = 16 }: { name: string; size?: number }) => {
@@ -424,7 +426,7 @@ const SQLPractice = ({ navigate, user }: any) => {
         {/* ── Filters ── */}
         {(() => {
           const companies = ['all', ...Array.from(new Set(problems.flatMap((p: any) => p.company_tags || [p.company_tag]).filter(Boolean))).sort()];
-          const topics = ['all', ...Array.from(new Set(problems.map((p: any) => p.topic).filter(Boolean))).sort()];
+          const categories = ['all', ...Array.from(new Set(problems.map((p: any) => p.category).filter(Boolean))).sort()];
           const diffOpts = [
             { value: 'all', label: 'All Difficulties' },
             { value: 'easy', label: 'Easy', icon: <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" /> },
@@ -435,7 +437,7 @@ const SQLPractice = ({ navigate, user }: any) => {
             value: c, label: c === 'all' ? 'All Companies' : c,
             icon: c !== 'all' ? <CompanyLogo name={c} size={18} /> : undefined,
           }));
-          const topicOpts = topics.map(t => ({
+          const topicOpts = categories.map(t => ({
             value: t, label: t === 'all' ? 'All Topics' : t,
             icon: t !== 'all' ? <span className="text-violet-500">📘</span> : undefined,
           }));
@@ -476,11 +478,11 @@ const SQLPractice = ({ navigate, user }: any) => {
           const filtered = problems.filter((p: any) => {
             if (filterDiff !== 'all' && p.difficulty !== filterDiff) return false;
             if (filterCompany !== 'all' && !(p.company_tags || [p.company_tag]).includes(filterCompany)) return false;
-            if (filterTopic !== 'all' && p.topic !== filterTopic) return false;
+            if (filterTopic !== 'all' && p.category !== filterTopic) return false;
             if (showBookmarked && !bookmarks[p.id]) return false;
             if (searchQuery) {
               const q = searchQuery.toLowerCase();
-              const hay = `${p.title} ${p.topic} ${p.dataset_theme} ${(p.company_tags || [p.company_tag]).join(' ')}`.toLowerCase();
+              const hay = `${p.title} ${p.topic} ${p.category} ${p.dataset_theme} ${(p.company_tags || [p.company_tag]).join(' ')}`.toLowerCase();
               if (!hay.includes(q)) return false;
             }
             return true;

@@ -3614,11 +3614,77 @@ add("sql-200","generate_series: Gap Detection","E-Commerce / Shopping","Amazon, 
 PG_ECOM_T,PG_ECOM_S,(["missing_id"],[]),
 "SELECT s AS missing_id FROM generate_series((SELECT MIN(id) FROM orders_pg),(SELECT MAX(id) FROM orders_pg)) s WHERE s NOT IN (SELECT id FROM orders_pg) ORDER BY s;",topic="Data Generation: Gap Detection",backend_only=True)
 
+# ═══════════════════════════════════════════════════════════════════════
+#  POST-PROCESSING: Classify every problem into a broad concept category
+#  These match DataLemur's tag system (~19 categories)
+# ═══════════════════════════════════════════════════════════════════════
+
+CATEGORY_RULES = [
+    # Order matters — first match wins. More specific categories first.
+    ("Array Functions",       ["ARRAY_AGG","UNNEST","array_length","Array Function"]),
+    ("Data Generation",       ["generate_series","Data Generation"]),
+    ("Set Operations",        ["UNION","INTERSECT","EXCEPT","Set "]),
+    ("Window Functions",      ["Window","ROW_NUMBER","DENSE_RANK","RANK(","RANK ","LAG ","LAG(","LEAD ","LEAD(","NTILE","PERCENT_RANK","Running","Cumulative","Percentile","Rank Within"]),
+    ("Common Table Expressions (CTE) or Subquery", ["CTE","Recursive CTE","Subquery","Correlated"]),
+    ("Joins",                 ["JOIN","Self-Join","Self LEFT","Multi-Table","Multi-Join","Cross-Table","FULL OUTER"]),
+    ("Control Flow Functions",["Control Flow","IIF","NULLIF","COALESCE"]),
+    ("Conditional Logic",     ["CASE","Conditional","Classification","Segmentation","Bucket","Tier","Band","Mapping","Pass/Fail","Frequency Label"]),
+    ("Date-Time Functions",   ["Date","Month","Year","Quarter","Day-of-Week","JULIANDAY","Weekday","MoM","Time-to-"]),
+    ("String Functions",      ["String","LIKE","UPPER","LENGTH","SUBSTR","Concat","Vowel","Email Domain","GROUP_CONCAT"]),
+    ("Null Handling",         ["NULL","IS NULL"]),
+    ("Distinct and Unique Handling", ["DISTINCT","Unique"]),
+    ("Existence Check",       ["EXISTS","NOT EXISTS","Exclusive"]),
+    ("Mathematical Functions",["Revenue","Percentage","Percent","Ratio","Median","Weighted","Credit/Debit","Deviation"]),
+    ("Top N Results",         ["Top ","Top-N","LIMIT","ORDER BY DESC LIMIT","Most Popular","Most Watched","Most Commented","Most Enrolled","Most Orders"]),
+    ("Aggregate Functions",   ["COUNT","SUM ","SUM(","AVG ","AVG(","MIN ","MIN(","MAX ","MAX(","GROUP BY","HAVING","Aggregate","GROUP_BY"]),
+    ("Filtering & Sorting",   ["WHERE","BETWEEN","IN ","ORDER BY","Filter","Filtering"]),
+    ("Advanced Analytics",    ["Capstone","Dashboard","KPI","Grand Finale","BI Report","360","Platform","Executive","Audit Trail"]),
+]
+
+def classify(problem):
+    """Assign a broad category based on topic, title, and solution SQL."""
+    topic = problem.get("topic", "")
+    title = problem.get("title", "")
+    sol   = problem.get("solution_sql", "")
+    text  = f"{topic} {title}"  # Classify primarily by topic + title
+
+    for cat_name, keywords in CATEGORY_RULES:
+        for kw in keywords:
+            if kw.lower() in text.lower():
+                return cat_name
+
+    # Fallback: check solution SQL for common patterns
+    sol_upper = sol.upper()
+    if "WINDOW" in sol_upper or "OVER(" in sol_upper or "ROW_NUMBER" in sol_upper or "DENSE_RANK" in sol_upper:
+        return "Window Functions"
+    if "JOIN" in sol_upper:
+        return "Joins"
+    if any(fn in sol_upper for fn in ["COUNT(","SUM(","AVG(","MIN(","MAX("]):
+        return "Aggregate Functions"
+    if "GROUP BY" in sol_upper:
+        return "Aggregate Functions"
+    if "CASE " in sol_upper:
+        return "Conditional Logic"
+    if "WHERE" in sol_upper:
+        return "Filtering & Sorting"
+    return "General SQL"
+
+# Apply classification to all problems
+for p in P:
+    p["category"] = classify(p)
+
+# Print category distribution
+from collections import Counter
+cat_counts = Counter(p["category"] for p in P)
+print("\nCategory distribution:")
+for cat, count in sorted(cat_counts.items(), key=lambda x: -x[1]):
+    print(f"  {count:>4}  {cat}")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
     json.dump(P, f, indent=2, default=str)
-print(f"Done: Generated {len(P)} problems")
+print(f"\nDone: Generated {len(P)} problems across {len(cat_counts)} categories")
 pg_count = sum(1 for p in P if p.get('backend_only'))
 print(f"  -> {pg_count} PostgreSQL-only problems (backend_only=True)")
 print(f"  -> {len(P) - pg_count} SQLite WASM problems")
