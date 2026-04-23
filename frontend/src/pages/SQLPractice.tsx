@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Editor from '@monaco-editor/react';
-import { Database, Play, CheckCircle, XCircle, List, ArrowLeft, Lightbulb, Table as TableIcon, Eye, EyeSlash, Timer, CircleHalf } from '@phosphor-icons/react';
+import { Database, Play, CheckCircle, XCircle, List, ArrowLeft, Lightbulb, Table as TableIcon, Eye, EyeSlash, Timer, CircleHalf, BookmarkSimple, MagnifyingGlass } from '@phosphor-icons/react';
 import { useTheme } from '../contexts/ThemeContext';
 import { placementPrepAPI } from '../services/api';
 import { toast } from 'sonner';
@@ -164,6 +164,19 @@ const SQLPractice = ({ navigate, user }: any) => {
   const [statusMap, setStatusMap] = useState<Record<string, 'started' | 'solved'>>(() => {
     try { return JSON.parse(localStorage.getItem('sql_status') || '{}'); } catch { return {}; }
   });
+  const [bookmarks, setBookmarks] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem('sql_bookmarks') || '{}'); } catch { return {}; }
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showBookmarked, setShowBookmarked] = useState(false);
+  const toggleBookmark = (id: string) => {
+    setBookmarks(prev => {
+      const next = { ...prev };
+      if (next[id]) delete next[id]; else next[id] = true;
+      localStorage.setItem('sql_bookmarks', JSON.stringify(next));
+      return next;
+    });
+  };
   const updateStatus = (id: string, status: 'started' | 'solved') => {
     setStatusMap(prev => {
       if (prev[id] === 'solved') return prev; // never downgrade from solved
@@ -439,13 +452,31 @@ const SQLPractice = ({ navigate, user }: any) => {
           }));
           return (
             <div className="flex flex-wrap gap-3 items-center">
+              {/* Search bar */}
+              <div className="relative">
+                <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search problems..."
+                  className="pl-9 pr-4 py-2.5 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-[#1E293B] text-sm font-semibold text-slate-700 dark:text-slate-300 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all w-[200px] placeholder:text-slate-400 placeholder:font-medium"
+                />
+              </div>
               <FilterDropdown value={filterDiff} options={diffOpts} onChange={setFilterDiff} />
               <FilterDropdown value={filterCompany} options={companyOpts} onChange={setFilterCompany} />
               <FilterDropdown value={filterTopic} options={topicOpts} onChange={setFilterTopic} />
-              {(filterDiff !== 'all' || filterCompany !== 'all' || filterTopic !== 'all') && (
-                <button onClick={() => { setFilterDiff('all'); setFilterCompany('all'); setFilterTopic('all'); }}
+              {/* Bookmark filter */}
+              <button onClick={() => setShowBookmarked(!showBookmarked)}
+                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl border text-sm font-semibold transition-all shadow-sm hover:shadow-md ${
+                  showBookmarked
+                    ? 'bg-amber-50 dark:bg-amber-500/15 border-amber-300 dark:border-amber-500/30 text-amber-600 dark:text-amber-400'
+                    : 'bg-white dark:bg-[#1E293B] border-slate-200/70 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-500/30'
+                }`}>
+                <BookmarkSimple size={16} weight={showBookmarked ? 'fill' : 'regular'} /> Saved
+              </button>
+              {(filterDiff !== 'all' || filterCompany !== 'all' || filterTopic !== 'all' || searchQuery || showBookmarked) && (
+                <button onClick={() => { setFilterDiff('all'); setFilterCompany('all'); setFilterTopic('all'); setSearchQuery(''); setShowBookmarked(false); }}
                   className="text-xs font-bold text-red-500 hover:text-red-400 transition-colors px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10">
-                  ✕ Clear Filters
+                  ✕ Clear All
                 </button>
               )}
             </div>
@@ -457,6 +488,12 @@ const SQLPractice = ({ navigate, user }: any) => {
             if (filterDiff !== 'all' && p.difficulty !== filterDiff) return false;
             if (filterCompany !== 'all' && !(p.company_tags || [p.company_tag]).includes(filterCompany)) return false;
             if (filterTopic !== 'all' && p.topic !== filterTopic) return false;
+            if (showBookmarked && !bookmarks[p.id]) return false;
+            if (searchQuery) {
+              const q = searchQuery.toLowerCase();
+              const hay = `${p.title} ${p.topic} ${p.dataset_theme} ${(p.company_tags || [p.company_tag]).join(' ')}`.toLowerCase();
+              if (!hay.includes(q)) return false;
+            }
             return true;
           });
           return (
@@ -495,6 +532,11 @@ const SQLPractice = ({ navigate, user }: any) => {
                 {tagLabel && <span className={`ml-auto py-1 px-2 rounded whitespace-nowrap shrink-0 ${tagColor}`}>{tagLabel}</span>}
               </div>
               {p.topic && <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 truncate">📘 {p.topic}</p>}
+              {/* Bookmark toggle — bottom left */}
+              <button onClick={(e) => { e.stopPropagation(); toggleBookmark(p.id); }}
+                className={`absolute bottom-3 left-3 p-1 rounded-lg transition-all ${bookmarks[p.id] ? 'text-amber-500 hover:text-amber-600' : 'text-slate-300 dark:text-slate-600 hover:text-amber-400 dark:hover:text-amber-500'}`}>
+                <BookmarkSimple size={18} weight={bookmarks[p.id] ? 'fill' : 'regular'} />
+              </button>
               {/* DB engine logo — bottom right */}
               <img src={p.backend_only ? 'https://img.logo.dev/postgresql.org?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png' : 'https://img.logo.dev/sqlite.org?token=pk_WWYqoiQzSIyMyloG92OOgg&size=64&format=png'} alt={p.backend_only ? 'PostgreSQL' : 'SQLite'} className="absolute bottom-3 right-3 w-5 h-5 opacity-40 group-hover:opacity-70 transition-opacity object-contain" />
             </motion.div>);
