@@ -298,7 +298,7 @@ const SQLPractice = ({ navigate, user }: any) => {
         {(() => {
           const companies = ['all', ...Array.from(new Set(problems.map((p: any) => p.company_tag).filter(Boolean))).sort()];
           const topics = ['all', ...Array.from(new Set(problems.map((p: any) => p.topic).filter(Boolean))).sort()];
-          const selectCls = 'bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer';
+          const selectCls = 'bg-white dark:bg-[#1E293B] border border-slate-200/70 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 cursor-pointer shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500/30 transition-all appearance-none';
           return (
             <div className="flex flex-wrap gap-3 items-center">
               <select value={filterDiff} onChange={e => setFilterDiff(e.target.value)} className={selectCls}>
