@@ -3337,6 +3337,72 @@ add("sql-420","Doctors Sorted by Unique Patient Count","Healthcare / Hospital","
 HOSPITAL_T,HOSPITAL_S,(["name","patient_count"],[["Dr. Sharma",2],["Dr. Patel",2],["Dr. Gupta",1]]),
 "SELECT d.name,COUNT(DISTINCT a.patient_id)AS patient_count FROM doctors d JOIN appointments a ON d.id=a.doc_id GROUP BY d.name ORDER BY patient_count DESC;",topic="DISTINCT Patient Count")
 
+# ═══ BATCH 42: ZOHO GRAND FINALE (9 remaining → 30/30) ═══
+# 🏆 THIS BATCH COMPLETES ALL 10 COMPANIES TO 30/30! 🏆
+
+add("sql-421","Cumulative Order Revenue","E-Commerce (Flipkart)","Zoho","hard",
+"Show a running total of order revenue by date.\n\nReturn order_date, daily_revenue, cumulative_revenue. Order by order_date.",
+"SUM(SUM(total)) OVER(ORDER BY order_date).",
+"Running cumulative revenue.",
+ECOM_T,ECOM_S,(["order_date","daily_revenue","cumulative_revenue"],[["2024-01-10",2500.0,2500.0],["2024-01-15",58299.0,60799.0],["2024-02-20",55450.0,116249.0],["2024-03-10",6900.0,123149.0],["2024-03-15",3749.0,126898.0]]),
+"SELECT order_date,SUM(total)AS daily_revenue,SUM(SUM(total)) OVER(ORDER BY order_date)AS cumulative_revenue FROM orders WHERE status!='cancelled' GROUP BY order_date ORDER BY order_date;",topic="Cumulative Revenue Window")
+
+add("sql-422","Employees With Same Department as Manager","HR / Employee","Zoho","medium",
+"Find employees whose department matches their manager's department.\n\nReturn employee, dept. Order by employee.",
+"Self-join WHERE e.dept = m.dept.",
+"Same-dept manager relationship.",
+EMP_T,EMP_S,(["employee","dept"],[["Bob","Eng"],["Eve","Eng"]]),
+"SELECT e.name AS employee,e.dept FROM employees e JOIN employees m ON e.mgr_id=m.id WHERE e.dept=m.dept ORDER BY e.name;",topic="Self-Join: Same Dept")
+
+add("sql-423","Restaurant Rating Percentile","Food Delivery (Zomato)","Zoho","hard",
+"Show each restaurant's rating percentile rank.\n\nReturn name, rating, percentile (rounded to 0). Order by percentile DESC.",
+"PERCENT_RANK() OVER(ORDER BY rating).",
+"Where does each restaurant stand percentile-wise.",
+ZOMATO_T,ZOMATO_S,(["name","rating","percentile"],[["Dosa Corner",4.7,100],["Biryani House",4.5,75],["Pizza Palace",4.2,50],["Dragon Wok",3.8,25],["Burger Barn",3.5,0]]),
+"SELECT name,rating,ROUND(PERCENT_RANK() OVER(ORDER BY rating)*100,0)AS percentile FROM restaurants ORDER BY percentile DESC;",topic="PERCENT_RANK Rating")
+
+add("sql-424","Students With Top Grade in Any Course","University / Education","Zoho","hard",
+"Find students who scored the highest grade in at least one course.\n\nReturn student name, course, grade. Order by grade DESC, name.",
+"Window MAX(grade) PARTITION BY course_id, filter where grade = max.",
+"Top scorers per course.",
+UNI_T,UNI_S,(["name","course","grade"],[]),
+"SELECT s.name,co.name AS course,e.grade FROM enrollments e JOIN students s ON e.student_id=s.id JOIN courses co ON e.course_id=co.id WHERE e.grade=(SELECT MAX(e2.grade) FROM enrollments e2 WHERE e2.course_id=e.course_id) ORDER BY e.grade DESC,s.name;",topic="Top Grade Per Course")
+
+add("sql-425","Drivers With Above-Average Fare","Ride-Sharing (Ola)","Zoho","medium",
+"Find drivers whose average fare per ride exceeds the overall average fare.\n\nReturn driver name, avg_fare (rounded to 0). Order by avg_fare DESC.",
+"HAVING AVG(fare) > (SELECT AVG(fare) FROM rides).",
+"Drivers earning above average per ride.",
+RIDE_T,RIDE_S,(["name","avg_fare"],[]),
+"SELECT d.name,ROUND(AVG(r.fare),0)AS avg_fare FROM drivers d JOIN rides r ON d.id=r.driver_id GROUP BY d.name HAVING AVG(r.fare)>(SELECT AVG(fare) FROM rides) ORDER BY avg_fare DESC;",topic="HAVING > Global AVG")
+
+add("sql-426","Year-Over-Year Employee Growth","HR / Employee","Zoho","medium",
+"Count employees hired per year.\n\nReturn hire_year, hires, cumulative_hires. Order by hire_year.",
+"COUNT per year + SUM OVER(ORDER BY year).",
+"Track hiring growth.",
+EMP_T,EMP_S,(["hire_year","hires","cumulative_hires"],[["2019",1,1],["2020",2,3],["2021",2,5],["2022",1,6]]),
+"SELECT SUBSTR(hire_date,1,4)AS hire_year,COUNT(*)AS hires,SUM(COUNT(*)) OVER(ORDER BY SUBSTR(hire_date,1,4))AS cumulative_hires FROM employees GROUP BY SUBSTR(hire_date,1,4) ORDER BY hire_year;",topic="Cumulative Hire Growth")
+
+add("sql-427","Complete Transaction Audit Trail","Banking / Finance","Zoho","hard",
+"Show each transaction with its running balance, previous balance, and change.\n\nReturn holder, txn_date, type, amount, prev_bal, new_bal. Order by holder, txn_date.",
+"LAG + SUM OVER for running balance audit.",
+"Full audit trail per account.",
+BANK_T,BANK_S,(["holder","txn_date","type","amount","prev_bal","new_bal"],[]),
+"SELECT a.holder,t.txn_date,t.type,t.amount,LAG(SUM(CASE WHEN t.type='credit' THEN t.amount ELSE -t.amount END) OVER(PARTITION BY a.id ORDER BY t.txn_date),1,0) OVER(PARTITION BY a.id ORDER BY t.txn_date)AS prev_bal,SUM(CASE WHEN t.type='credit' THEN t.amount ELSE -t.amount END) OVER(PARTITION BY a.id ORDER BY t.txn_date)AS new_bal FROM accounts a JOIN transactions t ON a.id=t.acc_id ORDER BY a.holder,t.txn_date;",topic="Audit Trail (LAG+SUM)")
+
+add("sql-428","Top Commented Users","Social Media (Instagram)","Zoho","medium",
+"Find the top 3 users by total comments they've written.\n\nReturn username, comment_count. Order by comment_count DESC.",
+"JOIN profiles + comments, COUNT, LIMIT 3.",
+"Most active commenters.",
+SOCIAL_T,SOCIAL_S,(["username","comment_count"],[]),
+"SELECT pr.username,COUNT(c.id)AS comment_count FROM profiles pr JOIN comments c ON pr.id=c.user_id GROUP BY pr.username ORDER BY comment_count DESC LIMIT 3;",topic="Top Commenters (LIMIT)")
+
+add("sql-429","Full Platform Analytics Dashboard","E-Commerce (Flipkart)","Zoho","hard",
+"Create a one-row analytics dashboard: total_orders, total_revenue, avg_order_value, unique_customers, total_products_sold.\n\nReturn all 5 metrics.",
+"Multiple aggregations in one SELECT from joined tables.",
+"Complete platform KPI snapshot.",
+ECOM_T,ECOM_S,(["total_orders","total_revenue","avg_order_value","unique_customers","total_products_sold"],[[7,126898.0,18128,5,14]]),
+"SELECT COUNT(DISTINCT o.id)AS total_orders,SUM(o.total)AS total_revenue,ROUND(AVG(o.total),0)AS avg_order_value,COUNT(DISTINCT o.customer_id)AS unique_customers,(SELECT SUM(qty) FROM order_items)AS total_products_sold FROM orders o WHERE o.status!='cancelled';",topic="Platform KPI Dashboard")
+
 # ═══ BATCH 19: PostgreSQL-Only — FULL OUTER JOIN ═══
 # These problems require FULL OUTER JOIN which is NOT supported by SQLite WASM.
 # They are flagged backend_only=True and execute on the backend PostgreSQL engine.
