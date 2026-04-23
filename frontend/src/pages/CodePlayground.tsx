@@ -166,16 +166,18 @@ const CodePlayground = ({ navigate, user }) => {
     };
   }, []);
   
-  // Resizable Pane State
   const [leftWidth, setLeftWidth] = useState(40); // Initial 40% width for left pane
   const [topHeight, setTopHeight] = useState(66); // Initial height for top code editor pane
   const [adHocLeftWidth, setAdHocLeftWidth] = useState(66); // Initial 66% width for ad-hoc editor pane
+  const [adHocTopHeight, setAdHocTopHeight] = useState(55); // Initial 55% height for ad-hoc output pane
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingH, setIsDraggingH] = useState(false);
   const [isDraggingAdHoc, setIsDraggingAdHoc] = useState(false);
+  const [isDraggingAdHocH, setIsDraggingAdHocH] = useState(false);
   const containerRef = useRef(null);
   const rightPaneRef = useRef(null);
   const adHocContainerRef = useRef(null);
+  const adHocRightPaneRef = useRef(null);
   
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -197,20 +199,27 @@ const CodePlayground = ({ navigate, user }) => {
         if (newHeight < 20) newHeight = 20;
         if (newHeight > 80) newHeight = 80;
         setTopHeight(newHeight);
+      } else if (isDraggingAdHocH && adHocRightPaneRef.current) {
+        const rightRect = adHocRightPaneRef.current.getBoundingClientRect();
+        let newHeight = ((e.clientY - rightRect.top) / rightRect.height) * 100;
+        if (newHeight < 20) newHeight = 20;
+        if (newHeight > 80) newHeight = 80;
+        setAdHocTopHeight(newHeight);
       }
     };
     const handleMouseUp = () => {
       if (isDragging) setIsDragging(false);
       if (isDraggingH) setIsDraggingH(false);
       if (isDraggingAdHoc) setIsDraggingAdHoc(false);
+      if (isDraggingAdHocH) setIsDraggingAdHocH(false);
     };
     
-    if (isDragging || isDraggingH || isDraggingAdHoc) {
+    if (isDragging || isDraggingH || isDraggingAdHoc || isDraggingAdHocH) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'none';
       if (isDragging || isDraggingAdHoc) document.body.style.cursor = 'col-resize';
-      if (isDraggingH) document.body.style.cursor = 'row-resize';
+      if (isDraggingH || isDraggingAdHocH) document.body.style.cursor = 'row-resize';
     }
     
     return () => {
@@ -219,7 +228,7 @@ const CodePlayground = ({ navigate, user }) => {
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isDragging, isDraggingH, isDraggingAdHoc]);
+  }, [isDragging, isDraggingH, isDraggingAdHoc, isDraggingAdHocH]);
 
   const editorRef = useRef(null);
 
@@ -1131,8 +1140,8 @@ const CodePlayground = ({ navigate, user }) => {
               </div>
 
               {/* Right Column: Output & History Panel */}
-              <div style={{ width: window.innerWidth >= 1024 ? `calc(${100 - adHocLeftWidth}% - 12px)` : '100%' }} className="space-y-4 flex flex-col lg:h-full lg:overflow-hidden pb-10 lg:pb-0">
-                <div className="soft-card flex flex-col flex-1 min-h-[300px]">
+              <div ref={adHocRightPaneRef} style={{ width: window.innerWidth >= 1024 ? `calc(${100 - adHocLeftWidth}% - 12px)` : '100%' }} className="gap-4 lg:gap-0 flex flex-col lg:h-full lg:overflow-hidden pb-10 lg:pb-0 relative min-h-[600px] lg:min-h-0">
+                <div style={{ height: window.innerWidth >= 1024 ? `calc(${adHocTopHeight}% - 12px)` : 'auto' }} className="soft-card flex flex-col flex-1 lg:flex-none min-h-[300px] lg:min-h-0">
                   <div className="p-5 pb-3 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-2">
                       <Terminal size={18} weight="duotone" className="text-slate-500 dark:text-slate-400" />
@@ -1202,7 +1211,16 @@ const CodePlayground = ({ navigate, user }) => {
                   </div>
                 </div>
 
-                <div className="soft-card flex flex-col h-[280px] shrink-0">
+                {/* Horizontal Splitter / Resizer (Hidden on mobile) */}
+                <div 
+                  className="hidden lg:flex h-6 shrink-0 flex-row justify-center items-center cursor-row-resize group z-10"
+                  onMouseDown={(e) => { e.preventDefault(); setIsDraggingAdHocH(true); }}
+                  title="Drag to resize panes"
+                >
+                  <div className={`w-16 h-1 rounded-full transition-colors ${isDraggingAdHocH ? 'bg-indigo-50 dark:bg-indigo-500/150' : 'bg-slate-200 dark:bg-slate-700 group-hover:bg-indigo-300'}`}></div>
+                </div>
+
+                <div style={{ height: window.innerWidth >= 1024 ? `calc(${100 - adHocTopHeight}% - 12px)` : 'auto' }} className="soft-card flex flex-col h-[280px] lg:h-auto min-h-[220px] lg:flex-none shrink-0">
                   <div className="p-5 pb-3 shrink-0">
                      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Run History</h3>
                   </div>
