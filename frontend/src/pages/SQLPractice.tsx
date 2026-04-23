@@ -302,9 +302,8 @@ const SQLPractice = ({ navigate, user }: any) => {
             const titleColor = status === 'solved' ? 'text-emerald-700 dark:text-emerald-400'
               : status === 'started' ? 'text-amber-700 dark:text-amber-400'
               : 'text-slate-800 dark:text-white';
-            const tagLabel = status === 'solved' ? '✓ Solved' : status === 'started' ? '◐ Started' : null;
-            const tagColor = status === 'solved' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-              : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400';
+            const tagLabel = status === 'solved' ? '✓ Solved' : null;
+            const tagColor = 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
             return (
             <motion.div key={p.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
               onClick={() => loadProblem(p)}
