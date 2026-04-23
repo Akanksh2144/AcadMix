@@ -622,6 +622,110 @@ add("sql-055","Category Revenue Percentage","E-Commerce (Flipkart)","ServiceNow"
 ECOM_T,ECOM_S,(["category","category_revenue","pct"],[["Electronics",117500.0,94.8],["Fashion",5597.0,4.5],["Books",900.0,0.7]]),
 "SELECT p.category,SUM(oi.price)AS category_revenue,ROUND(SUM(oi.price)*100.0/(SELECT SUM(price) FROM order_items),1)AS pct FROM order_items oi JOIN products p ON oi.product_id=p.id GROUP BY p.category ORDER BY pct DESC;",topic="Percentage Calculation")
 
+# ═══ NEW SCHEMA: Ride-Sharing ═══
+
+RIDE_S = """CREATE TABLE drivers(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,rating REAL,joined DATE);
+CREATE TABLE riders(id INT PRIMARY KEY,name VARCHAR,city VARCHAR,signup_date DATE);
+CREATE TABLE rides(id INT PRIMARY KEY,rider_id INT,driver_id INT,pickup VARCHAR,dropoff VARCHAR,fare REAL,distance_km REAL,ride_date DATE,status VARCHAR);
+INSERT INTO drivers VALUES(1,'Ramesh','Mumbai',4.8,'2022-06-01');
+INSERT INTO drivers VALUES(2,'Sunil','Mumbai',4.5,'2023-01-10');
+INSERT INTO drivers VALUES(3,'Kavita','Delhi',4.9,'2022-03-15');
+INSERT INTO drivers VALUES(4,'Mohan','Bangalore',4.2,'2023-05-20');
+INSERT INTO drivers VALUES(5,'Lakshmi','Chennai',4.7,'2022-11-01');
+INSERT INTO riders VALUES(1,'Aarav','Mumbai','2023-01-05');
+INSERT INTO riders VALUES(2,'Bhavna','Delhi','2023-03-15');
+INSERT INTO riders VALUES(3,'Chirag','Mumbai','2023-06-01');
+INSERT INTO riders VALUES(4,'Diya','Bangalore','2023-09-10');
+INSERT INTO riders VALUES(5,'Eshan','Chennai','2024-01-01');
+INSERT INTO rides VALUES(1,1,1,'Andheri','Bandra',250,8.5,'2024-01-10','completed');
+INSERT INTO rides VALUES(2,1,2,'Bandra','Dadar',180,5.2,'2024-01-12','completed');
+INSERT INTO rides VALUES(3,2,3,'CP','Nehru Place',320,12.0,'2024-01-15','completed');
+INSERT INTO rides VALUES(4,3,1,'Worli','Andheri',400,15.3,'2024-01-20','completed');
+INSERT INTO rides VALUES(5,1,1,'Dadar','Andheri',200,7.0,'2024-02-01','completed');
+INSERT INTO rides VALUES(6,4,4,'Koramangala','Whitefield',550,22.0,'2024-02-05','completed');
+INSERT INTO rides VALUES(7,2,3,'Saket','CP',280,10.5,'2024-02-10','cancelled');
+INSERT INTO rides VALUES(8,5,5,'T Nagar','Adyar',150,4.0,'2024-02-15','completed');
+INSERT INTO rides VALUES(9,3,2,'Andheri','Powai',350,13.0,'2024-03-01','completed');
+INSERT INTO rides VALUES(10,1,1,'Bandra','Worli',220,6.5,'2024-03-05','completed');"""
+RIDE_T = [{"name":"drivers","columns":[{"name":"id","type":"int"},{"name":"name","type":"varchar"},{"name":"city","type":"varchar"},{"name":"rating","type":"real"},{"name":"joined","type":"date"}],
+"sample_input":[[1,"Ramesh","Mumbai",4.8,"2022-06-01"],[2,"Sunil","Mumbai",4.5,"2023-01-10"],[3,"Kavita","Delhi",4.9,"2022-03-15"],[4,"Mohan","Bangalore",4.2,"2023-05-20"],[5,"Lakshmi","Chennai",4.7,"2022-11-01"]]},
+{"name":"riders","columns":[{"name":"id","type":"int"},{"name":"name","type":"varchar"},{"name":"city","type":"varchar"},{"name":"signup_date","type":"date"}],
+"sample_input":[[1,"Aarav","Mumbai","2023-01-05"],[2,"Bhavna","Delhi","2023-03-15"],[3,"Chirag","Mumbai","2023-06-01"],[4,"Diya","Bangalore","2023-09-10"],[5,"Eshan","Chennai","2024-01-01"]]},
+{"name":"rides","columns":[{"name":"id","type":"int"},{"name":"rider_id","type":"int"},{"name":"driver_id","type":"int"},{"name":"pickup","type":"varchar"},{"name":"dropoff","type":"varchar"},{"name":"fare","type":"real"},{"name":"distance_km","type":"real"},{"name":"ride_date","type":"date"},{"name":"status","type":"varchar"}],
+"sample_input":[[1,1,1,"Andheri","Bandra",250,8.5,"2024-01-10","completed"],[2,1,2,"Bandra","Dadar",180,5.2,"2024-01-12","completed"],[3,2,3,"CP","Nehru Place",320,12.0,"2024-01-15","completed"],[4,3,1,"Worli","Andheri",400,15.3,"2024-01-20","completed"],[5,1,1,"Dadar","Andheri",200,7.0,"2024-02-01","completed"]]}]
+
+# ═══ BATCH 6: Ride-Sharing + Mixed Advanced ═══
+
+add("sql-056","Recursive CTE: Number Sequence","HR / Employee","Juspay","hard",
+"Using a recursive CTE, generate a sequence of numbers from 1 to 6 (one for each employee).\n\nReturn the number as n.",
+"WITH RECURSIVE seq(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM seq WHERE n < 6).",
+"Simple recursive generation: 1,2,3,4,5,6.",
+EMP_T,EMP_S,(["n"],[[1],[2],[3],[4],[5],[6]]),
+"WITH RECURSIVE seq(n) AS(SELECT 1 UNION ALL SELECT n+1 FROM seq WHERE n<6)SELECT n FROM seq;",topic="Recursive CTE")
+
+add("sql-057","LAST_VALUE: Most Expensive Ride Per Rider","Ride-Sharing (Ola)","Ola","hard",
+"For each ride, show the rider's most expensive ride fare using LAST_VALUE.\n\nReturn rider name, ride_date, fare, and max_fare. Order by rider name, ride_date.",
+"Use LAST_VALUE(fare) OVER (PARTITION BY rider_id ORDER BY fare ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING).",
+"Aarav's max fare across all rides is 250.",
+RIDE_T,RIDE_S,(["name","ride_date","fare","max_fare"],[["Aarav","2024-01-10",250.0,250.0],["Aarav","2024-01-12",180.0,250.0],["Aarav","2024-02-01",200.0,250.0],["Aarav","2024-03-05",220.0,250.0],["Bhavna","2024-01-15",320.0,320.0],["Bhavna","2024-02-10",280.0,320.0],["Chirag","2024-01-20",400.0,400.0],["Chirag","2024-03-01",350.0,400.0],["Diya","2024-02-05",550.0,550.0],["Eshan","2024-02-15",150.0,150.0]]),
+"SELECT r2.name,r.ride_date,r.fare,LAST_VALUE(r.fare) OVER(PARTITION BY r.rider_id ORDER BY r.fare ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)AS max_fare FROM rides r JOIN riders r2 ON r.rider_id=r2.id ORDER BY r2.name,r.ride_date;",topic="Window Functions (LAST_VALUE)")
+
+add("sql-058","REPLACE: Clean Email Domain","E-Commerce (Flipkart)","CRED","easy",
+"Replace 'gmail.com' with 'company.com' in all customer emails.\n\nReturn name and updated_email, ordered by name.",
+"Use REPLACE(email, 'gmail.com', 'company.com').",
+"Ankit: ankit@company.com. Priya stays yahoo. Rohan: rohan@company.com.",
+ECOM_T,ECOM_S,(["name","updated_email"],[["Ankit","ankit@company.com"],["Priya","priya@yahoo.com"],["Rohan","rohan@company.com"],["Sneha","sneha@outlook.com"],["Vikram","vikram@company.com"]]),
+"SELECT name,REPLACE(email,'gmail.com','company.com')AS updated_email FROM customers ORDER BY name;",topic="String Functions (REPLACE)")
+
+add("sql-059","ABS: Fare vs Average Deviation","Ride-Sharing (Ola)","Zoho","medium",
+"For each completed ride, show how much the fare deviates from the average fare (absolute value).\n\nReturn ride_id, fare, and deviation rounded to 1 decimal. Order by deviation descending.",
+"Use ABS(fare - (SELECT AVG(fare) FROM rides WHERE status='completed')).",
+"Avg completed fare = (250+180+320+400+200+550+150+350+220)/9 ≈ 291.1.",
+RIDE_T,RIDE_S,(["id","fare","deviation"],[[6,550.0,258.9],[4,400.0,108.9],[9,350.0,58.9],[3,320.0,28.9],[1,250.0,41.1],[10,220.0,71.1],[5,200.0,91.1],[2,180.0,111.1],[8,150.0,141.1]]),
+"SELECT id,fare,ROUND(ABS(fare-(SELECT AVG(fare) FROM rides WHERE status='completed')),1)AS deviation FROM rides WHERE status='completed' ORDER BY deviation DESC;",topic="Math Functions (ABS)")
+
+add("sql-060","Conditional COUNT: Rides by Status","Ride-Sharing (Ola)","Freshworks","easy",
+"Count total rides, completed rides, and cancelled rides in a single query.\n\nReturn total_rides, completed, cancelled.",
+"Use COUNT(*) and SUM(CASE WHEN ...).",
+"Total=10, Completed=9, Cancelled=1.",
+RIDE_T,RIDE_S,(["total_rides","completed","cancelled"],[[10,9,1]]),
+"SELECT COUNT(*)AS total_rides,SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END)AS completed,SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END)AS cancelled FROM rides;",topic="Conditional Aggregation")
+
+add("sql-061","UPPER/LOWER: Standardize Usernames","Social Media (Instagram)","Zoho","easy",
+"Show each profile with username in UPPER case and full_name in LOWER case.\n\nReturn upper_user and lower_name, ordered by upper_user.",
+"Use UPPER() and LOWER().",
+"ANKIT_DEV, ankit sharma, etc.",
+SOCIAL_T,SOCIAL_S,(["upper_user","lower_name"],[["ANKIT_DEV","ankit sharma"],["PRIYA_CODES","priya patel"],["ROHAN_JS","rohan gupta"],["SNEHA_ML","sneha iyer"],["VIKRAM_SQL","vikram singh"]]),
+"SELECT UPPER(username)AS upper_user,LOWER(full_name)AS lower_name FROM profiles ORDER BY upper_user;",topic="String Functions (UPPER/LOWER)")
+
+add("sql-062","Fare Per Km: Best Value Rides","Ride-Sharing (Ola)","Ola","medium",
+"Find the fare per kilometer for each completed ride.\n\nReturn rider name, pickup, dropoff, fare_per_km (rounded to 1). Order by fare_per_km ascending.",
+"fare / distance_km, JOIN with riders.",
+"Cheapest per km first.",
+RIDE_T,RIDE_S,(["name","pickup","dropoff","fare_per_km"],[["Diya","Koramangala","Whitefield",25.0],["Aarav","Andheri","Bandra",29.4],["Chirag","Worli","Andheri",26.1],["Chirag","Andheri","Powai",26.9],["Aarav","Dadar","Andheri",28.6],["Aarav","Bandra","Worli",33.8],["Aarav","Bandra","Dadar",34.6],["Bhavna","CP","Nehru Place",26.7],["Eshan","T Nagar","Adyar",37.5]]),
+"SELECT r2.name,r.pickup,r.dropoff,ROUND(r.fare/r.distance_km,1)AS fare_per_km FROM rides r JOIN riders r2 ON r.rider_id=r2.id WHERE r.status='completed' ORDER BY fare_per_km;",topic="Math / Division")
+
+add("sql-063","Driver Earnings Summary","Ride-Sharing (Ola)","CRED","medium",
+"For each driver, show total earnings, ride count, and average fare from completed rides.\n\nReturn driver name, total_earnings, ride_count, avg_fare (rounded to 0). Order by total_earnings descending.",
+"JOIN drivers to rides, GROUP BY driver, filter completed.",
+"Ramesh: 4 rides totaling 1070.",
+RIDE_T,RIDE_S,(["name","total_earnings","ride_count","avg_fare"],[["Ramesh",1070.0,4,268],["Kavita",600.0,1,600],["Mohan",550.0,1,550],["Sunil",530.0,2,265],["Lakshmi",150.0,1,150]]),
+"SELECT d.name,SUM(r.fare)AS total_earnings,COUNT(*)AS ride_count,ROUND(AVG(r.fare))AS avg_fare FROM drivers d JOIN rides r ON d.id=r.driver_id WHERE r.status='completed' GROUP BY d.name ORDER BY total_earnings DESC;",topic="Multi-Aggregation")
+
+add("sql-064","Complex WHERE: High-Value Mumbai Rides","Ride-Sharing (Ola)","Juspay","medium",
+"Find completed rides in Mumbai (pickup or dropoff in Andheri, Bandra, Dadar, Worli, Powai) with fare > 200.\n\nReturn ride_id, pickup, dropoff, fare. Order by fare descending.",
+"Use WHERE status='completed' AND fare > 200 AND (pickup IN (...) OR dropoff IN (...)).",
+"Filter by multiple Mumbai locations and fare threshold.",
+RIDE_T,RIDE_S,(["id","pickup","dropoff","fare"],[[4,"Worli","Andheri",400.0],[9,"Andheri","Powai",350.0],[1,"Andheri","Bandra",250.0],[10,"Bandra","Worli",220.0]]),
+"SELECT id,pickup,dropoff,fare FROM rides WHERE status='completed' AND fare>200 AND(pickup IN('Andheri','Bandra','Dadar','Worli','Powai')OR dropoff IN('Andheri','Bandra','Dadar','Worli','Powai'))ORDER BY fare DESC;",topic="Complex WHERE Clause")
+
+add("sql-065","Engagement Score: Posts + Comments","Social Media (Instagram)","Freshworks","hard",
+"Calculate an engagement score for each user: (total_likes + comment_count * 5).\n\nReturn username, total_likes, comment_count, engagement_score. Order by score descending.",
+"LEFT JOIN posts and comments to profiles, aggregate both.",
+"ankit_dev: likes=25+42+95=162, comments received=1+3=4, score=162+20=182.",
+SOCIAL_T,SOCIAL_S,(["username","total_likes","comments_received","engagement_score"],[["ankit_dev",162,4,182],["priya_codes",144,1,149],["vikram_sql",71,1,76],["sneha_ml",33,0,33],["rohan_js",15,0,15]]),
+"SELECT pr.username,IFNULL(SUM(DISTINCT p.likes),0)AS total_likes,COUNT(DISTINCT c.id)AS comments_received,IFNULL(SUM(DISTINCT p.likes),0)+COUNT(DISTINCT c.id)*5 AS engagement_score FROM profiles pr LEFT JOIN posts p ON pr.id=p.user_id LEFT JOIN comments c ON p.id=c.post_id GROUP BY pr.username ORDER BY engagement_score DESC;",topic="Complex Aggregation")
+
 # Write output
 out = r'c:\AcadMix\frontend\src\data\sql_problems.json'
 with open(out, 'w') as f:
