@@ -6,6 +6,9 @@ import { nodalAPI, notificationsAPI, insightsAPI } from '../services/api';
 import { toast, Toaster } from 'sonner';
 import InsightsChat from '../components/insights/InsightsChat';
 import InsightsCanvas from '../components/insights/InsightsCanvas';
+import NAACMatrix from '../components/accreditation/NAACMatrix';
+import NBACoPoMatrix from '../components/accreditation/NBACoPoMatrix';
+import NEPTracker from '../components/accreditation/NEPTracker';
 
 // ─── Shared Notification Bell ──────────────────────────────────
 const NotifBell = () => {
@@ -68,6 +71,7 @@ const NotifBell = () => {
 
 const NodalOfficerDashboard = ({ navigate, user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [complianceSubTab, setComplianceSubTab] = useState('naac');
   const [activeCollegeId, setActiveCollegeId] = useState('');
   const { isDark, toggle: toggleTheme } = useTheme();
 
@@ -458,14 +462,34 @@ const NodalOfficerDashboard = ({ navigate, user, onLogout }) => {
           </motion.div>
         )}
 
-        {/* Compliance Fallback Tab */}
+        {/* Compliance & Accreditations Tab */}
         {activeTab === 'compliance' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="soft-card p-8 text-center">
-              <ShieldCheck size={48} weight="duotone" className="text-indigo-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Automated Compliance Feed</h2>
-              <p className="text-slate-500 font-medium max-w-lg mx-auto">This automated matrix aggregates CIA limits, attendance thresholds, and NAAC profiles using the nodal reporting endpoints successfully established in the backend API router.</p>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            {/* Sub-tab Navigation */}
+            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-white/5 rounded-xl w-fit">
+              {[
+                { id: 'naac', label: 'NAAC' },
+                { id: 'nba', label: 'NBA CO-PO' },
+                { id: 'nep', label: 'NEP 2020' },
+              ].map(st => (
+                <button
+                  key={st.id}
+                  onClick={() => setComplianceSubTab(st.id)}
+                  className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                    complianceSubTab === st.id
+                      ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                >
+                  {st.label}
+                </button>
+              ))}
             </div>
+
+            {/* Sub-tab Content */}
+            {complianceSubTab === 'naac' && <NAACMatrix viewMode="nodal" collegeId={activeCollegeId} />}
+            {complianceSubTab === 'nba' && <NBACoPoMatrix viewMode="nodal" />}
+            {complianceSubTab === 'nep' && <NEPTracker viewMode="nodal" collegeId={activeCollegeId} />}
           </motion.div>
         )}
 
