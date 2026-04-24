@@ -122,7 +122,7 @@ def _make_sandbox_limits(cpu_seconds: int):
     def _fn():
         try:
             resource.setrlimit(resource.RLIMIT_DATA, (MAX_MEMORY_BYTES, MAX_MEMORY_BYTES))
-            resource.setrlimit(resource.RLIMIT_FSIZE, (MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_BYTES))
+            # resource.setrlimit(resource.RLIMIT_FSIZE, (MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_BYTES))
             resource.setrlimit(resource.RLIMIT_NPROC, (MAX_PROCESSES, MAX_PROCESSES))
             resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds))
             os.setgid(SANDBOX_GID)

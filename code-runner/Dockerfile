@@ -12,12 +12,15 @@ RUN apt-get update && apt-get install -y \
     ghostscript \
     gnuplot-nox \
     curl \
-    dotnet-sdk-8.0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Go — official binary (lean, current version)
 RUN curl -fsSL https://go.dev/dl/go1.22.3.linux-amd64.tar.gz | tar -C /usr/local -xz
 ENV PATH="/usr/local/go/bin:${PATH}"
+
+# C# / .NET 8.0 — official install script
+RUN curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- -c 8.0 --install-dir /usr/share/dotnet \
+    && ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
 
 WORKDIR /app
 
