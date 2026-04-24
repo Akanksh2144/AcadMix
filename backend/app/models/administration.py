@@ -285,7 +285,32 @@ class Grievance(Base, SoftDeleteMixin):
     status           = Column(String, nullable=False, server_default='open')  # open/in_review/resolved/closed
     assigned_to      = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     resolution_notes = Column(String, nullable=True)
+    is_anonymous     = Column(Boolean, nullable=False, server_default=text('false'))
+    # When True, submitted_by must NOT be exposed in any API response or log.
+    # Service layer enforces this — not a DB constraint.
     created_at       = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class GrievanceAction(Base, SoftDeleteMixin):
+    """
+    Full audit trail for every action taken on a grievance.
+    Multiple actions per grievance are expected (status changes, escalations).
+    The final resolved action is the one where status='resolved'.
+    """
+    __tablename__ = "grievance_actions"
+    id           = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id   = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    grievance_id = Column(String, ForeignKey("grievances.id", ondelete="CASCADE"), nullable=False)
+    actioned_by  = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    action_taken = Column(String, nullable=False)
+    status       = Column(String, nullable=False)
+    # pending | under_review | resolved | escalated
+    resolved_at  = Column(DateTime(timezone=True), nullable=True)
+    created_at   = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_grievance_action_college_grievance", "college_id", "grievance_id"),
+    )
 
 # ==============================================================================
 # INDUSTRY MODULE MODELS

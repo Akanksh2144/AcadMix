@@ -115,6 +115,9 @@ class MarkSubmission(Base, SoftDeleteMixin):
     exam_type       = Column(String, nullable=False)
     component_id    = Column(String, nullable=True)
     max_marks       = Column(Float, nullable=False)
+    # NBA Attainment: maps this submission to the Course Outcomes being assessed.
+    # Nullable — legacy submissions remain valid; attainment engine skips nulls.
+    co_ids          = Column(JSONB, nullable=True, server_default='[]')
     semester        = Column(Integer, nullable=False, default=1)
     status          = Column(String, nullable=False, default="draft")
     submitted_at    = Column(DateTime(timezone=True), nullable=True)
@@ -135,6 +138,10 @@ class MarkSubmissionEntry(Base):
     submission_id  = Column(String, ForeignKey("mark_submissions.id", ondelete="CASCADE"), nullable=False, index=True)
     student_id     = Column(String, ForeignKey("users.id"), nullable=False, index=True)
     marks_obtained = Column(Float, nullable=False)
+    # NBA Attainment: question-level CO-mapped marks for direct attainment calculation.
+    # Example: {"co-uuid-1": 8.5, "co-uuid-2": 12.0}
+    # Nullable — legacy entries remain valid; attainment engine skips nulls.
+    co_wise_marks  = Column(JSONB, nullable=True)
     status         = Column(String, nullable=False, default="present")
     
     __table_args__ = (

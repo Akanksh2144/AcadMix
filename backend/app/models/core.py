@@ -115,6 +115,16 @@ class UserProfile(Base, SoftDeleteMixin):
     acad_tokens = Column(Float, nullable=False, server_default=text('0.0'))
     extra_data = Column(JSONB, nullable=True, server_default='{}')  # Extensible: notification_preferences, entitlements, etc.
 
+    # ── NEP Compliance Fields (Student-Only) ─────────────────────────
+    # These fields are ONLY meaningful when user.role == "student".
+    # The service layer MUST enforce this constraint — never populate
+    # or expose abc_id / enrollment_status for faculty, HOD, admin,
+    # or any non-student role. They remain NULL for all other roles.
+    abc_id            = Column(String, unique=True, index=True, nullable=True)
+    enrollment_status = Column(String, nullable=False, server_default="active")
+    # Valid values: active | academic_break | dropped_out | graduated
+    # academic_break = NEP's multiple entry/exit mechanism
+
     user = relationship("User", back_populates="profile")
 
 class UserPermission(Base, SoftDeleteMixin):

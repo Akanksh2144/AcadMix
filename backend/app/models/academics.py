@@ -1,13 +1,28 @@
 from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Boolean, Index, UniqueConstraint, Date, CheckConstraint, Text
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func, text
 import uuid
+import enum
 from database import Base
 
 def generate_uuid():
     return str(uuid.uuid4())
 
 from app.models.core import SoftDeleteMixin
+
+
+class CourseCategoryEnum(str, enum.Enum):
+    """NEP 2020 course classification. DB-level constraint prevents drift."""
+    core              = "core"
+    elective          = "elective"
+    multidisciplinary = "multidisciplinary"
+    open_elective     = "open_elective"
+    vsc               = "vsc"    # Value Added / Skill Course
+    sec               = "sec"    # Skill Enhancement Course
+    aec               = "aec"    # Ability Enhancement Course
+    mdc               = "mdc"    # Multidisciplinary Course (NEP specific)
+
 
 class Course(Base, SoftDeleteMixin):
     __tablename__ = "courses"
@@ -21,6 +36,14 @@ class Course(Base, SoftDeleteMixin):
     subject_code = Column(String, nullable=False, default="")
     regulation_year = Column(String, nullable=False, default="")
     hours_per_week = Column(Integer, nullable=False, default=0)
+    # NEP 2020 additions
+    course_category   = Column(SAEnum(CourseCategoryEnum), nullable=False, server_default="core")
+    lecture_hrs        = Column(Integer, nullable=True)   # L in L-T-P split
+    tutorial_hrs       = Column(Integer, nullable=True)   # T in L-T-P split
+    practical_hrs      = Column(Integer, nullable=True)   # P in L-T-P split
+    is_mooc            = Column(Boolean, nullable=False, server_default=text('false'))
+    mooc_platform      = Column(String, nullable=True)    # SWAYAM, NPTEL, Coursera, edX
+    mooc_credit_equiv  = Column(Integer, nullable=True)   # Credit equivalence granted
 
 
 class CourseEnrollment(Base, SoftDeleteMixin):
