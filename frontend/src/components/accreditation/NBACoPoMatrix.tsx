@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Table, X, ArrowSquareOut, CheckCircle, Warning } from '@phosphor-icons/react';
+import { Table, X, ArrowClockwise, CheckCircle, Warning, Database } from '@phosphor-icons/react';
+import { accreditationAPI, formatApiError } from '../../services/api';
 
 interface AttainmentCell {
   co_code: string;
@@ -34,42 +35,36 @@ interface NBACoPoMatrixProps {
   academicYear?: string;
 }
 
-const NBACoPoMatrix: React.FC<NBACoPoMatrixProps> = ({ viewMode, departmentId, academicYear }) => {
+const NBACoPoMatrix: React.FC<NBACoPoMatrixProps> = ({ viewMode, departmentId, academicYear = '2024-2025' }) => {
   const [coLabels, setCoLabels] = useState<string[]>([]);
   const [poLabels, setPoLabels] = useState<string[]>([]);
   const [matrix, setMatrix] = useState<Record<string, AttainmentCell>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [drilldown, setDrilldown] = useState<DrilldownData | null>(null);
 
+  const fetchMatrix = async () => {
+    if (!departmentId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await accreditationAPI.getNBAMatrix(departmentId, academicYear);
+      const data = res.data || res;
+      setCoLabels(data.cos?.map((c: any) => c.code) || []);
+      setPoLabels(data.pos?.map((p: any) => p.code) || []);
+      setMatrix(data.matrix || {});
+    } catch (err: any) {
+      setError(formatApiError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Mock data — replace with API: GET /api/accreditation/nba/attainment/{department_id}
-    const cos = ['CO1', 'CO2', 'CO3', 'CO4', 'CO5', 'CO6'];
-    const pos = ['PO1', 'PO2', 'PO3', 'PO4', 'PO5', 'PO6', 'PO7', 'PO8', 'PO9', 'PO10', 'PO11', 'PO12'];
-
-    const mockMatrix: Record<string, AttainmentCell> = {};
-    cos.forEach(co => {
-      pos.forEach(po => {
-        const hasMapping = Math.random() > 0.4;
-        if (hasMapping) {
-          const strength = [1, 2, 3][Math.floor(Math.random() * 3)];
-          const attainment = Math.random() > 0.1 ? Math.round(Math.random() * 100) : null;
-          mockMatrix[`${co}-${po}`] = {
-            co_code: co,
-            co_id: co,
-            po_code: po,
-            po_id: po,
-            strength,
-            attainment,
-            is_attained: attainment !== null ? attainment >= 60 : null,
-          };
-        }
-      });
-    });
-
-    setCoLabels(cos);
-    setPoLabels(pos);
-    setMatrix(mockMatrix);
-    setLoading(false);
+    fetchMatrix();
   }, [departmentId, academicYear]);
 
   const getCellColor = (cell: AttainmentCell | undefined) => {
@@ -83,7 +78,7 @@ const NBACoPoMatrix: React.FC<NBACoPoMatrixProps> = ({ viewMode, departmentId, a
   const getCellText = (cell: AttainmentCell | undefined) => {
     if (!cell) return '';
     if (cell.attainment === null) return '—';
-    return `${cell.attainment}%`;
+    return `${Math.round(cell.attainment)}%`;
   };
 
   const getCellTextColor = (cell: AttainmentCell | undefined) => {
@@ -95,9 +90,9 @@ const NBACoPoMatrix: React.FC<NBACoPoMatrixProps> = ({ viewMode, departmentId, a
 
   const handleCellClick = (cell: AttainmentCell | undefined) => {
     if (!cell) return;
-    // Mock drilldown — replace with API call
+    // Mock drilldown details since the matrix endpoint does not provide full assessment breakdown yet
     setDrilldown({
-      co_code: cell.co_code,
+      co_code: cell.co_code || cell.co_id,
       po_code: cell.po_code,
       strength: cell.strength,
       direct_attainment: cell.attainment ? cell.attainment * 0.95 : null,
@@ -115,8 +110,60 @@ const NBACoPoMatrix: React.FC<NBACoPoMatrixProps> = ({ viewMode, departmentId, a
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin" />
+      <div className="space-y-6 animate-pulse">
+        <div className="flex items-center justify-between">
+          <div className="h-8 w-64 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+          <div className="h-4 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+        </div>
+        <div className="soft-card overflow-x-auto p-4 space-y-2">
+          {/* Skeleton Header */}
+          <div className="flex gap-2 border-b border-slate-100 dark:border-slate-700 pb-2">
+             <div className="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+             {[1,2,3,4,5,6].map(i => <div key={i} className="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>)}
+          </div>
+          {/* Skeleton Rows */}
+          {[1,2,3,4].map(r => (
+            <div key={r} className="flex gap-2 pt-2">
+               <div className="h-10 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+               {[1,2,3,4,5,6].map(i => <div key={i} className="h-10 w-16 bg-slate-200 dark:bg-slate-800 rounded"></div>)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-2xl flex flex-col items-center text-center space-y-3">
+        <Warning size={32} weight="duotone" className="text-red-500" />
+        <div>
+          <h3 className="text-sm font-bold text-red-800 dark:text-red-400">Failed to load NBA Matrix</h3>
+          <p className="text-xs text-red-600 dark:text-red-300 mt-1">{error}</p>
+        </div>
+        <button 
+          onClick={fetchMatrix}
+          className="mt-2 flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          <ArrowClockwise size={16} /> Retry
+        </button>
+      </div>
+    );
+  }
+
+  const isEmpty = Object.keys(matrix).length === 0 && coLabels.length === 0;
+  if (isEmpty) {
+    return (
+      <div className="p-12 soft-card flex flex-col items-center justify-center text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-teal-50 dark:bg-teal-500/10 flex items-center justify-center">
+          <Database size={32} weight="duotone" className="text-teal-500" />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">No NBA data computed yet</h3>
+          <p className="text-sm text-slate-500 mt-1">
+            Trigger a calculation to begin populating your CO-PO assessment matrices.
+          </p>
+        </div>
       </div>
     );
   }
@@ -148,7 +195,7 @@ const NBACoPoMatrix: React.FC<NBACoPoMatrixProps> = ({ viewMode, departmentId, a
         animate={{ opacity: 1, y: 0 }}
         className="soft-card overflow-x-auto"
       >
-        <table className="w-full text-xs">
+        <table className="w-full text-xs border-collapse">
           <thead>
             <tr>
               <th className="sticky left-0 z-10 bg-white dark:bg-[#1A202C] p-3 text-left font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-white/10">
@@ -162,7 +209,7 @@ const NBACoPoMatrix: React.FC<NBACoPoMatrixProps> = ({ viewMode, departmentId, a
             </tr>
           </thead>
           <tbody>
-            {coLabels.map((co, ri) => (
+            {coLabels.map((co) => (
               <tr key={co}>
                 <td className="sticky left-0 z-10 bg-white dark:bg-[#1A202C] p-3 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-50 dark:border-white/5">
                   {co}

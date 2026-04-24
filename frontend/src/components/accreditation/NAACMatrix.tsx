@@ -4,7 +4,8 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   ResponsiveContainer, Tooltip,
 } from 'recharts';
-import { ShieldCheck, Upload, Lock, Warning, CheckCircle } from '@phosphor-icons/react';
+import { ShieldCheck, Upload, Lock, Warning, ArrowClockwise, Database } from '@phosphor-icons/react';
+import { accreditationAPI, formatApiError } from '../../services/api';
 
 interface NAACCriterion {
   number: number;
@@ -18,35 +19,91 @@ interface NAACCriterion {
 interface NAACMatrixProps {
   viewMode: 'principal' | 'nodal';
   collegeId?: string;
+  academicYear?: string;
 }
 
-const CRITERIA_LABELS: Record<number, string> = {
-  1: 'Curricular Aspects',
-  2: 'Teaching-Learning',
-  3: 'Research & Innovation',
-  4: 'Infrastructure',
-  5: 'Student Support',
-  6: 'Governance',
-  7: 'Institutional Values',
-};
-
-const NAACMatrix: React.FC<NAACMatrixProps> = ({ viewMode, collegeId }) => {
+const NAACMatrix: React.FC<NAACMatrixProps> = ({ viewMode, collegeId, academicYear = '2024-2025' }) => {
   const [criteria, setCriteria] = useState<NAACCriterion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSummary = async () => {
+    if (!collegeId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await accreditationAPI.getNAACSummary(collegeId, academicYear);
+      setCriteria(res.data?.criteria || res.criteria || []);
+    } catch (err: any) {
+      setError(formatApiError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Mock data for initial render — replace with API call to /api/accreditation/naac/summary
-    const mockCriteria: NAACCriterion[] = Object.entries(CRITERIA_LABELS).map(([num, name]) => ({
-      number: parseInt(num),
-      name,
-      score: Math.random() > 0.15 ? Math.round((2 + Math.random() * 2) * 100) / 100 : null,
-      max_score: 4.0,
-      evidence_count: Math.floor(Math.random() * 15),
-      snapshot_locked: Math.random() > 0.6,
-    }));
-    setCriteria(mockCriteria);
-    setLoading(false);
-  }, [collegeId]);
+    fetchSummary();
+  }, [collegeId, academicYear]);
+
+  // Loading Skeleton State
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="flex items-center justify-between">
+          <div className="h-8 w-64 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+          <div className="h-10 w-24 bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-72 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5, 6, 7].map(i => (
+              <div key={i} className="h-[76px] bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <div className="p-6 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-2xl flex flex-col items-center text-center space-y-3">
+        <Warning size={32} weight="duotone" className="text-red-500" />
+        <div>
+          <h3 className="text-sm font-bold text-red-800 dark:text-red-400">Failed to load NAAC Summary</h3>
+          <p className="text-xs text-red-600 dark:text-red-300 mt-1">{error}</p>
+        </div>
+        <button 
+          onClick={fetchSummary}
+          className="mt-2 flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          <ArrowClockwise size={16} /> Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Empty State (All criteria have null score and 0 evidence)
+  const isEmpty = criteria.every(c => c.score === null && c.evidence_count === 0);
+  if (isEmpty) {
+    return (
+      <div className="p-12 soft-card flex flex-col items-center justify-center text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+          <Database size={32} weight="duotone" className="text-indigo-500" />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">No NAAC data computed yet</h3>
+          <p className="text-sm text-slate-500 mt-1">
+            Trigger a calculation to begin populating your NAAC assessment matrices.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const radarData = criteria.map(c => ({
     criterion: `C${c.number}`,
@@ -79,14 +136,6 @@ const NAACMatrix: React.FC<NAACMatrixProps> = ({ viewMode, collegeId }) => {
     if (pct >= 0.5) return 'bg-amber-500';
     return 'bg-red-500';
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -217,3 +266,4 @@ const NAACMatrix: React.FC<NAACMatrixProps> = ({ viewMode, collegeId }) => {
 };
 
 export default NAACMatrix;
+

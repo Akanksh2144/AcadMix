@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Student, BookOpen, Briefcase, IdentificationCard, Warning, CheckCircle } from '@phosphor-icons/react';
+import { Student, BookOpen, Briefcase, IdentificationCard, Warning, CheckCircle, ArrowClockwise, Database } from '@phosphor-icons/react';
+import { accreditationAPI, formatApiError } from '../../services/api';
 
 interface NEPMetrics {
   abc_coverage_pct: number;
@@ -23,28 +24,75 @@ interface NEPTrackerProps {
 const NEPTracker: React.FC<NEPTrackerProps> = ({ viewMode, collegeId }) => {
   const [metrics, setMetrics] = useState<NEPMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchMetrics = async () => {
+    if (!collegeId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await accreditationAPI.getNEPStatus(collegeId);
+      setMetrics(res.data || res);
+    } catch (err: any) {
+      setError(formatApiError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Mock data — replace with API: GET /api/accreditation/nep/status/{college_id}
-    setMetrics({
-      abc_coverage_pct: 67.3,
-      mooc_enrollment_pct: 23.8,
-      multidisciplinary_pct: 41.5,
-      enrollment_status_breakdown: {
-        active: 2840,
-        academic_break: 45,
-        dropped_out: 12,
-        graduated: 1200,
-      },
-      total_students: 4097,
-    });
-    setLoading(false);
+    fetchMetrics();
   }, [collegeId]);
 
-  if (loading || !metrics) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+      <div className="space-y-6 animate-pulse">
+        <div className="flex items-center justify-between">
+          <div className="h-8 w-64 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-56 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
+          ))}
+        </div>
+        <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-2xl flex flex-col items-center text-center space-y-3">
+        <Warning size={32} weight="duotone" className="text-red-500" />
+        <div>
+          <h3 className="text-sm font-bold text-red-800 dark:text-red-400">Failed to load NEP Status</h3>
+          <p className="text-xs text-red-600 dark:text-red-300 mt-1">{error}</p>
+        </div>
+        <button 
+          onClick={fetchMetrics}
+          className="mt-2 flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          <ArrowClockwise size={16} /> Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!metrics || metrics.total_students === 0) {
+    return (
+      <div className="p-12 soft-card flex flex-col items-center justify-center text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-violet-50 dark:bg-violet-500/10 flex items-center justify-center">
+          <Database size={32} weight="duotone" className="text-violet-500" />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">No NEP data available</h3>
+          <p className="text-sm text-slate-500 mt-1">
+            Student records must be present to calculate NEP 2020 compliance metrics.
+          </p>
+        </div>
       </div>
     );
   }
