@@ -21,9 +21,11 @@ from app.models.accreditation import (
     PSOAttainmentRecord,
     COPSOMapping,
     CourseExitSurvey,
+    ProgramSpecificOutcome,
 )
 from app.models.outcomes import ProgramOutcome, CourseOutcome, COPOMapping
 from app.models.evaluation import MarkSubmission, MarkSubmissionEntry
+from app.models.academics import Course
 from app.models.core import College
 from app.core.exceptions import BusinessLogicError
 
@@ -75,6 +77,13 @@ class AttainmentService:
         weights = self._get_attainment_weights(settings)
         threshold = weights["co_pass_threshold"]
 
+        # Fetch the course to resolve subject_code and semester
+        course = await self.db.get(Course, course_id)
+        if not course:
+            return []
+        course_subject_code = course.subject_code
+        course_semester = course.semester
+
         # Fetch all COs for this course
         cos_result = await self.db.scalars(
             select(CourseOutcome).where(CourseOutcome.course_id == course_id)
@@ -83,11 +92,11 @@ class AttainmentService:
         if not cos:
             return []
 
-        # Fetch mark submissions with CO mappings
+        # Fetch mark submissions scoped to this course via subject_code
         subs_result = await self.db.scalars(
             select(MarkSubmission).where(
                 MarkSubmission.college_id == college_id,
-                MarkSubmission.subject_code.isnot(None),
+                MarkSubmission.subject_code == course_subject_code,
                 MarkSubmission.co_ids.isnot(None),
             )
         )
@@ -193,7 +202,7 @@ class AttainmentService:
                     co_id=co.id,
                     course_id=course_id,
                     academic_year=academic_year,
-                    semester=0,  # TODO: resolve from course
+                    semester=course_semester,
                     direct_attainment=direct,
                     indirect_attainment=indirect,
                     final_attainment=final,
@@ -232,16 +241,24 @@ class AttainmentService:
             select(ProgramOutcome).where(ProgramOutcome.department_id == department_id)
         )).all()
 
-        # Fetch all active CO-PO mappings
+        # Fetch active CO-PO mappings scoped to this department's POs only
+        po_ids = [po.id for po in pos]
         mappings = (await self.db.scalars(
-            select(COPOMapping).where(COPOMapping.is_active == True)
+            select(COPOMapping).where(
+                COPOMapping.po_id.in_(po_ids),
+                COPOMapping.is_active == True,
+            )
         )).all()
 
-        # Fetch all CO attainment records for this college + year
+        # Fetch CO attainment records scoped to this department's courses only
         co_records = (await self.db.scalars(
-            select(COAttainmentRecord).where(
+            select(COAttainmentRecord)
+            .join(CourseOutcome, COAttainmentRecord.co_id == CourseOutcome.id)
+            .join(Course, CourseOutcome.course_id == Course.id)
+            .where(
                 COAttainmentRecord.college_id == college_id,
                 COAttainmentRecord.academic_year == academic_year,
+                Course.department_id == department_id,
             )
         )).all()
         co_attainment_map = {r.co_id: r.final_attainment for r in co_records if r.final_attainment is not None}
@@ -303,8 +320,6 @@ class AttainmentService:
         college_id: str,
     ) -> List[PSOAttainmentRecord]:
         """Identical to calculate_po_attainment but uses COPSOMapping instead."""
-        from app.models.accreditation import ProgramSpecificOutcome
-
         psos = (await self.db.scalars(
             select(ProgramSpecificOutcome).where(
                 ProgramSpecificOutcome.department_id == department_id,
@@ -312,14 +327,24 @@ class AttainmentService:
             )
         )).all()
 
+        # Scope COPSOMapping to this department's PSOs only
+        pso_ids = [pso.id for pso in psos]
         mappings = (await self.db.scalars(
-            select(COPSOMapping).where(COPSOMapping.is_active == True)
+            select(COPSOMapping).where(
+                COPSOMapping.pso_id.in_(pso_ids),
+                COPSOMapping.is_active == True,
+            )
         )).all()
 
+        # Scope CO records to this department's courses only
         co_records = (await self.db.scalars(
-            select(COAttainmentRecord).where(
+            select(COAttainmentRecord)
+            .join(CourseOutcome, COAttainmentRecord.co_id == CourseOutcome.id)
+            .join(Course, CourseOutcome.course_id == Course.id)
+            .where(
                 COAttainmentRecord.college_id == college_id,
                 COAttainmentRecord.academic_year == academic_year,
+                Course.department_id == department_id,
             )
         )).all()
         co_attainment_map = {r.co_id: r.final_attainment for r in co_records if r.final_attainment is not None}

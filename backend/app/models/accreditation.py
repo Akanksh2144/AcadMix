@@ -1,4 +1,5 @@
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Boolean, Index, UniqueConstraint, Date, Text
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Boolean, Index, UniqueConstraint, Date, Text, CheckConstraint
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func, text
 import uuid
@@ -182,8 +183,14 @@ class FacultyAchievement(Base, SoftDeleteMixin):
     id            = Column(String, primary_key=True, index=True, default=generate_uuid)
     college_id    = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     faculty_id    = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    type          = Column(String, nullable=False)
-    # FDP | Workshop | Publication | Patent | Award | Consultancy | STTP | Conference
+    type          = Column(
+        SAEnum(
+            "FDP", "Workshop", "Publication", "Patent",
+            "Award", "Consultancy", "STTP", "Conference",
+            name="faculty_achievement_type_enum",
+        ),
+        nullable=False,
+    )
     title         = Column(String, nullable=False)
     date          = Column(Date, nullable=False)
     issuer        = Column(String, nullable=True)        # Journal name, patent office, etc.
@@ -242,5 +249,6 @@ class NAACAuditSnapshot(Base, SoftDeleteMixin):
 
     __table_args__ = (
         UniqueConstraint("college_id", "academic_year", "metric_code", name="uq_naac_snapshot"),
+        CheckConstraint("criterion >= 1 AND criterion <= 7", name="ck_criterion_range"),
         Index("ix_naac_snapshot_college_year", "college_id", "academic_year"),
     )
