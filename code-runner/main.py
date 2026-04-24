@@ -255,6 +255,7 @@ def run_code(req: ExecuteRequest, x_internal_token: str = Header(None)):
         # ── MATLAB/Octave ──────────────────────────────────────────────────────
         elif lang == "matlab":
             matlab_code = f"""graphics_toolkit("gnuplot");
+set(0, 'defaultfigurevisible', 'off');
 try
 {req.code}
 catch e
