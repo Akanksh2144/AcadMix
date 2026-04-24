@@ -127,6 +127,23 @@ def _make_sandbox_limits(cpu_seconds: int):
     return _fn
 
 
+def _make_compile_limits(cpu_seconds: int):
+    """Drop to sandbox user, but allow generous resources for compilers (like .NET)."""
+    if not IS_LINUX:
+        return None
+
+    def _fn():
+        try:
+            # CPU limit only to prevent infinite compilation loops
+            resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds))
+            os.setgid(SANDBOX_GID)
+            os.setuid(SANDBOX_UID)
+        except Exception:
+            pass 
+
+    return _fn
+
+
 def _run_cmd(cmd, test_input="", wall_timeout=10, cpu_seconds=10, cwd=None, env=None):
     try:
         r = subprocess.run(
@@ -155,7 +172,7 @@ def _run_compile(cmd, wall_timeout=60, cpu_seconds=60, cwd=None, env=None):
             timeout=wall_timeout,
             cwd=cwd,
             env=env,
-            preexec_fn=_make_sandbox_limits(cpu_seconds),
+            preexec_fn=_make_compile_limits(cpu_seconds),
         )
         return r.stdout, r.stderr, r.returncode
     except subprocess.TimeoutExpired:
