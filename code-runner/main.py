@@ -17,6 +17,12 @@ if IS_LINUX:
     import resource
     SANDBOX_UID = 1001
     SANDBOX_GID = 1001
+    
+    # Create persistent shared caches for Go to prevent 10s compilation on every run
+    os.makedirs("/tmp/gocache", exist_ok=True)
+    os.chmod("/tmp/gocache", 0o777)
+    os.makedirs("/tmp/gomodcache", exist_ok=True)
+    os.chmod("/tmp/gomodcache", 0o777)
     # 768MB is the sweet spot for a 1GB Fly machine (leaves room for kernel/Docker)
     MAX_MEMORY_BYTES = 768 * 1024 * 1024
     MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024  # 100 MB (required for C# intermediate obj builds)
@@ -328,7 +334,7 @@ end
                 f.write(req.code)
             os.chmod(src, 0o644)
             # Compile Go
-            go_env = dict(os.environ, GOCACHE=os.path.join(tmpdir, ".cache"), GOMODCACHE=os.path.join(tmpdir, ".modcache"), HOME=tmpdir)
+            go_env = dict(os.environ, GOCACHE="/tmp/gocache", GOMODCACHE="/tmp/gomodcache", HOME=tmpdir)
             cout, cerr, ccode = _run_compile(["go", "build", "-o", exe, src], wall_timeout=30, cpu_seconds=30, cwd=tmpdir, env=go_env)
             if ccode != 0:
                 error_msg = (cerr + "\n" + cout).strip()
