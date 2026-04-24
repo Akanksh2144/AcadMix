@@ -11,9 +11,19 @@ RUN apt-get update && apt-get install -y \
     octave \
     ghostscript \
     gnuplot-nox \
+    curl \
+    dotnet-sdk-8.0 \
     && rm -rf /var/lib/apt/lists/*
 
+# Go — official binary (lean, current version)
+RUN curl -fsSL https://go.dev/dl/go1.22.3.linux-amd64.tar.gz | tar -C /usr/local -xz
+ENV PATH="/usr/local/go/bin:${PATH}"
+
 WORKDIR /app
+
+# Pre-scaffold C# console project during build
+RUN dotnet new console -n Solution -o /app/csharp-template --no-restore \
+    && dotnet restore /app/csharp-template
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

@@ -82,6 +82,15 @@ _BLOCKED_PATTERNS = {
         r"\brm\s+-r", r"\bmkfs\b", r"\bdd\b", r"\bcurl\b", r"\bwget\b",
         r"\bping\b", r"\bssh\b", r"\bnc\b", r"\bnmap\b", r":\s*\(\s*\)\s*\{"
     ],
+    "go": [
+        r'"os/exec"', r'"net"', r'"net/http"', r'"syscall"', r'"unsafe"',
+        r'"os"', r'"io/ioutil"'
+    ],
+    "csharp": [
+        r"System\.Diagnostics\.Process", r"System\.Net\.", r"System\.IO\.File",
+        r"System\.IO\.Directory", r"System\.Reflection", r"Environment\.Exit",
+        r"Assembly\.", r"\bPInvoke\b", r"DllImport", r"unsafe\s*\{"
+    ],
 }
 _BLOCKED_PATTERNS["cpp"] = _BLOCKED_PATTERNS["c"]
 
@@ -143,6 +152,8 @@ TIMEOUT_CONFIG = {
     "sql": 15.0,
     "matlab": 15.0,
     "bash": 10.0,
+    "go": 45.0,
+    "csharp": 55.0,
 }
 
 @router.post("/execute")

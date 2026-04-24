@@ -18,6 +18,8 @@ const LANGUAGES = [
   { id: 'r', label: 'R', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/r/r-original.svg" alt="R" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'matlab', label: 'MATLAB', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/matlab/matlab-original.svg" alt="MATLAB" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'bash', label: 'Bash', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg" alt="Bash" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
+  { id: 'go', label: 'Go', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/go/go-original.svg" alt="Go" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
+  { id: 'csharp', label: 'C#', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" alt="C#" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
 ];
 
 const DEFAULT_TEMPLATES = {
@@ -28,7 +30,9 @@ const DEFAULT_TEMPLATES = {
   cpp: '#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}\n',
   r: '# Write your R code here\n\n# WebR allows plotting natively! Try running this:\nplot(mtcars$wt, mtcars$mpg, \n     main="Car Weight vs MPG", \n     xlab="Weight (1000 lbs)", ylab="Miles/(US) gallon", \n     col="blue", pch=19)\n',
   matlab: '% Write your MATLAB / Octave code here\n\nx = linspace(0, 2*pi, 100);\ny = sin(x);\ndisp("Hello, World from MATLAB/Octave!");\n',
-  bash: '#!/bin/bash\n\n# Write your shell script here\necho "Hello, World from Bash!"\n'
+  bash: '#!/bin/bash\n\n# Write your shell script here\necho "Hello, World from Bash!"\n',
+  go: 'package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello, World!")\n}\n',
+  csharp: 'using System;\n\nclass Solution {\n    static void Main(string[] args) {\n        Console.WriteLine("Hello, World!");\n    }\n}\n'
 };
 
 const CodePlayground = ({ navigate, user }) => {

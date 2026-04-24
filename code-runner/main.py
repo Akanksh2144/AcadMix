@@ -64,6 +64,15 @@ _BLOCKED_PATTERNS = {
     "bash": [
         r"\brm\s+-r", r"\bmkfs\b", r"\bdd\b", r"\bcurl\b", r"\bwget\b",
         r"\bping\b", r"\bssh\b", r"\bnc\b", r"\bnmap\b", r":\s*\(\s*\)\s*\{"
+    ],
+    "go": [
+        r'"os/exec"', r'"net"', r'"net/http"', r'"syscall"', r'"unsafe"',
+        r'"os"', r'"io/ioutil"'
+    ],
+    "csharp": [
+        r"System\.Diagnostics\.Process", r"System\.Net\.", r"System\.IO\.File",
+        r"System\.IO\.Directory", r"System\.Reflection", r"Environment\.Exit",
+        r"Assembly\.", r"\bPInvoke\b", r"DllImport", r"unsafe\s*\{"
     ]
 }
 _BLOCKED_PATTERNS["cpp"] = _BLOCKED_PATTERNS["c"]
@@ -291,6 +300,38 @@ end
             out, err, code = _run_cmd([
                 "bash", fp
             ], req.test_input, wall_timeout=5, cpu_seconds=5, cwd=tmpdir)
+
+        # ── GO ────────────────────────────────────────────────────────────────
+        elif lang == "go":
+            src = os.path.join(tmpdir, "solution.go")
+            exe = os.path.join(tmpdir, "solution.out")
+            with open(src, "w") as f:
+                f.write(req.code)
+            os.chmod(src, 0o644)
+            # Compile Go
+            cout, cerr, ccode = _run_compile(["go", "build", "-o", exe, src], wall_timeout=30, cpu_seconds=30, cwd=tmpdir)
+            if ccode != 0:
+                return {"output": "", "error": cerr[:2000], "exit_code": ccode}
+            os.chmod(exe, 0o755)
+            out, err, code = _run_cmd([exe], req.test_input, wall_timeout=15, cpu_seconds=15, cwd=tmpdir)
+
+        # ── C# ────────────────────────────────────────────────────────────────
+        elif lang == "csharp":
+            import shutil
+            proj_dir = os.path.join(tmpdir, "Solution")
+            shutil.copytree("/app/csharp-template", proj_dir)
+            fp = os.path.join(proj_dir, "Program.cs")
+            with open(fp, "w") as f:
+                f.write(req.code)
+            os.chmod(fp, 0o644)
+            cout, cerr, ccode = _run_compile(
+                ["dotnet", "build", "-c", "Release", "-o", os.path.join(proj_dir, "out")],
+                wall_timeout=30, cpu_seconds=30, cwd=proj_dir
+            )
+            if ccode != 0:
+                return {"output": "", "error": cerr[:2000], "exit_code": ccode}
+            exe = os.path.join(proj_dir, "out", "Solution")
+            out, err, code = _run_cmd([exe], req.test_input, wall_timeout=15, cpu_seconds=15, cwd=proj_dir)
 
         else:
             raise HTTPException(status_code=400, detail=f"Unsupported language")
