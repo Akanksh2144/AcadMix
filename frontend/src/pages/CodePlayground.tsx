@@ -134,6 +134,9 @@ const CodePlayground = ({ navigate, user }) => {
     setCode(starterCode);
     setOutput(null);
     setExecTime(null);
+    setRPlots([]);
+    setRemoteImages([]);
+    setActiveConsoleTab('results');
     setShowChallengesModal(false);
     
     if (challenge.test_cases) {
@@ -288,6 +291,9 @@ const CodePlayground = ({ navigate, user }) => {
     }
     setOutput(null);
     setExecTime(null);
+    setRPlots([]);
+    setRemoteImages([]);
+    setActiveConsoleTab('results');
     setShowLangMenu(false);
   };
 
