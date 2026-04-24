@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# Install system dependencies (compilers, nodejs, java, iptables for network isolation)
+# Install system dependencies (compilers, nodejs, java, iptables for network isolation, octave for matlab)
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \

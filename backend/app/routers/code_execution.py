@@ -75,13 +75,8 @@ _BLOCKED_PATTERNS = {
         r"\bpopen\s*\(", r"\bsocket\s*\(",
     ],
     "matlab": [
-        r"\bsystem\s*\(",
-        r"\bunix\s*\(",
-        r"\bpopen\s*\(",
-        r"\bfeval\s*\(",
-        r"\beval\s*\(",
-        r"\bexe\s*\(",
-        r"\bgetenv\s*\("
+        r"\bsystem\s*\(", r"\bunix\s*\(", r"\bpopen\s*\(",
+        r"\bfeval\s*\(", r"\beval\s*\(", r"\bexe\s*\(", r"\bgetenv\s*\("
     ],
 }
 _BLOCKED_PATTERNS["cpp"] = _BLOCKED_PATTERNS["c"]
