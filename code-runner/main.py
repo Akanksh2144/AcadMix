@@ -347,11 +347,28 @@ end
             import shutil
             proj_dir = os.path.join(tmpdir, "Solution")
             shutil.copytree("/app/csharp-template", proj_dir)
+            
+            # The python server is running as root, so the copied template is owned by root.
+            # We must recursively change ownership so the sandbox user can build inside it.
+            for root_dir, dirs, files in os.walk(proj_dir):
+                os.chown(root_dir, SANDBOX_UID, SANDBOX_GID)
+                for f in files:
+                    os.chown(os.path.join(root_dir, f), SANDBOX_UID, SANDBOX_GID)
+
             fp = os.path.join(proj_dir, "Program.cs")
             with open(fp, "w") as f:
                 f.write(req.code)
             os.chmod(fp, 0o644)
-            csharp_env = dict(os.environ, DOTNET_CLI_HOME=tmpdir, HOME=tmpdir)
+            os.chown(fp, SANDBOX_UID, SANDBOX_GID)
+            
+            csharp_env = dict(
+                os.environ, 
+                DOTNET_CLI_HOME=tmpdir, 
+                HOME=tmpdir,
+                DOTNET_CLI_TELEMETRY_OPTOUT="1",
+                DOTNET_SKIP_FIRST_TIME_EXPERIENCE="1",
+                DOTNET_NOLOGO="1"
+            )
             cout, cerr, ccode = _run_compile(
                 ["dotnet", "build", "-c", "Release", "-o", os.path.join(proj_dir, "out")],
                 wall_timeout=30, cpu_seconds=30, cwd=proj_dir, env=csharp_env
