@@ -127,7 +127,7 @@ def _make_sandbox_limits(cpu_seconds: int):
     return _fn
 
 
-def _run_cmd(cmd, test_input="", wall_timeout=10, cpu_seconds=10, cwd=None):
+def _run_cmd(cmd, test_input="", wall_timeout=10, cpu_seconds=10, cwd=None, env=None):
     try:
         r = subprocess.run(
             cmd,
@@ -136,6 +136,7 @@ def _run_cmd(cmd, test_input="", wall_timeout=10, cpu_seconds=10, cwd=None):
             text=True,
             timeout=wall_timeout,
             cwd=cwd,
+            env=env,
             preexec_fn=_make_sandbox_limits(cpu_seconds),
         )
         return r.stdout, r.stderr, r.returncode
@@ -145,7 +146,7 @@ def _run_cmd(cmd, test_input="", wall_timeout=10, cpu_seconds=10, cwd=None):
         return "", str(e), -1
 
 
-def _run_compile(cmd, wall_timeout=60, cpu_seconds=60, cwd=None):
+def _run_compile(cmd, wall_timeout=60, cpu_seconds=60, cwd=None, env=None):
     try:
         r = subprocess.run(
             cmd,
@@ -153,6 +154,7 @@ def _run_compile(cmd, wall_timeout=60, cpu_seconds=60, cwd=None):
             text=True,
             timeout=wall_timeout,
             cwd=cwd,
+            env=env,
             preexec_fn=_make_sandbox_limits(cpu_seconds),
         )
         return r.stdout, r.stderr, r.returncode
@@ -309,11 +311,13 @@ end
                 f.write(req.code)
             os.chmod(src, 0o644)
             # Compile Go
-            cout, cerr, ccode = _run_compile(["go", "build", "-o", exe, src], wall_timeout=30, cpu_seconds=30, cwd=tmpdir)
+            go_env = dict(os.environ, GOCACHE=os.path.join(tmpdir, ".cache"), GOMODCACHE=os.path.join(tmpdir, ".modcache"), HOME=tmpdir)
+            cout, cerr, ccode = _run_compile(["go", "build", "-o", exe, src], wall_timeout=30, cpu_seconds=30, cwd=tmpdir, env=go_env)
             if ccode != 0:
-                return {"output": "", "error": cerr[:2000], "exit_code": ccode}
+                error_msg = (cerr + "\n" + cout).strip()
+                return {"output": "", "error": error_msg[:2000], "exit_code": ccode}
             os.chmod(exe, 0o755)
-            out, err, code = _run_cmd([exe], req.test_input, wall_timeout=15, cpu_seconds=15, cwd=tmpdir)
+            out, err, code = _run_cmd([exe], req.test_input, wall_timeout=15, cpu_seconds=15, cwd=tmpdir, env=go_env)
 
         # ── C# ────────────────────────────────────────────────────────────────
         elif lang == "csharp":
@@ -324,14 +328,16 @@ end
             with open(fp, "w") as f:
                 f.write(req.code)
             os.chmod(fp, 0o644)
+            csharp_env = dict(os.environ, DOTNET_CLI_HOME=tmpdir, HOME=tmpdir)
             cout, cerr, ccode = _run_compile(
                 ["dotnet", "build", "-c", "Release", "-o", os.path.join(proj_dir, "out")],
-                wall_timeout=30, cpu_seconds=30, cwd=proj_dir
+                wall_timeout=30, cpu_seconds=30, cwd=proj_dir, env=csharp_env
             )
             if ccode != 0:
-                return {"output": "", "error": cerr[:2000], "exit_code": ccode}
+                error_msg = (cerr + "\n" + cout).strip()
+                return {"output": "", "error": error_msg[:2000], "exit_code": ccode}
             exe = os.path.join(proj_dir, "out", "Solution")
-            out, err, code = _run_cmd([exe], req.test_input, wall_timeout=15, cpu_seconds=15, cwd=proj_dir)
+            out, err, code = _run_cmd([exe], req.test_input, wall_timeout=15, cpu_seconds=15, cwd=proj_dir, env=csharp_env)
 
         else:
             raise HTTPException(status_code=400, detail=f"Unsupported language")
