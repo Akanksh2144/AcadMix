@@ -112,9 +112,16 @@ const NAACMatrix: React.FC<NAACMatrixProps> = ({ viewMode, collegeId, academicYe
     fullMark: c.max_score,
   }));
 
-  const overallScore = criteria.filter(c => c.score !== null).length > 0
-    ? (criteria.reduce((sum, c) => sum + (c.score ?? 0), 0) / criteria.filter(c => c.score !== null).length).toFixed(2)
-    : '—';
+  let totalWeightedScore = 0;
+  let totalWeight = 0;
+  criteria.forEach(c => {
+    if (c.score !== null) {
+      const weight = (c as any).weight || 1;
+      totalWeightedScore += c.score * weight;
+      totalWeight += weight;
+    }
+  });
+  const overallScore = totalWeight > 0 ? (totalWeightedScore / totalWeight).toFixed(2) : '—';
 
   const getScoreColor = (score: number | null, max: number) => {
     if (score === null) return 'text-slate-400';

@@ -11,8 +11,9 @@ from app.models.accreditation import (
     COAttainmentRecord,
     POAttainmentRecord,
 )
-from app.models.outcomes import ProgramOutcome, COPOMapping
+from app.models.outcomes import ProgramOutcome, COPOMapping, CourseOutcome
 from app.models.core import UserProfile, College
+from app.models.academics import CourseEnrollment, Course
 from app.services.attainment_service import AttainmentService
 
 router = APIRouter()
@@ -66,6 +67,10 @@ async def get_naac_summary(
         except (ValueError, IndexError):
             pass
 
+    NAAC_WEIGHTS = {
+        1: 100, 2: 350, 3: 110, 4: 100, 5: 140, 6: 100, 7: 100
+    }
+
     # Build response structure
     result = []
     for criterion_num, name in CRITERIA_LABELS.items():
@@ -87,9 +92,37 @@ async def get_naac_summary(
             "max_score": 4.0,  # Standard NAAC max scale
             "evidence_count": evidence_counts[criterion_num],
             "snapshot_locked": is_locked,
+            "weight": NAAC_WEIGHTS[criterion_num],
         })
 
     return {"criteria": result}
+
+@router.get("/naac/evidence/{college_id}/{criterion_id}")
+async def get_naac_evidence(
+    college_id: str,
+    criterion_id: str,
+    user: dict = Depends(require_role("nodal", "principal", "admin", "super_admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    evidences = (await session.scalars(
+        select(AccreditationEvidence).where(
+            AccreditationEvidence.college_id == college_id,
+            AccreditationEvidence.criterion_id.like(f"{criterion_id}%")
+        )
+    )).all()
+    
+    return {
+        "criterion_id": criterion_id,
+        "evidences": [
+            {
+                "id": e.id,
+                "file_name": e.file_name,
+                "s3_key": e.s3_key,
+                "uploaded_by": e.uploaded_by,
+                "created_at": e.created_at
+            } for e in evidences
+        ]
+    }
 
 # ── NBA CO-PO Matrix ─────────────────────────────────────────────────────────
 
@@ -134,10 +167,16 @@ async def get_nba_matrix(
             )
         )).all()
 
-    # Build matrix structure expected by frontend
     # Format: { "CO1-PO1": { co_code, po_code, strength, attainment, is_attained } }
     
-    co_labels = sorted(list(set([f"CO{idx}" for idx in range(1, len(co_records) + 1)]))) # In a real scenario, use actual CO codes if available
+    co_ids = [r.co_id for r in co_records]
+    co_models = []
+    if co_ids:
+        co_models = (await session.scalars(
+            select(CourseOutcome).where(CourseOutcome.id.in_(co_ids))
+        )).all()
+    co_map = {c.id: c.code for c in co_models}
+    
     po_labels = sorted([po.code for po in pos])
 
     matrix = {}
@@ -149,9 +188,10 @@ async def get_nba_matrix(
         po = next((p for p in pos if p.id == mapping.po_id), None)
         
         if po and co_rec:
-            # We map the actual CO and PO codes. For this endpoint we use IDs as placeholders if codes aren't available on the record directly.
-            key = f"{mapping.co_id}-{po.code}"  # Frontend can map these or we just use IDs
+            co_code = co_map.get(mapping.co_id, mapping.co_id)
+            key = f"{co_code}-{po.code}"
             matrix[key] = {
+                "co_code": co_code,
                 "co_id": mapping.co_id,
                 "po_id": po.id,
                 "po_code": po.code,
@@ -161,7 +201,7 @@ async def get_nba_matrix(
             }
 
     return {
-        "cos": [{"id": r.co_id, "code": r.co_id} for r in co_records], # Return full CO data to construct headers
+        "cos": [{"id": c.id, "code": c.code} for c in co_models],
         "pos": [{"id": po.id, "code": po.code} for po in pos],
         "matrix": matrix
     }
@@ -220,12 +260,33 @@ async def get_nep_status(
             abc_count += 1
 
     total_students = len(students)
+
+    # MOOC Enrollment
+    mooc_enrollments = (await session.scalars(
+        select(CourseEnrollment.student_id).join(Course).where(
+            CourseEnrollment.college_id == college_id,
+            Course.is_mooc == True
+        )
+    )).all()
+    unique_mooc_students = len(set(mooc_enrollments))
+
+    # Multidisciplinary Enrollment
+    multi_enrollments = (await session.scalars(
+        select(CourseEnrollment.student_id).join(Course).where(
+            CourseEnrollment.college_id == college_id,
+            Course.course_category.in_(["multidisciplinary", "mdc"])
+        )
+    )).all()
+    unique_multi_students = len(set(multi_enrollments))
+
     abc_coverage_pct = (abc_count / total_students * 100) if total_students > 0 else 0
+    mooc_pct = (unique_mooc_students / total_students * 100) if total_students > 0 else 0
+    multi_pct = (unique_multi_students / total_students * 100) if total_students > 0 else 0
 
     return {
         "abc_coverage_pct": abc_coverage_pct,
-        "mooc_enrollment_pct": 0,  # TODO: Compute from course enrollments
-        "multidisciplinary_pct": 0,  # TODO: Compute from course enrollments
+        "mooc_enrollment_pct": mooc_pct,
+        "multidisciplinary_pct": multi_pct,
         "enrollment_status_breakdown": status_breakdown,
         "total_students": total_students,
     }

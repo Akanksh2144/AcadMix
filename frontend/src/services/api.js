@@ -768,6 +768,7 @@ export const placementPrepAPI = {
 // ACCREDITATION API (NAAC / NBA / NEP)
 export const accreditationAPI = {
   getNAACSummary: (collegeId, academicYear) => api.get(`/accreditation/naac/summary/${collegeId}`, { params: { academic_year: academicYear } }),
+  getNAACEvidence: (collegeId, criterionId) => api.get(`/accreditation/naac/evidence/${collegeId}/${criterionId}`),
   getNBAMatrix: (departmentId, academicYear) => api.get(`/accreditation/nba/attainment/${departmentId}`, { params: { academic_year: academicYear } }),
   getNEPStatus: (collegeId) => api.get(`/accreditation/nep/status/${collegeId}`),
   calculateCourseAttainment: (courseId, academicYear) => api.post(`/accreditation/calculate/course/${courseId}`, null, { params: { academic_year: academicYear } }),
