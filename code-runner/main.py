@@ -264,7 +264,7 @@ end
 figs = get(0, 'children');
 if ~isempty(figs)
     for i = 1:length(figs)
-        print(figs(i), sprintf('output_%d.svg', i), '-dsvg');
+        print(figs(i), sprintf('output_%d.svg', i), '-dsvg', '-S800,600');
     end
 end
 """
