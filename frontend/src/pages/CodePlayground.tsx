@@ -451,6 +451,11 @@ const CodePlayground = ({ navigate, user }) => {
       }
       
       setRemoteImages(data.images || []);
+      if (data.images && data.images.length > 0) {
+          setActiveConsoleTab('plots');
+      } else {
+          setActiveConsoleTab('results');
+      }
       
       const cleanedOutput = globalPrints ? globalPrints.replace(/___ACADMIX_SEP___/g, '').replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').replace(/___ACADMIX_START_TESTS___/g, '').trim() : '';
       setOutput(cleanedOutput);
