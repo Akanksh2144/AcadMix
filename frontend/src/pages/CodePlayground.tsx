@@ -69,6 +69,7 @@ const CodePlayground = ({ navigate, user }) => {
   const langMenuRef = useRef(null);
 
   const [rPlots, setRPlots] = useState([]);
+  const [remoteImages, setRemoteImages] = useState([]);
   const [webrLoading, setWebrLoading] = useState(false);
   const webrRef = useRef(null);
 
@@ -443,6 +444,8 @@ const CodePlayground = ({ navigate, user }) => {
          setSubmitSuccess(data.success && is_submit);
       }
       
+      setRemoteImages(data.images || []);
+      
       const cleanedOutput = globalPrints ? globalPrints.replace(/___ACADMIX_SEP___/g, '').replace(/___ACADMIX_END___/g, '').replace(/___ACADMIX_OK___/g, '').replace(/___ACADMIX_START_TESTS___/g, '').trim() : '';
       setOutput(cleanedOutput);
       
@@ -472,7 +475,7 @@ const CodePlayground = ({ navigate, user }) => {
         toast.error(String(errDetail));
       }
 
-
+      setRemoteImages([]);
       setOutput(`Error: ${typeof errDetail === 'string' ? errDetail : JSON.stringify(errDetail)}`);
       setExecTime(Date.now() - startTime);
     }
@@ -1154,7 +1157,7 @@ const CodePlayground = ({ navigate, user }) => {
                     <div className="flex items-center gap-2">
                       <Terminal size={18} weight="duotone" className="text-slate-500 dark:text-slate-400" />
                       <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Output</h3>
-                      {(language === 'r' || rPlots.length > 0) && (
+                      {(language === 'r' || rPlots.length > 0 || remoteImages.length > 0) && (
                         <div className="ml-4 flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                            <button 
                              onClick={() => setActiveConsoleTab('results')}
@@ -1200,8 +1203,14 @@ const CodePlayground = ({ navigate, user }) => {
                                 <div dangerouslySetInnerHTML={{ __html: plot }} className="w-full flex justify-center [&>svg]:max-w-full [&>svg]:h-auto" />
                               </div>
                             ))
+                          ) : remoteImages.length > 0 ? (
+                            remoteImages.map((imgSrc, idx) => (
+                              <div key={`rm-${idx}`} className="bg-white rounded-xl p-2 mb-4 w-full overflow-x-auto shadow-lg flex justify-center">
+                                <img src={imgSrc} alt={`Plot ${idx}`} className="max-w-full h-auto object-contain" />
+                              </div>
+                            ))
                           ) : (
-                            <div className="text-slate-500 dark:text-slate-400 italic py-10">No plots generated yet. Use plot() or ggplot2 in R!</div>
+                            <div className="text-slate-500 dark:text-slate-400 italic py-10">No plots generated yet.</div>
                           )}
                         </div>
                       ) : output !== null ? (

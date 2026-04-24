@@ -254,9 +254,22 @@ def run_code(req: ExecuteRequest, x_internal_token: str = Header(None)):
 
         # ── MATLAB/Octave ──────────────────────────────────────────────────────
         elif lang == "matlab":
+            matlab_code = f"""graphics_toolkit("gnuplot");
+try
+{req.code}
+catch e
+  disp(e.message);
+end
+figs = get(0, 'children');
+if ~isempty(figs)
+    for i = 1:length(figs)
+        print(figs(i), sprintf('output_%d.svg', i), '-dsvg');
+    end
+end
+"""
             fp = os.path.join(tmpdir, "solution.m")
             with open(fp, "w") as f:
-                f.write(req.code)
+                f.write(matlab_code)
             os.chmod(fp, 0o644)
             # Use octave-cli for fast execution without GUI overhead
             # --no-gui, --quiet (no intro text), --eval
@@ -271,7 +284,21 @@ def run_code(req: ExecuteRequest, x_internal_token: str = Header(None)):
             out = err
             err = ""
 
-        return {"output": out[:5000], "error": err[:2000], "exit_code": code}
+        # Scan for output images
+        import base64
+        images = []
+        for file in sorted(os.listdir(tmpdir)):
+            if file.endswith('.svg') or file.endswith('.png'):
+                try:
+                    with open(os.path.join(tmpdir, file), 'rb') as img_f:
+                        encoded = base64.b64encode(img_f.read()).decode('utf-8')
+                        ext = file.split('.')[-1]
+                        mime = 'image/svg+xml' if ext == 'svg' else f'image/{ext}'
+                        images.append(f"data:{mime};base64,{encoded}")
+                except Exception:
+                    pass
+
+        return {"output": out[:5000], "error": err[:2000], "exit_code": code, "images": images}
 
 
 @app.get("/health")
