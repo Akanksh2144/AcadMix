@@ -19,8 +19,8 @@ if IS_LINUX:
     SANDBOX_GID = 1001
     # 768MB is the sweet spot for a 1GB Fly machine (leaves room for kernel/Docker)
     MAX_MEMORY_BYTES = 768 * 1024 * 1024
-    MAX_FILE_SIZE_BYTES = 30 * 1024 * 1024  # 30 MB (required for Go/C# static binaries and intermediate objs)
-    MAX_PROCESSES = 32
+    MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024  # 100 MB (required for C# intermediate obj builds)
+    MAX_PROCESSES = 128  # 128 threads/processes (required for .NET and Java threadpools)
     # Compilation is CPU-heavy — 60s for g++/javac on shared VMs
     CPU_COMPILE = 60
     CPU_EXECUTE = 10
