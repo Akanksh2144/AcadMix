@@ -1271,7 +1271,6 @@ const CodePlayground = ({ navigate, user }) => {
                               <th className="px-4 py-3 text-center">Language</th>
                               <th className="px-4 py-3 text-center">Code</th>
                               <th className="px-4 py-3 text-center">Analysis</th>
-                              <th className="px-4 py-3 text-center">Action</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
@@ -1299,11 +1298,6 @@ const CodePlayground = ({ navigate, user }) => {
                                 <td className="px-4 py-3 text-center">
                                   <button onClick={() => handleAnalysis(h)} className="text-slate-400 hover:text-indigo-500 transition-colors" title="Run AI Analysis">
                                     <ChartLineUp size={18} weight="bold" />
-                                  </button>
-                                </td>
-                                <td className="px-4 py-3 text-center">
-                                  <button onClick={() => setHistory(history.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-500 transition-colors" title="Delete run">
-                                    <Trash size={18} weight="duotone" />
                                   </button>
                                 </td>
                               </tr>
