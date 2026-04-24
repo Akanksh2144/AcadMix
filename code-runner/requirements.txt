@@ -4,3 +4,13 @@ pydantic==2.5.3
 numpy
 pandas
 matplotlib
+scikit-learn
+scipy
+seaborn
+statsmodels
+cryptography
+pycryptodome
+web3
+eth-utils
+paho-mqtt
+cbor2
