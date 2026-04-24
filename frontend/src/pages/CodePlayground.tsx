@@ -17,6 +17,7 @@ const LANGUAGES = [
   { id: 'cpp', label: 'C++', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/cplusplus/cplusplus-original.svg" alt="C++" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'r', label: 'R', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/r/r-original.svg" alt="R" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'matlab', label: 'MATLAB', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/matlab/matlab-original.svg" alt="MATLAB" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
+  { id: 'bash', label: 'Bash', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg" alt="Bash" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
 ];
 
 const DEFAULT_TEMPLATES = {
@@ -26,7 +27,8 @@ const DEFAULT_TEMPLATES = {
   c: '#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}\n',
   cpp: '#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}\n',
   r: '# Write your R code here\n\n# WebR allows plotting natively! Try running this:\nplot(mtcars$wt, mtcars$mpg, \n     main="Car Weight vs MPG", \n     xlab="Weight (1000 lbs)", ylab="Miles/(US) gallon", \n     col="blue", pch=19)\n',
-  matlab: '% Write your MATLAB / Octave code here\n\nx = linspace(0, 2*pi, 100);\ny = sin(x);\ndisp("Hello, World from MATLAB/Octave!");\n'
+  matlab: '% Write your MATLAB / Octave code here\n\nx = linspace(0, 2*pi, 100);\ny = sin(x);\ndisp("Hello, World from MATLAB/Octave!");\n',
+  bash: '#!/bin/bash\n\n# Write your shell script here\necho "Hello, World from Bash!"\n'
 };
 
 const CodePlayground = ({ navigate, user }) => {
@@ -1125,7 +1127,7 @@ const CodePlayground = ({ navigate, user }) => {
                 <div className="soft-card overflow-hidden flex-1 min-h-[400px]" onCopyCapture={handleCopyOrCut} onCutCapture={handleCopyOrCut} onPasteCapture={handlePasteCapture}>
                   <Editor
                     height="100%"
-                    language={language}
+                    language={language === 'bash' ? 'shell' : language}
                     value={code}
                     onChange={(val) => setCode(val || '')}
                     onMount={handleEditorMount}

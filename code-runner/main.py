@@ -60,6 +60,10 @@ _BLOCKED_PATTERNS = {
     "sql": [r"(?i)\bATTACH\b", r"(?i)\bPRAGMA\b", r"(?i)\bDROP\b", r"(?i)\bDELETE\b", r"(?i)\bUPDATE\b", r"(?i)\bINSERT\b", r"(?i)\bALTER\b"],
     "matlab": [
         r"\bsystem\s*\(", r"\bunix\s*\(", r"\bpopen\s*\(", r"\beval\s*\(", r"\bexe\s*\(", r"\bgetenv\s*\("
+    ],
+    "bash": [
+        r"\brm\s+-r", r"\bmkfs\b", r"\bdd\b", r"\bcurl\b", r"\bwget\b",
+        r"\bping\b", r"\bssh\b", r"\bnc\b", r"\bnmap\b", r":\s*\(\s*\)\s*\{"
     ]
 }
 _BLOCKED_PATTERNS["cpp"] = _BLOCKED_PATTERNS["c"]
@@ -277,6 +281,16 @@ end
             out, err, code = _run_cmd([
                 "octave-cli", "--no-gui", "--quiet", "--no-init-file", fp
             ], req.test_input, wall_timeout=15, cpu_seconds=15, cwd=tmpdir)
+
+        # ── BASH ───────────────────────────────────────────────────────────────
+        elif lang == "bash":
+            fp = os.path.join(tmpdir, "script.sh")
+            with open(fp, "w") as f:
+                f.write(req.code)
+            os.chmod(fp, 0o755)
+            out, err, code = _run_cmd([
+                "bash", fp
+            ], req.test_input, wall_timeout=5, cpu_seconds=5, cwd=tmpdir)
 
         else:
             raise HTTPException(status_code=400, detail=f"Unsupported language")
