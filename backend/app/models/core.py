@@ -93,8 +93,10 @@ class User(Base, SoftDeleteMixin):
                 "force_password_change": self.profile.force_password_change,
                 # Personal Details
                 "date_of_birth": self.profile.date_of_birth.isoformat() if self.profile.date_of_birth else None,
+                "dob": self.profile.date_of_birth.isoformat() if self.profile.date_of_birth else None,
                 "gender": self.profile.gender,
                 "aadhaar_number": self.profile.aadhaar_number,
+                "aadhaar": self.profile.aadhaar_number,
                 "father_name": self.profile.father_name,
                 "mother_name": self.profile.mother_name,
                 "address": self.profile.address,

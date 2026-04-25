@@ -178,7 +178,7 @@ class FeesService:
                 FeePayment.student_id == student_id,
                 FeePayment.college_id == college_id,
                 FeePayment.is_deleted == False
-            ).order_by(FeePayment.created_at.desc())
+            ).order_by(FeePayment.transaction_date.desc())
         )
         payments = payments_query.scalars().all()
 
