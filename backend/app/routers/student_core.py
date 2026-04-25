@@ -73,7 +73,7 @@ async def student_profile(student_id: str, user: dict = Depends(require_role("ho
         .outerjoin(
             models.Course,
             and_(
-                models.Course.subject_code == models.SemesterGrade.course_id,
+                models.Course.id == models.SemesterGrade.course_id,
                 models.Course.college_id == user["college_id"],
             )
         )

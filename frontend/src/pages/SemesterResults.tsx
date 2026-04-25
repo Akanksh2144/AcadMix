@@ -1,16 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { Download, TrendUp, TrendDown, X } from '@phosphor-icons/react';
+import { Download, TrendUp, TrendDown, X, ChartBar } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { resultsAPI } from '../services/api';
 
-const SemesterResults = ({ navigate, user }) => {
-  const [semesters, setSemesters] = useState([]);
-  const [selectedSem, setSelectedSem] = useState(null);
+interface SubjectResult {
+  name: string;
+  code: string;
+  credits: number;
+  grade: string;
+  status: string;
+  is_supplementary?: boolean;
+  mid1_marks?: number | null;
+  mid2_marks?: number | null;
+  mid1_max?: number | null;
+  mid2_max?: number | null;
+  attendance_pct?: number | null;
+}
+
+interface SemesterData {
+  semester: number;
+  sgpa: number | null;
+  cgpa: number | null;
+  subjects: SubjectResult[];
+}
+
+interface SemesterResultsProps {
+  navigate: (path: string) => void;
+  user: { id: string; name?: string; [key: string]: any };
+}
+
+const SemesterResults: React.FC<SemesterResultsProps> = ({ navigate, user }) => {
+  const [semesters, setSemesters] = useState<SemesterData[]>([]);
+  const [selectedSem, setSelectedSem] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSubject, setSelectedSubject] = useState(null);
+  const [selectedSubject, setSelectedSubject] = useState<SubjectResult | null>(null);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchResults = async () => {
       try {
         const { data } = await resultsAPI.semester(user.id);
         setSemesters(data);
@@ -18,20 +44,26 @@ const SemesterResults = ({ navigate, user }) => {
       } catch {}
       setLoading(false);
     };
-    fetch();
+    fetchResults();
   }, [user]);
 
   const currentSem = semesters.find(s => s.semester === selectedSem);
   const allSemNumbers = semesters.map(s => s.semester);
 
-  const getGradeColor = (grade) => {
+  const getGradeColor = (grade: string | null | undefined): string => {
     if (!grade) return 'bg-slate-100 dark:bg-slate-500/15 text-slate-600 dark:text-slate-400';
     if (grade === 'O' || grade.startsWith('A')) return 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400';
     if (grade.startsWith('B')) return 'bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400';
+    if (grade === 'F' || grade === 'AB') return 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400';
     return 'bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400';
   };
 
-
+  const getAttendanceColor = (pct: number | null | undefined): string => {
+    if (pct == null) return 'text-slate-400';
+    if (pct >= 85) return 'text-emerald-500';
+    if (pct >= 75) return 'text-amber-500';
+    return 'text-red-500';
+  };
 
   if (loading) return <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300 flex items-center justify-center"><div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>;
 
@@ -72,15 +104,34 @@ const SemesterResults = ({ navigate, user }) => {
             {currentSem && (
               <>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                  <div className="soft-card p-5" data-testid="sgpa-card"><span className="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">SGPA</span><p className="text-3xl font-extrabold text-slate-900 dark:text-white">{Number(currentSem.sgpa || 0).toFixed(2)}</p></div>
+                  <div className="soft-card p-5" data-testid="sgpa-card">
+                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">SGPA</span>
+                    {currentSem.sgpa != null ? (
+                      <p className="text-3xl font-extrabold text-slate-900 dark:text-white">{Number(currentSem.sgpa).toFixed(2)}</p>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <p className="text-2xl font-extrabold text-amber-500">NA</p>
+                        <span className="text-[10px] font-bold text-amber-500/70 uppercase tracking-wider">Arrears</span>
+                      </div>
+                    )}
+                  </div>
                   <div className="soft-card p-5" data-testid="cgpa-card">
                     <span className="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">CGPA</span>
-                    <div className="flex items-center gap-2"><p className="text-3xl font-extrabold text-slate-900 dark:text-white">{Number(currentSem.cgpa || 0).toFixed(2)}</p></div>
+                    <div className="flex items-center gap-2">
+                      {currentSem.cgpa != null ? (
+                        <p className="text-3xl font-extrabold text-slate-900 dark:text-white">{Number(currentSem.cgpa).toFixed(2)}</p>
+                      ) : (
+                        <p className="text-2xl font-extrabold text-slate-400">—</p>
+                      )}
+                    </div>
                   </div>
                   <div className="soft-card p-5" data-testid="subjects-count-card"><span className="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">Subjects</span><p className="text-3xl font-extrabold text-slate-900 dark:text-white">{currentSem.subjects?.length || 0}</p></div>
-                  <div className="soft-card p-5" data-testid="status-card"><span className="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">Status</span><span className="soft-badge bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-base mt-1">
-                    {currentSem.subjects?.every(s => s.status === 'PASS') ? 'All Pass' : 'Has Arrears'}
-                  </span></div>
+                  <div className="soft-card p-5" data-testid="status-card">
+                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">Status</span>
+                    <span className={`soft-badge text-base mt-1 ${currentSem.subjects?.every(s => s.status === 'PASS') ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400'}`}>
+                      {currentSem.subjects?.every(s => s.status === 'PASS') ? 'All Pass' : 'Has Arrears'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -98,10 +149,25 @@ const SemesterResults = ({ navigate, user }) => {
                       <tbody>
                         {(currentSem.subjects || []).map((sub, i) => (
                           <tr key={i} onClick={() => setSelectedSubject(sub)} className="border-b border-slate-50 dark:border-white/[0.06] hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer group" data-testid={`subject-row-${i}`}>
-                            <td className="p-4"><p className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-500 transition-colors">{sub.name}</p><p className="text-sm font-medium text-slate-400">{sub.code}</p></td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-500 transition-colors">
+                                  {sub.name}
+                                  {sub.is_supplementary && (
+                                    <span className="text-amber-500 ml-1 text-lg font-black" title="Cleared via Supplementary Exam">*</span>
+                                  )}
+                                </p>
+                              </div>
+                              <p className="text-sm font-medium text-slate-400">{sub.code}</p>
+                            </td>
                             <td className="text-center p-4"><p className="font-bold text-slate-700 dark:text-slate-300">{sub.credits}</p></td>
                             <td className="text-center p-4"><span className={`soft-badge ${getGradeColor(sub.grade)}`}>{sub.grade}</span></td>
-                            <td className="text-center p-4"><span className={`soft-badge ${sub.status === 'PASS' ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400'}`}>{sub.status}</span></td>
+                            <td className="text-center p-4">
+                              <span className={`soft-badge ${sub.status === 'PASS' ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400'}`}>
+                                {sub.status}
+                                {sub.is_supplementary && <span className="ml-1">★</span>}
+                              </span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -116,11 +182,17 @@ const SemesterResults = ({ navigate, user }) => {
                           <div key={s.semester} className="flex items-center justify-between" data-testid={`cgpa-history-sem-${s.semester}`}>
                             <span className="font-bold text-slate-700 dark:text-slate-300">Semester {s.semester}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-xl font-extrabold text-slate-900 dark:text-white min-w-[56px] text-right" style={{ fontVariantNumeric: 'tabular-nums' }}>{Number(s.cgpa || 0).toFixed(2)}</span>
-                              <span className="w-5 flex items-center justify-center">
-                                {i > 0 && s.cgpa > semesters[i - 1].cgpa && <TrendUp size={16} weight="duotone" className="text-emerald-500" />}
-                                {i > 0 && s.cgpa < semesters[i - 1].cgpa && <TrendDown size={16} weight="duotone" className="text-red-500" />}
-                              </span>
+                              {s.sgpa != null ? (
+                                <>
+                                  <span className="text-xl font-extrabold text-slate-900 dark:text-white min-w-[56px] text-right" style={{ fontVariantNumeric: 'tabular-nums' }}>{Number(s.cgpa || 0).toFixed(2)}</span>
+                                  <span className="w-5 flex items-center justify-center">
+                                    {i > 0 && s.cgpa != null && semesters[i - 1].cgpa != null && s.cgpa > semesters[i - 1].cgpa! && <TrendUp size={16} weight="duotone" className="text-emerald-500" />}
+                                    {i > 0 && s.cgpa != null && semesters[i - 1].cgpa != null && s.cgpa < semesters[i - 1].cgpa! && <TrendDown size={16} weight="duotone" className="text-red-500" />}
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-base font-extrabold text-amber-500 min-w-[56px] text-right">NA</span>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -132,6 +204,12 @@ const SemesterResults = ({ navigate, user }) => {
                         <p>Total credits this sem: {currentSem.subjects?.reduce((s, sub) => s + (sub.credits || 0), 0)}</p>
                         <p>Grade O count: {currentSem.subjects?.filter(s => s.grade === 'O').length || 0}</p>
                         <p>All subjects: {currentSem.subjects?.every(s => s.status === 'PASS') ? 'Passed' : 'Has arrears'}</p>
+                        {currentSem.subjects?.some(s => s.is_supplementary) && (
+                          <p className="flex items-center gap-1.5">
+                            <span className="text-amber-300 text-lg">★</span> 
+                            {currentSem.subjects?.filter(s => s.is_supplementary).length} subject(s) cleared via supplementary
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -142,14 +220,19 @@ const SemesterResults = ({ navigate, user }) => {
         )}
       </div>
 
-      {/* Subject Internal Marks Modal */}
+      {/* Subject Internal Marks + Attendance Modal */}
       {selectedSubject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" style={{ animation: 'fadeIn 0.2s ease-out' }}>
           <div className="bg-white dark:bg-[#0F172A] w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800" style={{ animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
             <div className="p-6 pb-0 flex items-start justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-1">{selectedSubject.code}</p>
-                <h3 className="text-xl font-extrabold text-slate-900 dark:text-white leading-tight pr-4">{selectedSubject.name}</h3>
+                <h3 className="text-xl font-extrabold text-slate-900 dark:text-white leading-tight pr-4">
+                  {selectedSubject.name}
+                  {selectedSubject.is_supplementary && (
+                    <span className="text-amber-500 ml-1" title="Cleared via Supplementary Exam">*</span>
+                  )}
+                </h3>
               </div>
               <button onClick={() => setSelectedSubject(null)} className="p-2 -mr-2 -mt-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                 <X size={20} weight="bold" />
@@ -157,6 +240,7 @@ const SemesterResults = ({ navigate, user }) => {
             </div>
             
             <div className="p-6 space-y-4">
+              {/* Mid Marks */}
               <div className="flex gap-4">
                 <div className="flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 text-center border border-slate-100 dark:border-slate-700/50">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Mid 1</p>
@@ -167,6 +251,30 @@ const SemesterResults = ({ navigate, user }) => {
                   <p className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">{selectedSubject.mid2_marks != null ? selectedSubject.mid2_marks : '—'} <span className="text-sm font-medium text-slate-400">/ {selectedSubject.mid2_max || 30}</span></p>
                 </div>
               </div>
+
+              {/* Attendance */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-700/50">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <ChartBar size={16} weight="duotone" className="text-indigo-500" />
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Attendance</p>
+                  </div>
+                  <p className={`text-2xl font-extrabold ${getAttendanceColor(selectedSubject.attendance_pct)}`}>
+                    {selectedSubject.attendance_pct != null ? `${selectedSubject.attendance_pct}%` : '—'}
+                  </p>
+                </div>
+                {selectedSubject.attendance_pct != null && (
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        selectedSubject.attendance_pct >= 85 ? 'bg-emerald-500' : 
+                        selectedSubject.attendance_pct >= 75 ? 'bg-amber-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${Math.min(selectedSubject.attendance_pct, 100)}%` }}
+                    />
+                  </div>
+                )}
+              </div>
               
               <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
                 <span className="text-sm font-bold text-slate-500">Final Grade</span>
@@ -174,7 +282,10 @@ const SemesterResults = ({ navigate, user }) => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-slate-500">Status</span>
-                <span className={`soft-badge px-3 py-1 text-sm ${selectedSubject.status === 'PASS' ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400'}`}>{selectedSubject.status}</span>
+                <span className={`soft-badge px-3 py-1 text-sm ${selectedSubject.status === 'PASS' ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400'}`}>
+                  {selectedSubject.status}
+                  {selectedSubject.is_supplementary && <span className="ml-1 text-amber-500">★</span>}
+                </span>
               </div>
             </div>
             <div className="p-4 bg-slate-50 dark:bg-slate-800/50">

@@ -2,7 +2,7 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import and_
+from sqlalchemy import and_, func, case, literal_column
 from typing import List, Optional
 from collections import defaultdict
 
@@ -29,12 +29,19 @@ _GRADE_POINTS = {
 
 
 def _compute_gpa(subjects: list) -> float:
-    """Weighted GPA = Σ(grade_point × credits) / Σ(credits)."""
+    """Weighted GPA = Σ(grade_point × credits) / Σ(credits).
+    Uses the course's actual credits (not credits_earned) so failed subjects
+    contribute their full weight to the denominator."""
     total_credits = sum(s["credits"] for s in subjects)
     if total_credits == 0:
         return 0.0
     weighted = sum(_GRADE_POINTS.get(s["grade"], 0) * s["credits"] for s in subjects)
     return round(weighted / total_credits, 2)
+
+
+def _semester_has_arrears(subjects: list) -> bool:
+    """Check if a semester has any uncleared failures (JNTUH: SGPA = NA)."""
+    return any(s["grade"] in ("F", "AB") for s in subjects)
 
 
 @router.get("/results/semester/{student_id}")
@@ -66,23 +73,29 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
     if not student_college_id:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    cache_key = f"result:{student_college_id}:{student_id}:v2"
+    cache_key = f"result:{student_college_id}:{student_id}:v3"
     if redis_client:
-        cached = await redis_client.get(cache_key)
-        if cached:
-            return json.loads(cached)
+        try:
+            cached = await redis_client.get(cache_key)
+            if cached:
+                return json.loads(cached)
+        except Exception:
+            pass
 
     # ── 1. Fetch semester grades with subject name via LEFT JOIN courses ──
+    # FIX: Join on Course.id (primary key) == SemesterGrade.course_id
+    # NOT on Course.subject_code which was the old broken join
     grade_rows = await session.execute(
         select(
             models.SemesterGrade,
             models.Course.name.label("course_name"),
             models.Course.subject_code.label("course_subject_code"),
+            models.Course.credits.label("course_credits"),
         )
         .outerjoin(
             models.Course,
             and_(
-                models.Course.subject_code == models.SemesterGrade.course_id,
+                models.Course.id == models.SemesterGrade.course_id,
                 models.Course.college_id == student_college_id,
             )
         )
@@ -101,7 +114,7 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
             models.MarkSubmission.status.in_(["approved", "published"]),
         )
     )
-    # Build a lookup: subject_code → {"mid1": marks, "mid2": marks, "mid1_max": max, "mid2_max": max}
+    # Build a lookup: subject_code → {"mid1": marks, "mid2": marks, ...}
     mid_lookup: dict = defaultdict(dict)
     for entry, submission in mid_rows.all():
         key = submission.subject_code
@@ -109,30 +122,74 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
         mid_lookup[key][f"{exam}_marks"] = entry.marks_obtained
         mid_lookup[key][f"{exam}_max"] = submission.max_marks
 
-    # ── 3. Group by semester, compute SGPA/CGPA ──────────────────────────
+    # ── 3. Fetch per-subject attendance percentage ────────────────────────
+    att_rows = await session.execute(
+        select(
+            models.AttendanceRecord.subject_code,
+            func.count(models.AttendanceRecord.id).label("total"),
+            func.sum(
+                case(
+                    (models.AttendanceRecord.status == "present", 1),
+                    else_=0
+                )
+            ).label("present"),
+        )
+        .where(
+            models.AttendanceRecord.student_id == student_id,
+            models.AttendanceRecord.is_deleted == False,
+        )
+        .group_by(models.AttendanceRecord.subject_code)
+    )
+    att_lookup: dict = {}
+    for row in att_rows.all():
+        total = row.total or 0
+        present = row.present or 0
+        att_lookup[row.subject_code] = round((present / total) * 100, 1) if total > 0 else None
+
+    # ── 4. Group by semester, compute SGPA/CGPA ──────────────────────────
     sem_map: dict = defaultdict(list)
-    for grade_row, course_name, course_subject_code in all_rows:
+    for grade_row, course_name, course_subject_code, course_credits in all_rows:
         subj_code = grade_row.course_id
-        mid_data = mid_lookup.get(subj_code, {})
+        # Use course subject_code for mid lookup, fall back to course_id
+        mid_key = course_subject_code or subj_code
+        mid_data = mid_lookup.get(mid_key, {})
+        # Also try course_id as mid key
+        if not mid_data:
+            mid_data = mid_lookup.get(subj_code, {})
+
+        # Use the ACTUAL course credits, not credits_earned (which is 0 for F grades)
+        actual_credits = course_credits if course_credits is not None else grade_row.credits_earned
+
         sem_map[grade_row.semester].append({
             "name": course_name or subj_code,
             "code": course_subject_code or subj_code,
-            "credits": grade_row.credits_earned,
+            "credits": actual_credits,
             "grade": grade_row.grade,
             "status": "PASS" if grade_row.grade not in ("F", "AB") else "FAIL",
+            "is_supplementary": grade_row.is_supplementary or False,
             "mid1_marks": mid_data.get("mid1_marks"),
             "mid2_marks": mid_data.get("mid2_marks"),
             "mid1_max": mid_data.get("mid1_max"),
             "mid2_max": mid_data.get("mid2_max"),
+            "attendance_pct": att_lookup.get(mid_key) or att_lookup.get(subj_code),
         })
 
-    # Compute SGPA per semester and cumulative CGPA
-    all_subjects_cumulative = []
+    # ── 5. Compute SGPA per semester and cumulative CGPA ─────────────────
+    # JNTUH Rule: SGPA is "NA" (null) if the semester has any uncleared F/AB.
+    # CGPA is computed only over semesters where SGPA is not NA.
+    all_cleared_subjects = []
     response_data = []
     for sem, subjects in sorted(sem_map.items()):
-        sgpa = _compute_gpa(subjects)
-        all_subjects_cumulative.extend(subjects)
-        cgpa = _compute_gpa(all_subjects_cumulative)
+        has_arrears = _semester_has_arrears(subjects)
+
+        if has_arrears:
+            sgpa = None  # "NA" — semester not fully cleared
+        else:
+            sgpa = _compute_gpa(subjects)
+            all_cleared_subjects.extend(subjects)
+
+        cgpa = _compute_gpa(all_cleared_subjects) if all_cleared_subjects else None
+
         response_data.append({
             "semester": sem,
             "sgpa": sgpa,
@@ -141,7 +198,10 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
         })
 
     if redis_client:
-        await redis_client.setex(cache_key, 86400, json.dumps(response_data))
+        try:
+            await redis_client.setex(cache_key, 86400, json.dumps(response_data))
+        except Exception:
+            pass
 
     return response_data
 
@@ -167,6 +227,9 @@ async def create_semester_result(req: SemesterResultCreate, user: dict = Depends
     
     from app.core.security import redis_client
     if redis_client:
-        await redis_client.delete(f"result:{student_college_id}:{req.student_id}:v2")
+        try:
+            await redis_client.delete(f"result:{student_college_id}:{req.student_id}:v3")
+        except Exception:
+            pass
         
     return {"message": "Semester result saved", "semester": req.semester, "student_id": req.student_id}

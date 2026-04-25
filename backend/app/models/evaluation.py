@@ -158,6 +158,7 @@ class SemesterGrade(Base, SoftDeleteMixin):
     course_id = Column(String, nullable=False)
     grade = Column(String, nullable=False)
     credits_earned = Column(Integer, nullable=False)
+    is_supplementary = Column(Boolean, nullable=False, server_default=text('false'))
 
     __table_args__ = (
         Index("ix_sem_grades_s_s", "student_id", "semester"),

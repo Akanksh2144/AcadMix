@@ -203,7 +203,7 @@ class FeesService:
                 "amount": p.amount_paid,
                 "status": p.status,
                 "transaction_ref": p.transaction_reference or "",
-                "paid_at": p.created_at.isoformat() if p.created_at else None,
+                "paid_at": p.transaction_date.isoformat() if p.transaction_date else None,
             })
         return history
 

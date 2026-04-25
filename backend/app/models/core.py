@@ -91,6 +91,13 @@ class User(Base, SoftDeleteMixin):
                 "college_id": self.profile.college_id,
                 "roll_number": self.profile.roll_number,
                 "force_password_change": self.profile.force_password_change,
+                # Personal Details
+                "date_of_birth": self.profile.date_of_birth.isoformat() if self.profile.date_of_birth else None,
+                "gender": self.profile.gender,
+                "aadhaar_number": self.profile.aadhaar_number,
+                "father_name": self.profile.father_name,
+                "mother_name": self.profile.mother_name,
+                "address": self.profile.address,
             }
         return {}
 
@@ -110,6 +117,14 @@ class UserProfile(Base, SoftDeleteMixin):
     
     phone = Column(String, nullable=True)
     blood_group = Column(String, nullable=True)
+
+    # ── Personal Details ──────────────────────────────────────────────
+    date_of_birth   = Column(Date, nullable=True)
+    gender          = Column(String(10), nullable=True)
+    aadhaar_number  = Column(String(12), nullable=True)
+    father_name     = Column(String(200), nullable=True)
+    mother_name     = Column(String(200), nullable=True)
+    address         = Column(Text, nullable=True)
     
     telemetry_strikes = Column(Integer, nullable=False, server_default=text('0'))
     acad_tokens = Column(Float, nullable=False, server_default=text('0.0'))
