@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select, func, update, delete
 from pydantic import BaseModel
 
-from database import get_db
+from database import get_admin_db
 from app.core.security import require_role
 from app.models.core import College, Department, Section, User, UserProfile
 from app.models.hostel import Hostel, Room, Bed, RoomTemplate, Allocation
@@ -72,7 +72,7 @@ class ModuleToggle(BaseModel):
 @router.get("/platform/overview")
 async def platform_overview(
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Global KPIs for the superadmin dashboard."""
     queries = {
@@ -107,7 +107,7 @@ async def platform_overview(
 @router.get("/colleges")
 async def list_colleges(
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """List all tenant colleges with summary stats."""
     result = await db.execute(text("""
@@ -137,7 +137,7 @@ async def list_colleges(
 async def create_college(
     req: CollegeCreate,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Onboard a new tenant."""
     await db.execute(text(
@@ -152,7 +152,7 @@ async def update_college(
     college_id: str,
     req: CollegeUpdate,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Update a tenant's settings."""
     updates = {}
@@ -177,7 +177,7 @@ async def update_college(
 async def deactivate_college(
     college_id: str,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Soft-delete (deactivate) a tenant."""
     await db.execute(text(
@@ -191,7 +191,7 @@ async def deactivate_college(
 async def college_deep_stats(
     college_id: str,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Detailed stats for a single tenant."""
     queries = {
@@ -235,7 +235,7 @@ async def college_deep_stats(
 async def get_college_modules(
     college_id: str,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Get enabled modules for a college."""
     result = await db.execute(text(
@@ -250,7 +250,7 @@ async def toggle_modules(
     college_id: str,
     req: ModuleToggle,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Enable/disable modules for a college."""
     for module_name, is_enabled in req.modules.items():
@@ -271,7 +271,7 @@ async def toggle_modules(
 async def list_hostels(
     college_id: Optional[str] = None,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """List hostels, optionally filtered by college."""
     if college_id:
@@ -299,7 +299,7 @@ async def list_hostels(
 async def create_hostel(
     req: HostelCreate,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Create a hostel building."""
     import uuid
@@ -317,7 +317,7 @@ async def create_hostel(
 async def list_hostel_rooms(
     hostel_id: str,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """List all rooms in a hostel with bed counts."""
     result = await db.execute(text("""
@@ -335,7 +335,7 @@ async def list_hostel_rooms(
 async def create_room(
     req: RoomCreate,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Create a room in a hostel."""
     import uuid
@@ -354,7 +354,7 @@ async def create_room(
 async def get_room_beds(
     room_id: str,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Get the bed grid for a room."""
     result = await db.execute(text("""
@@ -375,7 +375,7 @@ async def save_room_beds(
     room_id: str,
     req: BedLayout,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Save/upsert the full bed layout for a room."""
     import uuid
@@ -422,7 +422,7 @@ async def save_room_beds(
 @router.get("/room-templates")
 async def list_room_templates(
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """List all room templates."""
     result = await db.execute(text("""
@@ -436,7 +436,7 @@ async def list_room_templates(
 async def create_room_template(
     req: RoomTemplateCreate,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Create a reusable room template."""
     import uuid, json
@@ -458,7 +458,7 @@ async def apply_template_to_room(
     room_id: str,
     template_id: str,
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Apply a template's bed layout to a room."""
     # Get template
@@ -486,7 +486,7 @@ async def apply_template_to_room(
 @router.get("/billing/overview")
 async def billing_overview(
     user: dict = Depends(require_role("super_admin")),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_admin_db)
 ):
     """Billing summary across all tenants."""
     result = await db.execute(text("""

@@ -146,8 +146,8 @@ class AuthService:
                 import logging
                 logging.getLogger("acadmix.security").error(f"Failed to set active session tracking: {e}")
 
-        # Explicit Audit Log
-        if user.role != "student":
+        # Explicit Audit Log (skip super_admin — platform college bypasses tenant RLS)
+        if user.role not in ("student", "super_admin"):
             await AuditService.log_audit(
                 db=self.db,
                 college_id=tid,

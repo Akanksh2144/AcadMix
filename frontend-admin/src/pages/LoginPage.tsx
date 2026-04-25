@@ -39,18 +39,19 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setLoading(true);
 
     try {
-      const { data } = await authAPI.login(email, password);
+      const { data: resp } = await authAPI.login(email, password);
+      const user = resp.data || resp; // handle both enveloped and flat responses
 
-      if (data.role !== 'super_admin') {
+      if (user.role !== 'super_admin') {
         setError('Access denied. This portal is for platform administrators only.');
         setLoading(false);
         return;
       }
 
-      localStorage.setItem('admin_token', data.access_token);
-      onLogin(data);
+      localStorage.setItem('admin_token', user.access_token);
+      onLogin(user);
     } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Invalid credentials';
+      const msg = err.response?.data?.error || err.response?.data?.detail || 'Invalid credentials';
       setError(typeof msg === 'string' ? msg : 'Authentication failed');
     } finally {
       setLoading(false);

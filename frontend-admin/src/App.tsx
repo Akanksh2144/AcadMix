@@ -132,13 +132,14 @@ function AppShell() {
     const token = localStorage.getItem('admin_token');
     if (!token) { setLoading(false); return; }
     try {
-      const { data } = await authAPI.me();
-      if (data.role !== 'super_admin') {
+      const { data: resp } = await authAPI.me();
+      const me = resp.data || resp;
+      if (me.role !== 'super_admin') {
         localStorage.removeItem('admin_token');
         setLoading(false);
         return;
       }
-      setUser(data);
+      setUser(me);
     } catch {
       localStorage.removeItem('admin_token');
     }
