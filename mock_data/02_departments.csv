@@ -12,3 +12,4 @@ dept-eee,EEE,Electrical & Electronics Engineering,EEE,,False,B.Tech,60.0,1.0,60.
 dept-mech,MECH,Mechanical Engineering,MECH,,False,B.Tech,60.0,2.0,120.0,Professor & HOD,6,2008,True
 dept-civil,CIVIL,Civil Engineering,CIVIL,,False,B.Tech,60.0,1.0,60.0,Professor & HOD,5,2008,False
 dept-common,COMMON,Common / Basic Sciences,Common,,False,,,,,Dean Academics (oversight),3,2008,False
+dept-admin,ADMIN,Administration,Admin,,False,,,,,Chairman / Director,0,2008,False
