@@ -1,0 +1,5 @@
+id,label,start_year,end_year,is_current
+ay-2024-25,2024-25,2024,2025,True
+ay-2023-24,2023-24,2023,2024,False
+ay-2022-23,2022-23,2022,2023,False
+ay-2021-22,2021-22,2021,2022,False

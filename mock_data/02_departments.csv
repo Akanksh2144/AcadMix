@@ -1,0 +1,14 @@
+id,code,name,short_name,parent_dept_id,is_sub_branch,degree,intake_per_section,sections_per_year,annual_intake,hod_designation,lab_count,established_year,nba_accredited
+dept-cse,CSE,Computer Science & Engineering,CSE,,False,B.Tech,60.0,2.0,120.0,Professor & HOD,4,2008,True
+dept-et,ET,Emerging Technologies,ET,,False,B.Tech,,,390.0,Professor & HOD,8,2012,False
+dept-it,IT,Information Technology,IT,dept-et,True,B.Tech,60.0,2.0,120.0,,0,2012,False
+dept-csm,CSM,CSE (Machine Learning),CSM,dept-et,True,B.Tech,60.0,2.0,120.0,,0,2020,False
+dept-csd,CSD,CSE (Data Science),CSD,dept-et,True,B.Tech,60.0,1.0,60.0,,0,2020,False
+dept-cso,CSO,CSE (Cyber Security),CSO,dept-et,True,B.Tech,60.0,1.0,60.0,,0,2021,False
+dept-aiml,AIML,Artificial Intelligence & Machine Learning,AIML,dept-et,True,B.Tech,60.0,2.0,120.0,,0,2021,False
+dept-iot,IoT,Internet of Things,IoT,dept-et,True,B.Tech,60.0,1.0,60.0,,0,2022,False
+dept-ece,ECE,Electronics & Communication Engineering,ECE,,False,B.Tech,60.0,2.0,120.0,Professor & HOD,5,2008,True
+dept-eee,EEE,Electrical & Electronics Engineering,EEE,,False,B.Tech,60.0,1.0,60.0,Professor & HOD,4,2008,False
+dept-mech,MECH,Mechanical Engineering,MECH,,False,B.Tech,60.0,2.0,120.0,Professor & HOD,6,2008,True
+dept-civil,CIVIL,Civil Engineering,CIVIL,,False,B.Tech,60.0,1.0,60.0,Professor & HOD,5,2008,False
+dept-common,COMMON,Common / Basic Sciences,Common,,False,,,,,Dean Academics (oversight),3,2008,False

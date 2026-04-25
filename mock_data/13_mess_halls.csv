@@ -1,0 +1,7 @@
+id,hostel_block_id,gender,name,seating_capacity,has_ac,mess_type,monthly_charge_included,note
+mess-boys-a,hblk-boys-a,Male,Boys Block-A Mess Hall,150,False,veg_nonveg,True,Monthly mess charge bundled in annual hostel fee
+mess-boys-b,hblk-boys-b,Male,Boys Block-B Mess Hall,150,False,veg_nonveg,True,Monthly mess charge bundled in annual hostel fee
+mess-boys-ann,hblk-boys-ann,Male,Boys Annexe Mess Hall,100,False,veg_nonveg,True,Monthly mess charge bundled in annual hostel fee
+mess-girls-c,hblk-girls-c,Female,Girls Block-C Mess Hall,150,False,veg_nonveg,True,Monthly mess charge bundled in annual hostel fee
+mess-girls-d,hblk-girls-d,Female,Girls Block-D Mess Hall,150,False,veg_nonveg,True,Monthly mess charge bundled in annual hostel fee
+mess-girls-ann,hblk-girls-ann,Female,Girls Annexe Mess Hall,100,False,veg_nonveg,True,Monthly mess charge bundled in annual hostel fee

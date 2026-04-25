@@ -1,0 +1,11 @@
+id,bus_number,registration,make,model,capacity,route_id,year_of_purchase,is_ac,is_active
+bus-01,AITS-BUS-01,TS09EA1101,Tata Motors,Starbus Ultra,52,route-01,2018,False,True
+bus-02,AITS-BUS-02,TS09EA1102,Ashok Leyland,Viking,52,route-02,2019,False,True
+bus-03,AITS-BUS-03,TS09EA1103,Tata Motors,Starbus Ultra,52,route-03,2019,False,True
+bus-04,AITS-BUS-04,TS09EA1104,Volvo,B7R,45,route-04,2021,True,True
+bus-05,AITS-BUS-05,TS09EA1105,Ashok Leyland,Viking,52,route-05,2020,False,True
+bus-06,AITS-BUS-06,TS09EA1106,Tata Motors,Starbus Ultra,52,route-06,2020,False,True
+bus-07,AITS-BUS-07,TS09EA1107,Ashok Leyland,Viking,52,route-07,2018,False,True
+bus-08,AITS-BUS-08,TS09EA1108,Tata Motors,Starbus Ultra,52,route-08,2022,False,True
+bus-09,AITS-BUS-09,TS09EA1109,Volvo,B7R,45,route-09,2022,True,True
+bus-10,AITS-BUS-10,TS09EA1110,Ashok Leyland,Viking,52,route-10,2021,False,True

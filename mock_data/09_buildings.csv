@@ -1,0 +1,7 @@
+id,name,floors,primary_use
+bldg-a,Block A — Academic Block 1,4,"CSE, ET Departments"
+bldg-b,Block B — Academic Block 2,4,"ECE, EEE Departments"
+bldg-c,Block C — Academic Block 3,4,"MECH, CIVIL Departments"
+bldg-d,Block D — Administrative Block,2,"Principal Office, Admin, Finance, Exam Cell"
+bldg-e,Block E — Library & Seminar Block,3,"Library, Seminar Halls, Conference Rooms"
+bldg-f,Block F — Common Labs Block,2,"Physics Lab, Chemistry Lab, English Language Lab, Maths Resource Centre"

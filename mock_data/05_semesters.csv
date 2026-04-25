@@ -1,0 +1,9 @@
+id,semester_number,year_of_study,part,label,regulation
+sem-1,1,1,1,"Semester 1 (Year 1, Sem 1)",R22
+sem-2,2,1,2,"Semester 2 (Year 1, Sem 2)",R22
+sem-3,3,2,1,"Semester 3 (Year 2, Sem 1)",R22
+sem-4,4,2,2,"Semester 4 (Year 2, Sem 2)",R22
+sem-5,5,3,1,"Semester 5 (Year 3, Sem 1)",R22
+sem-6,6,3,2,"Semester 6 (Year 3, Sem 2)",R22
+sem-7,7,4,1,"Semester 7 (Year 4, Sem 1)",R22
+sem-8,8,4,2,"Semester 8 (Year 4, Sem 2)",R22

@@ -1,0 +1,7 @@
+id,name,gender,floors,has_ac_rooms,description,total_rooms,total_capacity
+hblk-boys-a,Boys Hostel Block A,Male,5,False,"Non-AC, I & II year male students",115,372
+hblk-boys-b,Boys Hostel Block B,Male,5,True,"AC/Non-AC, III & IV year male students",92,202
+hblk-boys-ann,Boys Hostel Annexe,Male,4,False,"Non-AC annexe overflow block, male students",90,280
+hblk-girls-c,Girls Hostel Block C,Female,5,False,"Non-AC, I & II year female students",115,372
+hblk-girls-d,Girls Hostel Block D,Female,5,True,"AC/Non-AC, III & IV year female students",92,202
+hblk-girls-ann,Girls Hostel Annexe,Female,4,False,"Non-AC annexe overflow block, female students",90,280

@@ -1,0 +1,133 @@
+id,building_id,floor,room_number,room_type,dept_code,capacity,has_ac,has_projector,description,is_active
+rm-a-g-01,bldg-a,0,A-G-01,classroom,CSE,65,False,True,CSE Year 1 Section A,True
+rm-a-g-02,bldg-a,0,A-G-02,classroom,CSE,65,False,True,CSE Year 1 Section B,True
+rm-a-g-03,bldg-a,0,A-G-03,classroom,CSE,65,False,True,CSE Year 2 Section A,True
+rm-a-g-04,bldg-a,0,A-G-04,classroom,CSE,65,False,True,CSE Year 2 Section B,True
+rm-a-1-01,bldg-a,1,A-1-01,classroom,CSE,65,False,True,CSE Year 3 Section A,True
+rm-a-1-02,bldg-a,1,A-1-02,classroom,CSE,65,False,True,CSE Year 3 Section B,True
+rm-a-1-03,bldg-a,1,A-1-03,classroom,CSE,65,False,True,CSE Year 4 Section A,True
+rm-a-1-04,bldg-a,1,A-1-04,classroom,CSE,65,False,True,CSE Year 4 Section B,True
+rm-a-1-hod,bldg-a,1,A-1-HOD,hod_room,CSE,10,True,False,CSE HOD Office,True
+rm-a-1-sr,bldg-a,1,A-1-SR,staff_room,CSE,30,True,False,CSE Faculty Staff Room,True
+rm-a-2-lab1,bldg-a,2,A-2-L01,lab,CSE,60,True,True,"Programming Lab 1 (C, Python)",True
+rm-a-2-lab2,bldg-a,2,A-2-L02,lab,CSE,60,True,True,"Programming Lab 2 (Java, Web)",True
+rm-a-2-lab3,bldg-a,2,A-2-L03,lab,CSE,60,True,True,Data Structures & Algorithms Lab,True
+rm-a-2-lab4,bldg-a,2,A-2-L04,lab,CSE,60,True,True,Networks & OS Lab,True
+rm-a-3-01,bldg-a,3,A-3-01,classroom,ET,65,False,True,IT Year 1 Section A,True
+rm-a-3-02,bldg-a,3,A-3-02,classroom,ET,65,False,True,IT Year 1 Section B,True
+rm-a-3-03,bldg-a,3,A-3-03,classroom,ET,65,False,True,CSM Year 1 Section A,True
+rm-a-3-04,bldg-a,3,A-3-04,classroom,ET,65,False,True,CSM Year 1 Section B,True
+rm-a-3-05,bldg-a,3,A-3-05,classroom,ET,65,False,True,IT Year 2 Section A,True
+rm-a-3-06,bldg-a,3,A-3-06,classroom,ET,65,False,True,IT Year 2 Section B,True
+rm-a-3-hod,bldg-a,3,A-3-HOD,hod_room,ET,10,True,False,ET HOD Office,True
+rm-a-3-sr,bldg-a,3,A-3-SR,staff_room,ET,40,True,False,ET Faculty Staff Room,True
+rm-ea-001,bldg-a,1,EA-001,classroom,ET,65,False,True,CSM Year 2 Section A,True
+rm-ea-002,bldg-a,1,EA-002,classroom,ET,65,False,True,CSM Year 2 Section B,True
+rm-ea-003,bldg-a,1,EA-003,classroom,ET,65,False,True,CSD Year 1 Section A,True
+rm-ea-004,bldg-a,1,EA-004,classroom,ET,65,False,True,CSO Year 1 Section A,True
+rm-ea-005,bldg-a,1,EA-005,classroom,ET,65,False,True,AIML Year 1 Section A,True
+rm-ea-006,bldg-a,1,EA-006,classroom,ET,65,False,True,AIML Year 1 Section B,True
+rm-ea-007,bldg-a,1,EA-007,classroom,ET,65,False,True,IoT Year 1 Section A,True
+rm-ea-008,bldg-a,1,EA-008,classroom,ET,65,False,True,IT Year 3 Section A,True
+rm-ea-009,bldg-a,2,EA-009,classroom,ET,65,False,True,IT Year 3 Section B,True
+rm-ea-010,bldg-a,2,EA-010,classroom,ET,65,False,True,CSM Year 3 Section A,True
+rm-ea-011,bldg-a,2,EA-011,classroom,ET,65,False,True,CSM Year 3 Section B,True
+rm-ea-012,bldg-a,2,EA-012,classroom,ET,65,False,True,CSD Year 2 Section A,True
+rm-ea-013,bldg-a,2,EA-013,classroom,ET,65,False,True,CSO Year 2 Section A,True
+rm-ea-014,bldg-a,2,EA-014,classroom,ET,65,False,True,AIML Year 2 Section A,True
+rm-ea-015,bldg-a,2,EA-015,classroom,ET,65,False,True,AIML Year 2 Section B,True
+rm-ea-016,bldg-a,2,EA-016,classroom,ET,65,False,True,IoT Year 2 Section A,True
+rm-ea-017,bldg-a,3,EA-017,classroom,ET,65,False,True,IT Year 4 Section A,True
+rm-ea-018,bldg-a,3,EA-018,classroom,ET,65,False,True,IT Year 4 Section B,True
+rm-ea-019,bldg-a,3,EA-019,classroom,ET,65,False,True,CSM Year 4 Section A,True
+rm-ea-020,bldg-a,3,EA-020,classroom,ET,65,False,True,CSM Year 4 Section B,True
+rm-ea-021,bldg-a,3,EA-021,classroom,ET,65,False,True,CSD Year 3 Section A,True
+rm-ea-022,bldg-a,3,EA-022,classroom,ET,65,False,True,CSO Year 3 Section A,True
+rm-ea-023,bldg-a,3,EA-023,classroom,ET,65,False,True,AIML Year 3 Section A,True
+rm-ea-024,bldg-a,3,EA-024,classroom,ET,65,False,True,AIML Year 3 Section B,True
+rm-ea-025,bldg-a,4,EA-025,classroom,ET,65,False,True,IoT Year 3 Section A,True
+rm-ea-026,bldg-a,4,EA-026,classroom,ET,65,False,True,CSD Year 4 Section A,True
+rm-ea-027,bldg-a,4,EA-027,classroom,ET,65,False,True,CSO Year 4 Section A,True
+rm-ea-028,bldg-a,4,EA-028,classroom,ET,65,False,True,AIML Year 4 Section A,True
+rm-ea-029,bldg-a,4,EA-029,classroom,ET,65,False,True,AIML Year 4 Section B,True
+rm-ea-030,bldg-a,4,EA-030,classroom,ET,65,False,True,IoT Year 4 Section A,True
+rm-a-lab-et-01,bldg-a,2,A-ETL-01,lab,ET,40,True,True,"AI/ML Lab — TensorFlow, PyTorch workstations",True
+rm-a-lab-et-02,bldg-a,2,A-ETL-02,lab,ET,40,True,True,"Data Science Lab — R Studio, Jupyter, Tableau",True
+rm-a-lab-et-03,bldg-a,2,A-ETL-03,lab,ET,40,True,True,"Cyber Security Lab — Kali Linux, Wireshark, Metasploit",True
+rm-a-lab-et-04,bldg-a,2,A-ETL-04,lab,ET,40,True,True,"IoT Lab — Arduino, Raspberry Pi, Sensors",True
+rm-a-lab-et-05,bldg-a,2,A-ETL-05,lab,ET,40,True,True,"Web & Cloud Lab — AWS, GCP sandboxed access",True
+rm-a-lab-et-06,bldg-a,2,A-ETL-06,lab,ET,40,True,True,Deep Learning Lab — GPU workstations,True
+rm-a-lab-et-07,bldg-a,2,A-ETL-07,lab,ET,40,True,True,"NLP & Vision Lab — NLP toolkits, OpenCV",True
+rm-a-lab-et-08,bldg-a,2,A-ETL-08,lab,ET,40,True,True,Project Lab — ET — Final year project workspace,True
+rm-b-01,bldg-b,0,B-01,classroom,ECE,65,False,True,ECE Year 1 Sec A,True
+rm-b-02,bldg-b,0,B-02,classroom,ECE,65,False,True,ECE Year 1 Sec B,True
+rm-b-03,bldg-b,0,B-03,classroom,ECE,65,False,True,ECE Year 2 Sec A,True
+rm-b-04,bldg-b,0,B-04,classroom,ECE,65,False,True,ECE Year 2 Sec B,True
+rm-b-05,bldg-b,1,B-05,classroom,ECE,65,False,True,ECE Year 3 Sec A,True
+rm-b-06,bldg-b,1,B-06,classroom,ECE,65,False,True,ECE Year 3 Sec B,True
+rm-b-07,bldg-b,1,B-07,classroom,ECE,65,False,True,ECE Year 4 Sec A,True
+rm-b-08,bldg-b,1,B-08,classroom,ECE,65,False,True,ECE Year 4 Sec B,True
+rm-b-09,bldg-b,2,B-09,classroom,EEE,65,False,True,EEE Year 1 Sec A,True
+rm-b-10,bldg-b,2,B-10,classroom,EEE,65,False,True,EEE Year 2 Sec A,True
+rm-b-11,bldg-b,2,B-11,classroom,EEE,65,False,True,EEE Year 3 Sec A,True
+rm-b-12,bldg-b,2,B-12,classroom,EEE,65,False,True,EEE Year 4 Sec A,True
+rm-b-hod-ece,bldg-b,1,B-HOD-ECE,hod_room,ECE,10,True,False,ECE HOD Office,True
+rm-b-hod-eee,bldg-b,2,B-HOD-EEE,hod_room,EEE,10,True,False,EEE HOD Office,True
+rm-b-sr-ece,bldg-b,1,B-SR-ECE,staff_room,ECE,30,True,False,ECE Staff Room,True
+rm-b-sr-eee,bldg-b,2,B-SR-EEE,staff_room,EEE,20,True,False,EEE Staff Room,True
+rm-b-lab-01,bldg-b,3,B-L01,lab,ECE,40,False,True,Electronics Devices Lab,True
+rm-b-lab-02,bldg-b,3,B-L02,lab,ECE,40,False,True,Digital Electronics Lab,True
+rm-b-lab-03,bldg-b,3,B-L03,lab,ECE,40,False,True,Signals & Systems Lab,True
+rm-b-lab-04,bldg-b,3,B-L04,lab,ECE,40,False,True,Communication Systems Lab,True
+rm-b-lab-05,bldg-b,3,B-L05,lab,ECE,40,False,True,VLSI & HDL Lab,True
+rm-b-lab-06,bldg-b,3,B-L06,lab,EEE,40,False,True,Electrical Machines Lab 1,True
+rm-b-lab-07,bldg-b,3,B-L07,lab,EEE,40,False,True,Electrical Machines Lab 2,True
+rm-b-lab-08,bldg-b,3,B-L08,lab,EEE,40,False,True,Power Electronics Lab,True
+rm-b-lab-09,bldg-b,3,B-L09,lab,EEE,40,False,True,Control Systems Lab,True
+rm-b-lab-10,bldg-b,3,B-L10,lab,EEE,40,False,True,Measurement & Instrumentation Lab,True
+rm-c-01,bldg-c,0,C-01,classroom,MECH,65,False,True,MECH Year 1 Sec A,True
+rm-c-02,bldg-c,0,C-02,classroom,MECH,65,False,True,MECH Year 1 Sec B,True
+rm-c-03,bldg-c,0,C-03,classroom,MECH,65,False,True,MECH Year 2 Sec A,True
+rm-c-04,bldg-c,0,C-04,classroom,MECH,65,False,True,MECH Year 2 Sec B,True
+rm-c-05,bldg-c,1,C-05,classroom,MECH,65,False,True,MECH Year 3 Sec A,True
+rm-c-06,bldg-c,1,C-06,classroom,MECH,65,False,True,MECH Year 3 Sec B,True
+rm-c-07,bldg-c,1,C-07,classroom,MECH,65,False,True,MECH Year 4 Sec A,True
+rm-c-08,bldg-c,1,C-08,classroom,MECH,65,False,True,MECH Year 4 Sec B,True
+rm-c-09,bldg-c,2,C-09,classroom,CIVIL,65,False,True,CIVIL Year 1 Sec A,True
+rm-c-10,bldg-c,2,C-10,classroom,CIVIL,65,False,True,CIVIL Year 2 Sec A,True
+rm-c-11,bldg-c,2,C-11,classroom,CIVIL,65,False,True,CIVIL Year 3 Sec A,True
+rm-c-12,bldg-c,2,C-12,classroom,CIVIL,65,False,True,CIVIL Year 4 Sec A,True
+rm-c-hod-mech,bldg-c,1,C-HOD-MECH,hod_room,MECH,10,True,False,MECH HOD Office,True
+rm-c-hod-civil,bldg-c,2,C-HOD-CIVIL,hod_room,CIVIL,10,True,False,CIVIL HOD Office,True
+rm-c-sr-mech,bldg-c,1,C-SR-MECH,staff_room,MECH,30,True,False,MECH Staff Room,True
+rm-c-sr-civil,bldg-c,2,C-SR-CIVIL,staff_room,CIVIL,20,True,False,CIVIL Staff Room,True
+rm-c-lab-01,bldg-c,3,C-L01,lab,MECH,40,False,True,Engineering Workshop,True
+rm-c-lab-02,bldg-c,3,C-L02,lab,MECH,40,False,True,Manufacturing Processes Lab,True
+rm-c-lab-03,bldg-c,3,C-L03,lab,MECH,40,False,True,Fluid Mechanics Lab,True
+rm-c-lab-04,bldg-c,3,C-L04,lab,MECH,40,False,True,Thermodynamics & Heat Transfer Lab,True
+rm-c-lab-05,bldg-c,3,C-L05,lab,MECH,40,False,True,CAD/CAM Lab,True
+rm-c-lab-06,bldg-c,3,C-L06,lab,MECH,40,False,True,Metrology & Measurement Lab,True
+rm-c-lab-07,bldg-c,3,C-L07,lab,CIVIL,40,False,True,Strength of Materials Lab,True
+rm-c-lab-08,bldg-c,3,C-L08,lab,CIVIL,40,False,True,Geotechnical Engineering Lab,True
+rm-c-lab-09,bldg-c,3,C-L09,lab,CIVIL,40,False,True,Surveying Lab,True
+rm-c-lab-10,bldg-c,3,C-L10,lab,CIVIL,40,False,True,Concrete Technology Lab,True
+rm-c-lab-11,bldg-c,3,C-L11,lab,CIVIL,40,False,True,Environmental Engineering Lab,True
+rm-c-lab-12,bldg-c,3,C-L12,lab,MECH,40,False,True,Drawing Hall — MECH/CIVIL,True
+rm-d-principal,bldg-d,0,D-PRI,office,ADMIN,15,True,False,Principal's Office,True
+rm-d-vprincipal,bldg-d,0,D-VP,office,ADMIN,10,True,False,Vice Principal's Office,True
+rm-d-chairman,bldg-d,0,D-CHR,office,ADMIN,20,True,False,Chairman / Director's Office,True
+rm-d-admin,bldg-d,0,D-ADM,office,ADMIN,20,True,False,Administrative Office,True
+rm-d-exam,bldg-d,1,D-EXM,office,ADMIN,15,True,False,Exam Cell,True
+rm-d-finance,bldg-d,1,D-FIN,office,ADMIN,15,True,False,Finance / Fee Collection Office,True
+rm-d-conf1,bldg-d,1,D-CF1,conference_room,ADMIN,30,True,True,Board Room / Conference Hall,True
+rm-d-transport,bldg-d,0,D-TRP,office,ADMIN,8,False,False,Transport In-charge Office,True
+rm-e-lib-main,bldg-e,0,E-LIB,library,COMMON,200,True,False,Main Library — Ground Floor,True
+rm-e-lib-digital,bldg-e,1,E-DLIB,library,COMMON,60,True,True,Digital Library / e-Resource Centre,True
+rm-e-sem1,bldg-e,1,E-SH1,seminar_hall,COMMON,150,True,True,Seminar Hall 1,True
+rm-e-sem2,bldg-e,2,E-SH2,seminar_hall,COMMON,150,True,True,Seminar Hall 2,True
+rm-e-aud,bldg-e,2,E-AUD,auditorium,COMMON,800,True,True,College Auditorium — AcadMix Arena,True
+rm-e-conf2,bldg-e,1,E-CF2,conference_room,COMMON,40,True,True,Faculty Conference Room,True
+rm-f-phy-lab,bldg-f,0,F-PHY,lab,COMMON,40,False,True,Engineering Physics Lab,True
+rm-f-chem-lab,bldg-f,0,F-CHM,lab,COMMON,40,False,True,Engineering Chemistry Lab,True
+rm-f-eng-lab,bldg-f,1,F-ENG,lab,COMMON,60,True,True,English Language & Communication Lab,True
+rm-f-maths,bldg-f,1,F-MAT,seminar_hall,COMMON,60,False,True,Mathematics Resource Centre,True

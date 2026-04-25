@@ -1,0 +1,29 @@
+id,day_of_week,day_number,meal_type,menu_description,is_veg_option_available,is_nonveg_option_available,applies_to
+menu-1-bre,Monday,1,Breakfast,Idli + Sambar + Chutney,True,False,All Hostel Students
+menu-1-lun,Monday,1,Lunch,Rice + Dal + Rajma + Salad,True,True,All Hostel Students
+menu-1-eve,Monday,1,Evening Snacks,Mirchi Bajji + Tea,True,False,All Hostel Students
+menu-1-din,Monday,1,Dinner,Chapati + Dal Makhani + Rice,True,True,All Hostel Students
+menu-2-bre,Tuesday,2,Breakfast,Dosa + Chutney + Sambar,True,False,All Hostel Students
+menu-2-lun,Tuesday,2,Lunch,Rice + Sambar + Rasam + Papad,True,True,All Hostel Students
+menu-2-eve,Tuesday,2,Evening Snacks,Samosa + Chai,True,False,All Hostel Students
+menu-2-din,Tuesday,2,Dinner,Rice + Egg Curry + Papad,True,True,All Hostel Students
+menu-3-bre,Wednesday,3,Breakfast,Upma + Banana,True,False,All Hostel Students
+menu-3-lun,Wednesday,3,Lunch,Rice + Chicken Curry + Curd,True,True,All Hostel Students
+menu-3-eve,Wednesday,3,Evening Snacks,Bread Pakora + Coffee,True,False,All Hostel Students
+menu-3-din,Wednesday,3,Dinner,Roti + Paneer Butter Masala,True,True,All Hostel Students
+menu-4-bre,Thursday,4,Breakfast,Puri + Aloo Curry,True,False,All Hostel Students
+menu-4-lun,Thursday,4,Lunch,Biryani + Raita + Boiled Egg,True,True,All Hostel Students
+menu-4-eve,Thursday,4,Evening Snacks,Banana + Peanuts,True,False,All Hostel Students
+menu-4-din,Thursday,4,Dinner,Rice + Mutton Curry + Curd,True,True,All Hostel Students
+menu-5-bre,Friday,5,Breakfast,Chapati + Sabzi,True,False,All Hostel Students
+menu-5-lun,Friday,5,Lunch,Rice + Dal Tadka + Mixed Veg,True,True,All Hostel Students
+menu-5-eve,Friday,5,Evening Snacks,Vada Pav + Juice,True,False,All Hostel Students
+menu-5-din,Friday,5,Dinner,Chapati + Mixed Veg + Dal,True,True,All Hostel Students
+menu-6-bre,Saturday,6,Breakfast,Pesarattu + Ginger Chutney,True,False,All Hostel Students
+menu-6-lun,Saturday,6,Lunch,Rice + Fish Curry + Pickle,True,True,All Hostel Students
+menu-6-eve,Saturday,6,Evening Snacks,Biscuits + Tea,True,False,All Hostel Students
+menu-6-din,Saturday,6,Dinner,Fried Rice + Manchurian + Soup,True,True,All Hostel Students
+menu-7-bre,Sunday,7,Breakfast,Bread Toast + Omelette,True,False,All Hostel Students
+menu-7-lun,Sunday,7,Lunch,Rice + Chole + Chapati + Salad,True,True,All Hostel Students
+menu-7-eve,Sunday,7,Evening Snacks,Poha + Chai,True,False,All Hostel Students
+menu-7-din,Sunday,7,Dinner,Rice + Sambar + Rasam + Sweet,True,True,All Hostel Students

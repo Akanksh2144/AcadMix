@@ -1,0 +1,5 @@
+id,slab_label,min_km,max_km,annual_fee_inr
+slab-1,0-10km,0,10,12000
+slab-2,10-20km,10,20,18000
+slab-3,20-30km,20,30,24000
+slab-4,30km+,30,999,30000

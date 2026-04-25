@@ -1,0 +1,11 @@
+id,route_number,route_name,origin,destination,distance_km,fare_slab,morning_departure,evening_departure,stops
+route-01,R01,Secunderabad – Kompally – AITS,Secunderabad Bus Stand,AITS Campus,32,30km+,07:00,17:30,Secunderabad → Trimulgherry → Malkajgiri → Yapral → Kompally → Quthbullapur → Kandlakoya → AITS
+route-02,R02,Dilsukhnagar – LB Nagar – AITS,Dilsukhnagar,AITS Campus,38,30km+,06:45,17:30,Dilsukhnagar → LB Nagar → Uppal → ECIL → Neredmet → Alwal → Medchal → Kandlakoya → AITS
+route-03,R03,Ameerpet – Kukatpally – AITS,Ameerpet,AITS Campus,28,20-30km,07:00,17:30,Ameerpet → SR Nagar → Kukatpally → KPHB → Bachupally → Nizampet → Medchal → Kandlakoya → AITS
+route-04,R04,Miyapur – Bachupally – AITS,Miyapur Metro,AITS Campus,22,20-30km,07:15,17:30,Miyapur → Chandanagar → Pragathi Nagar → Bachupally → Medchal Chowrasta → Kandlakoya → AITS
+route-05,R05,Sainikpuri – Alwal – AITS,Sainikpuri,AITS Campus,18,10-20km,07:20,17:30,Sainikpuri → AS Rao Nagar → Neredmet → Alwal → Medchal → Kandlakoya → AITS
+route-06,R06,Medchal Town – AITS,Medchal Town,AITS Campus,8,0-10km,07:45,17:30,Medchal MMTS → Medchal Market → Medchal Chowrasta → Kandlakoya → AITS
+route-07,R07,Quthbullapur – Dundigal – AITS,Quthbullapur,AITS Campus,14,10-20km,07:30,17:30,Quthbullapur → BHEL Township → Dundigal → Medchal → Kandlakoya → AITS
+route-08,R08,Bolarum – Hakimpet – AITS,Bolarum,AITS Campus,20,20-30km,07:15,17:30,Bolarum → Hakimpet → Lalapet → Alwal → Medchal → Kandlakoya → AITS
+route-09,R09,Jeedimetla – Suraram – AITS,Jeedimetla,AITS Campus,16,10-20km,07:25,17:30,Jeedimetla → IDA Jeedimetla → Suraram → Bollaram → Medchal → Kandlakoya → AITS
+route-10,R10,Patancheru – Isnapur – AITS,Patancheru,AITS Campus,35,30km+,06:50,17:30,Patancheru → Isnapur → Sangareddy Bypass → Dundigal → Medchal → Kandlakoya → AITS
