@@ -271,16 +271,6 @@ const LoginPage = ({ onLogin }) => {
                   </div>
                 </motion.div>
               </div>
-
-              {/* Collab Label */}
-              <motion.p
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45, duration: 0.4 }}
-                className="mt-3 text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-400 dark:text-slate-500"
-              >
-                Powered by AcadMix
-              </motion.p>
             </motion.div>
           )}
 
