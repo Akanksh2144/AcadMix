@@ -359,7 +359,7 @@ const LoginPage = ({ onLogin }) => {
                   <div className="relative">
                     <UserCircle size={18} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                     <input data-testid="college-id-input" type="text" value={collegeId} onChange={(e) => setCollegeId(e.target.value.toUpperCase())}
-                      placeholder="e.g., 22WJ8A6745, T001, A001" className="soft-input w-full pl-12 pr-4" />
+                      placeholder="Enter your College ID" className="soft-input w-full pl-12 pr-4" />
                   </div>
                 </div>
                 <div>
