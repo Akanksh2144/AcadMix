@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { authAPI } from './services/api';
 import {
-  LayoutDashboard, Building2, Bed, Receipt, LogOut, Shield, Command
+  LayoutDashboard, Building2, Bed, Receipt, LogOut, Shield, Command,
+  Moon, Sun
 } from 'lucide-react';
 import './index.css';
 
@@ -37,7 +38,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'billing', label: 'Billing', path: '/billing', icon: <Receipt size={18} /> },
 ];
 
-function Sidebar({ user, onLogout }: { user: any; onLogout: () => void }) {
+function Sidebar({ user, onLogout, theme, onToggleTheme }: { user: any; onLogout: () => void; theme: string; onToggleTheme: () => void }) {
   const location = useLocation();
 
   const isActive = (path: string) => {
@@ -85,8 +86,28 @@ function Sidebar({ user, onLogout }: { user: any; onLogout: () => void }) {
         ))}
       </nav>
 
+      {/* Theme Toggle */}
+      <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>
+          {theme === 'dark' ? 'Dark' : 'Light'} Mode
+        </span>
+        <button
+          className="theme-toggle"
+          onClick={onToggleTheme}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          id="theme-toggle-btn"
+        >
+          <div className={`theme-toggle-knob ${theme === 'light' ? 'light' : ''}`}>
+            {theme === 'dark'
+              ? <Moon size={11} color="white" />
+              : <Sun size={11} color="white" />
+            }
+          </div>
+        </button>
+      </div>
+
       {/* User */}
-      <div style={{ padding: '16px 12px', borderTop: '1px solid var(--border)' }}>
+      <div style={{ padding: '12px 12px 16px', borderTop: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 8px' }}>
           <div style={{
             width: 34, height: 34, borderRadius: 10,
@@ -126,7 +147,18 @@ function Sidebar({ user, onLogout }: { user: any; onLogout: () => void }) {
 function AppShell() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [theme, setTheme] = useState(() => localStorage.getItem('admin_theme') || 'dark');
   const navigate = useNavigate();
+
+  // Sync data-theme attribute on document root
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('admin_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  }, []);
 
   const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('admin_token');
@@ -182,7 +214,7 @@ function AppShell() {
   // Authenticated → show dashboard layout
   return (
     <div className="app-layout">
-      <Sidebar user={user} onLogout={handleLogout} />
+      <Sidebar user={user} onLogout={handleLogout} theme={theme} onToggleTheme={toggleTheme} />
       <main className="main-content">
         <Suspense fallback={
           <div style={{ padding: 40, display: 'flex', justifyContent: 'center' }}>
@@ -198,7 +230,7 @@ function AppShell() {
           </Routes>
         </Suspense>
       </main>
-      <Toaster position="bottom-right" theme="dark" richColors />
+      <Toaster position="bottom-right" theme={theme === 'dark' ? 'dark' : 'light'} richColors />
     </div>
   );
 }
