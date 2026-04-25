@@ -215,19 +215,19 @@ const LoginPage = ({ onLogin }) => {
               transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.05 }}
               className="flex flex-col items-center mb-6"
             >
-              <div className="flex items-center gap-4">
-                {/* AcadMix Logo */}
+              <div className="flex items-center gap-5">
+                {/* AcadMix Wordmark Logo */}
                 <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 dark:shadow-indigo-500/10"
-                  style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
                   title="AcadMix"
                 >
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6.5 6.5L12 2L17.5 6.5M6.5 6.5L2 12L6.5 17.5M6.5 6.5L12 12M17.5 6.5L22 12L17.5 17.5M17.5 6.5L12 12M6.5 17.5L12 22L17.5 17.5M6.5 17.5L12 12M17.5 17.5L12 12" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <img
+                    src="/logos/acadmix-wordmark.png"
+                    alt="AcadMix"
+                    className="h-10 sm:h-12 w-auto object-contain drop-shadow-sm"
+                  />
                 </motion.div>
 
                 {/* × Symbol */}
@@ -235,24 +235,40 @@ const LoginPage = ({ onLogin }) => {
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.35 }}
-                  className="text-xl font-light text-slate-300 dark:text-slate-500 select-none"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  className="text-2xl font-extralight text-slate-300 dark:text-slate-600 select-none"
                 >
                   ×
                 </motion.span>
 
-                {/* College Logo / Initial Badge */}
+                {/* College Logo — use emblem if available, fallback to initial badge */}
                 <motion.div
-                  initial={{ scale: 0, rotate: 180 }}
-                  animate={{ scale: 1, rotate: 0 }}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 dark:shadow-purple-500/10"
-                  style={{ background: 'linear-gradient(135deg, #8b5cf6, #a855f7)' }}
                   title={tenant.tenantName || tenant.tenantSlug?.toUpperCase()}
                 >
-                  <span className="text-white font-extrabold text-lg tracking-tight">
-                    {(tenant.tenantSlug || '').slice(0, 3).toUpperCase()}
-                  </span>
+                  {/* Check for tenant-specific logo, fallback to gradient badge */}
+                  <img
+                    src={`/logos/${tenant.tenantSlug}-emblem.png`}
+                    alt={tenant.tenantName || tenant.tenantSlug?.toUpperCase() || ''}
+                    className="h-12 sm:h-14 w-auto object-contain drop-shadow-sm"
+                    onError={(e) => {
+                      // Fallback: replace broken img with a gradient badge via parent swap
+                      const target = e.currentTarget;
+                      target.style.display = 'none';
+                      const fallback = target.nextElementSibling as HTMLElement;
+                      if (fallback) fallback.style.display = 'flex';
+                    }}
+                  />
+                  {/* Fallback initial badge (hidden by default, shown on img error) */}
+                  <div
+                    className="w-14 h-14 rounded-2xl items-center justify-center shadow-lg shadow-purple-500/20 dark:shadow-purple-500/10"
+                    style={{ display: 'none', background: 'linear-gradient(135deg, #8b5cf6, #a855f7)' }}
+                  >
+                    <span className="text-white font-extrabold text-lg tracking-tight">
+                      {(tenant.tenantSlug || '').slice(0, 4).toUpperCase()}
+                    </span>
+                  </div>
                 </motion.div>
               </div>
 
@@ -261,9 +277,9 @@ const LoginPage = ({ onLogin }) => {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.45, duration: 0.4 }}
-                className="mt-3 text-xs font-semibold tracking-widest uppercase text-slate-400 dark:text-slate-500"
+                className="mt-3 text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-400 dark:text-slate-500"
               >
-                AcadMix <span className="text-indigo-400 dark:text-indigo-500 mx-1">×</span> {tenant.tenantName || tenant.tenantSlug?.toUpperCase()}
+                Powered by AcadMix
               </motion.p>
             </motion.div>
           )}
