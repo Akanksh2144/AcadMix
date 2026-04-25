@@ -316,8 +316,13 @@ class StudyMaterial(Base, SoftDeleteMixin):
 
 
 class CodingChallenge(Base, SoftDeleteMixin):
+    """Coding challenges.
+    college_id NULL = platform-curated content (visible to all tenants).
+    college_id set  = college-specific content (tenant-scoped).
+    """
     __tablename__ = "coding_challenges"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)  # NULL = platform
     title = Column(String, nullable=False)
     description = Column(String, nullable=False)
     difficulty = Column(String, nullable=False) # easy, medium, hard
@@ -329,8 +334,13 @@ class CodingChallenge(Base, SoftDeleteMixin):
 
 
 class PremiumCodingChallenge(Base, SoftDeleteMixin):
+    """Premium coding challenges with test cases and AI context.
+    college_id NULL = platform-curated content (visible to all tenants).
+    college_id set  = college-specific content (tenant-scoped).
+    """
     __tablename__ = "premium_coding_challenges"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)  # NULL = platform
     slug = Column(String, unique=True, index=True, nullable=False)
     title = Column(String, nullable=False)
     description = Column(String, nullable=False)

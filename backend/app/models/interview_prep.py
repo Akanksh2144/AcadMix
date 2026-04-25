@@ -108,10 +108,14 @@ class CompanyQuestionBank(Base, SoftDeleteMixin):
 
 
 class AptitudeQuestion(Base, SoftDeleteMixin):
-    """Quantitative, Logical, and Verbal reasoning database."""
+    """Quantitative, Logical, and Verbal reasoning database.
+    college_id NULL = platform-curated content (visible to all tenants).
+    college_id set  = college-specific content (tenant-scoped).
+    """
     __tablename__ = "aptitude_questions"
 
     id             = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id     = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)  # NULL = platform
     category       = Column(String, index=True, nullable=False)                         # Quantitative / Logical / Verbal
     subcategory    = Column(String, nullable=True)                                      # Time & Work, Puzzles, Grammar
     difficulty     = Column(String, nullable=False, server_default='medium')            # easy/medium/hard
@@ -123,10 +127,14 @@ class AptitudeQuestion(Base, SoftDeleteMixin):
 
 
 class CompanyInterviewExperience(Base, SoftDeleteMixin):
-    """Curated, read-only interview records from past years."""
+    """Curated, read-only interview records from past years.
+    college_id NULL = global community content (visible to all tenants).
+    college_id set  = college-specific content (per college permission).
+    """
     __tablename__ = "company_interview_experiences"
 
     id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id       = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)  # NULL = global community
     company_name     = Column(String, index=True, nullable=False)
     target_role      = Column(String, index=True, nullable=False)                       # SDE-1, Data Analyst
     year             = Column(Integer, nullable=False)
@@ -136,10 +144,14 @@ class CompanyInterviewExperience(Base, SoftDeleteMixin):
 
 
 class SQLProblem(Base, SoftDeleteMixin):
-    """DataLemur-style SQL Practice challenges"""
+    """DataLemur-style SQL Practice challenges.
+    college_id NULL = platform-curated content (visible to all tenants).
+    college_id set  = college-specific content (tenant-scoped).
+    """
     __tablename__ = "sql_problems"
 
     id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id       = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)  # NULL = platform
     title            = Column(String, nullable=False)
     dataset_theme    = Column(String, nullable=False)                                   # E-commerce, HR, Social Media
     company_tag      = Column(String, nullable=True)                                    # 'Amazon'
