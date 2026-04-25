@@ -97,7 +97,7 @@ async def platform_overview(
         result = await db.execute(text(query))
         stats[key] = result.scalar()
     
-    return {"data": stats}
+    return stats
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -130,7 +130,7 @@ async def list_colleges(
             "hostel_count": row[9],
         })
     
-    return {"data": colleges}
+    return colleges
 
 
 @router.post("/colleges")
@@ -224,7 +224,7 @@ async def college_deep_stats(
         result = await db.execute(text(query), {"cid": college_id})
         stats[key] = [dict(row._mapping) for row in result.fetchall()]
     
-    return {"data": stats}
+    return stats
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -242,7 +242,7 @@ async def get_college_modules(
         "SELECT module_name, is_enabled FROM college_modules WHERE college_id = :cid"
     ), {"cid": college_id})
     modules = {row[0]: row[1] for row in result.fetchall()}
-    return {"data": modules}
+    return modules
 
 
 @router.put("/colleges/{college_id}/modules")
@@ -292,7 +292,7 @@ async def list_hostels(
         """))
     
     hostels = [dict(row._mapping) for row in result.fetchall()]
-    return {"data": hostels}
+    return hostels
 
 
 @router.post("/hostels")
@@ -328,7 +328,7 @@ async def list_hostel_rooms(
         ORDER BY r.floor, r.room_number
     """), {"hid": hostel_id})
     rooms = [dict(row._mapping) for row in result.fetchall()]
-    return {"data": rooms}
+    return rooms
 
 
 @router.post("/rooms")
@@ -367,7 +367,7 @@ async def get_room_beds(
     room_result = await db.execute(text("SELECT * FROM rooms WHERE id = :rid"), {"rid": room_id})
     room = dict(room_result.fetchone()._mapping) if room_result else None
     
-    return {"data": {"room": room, "beds": beds}}
+    return {"room": room, "beds": beds}
 
 
 @router.post("/rooms/{room_id}/beds")
@@ -429,7 +429,7 @@ async def list_room_templates(
         SELECT * FROM room_templates WHERE is_deleted = false ORDER BY name
     """))
     templates = [dict(row._mapping) for row in result.fetchall()]
-    return {"data": templates}
+    return templates
 
 
 @router.post("/room-templates")
@@ -503,4 +503,4 @@ async def billing_overview(
             "users": row[3], "total_fees": float(row[4]),
         })
     
-    return {"data": tenants}
+    return tenants
