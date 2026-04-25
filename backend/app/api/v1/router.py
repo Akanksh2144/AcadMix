@@ -9,7 +9,7 @@ from app.routers import (
     interview, resume, hostel, career_tools, iot_webhooks, transport, transport_admin, library,
     visitors, websocket, notifications, audit, insights, pre_enroll, modules, resume_vault, outcomes, assessments, placement_prep, accreditation
 )
-from app.routers import nodal_routes
+from app.routers import nodal_routes, superadmin
 
 api_router = APIRouter()
 
@@ -84,3 +84,4 @@ api_router.include_router(modules.router, tags=["college_modules"])
 
 # Nodal Router (historical top-level route, now safely namespaced if possible, keeping legacy /api scope mostly)
 api_router.include_router(nodal_routes.nodal_router, tags=["nodal_officer"])
+api_router.include_router(superadmin.router, tags=["superadmin"])
