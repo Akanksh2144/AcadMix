@@ -226,7 +226,7 @@ const LoginPage = ({ onLogin }) => {
                   <img
                     src="/logos/acadmix-wordmark.png"
                     alt="AcadMix"
-                    className="h-10 sm:h-12 w-auto object-contain drop-shadow-sm"
+                    className="h-14 sm:h-16 w-auto object-contain drop-shadow-sm"
                   />
                 </motion.div>
 
@@ -235,7 +235,7 @@ const LoginPage = ({ onLogin }) => {
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.35 }}
-                  className="text-2xl font-extralight text-slate-300 dark:text-slate-600 select-none"
+                  className="text-3xl font-extralight text-slate-300 dark:text-slate-600 select-none"
                 >
                   ×
                 </motion.span>
@@ -251,7 +251,7 @@ const LoginPage = ({ onLogin }) => {
                   <img
                     src={`/logos/${tenant.tenantSlug}-emblem.png`}
                     alt={tenant.tenantName || tenant.tenantSlug?.toUpperCase() || ''}
-                    className="h-12 sm:h-14 w-auto object-contain drop-shadow-sm"
+                    className="h-16 sm:h-20 w-auto object-contain drop-shadow-sm"
                     onError={(e) => {
                       // Fallback: replace broken img with a gradient badge via parent swap
                       const target = e.currentTarget;
