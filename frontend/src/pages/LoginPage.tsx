@@ -207,6 +207,67 @@ const LoginPage = ({ onLogin }) => {
             </motion.div>
           </div>
 
+          {/* ─── Collab Signature: AcadMix × College ─── */}
+          {tenant.tenantSlug && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.05 }}
+              className="flex flex-col items-center mb-6"
+            >
+              <div className="flex items-center gap-4">
+                {/* AcadMix Logo */}
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 dark:shadow-indigo-500/10"
+                  style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+                  title="AcadMix"
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6.5 6.5L12 2L17.5 6.5M6.5 6.5L2 12L6.5 17.5M6.5 6.5L12 12M17.5 6.5L22 12L17.5 17.5M17.5 6.5L12 12M6.5 17.5L12 22L17.5 17.5M6.5 17.5L12 12M17.5 17.5L12 12" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </motion.div>
+
+                {/* × Symbol */}
+                <motion.span
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.35 }}
+                  className="text-xl font-light text-slate-300 dark:text-slate-500 select-none"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  ×
+                </motion.span>
+
+                {/* College Logo / Initial Badge */}
+                <motion.div
+                  initial={{ scale: 0, rotate: 180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 dark:shadow-purple-500/10"
+                  style={{ background: 'linear-gradient(135deg, #8b5cf6, #a855f7)' }}
+                  title={tenant.tenantName || tenant.tenantSlug?.toUpperCase()}
+                >
+                  <span className="text-white font-extrabold text-lg tracking-tight">
+                    {(tenant.tenantSlug || '').slice(0, 3).toUpperCase()}
+                  </span>
+                </motion.div>
+              </div>
+
+              {/* Collab Label */}
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45, duration: 0.4 }}
+                className="mt-3 text-xs font-semibold tracking-widest uppercase text-slate-400 dark:text-slate-500"
+              >
+                AcadMix <span className="text-indigo-400 dark:text-indigo-500 mx-1">×</span> {tenant.tenantName || tenant.tenantSlug?.toUpperCase()}
+              </motion.p>
+            </motion.div>
+          )}
+
           <div className="soft-card p-8 sm:p-10">
             <div className="flex justify-between items-center mb-1">
               <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
