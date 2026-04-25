@@ -79,7 +79,7 @@ class User(Base, SoftDeleteMixin):
     @property
     def profile_data(self):
         if self.profile:
-            return {
+            data = {
                 "department": self.profile.department,
                 "section": self.profile.section,
                 "batch": self.profile.batch,
@@ -100,7 +100,16 @@ class User(Base, SoftDeleteMixin):
                 "father_name": self.profile.father_name,
                 "mother_name": self.profile.mother_name,
                 "address": self.profile.address,
+                # NEP Compliance
+                "abc_id": self.profile.abc_id,
+                "enrollment_status": self.profile.enrollment_status,
             }
+            # Merge extra_data JSONB (parent_phone, community, religion, etc.)
+            if self.profile.extra_data and isinstance(self.profile.extra_data, dict):
+                for k, v in self.profile.extra_data.items():
+                    if k not in data:
+                        data[k] = v
+            return data
         return {}
 
 class UserProfile(Base, SoftDeleteMixin):

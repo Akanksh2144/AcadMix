@@ -366,7 +366,7 @@ class MarksService:
         return {"message": f"Uploaded {len(parsed_entries)} entries successfully."}
 
     async def get_student_cia(self, student_id: str, college_id: str, semester: Optional[int] = None, academic_year: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Fetch approved CIA marks for a student via normalized MarkSubmissionEntry."""
+        """Fetch approved CIA marks for a student, grouped by subject with components."""
         cache_key = f"marks:{college_id}:{student_id}:{semester or 'all'}"
         cached = await cached_response(cache_key)
         if cached:
@@ -388,16 +388,50 @@ class MarksService:
         result = await self.session.execute(stmt)
         rows = result.all()
 
-        out = [{
-            "subject_code": sub.subject_code,
-            "exam_type": sub.exam_type,
-            "component_id": sub.component_id,
-            "marks_obtained": mse.marks_obtained,
-            "max_marks": sub.max_marks,
-            "status": mse.status,
-            "date_recorded": str(sub.published_at or sub.reviewed_at or sub.created_at),
-        } for mse, sub in rows]
+        if not rows:
+            await cache_set(cache_key, [], ttl=259200)
+            return []
 
+        # Resolve subject_code -> subject_name via Course
+        subject_codes = list(set(sub.subject_code for _, sub in rows))
+        course_r = await self.session.execute(
+            select(models.Course).where(
+                models.Course.subject_code.in_(subject_codes),
+                models.Course.college_id == college_id,
+            )
+        )
+        course_map = {c.subject_code: c for c in course_r.scalars().all()}
+
+        # Group by subject_code
+        from collections import defaultdict
+        grouped: Dict[str, Dict[str, Any]] = {}
+        for mse, sub in rows:
+            key = sub.subject_code
+            if key not in grouped:
+                course = course_map.get(key)
+                grouped[key] = {
+                    "subject_code": key,
+                    "subject_name": course.name if course else key,
+                    "semester": sub.semester,
+                    "components": [],
+                    "total_cia": 0.0,
+                    "total_max": 0.0,
+                }
+            # Determine component name from exam_type
+            exam_label = sub.exam_type.upper().replace("MID1", "Mid Term 1").replace("MID2", "Mid Term 2").replace("ASSIGNMENT", "Assignment").replace("QUIZ", "Quiz")
+            if sub.component_id:
+                exam_label = f"{exam_label} ({sub.component_id})"
+
+            grouped[key]["components"].append({
+                "name": exam_label,
+                "type": sub.exam_type,
+                "marks_obtained": mse.marks_obtained,
+                "max_marks": sub.max_marks,
+            })
+            grouped[key]["total_cia"] += mse.marks_obtained or 0
+            grouped[key]["total_max"] += sub.max_marks or 0
+
+        out = list(grouped.values())
         await cache_set(cache_key, out, ttl=259200)
         return out
 
@@ -424,5 +458,5 @@ class MarksService:
             "faculty_name": u.name,
             "status": e.status or "draft",
             "max_marks": e.max_marks,
-            "created_at": str(e.created_at),
+            "created_at": str(e.submitted_at or e.reviewed_at or ""),
         } for e, u in entries]
