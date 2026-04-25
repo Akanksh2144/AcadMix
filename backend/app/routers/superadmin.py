@@ -76,10 +76,10 @@ async def platform_overview(
 ):
     """Global KPIs for the superadmin dashboard."""
     queries = {
-        "total_tenants": "SELECT COUNT(*) FROM colleges WHERE is_deleted = false",
-        "total_users": "SELECT COUNT(*) FROM users WHERE is_deleted = false",
-        "total_students": "SELECT COUNT(*) FROM users WHERE role = 'student' AND is_deleted = false",
-        "total_staff": "SELECT COUNT(*) FROM users WHERE role != 'student' AND is_deleted = false",
+        "total_tenants": "SELECT COUNT(*) FROM colleges WHERE is_deleted = false AND id != 'acadmix-platform'",
+        "total_users": "SELECT COUNT(*) FROM users WHERE is_deleted = false AND college_id != 'acadmix-platform'",
+        "total_students": "SELECT COUNT(*) FROM users WHERE role = 'student' AND is_deleted = false AND college_id != 'acadmix-platform'",
+        "total_staff": "SELECT COUNT(*) FROM users WHERE role NOT IN ('student','super_admin') AND is_deleted = false AND college_id != 'acadmix-platform'",
         "total_departments": "SELECT COUNT(*) FROM departments WHERE is_deleted = false",
         "total_courses": "SELECT COUNT(*) FROM courses WHERE is_deleted = false",
         "total_attendance": "SELECT COUNT(*) FROM attendance_records",
@@ -117,6 +117,7 @@ async def list_colleges(
             (SELECT COUNT(*) FROM departments d WHERE d.college_id = c.id AND d.is_deleted = false) as dept_count,
             (SELECT COUNT(*) FROM hostels h WHERE h.college_id = c.id AND h.is_deleted = false) as hostel_count
         FROM colleges c
+        WHERE c.id != 'acadmix-platform'
         ORDER BY c.created_at DESC
     """))
     
