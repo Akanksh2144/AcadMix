@@ -16,8 +16,7 @@ class ProgramOutcome(Base, SoftDeleteMixin):
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
     department_id = Column(String, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False)
     # college_id enables efficient multi-college queries without joining through departments.
-    # Nullable so existing records don't break — backfill via Alembic data migration.
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     code = Column(String, nullable=False)  # Example: "PO1"
     description = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -33,6 +32,7 @@ class CourseOutcome(Base, SoftDeleteMixin):
     """
     __tablename__ = "course_outcomes"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     course_id = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
     code = Column(String, nullable=False)  # Example: "CO1"
     description = Column(String, nullable=False)
@@ -50,6 +50,7 @@ class COPOMapping(Base, SoftDeleteMixin):
     """
     __tablename__ = "co_po_mappings"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     co_id = Column(String, ForeignKey("course_outcomes.id", ondelete="CASCADE"), nullable=False)
     po_id = Column(String, ForeignKey("program_outcomes.id", ondelete="CASCADE"), nullable=False)
     strength = Column(Integer, nullable=False)  # 1, 2, or 3

@@ -42,6 +42,7 @@ async def api_commit_assessment(
     """
     # 1. Insert parent assessment
     assessment = AIGeneratedAssessment(
+        college_id=user["college_id"],
         faculty_id=user["id"],
         course_id=course_id,
         type=payload.type,
@@ -56,6 +57,7 @@ async def api_commit_assessment(
     q_objects = []
     for q in payload.questions:
         aq = AssessmentQuestion(
+            college_id=user["college_id"],
             assessment_id=assessment.id,
             question_text=q.question_text,
             question_type=q.question_type,

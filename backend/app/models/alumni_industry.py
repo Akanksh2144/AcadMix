@@ -111,7 +111,7 @@ class AlumniEvent(Base, SoftDeleteMixin):
 class AlumniEventRegistration(Base, SoftDeleteMixin):
     """RSVP and attendance tracking for alumni events."""
     __tablename__ = "alumni_event_registrations"
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     id            = Column(String, primary_key=True, index=True, default=generate_uuid)
     event_id      = Column(String, ForeignKey("alumni_events.id", ondelete="CASCADE"), nullable=False, index=True)
     alumni_id     = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)

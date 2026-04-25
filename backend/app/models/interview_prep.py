@@ -162,6 +162,7 @@ class PlacementAttemptTracker(Base, SoftDeleteMixin):
     __tablename__ = "placement_attempt_trackers"
 
     id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id       = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     student_id       = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     module_type      = Column(String, nullable=False)                                   # 'aptitude', 'sql', 'company_bank'
     reference_id     = Column(String, nullable=False)                                   # Question ID / SQL ID

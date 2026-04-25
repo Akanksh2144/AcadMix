@@ -145,7 +145,8 @@ async def log_aptitude_attempt(
 ):
     """Log an aptitude question attempt"""
     attempt = PlacementAttemptTracker(
-        student_id=user["sub"],
+        college_id=user["college_id"],
+        student_id=user["id"],
         module_type='aptitude',
         reference_id=req["question_id"],
         is_correct=req["is_correct"],
@@ -164,7 +165,8 @@ async def log_sql_attempt(
 ):
     """Log an SQL Sandbox attempt"""
     attempt = PlacementAttemptTracker(
-        student_id=user["sub"],
+        college_id=user["college_id"],
+        student_id=user["id"],
         module_type='sql',
         reference_id=req["problem_id"],
         is_correct=req["is_correct"],

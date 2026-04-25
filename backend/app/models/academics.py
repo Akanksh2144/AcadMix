@@ -48,7 +48,7 @@ class Course(Base, SoftDeleteMixin):
 
 class CourseEnrollment(Base, SoftDeleteMixin):
     __tablename__ = "course_enrollments"
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
     student_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     course_id = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)

@@ -39,6 +39,7 @@ class COPSOMapping(Base, SoftDeleteMixin):
     """
     __tablename__ = "co_pso_mappings"
     id        = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     co_id     = Column(String, ForeignKey("course_outcomes.id", ondelete="CASCADE"), nullable=False)
     pso_id    = Column(String, ForeignKey("program_specific_outcomes.id", ondelete="CASCADE"), nullable=False)
     strength  = Column(Integer, nullable=False)   # 1, 2, or 3

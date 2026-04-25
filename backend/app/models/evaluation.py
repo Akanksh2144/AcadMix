@@ -26,7 +26,7 @@ class Quiz(Base, SoftDeleteMixin):
 class Question(Base, SoftDeleteMixin):
     __tablename__ = "questions"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     quiz_id = Column(String, ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
     type = Column(String, nullable=False)
     marks = Column(Float, nullable=False)
@@ -37,7 +37,7 @@ class Question(Base, SoftDeleteMixin):
 class Option(Base, SoftDeleteMixin):
     __tablename__ = "options"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     question_id = Column(String, ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
     text = Column(String, nullable=False)
     is_correct = Column(Boolean, nullable=False, default=False)
@@ -46,7 +46,7 @@ class Option(Base, SoftDeleteMixin):
 class QuizAttempt(Base, SoftDeleteMixin):
     __tablename__ = "quiz_attempts"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     quiz_id = Column(String, ForeignKey("quizzes.id", ondelete="RESTRICT"), nullable=False, index=True)
     student_id = Column(String, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True)
     status = Column(String, nullable=False)
@@ -63,7 +63,7 @@ class QuizAttempt(Base, SoftDeleteMixin):
 class QuizAnswer(Base, SoftDeleteMixin):
     __tablename__ = "quiz_answers"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     attempt_id = Column(String, ForeignKey("quiz_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
     question_id = Column(String, ForeignKey("questions.id", ondelete="RESTRICT"), nullable=False)
     selected_option_id = Column(String, ForeignKey("options.id", ondelete="RESTRICT"), nullable=True)
@@ -74,7 +74,7 @@ class QuizAnswer(Base, SoftDeleteMixin):
 
 class ProctoringEvent(Base, SoftDeleteMixin):
     __tablename__ = "proctoring_events"
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
     attempt_id = Column(String, ForeignKey("quiz_attempts.id", ondelete="CASCADE"), nullable=False)
     event_type = Column(String, nullable=False)
@@ -84,7 +84,7 @@ class ProctoringEvent(Base, SoftDeleteMixin):
 
 class ProctoringViolation(Base, SoftDeleteMixin):
     __tablename__ = "proctoring_violations"
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
     attempt_id = Column(String, ForeignKey("quiz_attempts.id", ondelete="CASCADE"), nullable=False)
     violation_type = Column(String, nullable=False)
@@ -95,7 +95,7 @@ class ProctoringViolation(Base, SoftDeleteMixin):
 
 class Appeal(Base, SoftDeleteMixin):
     __tablename__ = "appeals"
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
     violation_id = Column(String, ForeignKey("proctoring_violations.id", ondelete="RESTRICT"), nullable=False)
     student_id = Column(String, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
@@ -133,7 +133,7 @@ class MarkSubmission(Base, SoftDeleteMixin):
 
 class MarkSubmissionEntry(Base):
     __tablename__ = "mark_submission_entries"
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     id             = Column(String, primary_key=True, default=generate_uuid)
     submission_id  = Column(String, ForeignKey("mark_submissions.id", ondelete="CASCADE"), nullable=False, index=True)
     student_id     = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -152,7 +152,7 @@ class MarkSubmissionEntry(Base):
 class SemesterGrade(Base, SoftDeleteMixin):
     __tablename__ = "semester_grades"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     student_id = Column(String, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
     semester = Column(Integer, nullable=False)
     course_id = Column(String, nullable=False)
@@ -196,6 +196,7 @@ class CIATemplateComponent(Base):
     """Normalized components for CIA Template instead of JSONB."""
     __tablename__ = "cia_template_components"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     template_id = Column(String, ForeignKey("cia_templates.id", ondelete="CASCADE"), nullable=False, index=True)
     component_type = Column(String, nullable=False)  # test, assignment, attendance, practical, etc.
     name = Column(String, nullable=False)
@@ -347,7 +348,7 @@ class PremiumCodingChallenge(Base, SoftDeleteMixin):
 
 class ChallengeProgress(Base, SoftDeleteMixin):
     __tablename__ = "challenge_progress"
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
     student_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     challenge_id = Column(String, ForeignKey("coding_challenges.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -358,7 +359,7 @@ class ChallengeProgress(Base, SoftDeleteMixin):
 
 class PremiumChallengeProgress(Base, SoftDeleteMixin):
     __tablename__ = "premium_challenge_progress"
-    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=True, index=True)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
     student_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     challenge_id = Column(String, ForeignKey("premium_coding_challenges.id", ondelete="CASCADE"), nullable=False, index=True)

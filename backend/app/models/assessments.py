@@ -14,6 +14,7 @@ class AIGeneratedAssessment(Base, SoftDeleteMixin):
     """
     __tablename__ = "ai_generated_assessments"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     faculty_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     course_id = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
     type = Column(String, nullable=False)  # quiz, assignment
@@ -28,6 +29,7 @@ class AssessmentQuestion(Base, SoftDeleteMixin):
     """
     __tablename__ = "assessment_questions"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
     assessment_id = Column(String, ForeignKey("ai_generated_assessments.id", ondelete="CASCADE"), nullable=False)
     
     question_text = Column(String, nullable=False)

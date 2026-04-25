@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from typing import List, Optional
 
 from database import get_db
@@ -23,7 +23,7 @@ async def get_outcomes_matrix(
     Includes all Course Outcomes, the standard Program Outcomes for the parent Department, and the existing mappings.
     """
     # 1. Fetch the course to determine the department
-    course = await db.scalar(select(Course).where(Course.id == course_id))
+    course = await db.scalar(select(Course).where(Course.id == course_id, Course.college_id == user["college_id"]))
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
@@ -77,9 +77,11 @@ async def batch_upsert_matrix(
     Strictly synchronizes the actual DB state to exactly mirror the frontend payload array.
     """
     # 1. Validate course exists
-    course = await db.scalar(select(Course).where(Course.id == course_id))
+    course = await db.scalar(select(Course).where(Course.id == course_id, Course.college_id == user["college_id"]))
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
+
+    college_id = course.college_id
 
     # 2. Sync Course Outcomes (COs)
     # Fetch existing
@@ -100,6 +102,7 @@ async def batch_upsert_matrix(
         else:
             # Insert
             new_co = CourseOutcome(
+                college_id=college_id,
                 course_id=course_id,
                 code=co_data.code,
                 description=co_data.description,
@@ -145,6 +148,7 @@ async def batch_upsert_matrix(
         for mapping in payload.mappings:
             if mapping.co_id in active_co_ids:  # Final guard
                 new_mapping = COPOMapping(
+                    college_id=college_id,
                     co_id=mapping.co_id,
                     po_id=mapping.po_id,
                     strength=mapping.strength
