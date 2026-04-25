@@ -1,0 +1,137 @@
+id,section_id,dept_code,batch_year,section,faculty_id,faculty_name,academic_year,is_active
+mnt-0001,sec-cse-2022-a,CSE,2022,A,STF-0026,Praveen Kumar Varma,2022-2026,True
+mnt-0002,sec-cse-2022-a,CSE,2022,A,STF-0009,Tirupathi Rao Subramaniam,2022-2026,True
+mnt-0003,sec-cse-2022-b,CSE,2022,B,STF-0006,Venkateswara Rao Kaur,2022-2026,True
+mnt-0004,sec-cse-2022-b,CSE,2022,B,STF-0029,Chandra Sekhar Balasubramaniam,2022-2026,True
+mnt-0005,sec-cse-2023-a,CSE,2023,A,STF-0014,Haritha Reddy,2023-2027,True
+mnt-0006,sec-cse-2023-a,CSE,2023,A,STF-0013,Sunitha Ganesh,2023-2027,True
+mnt-0007,sec-cse-2023-b,CSE,2023,B,STF-0013,Sunitha Ganesh,2023-2027,True
+mnt-0008,sec-cse-2023-b,CSE,2023,B,STF-0010,Naga Raju Yadav,2023-2027,True
+mnt-0009,sec-cse-2024-a,CSE,2024,A,STF-0029,Chandra Sekhar Balasubramaniam,2024-2028,True
+mnt-0010,sec-cse-2024-a,CSE,2024,A,STF-0009,Tirupathi Rao Subramaniam,2024-2028,True
+mnt-0011,sec-cse-2024-b,CSE,2024,B,STF-0027,Mohan Rao Hegde,2024-2028,True
+mnt-0012,sec-cse-2024-b,CSE,2024,B,STF-0029,Chandra Sekhar Balasubramaniam,2024-2028,True
+mnt-0013,sec-cse-2025-a,CSE,2025,A,STF-0023,Sudhakar Pillai,2025-2029,True
+mnt-0014,sec-cse-2025-a,CSE,2025,A,STF-0008,Tirupathi Rao Natarajan,2025-2029,True
+mnt-0015,sec-cse-2025-b,CSE,2025,B,STF-0024,Hari Babu Ganesh,2025-2029,True
+mnt-0016,sec-cse-2025-b,CSE,2025,B,STF-0019,Hema Latha Kapoor,2025-2029,True
+mnt-0017,sec-it-2022-a,IT,2022,A,STF-0035,Tarun Kumar Reddy,2022-2026,True
+mnt-0018,sec-it-2022-a,IT,2022,A,STF-0034,Jayasree Menon,2022-2026,True
+mnt-0019,sec-it-2022-b,IT,2022,B,STF-0042,Aparna Krishnan,2022-2026,True
+mnt-0020,sec-it-2022-b,IT,2022,B,STF-0058,Vamsi Krishna Venkataramana,2022-2026,True
+mnt-0021,sec-it-2023-a,IT,2023,A,STF-0060,Kamala Devi Raghavan,2023-2027,True
+mnt-0022,sec-it-2023-a,IT,2023,A,STF-0095,Kalyan Kumar Ramesh,2023-2027,True
+mnt-0023,sec-it-2023-b,IT,2023,B,STF-0034,Jayasree Menon,2023-2027,True
+mnt-0024,sec-it-2023-b,IT,2023,B,STF-0056,Sravanthi Prasad,2023-2027,True
+mnt-0025,sec-it-2024-a,IT,2024,A,STF-0100,Mahesh Babu Joshi,2024-2028,True
+mnt-0026,sec-it-2024-a,IT,2024,A,STF-0084,Ashok Kumar Mishra,2024-2028,True
+mnt-0027,sec-it-2024-b,IT,2024,B,STF-0059,Hemanth Kumar Yadav,2024-2028,True
+mnt-0028,sec-it-2024-b,IT,2024,B,STF-0088,Siva Kumar Reddy,2024-2028,True
+mnt-0029,sec-it-2025-a,IT,2025,A,STF-0066,Vani Patel,2025-2029,True
+mnt-0030,sec-it-2025-a,IT,2025,A,STF-0031,Vijay Kumar Mehta,2025-2029,True
+mnt-0031,sec-it-2025-b,IT,2025,B,STF-0051,Ranjith Kumar Kapoor,2025-2029,True
+mnt-0032,sec-it-2025-b,IT,2025,B,STF-0085,Pavani Desai,2025-2029,True
+mnt-0033,sec-csm-2022-a,CSM,2022,A,STF-0074,Krishna Murthy Yadav,2022-2026,True
+mnt-0034,sec-csm-2022-a,CSM,2022,A,STF-0066,Vani Patel,2022-2026,True
+mnt-0035,sec-csm-2022-b,CSM,2022,B,STF-0050,Naresh Kumar Malhotra,2022-2026,True
+mnt-0036,sec-csm-2022-b,CSM,2022,B,STF-0058,Vamsi Krishna Venkataramana,2022-2026,True
+mnt-0037,sec-csm-2023-a,CSM,2023,A,STF-0074,Krishna Murthy Yadav,2023-2027,True
+mnt-0038,sec-csm-2023-a,CSM,2023,A,STF-0044,Savitha Hegde,2023-2027,True
+mnt-0039,sec-csm-2023-b,CSM,2023,B,STF-0042,Aparna Krishnan,2023-2027,True
+mnt-0040,sec-csm-2023-b,CSM,2023,B,STF-0079,Praveen Kumar Krishnan,2023-2027,True
+mnt-0041,sec-csm-2024-a,CSM,2024,A,STF-0043,Ashwini Kumar,2024-2028,True
+mnt-0042,sec-csm-2024-a,CSM,2024,A,STF-0076,Vamsi Krishna Kaur,2024-2028,True
+mnt-0043,sec-csm-2024-b,CSM,2024,B,STF-0075,Sravanthi Iyer,2024-2028,True
+mnt-0044,sec-csm-2024-b,CSM,2024,B,STF-0064,Harsha Vardhan Rao,2024-2028,True
+mnt-0045,sec-csm-2025-a,CSM,2025,A,STF-0036,Praveen Kumar Babu,2025-2029,True
+mnt-0046,sec-csm-2025-a,CSM,2025,A,STF-0089,Rekha Natarajan,2025-2029,True
+mnt-0047,sec-csm-2025-b,CSM,2025,B,STF-0099,Hemanth Kumar Raghavan,2025-2029,True
+mnt-0048,sec-csm-2025-b,CSM,2025,B,STF-0046,Tejasvi Menon,2025-2029,True
+mnt-0049,sec-csd-2022-a,CSD,2022,A,STF-0079,Praveen Kumar Krishnan,2022-2026,True
+mnt-0050,sec-csd-2022-a,CSD,2022,A,STF-0041,Madhuri Kaur,2022-2026,True
+mnt-0051,sec-csd-2023-a,CSD,2023,A,STF-0101,Ramana Rao Mishra,2023-2027,True
+mnt-0052,sec-csd-2023-a,CSD,2023,A,STF-0068,Mahesh Babu Arora,2023-2027,True
+mnt-0053,sec-csd-2024-a,CSD,2024,A,STF-0077,Hemanth Kumar Natarajan,2024-2028,True
+mnt-0054,sec-csd-2024-a,CSD,2024,A,STF-0055,Anand Kumar Venkataramana,2024-2028,True
+mnt-0055,sec-csd-2025-a,CSD,2025,A,STF-0039,Manjula Natarajan,2025-2029,True
+mnt-0056,sec-csd-2025-a,CSD,2025,A,STF-0036,Praveen Kumar Babu,2025-2029,True
+mnt-0057,sec-cso-2022-a,CSO,2022,A,STF-0060,Kamala Devi Raghavan,2022-2026,True
+mnt-0058,sec-cso-2022-a,CSO,2022,A,STF-0068,Mahesh Babu Arora,2022-2026,True
+mnt-0059,sec-cso-2023-a,CSO,2023,A,STF-0041,Madhuri Kaur,2023-2027,True
+mnt-0060,sec-cso-2023-a,CSO,2023,A,STF-0060,Kamala Devi Raghavan,2023-2027,True
+mnt-0061,sec-cso-2024-a,CSO,2024,A,STF-0043,Ashwini Kumar,2024-2028,True
+mnt-0062,sec-cso-2024-a,CSO,2024,A,STF-0079,Praveen Kumar Krishnan,2024-2028,True
+mnt-0063,sec-cso-2025-a,CSO,2025,A,STF-0066,Vani Patel,2025-2029,True
+mnt-0064,sec-cso-2025-a,CSO,2025,A,STF-0089,Rekha Natarajan,2025-2029,True
+mnt-0065,sec-aiml-2022-a,AIML,2022,A,STF-0077,Hemanth Kumar Natarajan,2022-2026,True
+mnt-0066,sec-aiml-2022-a,AIML,2022,A,STF-0051,Ranjith Kumar Kapoor,2022-2026,True
+mnt-0067,sec-aiml-2022-b,AIML,2022,B,STF-0078,Lavanya Venkatesh,2022-2026,True
+mnt-0068,sec-aiml-2022-b,AIML,2022,B,STF-0076,Vamsi Krishna Kaur,2022-2026,True
+mnt-0069,sec-aiml-2023-a,AIML,2023,A,STF-0057,Rakesh Kumar Shah,2023-2027,True
+mnt-0070,sec-aiml-2023-a,AIML,2023,A,STF-0065,Kiran Kumar Sharma,2023-2027,True
+mnt-0071,sec-aiml-2023-b,AIML,2023,B,STF-0040,Sirisha Sundaram,2023-2027,True
+mnt-0072,sec-aiml-2023-b,AIML,2023,B,STF-0052,Ramesh Babu Ramesh,2023-2027,True
+mnt-0073,sec-aiml-2024-a,AIML,2024,A,STF-0099,Hemanth Kumar Raghavan,2024-2028,True
+mnt-0074,sec-aiml-2024-a,AIML,2024,A,STF-0062,Anusha Desai,2024-2028,True
+mnt-0075,sec-aiml-2024-b,AIML,2024,B,STF-0051,Ranjith Kumar Kapoor,2024-2028,True
+mnt-0076,sec-aiml-2024-b,AIML,2024,B,STF-0090,Vasantha Balaji,2024-2028,True
+mnt-0077,sec-aiml-2025-a,AIML,2025,A,STF-0079,Praveen Kumar Krishnan,2025-2029,True
+mnt-0078,sec-aiml-2025-a,AIML,2025,A,STF-0065,Kiran Kumar Sharma,2025-2029,True
+mnt-0079,sec-aiml-2025-b,AIML,2025,B,STF-0059,Hemanth Kumar Yadav,2025-2029,True
+mnt-0080,sec-aiml-2025-b,AIML,2025,B,STF-0072,Srinath Raghavan,2025-2029,True
+mnt-0081,sec-iot-2022-a,IoT,2022,A,STF-0038,Dinakar Rao Gupta,2022-2026,True
+mnt-0082,sec-iot-2022-a,IoT,2022,A,STF-0060,Kamala Devi Raghavan,2022-2026,True
+mnt-0083,sec-iot-2023-a,IoT,2023,A,STF-0035,Tarun Kumar Reddy,2023-2027,True
+mnt-0084,sec-iot-2023-a,IoT,2023,A,STF-0071,Jagadeesh Naidu,2023-2027,True
+mnt-0085,sec-iot-2024-a,IoT,2024,A,STF-0082,Meghana Singh,2024-2028,True
+mnt-0086,sec-iot-2024-a,IoT,2024,A,STF-0065,Kiran Kumar Sharma,2024-2028,True
+mnt-0087,sec-iot-2025-a,IoT,2025,A,STF-0039,Manjula Natarajan,2025-2029,True
+mnt-0088,sec-iot-2025-a,IoT,2025,A,STF-0058,Vamsi Krishna Venkataramana,2025-2029,True
+mnt-0089,sec-ece-2022-a,ECE,2022,A,STF-0120,Sunil Kumar Prasad,2022-2026,True
+mnt-0090,sec-ece-2022-a,ECE,2022,A,STF-0124,Naveen Kumar Prasad,2022-2026,True
+mnt-0091,sec-ece-2022-b,ECE,2022,B,STF-0112,Hemanth Kumar Sinha,2022-2026,True
+mnt-0092,sec-ece-2022-b,ECE,2022,B,STF-0108,Deepika Ganesh,2022-2026,True
+mnt-0093,sec-ece-2023-a,ECE,2023,A,STF-0122,Anand Kumar Ganesh,2023-2027,True
+mnt-0094,sec-ece-2023-a,ECE,2023,A,STF-0117,Ashok Kumar Ganesh,2023-2027,True
+mnt-0095,sec-ece-2023-b,ECE,2023,B,STF-0114,Tejasvi Natarajan,2023-2027,True
+mnt-0096,sec-ece-2023-b,ECE,2023,B,STF-0122,Anand Kumar Ganesh,2023-2027,True
+mnt-0097,sec-ece-2024-a,ECE,2024,A,STF-0116,Hari Babu Kapoor,2024-2028,True
+mnt-0098,sec-ece-2024-a,ECE,2024,A,STF-0106,Subrahmanyam Tripathi,2024-2028,True
+mnt-0099,sec-ece-2024-b,ECE,2024,B,STF-0110,Sirisha Rao,2024-2028,True
+mnt-0100,sec-ece-2024-b,ECE,2024,B,STF-0106,Subrahmanyam Tripathi,2024-2028,True
+mnt-0101,sec-ece-2025-a,ECE,2025,A,STF-0109,Bhargavi Ganesh,2025-2029,True
+mnt-0102,sec-ece-2025-a,ECE,2025,A,STF-0125,Nikhil Kumar Patel,2025-2029,True
+mnt-0103,sec-ece-2025-b,ECE,2025,B,STF-0119,Chandrika Singh,2025-2029,True
+mnt-0104,sec-ece-2025-b,ECE,2025,B,STF-0110,Sirisha Rao,2025-2029,True
+mnt-0105,sec-eee-2022-a,EEE,2022,A,STF-0138,Jagadeesh Babu,2022-2026,True
+mnt-0106,sec-eee-2022-a,EEE,2022,A,STF-0136,Trinadha Rao Varma,2022-2026,True
+mnt-0107,sec-eee-2023-a,EEE,2023,A,STF-0133,Rajendra Prasad Anand,2023-2027,True
+mnt-0108,sec-eee-2023-a,EEE,2023,A,STF-0136,Trinadha Rao Varma,2023-2027,True
+mnt-0109,sec-eee-2024-a,EEE,2024,A,STF-0133,Rajendra Prasad Anand,2024-2028,True
+mnt-0110,sec-eee-2024-a,EEE,2024,A,STF-0132,Mahesh Babu Balasubramaniam,2024-2028,True
+mnt-0111,sec-eee-2025-a,EEE,2025,A,STF-0130,Sravanthi Babu,2025-2029,True
+mnt-0112,sec-eee-2025-a,EEE,2025,A,STF-0129,Vani Chandrasekhar,2025-2029,True
+mnt-0113,sec-mech-2022-a,MECH,2022,A,STF-0158,Suresh Kumar Sharma,2022-2026,True
+mnt-0114,sec-mech-2022-a,MECH,2022,A,STF-0157,Pooja Subramaniam,2022-2026,True
+mnt-0115,sec-mech-2022-b,MECH,2022,B,STF-0144,Bhargavi Rao,2022-2026,True
+mnt-0116,sec-mech-2022-b,MECH,2022,B,STF-0166,Usha Rani Babu,2022-2026,True
+mnt-0117,sec-mech-2023-a,MECH,2023,A,STF-0143,Ravi Teja Krishnan,2023-2027,True
+mnt-0118,sec-mech-2023-a,MECH,2023,A,STF-0145,Sirisha Anand,2023-2027,True
+mnt-0119,sec-mech-2023-b,MECH,2023,B,STF-0146,Aruna Sharma,2023-2027,True
+mnt-0120,sec-mech-2023-b,MECH,2023,B,STF-0162,Hari Babu Subramaniam,2023-2027,True
+mnt-0121,sec-mech-2024-a,MECH,2024,A,STF-0147,Santosh Kumar Prasad,2024-2028,True
+mnt-0122,sec-mech-2024-a,MECH,2024,A,STF-0163,Lakshmana Rao Krishnan,2024-2028,True
+mnt-0123,sec-mech-2024-b,MECH,2024,B,STF-0155,Jyothi Pillai,2024-2028,True
+mnt-0124,sec-mech-2024-b,MECH,2024,B,STF-0161,Gopal Krishna Pandey,2024-2028,True
+mnt-0125,sec-mech-2025-a,MECH,2025,A,STF-0144,Bhargavi Rao,2025-2029,True
+mnt-0126,sec-mech-2025-a,MECH,2025,A,STF-0154,Bhargavi Prasad,2025-2029,True
+mnt-0127,sec-mech-2025-b,MECH,2025,B,STF-0154,Bhargavi Prasad,2025-2029,True
+mnt-0128,sec-mech-2025-b,MECH,2025,B,STF-0161,Gopal Krishna Pandey,2025-2029,True
+mnt-0129,sec-civil-2022-a,CIVIL,2022,A,STF-0174,Jayasree Varma,2022-2026,True
+mnt-0130,sec-civil-2022-a,CIVIL,2022,A,STF-0175,Brahmaiah Natarajan,2022-2026,True
+mnt-0131,sec-civil-2023-a,CIVIL,2023,A,STF-0171,Bhaskar Rao Goud,2023-2027,True
+mnt-0132,sec-civil-2023-a,CIVIL,2023,A,STF-0175,Brahmaiah Natarajan,2023-2027,True
+mnt-0133,sec-civil-2024-a,CIVIL,2024,A,STF-0180,Rakesh Kumar Kaur,2024-2028,True
+mnt-0134,sec-civil-2024-a,CIVIL,2024,A,STF-0167,Sunil Kumar Venkataramana,2024-2028,True
+mnt-0135,sec-civil-2025-a,CIVIL,2025,A,STF-0177,Hari Babu Venkatesh,2025-2029,True
+mnt-0136,sec-civil-2025-a,CIVIL,2025,A,STF-0178,Srinivasa Rao Subramaniam,2025-2029,True

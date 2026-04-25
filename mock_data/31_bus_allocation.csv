@@ -1,0 +1,789 @@
+id,student_id,route_id,boarding_stop,academic_year,pass_type,status
+bus-alloc-00001,STU-02867,route-10,Medchal,2023-2027,annual,active
+bus-alloc-00002,STU-02119,route-06,Medchal Chowrasta,2023-2027,semester,active
+bus-alloc-00003,STU-01310,route-10,Sangareddy Bypass,2024-2028,annual,active
+bus-alloc-00004,STU-01269,route-03,Medchal,2024-2028,annual,active
+bus-alloc-00005,STU-00001,route-05,Kandlakoya,2022-2026,annual,active
+bus-alloc-00006,STU-02524,route-03,KPHB,2024-2028,annual,active
+bus-alloc-00007,STU-00032,route-06,Medchal Market,2022-2026,semester,active
+bus-alloc-00008,STU-02352,route-08,Hakimpet,2025-2029,semester,active
+bus-alloc-00009,STU-01261,route-07,Medchal,2024-2028,semester,active
+bus-alloc-00010,STU-02696,route-02,LB Nagar,2022-2026,semester,active
+bus-alloc-00011,STU-01574,route-09,Kandlakoya,2024-2028,semester,active
+bus-alloc-00012,STU-02975,route-06,Kandlakoya,2024-2028,semester,active
+bus-alloc-00013,STU-01861,route-06,Medchal MMTS,2025-2029,annual,active
+bus-alloc-00014,STU-02758,route-08,Kandlakoya,2022-2026,semester,active
+bus-alloc-00015,STU-02412,route-02,Medchal,2022-2026,annual,active
+bus-alloc-00016,STU-01558,route-07,BHEL Township,2023-2027,semester,active
+bus-alloc-00017,STU-03259,route-05,Neredmet,2024-2028,semester,active
+bus-alloc-00018,STU-03027,route-06,Medchal Market,2025-2029,semester,active
+bus-alloc-00019,STU-03094,route-06,Medchal MMTS,2025-2029,annual,active
+bus-alloc-00020,STU-01597,route-02,Kandlakoya,2024-2028,annual,active
+bus-alloc-00021,STU-02073,route-02,Uppal,2023-2027,semester,active
+bus-alloc-00022,STU-03061,route-08,Bolarum,2025-2029,semester,active
+bus-alloc-00023,STU-02709,route-04,Kandlakoya,2022-2026,annual,active
+bus-alloc-00024,STU-01636,route-05,AS Rao Nagar,2025-2029,semester,active
+bus-alloc-00025,STU-01164,route-02,Alwal,2023-2027,semester,active
+bus-alloc-00026,STU-00693,route-02,Alwal,2023-2027,annual,active
+bus-alloc-00027,STU-03194,route-01,Yapral,2023-2027,semester,active
+bus-alloc-00028,STU-01418,route-04,Bachupally,2025-2029,annual,active
+bus-alloc-00029,STU-00033,route-02,Dilsukhnagar,2022-2026,annual,active
+bus-alloc-00030,STU-00424,route-08,Bolarum,2025-2029,annual,active
+bus-alloc-00031,STU-01326,route-10,Isnapur,2025-2029,semester,active
+bus-alloc-00032,STU-02561,route-01,Secunderabad,2024-2028,semester,active
+bus-alloc-00033,STU-02610,route-02,Medchal,2025-2029,annual,active
+bus-alloc-00034,STU-01301,route-08,Bolarum,2024-2028,annual,active
+bus-alloc-00035,STU-00446,route-07,Quthbullapur,2025-2029,annual,active
+bus-alloc-00036,STU-01368,route-02,Alwal,2025-2029,semester,active
+bus-alloc-00037,STU-00096,route-05,AS Rao Nagar,2022-2026,semester,active
+bus-alloc-00038,STU-03140,route-03,Kukatpally,2022-2026,annual,active
+bus-alloc-00039,STU-03016,route-09,Medchal,2025-2029,annual,active
+bus-alloc-00040,STU-00761,route-10,Kandlakoya,2024-2028,annual,active
+bus-alloc-00041,STU-02075,route-08,Lalapet,2023-2027,annual,active
+bus-alloc-00042,STU-02625,route-03,Medchal,2025-2029,semester,active
+bus-alloc-00043,STU-01841,route-04,Miyapur,2024-2028,annual,active
+bus-alloc-00044,STU-01019,route-03,SR Nagar,2022-2026,semester,active
+bus-alloc-00045,STU-02930,route-06,Kandlakoya,2024-2028,semester,active
+bus-alloc-00046,STU-01948,route-03,KPHB,2022-2026,semester,active
+bus-alloc-00047,STU-00056,route-02,ECIL,2022-2026,semester,active
+bus-alloc-00048,STU-00894,route-01,Kandlakoya,2025-2029,semester,active
+bus-alloc-00049,STU-03045,route-04,Medchal Chowrasta,2025-2029,annual,active
+bus-alloc-00050,STU-00122,route-07,Dundigal,2023-2027,annual,active
+bus-alloc-00051,STU-02973,route-04,Bachupally,2024-2028,semester,active
+bus-alloc-00052,STU-03232,route-02,ECIL,2023-2027,semester,active
+bus-alloc-00053,STU-01048,route-10,Patancheru,2022-2026,annual,active
+bus-alloc-00054,STU-00216,route-06,Medchal Chowrasta,2023-2027,annual,active
+bus-alloc-00055,STU-00557,route-07,Kandlakoya,2022-2026,semester,active
+bus-alloc-00056,STU-00664,route-06,Medchal Market,2023-2027,semester,active
+bus-alloc-00057,STU-03020,route-02,Dilsukhnagar,2025-2029,annual,active
+bus-alloc-00058,STU-00471,route-01,Malkajgiri,2025-2029,annual,active
+bus-alloc-00059,STU-00788,route-01,Secunderabad,2024-2028,semester,active
+bus-alloc-00060,STU-01736,route-09,Suraram,2022-2026,semester,active
+bus-alloc-00061,STU-01969,route-07,Medchal,2022-2026,annual,active
+bus-alloc-00062,STU-03205,route-09,Medchal,2023-2027,annual,active
+bus-alloc-00063,STU-01946,route-05,Sainikpuri,2022-2026,semester,active
+bus-alloc-00064,STU-02077,route-02,ECIL,2023-2027,annual,active
+bus-alloc-00065,STU-00545,route-09,Suraram,2022-2026,semester,active
+bus-alloc-00066,STU-01749,route-10,Kandlakoya,2023-2027,annual,active
+bus-alloc-00067,STU-03125,route-05,Kandlakoya,2022-2026,semester,active
+bus-alloc-00068,STU-02665,route-04,Miyapur,2022-2026,annual,active
+bus-alloc-00069,STU-03022,route-02,Medchal,2025-2029,annual,active
+bus-alloc-00070,STU-02190,route-08,Medchal,2024-2028,annual,active
+bus-alloc-00071,STU-01788,route-05,Kandlakoya,2023-2027,annual,active
+bus-alloc-00072,STU-01536,route-02,Dilsukhnagar,2023-2027,annual,active
+bus-alloc-00073,STU-00162,route-01,Trimulgherry,2023-2027,semester,active
+bus-alloc-00074,STU-02231,route-06,Medchal Chowrasta,2024-2028,annual,active
+bus-alloc-00075,STU-01076,route-06,Medchal Market,2022-2026,semester,active
+bus-alloc-00076,STU-00555,route-02,Dilsukhnagar,2022-2026,semester,active
+bus-alloc-00077,STU-01205,route-07,Dundigal,2024-2028,annual,active
+bus-alloc-00078,STU-01008,route-05,Kandlakoya,2022-2026,annual,active
+bus-alloc-00079,STU-01273,route-08,Alwal,2024-2028,semester,active
+bus-alloc-00080,STU-02004,route-01,Yapral,2022-2026,annual,active
+bus-alloc-00081,STU-01118,route-06,Medchal Market,2023-2027,semester,active
+bus-alloc-00082,STU-01619,route-02,LB Nagar,2024-2028,annual,active
+bus-alloc-00083,STU-02148,route-09,Jeedimetla,2023-2027,annual,active
+bus-alloc-00084,STU-00864,route-01,Trimulgherry,2025-2029,annual,active
+bus-alloc-00085,STU-03168,route-08,Lalapet,2022-2026,semester,active
+bus-alloc-00086,STU-01617,route-03,Kukatpally,2024-2028,annual,active
+bus-alloc-00087,STU-02737,route-09,Kandlakoya,2022-2026,semester,active
+bus-alloc-00088,STU-02182,route-04,Pragathi Nagar,2024-2028,annual,active
+bus-alloc-00089,STU-01994,route-07,Dundigal,2022-2026,semester,active
+bus-alloc-00090,STU-01741,route-02,Alwal,2023-2027,annual,active
+bus-alloc-00091,STU-00936,route-09,Kandlakoya,2025-2029,annual,active
+bus-alloc-00092,STU-01139,route-03,KPHB,2023-2027,annual,active
+bus-alloc-00093,STU-02488,route-07,Quthbullapur,2023-2027,semester,active
+bus-alloc-00094,STU-00821,route-05,Neredmet,2024-2028,semester,active
+bus-alloc-00095,STU-01194,route-02,Kandlakoya,2023-2027,annual,active
+bus-alloc-00096,STU-00241,route-06,Medchal Market,2024-2028,semester,active
+bus-alloc-00097,STU-00444,route-10,Sangareddy Bypass,2025-2029,annual,active
+bus-alloc-00098,STU-00753,route-08,Lalapet,2024-2028,semester,active
+bus-alloc-00099,STU-02495,route-04,Kandlakoya,2023-2027,annual,active
+bus-alloc-00100,STU-01576,route-03,Ameerpet,2024-2028,semester,active
+bus-alloc-00101,STU-02420,route-01,Trimulgherry,2022-2026,semester,active
+bus-alloc-00102,STU-02823,route-01,Malkajgiri,2023-2027,annual,active
+bus-alloc-00103,STU-01218,route-07,Dundigal,2024-2028,annual,active
+bus-alloc-00104,STU-00030,route-04,Medchal Chowrasta,2022-2026,annual,active
+bus-alloc-00105,STU-03176,route-07,Medchal,2022-2026,annual,active
+bus-alloc-00106,STU-03083,route-03,Bachupally,2025-2029,annual,active
+bus-alloc-00107,STU-00772,route-01,Trimulgherry,2024-2028,semester,active
+bus-alloc-00108,STU-03178,route-06,Kandlakoya,2022-2026,annual,active
+bus-alloc-00109,STU-03350,route-10,Patancheru,2025-2029,annual,active
+bus-alloc-00110,STU-00055,route-07,Quthbullapur,2022-2026,annual,active
+bus-alloc-00111,STU-01884,route-07,BHEL Township,2025-2029,annual,active
+bus-alloc-00112,STU-03133,route-05,Neredmet,2022-2026,semester,active
+bus-alloc-00113,STU-02444,route-07,Dundigal,2022-2026,semester,active
+bus-alloc-00114,STU-01004,route-08,Lalapet,2022-2026,annual,active
+bus-alloc-00115,STU-03110,route-02,ECIL,2025-2029,annual,active
+bus-alloc-00116,STU-02137,route-10,Patancheru,2023-2027,annual,active
+bus-alloc-00117,STU-00769,route-02,Uppal,2024-2028,semester,active
+bus-alloc-00118,STU-00943,route-08,Lalapet,2025-2029,semester,active
+bus-alloc-00119,STU-00626,route-02,Alwal,2023-2027,annual,active
+bus-alloc-00120,STU-03192,route-08,Lalapet,2023-2027,semester,active
+bus-alloc-00121,STU-00969,route-05,Sainikpuri,2022-2026,annual,active
+bus-alloc-00122,STU-01885,route-03,Bachupally,2025-2029,annual,active
+bus-alloc-00123,STU-02590,route-04,Pragathi Nagar,2025-2029,annual,active
+bus-alloc-00124,STU-00922,route-02,ECIL,2025-2029,semester,active
+bus-alloc-00125,STU-01632,route-07,Kandlakoya,2025-2029,annual,active
+bus-alloc-00126,STU-01376,route-05,Neredmet,2025-2029,annual,active
+bus-alloc-00127,STU-02955,route-01,Yapral,2024-2028,semester,active
+bus-alloc-00128,STU-01077,route-09,Kandlakoya,2022-2026,annual,active
+bus-alloc-00129,STU-02110,route-02,Kandlakoya,2023-2027,annual,active
+bus-alloc-00130,STU-03075,route-03,SR Nagar,2025-2029,annual,active
+bus-alloc-00131,STU-01260,route-01,Kandlakoya,2024-2028,annual,active
+bus-alloc-00132,STU-02937,route-03,KPHB,2024-2028,semester,active
+bus-alloc-00133,STU-00207,route-06,Medchal MMTS,2023-2027,semester,active
+bus-alloc-00134,STU-01939,route-02,Dilsukhnagar,2022-2026,annual,active
+bus-alloc-00135,STU-01066,route-04,Kandlakoya,2022-2026,semester,active
+bus-alloc-00136,STU-02818,route-03,SR Nagar,2023-2027,semester,active
+bus-alloc-00137,STU-00468,route-02,Dilsukhnagar,2025-2029,semester,active
+bus-alloc-00138,STU-00743,route-01,Trimulgherry,2024-2028,semester,active
+bus-alloc-00139,STU-03236,route-07,Medchal,2023-2027,annual,active
+bus-alloc-00140,STU-00714,route-07,Medchal,2023-2027,annual,active
+bus-alloc-00141,STU-02153,route-06,Medchal Market,2023-2027,annual,active
+bus-alloc-00142,STU-00418,route-05,Neredmet,2025-2029,semester,active
+bus-alloc-00143,STU-00762,route-03,Ameerpet,2024-2028,annual,active
+bus-alloc-00144,STU-01252,route-05,Alwal,2024-2028,semester,active
+bus-alloc-00145,STU-00315,route-09,Bollaram,2024-2028,annual,active
+bus-alloc-00146,STU-00594,route-02,Neredmet,2022-2026,semester,active
+bus-alloc-00147,STU-00003,route-03,Medchal,2022-2026,annual,active
+bus-alloc-00148,STU-01915,route-09,IDA Jeedimetla,2025-2029,annual,active
+bus-alloc-00149,STU-03101,route-07,Dundigal,2025-2029,semester,active
+bus-alloc-00150,STU-01422,route-09,Bollaram,2025-2029,semester,active
+bus-alloc-00151,STU-02363,route-10,Medchal,2025-2029,semester,active
+bus-alloc-00152,STU-00017,route-07,Dundigal,2022-2026,annual,active
+bus-alloc-00153,STU-03211,route-01,Malkajgiri,2023-2027,annual,active
+bus-alloc-00154,STU-00857,route-01,Kandlakoya,2025-2029,semester,active
+bus-alloc-00155,STU-02116,route-01,Kandlakoya,2023-2027,semester,active
+bus-alloc-00156,STU-01877,route-09,Suraram,2025-2029,annual,active
+bus-alloc-00157,STU-02538,route-03,SR Nagar,2024-2028,annual,active
+bus-alloc-00158,STU-03044,route-04,Pragathi Nagar,2025-2029,annual,active
+bus-alloc-00159,STU-02601,route-04,Medchal Chowrasta,2025-2029,semester,active
+bus-alloc-00160,STU-00897,route-06,Medchal Market,2025-2029,annual,active
+bus-alloc-00161,STU-01705,route-04,Medchal Chowrasta,2022-2026,semester,active
+bus-alloc-00162,STU-01672,route-06,Medchal MMTS,2025-2029,semester,active
+bus-alloc-00163,STU-00713,route-10,Medchal,2023-2027,annual,active
+bus-alloc-00164,STU-00979,route-10,Isnapur,2022-2026,semester,active
+bus-alloc-00165,STU-01425,route-09,Suraram,2025-2029,annual,active
+bus-alloc-00166,STU-00652,route-08,Bolarum,2023-2027,annual,active
+bus-alloc-00167,STU-01090,route-01,Trimulgherry,2023-2027,annual,active
+bus-alloc-00168,STU-00851,route-01,Kompally,2025-2029,semester,active
+bus-alloc-00169,STU-01892,route-01,Malkajgiri,2025-2029,annual,active
+bus-alloc-00170,STU-02711,route-03,Nizampet,2022-2026,annual,active
+bus-alloc-00171,STU-02570,route-06,Medchal MMTS,2024-2028,annual,active
+bus-alloc-00172,STU-01580,route-03,Kukatpally,2024-2028,annual,active
+bus-alloc-00173,STU-00959,route-09,Suraram,2025-2029,annual,active
+bus-alloc-00174,STU-02266,route-06,Kandlakoya,2024-2028,annual,active
+bus-alloc-00175,STU-01177,route-06,Medchal Chowrasta,2023-2027,semester,active
+bus-alloc-00176,STU-02350,route-03,Kukatpally,2025-2029,semester,active
+bus-alloc-00177,STU-00134,route-08,Kandlakoya,2023-2027,semester,active
+bus-alloc-00178,STU-01921,route-03,Nizampet,2022-2026,annual,active
+bus-alloc-00179,STU-00307,route-10,Isnapur,2024-2028,semester,active
+bus-alloc-00180,STU-03154,route-05,Kandlakoya,2022-2026,semester,active
+bus-alloc-00181,STU-00041,route-03,Kukatpally,2022-2026,annual,active
+bus-alloc-00182,STU-01319,route-10,Dundigal,2024-2028,annual,active
+bus-alloc-00183,STU-02492,route-03,Nizampet,2023-2027,annual,active
+bus-alloc-00184,STU-03058,route-10,Patancheru,2025-2029,semester,active
+bus-alloc-00185,STU-00218,route-03,Nizampet,2023-2027,annual,active
+bus-alloc-00186,STU-02512,route-04,Pragathi Nagar,2023-2027,semester,active
+bus-alloc-00187,STU-01199,route-03,SR Nagar,2023-2027,semester,active
+bus-alloc-00188,STU-00810,route-08,Bolarum,2024-2028,semester,active
+bus-alloc-00189,STU-02554,route-04,Chandanagar,2024-2028,annual,active
+bus-alloc-00190,STU-02364,route-06,Medchal Chowrasta,2025-2029,annual,active
+bus-alloc-00191,STU-00066,route-01,Secunderabad,2022-2026,semester,active
+bus-alloc-00192,STU-00766,route-08,Kandlakoya,2024-2028,semester,active
+bus-alloc-00193,STU-00054,route-03,Medchal,2022-2026,semester,active
+bus-alloc-00194,STU-01456,route-07,Dundigal,2022-2026,semester,active
+bus-alloc-00195,STU-02717,route-02,Kandlakoya,2022-2026,annual,active
+bus-alloc-00196,STU-02371,route-03,Kandlakoya,2025-2029,annual,active
+bus-alloc-00197,STU-00046,route-01,Malkajgiri,2022-2026,annual,active
+bus-alloc-00198,STU-02081,route-06,Medchal Chowrasta,2023-2027,annual,active
+bus-alloc-00199,STU-01201,route-02,Alwal,2024-2028,annual,active
+bus-alloc-00200,STU-01423,route-07,BHEL Township,2025-2029,annual,active
+bus-alloc-00201,STU-02328,route-09,Jeedimetla,2025-2029,semester,active
+bus-alloc-00202,STU-00543,route-10,Medchal,2022-2026,semester,active
+bus-alloc-00203,STU-02401,route-01,Yapral,2022-2026,annual,active
+bus-alloc-00204,STU-02956,route-10,Dundigal,2024-2028,annual,active
+bus-alloc-00205,STU-02006,route-01,Secunderabad,2022-2026,semester,active
+bus-alloc-00206,STU-02668,route-04,Chandanagar,2022-2026,semester,active
+bus-alloc-00207,STU-01564,route-09,Kandlakoya,2024-2028,semester,active
+bus-alloc-00208,STU-02719,route-05,Neredmet,2022-2026,annual,active
+bus-alloc-00209,STU-02991,route-02,Dilsukhnagar,2024-2028,semester,active
+bus-alloc-00210,STU-01353,route-10,Medchal,2025-2029,semester,active
+bus-alloc-00211,STU-00379,route-03,Ameerpet,2025-2029,semester,active
+bus-alloc-00212,STU-01930,route-01,Yapral,2022-2026,annual,active
+bus-alloc-00213,STU-03303,route-05,Kandlakoya,2025-2029,semester,active
+bus-alloc-00214,STU-00244,route-04,Miyapur,2024-2028,annual,active
+bus-alloc-00215,STU-03251,route-04,Chandanagar,2024-2028,semester,active
+bus-alloc-00216,STU-02162,route-02,Kandlakoya,2024-2028,annual,active
+bus-alloc-00217,STU-02814,route-05,Alwal,2023-2027,semester,active
+bus-alloc-00218,STU-01176,route-08,Kandlakoya,2023-2027,semester,active
+bus-alloc-00219,STU-02548,route-02,Medchal,2024-2028,annual,active
+bus-alloc-00220,STU-02238,route-06,Kandlakoya,2024-2028,semester,active
+bus-alloc-00221,STU-00044,route-03,Kandlakoya,2022-2026,annual,active
+bus-alloc-00222,STU-00628,route-05,Alwal,2023-2027,semester,active
+bus-alloc-00223,STU-02822,route-05,AS Rao Nagar,2023-2027,semester,active
+bus-alloc-00224,STU-00187,route-10,Patancheru,2023-2027,annual,active
+bus-alloc-00225,STU-00498,route-02,LB Nagar,2022-2026,semester,active
+bus-alloc-00226,STU-02030,route-09,Bollaram,2022-2026,annual,active
+bus-alloc-00227,STU-00882,route-09,Jeedimetla,2025-2029,semester,active
+bus-alloc-00228,STU-01299,route-09,Bollaram,2024-2028,semester,active
+bus-alloc-00229,STU-02566,route-10,Isnapur,2024-2028,semester,active
+bus-alloc-00230,STU-01820,route-05,Sainikpuri,2024-2028,semester,active
+bus-alloc-00231,STU-01270,route-01,Kompally,2024-2028,annual,active
+bus-alloc-00232,STU-00240,route-02,Kandlakoya,2023-2027,annual,active
+bus-alloc-00233,STU-01393,route-03,KPHB,2025-2029,annual,active
+bus-alloc-00234,STU-01318,route-03,Ameerpet,2024-2028,semester,active
+bus-alloc-00235,STU-00289,route-02,Medchal,2024-2028,annual,active
+bus-alloc-00236,STU-00647,route-03,Bachupally,2023-2027,semester,active
+bus-alloc-00237,STU-00948,route-02,LB Nagar,2025-2029,semester,active
+bus-alloc-00238,STU-01084,route-09,Bollaram,2023-2027,semester,active
+bus-alloc-00239,STU-00521,route-05,Medchal,2022-2026,semester,active
+bus-alloc-00240,STU-01547,route-01,Kandlakoya,2023-2027,semester,active
+bus-alloc-00241,STU-01458,route-02,Medchal,2022-2026,annual,active
+bus-alloc-00242,STU-02174,route-03,SR Nagar,2024-2028,annual,active
+bus-alloc-00243,STU-01197,route-10,Patancheru,2023-2027,semester,active
+bus-alloc-00244,STU-02286,route-09,Suraram,2025-2029,semester,active
+bus-alloc-00245,STU-00578,route-05,Alwal,2022-2026,semester,active
+bus-alloc-00246,STU-02607,route-10,Medchal,2025-2029,semester,active
+bus-alloc-00247,STU-03342,route-01,Trimulgherry,2025-2029,semester,active
+bus-alloc-00248,STU-00825,route-07,BHEL Township,2024-2028,semester,active
+bus-alloc-00249,STU-02242,route-01,Yapral,2024-2028,semester,active
+bus-alloc-00250,STU-01833,route-04,Miyapur,2024-2028,semester,active
+bus-alloc-00251,STU-00474,route-05,Neredmet,2025-2029,annual,active
+bus-alloc-00252,STU-00896,route-06,Medchal Chowrasta,2025-2029,semester,active
+bus-alloc-00253,STU-02576,route-05,Alwal,2024-2028,annual,active
+bus-alloc-00254,STU-02068,route-04,Chandanagar,2023-2027,semester,active
+bus-alloc-00255,STU-00674,route-08,Lalapet,2023-2027,semester,active
+bus-alloc-00256,STU-00367,route-07,Kandlakoya,2025-2029,annual,active
+bus-alloc-00257,STU-00354,route-04,Bachupally,2024-2028,annual,active
+bus-alloc-00258,STU-02826,route-07,Medchal,2023-2027,semester,active
+bus-alloc-00259,STU-01689,route-01,Kompally,2022-2026,annual,active
+bus-alloc-00260,STU-02768,route-02,Neredmet,2023-2027,semester,active
+bus-alloc-00261,STU-01503,route-03,Ameerpet,2023-2027,annual,active
+bus-alloc-00262,STU-01304,route-04,Chandanagar,2024-2028,annual,active
+bus-alloc-00263,STU-02300,route-04,Miyapur,2025-2029,semester,active
+bus-alloc-00264,STU-01081,route-01,Malkajgiri,2023-2027,annual,active
+bus-alloc-00265,STU-01052,route-05,Neredmet,2022-2026,semester,active
+bus-alloc-00266,STU-00531,route-09,Bollaram,2022-2026,annual,active
+bus-alloc-00267,STU-00817,route-01,Trimulgherry,2024-2028,semester,active
+bus-alloc-00268,STU-00806,route-08,Medchal,2024-2028,semester,active
+bus-alloc-00269,STU-01890,route-03,Kandlakoya,2025-2029,semester,active
+bus-alloc-00270,STU-00064,route-06,Medchal Market,2022-2026,semester,active
+bus-alloc-00271,STU-01364,route-02,Neredmet,2025-2029,annual,active
+bus-alloc-00272,STU-01335,route-07,Quthbullapur,2025-2029,annual,active
+bus-alloc-00273,STU-02817,route-10,Isnapur,2023-2027,annual,active
+bus-alloc-00274,STU-01606,route-04,Kandlakoya,2024-2028,annual,active
+bus-alloc-00275,STU-00604,route-05,Kandlakoya,2023-2027,semester,active
+bus-alloc-00276,STU-01849,route-09,Jeedimetla,2024-2028,annual,active
+bus-alloc-00277,STU-02626,route-08,Hakimpet,2025-2029,annual,active
+bus-alloc-00278,STU-02086,route-10,Patancheru,2023-2027,annual,active
+bus-alloc-00279,STU-00317,route-05,Medchal,2024-2028,semester,active
+bus-alloc-00280,STU-00348,route-05,Alwal,2024-2028,semester,active
+bus-alloc-00281,STU-00767,route-06,Kandlakoya,2024-2028,semester,active
+bus-alloc-00282,STU-02357,route-04,Bachupally,2025-2029,semester,active
+bus-alloc-00283,STU-01819,route-09,Medchal,2024-2028,semester,active
+bus-alloc-00284,STU-00830,route-10,Patancheru,2024-2028,annual,active
+bus-alloc-00285,STU-01407,route-09,Kandlakoya,2025-2029,semester,active
+bus-alloc-00286,STU-01951,route-09,Kandlakoya,2022-2026,semester,active
+bus-alloc-00287,STU-02888,route-05,Kandlakoya,2024-2028,annual,active
+bus-alloc-00288,STU-00683,route-08,Bolarum,2023-2027,semester,active
+bus-alloc-00289,STU-02671,route-05,Kandlakoya,2022-2026,semester,active
+bus-alloc-00290,STU-00279,route-05,Neredmet,2024-2028,semester,active
+bus-alloc-00291,STU-02499,route-04,Chandanagar,2023-2027,annual,active
+bus-alloc-00292,STU-01711,route-01,Kandlakoya,2022-2026,semester,active
+bus-alloc-00293,STU-00288,route-06,Medchal Market,2024-2028,annual,active
+bus-alloc-00294,STU-00983,route-08,Lalapet,2022-2026,semester,active
+bus-alloc-00295,STU-02864,route-07,Medchal,2023-2027,semester,active
+bus-alloc-00296,STU-00778,route-01,Kompally,2024-2028,annual,active
+bus-alloc-00297,STU-03243,route-06,Medchal Market,2024-2028,semester,active
+bus-alloc-00298,STU-02589,route-06,Medchal Chowrasta,2025-2029,annual,active
+bus-alloc-00299,STU-01308,route-09,IDA Jeedimetla,2024-2028,semester,active
+bus-alloc-00300,STU-03224,route-02,Kandlakoya,2023-2027,annual,active
+bus-alloc-00301,STU-00297,route-05,Kandlakoya,2024-2028,annual,active
+bus-alloc-00302,STU-02543,route-06,Medchal MMTS,2024-2028,annual,active
+bus-alloc-00303,STU-02164,route-06,Medchal Market,2024-2028,semester,active
+bus-alloc-00304,STU-00265,route-07,Dundigal,2024-2028,semester,active
+bus-alloc-00305,STU-00904,route-05,Medchal,2025-2029,semester,active
+bus-alloc-00306,STU-00649,route-08,Bolarum,2023-2027,semester,active
+bus-alloc-00307,STU-00408,route-01,Kandlakoya,2025-2029,annual,active
+bus-alloc-00308,STU-01912,route-08,Hakimpet,2025-2029,annual,active
+bus-alloc-00309,STU-00684,route-07,Kandlakoya,2023-2027,semester,active
+bus-alloc-00310,STU-01924,route-07,Quthbullapur,2022-2026,annual,active
+bus-alloc-00311,STU-01085,route-03,KPHB,2023-2027,semester,active
+bus-alloc-00312,STU-02484,route-07,Kandlakoya,2023-2027,semester,active
+bus-alloc-00313,STU-02619,route-03,Nizampet,2025-2029,annual,active
+bus-alloc-00314,STU-03195,route-02,Kandlakoya,2023-2027,semester,active
+bus-alloc-00315,STU-00429,route-03,Nizampet,2025-2029,annual,active
+bus-alloc-00316,STU-01699,route-01,Yapral,2022-2026,semester,active
+bus-alloc-00317,STU-00373,route-04,Chandanagar,2025-2029,annual,active
+bus-alloc-00318,STU-00233,route-08,Bolarum,2023-2027,annual,active
+bus-alloc-00319,STU-00801,route-10,Dundigal,2024-2028,semester,active
+bus-alloc-00320,STU-02360,route-07,Medchal,2025-2029,semester,active
+bus-alloc-00321,STU-01864,route-07,Quthbullapur,2025-2029,annual,active
+bus-alloc-00322,STU-01022,route-09,IDA Jeedimetla,2022-2026,semester,active
+bus-alloc-00323,STU-00439,route-01,Malkajgiri,2025-2029,annual,active
+bus-alloc-00324,STU-02828,route-01,Quthbullapur,2023-2027,annual,active
+bus-alloc-00325,STU-00902,route-04,Chandanagar,2025-2029,semester,active
+bus-alloc-00326,STU-00645,route-05,AS Rao Nagar,2023-2027,annual,active
+bus-alloc-00327,STU-00860,route-07,Kandlakoya,2025-2029,semester,active
+bus-alloc-00328,STU-00992,route-03,SR Nagar,2022-2026,annual,active
+bus-alloc-00329,STU-02082,route-05,Neredmet,2023-2027,semester,active
+bus-alloc-00330,STU-03285,route-09,Medchal,2024-2028,semester,active
+bus-alloc-00331,STU-00461,route-07,BHEL Township,2025-2029,semester,active
+bus-alloc-00332,STU-01555,route-08,Lalapet,2023-2027,annual,active
+bus-alloc-00333,STU-01966,route-03,Medchal,2022-2026,annual,active
+bus-alloc-00334,STU-01835,route-04,Chandanagar,2024-2028,annual,active
+bus-alloc-00335,STU-01814,route-04,Kandlakoya,2024-2028,annual,active
+bus-alloc-00336,STU-03223,route-10,Medchal,2023-2027,annual,active
+bus-alloc-00337,STU-03230,route-02,Alwal,2023-2027,annual,active
+bus-alloc-00338,STU-00956,route-07,Dundigal,2025-2029,annual,active
+bus-alloc-00339,STU-02513,route-10,Patancheru,2023-2027,annual,active
+bus-alloc-00340,STU-02287,route-01,Secunderabad,2025-2029,annual,active
+bus-alloc-00341,STU-01463,route-07,Medchal,2022-2026,semester,active
+bus-alloc-00342,STU-02511,route-02,Neredmet,2023-2027,semester,active
+bus-alloc-00343,STU-01683,route-03,KPHB,2022-2026,annual,active
+bus-alloc-00344,STU-01509,route-05,Alwal,2023-2027,annual,active
+bus-alloc-00345,STU-01278,route-09,Suraram,2024-2028,annual,active
+bus-alloc-00346,STU-01500,route-07,Quthbullapur,2022-2026,annual,active
+bus-alloc-00347,STU-02334,route-05,Sainikpuri,2025-2029,annual,active
+bus-alloc-00348,STU-00025,route-08,Hakimpet,2022-2026,annual,active
+bus-alloc-00349,STU-02387,route-05,Medchal,2025-2029,annual,active
+bus-alloc-00350,STU-02009,route-06,Kandlakoya,2022-2026,semester,active
+bus-alloc-00351,STU-01644,route-03,Ameerpet,2025-2029,semester,active
+bus-alloc-00352,STU-02131,route-04,Kandlakoya,2023-2027,semester,active
+bus-alloc-00353,STU-00491,route-06,Medchal Market,2022-2026,annual,active
+bus-alloc-00354,STU-00398,route-01,Quthbullapur,2025-2029,annual,active
+bus-alloc-00355,STU-01902,route-02,Kandlakoya,2025-2029,annual,active
+bus-alloc-00356,STU-00723,route-02,LB Nagar,2024-2028,annual,active
+bus-alloc-00357,STU-00078,route-05,Kandlakoya,2022-2026,annual,active
+bus-alloc-00358,STU-00117,route-08,Lalapet,2022-2026,semester,active
+bus-alloc-00359,STU-02816,route-08,Bolarum,2023-2027,annual,active
+bus-alloc-00360,STU-03163,route-03,Ameerpet,2022-2026,semester,active
+bus-alloc-00361,STU-00634,route-06,Medchal Chowrasta,2023-2027,semester,active
+bus-alloc-00362,STU-02481,route-02,LB Nagar,2023-2027,annual,active
+bus-alloc-00363,STU-02213,route-01,Kandlakoya,2024-2028,annual,active
+bus-alloc-00364,STU-00008,route-03,Nizampet,2022-2026,semester,active
+bus-alloc-00365,STU-02094,route-08,Medchal,2023-2027,semester,active
+bus-alloc-00366,STU-01803,route-02,Alwal,2024-2028,semester,active
+bus-alloc-00367,STU-01901,route-03,SR Nagar,2025-2029,semester,active
+bus-alloc-00368,STU-02516,route-07,Medchal,2023-2027,semester,active
+bus-alloc-00369,STU-01853,route-07,Medchal,2024-2028,semester,active
+bus-alloc-00370,STU-02376,route-03,SR Nagar,2025-2029,annual,active
+bus-alloc-00371,STU-00675,route-01,Kandlakoya,2023-2027,annual,active
+bus-alloc-00372,STU-02693,route-02,Medchal,2022-2026,semester,active
+bus-alloc-00373,STU-00895,route-10,Kandlakoya,2025-2029,semester,active
+bus-alloc-00374,STU-02534,route-03,Medchal,2024-2028,semester,active
+bus-alloc-00375,STU-01047,route-10,Patancheru,2022-2026,annual,active
+bus-alloc-00376,STU-01633,route-08,Alwal,2025-2029,annual,active
+bus-alloc-00377,STU-02643,route-07,Medchal,2022-2026,annual,active
+bus-alloc-00378,STU-00633,route-02,Neredmet,2023-2027,semester,active
+bus-alloc-00379,STU-02860,route-01,Quthbullapur,2023-2027,annual,active
+bus-alloc-00380,STU-02250,route-06,Medchal MMTS,2024-2028,semester,active
+bus-alloc-00381,STU-03337,route-04,Bachupally,2025-2029,semester,active
+bus-alloc-00382,STU-01671,route-07,BHEL Township,2025-2029,annual,active
+bus-alloc-00383,STU-01055,route-01,Quthbullapur,2022-2026,annual,active
+bus-alloc-00384,STU-02400,route-09,Bollaram,2025-2029,semester,active
+bus-alloc-00385,STU-02536,route-03,SR Nagar,2024-2028,semester,active
+bus-alloc-00386,STU-00606,route-06,Medchal Market,2023-2027,semester,active
+bus-alloc-00387,STU-00159,route-05,Sainikpuri,2023-2027,annual,active
+bus-alloc-00388,STU-03329,route-09,Kandlakoya,2025-2029,semester,active
+bus-alloc-00389,STU-01021,route-07,BHEL Township,2022-2026,annual,active
+bus-alloc-00390,STU-02648,route-08,Alwal,2022-2026,semester,active
+bus-alloc-00391,STU-02264,route-02,Kandlakoya,2024-2028,semester,active
+bus-alloc-00392,STU-02910,route-06,Medchal MMTS,2024-2028,semester,active
+bus-alloc-00393,STU-01350,route-01,Secunderabad,2025-2029,semester,active
+bus-alloc-00394,STU-02106,route-07,Quthbullapur,2023-2027,annual,active
+bus-alloc-00395,STU-02940,route-02,Neredmet,2024-2028,annual,active
+bus-alloc-00396,STU-02192,route-08,Lalapet,2024-2028,semester,active
+bus-alloc-00397,STU-01007,route-01,Kandlakoya,2022-2026,annual,active
+bus-alloc-00398,STU-02551,route-08,Lalapet,2024-2028,semester,active
+bus-alloc-00399,STU-00678,route-06,Kandlakoya,2023-2027,annual,active
+bus-alloc-00400,STU-02015,route-02,ECIL,2022-2026,annual,active
+bus-alloc-00401,STU-00533,route-06,Medchal Chowrasta,2022-2026,semester,active
+bus-alloc-00402,STU-01366,route-09,Medchal,2025-2029,semester,active
+bus-alloc-00403,STU-01737,route-02,Dilsukhnagar,2022-2026,annual,active
+bus-alloc-00404,STU-01098,route-08,Hakimpet,2023-2027,semester,active
+bus-alloc-00405,STU-00301,route-02,Neredmet,2024-2028,annual,active
+bus-alloc-00406,STU-01190,route-04,Miyapur,2023-2027,semester,active
+bus-alloc-00407,STU-00196,route-04,Bachupally,2023-2027,annual,active
+bus-alloc-00408,STU-02417,route-06,Medchal MMTS,2022-2026,semester,active
+bus-alloc-00409,STU-00090,route-01,Quthbullapur,2022-2026,annual,active
+bus-alloc-00410,STU-00049,route-08,Alwal,2022-2026,annual,active
+bus-alloc-00411,STU-00305,route-08,Bolarum,2024-2028,annual,active
+bus-alloc-00412,STU-02196,route-09,Bollaram,2024-2028,semester,active
+bus-alloc-00413,STU-02047,route-09,IDA Jeedimetla,2023-2027,annual,active
+bus-alloc-00414,STU-02040,route-03,SR Nagar,2022-2026,semester,active
+bus-alloc-00415,STU-02480,route-10,Medchal,2023-2027,semester,active
+bus-alloc-00416,STU-02358,route-09,Bollaram,2025-2029,semester,active
+bus-alloc-00417,STU-02175,route-10,Kandlakoya,2024-2028,annual,active
+bus-alloc-00418,STU-02244,route-05,Alwal,2024-2028,semester,active
+bus-alloc-00419,STU-00650,route-05,Alwal,2023-2027,annual,active
+bus-alloc-00420,STU-02866,route-03,Medchal,2023-2027,semester,active
+bus-alloc-00421,STU-00342,route-09,Suraram,2024-2028,annual,active
+bus-alloc-00422,STU-03112,route-04,Chandanagar,2025-2029,semester,active
+bus-alloc-00423,STU-02375,route-06,Medchal Market,2025-2029,annual,active
+bus-alloc-00424,STU-00602,route-09,Medchal,2023-2027,semester,active
+bus-alloc-00425,STU-00346,route-02,Alwal,2024-2028,semester,active
+bus-alloc-00426,STU-03030,route-10,Medchal,2025-2029,semester,active
+bus-alloc-00427,STU-00204,route-09,Suraram,2023-2027,semester,active
+bus-alloc-00428,STU-00765,route-01,Kompally,2024-2028,annual,active
+bus-alloc-00429,STU-01300,route-01,Yapral,2024-2028,annual,active
+bus-alloc-00430,STU-02457,route-01,Quthbullapur,2022-2026,annual,active
+bus-alloc-00431,STU-00071,route-04,Pragathi Nagar,2022-2026,annual,active
+bus-alloc-00432,STU-02806,route-05,Kandlakoya,2023-2027,semester,active
+bus-alloc-00433,STU-02112,route-03,Ameerpet,2023-2027,semester,active
+bus-alloc-00434,STU-00632,route-04,Medchal Chowrasta,2023-2027,annual,active
+bus-alloc-00435,STU-00724,route-06,Kandlakoya,2024-2028,annual,active
+bus-alloc-00436,STU-03229,route-10,Kandlakoya,2023-2027,annual,active
+bus-alloc-00437,STU-00123,route-09,Bollaram,2023-2027,annual,active
+bus-alloc-00438,STU-00523,route-09,Kandlakoya,2022-2026,semester,active
+bus-alloc-00439,STU-02605,route-01,Yapral,2025-2029,semester,active
+bus-alloc-00440,STU-00018,route-07,Dundigal,2022-2026,annual,active
+bus-alloc-00441,STU-02967,route-01,Quthbullapur,2024-2028,semester,active
+bus-alloc-00442,STU-03338,route-04,Medchal Chowrasta,2025-2029,semester,active
+bus-alloc-00443,STU-01546,route-04,Kandlakoya,2023-2027,semester,active
+bus-alloc-00444,STU-02124,route-10,Medchal,2023-2027,annual,active
+bus-alloc-00445,STU-00584,route-04,Pragathi Nagar,2022-2026,semester,active
+bus-alloc-00446,STU-03256,route-03,SR Nagar,2024-2028,annual,active
+bus-alloc-00447,STU-01678,route-03,SR Nagar,2025-2029,semester,active
+bus-alloc-00448,STU-01840,route-01,Yapral,2024-2028,semester,active
+bus-alloc-00449,STU-00892,route-09,Suraram,2025-2029,annual,active
+bus-alloc-00450,STU-02214,route-03,Bachupally,2024-2028,annual,active
+bus-alloc-00451,STU-01172,route-06,Kandlakoya,2023-2027,annual,active
+bus-alloc-00452,STU-01265,route-01,Trimulgherry,2024-2028,semester,active
+bus-alloc-00453,STU-02388,route-10,Patancheru,2025-2029,semester,active
+bus-alloc-00454,STU-03250,route-08,Medchal,2024-2028,semester,active
+bus-alloc-00455,STU-02568,route-02,Alwal,2024-2028,annual,active
+bus-alloc-00456,STU-01191,route-03,SR Nagar,2023-2027,annual,active
+bus-alloc-00457,STU-00764,route-07,Kandlakoya,2024-2028,semester,active
+bus-alloc-00458,STU-00183,route-02,Alwal,2023-2027,annual,active
+bus-alloc-00459,STU-02268,route-04,Kandlakoya,2024-2028,semester,active
+bus-alloc-00460,STU-00035,route-06,Medchal Chowrasta,2022-2026,semester,active
+bus-alloc-00461,STU-00467,route-04,Medchal Chowrasta,2025-2029,semester,active
+bus-alloc-00462,STU-00781,route-09,Kandlakoya,2024-2028,annual,active
+bus-alloc-00463,STU-03309,route-02,Alwal,2025-2029,semester,active
+bus-alloc-00464,STU-03225,route-04,Kandlakoya,2023-2027,annual,active
+bus-alloc-00465,STU-01789,route-01,Quthbullapur,2023-2027,semester,active
+bus-alloc-00466,STU-02305,route-07,Quthbullapur,2025-2029,semester,active
+bus-alloc-00467,STU-00686,route-05,Medchal,2023-2027,semester,active
+bus-alloc-00468,STU-00574,route-01,Kompally,2022-2026,semester,active
+bus-alloc-00469,STU-01015,route-09,Medchal,2022-2026,semester,active
+bus-alloc-00470,STU-03146,route-08,Bolarum,2022-2026,semester,active
+bus-alloc-00471,STU-02588,route-04,Pragathi Nagar,2025-2029,annual,active
+bus-alloc-00472,STU-03079,route-02,Uppal,2025-2029,annual,active
+bus-alloc-00473,STU-00146,route-02,ECIL,2023-2027,annual,active
+bus-alloc-00474,STU-03130,route-07,Quthbullapur,2022-2026,annual,active
+bus-alloc-00475,STU-00013,route-09,Kandlakoya,2022-2026,semester,active
+bus-alloc-00476,STU-02489,route-02,Uppal,2023-2027,annual,active
+bus-alloc-00477,STU-00051,route-08,Kandlakoya,2022-2026,semester,active
+bus-alloc-00478,STU-01873,route-01,Secunderabad,2025-2029,annual,active
+bus-alloc-00479,STU-02104,route-01,Trimulgherry,2023-2027,semester,active
+bus-alloc-00480,STU-03325,route-09,Jeedimetla,2025-2029,annual,active
+bus-alloc-00481,STU-03185,route-05,Alwal,2023-2027,semester,active
+bus-alloc-00482,STU-03047,route-08,Kandlakoya,2025-2029,semester,active
+bus-alloc-00483,STU-01928,route-07,Dundigal,2022-2026,annual,active
+bus-alloc-00484,STU-02825,route-07,Quthbullapur,2023-2027,annual,active
+bus-alloc-00485,STU-02583,route-10,Patancheru,2025-2029,annual,active
+bus-alloc-00486,STU-01832,route-02,Alwal,2024-2028,annual,active
+bus-alloc-00487,STU-02855,route-05,Kandlakoya,2023-2027,semester,active
+bus-alloc-00488,STU-00580,route-10,Patancheru,2022-2026,semester,active
+bus-alloc-00489,STU-02423,route-08,Alwal,2022-2026,semester,active
+bus-alloc-00490,STU-02089,route-01,Yapral,2023-2027,annual,active
+bus-alloc-00491,STU-02530,route-09,IDA Jeedimetla,2024-2028,annual,active
+bus-alloc-00492,STU-02038,route-07,Kandlakoya,2022-2026,semester,active
+bus-alloc-00493,STU-01275,route-03,Bachupally,2024-2028,semester,active
+bus-alloc-00494,STU-03032,route-01,Kompally,2025-2029,annual,active
+bus-alloc-00495,STU-02281,route-02,Dilsukhnagar,2025-2029,annual,active
+bus-alloc-00496,STU-01703,route-10,Medchal,2022-2026,semester,active
+bus-alloc-00497,STU-01538,route-09,Medchal,2023-2027,annual,active
+bus-alloc-00498,STU-02331,route-05,AS Rao Nagar,2025-2029,semester,active
+bus-alloc-00499,STU-02729,route-04,Bachupally,2022-2026,annual,active
+bus-alloc-00500,STU-02746,route-03,Kukatpally,2022-2026,annual,active
+bus-alloc-00501,STU-02044,route-10,Sangareddy Bypass,2023-2027,annual,active
+bus-alloc-00502,STU-01421,route-02,Uppal,2025-2029,annual,active
+bus-alloc-00503,STU-00351,route-09,Bollaram,2024-2028,annual,active
+bus-alloc-00504,STU-01906,route-05,Kandlakoya,2025-2029,annual,active
+bus-alloc-00505,STU-02392,route-05,Sainikpuri,2025-2029,annual,active
+bus-alloc-00506,STU-00311,route-10,Dundigal,2024-2028,semester,active
+bus-alloc-00507,STU-01771,route-06,Medchal Market,2023-2027,annual,active
+bus-alloc-00508,STU-02374,route-02,Neredmet,2025-2029,annual,active
+bus-alloc-00509,STU-00464,route-04,Pragathi Nagar,2025-2029,semester,active
+bus-alloc-00510,STU-02707,route-08,Lalapet,2022-2026,semester,active
+bus-alloc-00511,STU-02057,route-10,Isnapur,2023-2027,semester,active
+bus-alloc-00512,STU-02747,route-06,Kandlakoya,2022-2026,annual,active
+bus-alloc-00513,STU-02750,route-01,Malkajgiri,2022-2026,annual,active
+bus-alloc-00514,STU-00164,route-04,Kandlakoya,2023-2027,semester,active
+bus-alloc-00515,STU-01489,route-05,Neredmet,2022-2026,annual,active
+bus-alloc-00516,STU-00313,route-06,Kandlakoya,2024-2028,semester,active
+bus-alloc-00517,STU-02594,route-08,Lalapet,2025-2029,semester,active
+bus-alloc-00518,STU-02779,route-08,Medchal,2023-2027,annual,active
+bus-alloc-00519,STU-00883,route-03,SR Nagar,2025-2029,semester,active
+bus-alloc-00520,STU-01211,route-03,KPHB,2024-2028,semester,active
+bus-alloc-00521,STU-01206,route-02,LB Nagar,2024-2028,annual,active
+bus-alloc-00522,STU-00029,route-09,Kandlakoya,2022-2026,annual,active
+bus-alloc-00523,STU-03261,route-10,Medchal,2024-2028,semester,active
+bus-alloc-00524,STU-00729,route-10,Isnapur,2024-2028,annual,active
+bus-alloc-00525,STU-00910,route-09,Suraram,2025-2029,semester,active
+bus-alloc-00526,STU-00952,route-03,Nizampet,2025-2029,semester,active
+bus-alloc-00527,STU-00853,route-04,Medchal Chowrasta,2025-2029,semester,active
+bus-alloc-00528,STU-00846,route-03,Kandlakoya,2025-2029,annual,active
+bus-alloc-00529,STU-02876,route-07,Dundigal,2023-2027,annual,active
+bus-alloc-00530,STU-03037,route-04,Medchal Chowrasta,2025-2029,annual,active
+bus-alloc-00531,STU-01800,route-09,IDA Jeedimetla,2023-2027,semester,active
+bus-alloc-00532,STU-01281,route-03,Kukatpally,2024-2028,annual,active
+bus-alloc-00533,STU-03313,route-08,Lalapet,2025-2029,annual,active
+bus-alloc-00534,STU-01498,route-04,Bachupally,2022-2026,annual,active
+bus-alloc-00535,STU-02978,route-02,Neredmet,2024-2028,semester,active
+bus-alloc-00536,STU-00119,route-04,Miyapur,2022-2026,annual,active
+bus-alloc-00537,STU-00412,route-09,Suraram,2025-2029,semester,active
+bus-alloc-00538,STU-01582,route-08,Alwal,2024-2028,annual,active
+bus-alloc-00539,STU-02857,route-01,Quthbullapur,2023-2027,semester,active
+bus-alloc-00540,STU-01409,route-02,Neredmet,2025-2029,semester,active
+bus-alloc-00541,STU-01130,route-10,Medchal,2023-2027,annual,active
+bus-alloc-00542,STU-00127,route-07,Medchal,2023-2027,semester,active
+bus-alloc-00543,STU-01134,route-10,Kandlakoya,2023-2027,annual,active
+bus-alloc-00544,STU-01478,route-09,Suraram,2022-2026,semester,active
+bus-alloc-00545,STU-01922,route-04,Medchal Chowrasta,2022-2026,semester,active
+bus-alloc-00546,STU-01067,route-06,Medchal Chowrasta,2022-2026,semester,active
+bus-alloc-00547,STU-00932,route-08,Medchal,2025-2029,annual,active
+bus-alloc-00548,STU-02743,route-09,IDA Jeedimetla,2022-2026,semester,active
+bus-alloc-00549,STU-02749,route-03,KPHB,2022-2026,annual,active
+bus-alloc-00550,STU-00625,route-09,Kandlakoya,2023-2027,semester,active
+bus-alloc-00551,STU-02852,route-04,Chandanagar,2023-2027,annual,active
+bus-alloc-00552,STU-01159,route-03,Nizampet,2023-2027,annual,active
+bus-alloc-00553,STU-00856,route-04,Bachupally,2025-2029,semester,active
+bus-alloc-00554,STU-02564,route-02,Kandlakoya,2024-2028,semester,active
+bus-alloc-00555,STU-01452,route-08,Hakimpet,2022-2026,annual,active
+bus-alloc-00556,STU-03312,route-07,Quthbullapur,2025-2029,annual,active
+bus-alloc-00557,STU-02201,route-01,Trimulgherry,2024-2028,annual,active
+bus-alloc-00558,STU-02173,route-03,Ameerpet,2024-2028,annual,active
+bus-alloc-00559,STU-02856,route-01,Trimulgherry,2023-2027,semester,active
+bus-alloc-00560,STU-03080,route-03,Medchal,2025-2029,annual,active
+bus-alloc-00561,STU-02479,route-05,Sainikpuri,2023-2027,annual,active
+bus-alloc-00562,STU-00347,route-08,Medchal,2024-2028,semester,active
+bus-alloc-00563,STU-02316,route-08,Hakimpet,2025-2029,annual,active
+bus-alloc-00564,STU-01342,route-07,Kandlakoya,2025-2029,annual,active
+bus-alloc-00565,STU-03109,route-10,Isnapur,2025-2029,semester,active
+bus-alloc-00566,STU-01441,route-03,Nizampet,2022-2026,semester,active
+bus-alloc-00567,STU-01440,route-10,Medchal,2025-2029,annual,active
+bus-alloc-00568,STU-01673,route-04,Bachupally,2025-2029,semester,active
+bus-alloc-00569,STU-01094,route-03,SR Nagar,2023-2027,annual,active
+bus-alloc-00570,STU-01227,route-04,Medchal Chowrasta,2024-2028,semester,active
+bus-alloc-00571,STU-02871,route-03,SR Nagar,2023-2027,annual,active
+bus-alloc-00572,STU-00556,route-08,Medchal,2022-2026,annual,active
+bus-alloc-00573,STU-01034,route-09,Medchal,2022-2026,annual,active
+bus-alloc-00574,STU-01040,route-02,Kandlakoya,2022-2026,annual,active
+bus-alloc-00575,STU-01947,route-10,Medchal,2022-2026,annual,active
+bus-alloc-00576,STU-00824,route-07,Kandlakoya,2024-2028,semester,active
+bus-alloc-00577,STU-00166,route-06,Medchal MMTS,2023-2027,semester,active
+bus-alloc-00578,STU-02049,route-04,Bachupally,2023-2027,semester,active
+bus-alloc-00579,STU-00863,route-06,Medchal MMTS,2025-2029,semester,active
+bus-alloc-00580,STU-01866,route-03,Bachupally,2025-2029,semester,active
+bus-alloc-00581,STU-01384,route-04,Miyapur,2025-2029,semester,active
+bus-alloc-00582,STU-02651,route-10,Medchal,2022-2026,semester,active
+bus-alloc-00583,STU-02959,route-05,AS Rao Nagar,2024-2028,annual,active
+bus-alloc-00584,STU-00635,route-01,Kompally,2023-2027,annual,active
+bus-alloc-00585,STU-02306,route-09,Jeedimetla,2025-2029,semester,active
+bus-alloc-00586,STU-00820,route-04,Kandlakoya,2024-2028,semester,active
+bus-alloc-00587,STU-00667,route-07,Dundigal,2023-2027,annual,active
+bus-alloc-00588,STU-02766,route-03,Medchal,2023-2027,semester,active
+bus-alloc-00589,STU-00572,route-05,Medchal,2022-2026,semester,active
+bus-alloc-00590,STU-00949,route-10,Sangareddy Bypass,2025-2029,semester,active
+bus-alloc-00591,STU-01802,route-07,BHEL Township,2024-2028,semester,active
+bus-alloc-00592,STU-01695,route-09,Medchal,2022-2026,semester,active
+bus-alloc-00593,STU-00362,route-03,Nizampet,2025-2029,semester,active
+bus-alloc-00594,STU-01043,route-05,Neredmet,2022-2026,semester,active
+bus-alloc-00595,STU-01014,route-07,BHEL Township,2022-2026,annual,active
+bus-alloc-00596,STU-01675,route-04,Bachupally,2025-2029,annual,active
+bus-alloc-00597,STU-00337,route-02,ECIL,2024-2028,semester,active
+bus-alloc-00598,STU-03052,route-06,Medchal MMTS,2025-2029,annual,active
+bus-alloc-00599,STU-03136,route-07,Quthbullapur,2022-2026,annual,active
+bus-alloc-00600,STU-02260,route-03,Kandlakoya,2024-2028,semester,active
+bus-alloc-00601,STU-00589,route-02,LB Nagar,2022-2026,semester,active
+bus-alloc-00602,STU-00366,route-04,Pragathi Nagar,2025-2029,annual,active
+bus-alloc-00603,STU-01641,route-10,Patancheru,2025-2029,semester,active
+bus-alloc-00604,STU-01119,route-07,Kandlakoya,2023-2027,semester,active
+bus-alloc-00605,STU-02883,route-10,Patancheru,2024-2028,annual,active
+bus-alloc-00606,STU-02298,route-08,Alwal,2025-2029,annual,active
+bus-alloc-00607,STU-00334,route-04,Kandlakoya,2024-2028,semester,active
+bus-alloc-00608,STU-02293,route-04,Miyapur,2025-2029,annual,active
+bus-alloc-00609,STU-00072,route-10,Isnapur,2022-2026,annual,active
+bus-alloc-00610,STU-01196,route-06,Medchal Market,2023-2027,annual,active
+bus-alloc-00611,STU-02508,route-03,SR Nagar,2023-2027,semester,active
+bus-alloc-00612,STU-00092,route-07,Dundigal,2022-2026,semester,active
+bus-alloc-00613,STU-00341,route-07,Kandlakoya,2024-2028,annual,active
+bus-alloc-00614,STU-00926,route-09,Jeedimetla,2025-2029,annual,active
+bus-alloc-00615,STU-00158,route-02,Neredmet,2023-2027,semester,active
+bus-alloc-00616,STU-00651,route-06,Medchal Chowrasta,2023-2027,annual,active
+bus-alloc-00617,STU-01766,route-10,Isnapur,2023-2027,semester,active
+bus-alloc-00618,STU-01661,route-07,Kandlakoya,2025-2029,annual,active
+bus-alloc-00619,STU-01464,route-05,AS Rao Nagar,2022-2026,semester,active
+bus-alloc-00620,STU-00361,route-09,Jeedimetla,2025-2029,annual,active
+bus-alloc-00621,STU-02738,route-09,Suraram,2022-2026,semester,active
+bus-alloc-00622,STU-03126,route-02,Neredmet,2022-2026,semester,active
+bus-alloc-00623,STU-02983,route-08,Alwal,2024-2028,semester,active
+bus-alloc-00624,STU-02664,route-04,Pragathi Nagar,2022-2026,semester,active
+bus-alloc-00625,STU-02016,route-08,Medchal,2022-2026,annual,active
+bus-alloc-00626,STU-02478,route-08,Bolarum,2023-2027,semester,active
+bus-alloc-00627,STU-02698,route-02,Medchal,2022-2026,annual,active
+bus-alloc-00628,STU-00731,route-04,Pragathi Nagar,2024-2028,semester,active
+bus-alloc-00629,STU-01755,route-06,Medchal MMTS,2023-2027,semester,active
+bus-alloc-00630,STU-02597,route-04,Pragathi Nagar,2025-2029,annual,active
+bus-alloc-00631,STU-02684,route-07,Dundigal,2022-2026,annual,active
+bus-alloc-00632,STU-03113,route-09,IDA Jeedimetla,2025-2029,semester,active
+bus-alloc-00633,STU-03348,route-06,Medchal Chowrasta,2025-2029,annual,active
+bus-alloc-00634,STU-00400,route-10,Sangareddy Bypass,2025-2029,annual,active
+bus-alloc-00635,STU-01976,route-04,Bachupally,2022-2026,annual,active
+bus-alloc-00636,STU-02127,route-04,Kandlakoya,2023-2027,annual,active
+bus-alloc-00637,STU-02765,route-05,AS Rao Nagar,2023-2027,annual,active
+bus-alloc-00638,STU-00319,route-04,Chandanagar,2024-2028,semester,active
+bus-alloc-00639,STU-02872,route-03,SR Nagar,2023-2027,annual,active
+bus-alloc-00640,STU-02297,route-02,Kandlakoya,2025-2029,annual,active
+bus-alloc-00641,STU-00255,route-09,Jeedimetla,2024-2028,semester,active
+bus-alloc-00642,STU-01210,route-06,Medchal Chowrasta,2024-2028,semester,active
+bus-alloc-00643,STU-00741,route-10,Sangareddy Bypass,2024-2028,semester,active
+bus-alloc-00644,STU-01545,route-03,Bachupally,2023-2027,semester,active
+bus-alloc-00645,STU-00906,route-04,Medchal Chowrasta,2025-2029,annual,active
+bus-alloc-00646,STU-03017,route-01,Kompally,2025-2029,semester,active
+bus-alloc-00647,STU-02827,route-08,Medchal,2023-2027,annual,active
+bus-alloc-00648,STU-00088,route-09,Suraram,2022-2026,semester,active
+bus-alloc-00649,STU-02279,route-03,Kandlakoya,2024-2028,annual,active
+bus-alloc-00650,STU-00963,route-09,Bollaram,2022-2026,semester,active
+bus-alloc-00651,STU-02504,route-01,Secunderabad,2023-2027,annual,active
+bus-alloc-00652,STU-03095,route-07,Kandlakoya,2025-2029,annual,active
+bus-alloc-00653,STU-02571,route-06,Medchal Chowrasta,2024-2028,semester,active
+bus-alloc-00654,STU-02933,route-03,Bachupally,2024-2028,annual,active
+bus-alloc-00655,STU-02202,route-05,Alwal,2024-2028,semester,active
+bus-alloc-00656,STU-02011,route-06,Medchal Market,2022-2026,semester,active
+bus-alloc-00657,STU-02211,route-07,BHEL Township,2024-2028,semester,active
+bus-alloc-00658,STU-02774,route-06,Medchal Chowrasta,2023-2027,semester,active
+bus-alloc-00659,STU-02525,route-05,Alwal,2024-2028,annual,active
+bus-alloc-00660,STU-01337,route-10,Isnapur,2025-2029,annual,active
+bus-alloc-00661,STU-03021,route-02,Neredmet,2025-2029,annual,active
+bus-alloc-00662,STU-00242,route-09,Bollaram,2024-2028,semester,active
+bus-alloc-00663,STU-02726,route-04,Chandanagar,2022-2026,annual,active
+bus-alloc-00664,STU-00420,route-08,Bolarum,2025-2029,annual,active
+bus-alloc-00665,STU-01557,route-07,Medchal,2023-2027,annual,active
+bus-alloc-00666,STU-01845,route-09,Medchal,2024-2028,semester,active
+bus-alloc-00667,STU-01727,route-08,Lalapet,2022-2026,semester,active
+bus-alloc-00668,STU-03308,route-09,Medchal,2025-2029,annual,active
+bus-alloc-00669,STU-03351,route-07,Quthbullapur,2025-2029,annual,active
+bus-alloc-00670,STU-02390,route-01,Trimulgherry,2025-2029,semester,active
+bus-alloc-00671,STU-03326,route-08,Kandlakoya,2025-2029,annual,active
+bus-alloc-00672,STU-00876,route-08,Kandlakoya,2025-2029,semester,active
+bus-alloc-00673,STU-01416,route-05,Neredmet,2025-2029,semester,active
+bus-alloc-00674,STU-02546,route-09,Medchal,2024-2028,semester,active
+bus-alloc-00675,STU-00388,route-06,Medchal MMTS,2025-2029,semester,active
+bus-alloc-00676,STU-02123,route-02,Alwal,2023-2027,annual,active
+bus-alloc-00677,STU-00417,route-10,Medchal,2025-2029,annual,active
+bus-alloc-00678,STU-00771,route-05,Neredmet,2024-2028,semester,active
+bus-alloc-00679,STU-02132,route-09,Bollaram,2023-2027,semester,active
+bus-alloc-00680,STU-00083,route-02,Medchal,2022-2026,semester,active
+bus-alloc-00681,STU-01964,route-08,Kandlakoya,2022-2026,annual,active
+bus-alloc-00682,STU-00089,route-03,Nizampet,2022-2026,semester,active
+bus-alloc-00683,STU-02506,route-10,Medchal,2023-2027,semester,active
+bus-alloc-00684,STU-01294,route-02,LB Nagar,2024-2028,annual,active
+bus-alloc-00685,STU-03002,route-06,Medchal Market,2025-2029,semester,active
+bus-alloc-00686,STU-01023,route-06,Medchal Chowrasta,2022-2026,semester,active
+bus-alloc-00687,STU-01914,route-10,Kandlakoya,2025-2029,semester,active
+bus-alloc-00688,STU-00118,route-05,Alwal,2022-2026,semester,active
+bus-alloc-00689,STU-02858,route-10,Medchal,2023-2027,semester,active
+bus-alloc-00690,STU-00426,route-07,BHEL Township,2025-2029,annual,active
+bus-alloc-00691,STU-02669,route-01,Trimulgherry,2022-2026,annual,active
+bus-alloc-00692,STU-02325,route-05,Kandlakoya,2025-2029,annual,active
+bus-alloc-00693,STU-00744,route-04,Chandanagar,2024-2028,semester,active
+bus-alloc-00694,STU-01122,route-02,LB Nagar,2023-2027,annual,active
+bus-alloc-00695,STU-01708,route-08,Medchal,2022-2026,annual,active
+bus-alloc-00696,STU-01467,route-01,Kandlakoya,2022-2026,semester,active
+bus-alloc-00697,STU-02801,route-09,Jeedimetla,2023-2027,annual,active
+bus-alloc-00698,STU-02436,route-05,Medchal,2022-2026,annual,active
+bus-alloc-00699,STU-03028,route-02,Medchal,2025-2029,semester,active
+bus-alloc-00700,STU-01658,route-04,Chandanagar,2025-2029,semester,active
+bus-alloc-00701,STU-03124,route-08,Kandlakoya,2022-2026,annual,active
+bus-alloc-00702,STU-01306,route-03,Kukatpally,2024-2028,annual,active
+bus-alloc-00703,STU-03081,route-01,Quthbullapur,2025-2029,semester,active
+bus-alloc-00704,STU-01696,route-06,Kandlakoya,2022-2026,semester,active
+bus-alloc-00705,STU-00918,route-09,Suraram,2025-2029,semester,active
+bus-alloc-00706,STU-00751,route-03,Kukatpally,2024-2028,semester,active
+bus-alloc-00707,STU-03203,route-10,Dundigal,2023-2027,semester,active
+bus-alloc-00708,STU-02694,route-06,Kandlakoya,2022-2026,annual,active
+bus-alloc-00709,STU-00815,route-02,Kandlakoya,2024-2028,semester,active
+bus-alloc-00710,STU-03202,route-06,Kandlakoya,2023-2027,semester,active
+bus-alloc-00711,STU-00039,route-03,Bachupally,2022-2026,annual,active
+bus-alloc-00712,STU-02208,route-01,Kompally,2024-2028,annual,active
+bus-alloc-00713,STU-00396,route-06,Medchal Chowrasta,2025-2029,semester,active
+bus-alloc-00714,STU-00215,route-09,Jeedimetla,2023-2027,semester,active
+bus-alloc-00715,STU-03005,route-08,Lalapet,2025-2029,annual,active
+bus-alloc-00716,STU-02751,route-07,Dundigal,2022-2026,annual,active
+bus-alloc-00717,STU-01831,route-01,Kompally,2024-2028,semester,active
+bus-alloc-00718,STU-00312,route-04,Bachupally,2024-2028,semester,active
+bus-alloc-00719,STU-01375,route-07,BHEL Township,2025-2029,annual,active
+bus-alloc-00720,STU-02141,route-07,Medchal,2023-2027,annual,active
+bus-alloc-00721,STU-01770,route-05,Sainikpuri,2023-2027,semester,active
+bus-alloc-00722,STU-02120,route-04,Medchal Chowrasta,2023-2027,semester,active
+bus-alloc-00723,STU-00931,route-05,Kandlakoya,2025-2029,semester,active
+bus-alloc-00724,STU-01124,route-07,BHEL Township,2023-2027,annual,active
+bus-alloc-00725,STU-02714,route-03,Kukatpally,2022-2026,semester,active
+bus-alloc-00726,STU-01850,route-02,Kandlakoya,2024-2028,semester,active
+bus-alloc-00727,STU-00659,route-05,Kandlakoya,2023-2027,semester,active
+bus-alloc-00728,STU-00661,route-04,Pragathi Nagar,2023-2027,annual,active
+bus-alloc-00729,STU-02136,route-03,Ameerpet,2023-2027,annual,active
+bus-alloc-00730,STU-02632,route-03,SR Nagar,2025-2029,semester,active
+bus-alloc-00731,STU-02841,route-05,AS Rao Nagar,2023-2027,semester,active
+bus-alloc-00732,STU-00745,route-01,Trimulgherry,2024-2028,annual,active
+bus-alloc-00733,STU-02373,route-03,Ameerpet,2025-2029,semester,active
+bus-alloc-00734,STU-01990,route-04,Pragathi Nagar,2022-2026,semester,active
+bus-alloc-00735,STU-02409,route-05,Alwal,2022-2026,semester,active
+bus-alloc-00736,STU-03295,route-08,Kandlakoya,2024-2028,annual,active
+bus-alloc-00737,STU-03151,route-06,Medchal MMTS,2022-2026,annual,active
+bus-alloc-00738,STU-03257,route-01,Malkajgiri,2024-2028,semester,active
+bus-alloc-00739,STU-00057,route-02,Kandlakoya,2022-2026,annual,active
+bus-alloc-00740,STU-02523,route-04,Pragathi Nagar,2024-2028,semester,active
+bus-alloc-00741,STU-00120,route-01,Secunderabad,2022-2026,annual,active
+bus-alloc-00742,STU-00109,route-07,Medchal,2022-2026,annual,active
+bus-alloc-00743,STU-00933,route-01,Trimulgherry,2025-2029,semester,active
+bus-alloc-00744,STU-00115,route-02,ECIL,2022-2026,semester,active
+bus-alloc-00745,STU-03328,route-07,Dundigal,2025-2029,semester,active
+bus-alloc-00746,STU-00611,route-03,Ameerpet,2023-2027,annual,active
+bus-alloc-00747,STU-00750,route-05,Alwal,2024-2028,semester,active
+bus-alloc-00748,STU-00084,route-04,Pragathi Nagar,2022-2026,annual,active
+bus-alloc-00749,STU-02349,route-04,Miyapur,2025-2029,annual,active
+bus-alloc-00750,STU-03082,route-07,Dundigal,2025-2029,annual,active
+bus-alloc-00751,STU-02755,route-03,Bachupally,2022-2026,annual,active
+bus-alloc-00752,STU-02461,route-07,BHEL Township,2023-2027,annual,active
+bus-alloc-00753,STU-00452,route-01,Kompally,2025-2029,semester,active
+bus-alloc-00754,STU-00698,route-10,Isnapur,2023-2027,semester,active
+bus-alloc-00755,STU-00036,route-02,ECIL,2022-2026,annual,active
+bus-alloc-00756,STU-01396,route-08,Bolarum,2025-2029,semester,active
+bus-alloc-00757,STU-02039,route-01,Secunderabad,2022-2026,semester,active
+bus-alloc-00758,STU-03169,route-03,SR Nagar,2022-2026,annual,active
+bus-alloc-00759,STU-00811,route-08,Hakimpet,2024-2028,semester,active
+bus-alloc-00760,STU-01875,route-09,Kandlakoya,2025-2029,semester,active
+bus-alloc-00761,STU-03277,route-08,Kandlakoya,2024-2028,annual,active
+bus-alloc-00762,STU-02091,route-01,Quthbullapur,2023-2027,semester,active
+bus-alloc-00763,STU-00800,route-06,Medchal Market,2024-2028,semester,active
+bus-alloc-00764,STU-01444,route-01,Yapral,2022-2026,semester,active
+bus-alloc-00765,STU-00889,route-09,Suraram,2025-2029,semester,active
+bus-alloc-00766,STU-00223,route-04,Medchal Chowrasta,2023-2027,annual,active
+bus-alloc-00767,STU-00790,route-09,Suraram,2024-2028,semester,active
+bus-alloc-00768,STU-00097,route-08,Lalapet,2022-2026,annual,active
+bus-alloc-00769,STU-00779,route-02,Uppal,2024-2028,semester,active
+bus-alloc-00770,STU-00885,route-05,Neredmet,2025-2029,semester,active
+bus-alloc-00771,STU-02024,route-08,Bolarum,2022-2026,semester,active
+bus-alloc-00772,STU-00854,route-03,Ameerpet,2025-2029,semester,active
+bus-alloc-00773,STU-01006,route-10,Isnapur,2022-2026,semester,active
+bus-alloc-00774,STU-01587,route-02,Medchal,2024-2028,annual,active
+bus-alloc-00775,STU-02452,route-09,Kandlakoya,2022-2026,semester,active
+bus-alloc-00776,STU-02421,route-09,IDA Jeedimetla,2022-2026,semester,active
+bus-alloc-00777,STU-00197,route-06,Kandlakoya,2023-2027,semester,active
+bus-alloc-00778,STU-01648,route-02,LB Nagar,2025-2029,annual,active
+bus-alloc-00779,STU-00899,route-01,Kandlakoya,2025-2029,annual,active
+bus-alloc-00780,STU-01424,route-03,Ameerpet,2025-2029,annual,active
+bus-alloc-00781,STU-00294,route-02,Kandlakoya,2024-2028,annual,active
+bus-alloc-00782,STU-02267,route-02,Dilsukhnagar,2024-2028,semester,active
+bus-alloc-00783,STU-00927,route-08,Medchal,2025-2029,semester,active
+bus-alloc-00784,STU-01394,route-01,Malkajgiri,2025-2029,annual,active
+bus-alloc-00785,STU-02703,route-10,Kandlakoya,2022-2026,annual,active
+bus-alloc-00786,STU-00878,route-01,Trimulgherry,2025-2029,semester,active
+bus-alloc-00787,STU-00942,route-02,Kandlakoya,2025-2029,annual,active
+bus-alloc-00788,STU-01379,route-06,Kandlakoya,2025-2029,semester,active

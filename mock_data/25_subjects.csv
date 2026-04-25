@@ -1,0 +1,573 @@
+id,subject_code,name,dept_id,dept_code,semester,type,course_category,credits,lecture_hrs,tutorial_hrs,practical_hrs,regulation,hours_per_week,is_mooc
+subj-0001,22MA1101,Linear Algebra & Calculus,dept-cse,CSE,1,Theory,core,4,3,1,0,R22,4,False
+subj-0002,22PH1101,Applied Physics,dept-cse,CSE,1,Theory,core,4,3,0,0,R22,3,False
+subj-0003,22CS1101,Programming for Problem Solving (C),dept-cse,CSE,1,Theory,core,3,3,0,0,R22,3,False
+subj-0004,22CS1102,Programming for Problem Solving Lab,dept-cse,CSE,1,Lab,core,1,0,0,3,R22,3,False
+subj-0005,22EN1101,English - I,dept-cse,CSE,1,Theory,aec,2,2,0,0,R22,2,False
+subj-0006,22ME1101,Engineering Drawing,dept-cse,CSE,1,Lab,core,2,1,0,2,R22,3,False
+subj-0007,22PH1102,Applied Physics Lab,dept-cse,CSE,1,Lab,core,1,0,0,2,R22,2,False
+subj-0008,22MA1201,"Probability, Statistics & Numerical Methods",dept-cse,CSE,2,Theory,core,4,3,1,0,R22,4,False
+subj-0009,22CH1201,Engineering Chemistry,dept-cse,CSE,2,Theory,core,4,3,0,0,R22,3,False
+subj-0010,22EE1201,Basic Electrical Engineering,dept-cse,CSE,2,Theory,core,3,3,0,0,R22,3,False
+subj-0011,22EE1202,Basic Electrical Engineering Lab,dept-cse,CSE,2,Lab,core,1,0,0,2,R22,2,False
+subj-0012,22EN1201,English - II,dept-cse,CSE,2,Theory,aec,2,2,0,0,R22,2,False
+subj-0013,22CS1201,Data Structures,dept-cse,CSE,2,Theory,core,3,3,0,0,R22,3,False
+subj-0014,22CS1202,Data Structures Lab,dept-cse,CSE,2,Lab,core,1,0,0,3,R22,3,False
+subj-0015,22CH1202,Engineering Chemistry Lab,dept-cse,CSE,2,Lab,core,1,0,0,2,R22,2,False
+subj-0016,22CS3101,Discrete Mathematics,dept-cse,CSE,3,Theory,core,3,3,0,0,R22,3,False
+subj-0017,22CS3102,Object-Oriented Programming (Java),dept-cse,CSE,3,Theory,core,3,3,0,0,R22,3,False
+subj-0018,22CS3103,Digital Logic Design,dept-cse,CSE,3,Theory,core,3,3,0,0,R22,3,False
+subj-0019,22CS3104,Computer Organization,dept-cse,CSE,3,Theory,core,3,3,0,0,R22,3,False
+subj-0020,22CS3105,OOP Lab,dept-cse,CSE,3,Lab,core,2,0,0,3,R22,3,False
+subj-0021,22CS3106,Digital Logic Lab,dept-cse,CSE,3,Lab,core,1,0,0,2,R22,2,False
+subj-0022,22HS3101,Managerial Economics & Financial Analysis,dept-cse,CSE,3,Theory,sec,3,3,0,0,R22,3,False
+subj-0023,22CS4101,Operating Systems,dept-cse,CSE,4,Theory,core,3,3,0,0,R22,3,False
+subj-0024,22CS4102,Database Management Systems,dept-cse,CSE,4,Theory,core,3,3,0,0,R22,3,False
+subj-0025,22CS4103,Design & Analysis of Algorithms,dept-cse,CSE,4,Theory,core,3,3,1,0,R22,4,False
+subj-0026,22CS4104,Software Engineering,dept-cse,CSE,4,Theory,core,3,3,0,0,R22,3,False
+subj-0027,22CS4105,OS & DBMS Lab,dept-cse,CSE,4,Lab,core,2,0,0,3,R22,3,False
+subj-0028,22CS4106,Python Programming Lab,dept-cse,CSE,4,Lab,core,1,0,0,2,R22,2,False
+subj-0029,22HS4101,Environmental Science,dept-cse,CSE,4,Theory,mdc,2,2,0,0,R22,2,False
+subj-0030,22CS5101,Computer Networks,dept-cse,CSE,5,Theory,core,3,3,0,0,R22,3,False
+subj-0031,22CS5102,Compiler Design,dept-cse,CSE,5,Theory,core,3,3,0,0,R22,3,False
+subj-0032,22CS5103,Formal Languages & Automata Theory,dept-cse,CSE,5,Theory,core,3,3,1,0,R22,4,False
+subj-0033,22CS5104,Web Technologies,dept-cse,CSE,5,Theory,core,3,2,0,2,R22,4,False
+subj-0034,22CS5105,Computer Networks Lab,dept-cse,CSE,5,Lab,core,2,0,0,3,R22,3,False
+subj-0035,22CS5106,Professional Elective - I,dept-cse,CSE,5,Theory,elective,3,3,0,0,R22,3,False
+subj-0036,22MC5101,Constitution of India,dept-cse,CSE,5,Theory,mdc,0,2,0,0,R22,2,False
+subj-0037,22CS6101,Artificial Intelligence,dept-cse,CSE,6,Theory,core,3,3,0,0,R22,3,False
+subj-0038,22CS6102,Cryptography & Network Security,dept-cse,CSE,6,Theory,core,3,3,0,0,R22,3,False
+subj-0039,22CS6103,Machine Learning,dept-cse,CSE,6,Theory,core,3,3,0,0,R22,3,False
+subj-0040,22CS6104,Cloud Computing,dept-cse,CSE,6,Theory,core,3,3,0,0,R22,3,False
+subj-0041,22CS6105,AI & ML Lab,dept-cse,CSE,6,Lab,core,2,0,0,3,R22,3,False
+subj-0042,22CS6106,Professional Elective - II,dept-cse,CSE,6,Theory,elective,3,3,0,0,R22,3,False
+subj-0043,22CS6107,Open Elective - I,dept-cse,CSE,6,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0044,22CS7101,Big Data Analytics,dept-cse,CSE,7,Theory,core,3,3,0,0,R22,3,False
+subj-0045,22CS7102,Internet of Things,dept-cse,CSE,7,Theory,core,3,3,0,0,R22,3,False
+subj-0046,22CS7103,Professional Elective - III,dept-cse,CSE,7,Theory,elective,3,3,0,0,R22,3,False
+subj-0047,22CS7104,Open Elective - II,dept-cse,CSE,7,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0048,22CS7105,Project - I,dept-cse,CSE,7,Lab,core,2,0,0,4,R22,4,False
+subj-0049,22CS7106,Seminar,dept-cse,CSE,7,Lab,core,2,0,0,2,R22,2,False
+subj-0050,22CS8101,Professional Elective - IV,dept-cse,CSE,8,Theory,elective,3,3,0,0,R22,3,False
+subj-0051,22CS8102,Project - II,dept-cse,CSE,8,Lab,core,8,0,0,16,R22,16,False
+subj-0052,22CS8103,Comprehensive Viva,dept-cse,CSE,8,Lab,core,2,0,0,0,R22,0,False
+subj-0053,22MA1101,Linear Algebra & Calculus,dept-it,IT,1,Theory,core,4,3,1,0,R22,4,False
+subj-0054,22PH1101,Applied Physics,dept-it,IT,1,Theory,core,4,3,0,0,R22,3,False
+subj-0055,22CS1101,Programming for Problem Solving (C),dept-it,IT,1,Theory,core,3,3,0,0,R22,3,False
+subj-0056,22CS1102,Programming for Problem Solving Lab,dept-it,IT,1,Lab,core,1,0,0,3,R22,3,False
+subj-0057,22EN1101,English - I,dept-it,IT,1,Theory,aec,2,2,0,0,R22,2,False
+subj-0058,22ME1101,Engineering Drawing,dept-it,IT,1,Lab,core,2,1,0,2,R22,3,False
+subj-0059,22PH1102,Applied Physics Lab,dept-it,IT,1,Lab,core,1,0,0,2,R22,2,False
+subj-0060,22MA1201,"Probability, Statistics & Numerical Methods",dept-it,IT,2,Theory,core,4,3,1,0,R22,4,False
+subj-0061,22CH1201,Engineering Chemistry,dept-it,IT,2,Theory,core,4,3,0,0,R22,3,False
+subj-0062,22EE1201,Basic Electrical Engineering,dept-it,IT,2,Theory,core,3,3,0,0,R22,3,False
+subj-0063,22EE1202,Basic Electrical Engineering Lab,dept-it,IT,2,Lab,core,1,0,0,2,R22,2,False
+subj-0064,22EN1201,English - II,dept-it,IT,2,Theory,aec,2,2,0,0,R22,2,False
+subj-0065,22CS1201,Data Structures,dept-it,IT,2,Theory,core,3,3,0,0,R22,3,False
+subj-0066,22CS1202,Data Structures Lab,dept-it,IT,2,Lab,core,1,0,0,3,R22,3,False
+subj-0067,22CH1202,Engineering Chemistry Lab,dept-it,IT,2,Lab,core,1,0,0,2,R22,2,False
+subj-0068,22IT3101,Discrete Mathematics,dept-it,IT,3,Theory,core,3,3,0,0,R22,3,False
+subj-0069,22IT3102,Object-Oriented Programming (Java),dept-it,IT,3,Theory,core,3,3,0,0,R22,3,False
+subj-0070,22IT3103,Digital Logic Design,dept-it,IT,3,Theory,core,3,3,0,0,R22,3,False
+subj-0071,22IT3104,Computer Organization,dept-it,IT,3,Theory,core,3,3,0,0,R22,3,False
+subj-0072,22IT3105,OOP Lab,dept-it,IT,3,Lab,core,2,0,0,3,R22,3,False
+subj-0073,22IT3106,Digital Logic Lab,dept-it,IT,3,Lab,core,1,0,0,2,R22,2,False
+subj-0074,22HS3101,Managerial Economics & Financial Analysis,dept-it,IT,3,Theory,sec,3,3,0,0,R22,3,False
+subj-0075,22IT4101,Operating Systems,dept-it,IT,4,Theory,core,3,3,0,0,R22,3,False
+subj-0076,22IT4102,Database Management Systems,dept-it,IT,4,Theory,core,3,3,0,0,R22,3,False
+subj-0077,22IT4103,Design & Analysis of Algorithms,dept-it,IT,4,Theory,core,3,3,1,0,R22,4,False
+subj-0078,22IT4104,Software Engineering,dept-it,IT,4,Theory,core,3,3,0,0,R22,3,False
+subj-0079,22IT4105,OS & DBMS Lab,dept-it,IT,4,Lab,core,2,0,0,3,R22,3,False
+subj-0080,22IT4106,Python Programming Lab,dept-it,IT,4,Lab,core,1,0,0,2,R22,2,False
+subj-0081,22HS4101,Environmental Science,dept-it,IT,4,Theory,mdc,2,2,0,0,R22,2,False
+subj-0082,22IT5101,Computer Networks,dept-it,IT,5,Theory,core,3,3,0,0,R22,3,False
+subj-0083,22IT5102,Web Technologies,dept-it,IT,5,Theory,core,3,2,0,2,R22,4,False
+subj-0084,22IT5103,Information Security,dept-it,IT,5,Theory,core,3,3,0,0,R22,3,False
+subj-0085,22IT5104,Data Warehousing & Mining,dept-it,IT,5,Theory,core,3,3,0,0,R22,3,False
+subj-0086,22IT5105,CN & Web Lab,dept-it,IT,5,Lab,core,2,0,0,3,R22,3,False
+subj-0087,22IT5106,Professional Elective - I,dept-it,IT,5,Theory,elective,3,3,0,0,R22,3,False
+subj-0088,22MC5101,Constitution of India,dept-it,IT,5,Theory,mdc,0,2,0,0,R22,2,False
+subj-0089,22IT6101,Artificial Intelligence,dept-it,IT,6,Theory,core,3,3,0,0,R22,3,False
+subj-0090,22IT6102,Cloud Computing,dept-it,IT,6,Theory,core,3,3,0,0,R22,3,False
+subj-0091,22IT6103,Software Testing,dept-it,IT,6,Theory,core,3,3,0,0,R22,3,False
+subj-0092,22IT6104,Mobile Application Development,dept-it,IT,6,Theory,core,3,3,0,0,R22,3,False
+subj-0093,22IT6105,AI & Cloud Lab,dept-it,IT,6,Lab,core,2,0,0,3,R22,3,False
+subj-0094,22IT6106,Professional Elective - II,dept-it,IT,6,Theory,elective,3,3,0,0,R22,3,False
+subj-0095,22IT6107,Open Elective - I,dept-it,IT,6,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0096,22IT7101,DevOps & Automation,dept-it,IT,7,Theory,core,3,3,0,0,R22,3,False
+subj-0097,22IT7102,Blockchain Technology,dept-it,IT,7,Theory,core,3,3,0,0,R22,3,False
+subj-0098,22IT7103,Professional Elective - III,dept-it,IT,7,Theory,elective,3,3,0,0,R22,3,False
+subj-0099,22IT7104,Open Elective - II,dept-it,IT,7,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0100,22IT7105,Project - I,dept-it,IT,7,Lab,core,2,0,0,4,R22,4,False
+subj-0101,22IT7106,Seminar,dept-it,IT,7,Lab,core,2,0,0,2,R22,2,False
+subj-0102,22IT8101,Professional Elective - IV,dept-it,IT,8,Theory,elective,3,3,0,0,R22,3,False
+subj-0103,22IT8102,Project - II,dept-it,IT,8,Lab,core,8,0,0,16,R22,16,False
+subj-0104,22IT8103,Comprehensive Viva,dept-it,IT,8,Lab,core,2,0,0,0,R22,0,False
+subj-0105,22MA1101,Linear Algebra & Calculus,dept-ece,ECE,1,Theory,core,4,3,1,0,R22,4,False
+subj-0106,22PH1101,Applied Physics,dept-ece,ECE,1,Theory,core,4,3,0,0,R22,3,False
+subj-0107,22CS1101,Programming for Problem Solving (C),dept-ece,ECE,1,Theory,core,3,3,0,0,R22,3,False
+subj-0108,22CS1102,Programming for Problem Solving Lab,dept-ece,ECE,1,Lab,core,1,0,0,3,R22,3,False
+subj-0109,22EN1101,English - I,dept-ece,ECE,1,Theory,aec,2,2,0,0,R22,2,False
+subj-0110,22ME1101,Engineering Drawing,dept-ece,ECE,1,Lab,core,2,1,0,2,R22,3,False
+subj-0111,22PH1102,Applied Physics Lab,dept-ece,ECE,1,Lab,core,1,0,0,2,R22,2,False
+subj-0112,22MA1201,"Probability, Statistics & Numerical Methods",dept-ece,ECE,2,Theory,core,4,3,1,0,R22,4,False
+subj-0113,22CH1201,Engineering Chemistry,dept-ece,ECE,2,Theory,core,4,3,0,0,R22,3,False
+subj-0114,22EE1201,Basic Electrical Engineering,dept-ece,ECE,2,Theory,core,3,3,0,0,R22,3,False
+subj-0115,22EE1202,Basic Electrical Engineering Lab,dept-ece,ECE,2,Lab,core,1,0,0,2,R22,2,False
+subj-0116,22EN1201,English - II,dept-ece,ECE,2,Theory,aec,2,2,0,0,R22,2,False
+subj-0117,22CS1201,Data Structures,dept-ece,ECE,2,Theory,core,3,3,0,0,R22,3,False
+subj-0118,22CS1202,Data Structures Lab,dept-ece,ECE,2,Lab,core,1,0,0,3,R22,3,False
+subj-0119,22CH1202,Engineering Chemistry Lab,dept-ece,ECE,2,Lab,core,1,0,0,2,R22,2,False
+subj-0120,22EC3101,Signals & Systems,dept-ece,ECE,3,Theory,core,3,3,1,0,R22,4,False
+subj-0121,22EC3102,Analog Electronics,dept-ece,ECE,3,Theory,core,3,3,0,0,R22,3,False
+subj-0122,22EC3103,Network Theory,dept-ece,ECE,3,Theory,core,3,3,1,0,R22,4,False
+subj-0123,22EC3104,Electromagnetic Theory,dept-ece,ECE,3,Theory,core,3,3,0,0,R22,3,False
+subj-0124,22EC3105,Analog Electronics Lab,dept-ece,ECE,3,Lab,core,2,0,0,3,R22,3,False
+subj-0125,22EC3106,Network Theory Lab,dept-ece,ECE,3,Lab,core,1,0,0,2,R22,2,False
+subj-0126,22HS3101,Managerial Economics & Financial Analysis,dept-ece,ECE,3,Theory,sec,3,3,0,0,R22,3,False
+subj-0127,22EC4101,Analog Communication,dept-ece,ECE,4,Theory,core,3,3,0,0,R22,3,False
+subj-0128,22EC4102,Digital Signal Processing,dept-ece,ECE,4,Theory,core,3,3,1,0,R22,4,False
+subj-0129,22EC4103,Linear IC Applications,dept-ece,ECE,4,Theory,core,3,3,0,0,R22,3,False
+subj-0130,22EC4104,Control Systems,dept-ece,ECE,4,Theory,core,3,3,1,0,R22,4,False
+subj-0131,22EC4105,Communication & DSP Lab,dept-ece,ECE,4,Lab,core,2,0,0,3,R22,3,False
+subj-0132,22EC4106,IC Applications Lab,dept-ece,ECE,4,Lab,core,1,0,0,2,R22,2,False
+subj-0133,22HS4101,Environmental Science,dept-ece,ECE,4,Theory,mdc,2,2,0,0,R22,2,False
+subj-0134,22EC5101,Digital Communication,dept-ece,ECE,5,Theory,core,3,3,0,0,R22,3,False
+subj-0135,22EC5102,VLSI Design,dept-ece,ECE,5,Theory,core,3,3,0,0,R22,3,False
+subj-0136,22EC5103,Microprocessors & Microcontrollers,dept-ece,ECE,5,Theory,core,3,3,0,0,R22,3,False
+subj-0137,22EC5104,Antenna & Wave Propagation,dept-ece,ECE,5,Theory,core,3,3,0,0,R22,3,False
+subj-0138,22EC5105,VLSI & Microprocessor Lab,dept-ece,ECE,5,Lab,core,2,0,0,3,R22,3,False
+subj-0139,22EC5106,Professional Elective - I,dept-ece,ECE,5,Theory,elective,3,3,0,0,R22,3,False
+subj-0140,22MC5101,Constitution of India,dept-ece,ECE,5,Theory,mdc,0,2,0,0,R22,2,False
+subj-0141,22EC6101,Wireless Communication,dept-ece,ECE,6,Theory,core,3,3,0,0,R22,3,False
+subj-0142,22EC6102,Embedded Systems,dept-ece,ECE,6,Theory,core,3,3,0,0,R22,3,False
+subj-0143,22EC6103,Radar & Satellite Communication,dept-ece,ECE,6,Theory,core,3,3,0,0,R22,3,False
+subj-0144,22EC6104,Digital Image Processing,dept-ece,ECE,6,Theory,core,3,3,0,0,R22,3,False
+subj-0145,22EC6105,Embedded Systems Lab,dept-ece,ECE,6,Lab,core,2,0,0,3,R22,3,False
+subj-0146,22EC6106,Professional Elective - II,dept-ece,ECE,6,Theory,elective,3,3,0,0,R22,3,False
+subj-0147,22EC6107,Open Elective - I,dept-ece,ECE,6,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0148,22EC7101,Optical Communication,dept-ece,ECE,7,Theory,core,3,3,0,0,R22,3,False
+subj-0149,22EC7102,Robotics,dept-ece,ECE,7,Theory,core,3,3,0,0,R22,3,False
+subj-0150,22EC7103,Professional Elective - III,dept-ece,ECE,7,Theory,elective,3,3,0,0,R22,3,False
+subj-0151,22EC7104,Open Elective - II,dept-ece,ECE,7,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0152,22EC7105,Project - I,dept-ece,ECE,7,Lab,core,2,0,0,4,R22,4,False
+subj-0153,22EC7106,Seminar,dept-ece,ECE,7,Lab,core,2,0,0,2,R22,2,False
+subj-0154,22EC8101,Professional Elective - IV,dept-ece,ECE,8,Theory,elective,3,3,0,0,R22,3,False
+subj-0155,22EC8102,Project - II,dept-ece,ECE,8,Lab,core,8,0,0,16,R22,16,False
+subj-0156,22EC8103,Comprehensive Viva,dept-ece,ECE,8,Lab,core,2,0,0,0,R22,0,False
+subj-0157,22MA1101,Linear Algebra & Calculus,dept-eee,EEE,1,Theory,core,4,3,1,0,R22,4,False
+subj-0158,22PH1101,Applied Physics,dept-eee,EEE,1,Theory,core,4,3,0,0,R22,3,False
+subj-0159,22CS1101,Programming for Problem Solving (C),dept-eee,EEE,1,Theory,core,3,3,0,0,R22,3,False
+subj-0160,22CS1102,Programming for Problem Solving Lab,dept-eee,EEE,1,Lab,core,1,0,0,3,R22,3,False
+subj-0161,22EN1101,English - I,dept-eee,EEE,1,Theory,aec,2,2,0,0,R22,2,False
+subj-0162,22ME1101,Engineering Drawing,dept-eee,EEE,1,Lab,core,2,1,0,2,R22,3,False
+subj-0163,22PH1102,Applied Physics Lab,dept-eee,EEE,1,Lab,core,1,0,0,2,R22,2,False
+subj-0164,22MA1201,"Probability, Statistics & Numerical Methods",dept-eee,EEE,2,Theory,core,4,3,1,0,R22,4,False
+subj-0165,22CH1201,Engineering Chemistry,dept-eee,EEE,2,Theory,core,4,3,0,0,R22,3,False
+subj-0166,22EE1201,Basic Electrical Engineering,dept-eee,EEE,2,Theory,core,3,3,0,0,R22,3,False
+subj-0167,22EE1202,Basic Electrical Engineering Lab,dept-eee,EEE,2,Lab,core,1,0,0,2,R22,2,False
+subj-0168,22EN1201,English - II,dept-eee,EEE,2,Theory,aec,2,2,0,0,R22,2,False
+subj-0169,22CS1201,Data Structures,dept-eee,EEE,2,Theory,core,3,3,0,0,R22,3,False
+subj-0170,22CS1202,Data Structures Lab,dept-eee,EEE,2,Lab,core,1,0,0,3,R22,3,False
+subj-0171,22CH1202,Engineering Chemistry Lab,dept-eee,EEE,2,Lab,core,1,0,0,2,R22,2,False
+subj-0172,22EE3101,Electrical Machines - I,dept-eee,EEE,3,Theory,core,3,3,0,0,R22,3,False
+subj-0173,22EE3102,Network Theory,dept-eee,EEE,3,Theory,core,3,3,1,0,R22,4,False
+subj-0174,22EE3103,Electromagnetic Fields,dept-eee,EEE,3,Theory,core,3,3,0,0,R22,3,False
+subj-0175,22EE3104,Electronic Devices & Circuits,dept-eee,EEE,3,Theory,core,3,3,0,0,R22,3,False
+subj-0176,22EE3105,Electrical Machines Lab,dept-eee,EEE,3,Lab,core,2,0,0,3,R22,3,False
+subj-0177,22EE3106,Electronics Lab,dept-eee,EEE,3,Lab,core,1,0,0,2,R22,2,False
+subj-0178,22HS3101,Managerial Economics & Financial Analysis,dept-eee,EEE,3,Theory,sec,3,3,0,0,R22,3,False
+subj-0179,22EE4101,Electrical Machines - II,dept-eee,EEE,4,Theory,core,3,3,0,0,R22,3,False
+subj-0180,22EE4102,Power Systems - I,dept-eee,EEE,4,Theory,core,3,3,0,0,R22,3,False
+subj-0181,22EE4103,Control Systems,dept-eee,EEE,4,Theory,core,3,3,1,0,R22,4,False
+subj-0182,22EE4104,Signals & Systems,dept-eee,EEE,4,Theory,core,3,3,1,0,R22,4,False
+subj-0183,22EE4105,Machines & Control Lab,dept-eee,EEE,4,Lab,core,2,0,0,3,R22,3,False
+subj-0184,22EE4106,Simulation Lab,dept-eee,EEE,4,Lab,core,1,0,0,2,R22,2,False
+subj-0185,22HS4101,Environmental Science,dept-eee,EEE,4,Theory,mdc,2,2,0,0,R22,2,False
+subj-0186,22EE5101,Power Systems - II,dept-eee,EEE,5,Theory,core,3,3,0,0,R22,3,False
+subj-0187,22EE5102,Power Electronics,dept-eee,EEE,5,Theory,core,3,3,0,0,R22,3,False
+subj-0188,22EE5103,Microprocessors & Microcontrollers,dept-eee,EEE,5,Theory,core,3,3,0,0,R22,3,False
+subj-0189,22EE5104,Electrical Measurements,dept-eee,EEE,5,Theory,core,3,3,0,0,R22,3,False
+subj-0190,22EE5105,Power Electronics Lab,dept-eee,EEE,5,Lab,core,2,0,0,3,R22,3,False
+subj-0191,22EE5106,Professional Elective - I,dept-eee,EEE,5,Theory,elective,3,3,0,0,R22,3,False
+subj-0192,22MC5101,Constitution of India,dept-eee,EEE,5,Theory,mdc,0,2,0,0,R22,2,False
+subj-0193,22EE6101,Power System Protection,dept-eee,EEE,6,Theory,core,3,3,0,0,R22,3,False
+subj-0194,22EE6102,Renewable Energy Systems,dept-eee,EEE,6,Theory,core,3,3,0,0,R22,3,False
+subj-0195,22EE6103,Electric Drives,dept-eee,EEE,6,Theory,core,3,3,0,0,R22,3,False
+subj-0196,22EE6104,Digital Signal Processing,dept-eee,EEE,6,Theory,core,3,3,0,0,R22,3,False
+subj-0197,22EE6105,Drives & Renewable Lab,dept-eee,EEE,6,Lab,core,2,0,0,3,R22,3,False
+subj-0198,22EE6106,Professional Elective - II,dept-eee,EEE,6,Theory,elective,3,3,0,0,R22,3,False
+subj-0199,22EE6107,Open Elective - I,dept-eee,EEE,6,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0200,22EE7101,Smart Grid Technology,dept-eee,EEE,7,Theory,core,3,3,0,0,R22,3,False
+subj-0201,22EE7102,High Voltage Engineering,dept-eee,EEE,7,Theory,core,3,3,0,0,R22,3,False
+subj-0202,22EE7103,Professional Elective - III,dept-eee,EEE,7,Theory,elective,3,3,0,0,R22,3,False
+subj-0203,22EE7104,Open Elective - II,dept-eee,EEE,7,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0204,22EE7105,Project - I,dept-eee,EEE,7,Lab,core,2,0,0,4,R22,4,False
+subj-0205,22EE7106,Seminar,dept-eee,EEE,7,Lab,core,2,0,0,2,R22,2,False
+subj-0206,22EE8101,Professional Elective - IV,dept-eee,EEE,8,Theory,elective,3,3,0,0,R22,3,False
+subj-0207,22EE8102,Project - II,dept-eee,EEE,8,Lab,core,8,0,0,16,R22,16,False
+subj-0208,22EE8103,Comprehensive Viva,dept-eee,EEE,8,Lab,core,2,0,0,0,R22,0,False
+subj-0209,22MA1101,Linear Algebra & Calculus,dept-mech,MECH,1,Theory,core,4,3,1,0,R22,4,False
+subj-0210,22PH1101,Applied Physics,dept-mech,MECH,1,Theory,core,4,3,0,0,R22,3,False
+subj-0211,22CS1101,Programming for Problem Solving (C),dept-mech,MECH,1,Theory,core,3,3,0,0,R22,3,False
+subj-0212,22CS1102,Programming for Problem Solving Lab,dept-mech,MECH,1,Lab,core,1,0,0,3,R22,3,False
+subj-0213,22EN1101,English - I,dept-mech,MECH,1,Theory,aec,2,2,0,0,R22,2,False
+subj-0214,22ME1101,Engineering Drawing,dept-mech,MECH,1,Lab,core,2,1,0,2,R22,3,False
+subj-0215,22PH1102,Applied Physics Lab,dept-mech,MECH,1,Lab,core,1,0,0,2,R22,2,False
+subj-0216,22MA1201,"Probability, Statistics & Numerical Methods",dept-mech,MECH,2,Theory,core,4,3,1,0,R22,4,False
+subj-0217,22CH1201,Engineering Chemistry,dept-mech,MECH,2,Theory,core,4,3,0,0,R22,3,False
+subj-0218,22EE1201,Basic Electrical Engineering,dept-mech,MECH,2,Theory,core,3,3,0,0,R22,3,False
+subj-0219,22EE1202,Basic Electrical Engineering Lab,dept-mech,MECH,2,Lab,core,1,0,0,2,R22,2,False
+subj-0220,22EN1201,English - II,dept-mech,MECH,2,Theory,aec,2,2,0,0,R22,2,False
+subj-0221,22CS1201,Data Structures,dept-mech,MECH,2,Theory,core,3,3,0,0,R22,3,False
+subj-0222,22CS1202,Data Structures Lab,dept-mech,MECH,2,Lab,core,1,0,0,3,R22,3,False
+subj-0223,22CH1202,Engineering Chemistry Lab,dept-mech,MECH,2,Lab,core,1,0,0,2,R22,2,False
+subj-0224,22ME3101,Thermodynamics,dept-mech,MECH,3,Theory,core,3,3,0,0,R22,3,False
+subj-0225,22ME3102,Mechanics of Solids,dept-mech,MECH,3,Theory,core,3,3,1,0,R22,4,False
+subj-0226,22ME3103,Manufacturing Technology,dept-mech,MECH,3,Theory,core,3,3,0,0,R22,3,False
+subj-0227,22ME3104,Fluid Mechanics,dept-mech,MECH,3,Theory,core,3,3,0,0,R22,3,False
+subj-0228,22ME3105,Manufacturing Lab,dept-mech,MECH,3,Lab,core,2,0,0,3,R22,3,False
+subj-0229,22ME3106,Fluid Mechanics Lab,dept-mech,MECH,3,Lab,core,1,0,0,2,R22,2,False
+subj-0230,22HS3101,Managerial Economics & Financial Analysis,dept-mech,MECH,3,Theory,sec,3,3,0,0,R22,3,False
+subj-0231,22ME4101,Kinematics of Machinery,dept-mech,MECH,4,Theory,core,3,3,0,0,R22,3,False
+subj-0232,22ME4102,Thermal Engineering - I,dept-mech,MECH,4,Theory,core,3,3,0,0,R22,3,False
+subj-0233,22ME4103,Machine Design - I,dept-mech,MECH,4,Theory,core,3,3,1,0,R22,4,False
+subj-0234,22ME4104,Metrology & Quality Control,dept-mech,MECH,4,Theory,core,3,3,0,0,R22,3,False
+subj-0235,22ME4105,Thermal Engineering Lab,dept-mech,MECH,4,Lab,core,2,0,0,3,R22,3,False
+subj-0236,22ME4106,Metrology Lab,dept-mech,MECH,4,Lab,core,1,0,0,2,R22,2,False
+subj-0237,22HS4101,Environmental Science,dept-mech,MECH,4,Theory,mdc,2,2,0,0,R22,2,False
+subj-0238,22ME5101,Dynamics of Machinery,dept-mech,MECH,5,Theory,core,3,3,0,0,R22,3,False
+subj-0239,22ME5102,Heat Transfer,dept-mech,MECH,5,Theory,core,3,3,0,0,R22,3,False
+subj-0240,22ME5103,Machine Design - II,dept-mech,MECH,5,Theory,core,3,3,0,0,R22,3,False
+subj-0241,22ME5104,Industrial Engineering,dept-mech,MECH,5,Theory,core,3,3,0,0,R22,3,False
+subj-0242,22ME5105,CAD/CAM Lab,dept-mech,MECH,5,Lab,core,2,0,0,3,R22,3,False
+subj-0243,22ME5106,Professional Elective - I,dept-mech,MECH,5,Theory,elective,3,3,0,0,R22,3,False
+subj-0244,22MC5101,Constitution of India,dept-mech,MECH,5,Theory,mdc,0,2,0,0,R22,2,False
+subj-0245,22ME6101,Automobile Engineering,dept-mech,MECH,6,Theory,core,3,3,0,0,R22,3,False
+subj-0246,22ME6102,Finite Element Methods,dept-mech,MECH,6,Theory,core,3,3,0,0,R22,3,False
+subj-0247,22ME6103,Robotics,dept-mech,MECH,6,Theory,core,3,3,0,0,R22,3,False
+subj-0248,22ME6104,Operations Research,dept-mech,MECH,6,Theory,core,3,3,0,0,R22,3,False
+subj-0249,22ME6105,Robotics & Simulation Lab,dept-mech,MECH,6,Lab,core,2,0,0,3,R22,3,False
+subj-0250,22ME6106,Professional Elective - II,dept-mech,MECH,6,Theory,elective,3,3,0,0,R22,3,False
+subj-0251,22ME6107,Open Elective - I,dept-mech,MECH,6,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0252,22ME7101,Power Plant Engineering,dept-mech,MECH,7,Theory,core,3,3,0,0,R22,3,False
+subj-0253,22ME7102,Refrigeration & Air Conditioning,dept-mech,MECH,7,Theory,core,3,3,0,0,R22,3,False
+subj-0254,22ME7103,Professional Elective - III,dept-mech,MECH,7,Theory,elective,3,3,0,0,R22,3,False
+subj-0255,22ME7104,Open Elective - II,dept-mech,MECH,7,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0256,22ME7105,Project - I,dept-mech,MECH,7,Lab,core,2,0,0,4,R22,4,False
+subj-0257,22ME7106,Seminar,dept-mech,MECH,7,Lab,core,2,0,0,2,R22,2,False
+subj-0258,22ME8101,Professional Elective - IV,dept-mech,MECH,8,Theory,elective,3,3,0,0,R22,3,False
+subj-0259,22ME8102,Project - II,dept-mech,MECH,8,Lab,core,8,0,0,16,R22,16,False
+subj-0260,22ME8103,Comprehensive Viva,dept-mech,MECH,8,Lab,core,2,0,0,0,R22,0,False
+subj-0261,22MA1101,Linear Algebra & Calculus,dept-civil,CIVIL,1,Theory,core,4,3,1,0,R22,4,False
+subj-0262,22PH1101,Applied Physics,dept-civil,CIVIL,1,Theory,core,4,3,0,0,R22,3,False
+subj-0263,22CS1101,Programming for Problem Solving (C),dept-civil,CIVIL,1,Theory,core,3,3,0,0,R22,3,False
+subj-0264,22CS1102,Programming for Problem Solving Lab,dept-civil,CIVIL,1,Lab,core,1,0,0,3,R22,3,False
+subj-0265,22EN1101,English - I,dept-civil,CIVIL,1,Theory,aec,2,2,0,0,R22,2,False
+subj-0266,22ME1101,Engineering Drawing,dept-civil,CIVIL,1,Lab,core,2,1,0,2,R22,3,False
+subj-0267,22PH1102,Applied Physics Lab,dept-civil,CIVIL,1,Lab,core,1,0,0,2,R22,2,False
+subj-0268,22MA1201,"Probability, Statistics & Numerical Methods",dept-civil,CIVIL,2,Theory,core,4,3,1,0,R22,4,False
+subj-0269,22CH1201,Engineering Chemistry,dept-civil,CIVIL,2,Theory,core,4,3,0,0,R22,3,False
+subj-0270,22EE1201,Basic Electrical Engineering,dept-civil,CIVIL,2,Theory,core,3,3,0,0,R22,3,False
+subj-0271,22EE1202,Basic Electrical Engineering Lab,dept-civil,CIVIL,2,Lab,core,1,0,0,2,R22,2,False
+subj-0272,22EN1201,English - II,dept-civil,CIVIL,2,Theory,aec,2,2,0,0,R22,2,False
+subj-0273,22CS1201,Data Structures,dept-civil,CIVIL,2,Theory,core,3,3,0,0,R22,3,False
+subj-0274,22CS1202,Data Structures Lab,dept-civil,CIVIL,2,Lab,core,1,0,0,3,R22,3,False
+subj-0275,22CH1202,Engineering Chemistry Lab,dept-civil,CIVIL,2,Lab,core,1,0,0,2,R22,2,False
+subj-0276,22CE3101,Mechanics of Solids,dept-civil,CIVIL,3,Theory,core,3,3,1,0,R22,4,False
+subj-0277,22CE3102,Surveying,dept-civil,CIVIL,3,Theory,core,3,3,0,0,R22,3,False
+subj-0278,22CE3103,Building Materials & Construction,dept-civil,CIVIL,3,Theory,core,3,3,0,0,R22,3,False
+subj-0279,22CE3104,Fluid Mechanics,dept-civil,CIVIL,3,Theory,core,3,3,0,0,R22,3,False
+subj-0280,22CE3105,Surveying Lab,dept-civil,CIVIL,3,Lab,core,2,0,0,3,R22,3,False
+subj-0281,22CE3106,Fluid Mechanics Lab,dept-civil,CIVIL,3,Lab,core,1,0,0,2,R22,2,False
+subj-0282,22HS3101,Managerial Economics & Financial Analysis,dept-civil,CIVIL,3,Theory,sec,3,3,0,0,R22,3,False
+subj-0283,22CE4101,Structural Analysis - I,dept-civil,CIVIL,4,Theory,core,3,3,1,0,R22,4,False
+subj-0284,22CE4102,Geotechnical Engineering - I,dept-civil,CIVIL,4,Theory,core,3,3,0,0,R22,3,False
+subj-0285,22CE4103,Hydraulics & Hydraulic Machinery,dept-civil,CIVIL,4,Theory,core,3,3,0,0,R22,3,False
+subj-0286,22CE4104,Concrete Technology,dept-civil,CIVIL,4,Theory,core,3,3,0,0,R22,3,False
+subj-0287,22CE4105,Geotechnical Lab,dept-civil,CIVIL,4,Lab,core,2,0,0,3,R22,3,False
+subj-0288,22CE4106,Concrete Lab,dept-civil,CIVIL,4,Lab,core,1,0,0,2,R22,2,False
+subj-0289,22HS4101,Environmental Science,dept-civil,CIVIL,4,Theory,mdc,2,2,0,0,R22,2,False
+subj-0290,22CE5101,Structural Analysis - II,dept-civil,CIVIL,5,Theory,core,3,3,0,0,R22,3,False
+subj-0291,22CE5102,Design of RC Structures,dept-civil,CIVIL,5,Theory,core,3,3,0,0,R22,3,False
+subj-0292,22CE5103,Transportation Engineering,dept-civil,CIVIL,5,Theory,core,3,3,0,0,R22,3,False
+subj-0293,22CE5104,Environmental Engineering,dept-civil,CIVIL,5,Theory,core,3,3,0,0,R22,3,False
+subj-0294,22CE5105,RC Design Lab,dept-civil,CIVIL,5,Lab,core,2,0,0,3,R22,3,False
+subj-0295,22CE5106,Professional Elective - I,dept-civil,CIVIL,5,Theory,elective,3,3,0,0,R22,3,False
+subj-0296,22MC5101,Constitution of India,dept-civil,CIVIL,5,Theory,mdc,0,2,0,0,R22,2,False
+subj-0297,22CE6101,Design of Steel Structures,dept-civil,CIVIL,6,Theory,core,3,3,0,0,R22,3,False
+subj-0298,22CE6102,Geotechnical Engineering - II,dept-civil,CIVIL,6,Theory,core,3,3,0,0,R22,3,False
+subj-0299,22CE6103,Hydrology & Water Resources,dept-civil,CIVIL,6,Theory,core,3,3,0,0,R22,3,False
+subj-0300,22CE6104,Estimation & Costing,dept-civil,CIVIL,6,Theory,core,3,3,0,0,R22,3,False
+subj-0301,22CE6105,Steel Structures Lab,dept-civil,CIVIL,6,Lab,core,2,0,0,3,R22,3,False
+subj-0302,22CE6106,Professional Elective - II,dept-civil,CIVIL,6,Theory,elective,3,3,0,0,R22,3,False
+subj-0303,22CE6107,Open Elective - I,dept-civil,CIVIL,6,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0304,22CE7101,Construction Planning & Management,dept-civil,CIVIL,7,Theory,core,3,3,0,0,R22,3,False
+subj-0305,22CE7102,Remote Sensing & GIS,dept-civil,CIVIL,7,Theory,core,3,3,0,0,R22,3,False
+subj-0306,22CE7103,Professional Elective - III,dept-civil,CIVIL,7,Theory,elective,3,3,0,0,R22,3,False
+subj-0307,22CE7104,Open Elective - II,dept-civil,CIVIL,7,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0308,22CE7105,Project - I,dept-civil,CIVIL,7,Lab,core,2,0,0,4,R22,4,False
+subj-0309,22CE7106,Seminar,dept-civil,CIVIL,7,Lab,core,2,0,0,2,R22,2,False
+subj-0310,22CE8101,Professional Elective - IV,dept-civil,CIVIL,8,Theory,elective,3,3,0,0,R22,3,False
+subj-0311,22CE8102,Project - II,dept-civil,CIVIL,8,Lab,core,8,0,0,16,R22,16,False
+subj-0312,22CE8103,Comprehensive Viva,dept-civil,CIVIL,8,Lab,core,2,0,0,0,R22,0,False
+subj-0313,22MA1101,Linear Algebra & Calculus,dept-csm,CSM,1,Theory,core,4,3,1,0,R22,4,False
+subj-0314,22PH1101,Applied Physics,dept-csm,CSM,1,Theory,core,4,3,0,0,R22,3,False
+subj-0315,22CS1101,Programming for Problem Solving (C),dept-csm,CSM,1,Theory,core,3,3,0,0,R22,3,False
+subj-0316,22CS1102,Programming for Problem Solving Lab,dept-csm,CSM,1,Lab,core,1,0,0,3,R22,3,False
+subj-0317,22EN1101,English - I,dept-csm,CSM,1,Theory,aec,2,2,0,0,R22,2,False
+subj-0318,22ME1101,Engineering Drawing,dept-csm,CSM,1,Lab,core,2,1,0,2,R22,3,False
+subj-0319,22PH1102,Applied Physics Lab,dept-csm,CSM,1,Lab,core,1,0,0,2,R22,2,False
+subj-0320,22MA1201,"Probability, Statistics & Numerical Methods",dept-csm,CSM,2,Theory,core,4,3,1,0,R22,4,False
+subj-0321,22CH1201,Engineering Chemistry,dept-csm,CSM,2,Theory,core,4,3,0,0,R22,3,False
+subj-0322,22EE1201,Basic Electrical Engineering,dept-csm,CSM,2,Theory,core,3,3,0,0,R22,3,False
+subj-0323,22EE1202,Basic Electrical Engineering Lab,dept-csm,CSM,2,Lab,core,1,0,0,2,R22,2,False
+subj-0324,22EN1201,English - II,dept-csm,CSM,2,Theory,aec,2,2,0,0,R22,2,False
+subj-0325,22CS1201,Data Structures,dept-csm,CSM,2,Theory,core,3,3,0,0,R22,3,False
+subj-0326,22CS1202,Data Structures Lab,dept-csm,CSM,2,Lab,core,1,0,0,3,R22,3,False
+subj-0327,22CH1202,Engineering Chemistry Lab,dept-csm,CSM,2,Lab,core,1,0,0,2,R22,2,False
+subj-0328,22AI3101,Discrete Mathematics,dept-csm,CSM,3,Theory,core,3,3,0,0,R22,3,False
+subj-0329,22AI3102,Object-Oriented Programming (Java),dept-csm,CSM,3,Theory,core,3,3,0,0,R22,3,False
+subj-0330,22AI3103,Digital Logic Design,dept-csm,CSM,3,Theory,core,3,3,0,0,R22,3,False
+subj-0331,22AI3104,Computer Organization,dept-csm,CSM,3,Theory,core,3,3,0,0,R22,3,False
+subj-0332,22AI3105,OOP Lab,dept-csm,CSM,3,Lab,core,2,0,0,3,R22,3,False
+subj-0333,22AI3106,Digital Logic Lab,dept-csm,CSM,3,Lab,core,1,0,0,2,R22,2,False
+subj-0334,22HS3101,Managerial Economics & Financial Analysis,dept-csm,CSM,3,Theory,sec,3,3,0,0,R22,3,False
+subj-0335,22AI4101,Operating Systems,dept-csm,CSM,4,Theory,core,3,3,0,0,R22,3,False
+subj-0336,22AI4102,Database Management Systems,dept-csm,CSM,4,Theory,core,3,3,0,0,R22,3,False
+subj-0337,22AI4103,Design & Analysis of Algorithms,dept-csm,CSM,4,Theory,core,3,3,1,0,R22,4,False
+subj-0338,22AI4104,Software Engineering,dept-csm,CSM,4,Theory,core,3,3,0,0,R22,3,False
+subj-0339,22AI4105,OS & DBMS Lab,dept-csm,CSM,4,Lab,core,2,0,0,3,R22,3,False
+subj-0340,22AI4106,Python Programming Lab,dept-csm,CSM,4,Lab,core,1,0,0,2,R22,2,False
+subj-0341,22HS4101,Environmental Science,dept-csm,CSM,4,Theory,mdc,2,2,0,0,R22,2,False
+subj-0342,22AI5101,Computer Networks,dept-csm,CSM,5,Theory,core,3,3,0,0,R22,3,False
+subj-0343,22AI5102,Compiler Design,dept-csm,CSM,5,Theory,core,3,3,0,0,R22,3,False
+subj-0344,22AI5103,Formal Languages & Automata Theory,dept-csm,CSM,5,Theory,core,3,3,1,0,R22,4,False
+subj-0345,22AI5104,Web Technologies,dept-csm,CSM,5,Theory,core,3,2,0,2,R22,4,False
+subj-0346,22AI5105,Computer Networks Lab,dept-csm,CSM,5,Lab,core,2,0,0,3,R22,3,False
+subj-0347,22AI5106,Professional Elective - I,dept-csm,CSM,5,Theory,elective,3,3,0,0,R22,3,False
+subj-0348,22MC5101,Constitution of India,dept-csm,CSM,5,Theory,mdc,0,2,0,0,R22,2,False
+subj-0349,22AI6101,Artificial Intelligence,dept-csm,CSM,6,Theory,core,3,3,0,0,R22,3,False
+subj-0350,22AI6102,Cryptography & Network Security,dept-csm,CSM,6,Theory,core,3,3,0,0,R22,3,False
+subj-0351,22AI6103,Machine Learning,dept-csm,CSM,6,Theory,core,3,3,0,0,R22,3,False
+subj-0352,22AI6104,Cloud Computing,dept-csm,CSM,6,Theory,core,3,3,0,0,R22,3,False
+subj-0353,22AI6105,AI & ML Lab,dept-csm,CSM,6,Lab,core,2,0,0,3,R22,3,False
+subj-0354,22AI6106,Professional Elective - II,dept-csm,CSM,6,Theory,elective,3,3,0,0,R22,3,False
+subj-0355,22AI6107,Open Elective - I,dept-csm,CSM,6,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0356,22AI7101,Big Data Analytics,dept-csm,CSM,7,Theory,core,3,3,0,0,R22,3,False
+subj-0357,22AI7102,Internet of Things,dept-csm,CSM,7,Theory,core,3,3,0,0,R22,3,False
+subj-0358,22AI7103,Professional Elective - III,dept-csm,CSM,7,Theory,elective,3,3,0,0,R22,3,False
+subj-0359,22AI7104,Open Elective - II,dept-csm,CSM,7,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0360,22AI7105,Project - I,dept-csm,CSM,7,Lab,core,2,0,0,4,R22,4,False
+subj-0361,22AI7106,Seminar,dept-csm,CSM,7,Lab,core,2,0,0,2,R22,2,False
+subj-0362,22AI8101,Professional Elective - IV,dept-csm,CSM,8,Theory,elective,3,3,0,0,R22,3,False
+subj-0363,22AI8102,Project - II,dept-csm,CSM,8,Lab,core,8,0,0,16,R22,16,False
+subj-0364,22AI8103,Comprehensive Viva,dept-csm,CSM,8,Lab,core,2,0,0,0,R22,0,False
+subj-0365,22MA1101,Linear Algebra & Calculus,dept-csd,CSD,1,Theory,core,4,3,1,0,R22,4,False
+subj-0366,22PH1101,Applied Physics,dept-csd,CSD,1,Theory,core,4,3,0,0,R22,3,False
+subj-0367,22CS1101,Programming for Problem Solving (C),dept-csd,CSD,1,Theory,core,3,3,0,0,R22,3,False
+subj-0368,22CS1102,Programming for Problem Solving Lab,dept-csd,CSD,1,Lab,core,1,0,0,3,R22,3,False
+subj-0369,22EN1101,English - I,dept-csd,CSD,1,Theory,aec,2,2,0,0,R22,2,False
+subj-0370,22ME1101,Engineering Drawing,dept-csd,CSD,1,Lab,core,2,1,0,2,R22,3,False
+subj-0371,22PH1102,Applied Physics Lab,dept-csd,CSD,1,Lab,core,1,0,0,2,R22,2,False
+subj-0372,22MA1201,"Probability, Statistics & Numerical Methods",dept-csd,CSD,2,Theory,core,4,3,1,0,R22,4,False
+subj-0373,22CH1201,Engineering Chemistry,dept-csd,CSD,2,Theory,core,4,3,0,0,R22,3,False
+subj-0374,22EE1201,Basic Electrical Engineering,dept-csd,CSD,2,Theory,core,3,3,0,0,R22,3,False
+subj-0375,22EE1202,Basic Electrical Engineering Lab,dept-csd,CSD,2,Lab,core,1,0,0,2,R22,2,False
+subj-0376,22EN1201,English - II,dept-csd,CSD,2,Theory,aec,2,2,0,0,R22,2,False
+subj-0377,22CS1201,Data Structures,dept-csd,CSD,2,Theory,core,3,3,0,0,R22,3,False
+subj-0378,22CS1202,Data Structures Lab,dept-csd,CSD,2,Lab,core,1,0,0,3,R22,3,False
+subj-0379,22CH1202,Engineering Chemistry Lab,dept-csd,CSD,2,Lab,core,1,0,0,2,R22,2,False
+subj-0380,22DS3101,Discrete Mathematics,dept-csd,CSD,3,Theory,core,3,3,0,0,R22,3,False
+subj-0381,22DS3102,Object-Oriented Programming (Java),dept-csd,CSD,3,Theory,core,3,3,0,0,R22,3,False
+subj-0382,22DS3103,Digital Logic Design,dept-csd,CSD,3,Theory,core,3,3,0,0,R22,3,False
+subj-0383,22DS3104,Computer Organization,dept-csd,CSD,3,Theory,core,3,3,0,0,R22,3,False
+subj-0384,22DS3105,OOP Lab,dept-csd,CSD,3,Lab,core,2,0,0,3,R22,3,False
+subj-0385,22DS3106,Digital Logic Lab,dept-csd,CSD,3,Lab,core,1,0,0,2,R22,2,False
+subj-0386,22HS3101,Managerial Economics & Financial Analysis,dept-csd,CSD,3,Theory,sec,3,3,0,0,R22,3,False
+subj-0387,22DS4101,Operating Systems,dept-csd,CSD,4,Theory,core,3,3,0,0,R22,3,False
+subj-0388,22DS4102,Database Management Systems,dept-csd,CSD,4,Theory,core,3,3,0,0,R22,3,False
+subj-0389,22DS4103,Design & Analysis of Algorithms,dept-csd,CSD,4,Theory,core,3,3,1,0,R22,4,False
+subj-0390,22DS4104,Software Engineering,dept-csd,CSD,4,Theory,core,3,3,0,0,R22,3,False
+subj-0391,22DS4105,OS & DBMS Lab,dept-csd,CSD,4,Lab,core,2,0,0,3,R22,3,False
+subj-0392,22DS4106,Python Programming Lab,dept-csd,CSD,4,Lab,core,1,0,0,2,R22,2,False
+subj-0393,22HS4101,Environmental Science,dept-csd,CSD,4,Theory,mdc,2,2,0,0,R22,2,False
+subj-0394,22DS5101,Computer Networks,dept-csd,CSD,5,Theory,core,3,3,0,0,R22,3,False
+subj-0395,22DS5102,Compiler Design,dept-csd,CSD,5,Theory,core,3,3,0,0,R22,3,False
+subj-0396,22DS5103,Formal Languages & Automata Theory,dept-csd,CSD,5,Theory,core,3,3,1,0,R22,4,False
+subj-0397,22DS5104,Web Technologies,dept-csd,CSD,5,Theory,core,3,2,0,2,R22,4,False
+subj-0398,22DS5105,Computer Networks Lab,dept-csd,CSD,5,Lab,core,2,0,0,3,R22,3,False
+subj-0399,22DS5106,Professional Elective - I,dept-csd,CSD,5,Theory,elective,3,3,0,0,R22,3,False
+subj-0400,22MC5101,Constitution of India,dept-csd,CSD,5,Theory,mdc,0,2,0,0,R22,2,False
+subj-0401,22DS6101,Artificial Intelligence,dept-csd,CSD,6,Theory,core,3,3,0,0,R22,3,False
+subj-0402,22DS6102,Cryptography & Network Security,dept-csd,CSD,6,Theory,core,3,3,0,0,R22,3,False
+subj-0403,22DS6103,Machine Learning,dept-csd,CSD,6,Theory,core,3,3,0,0,R22,3,False
+subj-0404,22DS6104,Cloud Computing,dept-csd,CSD,6,Theory,core,3,3,0,0,R22,3,False
+subj-0405,22DS6105,AI & ML Lab,dept-csd,CSD,6,Lab,core,2,0,0,3,R22,3,False
+subj-0406,22DS6106,Professional Elective - II,dept-csd,CSD,6,Theory,elective,3,3,0,0,R22,3,False
+subj-0407,22DS6107,Open Elective - I,dept-csd,CSD,6,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0408,22DS7101,Big Data Analytics,dept-csd,CSD,7,Theory,core,3,3,0,0,R22,3,False
+subj-0409,22DS7102,Internet of Things,dept-csd,CSD,7,Theory,core,3,3,0,0,R22,3,False
+subj-0410,22DS7103,Professional Elective - III,dept-csd,CSD,7,Theory,elective,3,3,0,0,R22,3,False
+subj-0411,22DS7104,Open Elective - II,dept-csd,CSD,7,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0412,22DS7105,Project - I,dept-csd,CSD,7,Lab,core,2,0,0,4,R22,4,False
+subj-0413,22DS7106,Seminar,dept-csd,CSD,7,Lab,core,2,0,0,2,R22,2,False
+subj-0414,22DS8101,Professional Elective - IV,dept-csd,CSD,8,Theory,elective,3,3,0,0,R22,3,False
+subj-0415,22DS8102,Project - II,dept-csd,CSD,8,Lab,core,8,0,0,16,R22,16,False
+subj-0416,22DS8103,Comprehensive Viva,dept-csd,CSD,8,Lab,core,2,0,0,0,R22,0,False
+subj-0417,22MA1101,Linear Algebra & Calculus,dept-aiml,AIML,1,Theory,core,4,3,1,0,R22,4,False
+subj-0418,22PH1101,Applied Physics,dept-aiml,AIML,1,Theory,core,4,3,0,0,R22,3,False
+subj-0419,22CS1101,Programming for Problem Solving (C),dept-aiml,AIML,1,Theory,core,3,3,0,0,R22,3,False
+subj-0420,22CS1102,Programming for Problem Solving Lab,dept-aiml,AIML,1,Lab,core,1,0,0,3,R22,3,False
+subj-0421,22EN1101,English - I,dept-aiml,AIML,1,Theory,aec,2,2,0,0,R22,2,False
+subj-0422,22ME1101,Engineering Drawing,dept-aiml,AIML,1,Lab,core,2,1,0,2,R22,3,False
+subj-0423,22PH1102,Applied Physics Lab,dept-aiml,AIML,1,Lab,core,1,0,0,2,R22,2,False
+subj-0424,22MA1201,"Probability, Statistics & Numerical Methods",dept-aiml,AIML,2,Theory,core,4,3,1,0,R22,4,False
+subj-0425,22CH1201,Engineering Chemistry,dept-aiml,AIML,2,Theory,core,4,3,0,0,R22,3,False
+subj-0426,22EE1201,Basic Electrical Engineering,dept-aiml,AIML,2,Theory,core,3,3,0,0,R22,3,False
+subj-0427,22EE1202,Basic Electrical Engineering Lab,dept-aiml,AIML,2,Lab,core,1,0,0,2,R22,2,False
+subj-0428,22EN1201,English - II,dept-aiml,AIML,2,Theory,aec,2,2,0,0,R22,2,False
+subj-0429,22CS1201,Data Structures,dept-aiml,AIML,2,Theory,core,3,3,0,0,R22,3,False
+subj-0430,22CS1202,Data Structures Lab,dept-aiml,AIML,2,Lab,core,1,0,0,3,R22,3,False
+subj-0431,22CH1202,Engineering Chemistry Lab,dept-aiml,AIML,2,Lab,core,1,0,0,2,R22,2,False
+subj-0432,22AM3101,Discrete Mathematics,dept-aiml,AIML,3,Theory,core,3,3,0,0,R22,3,False
+subj-0433,22AM3102,Object-Oriented Programming (Java),dept-aiml,AIML,3,Theory,core,3,3,0,0,R22,3,False
+subj-0434,22AM3103,Digital Logic Design,dept-aiml,AIML,3,Theory,core,3,3,0,0,R22,3,False
+subj-0435,22AM3104,Computer Organization,dept-aiml,AIML,3,Theory,core,3,3,0,0,R22,3,False
+subj-0436,22AM3105,OOP Lab,dept-aiml,AIML,3,Lab,core,2,0,0,3,R22,3,False
+subj-0437,22AM3106,Digital Logic Lab,dept-aiml,AIML,3,Lab,core,1,0,0,2,R22,2,False
+subj-0438,22HS3101,Managerial Economics & Financial Analysis,dept-aiml,AIML,3,Theory,sec,3,3,0,0,R22,3,False
+subj-0439,22AM4101,Operating Systems,dept-aiml,AIML,4,Theory,core,3,3,0,0,R22,3,False
+subj-0440,22AM4102,Database Management Systems,dept-aiml,AIML,4,Theory,core,3,3,0,0,R22,3,False
+subj-0441,22AM4103,Design & Analysis of Algorithms,dept-aiml,AIML,4,Theory,core,3,3,1,0,R22,4,False
+subj-0442,22AM4104,Software Engineering,dept-aiml,AIML,4,Theory,core,3,3,0,0,R22,3,False
+subj-0443,22AM4105,OS & DBMS Lab,dept-aiml,AIML,4,Lab,core,2,0,0,3,R22,3,False
+subj-0444,22AM4106,Python Programming Lab,dept-aiml,AIML,4,Lab,core,1,0,0,2,R22,2,False
+subj-0445,22HS4101,Environmental Science,dept-aiml,AIML,4,Theory,mdc,2,2,0,0,R22,2,False
+subj-0446,22AM5101,Computer Networks,dept-aiml,AIML,5,Theory,core,3,3,0,0,R22,3,False
+subj-0447,22AM5102,Compiler Design,dept-aiml,AIML,5,Theory,core,3,3,0,0,R22,3,False
+subj-0448,22AM5103,Formal Languages & Automata Theory,dept-aiml,AIML,5,Theory,core,3,3,1,0,R22,4,False
+subj-0449,22AM5104,Web Technologies,dept-aiml,AIML,5,Theory,core,3,2,0,2,R22,4,False
+subj-0450,22AM5105,Computer Networks Lab,dept-aiml,AIML,5,Lab,core,2,0,0,3,R22,3,False
+subj-0451,22AM5106,Professional Elective - I,dept-aiml,AIML,5,Theory,elective,3,3,0,0,R22,3,False
+subj-0452,22MC5101,Constitution of India,dept-aiml,AIML,5,Theory,mdc,0,2,0,0,R22,2,False
+subj-0453,22AM6101,Artificial Intelligence,dept-aiml,AIML,6,Theory,core,3,3,0,0,R22,3,False
+subj-0454,22AM6102,Cryptography & Network Security,dept-aiml,AIML,6,Theory,core,3,3,0,0,R22,3,False
+subj-0455,22AM6103,Machine Learning,dept-aiml,AIML,6,Theory,core,3,3,0,0,R22,3,False
+subj-0456,22AM6104,Cloud Computing,dept-aiml,AIML,6,Theory,core,3,3,0,0,R22,3,False
+subj-0457,22AM6105,AI & ML Lab,dept-aiml,AIML,6,Lab,core,2,0,0,3,R22,3,False
+subj-0458,22AM6106,Professional Elective - II,dept-aiml,AIML,6,Theory,elective,3,3,0,0,R22,3,False
+subj-0459,22AM6107,Open Elective - I,dept-aiml,AIML,6,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0460,22AM7101,Big Data Analytics,dept-aiml,AIML,7,Theory,core,3,3,0,0,R22,3,False
+subj-0461,22AM7102,Internet of Things,dept-aiml,AIML,7,Theory,core,3,3,0,0,R22,3,False
+subj-0462,22AM7103,Professional Elective - III,dept-aiml,AIML,7,Theory,elective,3,3,0,0,R22,3,False
+subj-0463,22AM7104,Open Elective - II,dept-aiml,AIML,7,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0464,22AM7105,Project - I,dept-aiml,AIML,7,Lab,core,2,0,0,4,R22,4,False
+subj-0465,22AM7106,Seminar,dept-aiml,AIML,7,Lab,core,2,0,0,2,R22,2,False
+subj-0466,22AM8101,Professional Elective - IV,dept-aiml,AIML,8,Theory,elective,3,3,0,0,R22,3,False
+subj-0467,22AM8102,Project - II,dept-aiml,AIML,8,Lab,core,8,0,0,16,R22,16,False
+subj-0468,22AM8103,Comprehensive Viva,dept-aiml,AIML,8,Lab,core,2,0,0,0,R22,0,False
+subj-0469,22MA1101,Linear Algebra & Calculus,dept-cso,CSO,1,Theory,core,4,3,1,0,R22,4,False
+subj-0470,22PH1101,Applied Physics,dept-cso,CSO,1,Theory,core,4,3,0,0,R22,3,False
+subj-0471,22CS1101,Programming for Problem Solving (C),dept-cso,CSO,1,Theory,core,3,3,0,0,R22,3,False
+subj-0472,22CS1102,Programming for Problem Solving Lab,dept-cso,CSO,1,Lab,core,1,0,0,3,R22,3,False
+subj-0473,22EN1101,English - I,dept-cso,CSO,1,Theory,aec,2,2,0,0,R22,2,False
+subj-0474,22ME1101,Engineering Drawing,dept-cso,CSO,1,Lab,core,2,1,0,2,R22,3,False
+subj-0475,22PH1102,Applied Physics Lab,dept-cso,CSO,1,Lab,core,1,0,0,2,R22,2,False
+subj-0476,22MA1201,"Probability, Statistics & Numerical Methods",dept-cso,CSO,2,Theory,core,4,3,1,0,R22,4,False
+subj-0477,22CH1201,Engineering Chemistry,dept-cso,CSO,2,Theory,core,4,3,0,0,R22,3,False
+subj-0478,22EE1201,Basic Electrical Engineering,dept-cso,CSO,2,Theory,core,3,3,0,0,R22,3,False
+subj-0479,22EE1202,Basic Electrical Engineering Lab,dept-cso,CSO,2,Lab,core,1,0,0,2,R22,2,False
+subj-0480,22EN1201,English - II,dept-cso,CSO,2,Theory,aec,2,2,0,0,R22,2,False
+subj-0481,22CS1201,Data Structures,dept-cso,CSO,2,Theory,core,3,3,0,0,R22,3,False
+subj-0482,22CS1202,Data Structures Lab,dept-cso,CSO,2,Lab,core,1,0,0,3,R22,3,False
+subj-0483,22CH1202,Engineering Chemistry Lab,dept-cso,CSO,2,Lab,core,1,0,0,2,R22,2,False
+subj-0484,22CY3101,Discrete Mathematics,dept-cso,CSO,3,Theory,core,3,3,0,0,R22,3,False
+subj-0485,22CY3102,Object-Oriented Programming (Java),dept-cso,CSO,3,Theory,core,3,3,0,0,R22,3,False
+subj-0486,22CY3103,Digital Logic Design,dept-cso,CSO,3,Theory,core,3,3,0,0,R22,3,False
+subj-0487,22CY3104,Computer Organization,dept-cso,CSO,3,Theory,core,3,3,0,0,R22,3,False
+subj-0488,22CY3105,OOP Lab,dept-cso,CSO,3,Lab,core,2,0,0,3,R22,3,False
+subj-0489,22CY3106,Digital Logic Lab,dept-cso,CSO,3,Lab,core,1,0,0,2,R22,2,False
+subj-0490,22HS3101,Managerial Economics & Financial Analysis,dept-cso,CSO,3,Theory,sec,3,3,0,0,R22,3,False
+subj-0491,22CY4101,Operating Systems,dept-cso,CSO,4,Theory,core,3,3,0,0,R22,3,False
+subj-0492,22CY4102,Database Management Systems,dept-cso,CSO,4,Theory,core,3,3,0,0,R22,3,False
+subj-0493,22CY4103,Design & Analysis of Algorithms,dept-cso,CSO,4,Theory,core,3,3,1,0,R22,4,False
+subj-0494,22CY4104,Software Engineering,dept-cso,CSO,4,Theory,core,3,3,0,0,R22,3,False
+subj-0495,22CY4105,OS & DBMS Lab,dept-cso,CSO,4,Lab,core,2,0,0,3,R22,3,False
+subj-0496,22CY4106,Python Programming Lab,dept-cso,CSO,4,Lab,core,1,0,0,2,R22,2,False
+subj-0497,22HS4101,Environmental Science,dept-cso,CSO,4,Theory,mdc,2,2,0,0,R22,2,False
+subj-0498,22CY5101,Computer Networks,dept-cso,CSO,5,Theory,core,3,3,0,0,R22,3,False
+subj-0499,22CY5102,Compiler Design,dept-cso,CSO,5,Theory,core,3,3,0,0,R22,3,False
+subj-0500,22CY5103,Formal Languages & Automata Theory,dept-cso,CSO,5,Theory,core,3,3,1,0,R22,4,False
+subj-0501,22CY5104,Web Technologies,dept-cso,CSO,5,Theory,core,3,2,0,2,R22,4,False
+subj-0502,22CY5105,Computer Networks Lab,dept-cso,CSO,5,Lab,core,2,0,0,3,R22,3,False
+subj-0503,22CY5106,Professional Elective - I,dept-cso,CSO,5,Theory,elective,3,3,0,0,R22,3,False
+subj-0504,22MC5101,Constitution of India,dept-cso,CSO,5,Theory,mdc,0,2,0,0,R22,2,False
+subj-0505,22CY6101,Artificial Intelligence,dept-cso,CSO,6,Theory,core,3,3,0,0,R22,3,False
+subj-0506,22CY6102,Cryptography & Network Security,dept-cso,CSO,6,Theory,core,3,3,0,0,R22,3,False
+subj-0507,22CY6103,Machine Learning,dept-cso,CSO,6,Theory,core,3,3,0,0,R22,3,False
+subj-0508,22CY6104,Cloud Computing,dept-cso,CSO,6,Theory,core,3,3,0,0,R22,3,False
+subj-0509,22CY6105,AI & ML Lab,dept-cso,CSO,6,Lab,core,2,0,0,3,R22,3,False
+subj-0510,22CY6106,Professional Elective - II,dept-cso,CSO,6,Theory,elective,3,3,0,0,R22,3,False
+subj-0511,22CY6107,Open Elective - I,dept-cso,CSO,6,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0512,22CY7101,Big Data Analytics,dept-cso,CSO,7,Theory,core,3,3,0,0,R22,3,False
+subj-0513,22CY7102,Internet of Things,dept-cso,CSO,7,Theory,core,3,3,0,0,R22,3,False
+subj-0514,22CY7103,Professional Elective - III,dept-cso,CSO,7,Theory,elective,3,3,0,0,R22,3,False
+subj-0515,22CY7104,Open Elective - II,dept-cso,CSO,7,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0516,22CY7105,Project - I,dept-cso,CSO,7,Lab,core,2,0,0,4,R22,4,False
+subj-0517,22CY7106,Seminar,dept-cso,CSO,7,Lab,core,2,0,0,2,R22,2,False
+subj-0518,22CY8101,Professional Elective - IV,dept-cso,CSO,8,Theory,elective,3,3,0,0,R22,3,False
+subj-0519,22CY8102,Project - II,dept-cso,CSO,8,Lab,core,8,0,0,16,R22,16,False
+subj-0520,22CY8103,Comprehensive Viva,dept-cso,CSO,8,Lab,core,2,0,0,0,R22,0,False
+subj-0521,22MA1101,Linear Algebra & Calculus,dept-iot,IoT,1,Theory,core,4,3,1,0,R22,4,False
+subj-0522,22PH1101,Applied Physics,dept-iot,IoT,1,Theory,core,4,3,0,0,R22,3,False
+subj-0523,22CS1101,Programming for Problem Solving (C),dept-iot,IoT,1,Theory,core,3,3,0,0,R22,3,False
+subj-0524,22CS1102,Programming for Problem Solving Lab,dept-iot,IoT,1,Lab,core,1,0,0,3,R22,3,False
+subj-0525,22EN1101,English - I,dept-iot,IoT,1,Theory,aec,2,2,0,0,R22,2,False
+subj-0526,22ME1101,Engineering Drawing,dept-iot,IoT,1,Lab,core,2,1,0,2,R22,3,False
+subj-0527,22PH1102,Applied Physics Lab,dept-iot,IoT,1,Lab,core,1,0,0,2,R22,2,False
+subj-0528,22MA1201,"Probability, Statistics & Numerical Methods",dept-iot,IoT,2,Theory,core,4,3,1,0,R22,4,False
+subj-0529,22CH1201,Engineering Chemistry,dept-iot,IoT,2,Theory,core,4,3,0,0,R22,3,False
+subj-0530,22EE1201,Basic Electrical Engineering,dept-iot,IoT,2,Theory,core,3,3,0,0,R22,3,False
+subj-0531,22EE1202,Basic Electrical Engineering Lab,dept-iot,IoT,2,Lab,core,1,0,0,2,R22,2,False
+subj-0532,22EN1201,English - II,dept-iot,IoT,2,Theory,aec,2,2,0,0,R22,2,False
+subj-0533,22CS1201,Data Structures,dept-iot,IoT,2,Theory,core,3,3,0,0,R22,3,False
+subj-0534,22CS1202,Data Structures Lab,dept-iot,IoT,2,Lab,core,1,0,0,3,R22,3,False
+subj-0535,22CH1202,Engineering Chemistry Lab,dept-iot,IoT,2,Lab,core,1,0,0,2,R22,2,False
+subj-0536,22IO3101,Discrete Mathematics,dept-iot,IoT,3,Theory,core,3,3,0,0,R22,3,False
+subj-0537,22IO3102,Object-Oriented Programming (Java),dept-iot,IoT,3,Theory,core,3,3,0,0,R22,3,False
+subj-0538,22IO3103,Digital Logic Design,dept-iot,IoT,3,Theory,core,3,3,0,0,R22,3,False
+subj-0539,22IO3104,Computer Organization,dept-iot,IoT,3,Theory,core,3,3,0,0,R22,3,False
+subj-0540,22IO3105,OOP Lab,dept-iot,IoT,3,Lab,core,2,0,0,3,R22,3,False
+subj-0541,22IO3106,Digital Logic Lab,dept-iot,IoT,3,Lab,core,1,0,0,2,R22,2,False
+subj-0542,22HS3101,Managerial Economics & Financial Analysis,dept-iot,IoT,3,Theory,sec,3,3,0,0,R22,3,False
+subj-0543,22IO4101,Operating Systems,dept-iot,IoT,4,Theory,core,3,3,0,0,R22,3,False
+subj-0544,22IO4102,Database Management Systems,dept-iot,IoT,4,Theory,core,3,3,0,0,R22,3,False
+subj-0545,22IO4103,Design & Analysis of Algorithms,dept-iot,IoT,4,Theory,core,3,3,1,0,R22,4,False
+subj-0546,22IO4104,Software Engineering,dept-iot,IoT,4,Theory,core,3,3,0,0,R22,3,False
+subj-0547,22IO4105,OS & DBMS Lab,dept-iot,IoT,4,Lab,core,2,0,0,3,R22,3,False
+subj-0548,22IO4106,Python Programming Lab,dept-iot,IoT,4,Lab,core,1,0,0,2,R22,2,False
+subj-0549,22HS4101,Environmental Science,dept-iot,IoT,4,Theory,mdc,2,2,0,0,R22,2,False
+subj-0550,22IO5101,Computer Networks,dept-iot,IoT,5,Theory,core,3,3,0,0,R22,3,False
+subj-0551,22IO5102,Compiler Design,dept-iot,IoT,5,Theory,core,3,3,0,0,R22,3,False
+subj-0552,22IO5103,Formal Languages & Automata Theory,dept-iot,IoT,5,Theory,core,3,3,1,0,R22,4,False
+subj-0553,22IO5104,Web Technologies,dept-iot,IoT,5,Theory,core,3,2,0,2,R22,4,False
+subj-0554,22IO5105,Computer Networks Lab,dept-iot,IoT,5,Lab,core,2,0,0,3,R22,3,False
+subj-0555,22IO5106,Professional Elective - I,dept-iot,IoT,5,Theory,elective,3,3,0,0,R22,3,False
+subj-0556,22MC5101,Constitution of India,dept-iot,IoT,5,Theory,mdc,0,2,0,0,R22,2,False
+subj-0557,22IO6101,Artificial Intelligence,dept-iot,IoT,6,Theory,core,3,3,0,0,R22,3,False
+subj-0558,22IO6102,Cryptography & Network Security,dept-iot,IoT,6,Theory,core,3,3,0,0,R22,3,False
+subj-0559,22IO6103,Machine Learning,dept-iot,IoT,6,Theory,core,3,3,0,0,R22,3,False
+subj-0560,22IO6104,Cloud Computing,dept-iot,IoT,6,Theory,core,3,3,0,0,R22,3,False
+subj-0561,22IO6105,AI & ML Lab,dept-iot,IoT,6,Lab,core,2,0,0,3,R22,3,False
+subj-0562,22IO6106,Professional Elective - II,dept-iot,IoT,6,Theory,elective,3,3,0,0,R22,3,False
+subj-0563,22IO6107,Open Elective - I,dept-iot,IoT,6,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0564,22IO7101,Big Data Analytics,dept-iot,IoT,7,Theory,core,3,3,0,0,R22,3,False
+subj-0565,22IO7102,Internet of Things,dept-iot,IoT,7,Theory,core,3,3,0,0,R22,3,False
+subj-0566,22IO7103,Professional Elective - III,dept-iot,IoT,7,Theory,elective,3,3,0,0,R22,3,False
+subj-0567,22IO7104,Open Elective - II,dept-iot,IoT,7,Theory,open_elective,3,3,0,0,R22,3,False
+subj-0568,22IO7105,Project - I,dept-iot,IoT,7,Lab,core,2,0,0,4,R22,4,False
+subj-0569,22IO7106,Seminar,dept-iot,IoT,7,Lab,core,2,0,0,2,R22,2,False
+subj-0570,22IO8101,Professional Elective - IV,dept-iot,IoT,8,Theory,elective,3,3,0,0,R22,3,False
+subj-0571,22IO8102,Project - II,dept-iot,IoT,8,Lab,core,8,0,0,16,R22,16,False
+subj-0572,22IO8103,Comprehensive Viva,dept-iot,IoT,8,Lab,core,2,0,0,0,R22,0,False
