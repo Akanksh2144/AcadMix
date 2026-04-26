@@ -52,11 +52,15 @@ const CodePlayground = ({ navigate, user }) => {
 
   const [activeChallenge, setActiveChallenge] = useState(_restoreChallenge);
 
+  const getCodeStorageKey = (ch, lang) => `acadmix_code_${ch ? ch.id : 'free'}_${lang}`;
+
   // Derive initial code & test cases from the restored challenge (if any)
   const [code, setCode] = useState(() => {
     const ch = _restoreChallenge();
+    const lang = ch?.language || 'python';
+    const saved = sessionStorage.getItem(getCodeStorageKey(ch, lang));
+    if (saved !== null) return saved;
     if (ch) {
-      const lang = ch.language || 'python';
       return ch.init_code?.[lang] || ch.template_code || DEFAULT_TEMPLATES[lang];
     }
     return DEFAULT_TEMPLATES['python'];
@@ -136,8 +140,13 @@ const CodePlayground = ({ navigate, user }) => {
     const lang = challenge.language || 'python';
     setLanguage(lang);
     // Resolve starter template: init_code[lang] → template_code → default
-    const starterCode = challenge.init_code?.[lang] || challenge.template_code || DEFAULT_TEMPLATES[lang];
-    setCode(starterCode);
+    const saved = sessionStorage.getItem(getCodeStorageKey(challenge, lang));
+    if (saved !== null) {
+      setCode(saved);
+    } else {
+      const starterCode = challenge.init_code?.[lang] || challenge.template_code || DEFAULT_TEMPLATES[lang];
+      setCode(starterCode);
+    }
     setOutput(null);
     setExecTime(null);
     setRPlots([]);
@@ -165,6 +174,11 @@ const CodePlayground = ({ navigate, user }) => {
     }
   }, [activeChallenge]);
 
+  // Persist code state across F5 refreshes
+  useEffect(() => {
+    sessionStorage.setItem(getCodeStorageKey(activeChallenge, language), code);
+  }, [code, language, activeChallenge]);
+
   // Detect refresh vs SPA navigation for cleanup
   useEffect(() => {
     const handleBeforeUnload = () => { isRefreshingRef.current = true; };
@@ -174,6 +188,9 @@ const CodePlayground = ({ navigate, user }) => {
       // On SPA navigation away, clear session — on refresh, keep it
       if (!isRefreshingRef.current) {
         sessionStorage.removeItem('acadmix_active_challenge');
+        Object.keys(sessionStorage).forEach(k => {
+          if (k.startsWith('acadmix_code_')) sessionStorage.removeItem(k);
+        });
       }
     };
   }, []);
@@ -289,11 +306,16 @@ const CodePlayground = ({ navigate, user }) => {
 
   const handleLanguageChange = (langId) => {
     setLanguage(langId);
-    const challengeTemplate = activeChallenge?.init_code?.[langId] || activeChallenge?.template_code;
-    if (langId === (activeChallenge?.language || 'python') && challengeTemplate) {
-      setCode(challengeTemplate);
+    const saved = sessionStorage.getItem(getCodeStorageKey(activeChallenge, langId));
+    if (saved !== null) {
+      setCode(saved);
     } else {
-      setCode(activeChallenge?.init_code?.[langId] || DEFAULT_TEMPLATES[langId] || '');
+      const challengeTemplate = activeChallenge?.init_code?.[langId] || activeChallenge?.template_code;
+      if (langId === (activeChallenge?.language || 'python') && challengeTemplate) {
+        setCode(challengeTemplate);
+      } else {
+        setCode(activeChallenge?.init_code?.[langId] || DEFAULT_TEMPLATES[langId] || '');
+      }
     }
     setOutput(null);
     setExecTime(null);
