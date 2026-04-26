@@ -37,13 +37,29 @@ async def student_analytics(student_id: str, user: dict = Depends(get_current_us
         "date": a.end_time.isoformat() if a.end_time else "",
         "score": a.final_score or 0, "quiz": a.quiz_id
     } for a in attempts[-10:]]
+    _GRADE_POINTS = {
+        "O": 10, "A+": 9, "A": 8, "B+": 7, "B": 6,
+        "C": 5, "D": 4, "F": 0, "AB": 0,
+    }
     sem_map = defaultdict(list)
     for row in sem_rows:
         sem_map[row.semester].append({"course_id": row.course_id, "grade": row.grade, "credits": row.credits_earned})
-    semesters = [{"semester": sem, "subjects": subjs} for sem, subjs in sorted(sem_map.items())]
+        
+    semesters = []
+    all_cumulative = []
+    for sem, subjs in sorted(sem_map.items()):
+        total_credits = sum(s["credits"] for s in subjs)
+        sgpa = round(sum(_GRADE_POINTS.get(s["grade"], 0) * s["credits"] for s in subjs) / total_credits, 2) if total_credits > 0 else 0
+        all_cumulative.extend(subjs)
+        total_cum = sum(s["credits"] for s in all_cumulative)
+        cgpa = round(sum(_GRADE_POINTS.get(s["grade"], 0) * s["credits"] for s in all_cumulative) / total_cum, 2) if total_cum > 0 else 0
+        semesters.append({"semester": sem, "sgpa": sgpa, "cgpa": cgpa, "subjects": subjs})
+
+    latest_cgpa = semesters[-1]["cgpa"] if semesters else 0
+
     return {
         "total_quizzes": total_quizzes, "avg_score": avg_score, "best_score": best_score,
-        "latest_cgpa": 0, "quiz_trend": quiz_trend, "subject_averages": {},
+        "latest_cgpa": latest_cgpa, "quiz_trend": quiz_trend, "subject_averages": {},
         "semesters": semesters
     }
 
