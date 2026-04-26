@@ -143,9 +143,13 @@ const LoginPage = ({ onLogin }) => {
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
-              className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6"
+              className={`${tenant.logo ? 'w-20 h-20' : 'w-16 h-16'} bg-white/20 backdrop-blur-sm ${tenant.logo ? 'rounded-full p-1' : 'rounded-2xl'} flex items-center justify-center mb-6`}
             >
-              <GraduationCap size={36} weight="duotone" className="text-white" />
+              {tenant.logo ? (
+                <img src={tenant.logo} alt={`${tenant.tenantName} logo`} className="w-full h-full object-contain rounded-full" />
+              ) : (
+                <GraduationCap size={36} weight="duotone" className="text-white" />
+              )}
             </motion.div>
             <h1 className="text-5xl font-extrabold tracking-tight mb-4">Welcome to<br/>{tenant.tenantName || 'AcadMix'}</h1>
             <p className="text-lg font-medium leading-relaxed text-white/80">
@@ -201,9 +205,13 @@ const LoginPage = ({ onLogin }) => {
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="w-16 h-16 bg-indigo-500 rounded-2xl flex items-center justify-center"
+              className={`${tenant.logo ? 'w-20 h-20' : 'w-16 h-16'} ${tenant.logo ? 'bg-white dark:bg-slate-800 shadow-lg rounded-full p-1' : 'bg-indigo-500 rounded-2xl'} flex items-center justify-center`}
             >
-              <GraduationCap size={36} weight="duotone" className="text-white" />
+              {tenant.logo ? (
+                <img src={tenant.logo} alt={`${tenant.tenantName} logo`} className="w-full h-full object-contain rounded-full" />
+              ) : (
+                <GraduationCap size={36} weight="duotone" className="text-white" />
+              )}
             </motion.div>
           </div>
 

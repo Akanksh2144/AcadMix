@@ -3,19 +3,22 @@ import React, { createContext, useContext, useMemo } from 'react';
 const TenantContext = createContext({
   tenantSlug: null,
   tenantName: null,
+  logo: null,
   isDemo: false,
   isLocalDev: false,
 });
 
 /**
- * Maps subdomain slugs to college display names.
+ * Maps subdomain slugs to college display names and branding.
+ * logo: path relative to /public (served at root by Vite)
  * In production, this would be fetched from the API.
  */
 const TENANT_MAP = {
-  demo: { name: 'Demo College', id: 'DEMO' },
-  gnitc: { name: 'GNITC - Guru Nanak Institute of Technology', id: 'GNITC' },
-  gnitr: { name: 'GNITR - Guru Nanak IT Research', id: 'GNITR' },
-  gnits: { name: 'GNITS - Guru Nanak IT Sciences', id: 'GNITS' },
+  demo: { name: 'Demo College', id: 'DEMO', logo: null },
+  aits: { name: 'AITS', id: 'aits-hyd-001', logo: '/logos/aits-emblem.png' },
+  gnitc: { name: 'GNITC - Guru Nanak Institute of Technology', id: 'GNITC', logo: null },
+  gnitr: { name: 'GNITR - Guru Nanak IT Research', id: 'GNITR', logo: null },
+  gnits: { name: 'GNITS - Guru Nanak IT Sciences', id: 'GNITS', logo: null },
 };
 
 /**
@@ -63,6 +66,7 @@ export function TenantProvider({ children }) {
       tenantSlug: slug,
       tenantName: config?.name || (slug ? slug.toUpperCase() : null),
       tenantId: config?.id || (slug ? slug.toUpperCase() : null),
+      logo: config?.logo || null,
       isDemo: slug === 'demo',
       isLocalDev: hostname === 'localhost' || hostname === '127.0.0.1',
     };
