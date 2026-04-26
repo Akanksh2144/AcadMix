@@ -240,7 +240,7 @@ const Analytics = ({ navigate, user, userRole }) => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
                     <XAxis dataKey="name" stroke="#94A3B8" style={{ fontSize: '12px', fontWeight: 600 }} />
                     <YAxis stroke="#94A3B8" style={{ fontSize: '12px', fontWeight: 600 }} domain={[0, 10]} />
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(20, 184, 166, 0.08)' }} />
                     <Bar dataKey="sgpa" fill="#14B8A6" radius={[8, 8, 0, 0]} name="SGPA" />
                   </BarChart>
                 </ResponsiveContainer>
