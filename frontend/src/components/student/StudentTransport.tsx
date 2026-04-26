@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bus, MapPin, Clock, CreditCard, QrCode, ArrowRight, CheckCircle, Warning, NavigationArrow, Pulse, Timer, Users, Receipt } from '@phosphor-icons/react';
+import { Bus, MapPin, Clock, CreditCard, QrCode, ArrowRight, CheckCircle, Warning, NavigationArrow, Pulse, Timer, Users, Receipt, MagnifyingGlass } from '@phosphor-icons/react';
 import { transportAPI } from '../../services/api';
 
 const POLL_INTERVAL = 10000;
@@ -184,6 +184,8 @@ const StudentTransport = () => {
   const [enrolling, setEnrolling] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [selectedStop, setSelectedStop] = useState(null);
+  const [stopSearch, setStopSearch] = useState('');
+  const [chosenStopName, setChosenStopName] = useState(null);
   const pollRef = useRef(null);
 
   // Load data on mount
@@ -259,7 +261,32 @@ const StudentTransport = () => {
     );
   }
 
-  // ─── Not Enrolled — Route Selection ───────────────────────────────────────
+  // ─── Not Enrolled — Stop-First Selection ───────────────────────────────────
+  // Build a unique list of all bus stops across all routes
+  const allStops = React.useMemo(() => {
+    const stopMap = new Map();
+    routes.forEach(route => {
+      (route.stops || []).forEach((stop, idx) => {
+        const name = stop.name || `Stop ${idx + 1}`;
+        if (!stopMap.has(name)) stopMap.set(name, []);
+        stopMap.get(name).push({ route, stopIndex: idx });
+      });
+    });
+    return Array.from(stopMap.entries()).map(([name, routeEntries]) => ({ name, routeEntries })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [routes]);
+
+  const filteredStops = React.useMemo(() => {
+    if (!stopSearch.trim()) return allStops;
+    const q = stopSearch.toLowerCase();
+    return allStops.filter(s => s.name.toLowerCase().includes(q));
+  }, [allStops, stopSearch]);
+
+  const matchingRoutes = React.useMemo(() => {
+    if (!chosenStopName) return [];
+    const entry = allStops.find(s => s.name === chosenStopName);
+    return entry ? entry.routeEntries : [];
+  }, [chosenStopName, allStops]);
+
   if (!enrollment) {
     return (
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
@@ -269,93 +296,147 @@ const StudentTransport = () => {
           </div>
           <div>
             <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Campus Transport</h2>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Choose your bus route & boarding stop</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Find your bus stop & pick a route</p>
           </div>
         </div>
 
-        <div className="grid gap-4">
-          {routes.map(route => (
-            <motion.div
-              key={route.id}
-              whileHover={{ scale: 1.01 }}
-              onClick={() => { setSelectedRoute(route); setSelectedStop(null); }}
-              className={`soft-card p-5 cursor-pointer border-2 transition-all ${
-                selectedRoute?.id === route.id
-                  ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50/50 dark:bg-emerald-500/5'
-                  : 'border-transparent hover:border-slate-200 dark:hover:border-white/10'
-              }`}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-xs font-bold">{route.route_number}</span>
-                    {route.vehicle_number && <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{route.vehicle_number}</span>}
-                  </div>
-                  <p className="text-base font-bold text-slate-900 dark:text-white mt-1">{route.route_name || route.route_number}</p>
-                </div>
-                <div className="text-right">
-                  {route.fee_amount > 0 && <p className="text-lg font-extrabold text-slate-900 dark:text-white">₹{route.fee_amount?.toLocaleString()}</p>}
-                  <p className="text-xs font-medium text-slate-500">{route.available != null ? `${route.available} seats left` : `${route.enrolled} enrolled`}</p>
-                </div>
+        {/* ── Step 1: Search & Select Stop ─── */}
+        {!chosenStopName && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="soft-card p-5">
+              <h3 className="font-extrabold text-slate-900 dark:text-white mb-1">Where do you board?</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Search for your bus stop or pick from the list below</p>
+              <div className="relative mb-4">
+                <MagnifyingGlass size={16} weight="bold" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={stopSearch}
+                  onChange={e => setStopSearch(e.target.value)}
+                  placeholder="Search bus stop..."
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm font-semibold text-slate-800 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                />
               </div>
-
-              <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mb-3">
-                {route.departure_time && <span className="flex items-center gap-1"><Clock size={12} weight="bold" /> {route.departure_time}</span>}
-                {route.return_time && <span className="flex items-center gap-1"><Clock size={12} weight="bold" /> {route.return_time}</span>}
-                {route.capacity > 0 && <span className="flex items-center gap-1"><Users size={12} weight="bold" /> {route.capacity} seats</span>}
-              </div>
-
-              <div className="flex flex-wrap gap-1.5">
-                {(route.stops || []).map((stop, i) => (
-                  <span key={i} className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-xs font-medium text-slate-600 dark:text-slate-300">
-                    {stop.name || `Stop ${i + 1}`}
-                  </span>
+              <div className="space-y-1.5 max-h-[45vh] overflow-y-auto">
+                {filteredStops.length === 0 && (
+                  <p className="text-sm text-center text-slate-400 py-6">No stops match "{stopSearch}"</p>
+                )}
+                {filteredStops.map(s => (
+                  <button
+                    key={s.name}
+                    onClick={() => { setChosenStopName(s.name); setSelectedRoute(null); setSelectedStop(null); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left bg-slate-50 dark:bg-white/5 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-all group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+                      <MapPin size={14} weight="fill" className="text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-slate-800 dark:text-white truncate group-hover:text-emerald-700 dark:group-hover:text-emerald-300">{s.name}</p>
+                      <p className="text-[11px] text-slate-400">{s.routeEntries.length} route{s.routeEntries.length !== 1 ? 's' : ''} available</p>
+                    </div>
+                    <ArrowRight size={14} weight="bold" className="text-slate-300 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
+                  </button>
                 ))}
               </div>
-            </motion.div>
-          ))}
-        </div>
+            </div>
+          </motion.div>
+        )}
 
-        {/* Stop Picker */}
+        {/* ── Step 2: Pick Route for chosen stop ─── */}
+        {chosenStopName && !selectedRoute && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <button
+              onClick={() => { setChosenStopName(null); setStopSearch(''); }}
+              className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-4 hover:underline"
+            >
+              ← Change stop
+            </button>
+            <div className="soft-card p-4 mb-4 bg-emerald-50/50 dark:bg-emerald-500/5 border-2 border-emerald-200 dark:border-emerald-500/20">
+              <div className="flex items-center gap-2">
+                <MapPin size={16} weight="fill" className="text-emerald-600 dark:text-emerald-400" />
+                <p className="text-sm font-extrabold text-emerald-800 dark:text-emerald-300">{chosenStopName}</p>
+              </div>
+            </div>
+            <h3 className="font-extrabold text-slate-900 dark:text-white mb-1">Available Routes</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Buses that stop at {chosenStopName}</p>
+            <div className="grid gap-3">
+              {matchingRoutes.map(({ route, stopIndex }) => (
+                <motion.div
+                  key={route.id}
+                  whileHover={{ scale: 1.01 }}
+                  onClick={() => { setSelectedRoute(route); setSelectedStop(stopIndex); }}
+                  className="soft-card p-5 cursor-pointer border-2 border-transparent hover:border-emerald-300 dark:hover:border-emerald-500/30 transition-all"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-xs font-bold">{route.route_number}</span>
+                        {route.vehicle_number && <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{route.vehicle_number}</span>}
+                      </div>
+                      <p className="text-base font-bold text-slate-900 dark:text-white">{route.route_name || route.route_number}</p>
+                    </div>
+                    <div className="text-right">
+                      {route.fee_amount > 0 && <p className="text-lg font-extrabold text-slate-900 dark:text-white">₹{route.fee_amount?.toLocaleString()}</p>}
+                      <p className="text-xs font-medium text-slate-500">{route.available != null ? `${route.available} seats left` : `${route.enrolled} enrolled`}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mb-2">
+                    {route.departure_time && <span className="flex items-center gap-1"><Clock size={12} weight="bold" /> {route.departure_time}</span>}
+                    {route.return_time && <span className="flex items-center gap-1"><Clock size={12} weight="bold" /> {route.return_time}</span>}
+                    {route.capacity > 0 && <span className="flex items-center gap-1"><Users size={12} weight="bold" /> {route.capacity} seats</span>}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {(route.stops || []).map((stop, i) => (
+                      <span key={i} className={`px-2 py-0.5 rounded-md text-xs font-medium ${
+                        stop.name === chosenStopName
+                          ? 'bg-emerald-200 dark:bg-emerald-500/25 text-emerald-800 dark:text-emerald-200 font-bold'
+                          : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
+                      }`}>
+                        {stop.name || `Stop ${i + 1}`}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Step 3: Confirm & Enroll ─── */}
         <AnimatePresence>
-          {selectedRoute && (
+          {selectedRoute && selectedStop !== null && (
             <motion.div
               initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
               className="mt-6 overflow-hidden"
             >
-              <div className="soft-card p-5">
-                <h3 className="font-extrabold text-slate-900 dark:text-white mb-1">Select Your Boarding Stop</h3>
-                <p className="text-xs text-slate-500 mb-4">Where will you board the bus every morning?</p>
-                <div className="space-y-2">
-                  {(selectedRoute.stops || []).map((stop, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedStop(i)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${
-                        selectedStop === i
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200'
-                      }`}
-                    >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                        selectedStop === i ? 'bg-white/20' : 'bg-slate-200 dark:bg-white/10'
-                      }`}>
-                        {i + 1}
-                      </div>
-                      <span className="font-bold text-sm">{stop.name || `Stop ${i + 1}`}</span>
-                      {selectedStop === i && <CheckCircle size={20} weight="fill" className="ml-auto" />}
-                    </button>
-                  ))}
+              <div className="soft-card p-5 border-2 border-emerald-400 dark:border-emerald-500/30">
+                <h3 className="font-extrabold text-slate-900 dark:text-white mb-3">Confirm Enrollment</h3>
+                <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Route</p>
+                    <p className="font-bold text-slate-800 dark:text-white">{selectedRoute.route_number}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Boarding Stop</p>
+                    <p className="font-bold text-slate-800 dark:text-white">{chosenStopName}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Fee</p>
+                    <p className="font-bold text-slate-800 dark:text-white">₹{selectedRoute.fee_amount?.toLocaleString() || '—'}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Schedule</p>
+                    <p className="font-bold text-slate-800 dark:text-white">{selectedRoute.departure_time || '07:00'} – {selectedRoute.return_time || '17:30'}</p>
+                  </div>
                 </div>
                 <button
                   onClick={handleEnroll}
-                  disabled={selectedStop === null || enrolling}
-                  className="btn-primary w-full mt-4 !py-3 disabled:opacity-50 flex items-center justify-center gap-2"
+                  disabled={enrolling}
+                  className="btn-primary w-full !py-3 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {enrolling ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <>Enroll in {selectedRoute.route_number} <ArrowRight size={16} weight="bold" /></>
+                    <>Enroll & Pay <ArrowRight size={16} weight="bold" /></>
                   )}
                 </button>
               </div>

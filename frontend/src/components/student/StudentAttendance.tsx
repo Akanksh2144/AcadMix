@@ -13,6 +13,7 @@ const STATUS_CONFIG = {
   late:    { label: 'Late',    color: 'bg-orange-500',  text: 'text-orange-600 dark:text-orange-400',   bg: 'bg-orange-50 dark:bg-orange-500/10', dot: '#f97316' },
 };
 
+const AT_RISK_THRESHOLD = 75;
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -27,6 +28,7 @@ const StudentAttendance = () => {
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [filterSubject, setFilterSubject] = useState('');
+  const [showAtRisk, setShowAtRisk] = useState(false);
 
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth());
@@ -125,15 +127,32 @@ const StudentAttendance = () => {
   const getPctColor = (pct) => pct >= 75 ? 'text-emerald-600 dark:text-emerald-400' : pct >= 65 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
   const getPctBg = (pct) => pct >= 75 ? 'bg-emerald-50 dark:bg-emerald-500/10' : pct >= 65 ? 'bg-amber-50 dark:bg-amber-500/10' : 'bg-red-50 dark:bg-red-500/10';
 
+  const atRiskSubjects = consolidated.filter(c => c.percentage < AT_RISK_THRESHOLD);
+
   if (loading) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="soft-card p-6 animate-pulse">
-            <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mb-3"></div>
-            <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+      <div className="space-y-6">
+        {/* Summary skeleton */}
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="soft-card p-4 sm:p-5 text-center animate-pulse">
+              <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-2/3 mx-auto mb-3"></div>
+              <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mx-auto"></div>
+            </div>
+          ))}
+        </div>
+        {/* Calendar skeleton */}
+        <div className="soft-card p-5 animate-pulse">
+          <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-1/4 mx-auto mb-4"></div>
+          <div className="grid grid-cols-7 gap-1.5">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={`h${i}`} className="h-3 bg-slate-100 dark:bg-slate-800 rounded mx-auto w-6"></div>
+            ))}
+            {Array.from({ length: 35 }).map((_, i) => (
+              <div key={i} className="h-9 sm:h-10 bg-slate-100 dark:bg-slate-800/50 rounded-xl"></div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     );
   }
@@ -153,10 +172,10 @@ const StudentAttendance = () => {
             <span className="text-base font-bold text-slate-400 dark:text-slate-500">/{consolidated.reduce((s, c) => s + c.total_count, 0)}</span>
           </p>
         </div>
-        <div className="soft-card p-4 sm:p-5 text-center">
+        <button onClick={() => atRiskSubjects.length > 0 && setShowAtRisk(true)} className={`soft-card p-4 sm:p-5 text-center transition-all ${atRiskSubjects.length > 0 ? 'cursor-pointer hover:ring-2 hover:ring-red-300 dark:hover:ring-red-500/30' : ''}`}>
           <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">At Risk</p>
-          <p className="text-3xl font-extrabold text-red-600 dark:text-red-400">{consolidated.filter(c => c.percentage < 75).length}</p>
-        </div>
+          <p className="text-3xl font-extrabold text-red-600 dark:text-red-400">{atRiskSubjects.length}</p>
+        </button>
       </motion.div>
 
       {/* ── View Toggle ───────────────────────── */}
@@ -196,7 +215,13 @@ const StudentAttendance = () => {
           </div>
 
           {/* Calendar grid — compact */}
-          <div className={`grid grid-cols-7 gap-1 transition-opacity duration-200 ${calendarLoading ? 'opacity-50' : 'opacity-100'}`}>
+          <div className="relative">
+          {calendarLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 dark:bg-[#0B0F19]/60 backdrop-blur-[2px] rounded-xl">
+              <div className="w-7 h-7 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          <div className={`grid grid-cols-7 gap-1 transition-opacity duration-200 ${calendarLoading ? 'opacity-40' : 'opacity-100'}`}>
             {calendarDays.map((day, i) => {
               if (!day) return <div key={i} />;
               const status = dateStatusMap[day];
@@ -225,6 +250,7 @@ const StudentAttendance = () => {
                 </button>
               );
             })}
+          </div>
           </div>
 
           {/* Legend */}
@@ -303,6 +329,63 @@ const StudentAttendance = () => {
         )}
       </AnimatePresence>
 
+      {/* ── At-Risk Popup ───────────────────── */}
+      <AnimatePresence>
+        {showAtRisk && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+              onClick={() => setShowAtRisk(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="w-full max-w-md bg-white dark:bg-[#151B2B] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-white/10">
+                  <div>
+                    <h4 className="font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
+                      <Warning size={18} weight="fill" className="text-red-500" /> At-Risk Subjects
+                    </h4>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                      {atRiskSubjects.length} subject{atRiskSubjects.length !== 1 ? 's' : ''} below {AT_RISK_THRESHOLD}%
+                    </p>
+                  </div>
+                  <button onClick={() => setShowAtRisk(false)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                    <X size={18} weight="bold" className="text-slate-400" />
+                  </button>
+                </div>
+                <div className="p-4 max-h-[50vh] overflow-y-auto space-y-2.5">
+                  {atRiskSubjects.map((subj, i) => {
+                    const needed = subj.total_count > 0 ? Math.ceil((AT_RISK_THRESHOLD * subj.total_count / 100) - subj.present_count) : 0;
+                    return (
+                      <div key={i} className="p-3.5 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm font-extrabold text-slate-800 dark:text-white">{subj.subject_name || subj.subject_code}</p>
+                          <span className="text-sm font-extrabold text-red-600 dark:text-red-400">{subj.percentage}%</span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{subj.subject_code} &middot; {subj.present_count}/{subj.total_count} classes</p>
+                        {needed > 0 && (
+                          <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-1">
+                            Need {needed} more consecutive classes to reach {AT_RISK_THRESHOLD}%
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* ── Subject Grid View ───────────────────────── */}
       {view === 'subjects' && (
         <motion.div variants={itemVariants}>
@@ -320,8 +403,8 @@ const StudentAttendance = () => {
                   <motion.div key={i} variants={itemVariants} className="soft-card p-4 sm:p-5">
                     <div className="flex items-center justify-between mb-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-extrabold text-slate-900 dark:text-white truncate">{subj.subject_code}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{subj.present_count} / {subj.total_count} classes</p>
+                        <p className="text-sm font-extrabold text-slate-900 dark:text-white truncate">{subj.subject_name || subj.subject_code}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{subj.subject_code} &middot; {subj.present_count} / {subj.total_count} classes</p>
                       </div>
                       <div className={`px-3 py-1.5 rounded-xl text-sm font-extrabold ${getPctBg(pct)} ${getPctColor(pct)}`}>
                         {pct}%

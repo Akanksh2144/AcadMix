@@ -110,12 +110,15 @@ class AttendanceService:
     async def get_student_consolidated(self, student_id: str) -> List[Dict[str, Any]]:
         stmt = text("""
             SELECT 
-                subject_code,
-                COUNT(*) FILTER (WHERE status = 'present' OR status = 'od') AS present_count,
+                ar.subject_code,
+                COALESCE(c.name, ar.subject_code) AS subject_name,
+                COUNT(*) FILTER (WHERE ar.status = 'present' OR ar.status = 'od') AS present_count,
                 COUNT(*) AS total_count
-            FROM attendance_records
-            WHERE student_id = :student_id AND is_deleted = false
-            GROUP BY subject_code
+            FROM attendance_records ar
+            LEFT JOIN courses c ON ar.subject_code = c.subject_code AND c.college_id = ar.college_id
+            WHERE ar.student_id = :student_id AND ar.is_deleted = false
+            GROUP BY ar.subject_code, c.name
+            ORDER BY ar.subject_code
         """)
         result = await self.session.execute(stmt, {"student_id": student_id})
         
@@ -124,6 +127,7 @@ class AttendanceService:
             pct = round(row.present_count * 100.0 / row.total_count, 1) if row.total_count > 0 else 0
             response.append({
                 "subject_code": row.subject_code,
+                "subject_name": row.subject_name,
                 "present_count": row.present_count,
                 "total_count": row.total_count,
                 "percentage": pct
