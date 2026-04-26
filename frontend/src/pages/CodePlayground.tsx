@@ -165,6 +165,26 @@ const CodePlayground = ({ navigate, user }) => {
     setActiveConsoleTab('test_cases');
   };
 
+  const handleExitChallenge = () => {
+    setActiveChallenge(null);
+    setShowCoach(false);
+    
+    // Restore free mode code
+    const savedFreeCode = sessionStorage.getItem(getCodeStorageKey(null, language));
+    if (savedFreeCode !== null) {
+      setCode(savedFreeCode);
+    } else {
+      setCode(DEFAULT_TEMPLATES[language] || '');
+    }
+    
+    setOutput(null);
+    setExecTime(null);
+    setRPlots([]);
+    setRemoteImages([]);
+    setActiveConsoleTab('results');
+    setUserTestCases([{ input_data: '', expected_output: '' }]);
+  };
+
   // Persist activeChallenge to sessionStorage (survives refresh)
   useEffect(() => {
     if (activeChallenge) {
@@ -507,7 +527,7 @@ const CodePlayground = ({ navigate, user }) => {
                      || 'Execution failed. Please try again.';
       
       if (err.response?.status === 404 && typeof errDetail === 'string' && errDetail.includes('Challenge not found')) {
-        setActiveChallenge(null);
+        handleExitChallenge();
         localStorage.removeItem('acadmix_active_challenge');
         toast.error("The challenge you were working on was no longer found. Returning to free-code mode.", { duration: 5000 });
       } else {
@@ -764,7 +784,7 @@ const CodePlayground = ({ navigate, user }) => {
                 <span className={`text-xs px-2.5 py-1 rounded-xl border font-bold ${activeChallenge.difficulty === 'Easy' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/25' : activeChallenge.difficulty === 'Medium' ? 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/25' : 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-500/15 dark:text-rose-400 dark:border-rose-500/25'}`}>
                   {activeChallenge.difficulty}
                 </span>
-                <button onClick={() => { setActiveChallenge(null); setShowCoach(false); }} className="text-sm font-bold text-slate-400 hover:text-slate-600 dark:text-slate-400" title="Exit Challenge">
+                <button onClick={handleExitChallenge} className="text-sm font-bold text-slate-400 hover:text-slate-600 dark:text-slate-400" title="Exit Challenge">
                   <X size={20} />
                 </button>
               </div>
