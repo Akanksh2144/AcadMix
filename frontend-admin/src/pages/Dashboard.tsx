@@ -60,7 +60,7 @@ export default function Dashboard() {
     queryKey: ['platform-overview'],
     queryFn: async () => {
       const { data } = await superadminAPI.platformOverview();
-      return data.data;
+      return data;
     },
   });
 
@@ -68,7 +68,7 @@ export default function Dashboard() {
     queryKey: ['colleges-list'],
     queryFn: async () => {
       const { data } = await superadminAPI.listColleges();
-      return data.data;
+      return data;
     },
   });
 
