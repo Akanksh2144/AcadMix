@@ -66,14 +66,18 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
             raise HTTPException(status_code=403, detail="Not authorized to view this student's results")
 
     # ── Resolve the student's actual college_id for cache consistency ─────
-    student_row = await session.execute(
-        select(models.User.college_id).where(models.User.id == student_id)
+    student_info = await session.execute(
+        select(models.User.college_id, models.UserProfile.current_semester)
+        .outerjoin(models.UserProfile, models.UserProfile.user_id == models.User.id)
+        .where(models.User.id == student_id)
     )
-    student_college_id = student_row.scalar_one_or_none()
-    if not student_college_id:
+    row = student_info.first()
+    if not row or not row.college_id:
         raise HTTPException(status_code=404, detail="Student not found")
+    student_college_id = row.college_id
+    current_semester = row.current_semester  # ongoing semester — results not finalized yet
 
-    cache_key = f"result:{student_college_id}:{student_id}:v3"
+    cache_key = f"result:{student_college_id}:{student_id}:v4"
     if redis_client:
         try:
             cached = await redis_client.get(cache_key)
@@ -85,7 +89,7 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
     # ── 1. Fetch semester grades with subject name via LEFT JOIN courses ──
     # FIX: Join on Course.id (primary key) == SemesterGrade.course_id
     # NOT on Course.subject_code which was the old broken join
-    grade_rows = await session.execute(
+    grade_query = (
         select(
             models.SemesterGrade,
             models.Course.name.label("course_name"),
@@ -99,9 +103,16 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
                 models.Course.college_id == student_college_id,
             )
         )
-        .where(models.SemesterGrade.student_id == student_id)
+        .where(
+            models.SemesterGrade.student_id == student_id,
+            models.SemesterGrade.is_deleted == False,
+        )
         .order_by(models.SemesterGrade.semester.asc())
     )
+    # Exclude ongoing semester — a student studying in sem N can't have sem N results
+    if current_semester:
+        grade_query = grade_query.where(models.SemesterGrade.semester < current_semester)
+    grade_rows = await session.execute(grade_query)
     all_rows = grade_rows.all()
 
     # ── 2. Fetch mid-term marks from mark_submissions ────────────────────
@@ -228,7 +239,7 @@ async def create_semester_result(req: SemesterResultCreate, user: dict = Depends
     from app.core.security import redis_client
     if redis_client:
         try:
-            await redis_client.delete(f"result:{student_college_id}:{req.student_id}:v3")
+            await redis_client.delete(f"result:{student_college_id}:{req.student_id}:v4")
         except Exception:
             pass
         
