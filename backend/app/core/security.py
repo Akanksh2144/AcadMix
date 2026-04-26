@@ -151,6 +151,8 @@ async def get_current_user(request: Request, session: AsyncSession = Depends(get
             for k, v in user.profile_data.items():
                 if k not in ["id", "role", "email", "name", "tenant_id", "college_id"]:
                     user_dict[k] = v
+            # Also include as nested dict for components that read user.profile_data
+            user_dict["profile_data"] = user.profile_data
             
         if "tenant_id" not in user_dict:
             user_dict["tenant_id"] = user_dict.get("college_id", "")
