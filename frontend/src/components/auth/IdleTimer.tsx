@@ -29,7 +29,7 @@ const IdleTimer: React.FC<IdleTimerProps> = ({ user, onLogout }) => {
         lastHeartbeatRef.current = now;
         localStorage.setItem('lastHeartbeatActivity', now.toString());
         try {
-          await authAPI.post('/heartbeat', {});
+          await authAPI.heartbeat();
         } catch (error) {
           // If the backend forcefully kicked us out with 401 via sliding expiration, api.js will catch it.
         }
