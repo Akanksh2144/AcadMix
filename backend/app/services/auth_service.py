@@ -170,6 +170,8 @@ class AuthService:
         }
         if user.profile_data:
             user_out.update({k: v for k, v in user.profile_data.items() if k != "password_hash"})
+            # Also include as nested dict for components that read user.profile_data
+            user_out["profile_data"] = user.profile_data
 
         return user_out
 
