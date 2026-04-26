@@ -367,7 +367,7 @@ class MarksService:
 
     async def get_student_cia(self, student_id: str, college_id: str, semester: Optional[int] = None, academic_year: Optional[str] = None) -> List[Dict[str, Any]]:
         """Fetch approved CIA marks for a student, grouped by subject with components."""
-        cache_key = f"marks:{college_id}:{student_id}:{semester or 'all'}"
+        cache_key = f"marks:{college_id}:{student_id}:{semester or 'all'}:v2"
         cached = await cached_response(cache_key)
         if cached:
             return cached
@@ -431,7 +431,16 @@ class MarksService:
             grouped[key]["total_cia"] += mse.marks_obtained or 0
             grouped[key]["total_max"] += sub.max_marks or 0
 
-        out = list(grouped.values())
+        out = []
+        for key, data in grouped.items():
+            num_components = len(data["components"])
+            if num_components > 0:
+                data["total_cia"] = round(data["total_cia"] / num_components, 1)
+                # If total_max comes out as a whole number (e.g. 30.0), cast to int for cleaner UI
+                avg_max = data["total_max"] / num_components
+                data["total_max"] = int(avg_max) if avg_max.is_integer() else round(avg_max, 1)
+            out.append(data)
+            
         await cache_set(cache_key, out, ttl=259200)
         return out
 
