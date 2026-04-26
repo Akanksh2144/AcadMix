@@ -27,11 +27,21 @@ class AuditService:
         Explicitly logs an action at the service layer for SOC 2 / ISO 27001 compliance.
         Does NOT commit automatically to allow being part of the parent transaction.
         """
+        from sqlalchemy import text
         # Ensure values are serializable
         if old_value:
             old_value = json.loads(json.dumps(old_value, default=str))
         if new_value:
             new_value = json.loads(json.dumps(new_value, default=str))
+
+        # Explicitly set the tenant context for this transaction before inserting.
+        # This is critical for unauthenticated endpoints (like /login or /logout)
+        # where the RLSMiddleware hasn't set the app.college_id GUC.
+        try:
+            await db.execute(text("SELECT set_config('app.college_id', :cid, true)"), {"cid": str(college_id)})
+        except Exception as e:
+            import logging
+            logging.getLogger("acadmix.audit").warning(f"Failed to set GUC for audit log: {e}")
 
         audit_log = AuditLog(
             college_id=college_id,
