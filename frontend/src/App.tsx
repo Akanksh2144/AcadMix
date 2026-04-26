@@ -530,17 +530,29 @@ function AppShell() {
 
   const confirmLogout = async (reason = null) => {
     setShowLogoutModal(false);
+    
+    // 1. Wipe storage immediately to prevent writes during the async API call
+    sessionStorage.clear();
+    localStorage.removeItem('auth_token');
+    
     try { await authAPI.logout(); } catch {}
+    
+    // 2. Wipe again to clear anything written by components during the await
+    sessionStorage.clear();
+    
     setUser(null);
     clearAuthToken();
-    localStorage.removeItem('auth_token');
-    sessionStorage.clear();
     
     if (reason === 'idle') {
       routerNavigate('/login?reason=idle', { replace: true });
     } else {
       routerNavigate('/login', { replace: true });
     }
+    
+    // 3. Final nuke to guarantee storage is dead after React unmounts complete
+    setTimeout(() => {
+      sessionStorage.clear();
+    }, 50);
   };
 
   if (loading) {
