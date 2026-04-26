@@ -507,6 +507,7 @@ function AppShell() {
       if (status === 401 || status === 403) {
         clearAuthToken();
         localStorage.removeItem('auth_token');
+        sessionStorage.clear();
         setUser(null);
         routerNavigate('/login', { replace: true });
       }
@@ -533,6 +534,7 @@ function AppShell() {
     setUser(null);
     clearAuthToken();
     localStorage.removeItem('auth_token');
+    sessionStorage.clear();
     
     if (reason === 'idle') {
       routerNavigate('/login?reason=idle', { replace: true });

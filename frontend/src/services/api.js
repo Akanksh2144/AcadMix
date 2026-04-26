@@ -96,6 +96,7 @@ api.interceptors.response.use(
           // Refresh failed — both tokens are dead. Force immediate logout.
           authToken = null;
           localStorage.removeItem('auth_token');
+          sessionStorage.clear();
           refreshSubscribers = [];
           isRefreshing = false;
           // Hard redirect to login — React state is stale at this point
