@@ -746,29 +746,15 @@ const SQLPractice = ({ navigate, user }: any) => {
                       </button>
                     </div>
                     {showSolution ? (
-                      <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm" style={{ height: '380px' }}>
-                        <Editor
-                          defaultLanguage="sql"
-                          value={(() => {
-                            try {
-                              return format(sp.solution_sql, { language: sp.backend_only ? 'postgresql' : 'sqlite', keywordCase: 'upper' });
-                            } catch {
-                              return sp.solution_sql;
-                            }
-                          })()}
-                          theme={isDark ? 'vs-dark' : 'light'}
-                          options={{ 
-                            readOnly: true, 
-                            minimap: { enabled: false }, 
-                            fontSize: 14, 
-                            padding: { top: 16, bottom: 16 }, 
-                            scrollBeyondLastLine: false, 
-                            wordWrap: 'on',
-                            lineNumbersMinChars: 3,
-                            renderLineHighlight: 'none'
-                          }}
-                        />
-                      </div>
+                      <pre className="bg-slate-50 dark:bg-[#0F172A] rounded-xl p-5 text-[13px] font-mono text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                        {(() => {
+                          try {
+                            return format(sp.solution_sql, { language: sp.backend_only ? 'postgresql' : 'sqlite', keywordCase: 'upper' });
+                          } catch {
+                            return sp.solution_sql;
+                          }
+                        })()}
+                      </pre>
                     ) : (
                       <div className="bg-slate-50 dark:bg-[#0F172A] rounded-xl p-8 text-center border border-slate-200 dark:border-white/10">
                         <Eye size={32} className="text-slate-300 mx-auto mb-2" />
