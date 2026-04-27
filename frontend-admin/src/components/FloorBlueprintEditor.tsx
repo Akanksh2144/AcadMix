@@ -208,32 +208,35 @@ export default function FloorBlueprintEditor({ hostelId, hostelName, totalFloors
   };
 
   if (loading && layout.elements.length === 0) {
-    return <div className="p-8 text-center text-slate-500">Loading Blueprint Editor...</div>;
+    return <div className="p-8 text-center text-slate-500 flex-1 flex items-center justify-center h-full">Loading Blueprint Editor...</div>;
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-12rem)] -mx-6 -mt-6 -mb-6 bg-slate-50">
+    <div className="flex flex-col absolute inset-0 bg-slate-50 z-10 overflow-hidden">
       
       {/* Header / Top Bar */}
-      <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200">
+      <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-slate-200 shadow-sm shrink-0 z-20">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="text-slate-500 hover:text-slate-800 font-medium">
+          <button onClick={onBack} className="text-slate-500 hover:text-slate-800 font-medium px-2 py-1 rounded-md hover:bg-slate-100 transition-colors">
             &larr; Back
           </button>
           <div className="h-6 w-px bg-slate-200"></div>
-          <h2 className="text-lg font-bold text-slate-800">
-            {hostelName} <span className="text-slate-400 font-normal">| Blueprint Editor</span>
+          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            {hostelName} <span className="text-slate-400 font-normal">| Blueprint</span>
           </h2>
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+        <div className="flex items-center gap-6">
+          {/* Floor Tabs */}
+          <div className="flex items-center gap-1">
             {Array.from({ length: totalFloors }).map((_, i) => (
               <button
                 key={i + 1}
                 onClick={() => setCurrentFloor(i + 1)}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  currentFloor === i + 1 ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                className={`px-4 py-2 border-b-2 text-sm font-bold transition-all mt-0.5 ${
+                  currentFloor === i + 1 
+                    ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50' 
+                    : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
                 }`}
               >
                 Floor {i + 1}
@@ -241,30 +244,32 @@ export default function FloorBlueprintEditor({ hostelId, hostelName, totalFloors
             ))}
             <button
               onClick={addFloor}
-              className="px-3 py-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50 rounded-md flex items-center gap-1 text-sm font-medium transition-colors"
+              className="ml-3 px-3 py-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md flex items-center gap-1 text-sm font-bold transition-colors border border-indigo-100 shadow-sm"
               title="Add New Floor"
             >
-              <Plus size={16} />
+              <Plus size={16} /> Add Floor
             </button>
           </div>
           
+          <div className="h-6 w-px bg-slate-200"></div>
+
           <button
             onClick={saveLayout}
             disabled={saving}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center gap-2 hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium shadow-sm"
+            className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg flex items-center gap-2 hover:bg-indigo-700 disabled:opacity-50 text-sm font-bold shadow-md transition-all active:scale-95"
           >
-            <Save size={16} />
+            <Save size={18} />
             {saving ? 'Saving...' : 'Save Blueprint'}
           </button>
         </div>
       </div>
 
       {/* Main Workspace */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         
         {/* Left Palette */}
-        <div className="w-72 bg-white border-r border-slate-200 flex flex-col z-10 shadow-sm">
-          <div className="p-5 border-b border-slate-100">
+        <div className="w-72 bg-white border-r border-slate-200 flex flex-col z-10 shadow-sm shrink-0">
+          <div className="p-5 border-b border-slate-100 shrink-0">
             <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2 mb-1">
               <Layout size={18} className="text-indigo-500" />
               Elements Palette
@@ -272,7 +277,7 @@ export default function FloorBlueprintEditor({ hostelId, hostelName, totalFloors
             <p className="text-xs text-slate-500 leading-relaxed">Select an element below, then click or drag on the grid to place it.</p>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-5 space-y-2">
+          <div className="flex-1 overflow-y-auto p-4 space-y-1.5 custom-scrollbar">
             <button
               onClick={() => setSelectedTool(null)}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
@@ -429,15 +434,15 @@ export default function FloorBlueprintEditor({ hostelId, hostelName, totalFloors
 
         {/* Right Properties Panel */}
         {selectedElement ? (
-          <div className="w-80 bg-white border-l border-slate-200 flex flex-col shadow-sm z-10">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <div className="w-80 bg-white border-l border-slate-200 flex flex-col shadow-sm z-10 shrink-0">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
               <h3 className="font-semibold text-slate-800 text-sm">Properties</h3>
               <span className="text-[10px] px-2 py-1 bg-slate-100 text-slate-600 rounded font-mono uppercase tracking-wider font-bold">
                 {selectedElement.type}
               </span>
             </div>
             
-            <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+            <div className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
               
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Label</label>
@@ -521,7 +526,7 @@ export default function FloorBlueprintEditor({ hostelId, hostelName, totalFloors
             </div>
           </div>
         ) : (
-          <div className="w-80 bg-white border-l border-slate-200 flex flex-col items-center justify-center p-8 text-center">
+          <div className="w-80 bg-white border-l border-slate-200 flex flex-col items-center justify-center p-8 text-center z-10 shrink-0 shadow-sm">
             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
               <Box size={24} className="text-slate-300" />
             </div>
