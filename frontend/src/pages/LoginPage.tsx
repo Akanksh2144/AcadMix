@@ -230,11 +230,12 @@ const LoginPage = ({ onLogin }) => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
                   title="AcadMix"
+                  className="dark:bg-slate-50 dark:px-3 dark:py-1.5 dark:rounded-2xl transition-colors duration-300 shadow-sm dark:shadow-[0_0_15px_rgba(255,255,255,0.05)]"
                 >
                   <img
                     src="/logos/acadmix-wordmark.png"
                     alt="AcadMix"
-                    className="h-14 sm:h-16 w-auto object-contain drop-shadow-sm"
+                    className="h-10 sm:h-12 w-auto object-contain drop-shadow-sm dark:drop-shadow-none"
                   />
                 </motion.div>
 
