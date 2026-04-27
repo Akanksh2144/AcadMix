@@ -443,6 +443,19 @@ const SQLPractice = ({ navigate, user }: any) => {
     </div>
   );
 
+  const formatSql = (sql: string) => {
+    if (!sql) return '';
+    return sql
+      .replace(/\s+/g, ' ')
+      .replace(/\b(SELECT|FROM|WHERE|INNER JOIN|LEFT JOIN|RIGHT JOIN|OUTER JOIN|JOIN|GROUP BY|ORDER BY|HAVING|LIMIT|ON|UNION)\b/gi, '\n$1')
+      .replace(/\b(AND|OR)\b/gi, '\n  $1')
+      .replace(/\(\s*(SELECT)\b/gi, '(\n  $1')
+      .replace(/;/g, ';\n')
+      .split('\n')
+      .filter(line => line.trim().length > 0)
+      .join('\n');
+  };
+
   /* ── Problem List ─────────────────────────────────────── */
   const sp = selectedProblem;
 
@@ -748,7 +761,7 @@ const SQLPractice = ({ navigate, user }: any) => {
                       <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm" style={{ height: '220px' }}>
                         <Editor
                           defaultLanguage="sql"
-                          value={sp.solution_sql.replace(/\b(SELECT|FROM|WHERE|INNER JOIN|LEFT JOIN|RIGHT JOIN|GROUP BY|ORDER BY|HAVING|LIMIT)\b/gi, '\n$1').trim()}
+                          value={formatSql(sp.solution_sql)}
                           theme={isDark ? 'vs-dark' : 'light'}
                           options={{ 
                             readOnly: true, 
