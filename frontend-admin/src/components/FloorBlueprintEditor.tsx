@@ -227,13 +227,13 @@ export default function FloorBlueprintEditor({ hostelId, hostelName, totalFloors
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="flex items-center bg-slate-100 p-1 rounded-lg">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
             {Array.from({ length: totalFloors }).map((_, i) => (
               <button
                 key={i + 1}
                 onClick={() => setCurrentFloor(i + 1)}
                 className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  currentFloor === i + 1 ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  currentFloor === i + 1 ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
                 }`}
               >
                 Floor {i + 1}
@@ -241,7 +241,7 @@ export default function FloorBlueprintEditor({ hostelId, hostelName, totalFloors
             ))}
             <button
               onClick={addFloor}
-              className="px-3 py-1.5 text-slate-500 hover:text-indigo-600 flex items-center gap-1 text-sm font-medium"
+              className="px-3 py-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50 rounded-md flex items-center gap-1 text-sm font-medium transition-colors"
               title="Add New Floor"
             >
               <Plus size={16} />
@@ -263,20 +263,20 @@ export default function FloorBlueprintEditor({ hostelId, hostelName, totalFloors
       <div className="flex flex-1 overflow-hidden">
         
         {/* Left Palette */}
-        <div className="w-64 bg-white border-r border-slate-200 flex flex-col">
-          <div className="p-4 border-b border-slate-100">
-            <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
-              <Layout size={16} className="text-slate-400" />
+        <div className="w-72 bg-white border-r border-slate-200 flex flex-col z-10 shadow-sm">
+          <div className="p-5 border-b border-slate-100">
+            <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2 mb-1">
+              <Layout size={18} className="text-indigo-500" />
               Elements Palette
             </h3>
-            <p className="text-xs text-slate-500 mt-1">Select an element to place on grid.</p>
+            <p className="text-xs text-slate-500 leading-relaxed">Select an element below, then click or drag on the grid to place it.</p>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          <div className="flex-1 overflow-y-auto p-5 space-y-2">
             <button
               onClick={() => setSelectedTool(null)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                selectedTool === null ? 'bg-slate-100 text-slate-900 border-2 border-slate-400' : 'text-slate-600 hover:bg-slate-50 border-2 border-transparent'
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                selectedTool === null ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm' : 'text-slate-600 hover:bg-slate-50 border border-transparent'
               }`}
             >
               <Box size={18} />
@@ -291,11 +291,11 @@ export default function FloorBlueprintEditor({ hostelId, hostelName, totalFloors
                 <button
                   key={tool.id}
                   onClick={() => setSelectedTool(tool.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    selectedTool === tool.id ? 'bg-indigo-50 text-indigo-700 border-2 border-indigo-400' : 'text-slate-600 hover:bg-slate-50 border-2 border-transparent'
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    selectedTool === tool.id ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm' : 'text-slate-600 hover:bg-slate-50 border border-transparent'
                   }`}
                 >
-                  <div className="w-6 h-6 rounded flex items-center justify-center text-white shadow-sm" style={{ backgroundColor: tool.color }}>
+                  <div className="w-7 h-7 rounded flex items-center justify-center text-white shadow-sm" style={{ backgroundColor: tool.color }}>
                     <Icon size={14} />
                   </div>
                   {tool.label}
@@ -304,29 +304,29 @@ export default function FloorBlueprintEditor({ hostelId, hostelName, totalFloors
             })}
           </div>
           
-          {/* Grid Settings */}
-          <div className="p-4 border-t border-slate-200 bg-slate-50">
-            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Grid Size</h4>
-            <div className="flex items-center gap-2">
-              <div>
-                <label className="text-xs text-slate-500 block mb-1">Rows</label>
+          {/* Grid Size Settings */}
+          <div className="p-5 border-t border-slate-200 bg-slate-50/50">
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Grid Settings</h4>
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <label className="text-xs font-medium text-slate-500 block mb-1.5">Rows</label>
                 <input 
                   type="number" 
                   min="1" max="50"
                   value={gridSize.rows}
                   onChange={e => setGridSize(prev => ({ ...prev, rows: parseInt(e.target.value) || 8 }))}
-                  className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-indigo-400"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-center outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 shadow-sm transition-all"
                 />
               </div>
-              <span className="text-slate-400 mt-4">×</span>
-              <div>
-                <label className="text-xs text-slate-500 block mb-1">Cols</label>
+              <span className="text-slate-300 mt-6 font-medium">×</span>
+              <div className="flex-1">
+                <label className="text-xs font-medium text-slate-500 block mb-1.5">Cols</label>
                 <input 
                   type="number" 
                   min="1" max="50"
                   value={gridSize.cols}
                   onChange={e => setGridSize(prev => ({ ...prev, cols: parseInt(e.target.value) || 16 }))}
-                  className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm outline-none focus:border-indigo-400"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-center outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 shadow-sm transition-all"
                 />
               </div>
             </div>
@@ -430,50 +430,50 @@ export default function FloorBlueprintEditor({ hostelId, hostelName, totalFloors
         {/* Right Properties Panel */}
         {selectedElement ? (
           <div className="w-80 bg-white border-l border-slate-200 flex flex-col shadow-sm z-10">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-semibold text-slate-800 text-sm">Properties</h3>
-              <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded font-mono">
-                {selectedElement.type.toUpperCase()}
+              <span className="text-[10px] px-2 py-1 bg-slate-100 text-slate-600 rounded font-mono uppercase tracking-wider font-bold">
+                {selectedElement.type}
               </span>
             </div>
             
-            <div className="p-5 space-y-5 flex-1 overflow-y-auto">
+            <div className="p-6 space-y-6 flex-1 overflow-y-auto">
               
               <div>
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">Label</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Label</label>
                 <input
                   type="text"
                   value={selectedElement.label}
                   onChange={e => updateSelectedElement({ label: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-sm transition-all"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">Color</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Color</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
                     value={selectedElement.color}
                     onChange={e => updateSelectedElement({ color: e.target.value })}
-                    className="w-8 h-8 rounded cursor-pointer border border-slate-200 p-0.5"
+                    className="w-10 h-10 rounded-lg cursor-pointer border border-slate-200 p-0.5 shadow-sm"
                   />
                   <input
                     type="text"
                     value={selectedElement.color}
                     onChange={e => updateSelectedElement({ color: e.target.value })}
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-500 font-mono"
+                    className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-indigo-500 font-mono shadow-sm transition-all"
                   />
                 </div>
               </div>
               
               {ELEMENT_TYPES.find(t => t.id === selectedElement.type)?.linkable && (
                 <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">Linked Room Record</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Linked Room Record</label>
                   <select
                     value={selectedElement.room_id || ''}
                     onChange={e => updateSelectedElement({ room_id: e.target.value || undefined })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-500 mb-2"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-indigo-500 mb-2 shadow-sm transition-all"
                   >
                     <option value="">-- Unlinked --</option>
                     <option value="NEW">+ Auto-create new room on save</option>
@@ -483,26 +483,26 @@ export default function FloorBlueprintEditor({ hostelId, hostelName, totalFloors
                       ))}
                     </optgroup>
                   </select>
-                  <p className="text-xs text-slate-500 leading-relaxed">
+                  <p className="text-[11px] text-slate-400 leading-relaxed mt-2">
                     Link this visual block to an actual room in the database, or set to Auto-create to generate a new record.
                   </p>
                 </div>
               )}
 
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">Position & Size</label>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-slate-400">Row:</span> {selectedElement.row}</div>
-                  <div><span className="text-slate-400">Col:</span> {selectedElement.col}</div>
-                  <div><span className="text-slate-400">Width:</span> {selectedElement.span_cols}</div>
-                  <div><span className="text-slate-400">Height:</span> {selectedElement.span_rows}</div>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg shadow-sm">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-3">Position & Size</label>
+                <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                  <div className="flex items-center justify-between"><span className="text-slate-400">Row</span> <span className="font-semibold text-slate-700">{selectedElement.row}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-slate-400">Col</span> <span className="font-semibold text-slate-700">{selectedElement.col}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-slate-400">Width</span> <span className="font-semibold text-slate-700">{selectedElement.span_cols}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-slate-400">Height</span> <span className="font-semibold text-slate-700">{selectedElement.span_rows}</span></div>
                 </div>
               </div>
               
               {selectedElement.type === 'room' && (
                 <button 
                   onClick={() => onRoomClick(selectedElement.room_id || 'NEW', selectedElement.label)}
-                  className="w-full py-2 bg-indigo-50 text-indigo-700 rounded-lg font-medium text-sm hover:bg-indigo-100 border border-indigo-100"
+                  className="w-full py-2.5 bg-indigo-50 text-indigo-700 rounded-lg font-medium text-sm hover:bg-indigo-100 border border-indigo-100 transition-colors shadow-sm"
                 >
                   Configure Beds inside Room &rarr;
                 </button>
