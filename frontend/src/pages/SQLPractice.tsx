@@ -746,7 +746,7 @@ const SQLPractice = ({ navigate, user }: any) => {
                       </button>
                     </div>
                     {showSolution ? (
-                      <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm" style={{ height: '220px' }}>
+                      <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm" style={{ height: '380px' }}>
                         <Editor
                           defaultLanguage="sql"
                           value={(() => {
