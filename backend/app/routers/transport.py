@@ -10,11 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from app.core.security import require_role, get_current_user
-from app.core.response import mark_enveloped
 from app.services.transport_service import TransportService
 from app.schemas.transport import TransportEnrollRequest
 
-router = APIRouter(dependencies=[Depends(mark_enveloped)])
+router = APIRouter()
 
 
 def get_svc(db: AsyncSession = Depends(get_db)):
@@ -31,7 +30,7 @@ async def list_routes(
 ):
     """List all available bus routes with stops, capacity, and fees."""
     routes = await svc.get_available_routes(user["college_id"])
-    return {"data": routes}
+    return routes
 
 
 # ─── Enrollment ──────────────────────────────────────────────────────────────
@@ -64,7 +63,7 @@ async def my_enrollment(
 ):
     """Get current transport enrollment details."""
     enrollment = await svc.get_my_enrollment(user["id"], user["college_id"])
-    return {"data": enrollment}
+    return enrollment
 
 
 # ─── Live Tracking (The Adaptive Radar) ──────────────────────────────────────
@@ -84,7 +83,7 @@ async def get_live_position(
       - Live Radar phase (bus is ≤2 stops away): Poll this every 10 seconds.
     """
     status = await svc.get_live_status(route_id)
-    return {"data": status}
+    return status
 
 
 @router.get("/transport/status/{route_id}")
@@ -98,7 +97,7 @@ async def get_bus_status(
     Lighter than /live for the Node-Jumper phase.
     """
     status = await svc.get_live_status(route_id)
-    return {"data": status}
+    return status
 
 
 # ─── Digital Bus Pass ────────────────────────────────────────────────────────
@@ -113,7 +112,7 @@ async def get_bus_pass(
     pass_data = await svc.generate_bus_pass_data(user["id"], user["college_id"])
     if not pass_data:
         raise HTTPException(status_code=404, detail="No active transport enrollment found")
-    return {"data": pass_data}
+    return pass_data
 
 
 # ─── Trip History ────────────────────────────────────────────────────────────
@@ -127,11 +126,11 @@ async def trip_history(
     """Get student's transport trip history."""
     enrollment = await svc.get_my_enrollment(user["id"], user["college_id"])
     if not enrollment:
-        return {"data": []}
+        return []
 
     history = await svc.get_trip_history(
         user["college_id"],
         route_id=enrollment["route_id"],
         days=30,
     )
-    return {"data": history}
+    return history

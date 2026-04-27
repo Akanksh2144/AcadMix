@@ -43,7 +43,7 @@ async def get_my_due_fees(
     session: AsyncSession = Depends(get_db),
 ):
     sid = await _resolve_student_id(user, student_id, session)
-    return {"data": await svc.get_student_due_fees(sid, user["college_id"])}
+    return await svc.get_student_due_fees(sid, user["college_id"])
 
 
 @router.get("/fees/history")
@@ -54,7 +54,7 @@ async def get_payment_history(
     session: AsyncSession = Depends(get_db),
 ):
     sid = await _resolve_student_id(user, student_id, session)
-    return {"data": await svc.get_payment_history(sid, user["college_id"])}
+    return await svc.get_payment_history(sid, user["college_id"])
 
 
 class CreateOrderPayload(BaseModel):
