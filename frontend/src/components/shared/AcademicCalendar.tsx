@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { CalendarDots, CaretLeft, CaretRight, Star, GraduationCap, Exam, Sun, Briefcase } from '@phosphor-icons/react';
 import api from '../../services/api';
@@ -46,43 +47,33 @@ const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transiti
  * AcademicCalendar — shared, role-agnostic calendar component.
  * @param {Function} [fetchCalendars] - async fn returning { data: [...] }. Defaults to studentAPI.academicCalendar.
  */
-const AcademicCalendar = ({ fetchCalendars }) => {
-  const [calendars, setCalendars] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCal, setSelectedCal] = useState(null);
+const AcademicCalendar = ({ fetchCalendars }: { fetchCalendars?: () => Promise<any> }) => {
+  const { data: calendars = [], isLoading: calLoading } = useQuery({
+    queryKey: ['academic-calendars'],
+    queryFn: async () => {
+      const fetcher = fetchCalendars || (() => api.get('/api/academic-calendars'));
+      const { data } = await fetcher();
+      if (data && data.length > 0) return data;
+      return DEMO_CALENDAR;
+    },
+  });
+
+  const { data: placementDrives = [] } = useQuery({
+    queryKey: ['student-placement-drives-calendar'],
+    queryFn: () => api.get('/api/student/placement-drives').then(r => r.data || []).catch(() => []),
+  });
+
+  const loading = calLoading;
+  const [selectedCalIdx, setSelectedCalIdx] = useState(0);
+  const selectedCal = calendars[selectedCalIdx] || calendars[0] || null;
+  const setSelectedCal = (cal: any) => {
+    const idx = calendars.findIndex((c: any) => c.id === cal.id);
+    if (idx >= 0) setSelectedCalIdx(idx);
+  };
 
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth());
   const [year, setYear] = useState(now.getFullYear());
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const fetcher = fetchCalendars || (() => api.get('/api/academic-calendars'));
-        const { data } = await fetcher();
-        if (data && data.length > 0) {
-          setCalendars(data);
-          setSelectedCal(data[0]);
-        } else {
-          throw new Error('empty');
-        }
-      } catch (e) {
-        setCalendars(DEMO_CALENDAR);
-        setSelectedCal(DEMO_CALENDAR[0]);
-      }
-      // Also fetch placement drives the student is registered for
-      try {
-        const { data } = await api.get('/api/student/placement-drives');
-        if (data && data.length > 0) {
-          setPlacementDrives(data);
-        }
-      } catch (_) {}
-      setLoading(false);
-    };
-    load();
-  }, [fetchCalendars]);
-
-  const [placementDrives, setPlacementDrives] = useState([]);
 
   // All events from all calendars + placement drives
   const allEvents = useMemo(() => {

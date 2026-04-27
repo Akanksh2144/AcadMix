@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock, CaretLeft, CaretRight, Funnel, CheckCircle, XCircle, Warning, X } from '@phosphor-icons/react';
 import { studentAPI, attendanceAPI } from '../../services/api';
@@ -21,12 +22,8 @@ const itemVariants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, 
 const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
 
 const StudentAttendance = () => {
-  const [view, setView] = useState('calendar'); // calendar | subjects
-  const [consolidated, setConsolidated] = useState([]);
-  const [detail, setDetail] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [calendarLoading, setCalendarLoading] = useState(false);
-  const [selectedDay, setSelectedDay] = useState(null);
+  const [view, setView] = useState<'calendar' | 'subjects'>('calendar');
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [filterSubject, setFilterSubject] = useState('');
   const [showAtRisk, setShowAtRisk] = useState(false);
 
@@ -34,32 +31,19 @@ const StudentAttendance = () => {
   const [month, setMonth] = useState(now.getMonth());
   const [year, setYear] = useState(now.getFullYear());
 
-  // Initial load — consolidated + first month detail
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [consRes, detailRes] = await Promise.all([
-          attendanceAPI.getStudentConsolidated(),
-          studentAPI.attendanceDetail({ month: month + 1, year }),
-        ]);
-        setConsolidated(consRes.data);
-        setDetail(detailRes.data);
-      } catch (e) { console.error(e); }
-      setLoading(false);
-    };
-    load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Cached consolidated attendance (subject-level summary)
+  const { data: consolidated = [], isLoading: consLoading } = useQuery({
+    queryKey: ['student-attendance-consolidated'],
+    queryFn: () => attendanceAPI.getStudentConsolidated().then(r => r.data),
+  });
 
-  // Smooth month change — only refetch detail, no full loading state
-  const fetchMonthDetail = useCallback(async (m, y) => {
-    setCalendarLoading(true);
-    try {
-      const detailRes = await studentAPI.attendanceDetail({ month: m + 1, year: y });
-      setDetail(detailRes.data);
-    } catch (e) { console.error(e); }
-    setCalendarLoading(false);
-  }, []);
+  // Cached per-month detail (keyed by month+year for automatic cache)
+  const { data: detail = [], isFetching: calendarLoading } = useQuery({
+    queryKey: ['student-attendance-detail', month, year],
+    queryFn: () => studentAPI.attendanceDetail({ month: month + 1, year }).then(r => r.data),
+  });
+
+  const loading = consLoading;
 
   const subjects = useMemo(() => [...new Set(consolidated.map(c => c.subject_code))], [consolidated]);
 
@@ -105,21 +89,15 @@ const StudentAttendance = () => {
   }, [selectedDay, detail, month, year]);
 
   const prevMonth = () => {
-    const newMonth = month === 0 ? 11 : month - 1;
-    const newYear = month === 0 ? year - 1 : year;
-    setMonth(newMonth);
-    setYear(newYear);
+    setMonth(m => m === 0 ? 11 : m - 1);
+    setYear(y => month === 0 ? y - 1 : y);
     setSelectedDay(null);
-    fetchMonthDetail(newMonth, newYear);
   };
 
   const nextMonth = () => {
-    const newMonth = month === 11 ? 0 : month + 1;
-    const newYear = month === 11 ? year + 1 : year;
-    setMonth(newMonth);
-    setYear(newYear);
+    setMonth(m => m === 11 ? 0 : m + 1);
+    setYear(y => month === 11 ? y + 1 : y);
     setSelectedDay(null);
-    fetchMonthDetail(newMonth, newYear);
   };
 
   const filteredConsolidated = filterSubject ? consolidated.filter(c => c.subject_code === filterSubject) : consolidated;

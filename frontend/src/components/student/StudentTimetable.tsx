@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Calendar, BookOpen } from '@phosphor-icons/react';
 import { timetableAPI } from '../../services/api';
@@ -34,19 +35,10 @@ const itemVariants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, 
 const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
 
 const StudentTimetable = () => {
-  const [slots, setSlots] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const { data } = await timetableAPI.getStudentTimetable();
-        setSlots(data);
-      } catch (e) { console.error(e); }
-      setLoading(false);
-    };
-    load();
-  }, []);
+  const { data: slots = [], isLoading: loading } = useQuery({
+    queryKey: ['student-timetable'],
+    queryFn: () => timetableAPI.getStudentTimetable().then(r => r.data),
+  });
 
   // Build subject -> color index map
   const subjectColorMap = useMemo(() => {

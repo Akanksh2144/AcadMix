@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Trophy, ChartLine, Fire, BookOpen, Calendar, Target, SignOut, Terminal, ArrowRight, GraduationCap, Play, Medal, Lightning, Warning, Bell, Exam, Briefcase, Sun, Moon, CalendarDots, Chalkboard, UserCircle, ListBullets, Microphone, House, FileText, Toolbox, Bus } from '@phosphor-icons/react';
@@ -77,10 +78,19 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
   const isHostelVisible = useIsModuleVisible("hostel");
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('student_tab') || 'overview');
   useEffect(() => { sessionStorage.setItem('student_tab', activeTab); }, [activeTab]);
-  const [dashboard, setDashboard] = useState(null);
-  const [interviewQuota, setInterviewQuota] = useState(null);
-  const [latestAtsScore, setLatestAtsScore] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { data: dashboard = null, isLoading: loading } = useQuery({
+    queryKey: ['student-dashboard'],
+    queryFn: () => analyticsAPI.studentDashboard().then(r => r.data),
+  });
+  const { data: interviewQuota = null } = useQuery({
+    queryKey: ['student-interview-quota'],
+    queryFn: () => interviewAPI.getQuota().then(r => r.data),
+  });
+  const { data: latestAtsScoreData = null } = useQuery({
+    queryKey: ['student-latest-ats'],
+    queryFn: () => resumeAPI.latest().then(r => r.data),
+  });
+  const latestAtsScore = latestAtsScoreData?.ats_score ?? null;
   const [showNotifications, setShowNotifications] = useState(false);
   const { isDark, toggle: toggleTheme } = useTheme();
   const [realNotifs, setRealNotifs] = useState([]);
@@ -176,18 +186,8 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
   const showQuizBadge = !seenTabs.quizzes && (dashboard?.upcoming_quizzes?.length > 0 || dashboard?.in_progress?.length > 0);
   const showFeesBadge = !seenTabs.fees && (dashboard?.pending_fees > 0 || dashboard?.fee_due);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data } = await analyticsAPI.studentDashboard();
-        setDashboard(data);
-      } catch (err) { console.error(err); }
-      setLoading(false);
-    };
-    fetchData();
-    interviewAPI.getQuota().then(res => setInterviewQuota(res.data)).catch(() => {});
-    resumeAPI.latest().then(res => { if (res.data?.ats_score != null) setLatestAtsScore(res.data.ats_score); }).catch(() => {});
-  }, []);
+  // Data fetching is now handled by useQuery hooks above (lines 80-91).
+  // React Query caches responses so tab switches and page revisits are instant.
 
   const quizzesTaken = dashboard?.total_quizzes || 0;
   const activeQuizzes = dashboard?.upcoming_quizzes?.length || 0;

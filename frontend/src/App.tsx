@@ -184,7 +184,7 @@ function ProtectedRoute({ children, user, allowedRoles }) {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,       // 30s before refetch
+      staleTime: 5 * 60 * 1000, // 5 min — dashboard data is fresh for 5 min
       retry: 1,
       refetchOnWindowFocus: false,
     },

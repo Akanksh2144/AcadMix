@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { BookOpen, Flask, Chalkboard, CheckCircle, Clock, Warning } from '@phosphor-icons/react';
 import { studentAPI } from '../../services/api';
@@ -15,19 +16,10 @@ const STATUS_BADGE = {
 };
 
 const StudentSubjects = () => {
-  const [subjects, setSubjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const { data } = await studentAPI.subjects();
-        setSubjects(data);
-      } catch (e) { console.error(e); }
-      setLoading(false);
-    };
-    load();
-  }, []);
+  const { data: subjects = [], isLoading: loading } = useQuery({
+    queryKey: ['student-subjects'],
+    queryFn: () => studentAPI.subjects().then(r => r.data),
+  });
 
   const totalCredits = subjects.reduce((s, sub) => s + (sub.credits || 0), 0);
   const bySemester = subjects.reduce((acc, s) => {

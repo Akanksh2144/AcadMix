@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Exam, CaretDown, CheckCircle, MinusCircle, Clock } from '@phosphor-icons/react';
 import { studentAPI } from '../../services/api';
@@ -9,27 +10,19 @@ const itemVariants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, 
 const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
 
 const StudentCIAMarks = () => {
-  const [marks, setMarks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedSubject, setExpandedSubject] = useState(null);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const { data } = await studentAPI.ciaMarks({});
-        // Normalize: ensure each subject has components array and numeric totals
-        const safe = (Array.isArray(data) ? data : []).map(s => ({
-          ...s,
-          components: Array.isArray(s.components) ? s.components : [],
-          total_cia: s.total_cia ?? 0,
-          total_max: s.total_max ?? 0,
-        }));
-        setMarks(safe);
-      } catch (e) { console.error(e); }
-      setLoading(false);
-    };
-    load();
-  }, []);
+  const { data: marks = [], isLoading: loading } = useQuery({
+    queryKey: ['student-cia-marks'],
+    queryFn: async () => {
+      const { data } = await studentAPI.ciaMarks({});
+      return (Array.isArray(data) ? data : []).map((s: any) => ({
+        ...s,
+        components: Array.isArray(s.components) ? s.components : [],
+        total_cia: s.total_cia ?? 0,
+        total_max: s.total_max ?? 0,
+      }));
+    },
+  });
+  const [expandedSubject, setExpandedSubject] = useState<number | null>(null);
 
   const getMarkColor = (obtained, max) => {
     if (obtained === null || obtained === undefined) return 'text-slate-400 dark:text-slate-500';
