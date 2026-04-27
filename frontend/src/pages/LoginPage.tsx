@@ -179,12 +179,18 @@ const LoginPage = ({ onLogin }) => {
 
       {/* Right panel — Form */}
       <div className="flex-1 flex items-center justify-center p-8 relative">
+        {/* Ambient background glow for dark mode */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none hidden dark:block">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px] mix-blend-screen"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px] mix-blend-screen translate-x-20 -translate-y-20"></div>
+        </div>
+
         {/* Theme toggle */}
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={toggleTheme}
-          className="absolute top-6 right-6 p-2.5 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors z-10"
+          className="absolute top-6 right-6 p-2.5 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors z-10 border border-transparent dark:border-white/5"
           aria-label="Toggle theme"
         >
           <AnimatePresence mode="wait" initial={false}>
@@ -198,7 +204,7 @@ const LoginPage = ({ onLogin }) => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.15 }}
-          className="w-full max-w-md"
+          className="w-full max-w-md relative z-10"
         >
           <div className="flex items-center justify-center mb-8 lg:hidden">
             <motion.div
@@ -230,12 +236,11 @@ const LoginPage = ({ onLogin }) => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
                   title="AcadMix"
-                  className="dark:bg-slate-50 dark:px-3 dark:py-1.5 dark:rounded-2xl transition-colors duration-300 shadow-sm dark:shadow-[0_0_15px_rgba(255,255,255,0.05)]"
                 >
                   <img
                     src="/logos/acadmix-wordmark.png"
                     alt="AcadMix"
-                    className="h-10 sm:h-12 w-auto object-contain drop-shadow-sm dark:drop-shadow-none"
+                    className="h-14 sm:h-16 w-auto object-contain drop-shadow-sm dark:drop-shadow-[0_0_12px_rgba(255,255,255,0.4)] dark:brightness-150 transition-all duration-300"
                   />
                 </motion.div>
 
@@ -260,7 +265,7 @@ const LoginPage = ({ onLogin }) => {
                   <img
                     src={`/logos/${tenant.tenantSlug}-emblem.png`}
                     alt={tenant.tenantName || tenant.tenantSlug?.toUpperCase() || ''}
-                    className="h-16 sm:h-20 w-auto object-contain drop-shadow-sm"
+                    className="h-16 sm:h-20 w-auto object-contain drop-shadow-sm dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all duration-300"
                     onError={(e) => {
                       // Fallback: replace broken img with a gradient badge via parent swap
                       const target = e.currentTarget;
@@ -283,7 +288,7 @@ const LoginPage = ({ onLogin }) => {
             </motion.div>
           )}
 
-          <div className="soft-card p-8 sm:p-10">
+          <div className="soft-card p-8 sm:p-10 dark:bg-[#0f1523]/80 dark:backdrop-blur-2xl dark:border dark:border-white/5 dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             <div className="flex justify-between items-center mb-1">
               <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {isPreEnrollMode ? "Pre-Enrollment" : "Sign In"}
