@@ -51,16 +51,29 @@ const AcademicCalendar = ({ fetchCalendars }: { fetchCalendars?: () => Promise<a
   const { data: calendars = [], isLoading: calLoading } = useQuery({
     queryKey: ['academic-calendars'],
     queryFn: async () => {
-      const fetcher = fetchCalendars || (() => api.get('/api/academic-calendars'));
-      const { data } = await fetcher();
-      if (data && data.length > 0) return data;
-      return DEMO_CALENDAR;
+      try {
+        const fetcher = fetchCalendars || (() => api.get('/api/academic-calendars'));
+        const { data } = await fetcher();
+        const arr = Array.isArray(data) ? data : data?.data;
+        if (arr && arr.length > 0) return arr;
+        return DEMO_CALENDAR;
+      } catch {
+        return DEMO_CALENDAR;
+      }
     },
   });
 
   const { data: placementDrives = [] } = useQuery({
     queryKey: ['student-placement-drives-calendar'],
-    queryFn: () => api.get('/api/student/placement-drives').then(r => r.data || []).catch(() => []),
+    queryFn: async () => {
+      try {
+        const res = await api.get('/api/student/placement-drives');
+        const arr = Array.isArray(res.data) ? res.data : res.data?.data;
+        return Array.isArray(arr) ? arr : [];
+      } catch {
+        return [];
+      }
+    },
   });
 
   const loading = calLoading;
