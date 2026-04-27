@@ -113,7 +113,8 @@ class AttendanceService:
                 ar.subject_code,
                 COALESCE(c.name, ar.subject_code) AS subject_name,
                 COUNT(*) FILTER (WHERE ar.status = 'present' OR ar.status = 'od') AS present_count,
-                COUNT(*) AS total_count
+                COUNT(*) AS total_count,
+                MAX(ar.date) AS latest_date
             FROM attendance_records ar
             LEFT JOIN courses c ON ar.subject_code = c.subject_code AND c.college_id = ar.college_id
             WHERE ar.student_id = :student_id AND ar.is_deleted = false
@@ -125,12 +126,21 @@ class AttendanceService:
         response = []
         for row in result.all():
             pct = round(row.present_count * 100.0 / row.total_count, 1) if row.total_count > 0 else 0
+            
+            latest_date_str = None
+            if row.latest_date:
+                try:
+                    latest_date_str = str(row.latest_date)
+                except Exception:
+                    pass
+
             response.append({
                 "subject_code": row.subject_code,
                 "subject_name": row.subject_name,
                 "present_count": row.present_count,
                 "total_count": row.total_count,
-                "percentage": pct
+                "percentage": pct,
+                "latest_date": latest_date_str
             })
         return response
 

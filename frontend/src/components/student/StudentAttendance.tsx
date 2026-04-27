@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock, CaretLeft, CaretRight, Funnel, CheckCircle, XCircle, Warning, X } from '@phosphor-icons/react';
@@ -30,12 +30,29 @@ const StudentAttendance = () => {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth());
   const [year, setYear] = useState(now.getFullYear());
+  const [hasInitializedMonth, setHasInitializedMonth] = useState(false);
 
   // Cached consolidated attendance (subject-level summary)
   const { data: consolidated = [], isLoading: consLoading } = useQuery({
     queryKey: ['student-attendance-consolidated'],
     queryFn: () => attendanceAPI.getStudentConsolidated().then(r => r.data),
   });
+
+  useEffect(() => {
+    if (consolidated.length > 0 && !hasInitializedMonth) {
+      const dates = consolidated
+        .filter((c: any) => c.latest_date)
+        .map((c: any) => new Date(c.latest_date));
+      if (dates.length > 0) {
+        const maxDate = new Date(Math.max(...dates.map((d: Date) => d.getTime())));
+        setMonth(maxDate.getMonth());
+        setYear(maxDate.getFullYear());
+      }
+      setHasInitializedMonth(true);
+    } else if (!consLoading && consolidated.length === 0 && !hasInitializedMonth) {
+      setHasInitializedMonth(true);
+    }
+  }, [consolidated, consLoading, hasInitializedMonth]);
 
   // Cached per-month detail (keyed by month+year for automatic cache)
   const { data: detail = [], isFetching: calendarLoading } = useQuery({
