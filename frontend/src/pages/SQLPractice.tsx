@@ -214,7 +214,7 @@ const SQLPractice = ({ navigate, user }: any) => {
       if (pid) {
         const p = problems.find(x => x.id === pid);
         if (p) {
-          setSelectedProblem(p);
+          loadProblem(p);
           setTimeout(() => window.scrollTo(0, 0), 10);
         }
       }
