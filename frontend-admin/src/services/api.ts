@@ -61,12 +61,18 @@ export const superadminAPI = {
 
   // Hostels
   listHostels: (collegeId?: string) =>
-    api.get('/superadmin/hostels', { params: collegeId ? { college_id: collegeId } : {} }),
+    api.get(collegeId ? `/superadmin/hostels?college_id=${collegeId}` : '/superadmin/hostels'),
   createHostel: (data: any) => api.post('/superadmin/hostels', data),
-
-  // Rooms
   listRooms: (hostelId: string) => api.get(`/superadmin/hostels/${hostelId}/rooms`),
   createRoom: (data: any) => api.post('/superadmin/rooms', data),
+  bulkCreateRooms: (data: any) => api.post('/superadmin/rooms/bulk', data),
+  
+  // Floor Layouts
+  getFloorLayouts: (hostelId: string) => api.get(`/superadmin/hostels/${hostelId}/floor-layouts`),
+  getFloorLayout: (hostelId: string, floor: number) => api.get(`/superadmin/hostels/${hostelId}/floor-layout/${floor}`),
+  saveFloorLayout: (hostelId: string, floor: number, layout: any) => api.put(`/superadmin/hostels/${hostelId}/floor-layout/${floor}`, layout),
+
+  // Beds
   getRoomBeds: (roomId: string) => api.get(`/superadmin/rooms/${roomId}/beds`),
   saveRoomBeds: (roomId: string, beds: any[]) =>
     api.post(`/superadmin/rooms/${roomId}/beds`, { beds }),

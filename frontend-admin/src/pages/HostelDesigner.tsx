@@ -5,8 +5,9 @@ import { superadminAPI } from '../services/api';
 import { toast } from 'sonner';
 import {
   Building2, Bed, Plus, ChevronRight, Save,
-  Layers, ArrowLeft
+  ArrowLeft
 } from 'lucide-react';
+import FloorBlueprintEditor from '../components/FloorBlueprintEditor';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HOSTEL DESIGNER — Floor/Room/Bed Visual Layout Tool
@@ -19,7 +20,6 @@ export default function HostelDesigner() {
   const [selectedCollegeId, setSelectedCollegeId] = useState<string | null>(null);
   const [selectedHostel, setSelectedHostel] = useState<any>(null);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
-  const [currentFloor, setCurrentFloor] = useState(1);
   const queryClient = useQueryClient();
   void queryClient;
 
@@ -45,9 +45,6 @@ export default function HostelDesigner() {
     queryFn: async () => { const { data } = await superadminAPI.getRoomBeds(selectedRoom.id); return data.data; },
     enabled: !!selectedRoom && step === 'bed-editor',
   });
-
-  const floorRooms = useMemo(() => rooms.filter((r: any) => r.floor === currentFloor), [rooms, currentFloor]);
-  const maxFloor = useMemo(() => Math.max(1, ...rooms.map((r: any) => r.floor || 1)), [rooms]);
 
   // Breadcrumb
   const breadcrumb = useMemo(() => {
@@ -120,7 +117,7 @@ export default function HostelDesigner() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
                 {hostels.map((h: any) => (
                   <div key={h.id} className="glass-card" style={{ cursor: 'pointer' }}
-                    onClick={() => { setSelectedHostel(h); setCurrentFloor(1); setStep('rooms'); }}>
+                    onClick={() => { setSelectedHostel(h); setStep('rooms'); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                       <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(167,139,250,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Bed size={18} style={{ color: '#A78BFA' }} />
@@ -147,54 +144,25 @@ export default function HostelDesigner() {
             </motion.div>
           )}
 
-          {/* Step 3: Floor Plan / Room Grid */}
-          {step === 'rooms' && (
+          {/* Step 3: Floor Plan / Blueprint Editor */}
+          {step === 'rooms' && selectedHostel && (
             <motion.div key="rooms" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}>
-              {/* Floor switcher */}
-              <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
-                {Array.from({ length: maxFloor }, (_, i) => i + 1).map(f => (
-                  <button key={f} className={`tab-item ${currentFloor === f ? 'active' : ''}`}
-                    onClick={() => setCurrentFloor(f)} style={{ background: currentFloor === f ? 'var(--surface-high)' : 'var(--surface-low)' }}>
-                    <Layers size={12} style={{ marginRight: 4 }} /> Floor {f}
-                  </button>
-                ))}
-              </div>
-
-              {/* Corridor-style room layout */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {/* Top row rooms */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
-                  {floorRooms.map((r: any) => {
-                    const pct = r.capacity > 0 ? Math.round(((r.booked_count || 0) / r.capacity) * 100) : 0;
-                    const color = pct >= 80 ? 'var(--rose)' : pct >= 40 ? 'var(--amber)' : 'var(--emerald)';
-                    return (
-                      <div key={r.id} className="glass-card-sm" style={{ cursor: 'pointer', textAlign: 'center' }}
-                        onClick={() => { setSelectedRoom(r); setStep('bed-editor'); }}>
-                        <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{r.room_number}</div>
-                        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginBottom: 8 }}>
-                          {r.bed_count || 0}/{r.capacity} beds
-                        </div>
-                        <div style={{ height: 3, background: 'var(--surface-high)', borderRadius: 99, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99 }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Corridor */}
-                <div style={{ height: 2, background: 'var(--border)', margin: '8px 0', position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '50%', top: -10, transform: 'translateX(-50%)', fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', background: 'var(--bg)', padding: '0 12px' }}>
-                    corridor
-                  </div>
-                </div>
-              </div>
-
-              {floorRooms.length === 0 && (
-                <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
-                  No rooms on Floor {currentFloor}
-                </div>
-              )}
+              <FloorBlueprintEditor
+                hostelId={selectedHostel.id}
+                hostelName={selectedHostel.name}
+                totalFloors={selectedHostel.total_floors || 1}
+                onRoomClick={(roomId, roomLabel) => {
+                  if (roomId === 'NEW') {
+                    toast.error('Please save the blueprint and link the room to a real record first.');
+                    return;
+                  }
+                  // We need to set the selectedRoom object so the bed editor works
+                  const roomObj = rooms.find((r: any) => r.id === roomId) || { id: roomId, room_number: roomLabel };
+                  setSelectedRoom(roomObj);
+                  setStep('bed-editor');
+                }}
+                onBack={() => setStep('hostels')}
+              />
             </motion.div>
           )}
 

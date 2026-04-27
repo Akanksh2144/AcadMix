@@ -314,6 +314,64 @@ async def create_hostel(
     return {"message": "Hostel created", "id": hid}
 
 
+from app.services.hostel_service import HostelService
+
+@router.get("/hostels/{hostel_id}/floor-layout/{floor}")
+async def get_floor_layout(
+    hostel_id: str,
+    floor: int,
+    college_id: Optional[str] = Query(None),
+    user: dict = Depends(require_role("super_admin")),
+    db: AsyncSession = Depends(get_admin_db)
+):
+    """Get floor blueprint."""
+    cid = college_id or getattr(user, 'college_id', None)
+    # Hack: super_admin usually has college_id or we get it from hostel
+    if not cid:
+        res = await db.execute(text("SELECT college_id FROM hostels WHERE id = :id"), {"id": hostel_id})
+        row = res.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Hostel not found")
+        cid = row[0]
+        
+    svc = HostelService(db)
+    return await svc.get_floor_layout(hostel_id, cid, floor)
+
+
+@router.get("/hostels/{hostel_id}/floor-layouts")
+async def get_all_floor_layouts(
+    hostel_id: str,
+    user: dict = Depends(require_role("super_admin")),
+    db: AsyncSession = Depends(get_admin_db)
+):
+    res = await db.execute(text("SELECT college_id FROM hostels WHERE id = :id"), {"id": hostel_id})
+    row = res.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Hostel not found")
+    cid = row[0]
+        
+    svc = HostelService(db)
+    return await svc.get_all_floor_layouts(hostel_id, cid)
+
+
+@router.put("/hostels/{hostel_id}/floor-layout/{floor}")
+async def save_floor_layout(
+    hostel_id: str,
+    floor: int,
+    layout: dict = Body(...),
+    user: dict = Depends(require_role("super_admin")),
+    db: AsyncSession = Depends(get_admin_db)
+):
+    res = await db.execute(text("SELECT college_id FROM hostels WHERE id = :id"), {"id": hostel_id})
+    row = res.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Hostel not found")
+    cid = row[0]
+        
+    svc = HostelService(db)
+    return await svc.save_floor_layout(hostel_id, cid, floor, layout)
+
+
 @router.get("/hostels/{hostel_id}/rooms")
 async def list_hostel_rooms(
     hostel_id: str,

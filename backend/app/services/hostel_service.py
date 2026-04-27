@@ -148,6 +148,85 @@ class HostelService:
         return {"id": hostel.id, "name": hostel.name}
 
     # ═══════════════════════════════════════════════════════════════════════════
+    # FLOOR LAYOUTS — 2D Blueprint Editor
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    async def get_floor_layout(self, hostel_id: str, college_id: str, floor: int) -> dict:
+        """Read the floor blueprint from Hostel.meta_data.floor_layouts.{floor}."""
+        hostel_q = await self.db.execute(
+            select(Hostel).where(
+                Hostel.id == hostel_id,
+                Hostel.college_id == college_id,
+                Hostel.is_deleted == False,
+            )
+        )
+        hostel = hostel_q.scalars().first()
+        if not hostel:
+            raise DomainException("Hostel not found", status_code=404)
+
+        meta = hostel.meta_data or {}
+        layouts = meta.get("floor_layouts", {})
+        layout = layouts.get(str(floor))
+
+        if not layout:
+            return {"grid_rows": 8, "grid_cols": 16, "elements": []}
+        return layout
+
+    async def save_floor_layout(self, hostel_id: str, college_id: str, floor: int, layout_data: dict) -> dict:
+        """Write the floor blueprint into Hostel.meta_data.floor_layouts.{floor}."""
+        hostel_q = await self.db.execute(
+            select(Hostel).where(
+                Hostel.id == hostel_id,
+                Hostel.college_id == college_id,
+                Hostel.is_deleted == False,
+            )
+        )
+        hostel = hostel_q.scalars().first()
+        if not hostel:
+            raise DomainException("Hostel not found", status_code=404)
+
+        meta = dict(hostel.meta_data or {})
+        if "floor_layouts" not in meta:
+            meta["floor_layouts"] = {}
+        meta["floor_layouts"][str(floor)] = layout_data
+
+        # Use flag_modified to ensure SQLAlchemy detects the JSONB mutation
+        hostel.meta_data = meta
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(hostel, "meta_data")
+
+        # Auto-expand total_floors if this floor exceeds current count
+        if floor > (hostel.total_floors or 1):
+            hostel.total_floors = floor
+
+        await self.db.commit()
+        return {"floor": floor, "saved": True}
+
+    async def get_all_floor_layouts(self, hostel_id: str, college_id: str) -> dict:
+        """Return all saved floor layout summaries for the 'copy from' picker."""
+        hostel_q = await self.db.execute(
+            select(Hostel).where(
+                Hostel.id == hostel_id,
+                Hostel.college_id == college_id,
+                Hostel.is_deleted == False,
+            )
+        )
+        hostel = hostel_q.scalars().first()
+        if not hostel:
+            raise DomainException("Hostel not found", status_code=404)
+
+        meta = hostel.meta_data or {}
+        layouts = meta.get("floor_layouts", {})
+        summaries = {}
+        for fl, layout in layouts.items():
+            summaries[fl] = {
+                "grid_rows": layout.get("grid_rows", 8),
+                "grid_cols": layout.get("grid_cols", 16),
+                "element_count": len(layout.get("elements", [])),
+            }
+        return {"total_floors": hostel.total_floors or 1, "layouts": summaries}
+
+    # ═══════════════════════════════════════════════════════════════════════════
     # ROOMS & BULK PROVISIONING
     # ═══════════════════════════════════════════════════════════════════════════
 
