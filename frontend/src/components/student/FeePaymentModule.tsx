@@ -57,7 +57,7 @@ const FeePaymentModule = ({ user }) => {
   const fetchDueFees = async () => {
     try {
       const { data } = await feesAPI.getDue();
-      setFees(Array.isArray(data) ? data : []);
+      setFees(data?.data || []);
     } catch (err) {
       console.error(err);
       setMessage({ text: 'Failed to load fee details', type: 'error' });
@@ -68,7 +68,7 @@ const FeePaymentModule = ({ user }) => {
   const fetchHistory = async () => {
     try {
       const { data } = await feesAPI.getHistory();
-      setHistory(Array.isArray(data) ? data : []);
+      setHistory(data?.data || []);
     } catch (err) {
       console.error('Failed to load payment history:', err);
     }

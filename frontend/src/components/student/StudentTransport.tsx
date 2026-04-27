@@ -193,11 +193,11 @@ const StudentTransport = () => {
     const loadData = async () => {
       try {
         const { data } = await transportAPI.myEnrollment();
-        setEnrollment(data || null);
+        if (data?.data) setEnrollment(data.data);
       } catch {}
       try {
         const { data } = await transportAPI.routes();
-        setRoutes(Array.isArray(data) ? data : []);
+        setRoutes(data?.data || []);
       } catch {}
       setLoading(false);
     };
@@ -210,7 +210,7 @@ const StudentTransport = () => {
     const poll = async () => {
       try {
         const { data } = await transportAPI.liveStatus(enrollment.route_id);
-        setLiveStatus(data || null);
+        setLiveStatus(data?.data);
       } catch {}
     };
     poll();
@@ -224,13 +224,13 @@ const StudentTransport = () => {
 
   useEffect(() => {
     if (tab === 'pass' && enrollment) {
-      transportAPI.busPass().then(r => setBusPass(r.data || null)).catch(() => {});
+      transportAPI.busPass().then(r => setBusPass(r.data?.data)).catch(() => {});
     }
   }, [tab, enrollment]);
 
   useEffect(() => {
     if (tab === 'history' && enrollment) {
-      transportAPI.tripHistory().then(r => setTripHistory(Array.isArray(r.data) ? r.data : [])).catch(() => {});
+      transportAPI.tripHistory().then(r => setTripHistory(r.data?.data || [])).catch(() => {});
     }
   }, [tab, enrollment]);
 
@@ -269,7 +269,7 @@ const StudentTransport = () => {
       });
       // Refresh enrollment
       const { data: fresh } = await transportAPI.myEnrollment();
-      setEnrollment(fresh || null);
+      if (fresh?.data) setEnrollment(fresh.data);
       setSelectedRoute(null);
       setSelectedStop(null);
     } catch (err: any) {
