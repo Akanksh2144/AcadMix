@@ -175,29 +175,29 @@ const LiveMap = ({ stops, currentNode, myStopIndex, livePosition, isActive }) =>
 // ─── Main Component ─────────────────────────────────────────────────────────
 const StudentTransport = () => {
   const [tab, setTab] = useState('tracker');
-  const [enrollment, setEnrollment] = useState(null);
-  const [routes, setRoutes] = useState([]);
-  const [liveStatus, setLiveStatus] = useState(null);
-  const [busPass, setBusPass] = useState(null);
-  const [tripHistory, setTripHistory] = useState([]);
+  const [enrollment, setEnrollment] = useState<any>(null);
+  const [routes, setRoutes] = useState<any[]>([]);
+  const [liveStatus, setLiveStatus] = useState<any>(null);
+  const [busPass, setBusPass] = useState<any>(null);
+  const [tripHistory, setTripHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
-  const [selectedRoute, setSelectedRoute] = useState(null);
-  const [selectedStop, setSelectedStop] = useState(null);
+  const [selectedRoute, setSelectedRoute] = useState<any>(null);
+  const [selectedStop, setSelectedStop] = useState<number | null>(null);
   const [stopSearch, setStopSearch] = useState('');
-  const [chosenStopName, setChosenStopName] = useState(null);
-  const pollRef = useRef(null);
+  const [chosenStopName, setChosenStopName] = useState<string | null>(null);
+  const pollRef = useRef<any>(null);
 
   // Load data on mount
   useEffect(() => {
     const loadData = async () => {
       try {
         const { data } = await transportAPI.myEnrollment();
-        if (data?.data) setEnrollment(data.data);
+        setEnrollment(data || null);
       } catch {}
       try {
         const { data } = await transportAPI.routes();
-        setRoutes(data?.data || []);
+        setRoutes(Array.isArray(data) ? data : []);
       } catch {}
       setLoading(false);
     };
@@ -210,7 +210,7 @@ const StudentTransport = () => {
     const poll = async () => {
       try {
         const { data } = await transportAPI.liveStatus(enrollment.route_id);
-        setLiveStatus(data?.data);
+        setLiveStatus(data || null);
       } catch {}
     };
     poll();
@@ -224,52 +224,24 @@ const StudentTransport = () => {
 
   useEffect(() => {
     if (tab === 'pass' && enrollment) {
-      transportAPI.busPass().then(r => setBusPass(r.data?.data)).catch(() => {});
+      transportAPI.busPass().then(r => setBusPass(r.data || null)).catch(() => {});
     }
   }, [tab, enrollment]);
 
   useEffect(() => {
     if (tab === 'history' && enrollment) {
-      transportAPI.tripHistory().then(r => setTripHistory(r.data?.data || [])).catch(() => {});
+      transportAPI.tripHistory().then(r => setTripHistory(Array.isArray(r.data) ? r.data : [])).catch(() => {});
     }
   }, [tab, enrollment]);
 
-  const handleEnroll = async () => {
-    if (!selectedRoute || selectedStop === null) return;
-    setEnrolling(true);
-    try {
-      await transportAPI.enroll({
-        route_id: selectedRoute.id,
-        boarding_stop_index: selectedStop,
-      });
-      // Refresh enrollment
-      const { data: fresh } = await transportAPI.myEnrollment();
-      if (fresh?.data) setEnrollment(fresh.data);
-      setSelectedRoute(null);
-      setSelectedStop(null);
-    } catch (err) {
-      alert(err.response?.data?.detail || 'Enrollment failed');
-    }
-    setEnrolling(false);
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  // ─── Not Enrolled — Stop-First Selection ───────────────────────────────────
-  // Build a unique list of all bus stops across all routes
+  // ── useMemo hooks MUST be before any early returns to avoid Error #310 ──
   const allStops = React.useMemo(() => {
-    const stopMap = new Map();
-    routes.forEach(route => {
-      (route.stops || []).forEach((stop, idx) => {
+    const stopMap = new Map<string, any[]>();
+    routes.forEach((route: any) => {
+      (route.stops || []).forEach((stop: any, idx: number) => {
         const name = stop.name || `Stop ${idx + 1}`;
         if (!stopMap.has(name)) stopMap.set(name, []);
-        stopMap.get(name).push({ route, stopIndex: idx });
+        stopMap.get(name)!.push({ route, stopIndex: idx });
       });
     });
     return Array.from(stopMap.entries()).map(([name, routeEntries]) => ({ name, routeEntries })).sort((a, b) => a.name.localeCompare(b.name));
@@ -286,6 +258,33 @@ const StudentTransport = () => {
     const entry = allStops.find(s => s.name === chosenStopName);
     return entry ? entry.routeEntries : [];
   }, [chosenStopName, allStops]);
+
+  const handleEnroll = async () => {
+    if (!selectedRoute || selectedStop === null) return;
+    setEnrolling(true);
+    try {
+      await transportAPI.enroll({
+        route_id: selectedRoute.id,
+        boarding_stop_index: selectedStop,
+      });
+      // Refresh enrollment
+      const { data: fresh } = await transportAPI.myEnrollment();
+      setEnrollment(fresh || null);
+      setSelectedRoute(null);
+      setSelectedStop(null);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Enrollment failed');
+    }
+    setEnrolling(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!enrollment) {
     return (
