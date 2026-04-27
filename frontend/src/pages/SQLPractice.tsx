@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import initSqlJs from 'sql.js';
 import sqlWasm from 'sql.js/dist/sql-wasm.wasm?url';
 import LOCAL_PROBLEMS from '../data/sql_problems.json';
+import { format } from 'sql-formatter';
 
 let CACHED_PROBLEMS: any[] | null = null;
 
@@ -748,7 +749,13 @@ const SQLPractice = ({ navigate, user }: any) => {
                       <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm" style={{ height: '220px' }}>
                         <Editor
                           defaultLanguage="sql"
-                          value={sp.solution_sql.trim()}
+                          value={(() => {
+                            try {
+                              return format(sp.solution_sql, { language: sp.backend_only ? 'postgresql' : 'sqlite', keywordCase: 'upper' });
+                            } catch {
+                              return sp.solution_sql;
+                            }
+                          })()}
                           theme={isDark ? 'vs-dark' : 'light'}
                           options={{ 
                             readOnly: true, 
@@ -756,7 +763,7 @@ const SQLPractice = ({ navigate, user }: any) => {
                             fontSize: 14, 
                             padding: { top: 16, bottom: 16 }, 
                             scrollBeyondLastLine: false, 
-                            wordWrap: 'off',
+                            wordWrap: 'on',
                             lineNumbersMinChars: 3,
                             renderLineHighlight: 'none'
                           }}
