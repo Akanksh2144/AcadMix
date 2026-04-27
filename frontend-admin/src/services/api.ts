@@ -1,13 +1,18 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+let API_BASE = import.meta.env.VITE_BACKEND_URL || '';
+if (API_BASE && !API_BASE.endsWith('/api')) {
+  API_BASE = `${API_BASE}/api`;
+} else if (!API_BASE) {
+  API_BASE = '/api';
+}
 
 const api = axios.create({
   baseURL: API_BASE,
   timeout: 30000,
-  headers: { 
+  headers: {
     'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': 'true'
+    'ngrok-skip-browser-warning': 'true',
   },
 });
 
@@ -18,17 +23,9 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 → redirect to login and guard against HTML responses
+// Handle 401 → redirect to login
 api.interceptors.response.use(
-  (res) => {
-    // If Vercel mistakenly serves index.html instead of a backend API response, reject it
-    if (typeof res.data === 'string' && res.data.trim().startsWith('<!doctype html>')) {
-      localStorage.removeItem('admin_token');
-      window.location.href = '/login';
-      return Promise.reject(new Error('Backend unreachable. Received HTML instead of JSON.'));
-    }
-    return res;
-  },
+  (res) => res,
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem('admin_token');
