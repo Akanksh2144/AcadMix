@@ -15,9 +15,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 → redirect to login
+// Handle 401 → redirect to login and guard against HTML responses
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // If Vercel mistakenly serves index.html instead of a backend API response, reject it
+    if (typeof res.data === 'string' && res.data.trim().startsWith('<!doctype html>')) {
+      localStorage.removeItem('admin_token');
+      window.location.href = '/login';
+      return Promise.reject(new Error('Backend unreachable. Received HTML instead of JSON.'));
+    }
+    return res;
+  },
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem('admin_token');
