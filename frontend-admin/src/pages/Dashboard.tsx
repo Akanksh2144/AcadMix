@@ -59,16 +59,16 @@ export default function Dashboard() {
   const { data: overviewData, isLoading } = useQuery({
     queryKey: ['platform-overview'],
     queryFn: async () => {
-      const { data } = await superadminAPI.platformOverview();
-      return data;
+      const res = await superadminAPI.platformOverview();
+      return res.data?.data ?? res.data;
     },
   });
 
   const { data: collegesData } = useQuery({
     queryKey: ['colleges-list'],
     queryFn: async () => {
-      const { data } = await superadminAPI.listColleges();
-      return data;
+      const res = await superadminAPI.listColleges();
+      return res.data?.data ?? res.data;
     },
   });
 
