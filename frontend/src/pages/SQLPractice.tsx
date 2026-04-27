@@ -746,7 +746,7 @@ const SQLPractice = ({ navigate, user }: any) => {
                       </button>
                     </div>
                     {showSolution ? (
-                      <pre className="bg-slate-50 dark:bg-[#0F172A] rounded-xl p-5 text-[13px] font-mono text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                      <pre className="select-none bg-slate-50 dark:bg-[#0F172A] rounded-xl p-5 text-[13px] font-mono text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 overflow-x-auto whitespace-pre-wrap leading-relaxed">
                         {(() => {
                           try {
                             return format(sp.solution_sql, { language: sp.backend_only ? 'postgresql' : 'sqlite', keywordCase: 'upper' });
