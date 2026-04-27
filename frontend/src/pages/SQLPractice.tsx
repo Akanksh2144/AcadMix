@@ -799,7 +799,7 @@ const SQLPractice = ({ navigate, user }: any) => {
           </div>
 
           {/* Results Panel */}
-          <div className="flex-1 bg-white dark:bg-[#1E293B] flex flex-col min-h-0">
+          <div className={`flex-1 bg-white dark:bg-[#1E293B] flex flex-col min-h-0 transition-all duration-300 ring-2 ring-inset ${isCorrect === true ? 'ring-emerald-500/80 dark:ring-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : isCorrect === false ? 'ring-red-500/80 dark:ring-red-500/60 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 'ring-transparent'}`}>
             <div className="px-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <button onClick={() => setTab('output')} className={`py-3 text-sm font-bold border-b-2 transition-colors ${tab === 'output' ? 'border-indigo-500 text-indigo-500' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>Output</button>
