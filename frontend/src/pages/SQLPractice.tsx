@@ -745,7 +745,23 @@ const SQLPractice = ({ navigate, user }: any) => {
                       </button>
                     </div>
                     {showSolution ? (
-                      <pre className="bg-slate-50 dark:bg-[#0F172A] rounded-xl p-4 text-sm font-mono text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 overflow-x-auto whitespace-pre-wrap">{sp.solution_sql}</pre>
+                      <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm" style={{ height: '220px' }}>
+                        <Editor
+                          defaultLanguage="sql"
+                          value={sp.solution_sql.replace(/\b(SELECT|FROM|WHERE|INNER JOIN|LEFT JOIN|RIGHT JOIN|GROUP BY|ORDER BY|HAVING|LIMIT)\b/gi, '\n$1').trim()}
+                          theme={isDark ? 'vs-dark' : 'light'}
+                          options={{ 
+                            readOnly: true, 
+                            minimap: { enabled: false }, 
+                            fontSize: 14, 
+                            padding: { top: 16, bottom: 16 }, 
+                            scrollBeyondLastLine: false, 
+                            wordWrap: 'on',
+                            lineNumbersMinChars: 3,
+                            renderLineHighlight: 'none'
+                          }}
+                        />
+                      </div>
                     ) : (
                       <div className="bg-slate-50 dark:bg-[#0F172A] rounded-xl p-8 text-center border border-slate-200 dark:border-white/10">
                         <Eye size={32} className="text-slate-300 mx-auto mb-2" />
