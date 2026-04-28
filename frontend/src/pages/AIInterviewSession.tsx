@@ -834,6 +834,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
         setTimeout(() => setOrbState('listening'), 300);
       }
 
+      const prevLength = transcriptRef.current.length;
       let interim = '';
       let final = transcriptRef.current;
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -854,13 +855,17 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
       transcriptRef.current = final;
       setTranscript(final + interim);
 
-      // Reset silence timer (4-second auto-submit — gives slower speakers more time)
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = setTimeout(() => {
-        if (transcriptRef.current.trim()) {
-          submitAnswer(transcriptRef.current.trim());
-        }
-      }, 4000);
+      // Only reset silence timer when transcript ACTUALLY changed
+      // This prevents ambient noise from infinitely resetting the countdown
+      const contentChanged = final.length > prevLength || interim.length > 0;
+      if (contentChanged) {
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = setTimeout(() => {
+          if (transcriptRef.current.trim()) {
+            submitAnswer(transcriptRef.current.trim());
+          }
+        }, 4000);
+      }
     };
 
     recognition.onerror = (e) => {
