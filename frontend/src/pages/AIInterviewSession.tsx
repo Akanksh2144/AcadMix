@@ -683,6 +683,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   const silenceTimerRef = useRef(null);
   const timerRef = useRef(null);
   const transcriptRef = useRef('');
+  const prevDisplayedRef = useRef(''); // Tracks last full displayed text (final+interim) to detect real changes
   const isSpeakingRef = useRef(false);
   const phaseRef = useRef('setup');
   
@@ -834,7 +835,6 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
         setTimeout(() => setOrbState('listening'), 300);
       }
 
-      const prevLength = transcriptRef.current.length;
       let interim = '';
       let final = transcriptRef.current;
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -846,12 +846,13 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
         }
       }
       transcriptRef.current = final;
-      setTranscript(final + interim);
+      const displayed = final + interim;
+      setTranscript(displayed);
 
-      // Only reset silence timer when transcript ACTUALLY changed
-      // This prevents ambient noise from infinitely resetting the countdown
-      const contentChanged = final.length > prevLength || interim.length > 0;
-      if (contentChanged) {
+      // Only reset silence timer when the DISPLAYED text actually changed
+      // This prevents ambient noise / repeated interim events from infinitely resetting the countdown
+      if (displayed !== prevDisplayedRef.current) {
+        prevDisplayedRef.current = displayed;
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
           if (transcriptRef.current.trim()) {
@@ -909,6 +910,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
     setShowTranscript(false); // ← Hide text immediately when entering thinking mode
     setTranscript('');
     transcriptRef.current = '';
+    prevDisplayedRef.current = '';
 
     try {
       const { data } = await interviewAPI.sendMessage(interviewId, { content: answer });
