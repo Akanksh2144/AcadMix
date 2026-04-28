@@ -590,7 +590,7 @@ const HardwareSetupLobby = ({ sessionConfig, onStart, onCancel }) => {
             <div
               onDragOver={(e) => e.preventDefault()}
               onDrop={onDrop}
-              className="mb-6 p-5 rounded-2xl border-2 border-dashed border-amber-300 dark:border-amber-500/40 bg-amber-50/50 dark:bg-amber-500/5 transition-colors"
+              className="mt-6 mb-6 p-5 rounded-2xl border-2 border-dashed border-amber-300 dark:border-amber-500/40 bg-amber-50/50 dark:bg-amber-500/5 transition-colors"
             >
               <div className="flex items-start gap-4">
                 <div className="w-11 h-11 bg-amber-100 dark:bg-amber-500/20 rounded-xl flex items-center justify-center shrink-0">
@@ -622,7 +622,7 @@ const HardwareSetupLobby = ({ sessionConfig, onStart, onCancel }) => {
             </div>
           )}
           {hasResume === true && (
-            <div className="mb-6 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-center gap-3">
+            <div className="mt-6 mb-6 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-center gap-3">
               <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg flex items-center justify-center">
                 <FileText size={16} weight="fill" className="text-emerald-600 dark:text-emerald-400" />
               </div>
