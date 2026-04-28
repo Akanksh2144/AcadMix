@@ -136,54 +136,61 @@ const WaveformAvatar = ({ state, analyserRef }) => {
 };
 
 
-// ─── Voice-Synced Text ───────────────────────────────────────────────────────
-// Reveals text character-by-character in perfect sync with TTS onboundary events.
-// Falls back to a smooth typing animation if onboundary isn't supported.
-const TypewriterText = ({ text, spokenIndex, isSpeaking }) => {
-  const [fallbackIndex, setFallbackIndex] = useState(0);
-  const [done, setDone] = useState(false);
-  const useFallback = spokenIndex === 0 && isSpeaking; // onboundary hasn't fired yet
+// ─── Voice-Synced Text (Time-Proportional) ────────────────────────────────────────
+// Smooth rAF animation calibrated to TTS speech rate (0.95 × ~150WPM ≈ 70ms/char).
+// No dependency on onboundary — works reliably across all browsers and voices.
+const TypewriterText = ({ text, isSpeaking }) => {
+  const [displayLength, setDisplayLength] = useState(0);
+  const startTimeRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
 
-  // Fallback: smooth typing animation if onboundary doesn't fire (some browsers/voices)
+  // Calibrated to match Chrome TTS at rate=0.95
+  // ~150 WPM × 0.95 = ~142 WPM × 5.5 avg chars/word = ~781 chars/min = ~13 chars/sec = ~77ms/char
+  const MS_PER_CHAR = 72;
+
+  // Start animation when isSpeaking becomes true
   useEffect(() => {
-    setFallbackIndex(0);
-    setDone(false);
-    if (!text) return;
-    // Only start fallback if after 500ms we still have no boundary events
-    const startDelay = setTimeout(() => {
-      let i = 0;
-      const timer = setInterval(() => {
-        i++;
-        setFallbackIndex(i);
-        if (i >= text.length) { clearInterval(timer); setDone(true); }
-      }, 55);
-      // Store interval ID for cleanup
-      (startDelay as any).__typingTimer = timer;
-    }, 500);
+    if (isSpeaking && text) {
+      startTimeRef.current = performance.now();
+      setDisplayLength(0);
+
+      const animate = () => {
+        if (!startTimeRef.current) return;
+        const elapsed = performance.now() - startTimeRef.current;
+        const chars = Math.floor(elapsed / MS_PER_CHAR);
+        setDisplayLength(Math.min(chars, text.length));
+        if (chars < text.length) {
+          rafRef.current = requestAnimationFrame(animate);
+        }
+      };
+      rafRef.current = requestAnimationFrame(animate);
+    }
 
     return () => {
-      clearTimeout(startDelay);
-      if ((startDelay as any).__typingTimer) clearInterval((startDelay as any).__typingTimer);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [text]);
-
-  // Determine how much text to show
-  const revealIndex = spokenIndex > 0 ? spokenIndex : fallbackIndex;
-  const displayed = text ? text.slice(0, Math.min(revealIndex, text.length)) : '';
-  const isComplete = revealIndex >= (text?.length || 0);
+  }, [isSpeaking, text]);
 
   // Force-complete when speech ends
   useEffect(() => {
-    if (!isSpeaking && text && !isComplete) {
-      setFallbackIndex(text.length);
-      setDone(true);
+    if (!isSpeaking && text) {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      setDisplayLength(text.length);
     }
-  }, [isSpeaking, text, isComplete]);
+  }, [isSpeaking, text]);
+
+  // Reset when text changes
+  useEffect(() => {
+    setDisplayLength(0);
+    startTimeRef.current = null;
+  }, [text]);
+
+  const isComplete = displayLength >= (text?.length || 0);
 
   return (
     <p className="text-lg sm:text-xl font-medium text-white/90 leading-relaxed max-w-2xl mx-auto">
-      {displayed}
-      {!isComplete && !done && <span className="inline-block w-0.5 h-5 bg-teal-400 ml-0.5 animate-pulse" />}
+      {text?.slice(0, displayLength)}
+      {!isComplete && <span className="inline-block w-0.5 h-5 bg-teal-400 ml-0.5 animate-pulse" />}
     </p>
   );
 };
@@ -675,7 +682,6 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   const [elapsed, setElapsed] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [transcript, setTranscript] = useState('');
-  const [spokenCharIndex, setSpokenCharIndex] = useState(0); // Voice-text sync via onboundary
   const [conversation, setConversation] = useState([]);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -786,22 +792,10 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
       utterance.onstart = () => {
         setIsSpeaking(true);
         setOrbState('speaking');
-        setSpokenCharIndex(0);    // Reset for new utterance
         setShowTranscript(true);  // ← TEXT LEAK FIX: Only show text AFTER TTS starts
         stopListening();
       };
-      // Voice-text sync: onboundary fires for each word with the character offset
-      utterance.onboundary = (e) => {
-        if (e.name === 'word') {
-          // Reveal up to the END of the current word being spoken
-          setSpokenCharIndex(e.charIndex + (e.charLength || 10));
-        }
-      };
-      utterance.onend = () => {
-        setSpokenCharIndex(text.length); // Reveal all on finish
-        clearTimeout(tt);
-        safeResolve();
-      };
+      utterance.onend = () => { clearTimeout(tt); safeResolve(); };
       utterance.onerror = () => { clearTimeout(tt); safeResolve(); };
       synthRef.current.speak(utterance);
     });
@@ -1066,7 +1060,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
         {/* Current question (typewriter) */}
         <div className="mt-16 mb-8 text-center px-4 min-h-[80px]">
-          {showTranscript && currentQuestion && <TypewriterText text={currentQuestion} spokenIndex={spokenCharIndex} isSpeaking={isSpeaking} />}
+          {showTranscript && currentQuestion && <TypewriterText text={currentQuestion} isSpeaking={isSpeaking} />}
         </div>
 
         {/* Student transcript (live) */}
