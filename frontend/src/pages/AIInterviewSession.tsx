@@ -838,14 +838,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
       let interim = '';
       let final = transcriptRef.current;
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        // Pick the highest-confidence alternative
-        const best = event.results[i][0];
-        const t = best.transcript;
-        const confidence = best.confidence || 1;
-
-        // Noise gate: skip very low-confidence fragments (ambient noise)
-        if (confidence < 0.3 && !event.results[i].isFinal) continue;
-
+        const t = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
           final += t + ' ';
         } else {
