@@ -576,9 +576,12 @@ from app.core.tenant_middleware import TenantMiddleware  # noqa: E402
 app.add_middleware(TenantMiddleware)
 
 # ─── Rate Limiter ─────────────────────────────────────────────────────────────
-from app.core.limiter import limiter
+from app.core.limiter import limiter, TenantRateLimitMiddleware
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ─── Tenant-Level Rate Limiter (Noisy Neighbor Protection) ────────────────────
+app.add_middleware(TenantRateLimitMiddleware)
 
 # ─── Domain Exception Handler ────────────────────────────────────────────────────
 @app.exception_handler(DomainException)

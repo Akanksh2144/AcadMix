@@ -39,25 +39,43 @@ async def readiness(session: AsyncSession = Depends(get_db)):
     except Exception as e:
         checks["database"] = f"error: {type(e).__name__}"
 
-    # Redis connectivity
+    # Redis connectivity — use the singleton client, not a throwaway connection.
+    # This validates the actual client the app uses, not just Redis reachability.
     try:
-        if settings.REDIS_URL:
-            import redis.asyncio as aioredis
-            r = aioredis.from_url(settings.REDIS_URL, socket_connect_timeout=2)
-            await r.ping()
-            await r.aclose()
+        from app.core.security import redis_client
+        if redis_client:
+            await redis_client.ping()
             checks["redis"] = "ok"
         else:
-            checks["redis"] = "not_configured"
+            checks["redis"] = "disabled"
     except Exception as e:
         checks["redis"] = f"error: {type(e).__name__}"
 
-    all_ok = all(v == "ok" for v in checks.values() if v != "not_configured")
+    # Pool saturation check
+    from database import get_pool_status
+    pool = get_pool_status()
+    pool_size = pool["pool_size"]
+    checked_out = pool["checked_out"]
+    saturation_pct = round((checked_out / max(pool_size, 1)) * 100, 1)
+
+    pool_status = "ok"
+    if saturation_pct > 90:
+        pool_status = "critical"
+    elif saturation_pct > 80:
+        pool_status = "warning"
+    checks["connection_pool"] = pool_status
+
+    all_ok = all(
+        v in ("ok", "disabled")
+        for v in checks.values()
+    )
 
     return {
         "status": "ready" if all_ok else "degraded",
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "version": settings.APP_NAME,
         "checks": checks,
+        "pool_saturation_pct": saturation_pct,
     }
 
 
@@ -73,8 +91,12 @@ async def health_db():
     from database import get_pool_status
 
     pool = get_pool_status()
+    pool_size = pool["pool_size"]
+    checked_out = pool["checked_out"]
+    saturation_pct = round((checked_out / max(pool_size, 1)) * 100, 1)
+
     return {
-        "status": "healthy",
+        "status": "healthy" if saturation_pct < 80 else "warning" if saturation_pct < 90 else "critical",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "connection_pool": {
             "pool_size": pool["pool_size"],
@@ -82,6 +104,7 @@ async def health_db():
             "checked_out": pool["checked_out"],
             "overflow": pool["overflow"],
             "max_overflow": pool["max_overflow"],
+            "saturation_pct": saturation_pct,
             "pgbouncer_enabled": pool["pgbouncer_enabled"],
         },
         "rls_shadow_mode": {

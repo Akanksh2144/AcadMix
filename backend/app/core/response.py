@@ -19,6 +19,7 @@ Usage:
 import json
 import uuid
 import logging
+import contextvars
 from typing import Any, Optional, Dict
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -26,6 +27,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import StreamingResponse, Response
 
 logger = logging.getLogger("acadmix.response")
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# REQUEST CONTEXT — propagated to every log line via JSONFormatter.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+request_context: contextvars.ContextVar[dict] = contextvars.ContextVar(
+    "request_context", default={}
+)
 
 
 async def mark_enveloped(response: Response):
@@ -66,8 +75,11 @@ def error_response(message: str, status_code: int = 400, details: Optional[dict]
 
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
-    """Adds X-Request-ID header to every request/response for log correlation.
-    
+    """Adds X-Request-ID header and populates request_context ContextVar.
+
+    Every downstream log line automatically gets request_id, tenant_id,
+    and path via the JSONFormatter reading request_context.
+
     If the client sends an X-Request-ID, it's preserved.
     Otherwise, a short UUID is generated.
     """
@@ -75,10 +87,26 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())[:8]
         request.state.request_id = request_id
-        
-        response = await call_next(request)
-        response.headers["X-Request-ID"] = request_id
-        return response
+
+        # Extract tenant slug from header (middleware order: RequestId runs
+        # before TenantMiddleware resolves it, so we use the raw header)
+        tenant_slug = request.headers.get("x-tenant", "")
+
+        # Set request context for structured logging
+        ctx = {
+            "request_id": request_id,
+            "tenant_id": tenant_slug,
+            "path": request.url.path,
+            "method": request.method,
+        }
+        token = request_context.set(ctx)
+
+        try:
+            response = await call_next(request)
+            response.headers["X-Request-ID"] = request_id
+            return response
+        finally:
+            request_context.reset(token)
 
 
 class ResponseEnvelopeMiddleware(BaseHTTPMiddleware):

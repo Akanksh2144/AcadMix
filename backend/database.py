@@ -8,6 +8,24 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import event, text
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CONTEXT GUARD — prevents admin engine from being used inside tenant requests.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class SecurityHardeningError(RuntimeError):
+    """Raised when the admin engine is used inside a tenant-scoped request.
+
+    This prevents a developer from accidentally importing ``get_admin_db``
+    into a user-facing router, which would silently bypass all RLS policies.
+    """
+    pass
+
+
+_ADMIN_GUARD_ENABLED = os.getenv("ADMIN_GUARD_ENABLED", "true").lower() == "true"
+_ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
 load_dotenv()
 
 logger = logging.getLogger("acadmix.rls")
@@ -342,7 +360,27 @@ async def get_admin_db():
 
     Use ONLY for system-level operations: user management seed endpoints,
     cross-tenant analytics, migration helpers, etc.
+
+    CONTEXT GUARD: If a tenant context is active (i.e. a regular user request
+    is in progress), this will raise SecurityHardeningError in dev/staging or
+    log a CRITICAL warning in production. The ``super_admin`` sentinel is
+    exempt — that's the expected context for superadmin endpoints.
     """
+    if _ADMIN_GUARD_ENABLED:
+        active_tenant = tenant_context.get()
+        if active_tenant and active_tenant != "super_admin":
+            msg = (
+                f"SECURITY: get_admin_db() called inside tenant-scoped request "
+                f"(tenant_context={active_tenant!r}). This bypasses ALL RLS policies. "
+                f"Use get_db() for tenant-scoped operations, or get_admin_db() only "
+                f"in super_admin routes."
+            )
+            if _ENVIRONMENT in ("development", "staging"):
+                raise SecurityHardeningError(msg)
+            else:
+                # Production: log critical but don't crash (allow investigation)
+                logger.critical(msg)
+
     async with AdminSessionLocal() as session:
         session.info["_admin_bypass"] = True
         async with session.begin():

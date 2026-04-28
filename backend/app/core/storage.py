@@ -73,6 +73,7 @@ def upload_file(
     file_bytes: bytes,
     key: str,
     content_type: str = "application/octet-stream",
+    skip_validation: bool = False,
 ) -> str:
     """
     Upload file bytes to R2 (or local fallback).
@@ -81,10 +82,30 @@ def upload_file(
         file_bytes: Raw file content.
         key: Storage key (e.g. "resumes/{college_id}/{student_id}/resume_v1.pdf").
         content_type: MIME type.
+        skip_validation: Set True for system-generated files (e.g., exports).
 
     Returns:
         Public URL of the uploaded file.
+
+    Raises:
+        PayloadTooLargeError: If file exceeds max size.
+        InputValidationError: If file type is invalid or disguised.
     """
+    # Server-side file validation (security hardening)
+    if not skip_validation:
+        from app.core.file_validator import validate_upload
+        from app.core.exceptions import PayloadTooLargeError, InputValidationError
+
+        # Extract filename from storage key for extension validation
+        filename = key.rsplit("/", 1)[-1] if "/" in key else key
+        max_mb = float(settings.STORAGE_MAX_FILE_SIZE_MB)
+
+        result = validate_upload(file_bytes, filename, max_size_mb=max_mb)
+        if not result.is_valid:
+            if "size" in (result.rejection_reason or "").lower():
+                raise PayloadTooLargeError(result.rejection_reason)
+            raise InputValidationError(result.rejection_reason)
+
     client = _client()
 
     if client:
