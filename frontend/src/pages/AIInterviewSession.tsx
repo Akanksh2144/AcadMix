@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Microphone, MicrophoneSlash, Clock, ArrowsOut, X, Brain, Warning, Sparkle, Stop, ChatCircleDots } from '@phosphor-icons/react';
-import { interviewAPI } from '../services/api';
+import { Microphone, MicrophoneSlash, Clock, ArrowsOut, X, Brain, Warning, Sparkle, Stop, ChatCircleDots, FileText, Upload, ArrowRight } from '@phosphor-icons/react';
+import { interviewAPI, resumeAPI } from '../services/api';
 import { toast } from 'sonner';
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { useTheme } from '../contexts/ThemeContext';
@@ -358,9 +358,59 @@ const HardwareSetupLobby = ({ sessionConfig, onStart, onCancel }) => {
   const [selectedAudioId, setSelectedAudioId] = useState('');
   const [hasMicSignal, setHasMicSignal] = useState(false);
   const [permissionsGranted, setPermissionsGranted] = useState(false);
+  const [hasResume, setHasResume] = useState<boolean | null>(null); // null = loading
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef(null);
   const audioContextRef = useRef(null);
   const animationFrameRef = useRef(null);
+
+  // ── Resume presence check on mount ──
+  useEffect(() => {
+    resumeAPI.latest()
+      .then(res => {
+        setHasResume(!!(res?.data && (res.data.id || res.data.parsed_text)));
+      })
+      .catch(() => {
+        setHasResume(false);
+      });
+  }, []);
+
+  // ── Inline resume upload handler ──
+  const handleResumeUpload = async (file: File) => {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      toast.error('Please upload a PDF file.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be under 5 MB.');
+      return;
+    }
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      await resumeAPI.upload(formData);
+      setHasResume(true);
+      toast.success('Resume uploaded! You\'re good to go.');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || 'Resume upload failed. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleResumeUpload(file);
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleResumeUpload(file);
+  };
 
   const requestPermissionsAndEnumerate = async () => {
     try {
@@ -535,6 +585,51 @@ const HardwareSetupLobby = ({ sessionConfig, onStart, onCancel }) => {
             </div>
           </div>
 
+          {/* ── Resume Check ── */}
+          {hasResume === false && (
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={onDrop}
+              className="mb-6 p-5 rounded-2xl border-2 border-dashed border-amber-300 dark:border-amber-500/40 bg-amber-50/50 dark:bg-amber-500/5 transition-colors"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-11 h-11 bg-amber-100 dark:bg-amber-500/20 rounded-xl flex items-center justify-center shrink-0">
+                  <FileText size={22} weight="duotone" className="text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-extrabold text-sm text-amber-800 dark:text-amber-300 mb-1">Resume Required</h4>
+                  <p className="text-xs text-amber-700/80 dark:text-amber-400/70 mb-3 leading-relaxed">
+                    Ami personalizes your interview using your resume. Upload a PDF to get started.
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    onChange={onFileChange}
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-bold text-xs shadow-md shadow-amber-500/20 transition-all disabled:opacity-60"
+                  >
+                    <Upload size={14} weight="bold" />
+                    {isUploading ? 'Uploading...' : 'Upload Resume (PDF)'}
+                  </button>
+                  <p className="text-[10px] text-amber-600/50 dark:text-amber-400/40 mt-2">or drag & drop a PDF here</p>
+                </div>
+              </div>
+            </div>
+          )}
+          {hasResume === true && (
+            <div className="mb-6 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-center gap-3">
+              <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                <FileText size={16} weight="fill" className="text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Resume detected — Ami will personalize your interview</span>
+            </div>
+          )}
+
           {/* Action Row */}
           <div className="mt-8 flex flex-col-reverse sm:flex-row gap-3 pt-6 border-t border-slate-100 dark:border-slate-800/50">
             <button 
@@ -545,11 +640,11 @@ const HardwareSetupLobby = ({ sessionConfig, onStart, onCancel }) => {
             </button>
             <button 
               onClick={handleStartWrapper} 
-              disabled={!permissionsGranted || !hasMicSignal}
+              disabled={!permissionsGranted || !hasMicSignal || hasResume === false || hasResume === null}
               className="flex-1 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {!permissionsGranted ? 'Waiting for permissions...' : !hasMicSignal ? 'Waiting for mic signal...' : 'Start Interview'}
-              {permissionsGranted && hasMicSignal && <ArrowsOut size={16} weight="bold" />}
+              {hasResume === null ? 'Checking resume...' : hasResume === false ? 'Resume required to start' : !permissionsGranted ? 'Waiting for permissions...' : !hasMicSignal ? 'Waiting for mic signal...' : 'Start Interview'}
+              {permissionsGranted && hasMicSignal && hasResume && <ArrowsOut size={16} weight="bold" />}
             </button>
           </div>
         </div>

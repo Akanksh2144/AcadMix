@@ -19,20 +19,6 @@ const AIInterviewTab = ({ navigate, quota, readiness }) => {
   const [targetRole, setTargetRole] = useState('Software Developer');
   const [targetCompany, setTargetCompany] = useState('');
   const [difficulty, setDifficulty] = useState('intermediate');
-  const [hasResume, setHasResume] = useState<boolean | null>(null); // null = loading
-
-  // ── Resume presence check on mount ──
-  useEffect(() => {
-    resumeAPI.latest()
-      .then(res => {
-        // If the API returns data with parsed_text or a valid record, they have a resume
-        setHasResume(!!(res?.data && (res.data.id || res.data.parsed_text)));
-      })
-      .catch(() => {
-        // 404 or error = no resume
-        setHasResume(false);
-      });
-  }, []);
 
   const types = [
     { id: 'technical', label: 'Technical', icon: Brain, desc: 'DSA, OS, DBMS, OOP' },
@@ -45,10 +31,6 @@ const AIInterviewTab = ({ navigate, quota, readiness }) => {
   const roles = ['Software Developer', 'Data Analyst', 'System Design', 'Frontend Developer', 'Backend Developer', 'DevOps Engineer', 'Full Stack Developer'];
 
   const handleStart = () => {
-    if (hasResume === false) {
-      toast.error('Please upload your resume before starting an interview.');
-      return;
-    }
     navigate('ai-interview-session', {
       interview_type: interviewType,
       target_role: targetRole,
@@ -59,33 +41,6 @@ const AIInterviewTab = ({ navigate, quota, readiness }) => {
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="show">
-      {/* ── Resume Required Gate ── */}
-      {hasResume === false && (
-        <motion.div variants={itemVariants} className="soft-card p-6 mb-6 border-2 border-dashed border-amber-300 dark:border-amber-500/40 bg-amber-50/50 dark:bg-amber-500/5">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-amber-100 dark:bg-amber-500/20 rounded-2xl flex items-center justify-center shrink-0">
-              <FileText size={24} weight="duotone" className="text-amber-600 dark:text-amber-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-extrabold text-base text-amber-800 dark:text-amber-300 mb-1">Resume Required</h4>
-              <p className="text-sm text-amber-700/80 dark:text-amber-400/70 mb-4">
-                Ami personalizes your interview based on your resume — projects, skills, and experience. 
-                Upload your resume first for the most realistic mock interview experience.
-              </p>
-              <motion.button 
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                onClick={() => navigate('resume-vault')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-bold text-sm shadow-md shadow-amber-500/20 transition-all"
-              >
-                <Upload size={16} weight="bold" />
-                Upload Resume
-                <ArrowRight size={14} weight="bold" />
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
       {/* Readiness Score Hero */}
       {readiness && readiness.total_interviews > 0 && (
         <motion.div variants={itemVariants} className="soft-card p-6 mb-6 bg-gradient-to-r from-teal-500/10 to-cyan-500/10 dark:from-teal-500/5 dark:to-cyan-500/5 border-teal-200/50 dark:border-teal-500/20">
@@ -162,12 +117,11 @@ const AIInterviewTab = ({ navigate, quota, readiness }) => {
 
       {/* Start Button */}
       <motion.div variants={itemVariants}>
-        <motion.button whileHover={hasResume !== false ? { scale: 1.01 } : {}} whileTap={hasResume !== false ? { scale: 0.98 } : {}}
+        <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
           onClick={handleStart}
-          disabled={hasResume === false || hasResume === null}
           className="w-full py-5 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white rounded-2xl font-extrabold text-lg transition-all flex items-center justify-center gap-3 shadow-lg shadow-teal-500/20 disabled:opacity-50 disabled:cursor-not-allowed">
           <Sparkle size={24} weight="fill" />
-          {hasResume === null ? 'Checking resume...' : hasResume === false ? 'Resume Required to Start' : 'Start Ami Mock Interview'}
+          Start Ami Mock Interview
           <ArrowRight size={20} weight="bold" />
         </motion.button>
       </motion.div>
