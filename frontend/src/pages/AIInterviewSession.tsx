@@ -576,6 +576,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   const [conversation, setConversation] = useState([]);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(false); // Gates TypewriterText — prevents text leak in thinking mode
   const [feedback, setFeedback] = useState(null);
   const [sessionMicId, setSessionMicId] = useState('');
   const [sessionVideoId, setSessionVideoId] = useState('');
@@ -676,7 +677,12 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
       const fallbackMs = Math.max(3000, text.length * 80 + 2000);
       const tt = setTimeout(safeResolve, fallbackMs);
 
-      utterance.onstart = () => { setIsSpeaking(true); setOrbState('speaking'); stopListening(); };
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        setOrbState('speaking');
+        setShowTranscript(true);  // ← TEXT LEAK FIX: Only show text AFTER TTS starts
+        stopListening();
+      };
       utterance.onend = () => { clearTimeout(tt); safeResolve(); };
       utterance.onerror = () => { clearTimeout(tt); safeResolve(); };
       synthRef.current.speak(utterance);
@@ -698,7 +704,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         audioContextRef.current = new AudioContext();
         analyserRef.current = audioContextRef.current.createAnalyser();
-        analyserRef.current.fftSize = 64; // 32 bins
+        analyserRef.current.fftSize = 256; // 128 bins — better frequency resolution for speech
         
         sourceNodeRef.current = audioContextRef.current.createMediaStreamSource(stream);
         sourceNodeRef.current.connect(analyserRef.current);
@@ -720,6 +726,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
+    recognition.maxAlternatives = 3; // Chrome picks best hypothesis from multiple candidates
 
     recognition.onstart = () => { setIsListening(true); setOrbState('listening'); };
 
@@ -735,7 +742,14 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
       let interim = '';
       let final = transcriptRef.current;
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const t = event.results[i][0].transcript;
+        // Pick the highest-confidence alternative
+        const best = event.results[i][0];
+        const t = best.transcript;
+        const confidence = best.confidence || 1;
+
+        // Noise gate: skip very low-confidence fragments (ambient noise)
+        if (confidence < 0.3 && !event.results[i].isFinal) continue;
+
         if (event.results[i].isFinal) {
           final += t + ' ';
         } else {
@@ -745,13 +759,13 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
       transcriptRef.current = final;
       setTranscript(final + interim);
 
-      // Reset silence timer (3-second auto-submit)
+      // Reset silence timer (4-second auto-submit — gives slower speakers more time)
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = setTimeout(() => {
         if (transcriptRef.current.trim()) {
           submitAnswer(transcriptRef.current.trim());
         }
-      }, 3000);
+      }, 4000);
     };
 
     recognition.onerror = (e) => {
@@ -799,6 +813,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
     if (!interviewId || !answer.trim()) return;
     stopListening();
     setOrbState('thinking');
+    setShowTranscript(false); // ← Hide text immediately when entering thinking mode
     setTranscript('');
     transcriptRef.current = '';
 
@@ -848,6 +863,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
     setPhase('active');
     setOrbState('thinking');
+    setShowTranscript(false); // ← Ensure text is hidden on initial start
 
     try {
       const { data } = await interviewAPI.start({
@@ -932,7 +948,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
         {/* Current question (typewriter) */}
         <div className="mt-16 mb-8 text-center px-4 min-h-[80px]">
-          {currentQuestion && <TypewriterText text={currentQuestion} isSpeaking={isSpeaking} />}
+          {showTranscript && currentQuestion && <TypewriterText text={currentQuestion} isSpeaking={isSpeaking} />}
         </div>
 
         {/* Student transcript (live) */}
