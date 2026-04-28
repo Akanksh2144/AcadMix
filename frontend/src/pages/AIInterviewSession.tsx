@@ -179,12 +179,6 @@ const TypewriterText = ({ text, isSpeaking }) => {
     }
   }, [isSpeaking, text]);
 
-  // Reset when text changes
-  useEffect(() => {
-    setDisplayLength(0);
-    startTimeRef.current = null;
-  }, [text]);
-
   const isComplete = displayLength >= (text?.length || 0);
 
   return (
