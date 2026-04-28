@@ -686,6 +686,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   const prevDisplayedRef = useRef(''); // Tracks last full displayed text (final+interim) to detect real changes
   const isSpeakingRef = useRef(false);
   const phaseRef = useRef('setup');
+  const interviewIdRef = useRef(null); // Avoids stale closure in submitAnswer
   
   // Audio Web API Refs
   const audioContextRef = useRef(null);
@@ -739,6 +740,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
   // Keep refs synced
   useEffect(() => { isSpeakingRef.current = isSpeaking; }, [isSpeaking]);
   useEffect(() => { phaseRef.current = phase; }, [phase]);
+  useEffect(() => { interviewIdRef.current = interviewId; }, [interviewId]);
 
   // ── Stop Listening (defined first — no deps) ──
   const stopListening = useCallback(() => {
@@ -904,7 +906,8 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
 
   // ── Submit answer to backend ──
   const submitAnswer = useCallback(async (answer) => {
-    if (!interviewId || !answer.trim()) return;
+    const currentInterviewId = interviewIdRef.current;
+    if (!currentInterviewId || !answer.trim()) return;
     stopListening();
     setOrbState('thinking');
     setShowTranscript(false); // ← Hide text immediately when entering thinking mode
@@ -913,7 +916,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
     prevDisplayedRef.current = '';
 
     try {
-      const { data } = await interviewAPI.sendMessage(interviewId, { content: answer });
+      const { data } = await interviewAPI.sendMessage(currentInterviewId, { content: answer });
       setConversation(prev => [
         ...prev,
         { role: 'user', content: answer },
@@ -942,7 +945,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
       setOrbState('listening');
       startListening();
     }
-  }, [interviewId, stopListening, speakText, startListening, maxQuestions, handleEndInterview]);
+  }, [stopListening, speakText, startListening, maxQuestions, handleEndInterview]);
 
   // ── Start Interview ──
   const handleStart = async (hardwareIds) => {
