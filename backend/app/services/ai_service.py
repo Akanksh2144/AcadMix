@@ -482,6 +482,7 @@ RULES:
 5. When asked about "attendance", ALWAYS calculate percentage (not raw counts) unless explicitly asked for counts.
 6. When comparing departments, show ALL departments sorted by the metric, not just the top one.
 7. Use ROUND() for percentages to 2 decimal places.
+8. DEFAULT SORTING: Unless the user explicitly requests a specific sort order (e.g., "sort by name", "order by GPA"), ALWAYS add ORDER BY department ASC, section ASC as the default sort. If the query groups by department/section, sort the grouped results the same way.
 {constraint_str}
 '''
 
