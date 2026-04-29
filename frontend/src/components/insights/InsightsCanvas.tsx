@@ -27,7 +27,7 @@ export default function InsightsCanvas({ result, onPin }) {
         </h3>
         
         <div className="flex items-center gap-2">
-          <div className="flex bg-[var(--color-background)] rounded-lg p-1 border border-[var(--color-border)]">
+          <div className="flex bg-[var(--color-background)] rounded-lg p-1 border border-[var(--color-border)] h-9 items-center">
             <button
               onClick={() => setView('table')}
               className={`p-1.5 rounded-md transition-colors ${view === 'table' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}
@@ -60,7 +60,7 @@ export default function InsightsCanvas({ result, onPin }) {
 
           <button
             onClick={handleExport}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-background)] transition-colors"
+            className="flex items-center gap-2 px-3 h-9 text-sm font-medium bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-background)] transition-colors"
           >
             <Download size={16} /> Export
           </button>
@@ -68,7 +68,7 @@ export default function InsightsCanvas({ result, onPin }) {
           {onPin && (
             <button
               onClick={onPin}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap shadow-sm"
+              className="flex items-center gap-2 px-3 h-9 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap shadow-sm"
             >
               <Pin size={16} fill="white" /> Pin to Dashboard
             </button>
