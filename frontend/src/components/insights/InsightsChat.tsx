@@ -83,7 +83,7 @@ export default function InsightsChat({ user, activeCollegeId }) {
     <div className="relative bg-transparent flex flex-col h-[calc(100vh-160px)] w-full transition-colors duration-300">
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto w-full p-2 sm:p-4 space-y-6 hide-scrollbar relative">
+      <div className="flex-1 overflow-y-auto w-full p-2 sm:p-4 pb-16 space-y-6 hide-scrollbar relative">
         
         {/* Empty State / Suggestions */}
         {history.length === 0 && (
@@ -193,9 +193,9 @@ export default function InsightsChat({ user, activeCollegeId }) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Form at the bottom */}
-      <div className="shrink-0 w-full pt-2 pb-1 mt-auto z-30 flex justify-center">
-        <form onSubmit={handleQuery} className="w-full max-w-3xl relative shadow-md rounded-2xl">
+      {/* Floating Input — absolute, no background container */}
+      <div className="absolute bottom-2 left-0 right-0 z-30 flex justify-center px-4 pointer-events-none">
+        <form onSubmit={handleQuery} className="w-full max-w-3xl relative shadow-md rounded-2xl pointer-events-auto">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl p-[1.5px] opacity-20 disabled:opacity-10"></div>
           <div className="relative bg-white dark:bg-[#1A202C] rounded-2xl flex items-center p-1.5 border border-slate-100 dark:border-slate-800 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all duration-300">
              <div className="pl-3 text-slate-400">
