@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, Send, Loader2, Database, Brain, ArrowRight, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../../services/api';
+import { insightsAPI } from '../../services/api';
 import InsightsCanvas from './InsightsCanvas';
 import { toast } from 'sonner';
 
@@ -36,7 +36,7 @@ export default function InsightsChat({ user, activeCollegeId }) {
         content: msg.role === 'assistant' ? msg.result.summary : msg.content
       }));
 
-      const response = await api.post('/api/v1/insights/query', {
+      const response = await insightsAPI.query({
         message: userMessage.content,
         session_history: sessionHistory,
         active_college_id: activeCollegeId
@@ -53,7 +53,7 @@ export default function InsightsChat({ user, activeCollegeId }) {
 
   const handlePin = async (result, queryText) => {
     try {
-      await api.post('/api/v1/insights/pins', {
+      await insightsAPI.createPin({
         title: queryText || result.summary || "Saved Insight",
         nl_query: queryText,
         cached_sql: result.generated_sql,
