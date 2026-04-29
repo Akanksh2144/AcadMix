@@ -19,65 +19,55 @@ export default function InsightsCanvas({ result, onPin }) {
   };
 
   return (
-    <div className="bg-[var(--color-background)] overflow-hidden flex flex-col animation-fade-in w-full">
-      {/* Header and Controls */}
-      <div className="bg-[var(--color-surface)] p-4 flex flex-wrap items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-[var(--color-text)] flex-1 min-w-[200px]">
+    <div className="bg-[var(--color-background)] overflow-hidden flex flex-col animation-fade-in w-full relative">
+      {/* Vertical Icon Toolbar - top right */}
+      <div className="absolute top-3 right-3 z-10 flex flex-col gap-1 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700 p-1 shadow-lg">
+        {[
+          { id: 'table', icon: TableIcon, label: 'Table View' },
+          { id: 'bar_chart', icon: BarChart2, label: 'Bar Chart' },
+          { id: 'pie_chart', icon: PieChartIcon, label: 'Pie Chart' },
+          { id: 'line_chart', icon: LineChartIcon, label: 'Line Chart' },
+        ].map(item => (
+          <button
+            key={item.id}
+            onClick={() => setView(item.id)}
+            className={`p-1.5 rounded-lg transition-colors ${view === item.id ? 'bg-indigo-600 text-white' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+            title={item.label}
+          >
+            <item.icon size={16} />
+          </button>
+        ))}
+
+        <div className="border-t border-slate-200 dark:border-slate-700 my-0.5" />
+
+        <button
+          onClick={handleExport}
+          className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          title="Export"
+        >
+          <Download size={16} />
+        </button>
+
+        {onPin && (
+          <button
+            onClick={onPin}
+            className="p-1.5 rounded-lg text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+            title="Pin to Dashboard"
+          >
+            <Pin size={16} />
+          </button>
+        )}
+      </div>
+
+      {/* Summary Header */}
+      <div className="p-4 pr-14">
+        <h3 className="text-lg font-semibold text-[var(--color-text)]">
           {result.summary || "Here are your insights"}
         </h3>
-        
-        <div className="flex items-center gap-2">
-          <div className="flex bg-[var(--color-background)] rounded-lg p-1 border border-[var(--color-border)] h-9 items-center">
-            <button
-              onClick={() => setView('table')}
-              className={`p-1.5 rounded-md transition-colors ${view === 'table' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}
-              title="Table View"
-            >
-              <TableIcon size={18} />
-            </button>
-            <button
-              onClick={() => setView('bar_chart')}
-              className={`p-1.5 rounded-md transition-colors ${view === 'bar_chart' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}
-              title="Bar Chart"
-            >
-              <BarChart2 size={18} />
-            </button>
-            <button
-              onClick={() => setView('pie_chart')}
-              className={`p-1.5 rounded-md transition-colors ${view === 'pie_chart' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}
-              title="Pie Chart"
-            >
-              <PieChartIcon size={18} />
-            </button>
-            <button
-              onClick={() => setView('line_chart')}
-              className={`p-1.5 rounded-md transition-colors ${view === 'line_chart' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}
-              title="Line Chart"
-            >
-              <LineChartIcon size={18} />
-            </button>
-          </div>
-
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-2 px-3 h-9 text-sm font-medium bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-background)] transition-colors"
-          >
-            <Download size={16} /> Export
-          </button>
-
-          {onPin && (
-            <button
-              onClick={onPin}
-              className="flex items-center gap-2 px-3 h-9 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap shadow-sm"
-            >
-              <Pin size={16} fill="white" /> Pin to Dashboard
-            </button>
-          )}
-        </div>
       </div>
 
       {/* Canvas Area */}
-      <div className="p-4 bg-[var(--color-background)]">
+      <div className="p-4 pt-0 bg-[var(--color-background)]">
         {view === 'table' ? (
           <InsightsTable data={result.data} columns={result.columns} />
         ) : (
