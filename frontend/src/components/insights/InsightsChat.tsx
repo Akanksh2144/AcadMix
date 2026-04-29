@@ -163,9 +163,9 @@ export default function InsightsChat({ user, activeCollegeId }) {
                         <div className="flex-1 min-w-0">
                             <InsightsCanvas 
                               result={msg.result} 
-                              onPin={() => {
+                              onPin={async () => {
                                 const prevUserMsg = history[idx - 1];
-                                handlePin(msg.result, prevUserMsg?.content);
+                                return handlePin(msg.result, prevUserMsg?.content);
                               }} 
                             />
                         </div>

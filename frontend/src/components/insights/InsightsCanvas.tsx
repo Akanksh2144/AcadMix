@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table as TableIcon, BarChart2, PieChart as PieChartIcon, LineChart as LineChartIcon, Download, Pin } from 'lucide-react';
+import { Table as TableIcon, BarChart2, PieChart as PieChartIcon, LineChart as LineChartIcon, Download, Pin, Check, Loader2 } from 'lucide-react';
 import InsightsTable from './InsightsTable';
 import InsightsChart from './InsightsChart';
 import * as XLSX from 'xlsx';
@@ -8,6 +8,7 @@ export default function InsightsCanvas({ result, onPin }) {
   // result = { data, columns, summary, chart_suggestion, generated_sql }
   const defaultView = result.chart_suggestion ? result.chart_suggestion : 'table';
   const [view, setView] = useState(defaultView); // 'table', 'bar_chart', 'pie_chart', 'line_chart'
+  const [pinState, setPinState] = useState('idle'); // 'idle' | 'loading' | 'done'
 
   if (!result || !result.data) return null;
 
@@ -16,6 +17,17 @@ export default function InsightsCanvas({ result, onPin }) {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Insights");
     XLSX.writeFile(wb, "Insights_Export.xlsx");
+  };
+
+  const handlePinClick = async () => {
+    if (!onPin || pinState !== 'idle') return;
+    setPinState('loading');
+    try {
+      await onPin();
+      setPinState('done');
+    } catch {
+      setPinState('idle');
+    }
   };
 
   return (
@@ -48,6 +60,7 @@ export default function InsightsCanvas({ result, onPin }) {
           { id: 'line_chart', icon: LineChartIcon, label: 'Line Chart' },
         ].map(item => (
           <button
+            type="button"
             key={item.id}
             onClick={() => setView(item.id)}
             className={`p-1.5 rounded-xl transition-colors ${view === item.id ? 'bg-indigo-600 text-white' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
@@ -60,6 +73,7 @@ export default function InsightsCanvas({ result, onPin }) {
         <div className="border-t border-slate-200 dark:border-slate-700 my-0.5" />
 
         <button
+          type="button"
           onClick={handleExport}
           className="p-1.5 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           title="Export"
@@ -69,14 +83,23 @@ export default function InsightsCanvas({ result, onPin }) {
 
         {onPin && (
           <button
-            onClick={onPin}
-            className="p-1.5 rounded-xl text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
-            title="Pin to Dashboard"
+            type="button"
+            onClick={handlePinClick}
+            disabled={pinState !== 'idle'}
+            className={`p-1.5 rounded-xl transition-colors ${
+              pinState === 'done'
+                ? 'bg-emerald-500 text-white'
+                : pinState === 'loading'
+                ? 'text-indigo-400 animate-pulse'
+                : 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10'
+            }`}
+            title={pinState === 'done' ? 'Pinned!' : pinState === 'loading' ? 'Pinning...' : 'Pin to Dashboard'}
           >
-            <Pin size={16} />
+            {pinState === 'done' ? <Check size={16} /> : pinState === 'loading' ? <Loader2 size={16} className="animate-spin" /> : <Pin size={16} />}
           </button>
         )}
       </div>
     </div>
   );
 }
+
