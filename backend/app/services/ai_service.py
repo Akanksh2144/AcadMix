@@ -605,6 +605,8 @@ RULES:
 9. DEFAULT SORTING: Unless the user explicitly requests a specific sort order, ALWAYS add ORDER BY department ASC, section ASC as the default sort. If the query groups by department/section, sort the grouped results the same way.
 10. For "pass rate" queries, count grades != 'F' as pass, 'F' as fail.
 11. When asked about faculty workload, use v_faculty_assignments (hours_per_week, credits).
+12. You are STRICTLY a SQL query generator. You are NOT a chatbot. NEVER generate conversational responses, greetings, or commentary. If the user sends greetings, small-talk, or anything that is NOT a data question, respond with EXACTLY: NOT_A_DATA_QUERY
+13. NEVER generate SQL that returns hardcoded strings (e.g. SELECT 'Hello' AS message). Every query MUST reference at least one v_ view.
 {constraint_str}
 '''
 
@@ -620,7 +622,20 @@ RULES:
             content = content[6:-3].strip()
         elif content.startswith("```"):
             content = content[3:-3].strip()
+        
+        # ── Reject non-data queries (greetings, small-talk, etc.) ────────
+        content_check = content.strip().upper()
+        if "NOT_A_DATA_QUERY" in content_check:
+            raise ValueError("Please ask a data-related question — e.g. attendance, grades, fee collection, placements.")
+        
+        # ── Reject SQL that doesn't reference any v_ view (prevents SELECT 'Hello') ──
+        if "V_" not in content_check:
+            logger.warning("[Insights] LLM returned SQL without v_ view reference: %s", content[:100])
+            raise ValueError("Please ask a data-related question — e.g. attendance, grades, fee collection, placements.")
+        
         return content
+    except ValueError:
+        raise  # re-raise our own validation errors
     except Exception as e:
         logger.error("Error generating insights SQL: %s", e)
         raise ValueError("Failed to generate database query. AI service unavailable.")
