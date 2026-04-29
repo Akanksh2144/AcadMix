@@ -1747,14 +1747,14 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
 
         {/* ─── AI Insights Tab ─── */}
         {activeTab === "insights" && (
-            <div className="space-y-6">
-                <div className="flex justify-between items-center mb-4">
-                   <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <div className="space-y-3">
+                <div className="flex justify-between items-center mb-1">
+                   <h3 className="text-lg font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                        <Sparkle weight="fill" className="text-indigo-500" /> Conversational Insights
                    </h3>
                    <button 
                        onClick={() => { setIsChatting(!isChatting); setActivePinData(null); }} 
-                       className="btn-primary py-2 px-4 shadow-sm text-sm"
+                       className="btn-primary py-1.5 px-3 shadow-sm text-sm"
                    >
                        {isChatting ? "View Pinned Dashboards" : "New Query"}
                    </button>

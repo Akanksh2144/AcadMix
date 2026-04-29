@@ -80,22 +80,7 @@ export default function InsightsChat({ user, activeCollegeId }) {
   };
 
   return (
-    <div className="relative bg-transparent flex flex-col h-[calc(100vh-140px)] w-full transition-colors duration-300">
-      
-      {/* Premium Header - Left Cornered */}
-      <div className="w-full pb-4 mb-2 border-b border-slate-200/50 dark:border-white/[0.05] flex items-center justify-start gap-4 shrink-0">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.4)]">
-          <Brain className="text-white" size={24} />
-        </div>
-        <div>
-          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            Conversational <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">Insights</span>
-          </h2>
-          <p className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
-            Query institutional truth via natural language
-          </p>
-        </div>
-      </div>
+    <div className="relative bg-transparent flex flex-col h-[calc(100vh-160px)] w-full transition-colors duration-300">
 
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto w-full p-2 sm:p-4 space-y-6 hide-scrollbar relative">
