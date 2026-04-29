@@ -53,7 +53,7 @@ export default function InsightsChat({ user, activeCollegeId }) {
 
   const handlePin = async (result, queryText) => {
     try {
-      await insightsAPI.createPin({
+      const res = await insightsAPI.createPin({
         title: queryText || result.summary || "Saved Insight",
         nl_query: queryText || result.summary || "Untitled query",
         cached_sql: result.generated_sql || "",
@@ -61,9 +61,21 @@ export default function InsightsChat({ user, activeCollegeId }) {
         active_college_id: activeCollegeId
       });
       toast.success("Pinned to your dashboard!");
+      return res.data?.id || res.data; // return pin ID for unpin toggle
     } catch (error) {
       const detail = error.response?.data?.detail || error.message || "Unknown error";
       toast.error(`Failed to pin: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
+      throw error; // re-throw so canvas knows it failed
+    }
+  };
+
+  const handleUnpin = async (pinId) => {
+    try {
+      await insightsAPI.deletePin(pinId);
+      toast.success("Unpinned from dashboard");
+    } catch (error) {
+      toast.error("Failed to unpin");
+      throw error;
     }
   };
 
@@ -166,7 +178,8 @@ export default function InsightsChat({ user, activeCollegeId }) {
                               onPin={async () => {
                                 const prevUserMsg = history[idx - 1];
                                 return handlePin(msg.result, prevUserMsg?.content);
-                              }} 
+                              }}
+                              onUnpin={handleUnpin}
                             />
                         </div>
                     </div>

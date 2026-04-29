@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Table as TableIcon, BarChart2, PieChart as PieChartIcon, LineChart as LineChartIcon, Download, Pin, Check, Loader2 } from 'lucide-react';
+import { Table as TableIcon, BarChart2, PieChart as PieChartIcon, LineChart as LineChartIcon, Download, Pin, PinOff, Loader2 } from 'lucide-react';
 import InsightsTable from './InsightsTable';
 import InsightsChart from './InsightsChart';
 import * as XLSX from 'xlsx';
 
-export default function InsightsCanvas({ result, onPin }) {
+export default function InsightsCanvas({ result, onPin, onUnpin }) {
   // result = { data, columns, summary, chart_suggestion, generated_sql }
   const defaultView = result.chart_suggestion ? result.chart_suggestion : 'table';
-  const [view, setView] = useState(defaultView); // 'table', 'bar_chart', 'pie_chart', 'line_chart'
-  const [pinState, setPinState] = useState('idle'); // 'idle' | 'loading' | 'done'
+  const [view, setView] = useState(defaultView);
+  const [pinState, setPinState] = useState('idle'); // 'idle' | 'loading' | 'pinned'
+  const [pinnedId, setPinnedId] = useState(null);
 
   if (!result || !result.data) return null;
 
@@ -19,14 +20,29 @@ export default function InsightsCanvas({ result, onPin }) {
     XLSX.writeFile(wb, "Insights_Export.xlsx");
   };
 
-  const handlePinClick = async () => {
-    if (!onPin || pinState !== 'idle') return;
-    setPinState('loading');
-    try {
-      await onPin();
-      setPinState('done');
-    } catch {
-      setPinState('idle');
+  const handlePinToggle = async () => {
+    if (pinState === 'loading') return;
+
+    if (pinState === 'pinned' && pinnedId && onUnpin) {
+      // Unpin
+      setPinState('loading');
+      try {
+        await onUnpin(pinnedId);
+        setPinnedId(null);
+        setPinState('idle');
+      } catch {
+        setPinState('pinned');
+      }
+    } else if (pinState === 'idle' && onPin) {
+      // Pin
+      setPinState('loading');
+      try {
+        const id = await onPin();
+        setPinnedId(id);
+        setPinState('pinned');
+      } catch {
+        setPinState('idle');
+      }
     }
   };
 
@@ -84,22 +100,26 @@ export default function InsightsCanvas({ result, onPin }) {
         {onPin && (
           <button
             type="button"
-            onClick={handlePinClick}
-            disabled={pinState !== 'idle'}
+            onClick={handlePinToggle}
+            disabled={pinState === 'loading'}
             className={`p-1.5 rounded-xl transition-colors ${
-              pinState === 'done'
-                ? 'bg-emerald-500 text-white'
+              pinState === 'pinned'
+                ? 'bg-emerald-500 text-white hover:bg-rose-500'
                 : pinState === 'loading'
                 ? 'text-indigo-400 animate-pulse'
                 : 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10'
             }`}
-            title={pinState === 'done' ? 'Pinned!' : pinState === 'loading' ? 'Pinning...' : 'Pin to Dashboard'}
+            title={pinState === 'pinned' ? 'Unpin from Dashboard' : pinState === 'loading' ? 'Working...' : 'Pin to Dashboard'}
           >
-            {pinState === 'done' ? <Check size={16} /> : pinState === 'loading' ? <Loader2 size={16} className="animate-spin" /> : <Pin size={16} />}
+            {pinState === 'loading'
+              ? <Loader2 size={16} className="animate-spin" />
+              : pinState === 'pinned'
+              ? <PinOff size={16} />
+              : <Pin size={16} />
+            }
           </button>
         )}
       </div>
     </div>
   );
 }
-
