@@ -62,7 +62,7 @@ export default function InsightsCanvas({ result, onPin, onUnpin }) {
   return (
     <div className="flex items-start gap-2 animation-fade-in w-full">
       {/* Card Content */}
-      <div className="flex-1 min-w-0 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-800 rounded-3xl rounded-tl-sm shadow-sm overflow-hidden">
+      <div className="flex-1 min-w-0 bg-[#EAEAE8] dark:bg-[#1A202C] border border-slate-200 dark:border-slate-800 rounded-3xl rounded-tl-sm shadow-sm overflow-hidden">
         <div className="p-4">
           <h3 className="text-lg font-semibold text-[var(--color-text)]">
             {result.summary || "Here are your insights"}
