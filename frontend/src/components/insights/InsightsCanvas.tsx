@@ -8,7 +8,7 @@ export default function InsightsCanvas({ result, onPin, onUnpin }) {
   // result = { data, columns, summary, chart_suggestion, generated_sql }
   const defaultView = result.chart_suggestion ? result.chart_suggestion : 'table';
   const [view, setView] = useState(defaultView);
-  const [pinState, setPinState] = useState('idle'); // 'idle' | 'loading' | 'pinned'
+  const [pinState, setPinState] = useState('idle'); // 'idle' | 'pinned'
   const [pinnedId, setPinnedId] = useState(null);
 
   if (!result || !result.data) return null;
@@ -20,29 +20,27 @@ export default function InsightsCanvas({ result, onPin, onUnpin }) {
     XLSX.writeFile(wb, "Insights_Export.xlsx");
   };
 
-  const handlePinToggle = async () => {
-    if (pinState === 'loading') return;
-
+  const handlePinToggle = () => {
     if (pinState === 'pinned' && pinnedId && onUnpin) {
-      // Unpin
-      setPinState('loading');
-      try {
-        await onUnpin(pinnedId);
-        setPinnedId(null);
-        setPinState('idle');
-      } catch {
+      // Optimistic unpin — revert to idle immediately
+      const prevId = pinnedId;
+      setPinState('idle');
+      setPinnedId(null);
+      onUnpin(prevId).catch(() => {
+        // Revert on failure
+        setPinnedId(prevId);
         setPinState('pinned');
-      }
+      });
     } else if (pinState === 'idle' && onPin) {
-      // Pin
-      setPinState('loading');
-      try {
-        const id = await onPin();
+      // Optimistic pin — show pinned immediately
+      setPinState('pinned');
+      onPin().then((id) => {
         setPinnedId(id);
-        setPinState('pinned');
-      } catch {
+      }).catch(() => {
+        // Revert on failure
         setPinState('idle');
-      }
+        setPinnedId(null);
+      });
     }
   };
 
@@ -101,22 +99,14 @@ export default function InsightsCanvas({ result, onPin, onUnpin }) {
           <button
             type="button"
             onClick={handlePinToggle}
-            disabled={pinState === 'loading'}
-            className={`p-1.5 rounded-xl transition-colors ${
+            className={`p-1.5 rounded-xl transition-all duration-200 ${
               pinState === 'pinned'
                 ? 'bg-emerald-500 text-white hover:bg-rose-500'
-                : pinState === 'loading'
-                ? 'text-indigo-400 animate-pulse'
                 : 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10'
             }`}
-            title={pinState === 'pinned' ? 'Unpin from Dashboard' : pinState === 'loading' ? 'Working...' : 'Pin to Dashboard'}
+            title={pinState === 'pinned' ? 'Unpin from Dashboard' : 'Pin to Dashboard'}
           >
-            {pinState === 'loading'
-              ? <Loader2 size={16} className="animate-spin" />
-              : pinState === 'pinned'
-              ? <PinOff size={16} />
-              : <Pin size={16} />
-            }
+            {pinState === 'pinned' ? <PinOff size={16} /> : <Pin size={16} />}
           </button>
         )}
       </div>
