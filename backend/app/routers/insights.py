@@ -2,6 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 from datetime import datetime, timezone
+import hashlib
+import json
+import logging
 
 from app.schemas.insights import InsightsQueryRequest, InsightsQueryResponse, PinnedInsightCreate, PinnedInsightResponse
 from app.services.ai_service import generate_insights_sql, format_insights_summary
@@ -12,7 +15,26 @@ from app.models.core import User, PinnedInsight
 from sqlalchemy import select
 from typing import List
 
+logger = logging.getLogger("acadmix.insights")
+
 router = APIRouter()
+
+# ── Insights Cache Helpers ────────────────────────────────────────────────────
+INSIGHTS_CACHE_TTL = 300  # 5 minutes
+
+async def _get_redis():
+    """Lazy-import the shared Redis pool."""
+    try:
+        from app.services.wa_state_machine import get_redis
+        return await get_redis()
+    except Exception:
+        return None
+
+def _insights_cache_key(query: str, role: str) -> str:
+    """SHA-256 hash of (query + role) for cache deduplication."""
+    digest = hashlib.sha256(f"{role}:{query.strip().lower()}".encode()).hexdigest()
+    return f"insights_cache:{digest}"
+
 
 @router.post("/query", response_model=InsightsQueryResponse)
 async def query_insights(
@@ -28,6 +50,19 @@ async def query_insights(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to access the Insights module."
         )
+
+    # ── Cache Lookup ──────────────────────────────────────────────────────
+    cache_key = _insights_cache_key(request.message, role)
+    r = await _get_redis()
+    if r and not request.cached_sql:  # only cache fresh queries, not re-executions
+        try:
+            cached = await r.get(cache_key)
+            if cached:
+                logger.info("Insights cache HIT: %s", cache_key[:40])
+                cached_data = json.loads(cached)
+                return InsightsQueryResponse(**cached_data)
+        except Exception:
+            pass  # Redis down — proceed without cache
 
     # 1. Generate SQL from Natural Language OR use cached_sql
     if request.cached_sql:
@@ -72,15 +107,25 @@ async def query_insights(
             "summary": f"Query returned {len_data} rows.",
             "chart_suggestion": None
         }
-        
-    return InsightsQueryResponse(
-        summary=summary_info.get("summary", ""),
-        data=result["data"],
-        columns=result["columns"],
-        chart_suggestion=summary_info.get("chart_suggestion"),
-        exportable=True,
-        generated_sql=generated_sql
-    )
+    
+    response_data = {
+        "summary": summary_info.get("summary", ""),
+        "data": result["data"],
+        "columns": result["columns"],
+        "chart_suggestion": summary_info.get("chart_suggestion"),
+        "exportable": True,
+        "generated_sql": generated_sql
+    }
+
+    # ── Cache Write ───────────────────────────────────────────────────────
+    if r and not request.cached_sql:
+        try:
+            await r.set(cache_key, json.dumps(response_data, default=str), ex=INSIGHTS_CACHE_TTL)
+            logger.info("Insights cache SET: %s (TTL %ds)", cache_key[:40], INSIGHTS_CACHE_TTL)
+        except Exception:
+            pass  # Redis down — skip cache write
+
+    return InsightsQueryResponse(**response_data)
 
 @router.post("/pins", response_model=PinnedInsightResponse)
 async def create_pin(
