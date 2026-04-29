@@ -330,11 +330,13 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
 
   const deletePin = async (id) => {
     try {
-      await insightsAPI.deletePin(id);
-      setPins(pins.filter(p => p.id !== id));
+      console.log('[Insights] Deleting pin:', id);
+      const res = await insightsAPI.deletePin(id);
+      console.log('[Insights] Delete response:', res.status, res.data);
+      setPins(prev => prev.filter(p => p.id !== id));
       setActivePinData(null);
     } catch (err) {
-      alert("Failed to delete pin");
+      console.error('[Insights] Delete failed:', err?.response?.status, err?.response?.data, err);
     }
   };
 

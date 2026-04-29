@@ -201,9 +201,12 @@ async def delete_pin(
     db: AsyncSession = Depends(get_db)
 ):
     role = current_user.get("role", "").upper()
+    user_id = current_user.get("id")
+    logger.info("delete_pin called: pin_id=%s, user_id=%s, role=%s", pin_id, user_id, role)
+    
     stmt = select(PinnedInsight).where(
         PinnedInsight.id == pin_id,
-        PinnedInsight.user_id == current_user.get("id"),
+        PinnedInsight.user_id == user_id,
         PinnedInsight.role == role,
         PinnedInsight.is_deleted == False
     )
@@ -211,8 +214,10 @@ async def delete_pin(
     pin = result.scalar_one_or_none()
     
     if not pin:
+        logger.warning("delete_pin: pin not found — pin_id=%s, user_id=%s, role=%s", pin_id, user_id, role)
         raise HTTPException(status_code=404, detail="Pin not found")
         
     pin.is_deleted = True
-    # Managed transaction (session.begin) auto-commits on success
+    await db.flush()  # ensure dirty flag is written within the managed transaction
+    logger.info("delete_pin: success — pin_id=%s soft-deleted", pin_id)
     return {"message": "Success"}
