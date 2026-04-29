@@ -426,7 +426,7 @@ async def generate_insights_sql(user_query: str, history: List[Dict[str, str]] =
     role_upper = role.upper()
     
     # Base Schema for generic roles
-    students_schema = "- v_students(id, name, email, roll_number, department, section, current_semester, cgpa, graduation_year)"
+    students_schema = "- v_students(id, name, email, roll_number, department, section, current_semester, batch)"
     attendance_schema = "- v_attendance(id, student_id, date, subject_code, status, is_late_entry, department, section)"
     invoices_schema = "- v_invoices(id, student_id, fee_type, total_amount, academic_year, due_date, department, section)"
     payments_schema = "- v_payments(id, student_id, invoice_id, amount_paid, status, transaction_date, department, section)"
@@ -437,8 +437,8 @@ async def generate_insights_sql(user_query: str, history: List[Dict[str, str]] =
 - v_placement_drives(id, company_id, role_title, drive_type, package_lpa, drive_date, status, min_cgpa)
 - v_placement_applications(id, drive_id, student_id, status, registered_at)"""
     
-    exams_schema = """- v_quizzes(id, title, subject_code, department, status, total_marks)
-- v_quiz_attempts(id, quiz_id, student_id, score, status)"""
+    exams_schema = """- v_quizzes(id, title, type, status, total_marks, faculty_id, course_id, created_at)
+- v_quiz_attempts(id, quiz_id, student_id, status, final_score, start_time, end_time)"""
 
     schemas = [students_schema, departments_schema]
     constraints = []
