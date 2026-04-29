@@ -445,6 +445,10 @@ async def execute_insights_query(session: AsyncSession, sql_query: str, college_
         clean_sql = re.sub(r"\s*```$", "", clean_sql, flags=re.IGNORECASE)
     clean_sql = clean_sql.strip().rstrip(";")
     
+    # Sanitize: strip trailing empty ORDER BY (LLM sometimes generates "ORDER BY)" or "ORDER BY")
+    clean_sql = re.sub(r'\s+ORDER\s+BY\s*\)', ')', clean_sql, flags=re.IGNORECASE)
+    clean_sql = re.sub(r'\s+ORDER\s+BY\s*$', '', clean_sql, flags=re.IGNORECASE)
+    
     validate_sql_safety(clean_sql)
     
     limited_sql = f"SELECT * FROM ({clean_sql}) AS _llm_q LIMIT 1000"
