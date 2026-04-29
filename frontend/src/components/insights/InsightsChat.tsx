@@ -46,7 +46,7 @@ export default function InsightsChat({ user, activeCollegeId, onPinsChanged }) {
     } catch (error) {
       const detail = error.response?.data?.detail;
       const statusCode = error.response?.status;
-      console.error('[InsightsChat] Query failed:', { statusCode, detail, error: error.message, fullResponse: error.response?.data });
+      console.error('[InsightsChat] Query failed:', { statusCode, detail, error: error.message });
       toast.error(detail || error.message || "Failed to fetch insights");
       setHistory([...newHistory, { role: 'assistant', error: true, content: detail || "Sorry, I had trouble processing that request." }]);
     } finally {
