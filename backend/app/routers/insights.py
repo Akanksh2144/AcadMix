@@ -30,9 +30,14 @@ async def _get_redis():
     except Exception:
         return None
 
-def _insights_cache_key(query: str, role: str) -> str:
-    """SHA-256 hash of (query + role) for cache deduplication."""
-    digest = hashlib.sha256(f"{role}:{query.strip().lower()}".encode()).hexdigest()
+def _insights_cache_key(sql: str, role: str) -> str:
+    """SHA-256 hash of (generated SQL + role) for semantic cache deduplication.
+    
+    Keying on SQL instead of NL text means semantically identical questions
+    ('students below 50%' vs 'students with <50% attendance') that produce
+    the same SQL will share the same cache entry.
+    """
+    digest = hashlib.sha256(f"{role}:{sql.strip()}".encode()).hexdigest()
     return f"insights_cache:{digest}"
 
 
@@ -51,19 +56,6 @@ async def query_insights(
             detail="You do not have permission to access the Insights module."
         )
 
-    # ── Cache Lookup ──────────────────────────────────────────────────────
-    cache_key = _insights_cache_key(request.message, role)
-    r = await _get_redis()
-    if r and not request.cached_sql:  # only cache fresh queries, not re-executions
-        try:
-            cached = await r.get(cache_key)
-            if cached:
-                logger.info("Insights cache HIT: %s", cache_key[:40])
-                cached_data = json.loads(cached)
-                return InsightsQueryResponse(**cached_data)
-        except Exception:
-            pass  # Redis down — proceed without cache
-
     # 1. Generate SQL from Natural Language OR use cached_sql
     if request.cached_sql:
         generated_sql = request.cached_sql
@@ -73,7 +65,20 @@ async def query_insights(
             generated_sql = await generate_insights_sql(request.message, history_dicts, role)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-        
+
+    # ── Cache Lookup (keyed on generated SQL for semantic dedup) ──────────
+    r = await _get_redis()
+    cache_key = _insights_cache_key(generated_sql, role)
+    if r and not request.cached_sql:
+        try:
+            cached = await r.get(cache_key)
+            if cached:
+                logger.info("Insights cache HIT (SQL-keyed): %s", cache_key[:40])
+                cached_data = json.loads(cached)
+                return InsightsQueryResponse(**cached_data)
+        except Exception:
+            pass  # Redis down — proceed without cache
+
     # 2. Execute SQL Securely with Scope Validator
     # For DHTE/Superadmin, use active_college_id if provided.
     target_college = request.active_college_id if request.active_college_id and role in ["DHTE_NODAL", "SUPERADMIN"] else current_user.get("college_id")
