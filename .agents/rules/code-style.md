@@ -9,3 +9,4 @@ Do not use generic window.alerts. Use neat and premium alert popups like we use 
 before changing anything any tech stack/AI models, ask for my permission first.
 always use active tab container shape same as the external container.
 Use pill shaped container for tab menu
+go through all previous conversations.

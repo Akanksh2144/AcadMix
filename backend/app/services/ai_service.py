@@ -552,8 +552,9 @@ DOMAIN KNOWLEDGE:
 - GRADES: v_semester_grades.grade values: 'O' (Outstanding, 10 pts), 'A+' (9 pts), 'A' (8 pts), 'B+' (7 pts), 'B' (6 pts), 'C' (5 pts), 'F' (Fail, 0 pts).
   To calculate GPA: SUM(credits_earned * grade_points) / NULLIF(SUM(credits_earned), 0).
   To convert grade to points, use CASE: CASE grade WHEN 'O' THEN 10 WHEN 'A+' THEN 9 WHEN 'A' THEN 8 WHEN 'B+' THEN 7 WHEN 'B' THEN 6 WHEN 'C' THEN 5 WHEN 'F' THEN 0 ELSE 0 END.
-  "Top performing" or "best students" means highest GPA. "Pass rate" means % of non-'F' grades.
-  IMPORTANT: For "top performing students", "best students", "highest GPA", or any performance ranking query, ALWAYS compute GPA from v_semester_grades using the grade-to-points CASE expression above. Do NOT use v_student_rankings — it is a precomputed cache that may be empty.
+  "Top performing" or "best students" means highest CGPA. "Pass rate" means % of non-'F' grades.
+  CGPA vs SGPA: When computing GPA across ALL semesters (no semester filter), label the column as "CGPA". When computing for a SPECIFIC semester, label it as "SGPA". Default to CGPA unless the user specifically asks for a single semester.
+  IMPORTANT: For "top performing students", "best students", "highest GPA/CGPA", or any performance ranking query, ALWAYS compute CGPA from v_semester_grades using the grade-to-points CASE expression above. Do NOT use v_student_rankings — it is a precomputed cache that may be empty.
 
 - RANKINGS: v_student_rankings is a precomputed leaderboard cache. It MAY BE EMPTY. Always prefer computing GPA from v_semester_grades instead.
 
