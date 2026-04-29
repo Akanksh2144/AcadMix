@@ -418,71 +418,191 @@ async def generate_coach_stream(messages: List[Dict[str, str]], current_code: st
 async def generate_insights_sql(user_query: str, history: List[Dict[str, str]] = None, role: str = "") -> str:
     """Uses LLM to convert a natural language query into a PostgreSQL SELECT query.
     
-    Production: AWS Bedrock Nova Pro → Claude 3.7 Sonnet (complex fallback)
-    Fallback:   LiteLLM → Groq / Gemini AI Studio
+    Covers the FULL AcadMix database: students, grades, marks, attendance,
+    courses, faculty, fees, placements, hostel, library, feedback, grievances,
+    leave management, exams, scholarships, mentoring, and more.
+    
+    Production: Vertex AI Gemini 2.5 Flash → Gemini 2.5 Pro (complex fallback)
     """
     from app.services.llm_gateway import gateway
 
     role_upper = role.upper()
-    
-    # Base Schema for generic roles
-    students_schema = "- v_students(id, name, email, roll_number, department, section, current_semester, batch)"
-    attendance_schema = "- v_attendance(id, student_id, date, subject_code, status, is_late_entry, department, section)"
-    invoices_schema = "- v_invoices(id, student_id, fee_type, total_amount, academic_year, due_date, department, section)"
-    payments_schema = "- v_payments(id, student_id, invoice_id, amount_paid, status, transaction_date, department, section)"
-    departments_schema = "- v_departments(id, name, code, hod_user_id)"
-    
-    # Advanced Schemas
-    placements_schema = """- v_companies(id, name, sector, website)
-- v_placement_drives(id, company_id, role_title, drive_type, package_lpa, drive_date, status, min_cgpa)
-- v_placement_applications(id, drive_id, student_id, status, registered_at)"""
-    
-    exams_schema = """- v_quizzes(id, title, type, status, total_marks, faculty_id, course_id, created_at)
-- v_quiz_attempts(id, quiz_id, student_id, status, final_score, start_time, end_time)"""
 
-    schemas = [students_schema, departments_schema]
+    # ── TIER 0: Universal schemas (every role gets these) ────────────────────
+    
+    base_schemas = [
+        "- v_students(id, name, email, roll_number, department, section, current_semester, batch, gender, date_of_birth, enrollment_status, abc_id)",
+        "- v_departments(id, name, code, hod_user_id)",
+        "- v_courses(id, name, subject_code, credits, semester, type, course_category, regulation_year, hours_per_week, lecture_hrs, tutorial_hrs, practical_hrs, is_mooc, mooc_platform, department_name, department_code)",
+        "- v_faculty(id, name, email, department, phone)",
+        "- v_faculty_assignments(id, teacher_id, teacher_name, subject_code, subject_name, department, batch, section, semester, academic_year, credits, hours_per_week, is_lab)",
+    ]
+
+    # ── TIER 1: Academic schemas (all except TPO) ────────────────────────────
+
+    academic_schemas = [
+        "- v_attendance(id, student_id, date, subject_code, status, is_late_entry, department, section)",
+        "- v_semester_grades(id, student_id, student_name, roll_number, department, section, batch, semester, course_id, grade, credits_earned, is_supplementary)",
+        "- v_mark_entries(id, student_id, student_name, roll_number, department, section, subject_code, exam_type, semester, max_marks, marks_obtained, entry_status, submission_status, faculty_name)",
+        "- v_student_rankings(student_id, student_name, roll_number, department, section, batch, rank, total_students, avg_score, computed_at)",
+        "- v_leave_requests(id, applicant_id, applicant_name, applicant_role, leave_type, from_date, to_date, reason, status, reviewed_by, created_at)",
+        "- v_mentor_assignments(id, faculty_id, mentor_name, student_id, student_name, department, section, batch, academic_year, is_active)",
+    ]
+
+    # ── TIER 2: Feedback & Evaluations ───────────────────────────────────────
+
+    feedback_schemas = [
+        "- v_course_feedback(id, student_id, faculty_id, faculty_name, department, subject_code, academic_year, semester, content_rating, teaching_rating, engagement_rating, assessment_rating, overall_rating)",
+        "- v_teaching_evaluations(id, faculty_id, faculty_name, department, subject_code, academic_year, content_coverage_rating, methodology_rating, engagement_rating, assessment_quality_rating, overall_rating, evaluation_date)",
+    ]
+
+    # ── TIER 3: Exams & Assessments ──────────────────────────────────────────
+
+    exam_schemas = [
+        "- v_quizzes(id, title, type, status, total_marks, faculty_id, course_id, created_at)",
+        "- v_quiz_attempts(id, quiz_id, student_id, status, final_score, start_time, end_time)",
+        "- v_exam_schedules(id, department_id, department_name, batch, semester, academic_year, subject_code, subject_name, exam_date, session, exam_time, is_published)",
+    ]
+
+    # ── TIER 4: Financial ────────────────────────────────────────────────────
+
+    financial_schemas = [
+        "- v_invoices(id, student_id, fee_type, total_amount, academic_year, due_date, department, section)",
+        "- v_payments(id, student_id, invoice_id, amount_paid, status, transaction_date, department, section)",
+    ]
+
+    scholarship_schemas = [
+        "- v_scholarship_applications(id, student_id, student_name, department, section, batch, scholarship_name, scholarship_type, status, applied_at)",
+    ]
+
+    # ── TIER 5: Placements ───────────────────────────────────────────────────
+
+    placement_schemas = [
+        "- v_companies(id, name, sector, website)",
+        "- v_placement_drives(id, company_id, role_title, drive_type, package_lpa, drive_date, status, min_cgpa, type, work_location, stipend, duration_weeks)",
+        "- v_placement_applications(id, drive_id, student_id, student_name, department, section, batch, status, registered_at)",
+    ]
+
+    # ── TIER 6: Hostel & Library ─────────────────────────────────────────────
+
+    hostel_library_schemas = [
+        "- v_hostel_allocations(id, student_id, student_name, department, section, batch, hostel_name, room_no, floor, bed_label, academic_year, allocated_at, vacated_at, status)",
+        "- v_library_transactions(id, student_id, student_name, department, section, book_title, author, isbn, issue_date, due_date, return_date, status, fine_amount)",
+    ]
+
+    # ── TIER 7: Governance ───────────────────────────────────────────────────
+
+    governance_schemas = [
+        "- v_grievances(id, submitted_by, submitted_by_name, submitted_by_role, category, subject, description, status, is_anonymous, created_at)",
+        "- v_announcements(id, title, message, priority, created_at)",
+    ]
+
+    # ═════════════════════════════════════════════════════════════════════════
+    # ROLE-BASED SCHEMA ASSEMBLY
+    # ═════════════════════════════════════════════════════════════════════════
+
+    schemas = list(base_schemas)  # copy
     constraints = []
-    
+
     if role_upper == "TPO":
-        schemas.append(placements_schema)
-        constraints.append("You are querying only Placement and Student data. DO NOT attempt to query attendance or invoices.")
+        # TPO: only placement + student data
+        schemas.extend(placement_schemas)
+        constraints.append("You are the TPO. You can ONLY query student and placement data. DO NOT query attendance, grades, invoices, or academic tables.")
     else:
-        schemas.append(attendance_schema)
-        schemas.append(invoices_schema)
-        schemas.append(payments_schema)
-        
+        # All academic roles get academic + financial views
+        schemas.extend(academic_schemas)
+        schemas.extend(financial_schemas)
+
+    # Feedback & Evaluations — academic leadership
+    if role_upper in ["PRINCIPAL", "HOD", "ADMIN", "SUPERADMIN", "EXAM_CELL", "FACULTY", "DHTE_NODAL", "INSTITUTIONAL_NODAL"]:
+        schemas.extend(feedback_schemas)
+
+    # Exams — exam cell + academic leadership
     if role_upper in ["EXAM_CELL", "SUPERADMIN", "PRINCIPAL", "ADMIN", "FACULTY", "HOD", "DHTE_NODAL", "INSTITUTIONAL_NODAL"]:
-        schemas.append(exams_schema)
-        
+        schemas.extend(exam_schemas)
+
+    # Scholarships — financial leadership
+    if role_upper in ["PRINCIPAL", "ADMIN", "SUPERADMIN", "DHTE_NODAL", "INSTITUTIONAL_NODAL"]:
+        schemas.extend(scholarship_schemas)
+
+    # Placements — leadership roles also see placement data
     if role_upper in ["SUPERADMIN", "PRINCIPAL", "ADMIN", "DHTE_NODAL", "INSTITUTIONAL_NODAL"]:
-        schemas.append(placements_schema)
-        
+        schemas.extend(placement_schemas)
+
+    # Hostel & Library — institutional leadership
+    if role_upper in ["PRINCIPAL", "ADMIN", "SUPERADMIN", "DHTE_NODAL", "INSTITUTIONAL_NODAL"]:
+        schemas.extend(hostel_library_schemas)
+
+    # Governance — institutional leadership
+    if role_upper in ["PRINCIPAL", "ADMIN", "SUPERADMIN", "DHTE_NODAL", "INSTITUTIONAL_NODAL"]:
+        schemas.extend(governance_schemas)
+
     schema_str = "\n".join(schemas)
-    constraint_str = "\n".join(constraints)
-    
+    constraint_str = "\n".join(constraints) if constraints else ""
+
     schema_context = f'''
-YOU MUST ONLY QUERY FROM THESE VIEWS. Never query actual tables like 'users' or 'attendance_records'.
+YOU MUST ONLY QUERY FROM THESE VIEWS. Never query actual tables like 'users', 'attendance_records', 'semester_grades', etc.
 {schema_str}
 
 DOMAIN KNOWLEDGE:
-- v_attendance.status has values: 'present', 'absent', 'late', 'od' (on-duty), 'medical'. 
+- ATTENDANCE: v_attendance.status values: 'present', 'absent', 'late', 'od' (on-duty), 'medical'. 
   To calculate attendance %, use: ROUND(COUNT(CASE WHEN status IN ('present','late','od','medical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS attendance_pct
   'present', 'late', 'od', and 'medical' all count as ATTENDED. Only 'absent' is not attended.
-- v_invoices.fee_type values: 'tuition', 'hostel', 'exam', 'library', etc.
-- v_payments.status values: 'completed', 'pending', 'failed'.
-- v_quiz_attempts.status values: 'completed', 'in_progress', 'abandoned'.
-- v_placement_applications.status values: 'applied', 'shortlisted', 'selected', 'rejected'.
-- v_placement_drives.drive_type values: 'on_campus', 'off_campus', 'pool'.
+
+- GRADES: v_semester_grades.grade values: 'O' (Outstanding, 10 pts), 'A+' (9 pts), 'A' (8 pts), 'B+' (7 pts), 'B' (6 pts), 'C' (5 pts), 'F' (Fail, 0 pts).
+  To calculate GPA: SUM(credits_earned * grade_points) / NULLIF(SUM(credits_earned), 0).
+  To convert grade to points, use CASE: CASE grade WHEN 'O' THEN 10 WHEN 'A+' THEN 9 WHEN 'A' THEN 8 WHEN 'B+' THEN 7 WHEN 'B' THEN 6 WHEN 'C' THEN 5 WHEN 'F' THEN 0 ELSE 0 END.
+  "Top performing" or "best students" means highest GPA. "Pass rate" means % of non-'F' grades.
+
+- MARKS: v_mark_entries.exam_type values: 'mid1', 'mid2', 'endterm', 'assignment', 'practical', 'model'.
+  v_mark_entries.entry_status: 'present', 'absent'. v_mark_entries.submission_status: 'draft', 'submitted', 'published'.
+  To find highest scorers, calculate marks_obtained as percentage of max_marks.
+
+- RANKINGS: v_student_rankings contains precomputed leaderboard. Use this for "top N students" or "rank" queries.
+
+- FEES: v_invoices.fee_type values: 'tuition', 'hostel', 'exam', 'library', etc.
+  v_payments.status values: 'completed', 'pending', 'failed'.
+  "Fee collection rate" = SUM(amount_paid where status='completed') / SUM(total_amount).
+
+- LEAVE: v_leave_requests.leave_type values: 'CL' (Casual), 'EL' (Earned), 'ML' (Medical), 'OD' (On Duty), 'medical'.
+  v_leave_requests.status values: 'pending', 'approved', 'rejected', 'cancellation_requested', 'cancelled'.
+  v_leave_requests.applicant_role: 'faculty' or 'student'.
+
+- FEEDBACK: v_course_feedback and v_teaching_evaluations ratings are on a 1-5 scale (5 = best).
+
+- QUIZZES: v_quiz_attempts.status values: 'completed', 'in_progress', 'abandoned'.
+
+- PLACEMENTS: v_placement_applications.status values: 'applied', 'shortlisted', 'selected', 'rejected'.
+  v_placement_drives.drive_type values: 'on_campus', 'off_campus', 'pool'.
+  v_placement_drives.type values: 'placement', 'internship'.
+
+- HOSTEL: v_hostel_allocations.status values: 'active', 'vacated', 'transferred'.
+
+- LIBRARY: v_library_transactions.status values: 'ACTIVE' (currently checked out), 'RETURNED', 'OVERDUE'.
+
+- SCHOLARSHIPS: v_scholarship_applications.status values: 'submitted', 'approved', 'rejected'.
+  v_scholarship_applications.scholarship_type values: 'Government', 'Private', 'Merit'.
+
+- GRIEVANCES: v_grievances.category values: 'academic', 'administrative', 'infrastructure', 'other'.
+  v_grievances.status values: 'open', 'in_review', 'resolved', 'closed'.
+
+- COURSES: v_courses.course_category values: 'core', 'elective', 'multidisciplinary', 'open_elective', 'vsc', 'sec', 'aec', 'mdc'.
+  v_courses.type values: 'Theory', 'Lab'.
+
+- ENROLLMENT: v_students.enrollment_status values: 'active', 'academic_break', 'dropped_out', 'graduated'.
 
 RULES:
 1. Return ONLY valid PostgreSQL SELECT query string. NO text, NO markdown formatting, NO explanation.
-2. Assume the tables are already filtered to the user's role scope. You do not need to filter by college_id.
+2. Assume the views are already filtered to the user's role scope. You do not need to filter by college_id.
 3. Only use SELECT. Never use DROP, DELETE, UPDATE, INSERT.
 4. Alias columns cleanly for human reading (e.g., "name AS Student_Name", "department AS Department").
 5. When asked about "attendance", ALWAYS calculate percentage (not raw counts) unless explicitly asked for counts.
-6. When comparing departments, show ALL departments sorted by the metric, not just the top one.
-7. Use ROUND() for percentages to 2 decimal places.
-8. DEFAULT SORTING: Unless the user explicitly requests a specific sort order (e.g., "sort by name", "order by GPA"), ALWAYS add ORDER BY department ASC, section ASC as the default sort. If the query groups by department/section, sort the grouped results the same way.
+6. When asked about "top performing" or "best students", use v_student_rankings first, or v_semester_grades to compute GPA.
+7. When comparing departments, show ALL departments sorted by the metric, not just the top one.
+8. Use ROUND() for percentages and decimals to 2 decimal places.
+9. DEFAULT SORTING: Unless the user explicitly requests a specific sort order, ALWAYS add ORDER BY department ASC, section ASC as the default sort. If the query groups by department/section, sort the grouped results the same way.
+10. For "pass rate" queries, count grades != 'F' as pass, 'F' as fail.
+11. When asked about faculty workload, use v_faculty_assignments (hours_per_week, credits).
 {constraint_str}
 '''
 
@@ -493,7 +613,6 @@ RULES:
     messages_list.append({"role": "user", "content": f"Write a query for: {user_query}"})
 
     try:
-        # ERP uses smart fallback: Nova Pro → Claude 3.7 Sonnet for complex queries
         content = await gateway.complete_erp(user_query, messages_list)
         if content.startswith("```sql"):
             content = content[6:-3].strip()

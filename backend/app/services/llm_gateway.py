@@ -595,10 +595,25 @@ class LLMGateway:
 
         # ── Complexity heuristic — route hard queries directly to Tier 2 ──
         complex_signals = [
+            # Existing analytical patterns
             "compare", "trend", "across all", "correlation", "at-risk",
             "top performing", "analyze", "pattern", "anomaly", "predict",
             "year over year", "semester wise", "department wise breakdown",
             "vs last year",
+            # NEW: Academic performance
+            "gpa", "cgpa", "grade", "marks", "rank", "topper", "pass rate",
+            "fail rate", "backlog", "supplementary", "attainment",
+            # NEW: Faculty & Feedback
+            "faculty workload", "teaching evaluation", "course feedback",
+            "faculty rating", "mentor",
+            # NEW: Leave & Admin
+            "leave statistics", "leave balance", "absenteeism",
+            # NEW: Hostel & Library
+            "hostel occupancy", "library overdue", "fine amount",
+            # NEW: Placement analytics
+            "placement rate", "package", "highest ctc", "average package",
+            # NEW: Governance & Compliance
+            "grievance", "scholarship", "naac", "nba",
         ]
         is_complex = any(signal in user_query.lower() for signal in complex_signals)
 
