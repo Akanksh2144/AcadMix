@@ -312,6 +312,15 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
       status: r.status,
     }));
 
+  const refreshPins = async () => {
+    try {
+      const { data } = await insightsAPI.getPins();
+      setPins(data);
+    } catch (err) {
+      console.error('[Insights] Failed to refresh pins', err);
+    }
+  };
+
   const executePin = async (pin) => {
     setPinLoading(true);
     setActivePinData(null);
@@ -323,7 +332,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
       });
       setActivePinData(response.data);
     } catch (err) {
-      alert("Failed to load pin data");
+      console.error('[Insights] Failed to load pin data', err);
     }
     setPinLoading(false);
   };
@@ -1764,7 +1773,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
 
                 {isChatting ? (
                     <div className="flex overflow-hidden">
-                         <InsightsChat user={user} activeCollegeId={null} />
+                         <InsightsChat user={user} activeCollegeId={null} onPinsChanged={refreshPins} />
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

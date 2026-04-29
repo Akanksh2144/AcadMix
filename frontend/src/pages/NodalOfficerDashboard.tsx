@@ -100,6 +100,15 @@ const NodalOfficerDashboard = ({ navigate, user, onLogout }) => {
     }
   }, [activeTab]);
 
+  const refreshPins = async () => {
+    try {
+      const { data } = await insightsAPI.getPins();
+      setPins(data);
+    } catch (err) {
+      console.error('[Insights] Failed to refresh pins', err);
+    }
+  };
+
   const executePin = async (pin) => {
     setPinLoading(true);
     setActivePinData(null);
@@ -111,7 +120,7 @@ const NodalOfficerDashboard = ({ navigate, user, onLogout }) => {
       });
       setActivePinData(response.data);
     } catch (err) {
-      alert("Failed to load pin data");
+      console.error('[Insights] Failed to load pin data', err);
     }
     setPinLoading(false);
   };
@@ -119,10 +128,10 @@ const NodalOfficerDashboard = ({ navigate, user, onLogout }) => {
   const deletePin = async (id) => {
     try {
       await insightsAPI.deletePin(id);
-      setPins(pins.filter(p => p.id !== id));
+      setPins(prev => prev.filter(p => p.id !== id));
       setActivePinData(null);
     } catch (err) {
-      alert("Failed to delete pin");
+      console.error('[Insights] Delete failed', err);
     }
   };
 
@@ -611,7 +620,7 @@ const NodalOfficerDashboard = ({ navigate, user, onLogout }) => {
 
                 {isChatting ? (
                     <div className="flex overflow-hidden">
-                         <InsightsChat user={user} activeCollegeId={activeCollegeId} />
+                         <InsightsChat user={user} activeCollegeId={activeCollegeId} onPinsChanged={refreshPins} />
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

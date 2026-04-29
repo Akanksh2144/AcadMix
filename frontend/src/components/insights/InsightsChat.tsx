@@ -5,7 +5,7 @@ import { insightsAPI } from '../../services/api';
 import InsightsCanvas from './InsightsCanvas';
 import { toast } from 'sonner';
 
-export default function InsightsChat({ user, activeCollegeId }) {
+export default function InsightsChat({ user, activeCollegeId, onPinsChanged }) {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
@@ -61,6 +61,7 @@ export default function InsightsChat({ user, activeCollegeId }) {
         active_college_id: activeCollegeId
       });
       toast.success("Pinned to your dashboard!");
+      onPinsChanged?.();  // notify parent to refresh pin list
       return res.data?.id || res.data; // return pin ID for unpin toggle
     } catch (error) {
       const detail = error.response?.data?.detail || error.message || "Unknown error";
@@ -73,6 +74,7 @@ export default function InsightsChat({ user, activeCollegeId }) {
     try {
       await insightsAPI.deletePin(pinId);
       toast.success("Unpinned from dashboard");
+      onPinsChanged?.();  // notify parent to refresh pin list
     } catch (error) {
       toast.error("Failed to unpin");
       throw error;
