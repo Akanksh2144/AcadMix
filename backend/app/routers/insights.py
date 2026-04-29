@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
+from datetime import datetime, timezone
 
 from app.schemas.insights import InsightsQueryRequest, InsightsQueryResponse, PinnedInsightCreate, PinnedInsightResponse
 from app.services.ai_service import generate_insights_sql, format_insights_summary
@@ -107,9 +108,18 @@ async def create_pin(
         chart_suggestion=pin_in.chart_suggestion
     )
     db.add(new_pin)
-    await db.commit()
-    await db.refresh(new_pin)
-    return new_pin
+    # Skip db.commit() — get_db() uses managed transaction (session.begin) which auto-commits.
+    # Skip db.refresh() — avoids an extra SELECT round-trip; return from input data directly.
+    await db.flush()  # ensures ID is generated without a full commit+refresh cycle
+    return PinnedInsightResponse(
+        id=new_pin.id,
+        title=pin_in.title,
+        nl_query=pin_in.nl_query,
+        cached_sql=pin_in.cached_sql,
+        chart_suggestion=pin_in.chart_suggestion,
+        role=role,
+        created_at=new_pin.created_at or datetime.now(timezone.utc)
+    )
 
 @router.get("/pins", response_model=List[PinnedInsightResponse])
 async def get_pins(
@@ -154,5 +164,5 @@ async def delete_pin(
         raise HTTPException(status_code=404, detail="Pin not found")
         
     pin.is_deleted = True
-    await db.commit()
+    # Managed transaction (session.begin) auto-commits on success
     return {"message": "Success"}
