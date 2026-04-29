@@ -19,9 +19,28 @@ export default function InsightsCanvas({ result, onPin }) {
   };
 
   return (
-    <div className="bg-[var(--color-background)] overflow-hidden flex flex-col animation-fade-in w-full relative">
-      {/* Vertical Icon Toolbar - top right */}
-      <div className="absolute top-3 right-3 z-10 flex flex-col gap-1 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700 p-1 shadow-lg">
+    <div className="flex items-start gap-2 animation-fade-in w-full">
+      {/* Card Content */}
+      <div className="flex-1 min-w-0 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-800 rounded-3xl rounded-tl-sm shadow-sm overflow-hidden">
+        {/* Summary Header */}
+        <div className="p-4">
+          <h3 className="text-lg font-semibold text-[var(--color-text)]">
+            {result.summary || "Here are your insights"}
+          </h3>
+        </div>
+
+        {/* Canvas Area */}
+        <div className="p-4 pt-0">
+          {view === 'table' ? (
+            <InsightsTable data={result.data} columns={result.columns} />
+          ) : (
+            <InsightsChart data={result.data} columns={result.columns} chartType={view} />
+          )}
+        </div>
+      </div>
+
+      {/* External Vertical Icon Toolbar */}
+      <div className="flex flex-col gap-1 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700 p-1 shadow-sm shrink-0">
         {[
           { id: 'table', icon: TableIcon, label: 'Table View' },
           { id: 'bar_chart', icon: BarChart2, label: 'Bar Chart' },
@@ -56,22 +75,6 @@ export default function InsightsCanvas({ result, onPin }) {
           >
             <Pin size={16} />
           </button>
-        )}
-      </div>
-
-      {/* Summary Header */}
-      <div className="p-4 pr-14">
-        <h3 className="text-lg font-semibold text-[var(--color-text)]">
-          {result.summary || "Here are your insights"}
-        </h3>
-      </div>
-
-      {/* Canvas Area */}
-      <div className="p-4 pt-0 bg-[var(--color-background)]">
-        {view === 'table' ? (
-          <InsightsTable data={result.data} columns={result.columns} />
-        ) : (
-          <InsightsChart data={result.data} columns={result.columns} chartType={view} />
         )}
       </div>
     </div>
