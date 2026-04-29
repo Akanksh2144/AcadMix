@@ -464,11 +464,24 @@ async def generate_insights_sql(user_query: str, history: List[Dict[str, str]] =
 YOU MUST ONLY QUERY FROM THESE VIEWS. Never query actual tables like 'users' or 'attendance_records'.
 {schema_str}
 
+DOMAIN KNOWLEDGE:
+- v_attendance.status has values: 'present', 'absent', 'late', 'od' (on-duty), 'medical'. 
+  To calculate attendance %, use: ROUND(COUNT(CASE WHEN status IN ('present','late','od','medical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS attendance_pct
+  'present', 'late', 'od', and 'medical' all count as ATTENDED. Only 'absent' is not attended.
+- v_invoices.fee_type values: 'tuition', 'hostel', 'exam', 'library', etc.
+- v_payments.status values: 'completed', 'pending', 'failed'.
+- v_quiz_attempts.status values: 'completed', 'in_progress', 'abandoned'.
+- v_placement_applications.status values: 'applied', 'shortlisted', 'selected', 'rejected'.
+- v_placement_drives.drive_type values: 'on_campus', 'off_campus', 'pool'.
+
 RULES:
 1. Return ONLY valid PostgreSQL SELECT query string. NO text, NO markdown formatting, NO explanation.
 2. Assume the tables are already filtered to the user's role scope. You do not need to filter by college_id.
 3. Only use SELECT. Never use DROP, DELETE, UPDATE, INSERT.
-4. Alias columns cleanly for human reading (e.g., "u.name AS Student_Name", "p.roll_number AS Roll_Number").
+4. Alias columns cleanly for human reading (e.g., "name AS Student_Name", "department AS Department").
+5. When asked about "attendance", ALWAYS calculate percentage (not raw counts) unless explicitly asked for counts.
+6. When comparing departments, show ALL departments sorted by the metric, not just the top one.
+7. Use ROUND() for percentages to 2 decimal places.
 {constraint_str}
 '''
 
