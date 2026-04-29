@@ -50,7 +50,7 @@ export default function InsightsCanvas({ result, onPin }) {
           <button
             key={item.id}
             onClick={() => setView(item.id)}
-            className={`p-1.5 rounded-lg transition-colors ${view === item.id ? 'bg-indigo-600 text-white' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+            className={`p-1.5 rounded-xl transition-colors ${view === item.id ? 'bg-indigo-600 text-white' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
             title={item.label}
           >
             <item.icon size={16} />
@@ -61,7 +61,7 @@ export default function InsightsCanvas({ result, onPin }) {
 
         <button
           onClick={handleExport}
-          className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          className="p-1.5 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           title="Export"
         >
           <Download size={16} />
@@ -70,7 +70,7 @@ export default function InsightsCanvas({ result, onPin }) {
         {onPin && (
           <button
             onClick={onPin}
-            className="p-1.5 rounded-lg text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+            className="p-1.5 rounded-xl text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
             title="Pin to Dashboard"
           >
             <Pin size={16} />
