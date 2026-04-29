@@ -180,7 +180,7 @@ async def execute_insights_query(session: AsyncSession, sql_query: str, college_
             await _setup_temporary_views(session, college_id, role, user_id)
             
             # 2. Safety: timeout guard for LLM-generated queries
-            await session.execute(text("SET LOCAL statement_timeout = '10s'"))
+            await session.execute(text("SET LOCAL statement_timeout = '60s'"))
             
             # 3. Execute the LLM query (safety enforced by validate_sql_safety + temp view scope)
             logger.info(f"Executing LLM Query for user {user_id}: {limited_sql}")
