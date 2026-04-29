@@ -19,9 +19,9 @@ export default function InsightsCanvas({ result, onPin }) {
   };
 
   return (
-    <div className="bg-[var(--color-background)] overflow-hidden flex flex-col animation-fade-in w-full">
+    <div className="bg-transparent overflow-hidden flex flex-col animation-fade-in w-full">
       {/* Header and Controls */}
-      <div className="bg-[var(--color-surface)] p-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-transparent p-4 flex flex-wrap items-center justify-between gap-4">
         <h3 className="text-lg font-semibold text-[var(--color-text)] flex-1 min-w-[200px]">
           {result.summary || "Here are your insights"}
         </h3>
@@ -77,7 +77,7 @@ export default function InsightsCanvas({ result, onPin }) {
       </div>
 
       {/* Canvas Area */}
-      <div className="p-4 bg-[var(--color-background)]">
+      <div className="p-4 bg-transparent">
         {view === 'table' ? (
           <InsightsTable data={result.data} columns={result.columns} />
         ) : (

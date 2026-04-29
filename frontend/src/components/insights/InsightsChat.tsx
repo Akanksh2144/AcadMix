@@ -159,7 +159,7 @@ export default function InsightsChat({ user, activeCollegeId }) {
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex flex-shrink-0 items-center justify-center shadow-md">
                            <Brain className="text-white" size={20} />
                         </div>
-                        <div className="flex-1 min-w-0 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-800 rounded-3xl rounded-tl-sm shadow-sm overflow-hidden">
+                        <div className="flex-1 min-w-0 overflow-hidden">
                             <InsightsCanvas 
                               result={msg.result} 
                               onPin={() => {
