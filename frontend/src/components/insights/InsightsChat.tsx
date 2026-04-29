@@ -33,7 +33,7 @@ export default function InsightsChat({ user, activeCollegeId, onPinsChanged }) {
       // Pass only text messages for context, not the huge result objects
       const sessionHistory = history.map(msg => ({
         role: msg.role,
-        content: msg.role === 'assistant' ? msg.result.summary : msg.content
+        content: msg.role === 'assistant' ? (msg.result?.summary || msg.content || '') : msg.content
       }));
 
       const response = await insightsAPI.query({

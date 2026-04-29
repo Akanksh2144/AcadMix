@@ -18,7 +18,7 @@ UNSAFE_PATTERNS = [
 # VIEW REGISTRY — Modular, role-aware view definitions
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _build_views(col_filter: str, dept_filter: str, role_upper: str) -> list[str]:
+def _build_views(col_filter: str, dept_filter: str, dept_filter_direct: str, role_upper: str) -> list[str]:
     """
     Returns the list of CREATE TEMPORARY VIEW SQL statements for the given role.
     
@@ -88,7 +88,7 @@ def _build_views(col_filter: str, dept_filter: str, role_upper: str) -> list[str
                fa.credits, fa.hours_per_week, fa.is_lab
         FROM faculty_assignments fa
         JOIN users u ON fa.teacher_id = u.id
-        WHERE fa.{col_filter} {dept_filter} AND fa.is_deleted = false
+        WHERE fa.{col_filter} {dept_filter_direct} AND fa.is_deleted = false
     ''')
 
     # ── TIER 1: Academic views (not for TPO) ─────────────────────────────────
@@ -162,12 +162,12 @@ def _build_views(col_filter: str, dept_filter: str, role_upper: str) -> list[str
         CREATE OR REPLACE TEMPORARY VIEW v_mentor_assignments AS
             SELECT ma.id, ma.faculty_id, f.name AS mentor_name,
                    ma.student_id, s.name AS student_name,
-                   sp.department, sp.section, sp.batch,
+                   p.department, p.section, p.batch,
                    ma.academic_year, ma.is_active
             FROM mentor_assignments ma
             JOIN users f ON ma.faculty_id = f.id
             JOIN users s ON ma.student_id = s.id
-            JOIN user_profiles sp ON ma.student_id = sp.user_id
+            JOIN user_profiles p ON ma.student_id = p.user_id
             WHERE ma.{col_filter} {dept_filter} AND ma.is_deleted = false
         ''')
 
@@ -178,13 +178,13 @@ def _build_views(col_filter: str, dept_filter: str, role_upper: str) -> list[str
         views.append(f'''
         CREATE OR REPLACE TEMPORARY VIEW v_course_feedback AS
             SELECT cf.id, cf.student_id, cf.faculty_id, 
-                   f.name AS faculty_name, fp.department,
+                   f.name AS faculty_name, p.department,
                    cf.subject_code, cf.academic_year, cf.semester,
                    cf.content_rating, cf.teaching_rating, cf.engagement_rating,
                    cf.assessment_rating, cf.overall_rating
             FROM course_feedback cf
             JOIN users f ON cf.faculty_id = f.id
-            JOIN user_profiles fp ON cf.faculty_id = fp.user_id
+            JOIN user_profiles p ON cf.faculty_id = p.user_id
             WHERE cf.{col_filter} {dept_filter} AND cf.is_deleted = false
         ''')
 
@@ -192,13 +192,13 @@ def _build_views(col_filter: str, dept_filter: str, role_upper: str) -> list[str
         views.append(f'''
         CREATE OR REPLACE TEMPORARY VIEW v_teaching_evaluations AS
             SELECT te.id, te.faculty_id, f.name AS faculty_name,
-                   fp.department, te.subject_code, te.academic_year,
+                   p.department, te.subject_code, te.academic_year,
                    te.content_coverage_rating, te.methodology_rating,
                    te.engagement_rating, te.assessment_quality_rating,
                    te.overall_rating, te.evaluation_date
             FROM teaching_evaluations te
             JOIN users f ON te.faculty_id = f.id
-            JOIN user_profiles fp ON te.faculty_id = fp.user_id
+            JOIN user_profiles p ON te.faculty_id = p.user_id
             WHERE te.{col_filter} {dept_filter} AND te.is_deleted = false
         ''')
 
@@ -393,11 +393,14 @@ async def _setup_temporary_views(session: AsyncSession, college_id: str, role: s
 
     if role_upper in ["HOD", "FACULTY"]:
         dept_filter = " AND p.department = current_setting('insights.department')"
+        # For views that have their own department column (no user_profiles join)
+        dept_filter_direct = " AND department = current_setting('insights.department')"
     else:
         dept_filter = ""
+        dept_filter_direct = ""
 
     # Build all views for this role
-    views_sql = _build_views(col_filter, dept_filter, role_upper)
+    views_sql = _build_views(col_filter, dept_filter, dept_filter_direct, role_upper)
 
     # Execute each view creation individually (asyncpg requires single-statement execution)
     for view_stmt in views_sql:
@@ -454,7 +457,7 @@ async def execute_insights_query(session: AsyncSession, sql_query: str, college_
             await _setup_temporary_views(session, college_id, role, user_id)
             
             # 2. Safety: timeout guard for LLM-generated queries
-            await session.execute(text("SET LOCAL statement_timeout = '60s'"))
+            await session.execute(text("SET LOCAL statement_timeout = '90s'"))
             
             # 3. Execute the LLM query (safety enforced by validate_sql_safety + temp view scope)
             logger.info(f"Executing LLM Query for user {user_id}: {limited_sql}")
