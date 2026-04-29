@@ -199,5 +199,6 @@ async def execute_insights_query(session: AsyncSession, sql_query: str, college_
             }
             
     except Exception as e:
-        logger.error(f"Error executing insights query: {e}")
-        raise ValueError(f"Failed to execute query: {str(e)}")
+        import traceback
+        logger.error(f"Error executing insights query: {type(e).__name__}: {e}\n{traceback.format_exc()}")
+        raise ValueError(f"Failed to execute query: {type(e).__name__}: {str(e)}")

@@ -720,7 +720,7 @@ export const visitorAPI = {
 };
 
 export const insightsAPI = {
-  query: (data) => api.post('/insights/query', data),
+  query: (data) => api.post('/insights/query', data, { timeout: 90000 }), // 90s for complex aggregations
   getPins: () => api.get('/insights/pins'),
   createPin: (data) => api.post('/insights/pins', data),
   deletePin: (id) => api.delete(`/insights/pins/${id}`),
