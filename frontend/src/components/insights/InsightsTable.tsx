@@ -7,7 +7,12 @@ import {
 } from '@tanstack/react-table';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-export default function InsightsTable({ data, columns: inputColumns }) {
+interface InsightsTableProps {
+  data: Record<string, any>[];
+  columns: string[];
+}
+
+export default function InsightsTable({ data, columns: inputColumns }: InsightsTableProps) {
   const columns = useMemo(
     () =>
       inputColumns.map((col) => ({
