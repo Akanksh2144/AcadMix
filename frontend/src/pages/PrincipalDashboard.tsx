@@ -747,7 +747,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                     </div>
 
                     {isChatting ? (
-                        <div className="bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800 flex overflow-hidden">
+                        <div className="flex overflow-hidden">
                              <InsightsChat user={user} activeCollegeId={null} />
                         </div>
                     ) : (

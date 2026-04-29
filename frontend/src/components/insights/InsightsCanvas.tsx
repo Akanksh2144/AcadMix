@@ -19,15 +19,15 @@ export default function InsightsCanvas({ result, onPin }) {
   };
 
   return (
-    <div className="bg-transparent overflow-hidden flex flex-col animation-fade-in w-full">
+    <div className="bg-[var(--color-background)] overflow-hidden flex flex-col animation-fade-in w-full">
       {/* Header and Controls */}
-      <div className="bg-transparent p-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-[var(--color-surface)] p-4 flex flex-wrap items-center justify-between gap-4">
         <h3 className="text-lg font-semibold text-[var(--color-text)] flex-1 min-w-[200px]">
           {result.summary || "Here are your insights"}
         </h3>
         
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg p-1 border border-white/[0.06]">
+          <div className="flex bg-[var(--color-background)] rounded-lg p-1 border border-[var(--color-border)]">
             <button
               onClick={() => setView('table')}
               className={`p-1.5 rounded-md transition-colors ${view === 'table' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}
@@ -60,7 +60,7 @@ export default function InsightsCanvas({ result, onPin }) {
 
           <button
             onClick={handleExport}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border border-white/[0.06] text-[var(--color-text)] rounded-lg hover:bg-white/[0.03] transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-background)] transition-colors"
           >
             <Download size={16} /> Export
           </button>
@@ -77,7 +77,7 @@ export default function InsightsCanvas({ result, onPin }) {
       </div>
 
       {/* Canvas Area */}
-      <div className="p-4 bg-transparent">
+      <div className="p-4 bg-[var(--color-background)]">
         {view === 'table' ? (
           <InsightsTable data={result.data} columns={result.columns} />
         ) : (
