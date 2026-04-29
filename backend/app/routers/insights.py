@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import logging
+import traceback
 
 from app.schemas.insights import InsightsQueryRequest, InsightsQueryResponse, PinnedInsightCreate, PinnedInsightResponse
 from app.services.ai_service import generate_insights_sql, format_insights_summary
@@ -56,15 +57,20 @@ async def query_insights(
             detail="You do not have permission to access the Insights module."
         )
 
+    logger.info("[Insights] Query from %s (role=%s): %s", current_user.get("id", "?"), role, request.message[:100])
+
     # 1. Generate SQL from Natural Language OR use cached_sql
     if request.cached_sql:
         generated_sql = request.cached_sql
+        logger.info("[Insights] Using cached_sql: %s", generated_sql[:100])
     else:
         history_dicts = [{"role": msg.role, "content": msg.content} for msg in request.session_history]
         try:
             generated_sql = await generate_insights_sql(request.message, history_dicts, role)
+            logger.info("[Insights] Generated SQL: %s", generated_sql[:200])
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            logger.error("[Insights] LLM SQL generation FAILED: %s\n%s", e, traceback.format_exc())
+            raise HTTPException(status_code=500, detail=f"AI SQL generation failed: {str(e)}")
 
     # ── Cache Lookup (keyed on generated SQL for semantic dedup) ──────────
     r = await _get_redis()
@@ -91,16 +97,19 @@ async def query_insights(
             role=role,
             user_id=current_user.get("id")
         )
+        logger.info("[Insights] Query returned %d rows, %d columns", len(result.get("data", [])), len(result.get("columns", [])))
     except ValueError as e:
         # Invalid or unsafe SQL
         err_str = str(e)
+        logger.warning("[Insights] SQL validation/execution ValueError: %s", err_str)
         if role == "TPO" and "relation" in err_str and "does not exist" in err_str:
              raise HTTPException(status_code=400, detail="This query is outside your access scope.")
         raise HTTPException(status_code=400, detail=err_str)
     except Exception as e:
+        logger.error("[Insights] SQL execution FAILED: %s\n%s", e, traceback.format_exc())
         if role == "TPO" and getattr(e, 'orig', None) and 'does not exist' in str(e.orig):
              raise HTTPException(status_code=400, detail="This query is outside your access scope.")
-        raise HTTPException(status_code=500, detail="Database execution failed.")
+        raise HTTPException(status_code=500, detail=f"Database execution failed: {type(e).__name__}: {str(e)}")
 
     # 3. Format Response with AI Summary
     try:
