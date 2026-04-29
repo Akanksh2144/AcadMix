@@ -553,12 +553,13 @@ DOMAIN KNOWLEDGE:
   To calculate GPA: SUM(credits_earned * grade_points) / NULLIF(SUM(credits_earned), 0).
   To convert grade to points, use CASE: CASE grade WHEN 'O' THEN 10 WHEN 'A+' THEN 9 WHEN 'A' THEN 8 WHEN 'B+' THEN 7 WHEN 'B' THEN 6 WHEN 'C' THEN 5 WHEN 'F' THEN 0 ELSE 0 END.
   "Top performing" or "best students" means highest GPA. "Pass rate" means % of non-'F' grades.
+  IMPORTANT: For "top performing students", "best students", "highest GPA", or any performance ranking query, ALWAYS compute GPA from v_semester_grades using the grade-to-points CASE expression above. Do NOT use v_student_rankings — it is a precomputed cache that may be empty.
+
+- RANKINGS: v_student_rankings is a precomputed leaderboard cache. It MAY BE EMPTY. Always prefer computing GPA from v_semester_grades instead.
 
 - MARKS: v_mark_entries.exam_type values: 'mid1', 'mid2', 'endterm', 'assignment', 'practical', 'model'.
   v_mark_entries.entry_status: 'present', 'absent'. v_mark_entries.submission_status: 'draft', 'submitted', 'published'.
   To find highest scorers, calculate marks_obtained as percentage of max_marks.
-
-- RANKINGS: v_student_rankings contains precomputed leaderboard. Use this for "top N students" or "rank" queries.
 
 - FEES: v_invoices.fee_type values: 'tuition', 'hostel', 'exam', 'library', etc.
   v_payments.status values: 'completed', 'pending', 'failed'.
