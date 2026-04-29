@@ -68,7 +68,7 @@ export default function InsightsCanvas({ result, onPin }) {
           {onPin && (
             <button
               onClick={onPin}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap shadow-sm"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap shadow-sm"
             >
               <Pin size={16} fill="white" /> Pin to Dashboard
             </button>
