@@ -46,39 +46,39 @@ async def _setup_temporary_views(session: AsyncSession, college_id: str, role: s
     # Students view
     if role_upper == "TPO":
         views_sql.append(f'''
-        CREATE TEMPORARY VIEW v_students AS 
+        CREATE OR REPLACE TEMPORARY VIEW v_students AS 
             SELECT u.id, u.name, u.email, p.roll_number, p.department, p.section, p.current_semester, p.batch
             FROM users u 
             JOIN user_profiles p ON u.id = p.user_id 
-            WHERE u.{col_filter} {dept_filter} AND u.is_deleted = false AND u.role = 'STUDENT'
+            WHERE u.{col_filter} {dept_filter} AND u.is_deleted = false AND UPPER(u.role) = 'STUDENT'
         ''')
     else:
         views_sql.append(f'''
-        CREATE TEMPORARY VIEW v_students AS 
+        CREATE OR REPLACE TEMPORARY VIEW v_students AS 
             SELECT u.id, u.name, u.email, p.roll_number, p.department, p.section, p.current_semester, p.batch
             FROM users u 
             JOIN user_profiles p ON u.id = p.user_id 
-            WHERE u.{col_filter} {dept_filter} AND u.is_deleted = false AND u.role = 'STUDENT'
+            WHERE u.{col_filter} {dept_filter} AND u.is_deleted = false AND UPPER(u.role) = 'STUDENT'
         ''')
 
     # Financial & Attendance (one per append)
     if role_upper != "TPO":
         views_sql.append(f'''
-        CREATE TEMPORARY VIEW v_attendance AS 
+        CREATE OR REPLACE TEMPORARY VIEW v_attendance AS 
             SELECT a.id, a.student_id, a.date, a.subject_code, a.status, a.is_late_entry, p.department, p.section
             FROM attendance_records a
             JOIN user_profiles p ON a.student_id = p.user_id
             WHERE a.{col_filter} {dept_filter} AND a.is_deleted = false
         ''')
         views_sql.append(f'''
-        CREATE TEMPORARY VIEW v_invoices AS
+        CREATE OR REPLACE TEMPORARY VIEW v_invoices AS
             SELECT i.id, i.student_id, i.fee_type, i.total_amount, i.academic_year, i.due_date, p.department, p.section
             FROM student_fee_invoices i
             JOIN user_profiles p ON i.student_id = p.user_id
             WHERE i.{col_filter} {dept_filter} AND i.is_deleted = false
         ''')
         views_sql.append(f'''
-        CREATE TEMPORARY VIEW v_payments AS
+        CREATE OR REPLACE TEMPORARY VIEW v_payments AS
             SELECT fp.id, fp.student_id, fp.invoice_id, fp.amount_paid, fp.status, fp.transaction_date, p.department, p.section
             FROM fee_payments fp
             JOIN user_profiles p ON fp.student_id = p.user_id
@@ -86,7 +86,7 @@ async def _setup_temporary_views(session: AsyncSession, college_id: str, role: s
         ''')
         
     views_sql.append(f'''
-    CREATE TEMPORARY VIEW v_departments AS
+    CREATE OR REPLACE TEMPORARY VIEW v_departments AS
         SELECT id, name, code, hod_user_id
         FROM departments
         WHERE {col_filter} AND is_deleted = false
@@ -94,19 +94,19 @@ async def _setup_temporary_views(session: AsyncSession, college_id: str, role: s
 
     if role_upper in ["TPO", "SUPERADMIN", "PRINCIPAL", "ADMIN", "DHTE_NODAL", "INSTITUTIONAL_NODAL"]:
         views_sql.append(f'''
-        CREATE TEMPORARY VIEW v_companies AS
+        CREATE OR REPLACE TEMPORARY VIEW v_companies AS
             SELECT id, name, sector, website
             FROM companies
             WHERE {col_filter} AND is_deleted = false
         ''')
         views_sql.append(f'''
-        CREATE TEMPORARY VIEW v_placement_drives AS
+        CREATE OR REPLACE TEMPORARY VIEW v_placement_drives AS
             SELECT id, company_id, role_title, drive_type, package_lpa, drive_date, status, min_cgpa
             FROM placement_drives
             WHERE {col_filter} AND is_deleted = false
         ''')
         views_sql.append(f'''
-        CREATE TEMPORARY VIEW v_placement_applications AS
+        CREATE OR REPLACE TEMPORARY VIEW v_placement_applications AS
             SELECT a.id, a.drive_id, a.student_id, a.status, a.registered_at
             FROM placement_applications a
             WHERE a.{col_filter} AND a.is_deleted = false
@@ -114,13 +114,13 @@ async def _setup_temporary_views(session: AsyncSession, college_id: str, role: s
 
     if role_upper in ["EXAM_CELL", "SUPERADMIN", "PRINCIPAL", "ADMIN", "FACULTY", "HOD", "DHTE_NODAL", "INSTITUTIONAL_NODAL"]:
         views_sql.append(f'''
-        CREATE TEMPORARY VIEW v_quizzes AS
+        CREATE OR REPLACE TEMPORARY VIEW v_quizzes AS
             SELECT q.id, q.title, q.type, q.status, q.total_marks, q.faculty_id, q.course_id, q.created_at
             FROM quizzes q
             WHERE q.{col_filter} AND q.is_deleted = false
         ''')
         views_sql.append(f'''
-        CREATE TEMPORARY VIEW v_quiz_attempts AS
+        CREATE OR REPLACE TEMPORARY VIEW v_quiz_attempts AS
             SELECT qa.id, qa.quiz_id, qa.student_id, qa.status, qa.final_score, qa.start_time, qa.end_time
             FROM quiz_attempts qa
             WHERE qa.{col_filter} AND qa.is_deleted = false
