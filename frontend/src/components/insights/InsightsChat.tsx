@@ -55,14 +55,15 @@ export default function InsightsChat({ user, activeCollegeId }) {
     try {
       await insightsAPI.createPin({
         title: queryText || result.summary || "Saved Insight",
-        nl_query: queryText,
-        cached_sql: result.generated_sql,
-        chart_suggestion: result.chart_suggestion,
+        nl_query: queryText || result.summary || "Untitled query",
+        cached_sql: result.generated_sql || "",
+        chart_suggestion: result.chart_suggestion || null,
         active_college_id: activeCollegeId
       });
       toast.success("Pinned to your dashboard!");
     } catch (error) {
-      toast.error("Failed to pin insight.");
+      const detail = error.response?.data?.detail || error.message || "Unknown error";
+      toast.error(`Failed to pin: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
     }
   };
 
