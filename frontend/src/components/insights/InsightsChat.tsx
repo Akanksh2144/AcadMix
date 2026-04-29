@@ -194,12 +194,12 @@ export default function InsightsChat({ user, activeCollegeId }) {
       </div>
 
       {/* Input Form at the bottom strictly */}
-      <div className="shrink-0 w-full pt-4 mt-auto z-30 bg-transparent flex justify-center">
-        <form onSubmit={handleQuery} className="w-full max-w-4xl relative shadow-[0_0_30px_rgba(99,102,241,0.15)] rounded-[2rem]">
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-[2rem] p-[2px] opacity-30 disabled:opacity-10"></div>
-          <div className="relative bg-white dark:bg-[#1A202C] rounded-[2rem] flex items-center p-2 border border-slate-100 dark:border-slate-800 focus-within:ring-4 focus-within:ring-indigo-500/20 transition-all duration-300">
-             <div className="pl-4 text-slate-400">
-                <Sparkles size={24} className="text-indigo-500" />
+      <div className="shrink-0 w-full pt-2 mt-auto z-30 bg-transparent flex justify-center">
+        <form onSubmit={handleQuery} className="w-full max-w-3xl relative shadow-md rounded-2xl">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl p-[1.5px] opacity-20 disabled:opacity-10"></div>
+          <div className="relative bg-white dark:bg-[#1A202C] rounded-2xl flex items-center p-1.5 border border-slate-100 dark:border-slate-800 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all duration-300">
+             <div className="pl-3 text-slate-400">
+                <Sparkles size={18} className="text-indigo-500" />
              </div>
              <input
                type="text"
@@ -207,16 +207,16 @@ export default function InsightsChat({ user, activeCollegeId }) {
                onChange={(e) => setQuery(e.target.value)}
                disabled={loading}
                placeholder="Ask about attendance, grades, fees, etc..."
-               className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none text-slate-900 dark:text-white px-4 py-4 sm:py-5 outline-none font-semibold text-base sm:text-lg w-full disabled:opacity-50 placeholder:font-medium placeholder:text-slate-400 text-center"
+               className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none text-slate-900 dark:text-white px-3 py-2.5 outline-none font-semibold text-sm w-full disabled:opacity-50 placeholder:font-medium placeholder:text-slate-400"
              />
              <motion.button
                whileHover={{ scale: 1.05 }}
                whileTap={{ scale: 0.95 }}
                type="submit"
                disabled={loading || !query.trim()}
-               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-full w-14 h-14 flex items-center justify-center transition-all disabled:opacity-50 mr-1 shadow-lg shadow-indigo-500/30"
+               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-xl w-10 h-10 flex items-center justify-center transition-all disabled:opacity-50 mr-0.5 shadow-sm"
              >
-               {loading ? <Loader2 size={24} className="animate-spin" /> : <Send size={24} />}
+               {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
              </motion.button>
           </div>
         </form>
