@@ -193,10 +193,7 @@ export default function InsightsChat({ user, activeCollegeId }) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Blur fade between chat and input */}
-      <div className="shrink-0 w-full h-12 -mb-12 z-20 pointer-events-none bg-gradient-to-t from-white dark:from-[#0f1117] to-transparent" />
-
-      {/* Input Form at the bottom strictly */}
+      {/* Input Form at the bottom */}
       <div className="shrink-0 w-full pt-2 pb-1 mt-auto z-30 flex justify-center">
         <form onSubmit={handleQuery} className="w-full max-w-3xl relative shadow-md rounded-2xl">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl p-[1.5px] opacity-20 disabled:opacity-10"></div>
