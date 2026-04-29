@@ -36,9 +36,9 @@ export default function InsightsTable({ data, columns: inputColumns }: InsightsT
 
   return (
     <div className="w-full">
-      <div className="overflow-x-auto rounded-lg border border-[var(--color-border)]">
+      <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
-          <thead className="bg-[var(--color-surface)] text-[var(--color-text)] border-b border-[var(--color-border)]">
+          <thead className="text-[var(--color-text)]">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
@@ -55,11 +55,11 @@ export default function InsightsTable({ data, columns: inputColumns }: InsightsT
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-[var(--color-border)] bg-[var(--color-background)]">
+          <tbody className="divide-y divide-white/[0.03]">
             {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
-                className="hover:bg-[var(--color-surface)] transition-colors duration-200"
+                className="hover:bg-white/[0.03] transition-colors duration-200"
               >
                 {row.getVisibleCells().map((cell) => (
                   <td
@@ -95,14 +95,14 @@ export default function InsightsTable({ data, columns: inputColumns }: InsightsT
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="p-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-2 rounded-lg border border-white/[0.06] hover:bg-white/[0.03] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="p-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-2 rounded-lg border border-white/[0.06] hover:bg-white/[0.03] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight size={16} />
             </button>

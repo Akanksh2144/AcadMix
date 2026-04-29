@@ -27,7 +27,7 @@ export default function InsightsCanvas({ result, onPin }) {
         </h3>
         
         <div className="flex items-center gap-2">
-          <div className="flex bg-[var(--color-background)] rounded-lg p-1 border border-[var(--color-border)]">
+          <div className="flex rounded-lg p-1 border border-white/[0.06]">
             <button
               onClick={() => setView('table')}
               className={`p-1.5 rounded-md transition-colors ${view === 'table' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'}`}
@@ -60,7 +60,7 @@ export default function InsightsCanvas({ result, onPin }) {
 
           <button
             onClick={handleExport}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-background)] transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border border-white/[0.06] text-[var(--color-text)] rounded-lg hover:bg-white/[0.03] transition-colors"
           >
             <Download size={16} /> Export
           </button>
