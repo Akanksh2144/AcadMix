@@ -719,8 +719,60 @@ export const visitorAPI = {
   getLog: (params = {}) => api.get('/visitors/log', { params }),
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// INSIGHTS ENGINE v2 — Edge Function primary, Python backend fallback
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://axjhruxfwzymagaztney.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4amhydXhmd3p5bWFnYXp0bmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTk5MjIsImV4cCI6MjA5MDg3NTkyMn0.Vdd3tJDizUMTu66UfJmJtJYOT0d36cjbt3TAXAbE1O4';
+
+async function queryEdgeFunction(data) {
+  const token = localStorage.getItem('auth_token');
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/insights-query`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({
+      message: data.message,
+      college_id: data.active_college_id,
+    }),
+    signal: AbortSignal.timeout(60000),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ error: resp.statusText }));
+    throw new Error(err.error || `Edge Function error ${resp.status}`);
+  }
+  const result = await resp.json();
+  return {
+    data: {
+      columns: result.columns,
+      data: result.data,
+      row_count: result.row_count,
+      summary: result.summary,
+      chart_suggestion: result.chart_suggestion,
+      source: result.source,
+      timing: result.timing,
+    }
+  };
+}
+
 export const insightsAPI = {
-  query: (data) => api.post('/insights/query', data, { timeout: 90000 }), // 90s for complex aggregations
+  query: async (data) => {
+    // Try Edge Function first, fall back to Python backend
+    try {
+      return await queryEdgeFunction(data);
+    } catch (edgeErr) {
+      console.warn('[InsightsAPI] Edge Function failed, falling back to Python:', edgeErr.message);
+      return api.post('/insights/query', data, { timeout: 90000 });
+    }
+  },
+  // Direct Edge Function call (no fallback)
+  queryEdge: (data) => queryEdgeFunction(data),
+  // Direct Python backend call (for testing)
+  queryPython: (data) => api.post('/insights/query', data, { timeout: 90000 }),
   getPins: () => api.get('/insights/pins'),
   createPin: (data) => api.post('/insights/pins', data),
   deletePin: (id) => api.delete(`/insights/pins/${id}`),
