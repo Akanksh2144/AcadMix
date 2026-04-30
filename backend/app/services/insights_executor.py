@@ -822,6 +822,11 @@ async def execute_insights_query(session: AsyncSession, sql_query: str, college_
     except Exception as e:
         import traceback
         logger.error(f"Error executing insights query: {type(e).__name__}: {e}\n{traceback.format_exc()}")
+        # Explicit rollback to clear the PendingRollbackError state
+        try:
+            await session.rollback()
+        except Exception:
+            pass
         raise ValueError(f"Failed to execute query: {type(e).__name__}: {str(e)}")
 
 
