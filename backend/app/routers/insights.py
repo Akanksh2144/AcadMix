@@ -12,7 +12,7 @@ from app.services.insights_executor import execute_insights_query
 from app.core.security import get_current_user
 from database import get_db
 from app.models.core import User, PinnedInsight
-from sqlalchemy import select
+from sqlalchemy import select, text
 from typing import List
 
 logger = logging.getLogger("acadmix.insights")
@@ -57,12 +57,28 @@ async def query_insights(
         )
 
     # 1. Generate SQL from Natural Language OR use cached_sql
+    # Fetch department for HOD/FACULTY prompt constraint
+    user_department = ""
+    if role in ["HOD", "FACULTY"]:
+        try:
+            dept_result = await db.execute(
+                text("SELECT department FROM user_profiles WHERE user_id = :uid"),
+                {"uid": current_user.get("id")}
+            )
+            dept_row = dept_result.fetchone()
+            if dept_row:
+                user_department = dept_row[0]
+        except Exception:
+            pass  # Graceful degradation — prompt constraint won't apply
+
     if request.cached_sql:
         generated_sql = request.cached_sql
     else:
         history_dicts = [{"role": msg.role, "content": msg.content} for msg in request.session_history]
         try:
-            generated_sql = await generate_insights_sql(request.message, history_dicts, role)
+            generated_sql = await generate_insights_sql(
+                request.message, history_dicts, role, db=db, department=user_department
+            )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -79,28 +95,83 @@ async def query_insights(
         except Exception:
             pass  # Redis down — proceed without cache
 
-    # 2. Execute SQL Securely with Scope Validator
+    # 2. Execute SQL Securely with Scope Validator + Self-Healing Retry
     # For DHTE/Superadmin, use active_college_id if provided.
     target_college = request.active_college_id if request.active_college_id and role in ["DHTE_NODAL", "SUPERADMIN"] else current_user.get("college_id")
     
-    try:
-        result = await execute_insights_query(
-            session=db,
-            sql_query=generated_sql,
-            college_id=target_college,
-            role=role,
-            user_id=current_user.get("id")
-        )
-    except ValueError as e:
-        # Invalid or unsafe SQL
-        err_str = str(e)
-        if role == "TPO" and "relation" in err_str and "does not exist" in err_str:
-             raise HTTPException(status_code=400, detail="This query is outside your access scope.")
-        raise HTTPException(status_code=400, detail=err_str)
-    except Exception as e:
-        if role == "TPO" and getattr(e, 'orig', None) and 'does not exist' in str(e.orig):
-             raise HTTPException(status_code=400, detail="This query is outside your access scope.")
-        raise HTTPException(status_code=500, detail="Database execution failed.")
+    max_attempts = 2  # Original + 1 retry
+    last_error = None
+    
+    for attempt in range(max_attempts):
+        try:
+            result = await execute_insights_query(
+                session=db,
+                sql_query=generated_sql,
+                college_id=target_college,
+                role=role,
+                user_id=current_user.get("id")
+            )
+            break  # Success — exit retry loop
+        except ValueError as e:
+            last_error = e
+            err_str = str(e)
+            
+            # Don't retry on security blocks — these are intentional
+            if "Blocked keyword" in err_str or "department filtering" in err_str or "outside your access scope" in err_str:
+                if role == "TPO" and "relation" in err_str and "does not exist" in err_str:
+                    raise HTTPException(status_code=400, detail="This query is outside your access scope.")
+                raise HTTPException(status_code=400, detail=err_str)
+            
+            # Self-healing retry: feed the Postgres error back to the LLM
+            if attempt < max_attempts - 1 and not request.cached_sql:
+                logger.info("Self-healing retry (attempt %d): feeding error back to LLM", attempt + 1)
+                try:
+                    # Build a repair prompt with the error context
+                    repair_history = history_dicts.copy() if not request.cached_sql else []
+                    repair_history.append({"role": "assistant", "content": generated_sql})
+                    repair_history.append({
+                        "role": "user", 
+                        "content": (
+                            f"The previous SQL query failed with this PostgreSQL error:\n{err_str}\n\n"
+                            f"Fix the SQL query. Return ONLY the corrected SQL, no explanation."
+                        )
+                    })
+                    generated_sql = await generate_insights_sql(
+                        request.message, repair_history, role, db=db, department=user_department
+                    )
+                    logger.info("Self-healing: LLM generated corrected SQL")
+                    continue  # Retry with the corrected SQL
+                except Exception as retry_err:
+                    logger.warning("Self-healing retry failed: %s", retry_err)
+                    raise HTTPException(status_code=400, detail=str(last_error))
+            
+            raise HTTPException(status_code=400, detail=err_str)
+        except Exception as e:
+            last_error = e
+            if role == "TPO" and getattr(e, 'orig', None) and 'does not exist' in str(e.orig):
+                raise HTTPException(status_code=400, detail="This query is outside your access scope.")
+            
+            # Self-healing retry for execution errors too
+            if attempt < max_attempts - 1 and not request.cached_sql:
+                logger.info("Self-healing retry on execution error (attempt %d)", attempt + 1)
+                try:
+                    repair_history = history_dicts.copy() if not request.cached_sql else []
+                    repair_history.append({"role": "assistant", "content": generated_sql})
+                    repair_history.append({
+                        "role": "user",
+                        "content": (
+                            f"The previous SQL query failed with this PostgreSQL error:\n"
+                            f"{type(e).__name__}: {str(e)}\n\n"
+                            f"Fix the SQL query. Return ONLY the corrected SQL, no explanation."
+                        )
+                    })
+                    generated_sql = await generate_insights_sql(
+                        request.message, repair_history, role, db=db, department=user_department
+                    )
+                    continue
+                except Exception:
+                    pass
+            raise HTTPException(status_code=500, detail=f"Database execution failed: {type(last_error).__name__}: {str(last_error)[:300]}")
 
     # 3. Format Response with AI Summary
     try:

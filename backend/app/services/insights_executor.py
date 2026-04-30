@@ -1,4 +1,5 @@
 import re
+import time
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
@@ -13,10 +14,200 @@ UNSAFE_PATTERNS = [
     r"--"
 ]
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# FULL DATABASE SCHEMA CACHE — Introspected from information_schema
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_schema_cache: dict = {"schema_str": None, "fetched_at": 0}
+_SCHEMA_CACHE_TTL = 3600  # Refresh every 1 hour
+
+# Tables that are internal/system and should NOT be exposed to the LLM
+_EXCLUDED_TABLES = {
+    "alembic_version", "spatial_ref_sys",  # system tables
+}
+
+async def get_full_database_schema(session: AsyncSession) -> str:
+    """
+    Introspects the complete public schema from information_schema.
+    Returns a formatted string of all tables with columns and types.
+    Cached for 1 hour since DDL changes are rare.
+    """
+    now = time.time()
+    if _schema_cache["schema_str"] and (now - _schema_cache["fetched_at"]) < _SCHEMA_CACHE_TTL:
+        return _schema_cache["schema_str"]
+    
+    try:
+        # Pull all columns from public schema
+        result = await session.execute(text("""
+            SELECT 
+                c.table_name,
+                c.column_name,
+                c.data_type,
+                c.is_nullable,
+                CASE WHEN tc.constraint_type = 'PRIMARY KEY' THEN true ELSE false END AS is_pk,
+                CASE WHEN tc.constraint_type = 'FOREIGN KEY' THEN 
+                    ccu.table_name || '(' || ccu.column_name || ')'
+                    ELSE NULL 
+                END AS fk_ref
+            FROM information_schema.columns c
+            LEFT JOIN information_schema.key_column_usage kcu 
+                ON c.table_name = kcu.table_name 
+                AND c.column_name = kcu.column_name
+                AND c.table_schema = kcu.table_schema
+            LEFT JOIN information_schema.table_constraints tc 
+                ON kcu.constraint_name = tc.constraint_name
+                AND kcu.table_schema = tc.table_schema
+            LEFT JOIN information_schema.constraint_column_usage ccu
+                ON tc.constraint_name = ccu.constraint_name
+                AND tc.table_schema = ccu.table_schema
+                AND tc.constraint_type = 'FOREIGN KEY'
+            WHERE c.table_schema = 'public'
+            ORDER BY c.table_name, c.ordinal_position
+        """))
+        rows = result.fetchall()
+        
+        if not rows:
+            logger.warning("No schema rows returned from information_schema")
+            return ""
+        
+        # Group by table
+        tables: dict[str, list] = {}
+        for row in rows:
+            table_name = row[0]
+            if table_name in _EXCLUDED_TABLES:
+                continue
+            if table_name not in tables:
+                tables[table_name] = []
+            
+            col_info = row[1]  # column_name
+            data_type = row[2]
+            is_pk = row[4]
+            fk_ref = row[5]
+            
+            extras = []
+            if is_pk:
+                extras.append("PK")
+            if fk_ref:
+                extras.append(f"FK→{fk_ref}")
+            
+            suffix = f" [{', '.join(extras)}]" if extras else ""
+            tables[table_name].append(f"{col_info}:{data_type}{suffix}")
+        
+        # Format as compact schema string
+        lines = []
+        for table_name, cols in sorted(tables.items()):
+            cols_str = ", ".join(cols)
+            lines.append(f"  {table_name}({cols_str})")
+        
+        schema_str = "\n".join(lines)
+        _schema_cache["schema_str"] = schema_str
+        _schema_cache["fetched_at"] = now
+        logger.info("Full database schema cached: %d tables, %d total columns", 
+                     len(tables), sum(len(c) for c in tables.values()))
+        return schema_str
+        
+    except Exception as e:
+        logger.error("Failed to introspect database schema: %s", e)
+        return ""
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# VIEW REGISTRY — Modular, role-aware view definitions
+# DOMAIN VALUE CACHE — Auto-discovered enum/status values from actual data
 # ═══════════════════════════════════════════════════════════════════════════════
+
+_domain_cache: dict = {"domain_str": None, "fetched_at": 0}
+_DOMAIN_CACHE_TTL = 3600  # Refresh every 1 hour
+
+# Column name patterns that likely contain enum/categorical values
+_ENUM_COLUMN_PATTERNS = {
+    'status', 'type', 'category', 'role', 'gender', 'priority',
+    'fee_type', 'leave_type', 'drive_type', 'exam_type', 'quiz_type',
+    'course_category', 'scholarship_type', 'entry_status', 'submission_status',
+    'enrollment_status', 'applicant_role', 'session', 'grade',
+    'is_published', 'is_supplementary', 'is_lab', 'is_mooc',
+    'sector', 'work_location',
+}
+
+
+async def get_domain_values(session: AsyncSession) -> str:
+    """
+    Auto-discovers distinct values for enum/status/category columns
+    by querying the actual BASE TABLES (not temp views which may not exist
+    in this session context).
+    
+    Strategy:
+    1. Query information_schema for all varchar/text columns matching enum patterns
+    2. For each, run SELECT DISTINCT to get actual values
+    3. Cache results for 1 hour
+    
+    Returns a formatted string like:
+      payments.status: 'success', 'pending', 'failed'
+      invoices.fee_type: 'Tuition Fee', 'Exam Fee', ...
+    """
+    now = time.time()
+    if _domain_cache["domain_str"] and (now - _domain_cache["fetched_at"]) < _DOMAIN_CACHE_TTL:
+        return _domain_cache["domain_str"]
+    
+    try:
+        # Step 1: Find all candidate enum columns from information_schema
+        result = await session.execute(text("""
+            SELECT table_name, column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND data_type IN ('character varying', 'text', 'USER-DEFINED')
+              AND (
+                column_name IN (
+                    'status', 'type', 'category', 'role', 'gender', 'priority',
+                    'fee_type', 'leave_type', 'drive_type', 'exam_type', 'quiz_type',
+                    'course_category', 'scholarship_type', 'entry_status', 
+                    'submission_status', 'enrollment_status', 'applicant_role',
+                    'session', 'grade', 'sector', 'work_location', 'blood_group',
+                    'semester', 'academic_year', 'batch'
+                )
+                OR column_name LIKE '%_status'
+                OR column_name LIKE '%_type'
+              )
+            ORDER BY table_name, column_name
+        """))
+        candidates = result.fetchall()
+        
+        if not candidates:
+            return ""
+        
+        # Step 2: Query distinct values for each candidate (with per-query timeout)
+        domain_lines = []
+        for table_name, col_name in candidates:
+            if table_name in _EXCLUDED_TABLES:
+                continue
+            try:
+                # Timeout per-query: 3 seconds max to avoid slow scans on large tables
+                await session.execute(text("SET LOCAL statement_timeout = '3s'"))
+                distinct_result = await session.execute(text(
+                    f'SELECT DISTINCT "{col_name}" FROM "{table_name}" '
+                    f'WHERE "{col_name}" IS NOT NULL '
+                    f'ORDER BY "{col_name}" LIMIT 30'
+                ))
+                values = [str(row[0]) for row in distinct_result.fetchall()]
+                await session.execute(text("RESET statement_timeout"))
+                
+                # Skip if too many values (not a real enum) or empty
+                if not values or len(values) > 25:
+                    continue
+                    
+                vals_str = ", ".join(f"'{v}'" for v in values)
+                domain_lines.append(f"  {table_name}.{col_name}: {vals_str}")
+            except Exception:
+                pass  # Table might not be accessible, skip silently
+        
+        domain_str = "\n".join(domain_lines)
+        _domain_cache["domain_str"] = domain_str
+        _domain_cache["fetched_at"] = now
+        logger.info("Domain values cached: %d enum columns discovered from base tables", len(domain_lines))
+        return domain_str
+        
+    except Exception as e:
+        logger.error("Failed to introspect domain values: %s", e)
+        return ""
 
 def _build_views(col_filter: str, dept_filter: str, dept_filter_direct: str, role_upper: str) -> list[str]:
     """
@@ -367,6 +558,78 @@ def _build_views(col_filter: str, dept_filter: str, dept_filter_direct: str, rol
     return views
 
 
+def get_view_schemas_for_prompt(role: str) -> list[str]:
+    """
+    Extracts the exact column schemas from the actual view definitions.
+    Returns schema strings like: "- v_students(id, name, email, roll_number, department, ...)"
+    
+    This ensures the LLM prompt always matches the real temporary views,
+    eliminating schema drift between the prompt and actual SQL.
+    """
+    # Use placeholder filters — we only need the column names, not the actual WHERE clauses
+    views_sql = _build_views(
+        col_filter="1=1",
+        dept_filter="",
+        dept_filter_direct="",
+        role_upper=role.upper()
+    )
+    
+    schemas = []
+    for stmt in views_sql:
+        # Extract view name
+        name_match = re.search(r'CREATE\s+OR\s+REPLACE\s+TEMPORARY\s+VIEW\s+(\w+)', stmt, re.IGNORECASE)
+        if not name_match:
+            continue
+        view_name = name_match.group(1)
+        
+        # Extract the SELECT ... FROM portion
+        select_match = re.search(r'SELECT\s+(.*?)\s+FROM\s+', stmt, re.IGNORECASE | re.DOTALL)
+        if not select_match:
+            continue
+        
+        select_clause = select_match.group(1)
+        
+        # Parse individual column expressions and extract their final alias
+        columns = []
+        # Split by comma, respecting parentheses
+        depth = 0
+        current = []
+        for ch in select_clause:
+            if ch == '(':
+                depth += 1
+                current.append(ch)
+            elif ch == ')':
+                depth -= 1
+                current.append(ch)
+            elif ch == ',' and depth == 0:
+                columns.append(''.join(current).strip())
+                current = []
+            else:
+                current.append(ch)
+        if current:
+            columns.append(''.join(current).strip())
+        
+        # For each column, extract the alias (the last word, or the part after AS)
+        col_names = []
+        for col in columns:
+            col = col.strip()
+            if not col:
+                continue
+            # Check for explicit AS alias
+            as_match = re.search(r'\bAS\s+(\w+)\s*$', col, re.IGNORECASE)
+            if as_match:
+                col_names.append(as_match.group(1))
+            else:
+                # No alias — take the column name (last segment after .)
+                parts = col.split('.')
+                col_name = parts[-1].strip()
+                col_names.append(col_name)
+        
+        schemas.append(f"- {view_name}({', '.join(col_names)})")
+    
+    return schemas
+
+
 async def _setup_temporary_views(session: AsyncSession, college_id: str, role: str, user_id: str):
     """Sets up GUC variables and creates role-scoped temporary views."""
     department = None
@@ -385,6 +648,8 @@ async def _setup_temporary_views(session: AsyncSession, college_id: str, role: s
     await session.execute(text("SELECT set_config('insights.college_id', :cid, true)"), {"cid": college_id or ''})
     await session.execute(text("SELECT set_config('insights.department', :dept, true)"), {"dept": department})
     await session.execute(text("SELECT set_config('insights.role', :role, true)"), {"role": role_upper})
+    # Also set app.college_id so RLS policies enforce tenant isolation on base table queries
+    await session.execute(text("SELECT set_config('app.college_id', :cid, true)"), {"cid": college_id or ''})
 
     if role_upper == "SUPERADMIN":
         col_filter = " 1=1 "
@@ -435,8 +700,9 @@ async def execute_insights_query(session: AsyncSession, sql_query: str, college_
     2. Opens a subtransaction (savepoint) just in case
     3. Enforces READ ONLY
     4. Sets up v_* Temp Views
-    5. Wraps query with LIMIT 1000
-    6. Returns data and columns
+    5. Validates department scope for HOD/FACULTY
+    6. Wraps query with LIMIT 1000
+    7. Returns data and columns
     """
     # Clean SQL BEFORE validation: strip markdown fences and trailing semicolons
     clean_sql = sql_query.strip()
@@ -449,9 +715,83 @@ async def execute_insights_query(session: AsyncSession, sql_query: str, college_
     clean_sql = re.sub(r'\s+ORDER\s+BY\s*\)', ')', clean_sql, flags=re.IGNORECASE)
     clean_sql = re.sub(r'\s+ORDER\s+BY\s*$', '', clean_sql, flags=re.IGNORECASE)
     
+    # Auto-fix: PostgreSQL ROUND(double precision, int) does not exist.
+    # LLMs consistently generate ROUND(expr * 100.0 / ..., 2) which produces double precision.
+    # Fix: inject ::NUMERIC cast before the precision argument.
+    # Uses parenthesis-depth tracking to find the correct outer comma.
+    def _fix_all_rounds(sql_text):
+        upper = sql_text.upper()
+        result = []
+        i = 0
+        while i < len(sql_text):
+            # Look for ROUND(
+            if upper[i:i+5] == 'ROUND' and i + 5 < len(sql_text):
+                # Skip whitespace after ROUND
+                j = i + 5
+                while j < len(sql_text) and sql_text[j] in ' \t\n\r':
+                    j += 1
+                if j < len(sql_text) and sql_text[j] == '(':
+                    # Found ROUND( — now find the matching outer comma and closing paren
+                    paren_start = j
+                    depth = 1
+                    k = j + 1
+                    comma_pos = -1
+                    while k < len(sql_text) and depth > 0:
+                        ch = sql_text[k]
+                        if ch == '(':
+                            depth += 1
+                        elif ch == ')':
+                            depth -= 1
+                        elif ch == ',' and depth == 1 and comma_pos == -1:
+                            comma_pos = k
+                        k += 1
+                    # k is now one past the closing paren
+                    if comma_pos > 0 and depth == 0:
+                        expr_part = sql_text[paren_start + 1:comma_pos].strip()
+                        prec_part = sql_text[comma_pos + 1:k - 1].strip()
+                        if expr_part.upper().rstrip().endswith('::NUMERIC'):
+                            result.append(sql_text[i:k])
+                        else:
+                            result.append(f'ROUND(({expr_part})::NUMERIC, {prec_part})')
+                        i = k
+                        continue
+            result.append(sql_text[i])
+            i += 1
+        return ''.join(result)
+    
+    clean_sql = _fix_all_rounds(clean_sql)
+    
+    # Detect truncated CASE statements (LLM token-limit cuts mid-CASE)
+    # Pattern: "WHEN <value> THEN <value> WHEN)" or "WHEN <value> THEN <value> WHEN,"
+    # These indicate the LLM ran out of tokens while generating a CASE block.
+    truncated_case_pattern = re.compile(
+        r'WHEN\s*\)?[\s,;]*$'            # ends with dangling WHEN)
+        r'|WHEN\s+\'[^\']*\'\s*\)'       # WHEN 'value')  — missing THEN
+        r'|THEN\s+\d+\s+WHEN\s*\)',      # THEN 8 WHEN)   — truncated mid-block
+        re.IGNORECASE
+    )
+    if truncated_case_pattern.search(clean_sql):
+        raise ValueError(
+            "The query was too complex and got truncated. "
+            "Please try a simpler question or break it into smaller parts."
+        )
+    
     validate_sql_safety(clean_sql)
     
-    limited_sql = f"SELECT * FROM ({clean_sql}) AS _llm_q LIMIT 1000"
+    # ── Department scope validation for HOD/FACULTY on base table queries ────
+    # If query references base tables (not just v_ views), HOD/FACULTY must
+    # have a department filter. This is the (B) defense layer.
+    role_upper = role.upper()
+    if role_upper in ["HOD", "FACULTY"]:
+        _validate_department_scope(clean_sql, session, user_id)
+    
+    # Wrap with LIMIT — handle CTEs (WITH ... AS) differently
+    # CTEs can't be wrapped in SELECT * FROM (...) — append LIMIT directly
+    if clean_sql.strip().upper().startswith("WITH"):
+        # CTE query — just append LIMIT to the end
+        limited_sql = f"{clean_sql} LIMIT 1000"
+    else:
+        limited_sql = f"SELECT * FROM ({clean_sql}) AS _llm_q LIMIT 1000"
 
     try:
         # Start a nested transaction (SAVEPOINT) so if the LLM query fails, 
@@ -460,8 +800,8 @@ async def execute_insights_query(session: AsyncSession, sql_query: str, college_
             # 1. Setup GUC variables and create scoped temp views
             await _setup_temporary_views(session, college_id, role, user_id)
             
-            # 2. Safety: timeout guard for LLM-generated queries
-            await session.execute(text("SET LOCAL statement_timeout = '90s'"))
+            # 2. Safety: timeout guard for LLM-generated queries (45s max)
+            await session.execute(text("SET LOCAL statement_timeout = '45s'"))
             
             # 3. Execute the LLM query (safety enforced by validate_sql_safety + temp view scope)
             logger.info(f"Executing LLM Query for user {user_id}: {limited_sql}")
@@ -483,3 +823,50 @@ async def execute_insights_query(session: AsyncSession, sql_query: str, college_
         import traceback
         logger.error(f"Error executing insights query: {type(e).__name__}: {e}\n{traceback.format_exc()}")
         raise ValueError(f"Failed to execute query: {type(e).__name__}: {str(e)}")
+
+
+def _validate_department_scope(sql: str, session: AsyncSession, user_id: str):
+    """
+    Post-validation: For HOD/FACULTY roles, if the SQL queries base tables
+    (not just v_ views), verify that a department filter is present.
+    
+    This is the (B) defense layer — even if the LLM ignores the prompt constraint,
+    we block the query at execution time.
+    """
+    upper_sql = sql.upper()
+    
+    # Extract all table/view references from FROM and JOIN clauses
+    # Pattern: FROM tablename, JOIN tablename
+    table_refs = re.findall(
+        r'(?:FROM|JOIN)\s+(\w+)',
+        upper_sql
+    )
+    
+    # Check if any reference is NOT a v_ view
+    has_base_table = any(
+        not ref.startswith('V_') and ref not in ('VALUES', 'LATERAL', 'GENERATE_SERIES')
+        for ref in table_refs
+    )
+    
+    if not has_base_table:
+        return  # All references are v_ views — they handle department filtering
+    
+    # Base table detected — verify department filter exists
+    has_dept_filter = bool(re.search(
+        r"department\s*=\s*'[^']+'"     # department = 'CSE'
+        r"|department\s*=\s*current_setting"  # department = current_setting(...)
+        r"|p\.department\s*=",           # p.department = ...
+        upper_sql,
+        re.IGNORECASE
+    ))
+    
+    if not has_dept_filter:
+        logger.warning(
+            "BLOCKED: HOD/FACULTY query on base tables without department filter. "
+            f"User: {user_id}, SQL: {sql[:200]}"
+        )
+        raise ValueError(
+            "This query accesses base tables without department filtering. "
+            "For security, your queries on base tables must include a department filter. "
+            "Please rephrase your question or use the pre-built views."
+        )
