@@ -785,48 +785,45 @@ async def execute_insights_query(session: AsyncSession, sql_query: str, college_
     if role_upper in ["HOD", "FACULTY"]:
         _validate_department_scope(clean_sql, session, user_id)
     
-    # Wrap with LIMIT — handle CTEs (WITH ... AS) differently
-    # CTEs can't be wrapped in SELECT * FROM (...) — append LIMIT directly
+    # Wrap as subquery to ensure it executes cleanly, but NO limits.
+    # CTEs (WITH ... AS) must be executed directly without subquery wrapping.
     if clean_sql.strip().upper().startswith("WITH"):
-        # CTE query — just append LIMIT to the end
-        limited_sql = f"{clean_sql} LIMIT 1000"
+        limited_sql = clean_sql
     else:
-        limited_sql = f"SELECT * FROM ({clean_sql}) AS _llm_q LIMIT 1000"
+        limited_sql = f"SELECT * FROM ({clean_sql}) AS _llm_q"
 
+    from database import AsyncSessionLocal
+    
     try:
-        # Start a nested transaction (SAVEPOINT) so if the LLM query fails, 
-        # it doesn't break the parent transaction.
-        async with session.begin_nested():
-            # 1. Setup GUC variables and create scoped temp views
-            await _setup_temporary_views(session, college_id, role, user_id)
-            
-            # 2. Safety: timeout guard for LLM-generated queries (45s max)
-            await session.execute(text("SET LOCAL statement_timeout = '45s'"))
-            
-            # 3. Execute the LLM query (safety enforced by validate_sql_safety + temp view scope)
-            logger.info(f"Executing LLM Query for user {user_id}: {limited_sql}")
-            result = await session.execute(text(limited_sql))
-            
-            # 4. Fetch columns and rows
-            keys = result.keys()
-            columns = list(keys)
-            
-            rows = result.fetchall()
-            data = [dict(zip(keys, row)) for row in rows]
-            
-            return {
-                "columns": columns,
-                "data": data
-            }
+        # Create a completely isolated database session to prevent any aborted 
+        # transactions from bleeding into the parent FastAPI request session.
+        async with AsyncSessionLocal() as isolated_session:
+            async with isolated_session.begin():
+                # 1. Setup GUC variables and create scoped temp views
+                await _setup_temporary_views(isolated_session, college_id, role, user_id)
+                
+                # 2. Safety: timeout guard for LLM-generated queries (45s max)
+                await isolated_session.execute(text("SET LOCAL statement_timeout = '45s'"))
+                
+                # 3. Execute the LLM query (safety enforced by validate_sql_safety + temp view scope)
+                logger.info(f"Executing LLM Query for user {user_id}: {limited_sql}")
+                result = await isolated_session.execute(text(limited_sql))
+                
+                # 4. Fetch columns and rows
+                keys = result.keys()
+                columns = list(keys)
+                
+                rows = result.fetchall()
+                data = [dict(zip(keys, row)) for row in rows]
+                
+                return {
+                    "columns": columns,
+                    "data": data
+                }
             
     except Exception as e:
         import traceback
         logger.error(f"Error executing insights query: {type(e).__name__}: {e}\n{traceback.format_exc()}")
-        # Explicit rollback to clear the PendingRollbackError state
-        try:
-            await session.rollback()
-        except Exception:
-            pass
         raise ValueError(f"Failed to execute query: {type(e).__name__}: {str(e)}")
 
 

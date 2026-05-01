@@ -133,8 +133,8 @@ ROUTES: Dict[str, Dict[str, Any]] = {
         "provider": "vertex",
         "model": None,
         "temperature": 0.0,
-        "max_tokens": 1000,
-        "timeout": 45.0,
+        "max_tokens": 4096,
+        "timeout": 90.0,
         "description": "Complex multi-step ERP queries",
     },
     
@@ -143,8 +143,8 @@ ROUTES: Dict[str, Dict[str, Any]] = {
         "provider": "vertex",
         "model": None,
         "temperature": 0.0,
-        "max_tokens": 1000,
-        "timeout": 60.0,
+        "max_tokens": 4096,
+        "timeout": 120.0,
         "description": "Last-resort fallback for ERP queries when Gemini Pro fails",
     },
 

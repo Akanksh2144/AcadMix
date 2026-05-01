@@ -1,4 +1,4 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+﻿import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -42,9 +42,7 @@ CRITICAL RULES:
 - NEVER include college_id, id, is_deleted, created_at, updated_at, deleted_at in SELECT.
 - For college_id filtering: college_id = current_setting('app.college_id')
 - Only add is_deleted = false for tables that HAVE it. mark_submission_entries does NOT have is_deleted.
-- Use ROUND(expr::NUMERIC, 2) for decimals.
-- Add LIMIT only when the user asks for 'top N' or 'first N'. Otherwise return all matching rows.
-- PERFORMANCE RULES: For queries asking for records with 'NO' something (e.g. subjects with no attendance), ALWAYS use NOT EXISTS (SELECT 1 FROM ...) instead of LEFT JOIN + IS NULL.
+- Use ROUND(expr::NUMERIC, 2) for decimals. LIMIT 500 always.
 - Output ONLY the SQL query.
 
 === TABLES ===
@@ -86,7 +84,6 @@ co_po_mappings(id [PK], co_id [FK->course_outcomes], po_id [FK->program_outcomes
 === FORMULAS ===
 ATTENDANCE %: ROUND(COUNT(CASE WHEN status IN ('present','late','od','medical') THEN 1 END)*100.0/NULLIF(COUNT(*),0),2)
 CGPA: JOIN (VALUES ('O',10),('A+',9),('A',8),('B+',7),('B',6),('C',5),('D',4),('F',0)) AS gp(grade,points) ON sg.grade=gp.grade => ROUND(SUM(sg.credits_earned*gp.points)::numeric/NULLIF(SUM(sg.credits_earned),0),2)
-UNPAID INVOICE: LEFT JOIN fee_payments fp ON i.id = fp.invoice_id AND fp.status = 'success' => HAVING COALESCE(SUM(fp.amount_paid), 0) < i.total_amount
 
 === COMPLEX QUERY EXAMPLES ===
 Q: Students who got F grade in any subject
@@ -105,16 +102,7 @@ Q: Faculty with highest feedback rating
 A: SELECT u.name AS faculty_name, ROUND(AVG(cf.overall_rating)::numeric, 2) AS avg_rating, ROUND(AVG(cf.teaching_rating)::numeric, 2) AS avg_teaching, COUNT(*) AS feedback_count FROM course_feedback cf JOIN users u ON cf.faculty_id = u.id WHERE cf.is_deleted = false AND cf.college_id = current_setting('app.college_id') GROUP BY u.name ORDER BY avg_rating DESC LIMIT 10
 
 Q: Department-wise placement statistics
-A: SELECT p.department, COUNT(DISTINCT pa.student_id) AS total_applied, COUNT(DISTINCT CASE WHEN pa.status = 'selected' THEN pa.student_id END) AS selected, ROUND(COUNT(DISTINCT CASE WHEN pa.status = 'selected' THEN pa.student_id END) * 100.0 / NULLIF(COUNT(DISTINCT pa.student_id), 0), 2) AS selection_rate FROM placement_applications pa JOIN users u ON pa.student_id = u.id JOIN user_profiles p ON u.id = p.user_id WHERE pa.is_deleted = false AND pa.college_id = current_setting('app.college_id') GROUP BY p.department ORDER BY selected DESC
-
-Q: Compare CSE and IT department
-A: SELECT p.department, COUNT(DISTINCT p.user_id) AS students, ROUND(SUM(sg.credits_earned * gp.points)::numeric / NULLIF(SUM(sg.credits_earned), 0), 2) AS avg_cgpa FROM user_profiles p LEFT JOIN semester_grades sg ON p.user_id = sg.student_id LEFT JOIN (VALUES ('O',10),('A+',9),('A',8),('B+',7),('B',6),('C',5),('D',4),('F',0)) AS gp(grade, points) ON sg.grade = gp.grade WHERE p.department IN ('CSE','IT') AND p.is_deleted = false AND p.college_id = current_setting('app.college_id') GROUP BY p.department
-
-Q: Attendance this month
-A: SELECT u.name, p.roll_number, COUNT(CASE WHEN ar.status IN ('present','late','od','medical') THEN 1 END) AS attended FROM attendance_records ar JOIN users u ON ar.student_id = u.id JOIN user_profiles p ON u.id = p.user_id WHERE ar.date >= date_trunc('month', CURRENT_DATE) AND ar.is_deleted = false AND ar.college_id = current_setting('app.college_id') GROUP BY u.name, p.roll_number
-
-Q: Subjects with no attendance records
-A: SELECT c.name AS course_name, c.subject_code FROM courses c WHERE c.is_deleted = false AND c.college_id = current_setting('app.college_id') AND NOT EXISTS (SELECT 1 FROM attendance_records ar WHERE ar.subject_code = c.subject_code AND ar.is_deleted = false AND ar.college_id = current_setting('app.college_id'))`;
+A: SELECT p.department, COUNT(DISTINCT pa.student_id) AS total_applied, COUNT(DISTINCT CASE WHEN pa.status = 'selected' THEN pa.student_id END) AS selected, ROUND(COUNT(DISTINCT CASE WHEN pa.status = 'selected' THEN pa.student_id END) * 100.0 / NULLIF(COUNT(DISTINCT pa.student_id), 0), 2) AS selection_rate FROM placement_applications pa JOIN users u ON pa.student_id = u.id JOIN user_profiles p ON u.id = p.user_id WHERE pa.is_deleted = false AND pa.college_id = current_setting('app.college_id') GROUP BY p.department ORDER BY selected DESC LIMIT 500`;
 
 let _cachedToken:{token:string;expires:number}|null=null;
 async function getAccessToken():Promise<string> {
@@ -142,8 +130,7 @@ async function callVertexAI(model:string,systemPrompt:string,userPrompt:string,t
       const token=await getAccessToken();
       const url=`https://${GCP_LOCATION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT}/locations/${GCP_LOCATION}/publishers/google/models/${model}:generateContent`;
       // deno-lint-ignore no-explicit-any
-      const effectiveMaxTokens = model===MODEL_PRO ? Math.max(maxTokens, 4096) : maxTokens;
-      const gc:any={temperature,maxOutputTokens:effectiveMaxTokens,candidateCount:1};
+      const gc:any={temperature,maxOutputTokens:maxTokens,candidateCount:1};
       if(model===MODEL_FLASH||model===MODEL_CLASSIFIER)gc.thinkingConfig={thinkingBudget:0};
       if(model===MODEL_PRO)gc.thinkingConfig={thinkingBudget:2048};
       const resp=await fetch(url,{method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify({contents:[{role:"user",parts:[{text:userPrompt}]}],systemInstruction:{parts:[{text:systemPrompt}]},generationConfig:gc})});
@@ -159,14 +146,13 @@ async function callVertexAI(model:string,systemPrompt:string,userPrompt:string,t
   throw new Error("All attempts failed");
 }
 
-// Three-tier classifier: KNOWN (MV) / SIMPLE (Flash) / COMPLEX (Pro) / VAGUE
-async function classifyQuery(q:string):Promise<{type:"KNOWN"|"SIMPLE"|"COMPLEX"|"VAGUE";mvKey?:string;filter?:string}> {
+// Three-tier classifier: KNOWN (MV) / SIMPLE (Flash) / COMPLEX (Pro)
+async function classifyQuery(q:string):Promise<{type:"KNOWN"|"SIMPLE"|"COMPLEX";mvKey?:string;filter?:string}> {
   const prompt=`Classify this database query into exactly one category:
 
 KNOWN:<key> — matches a pre-computed materialized view (use filter if needed)
 SIMPLE — straightforward single-table query or simple count/list (e.g. "how many students", "list faculty", "total count")
-COMPLEX — requires multi-table JOINs, aggregations with HAVING, subqueries, grade calculations, cross-domain analysis, or temporal filters like "last month"
-VAGUE — query is too broad, philosophical, or not data-answerable (e.g. "what's wrong with our college", "show me everything", "why is ECE declining")
+COMPLEX — requires multi-table JOINs, aggregations with HAVING, subqueries, grade calculations, marks analysis, or cross-domain analysis
 
 Views:
 ${MV_LIST}
@@ -179,15 +165,16 @@ Examples:
 - "faculty load in ECE" => KNOWN:faculty_workload|filter:department = 'ECE'
 - "how many students?" => SIMPLE
 - "total faculty count" => SIMPLE
+- "pending leave requests" => SIMPLE
 - "students who got F grade" => COMPLEX
-- "attendance last month" => COMPLEX
-- "compare CSE and IT" => COMPLEX
+- "average marks in mid-terms by department" => COMPLEX
 - "highest package in placements" => COMPLEX
-- "what is wrong with the college?" => VAGUE
-- "why are students failing" => VAGUE
+- "CGPA above 9" => COMPLEX
+- "department-wise placement stats" => COMPLEX
+- "complete overview of CSE" => COMPLEX
 
-Respond ONLY: KNOWN:<key>, KNOWN:<key>|filter:<condition>, SIMPLE, COMPLEX, or VAGUE`;
-  const result=(await callVertexAI(MODEL_CLASSIFIER,"Query complexity classifier. Respond with exactly one of: KNOWN:<key>, KNOWN:<key>|filter:<condition>, SIMPLE, COMPLEX, or VAGUE.",prompt,0.0,100)).trim();
+Respond ONLY: KNOWN:<key>, KNOWN:<key>|filter:<condition>, SIMPLE, or COMPLEX`;
+  const result=(await callVertexAI(MODEL_CLASSIFIER,"Query complexity classifier. Respond with exactly one of: KNOWN:<key>, KNOWN:<key>|filter:<condition>, SIMPLE, or COMPLEX.",prompt,0.0,100)).trim();
   if(result.startsWith("KNOWN:")){
     const parts=result.replace("KNOWN:","").split("|filter:");
     const key=parts[0].trim();
@@ -195,7 +182,6 @@ Respond ONLY: KNOWN:<key>, KNOWN:<key>|filter:<condition>, SIMPLE, COMPLEX, or V
     if(MV_REGISTRY[key])return {type:"KNOWN",mvKey:key,filter};
   }
   if(result==="SIMPLE")return {type:"SIMPLE"};
-  if(result==="VAGUE")return {type:"VAGUE"};
   return {type:"COMPLEX"};
 }
 
@@ -227,19 +213,9 @@ Deno.serve(async(req)=>{
     const t0=Date.now();
     const classification=await classifyQuery(message);
     const t1=Date.now();
-    let rawData:Record<string,unknown>[],source:string, sql_executed:string="";
-    if(classification.type==="VAGUE"){
-      // === VAGUE PATH ===
-      return new Response(JSON.stringify({
-        summary: "That's a broad question! Here are some specific insights I can help with:",
-        chart_suggestion: "table",
-        columns: [],
-        data: [],
-        row_count: 0,
-        source: "vague_handler",
-        timing: { total_ms: Date.now()-t0 }
-      }),{headers:H});
-    } else if(classification.type==="KNOWN"&&classification.mvKey){
+    let rawData:Record<string,unknown>[],source:string;
+
+    if(classification.type==="KNOWN"&&classification.mvKey){
       // === MV PATH ===
       const mv=MV_REGISTRY[classification.mvKey];
       const adminClient=createClient(SUPABASE_URL,SUPABASE_SERVICE_KEY);
@@ -263,7 +239,7 @@ Deno.serve(async(req)=>{
           }
         }
       }
-      const {data:mvData,error:mvError}=await query;
+      const {data:mvData,error:mvError}=await query.limit(500);
       if(mvError)throw new Error(`MV query failed: ${mvError.message}`);
       rawData=mvData||[];source=`mv:${classification.mvKey}`;
 
@@ -278,7 +254,6 @@ Deno.serve(async(req)=>{
         sql = await generateSQL(message, fallback);
         if(!validateSQL(sql))throw new Error("SQL validation failed on both models");
       }
-      sql_executed = sql;
       const adminClient=createClient(SUPABASE_URL,SUPABASE_SERVICE_KEY);
       const {data:d1,error:e1}=await adminClient.rpc("insights_execute_safe",{sql_query:sql,p_college_id:college_id||''});
       if(e1){
@@ -287,7 +262,6 @@ Deno.serve(async(req)=>{
         console.log(`${model} SQL failed: ${e1.message}, repairing with Pro`);
         const repaired=await generateSQL(message,repairModel,`${e1.message}\nFailing SQL: ${sql}`);
         if(!validateSQL(repaired))throw new Error(`Repair failed: ${e1.message}`);
-        sql_executed = repaired;
         const {data:d2,error:e2}=await adminClient.rpc("insights_execute_safe",{sql_query:repaired,p_college_id:college_id||''});
         if(e2)throw new Error(`Query failed after repair: ${e2.message}`);
         rawData=d2||[];source=`${classification.type.toLowerCase()}:${model===MODEL_PRO?'pro':'flash'}-repaired`;
@@ -307,10 +281,11 @@ Deno.serve(async(req)=>{
       summary=parsed.summary||"";chartSuggestion=parsed.chart_suggestion||null;
     }catch{}
 
-    return new Response(JSON.stringify({columns:sanitized.columns,data:sanitized.data,row_count:sanitized.data.length,summary,chart_suggestion:chartSuggestion,source,timing:{classify_ms:t1-t0,query_ms:t2-t1,total_ms:Date.now()-t0}, sql_debug: sql_executed}),{status:200,headers:H});
+    return new Response(JSON.stringify({columns:sanitized.columns,data:sanitized.data,row_count:sanitized.data.length,summary,chart_suggestion:chartSuggestion,source,timing:{classify_ms:t1-t0,query_ms:t2-t1,total_ms:Date.now()-t0}}),{status:200,headers:H});
   }catch(err:unknown){
     const msg=err instanceof Error?err.message:String(err);
     console.error("insights-query error:",msg);
     return new Response(JSON.stringify({error:msg}),{status:500,headers:H});
   }
 });
+

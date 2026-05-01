@@ -523,6 +523,7 @@ RULES:
 14. NEVER generate SQL that returns hardcoded strings (e.g. SELECT 'Hello' AS message). Every query MUST reference at least one table or view.
 15. When querying base tables, always use proper JOINs with the foreign key relationships shown in the schema. Filter with is_deleted = false where applicable.
 16. ALWAYS use the exact enum/status values shown in the ACTUAL DATA VALUES section above. NEVER guess or assume values.
+17. DESCRIPTIVE LABELS: When returning per-student rows, ALWAYS include the student's name (e.g., u.name AS student_name). When returning per-section or per-class rows, ALWAYS create a composite label: department || '-' || section AS label (e.g., 'CSE-A', 'AIML-B'). NEVER return section alone ('A', 'B') as the only categorical column — it is meaningless without context. Place the most descriptive label column FIRST in the SELECT list.
 
 GRADE_POINTS SNIPPET (use this exact JOIN for GPA/CGPA calculations):
   JOIN (VALUES ('O',10),('A+',9),('A',8),('B+',7),('B',6),('C',5),('D',4),('F',0)) AS gp(grade, points) ON sg.grade = gp.grade

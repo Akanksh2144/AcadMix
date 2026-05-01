@@ -70,7 +70,14 @@ export default function InsightsCanvas({ result, onPin, onUnpin }) {
         </div>
         <div className="p-4 pt-0">
           {view === 'table' ? (
-            <InsightsTable data={result.data} columns={result.columns} />
+            <div className="flex flex-col gap-2">
+              <InsightsTable data={result.data.slice(0, 500)} columns={result.columns} />
+              {result.data.length > 500 && (
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic px-1">
+                  Showing first 500 of {result.data.length} rows. Use the Export button to download the full dataset.
+                </div>
+              )}
+            </div>
           ) : (
             <InsightsChart data={result.data} columns={result.columns} chartType={view} />
           )}

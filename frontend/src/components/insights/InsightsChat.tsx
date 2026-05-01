@@ -9,7 +9,25 @@ export default function InsightsChat({ user, activeCollegeId, onPinsChanged }) {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
+  const [backgroundTasks, setBackgroundTasks] = useState([]);
+  const [showBgPrompt, setShowBgPrompt] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Load existing background tasks
+  useEffect(() => {
+    const tasks = JSON.parse(localStorage.getItem('insights_bg_tasks') || '[]');
+    // Clean up stuck running tasks (if they refreshed the page)
+    const validTasks = tasks.map(t => {
+       if (t.status === 'running' && (Date.now() - t.timestamp > 150000)) {
+          return { ...t, status: 'error', error: 'Task timed out or page was refreshed' };
+       }
+       return t;
+    });
+    setBackgroundTasks(validTasks);
+    if (JSON.stringify(tasks) !== JSON.stringify(validTasks)) {
+      localStorage.setItem('insights_bg_tasks', JSON.stringify(validTasks));
+    }
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -17,24 +35,38 @@ export default function InsightsChat({ user, activeCollegeId, onPinsChanged }) {
 
   useEffect(() => {
     scrollToBottom();
-  }, [history, loading]);
+  }, [history, loading, backgroundTasks]);
 
-  const handleQuery = async (e) => {
-    e.preventDefault();
-    if (!query.trim()) return;
+  const handleQuery = async (e, forcedQuery = null) => {
+    if (e) e.preventDefault();
+    const q = forcedQuery || query;
+    if (!q.trim()) return;
 
-    const userMessage = { role: 'user', content: query };
+    const userMessage = { role: 'user', content: q };
     const newHistory = [...history, userMessage];
     setHistory(newHistory);
     setQuery('');
     setLoading(true);
+    setShowBgPrompt(false);
+
+    const taskId = Date.now().toString();
+
+    // 10-second prompt timer
+    const timer = setTimeout(() => {
+      setShowBgPrompt(true);
+    }, 10000);
 
     try {
-      // Pass only text messages for context, not the huge result objects
       const sessionHistory = history.map(msg => ({
         role: msg.role,
         content: msg.role === 'assistant' ? (msg.result?.summary || msg.content || '') : msg.content
       }));
+
+      // Start the task
+      const newTask = { id: taskId, timestamp: Date.now(), query: q, status: 'running' };
+      const tasks = JSON.parse(localStorage.getItem('insights_bg_tasks') || '[]');
+      localStorage.setItem('insights_bg_tasks', JSON.stringify([...tasks, newTask]));
+      setBackgroundTasks(prev => [...prev, newTask]);
 
       const response = await insightsAPI.query({
         message: userMessage.content,
@@ -42,13 +74,31 @@ export default function InsightsChat({ user, activeCollegeId, onPinsChanged }) {
         active_college_id: activeCollegeId
       });
 
-      setHistory([...newHistory, { role: 'assistant', result: response.data }]);
+      clearTimeout(timer);
+      setShowBgPrompt(false);
+
+      // Update task in local storage
+      const currentTasks = JSON.parse(localStorage.getItem('insights_bg_tasks') || '[]');
+      const updatedTasks = currentTasks.map(t => t.id === taskId ? { ...t, status: 'completed', result: response.data } : t);
+      localStorage.setItem('insights_bg_tasks', JSON.stringify(updatedTasks));
+      setBackgroundTasks(updatedTasks);
+
+      // Only add to chat history if it wasn't dismissed to background entirely
+      setHistory(prev => [...prev, { role: 'assistant', result: response.data, taskId }]);
+
     } catch (error) {
+      clearTimeout(timer);
+      setShowBgPrompt(false);
       const detail = error.response?.data?.detail;
-      const statusCode = error.response?.status;
-      console.error('[InsightsChat] Query failed:', { statusCode, detail, error: error.message });
-      toast.error(detail || error.message || "Failed to fetch insights");
-      setHistory([...newHistory, { role: 'assistant', error: true, content: detail || "Sorry, I had trouble processing that request." }]);
+      const errorMsg = detail || error.message || "Failed to fetch insights";
+      
+      const currentTasks = JSON.parse(localStorage.getItem('insights_bg_tasks') || '[]');
+      const updatedTasks = currentTasks.map(t => t.id === taskId ? { ...t, status: 'error', error: errorMsg } : t);
+      localStorage.setItem('insights_bg_tasks', JSON.stringify(updatedTasks));
+      setBackgroundTasks(updatedTasks);
+
+      toast.error(errorMsg);
+      setHistory(prev => [...prev, { role: 'assistant', error: true, content: errorMsg, taskId }]);
     } finally {
       setLoading(false);
     }
@@ -64,12 +114,12 @@ export default function InsightsChat({ user, activeCollegeId, onPinsChanged }) {
         active_college_id: activeCollegeId
       });
       toast.success("Pinned to your dashboard!");
-      onPinsChanged?.();  // notify parent to refresh pin list
-      return res.data?.id || res.data; // return pin ID for unpin toggle
+      onPinsChanged?.(); 
+      return res.data?.id || res.data;
     } catch (error) {
       const detail = error.response?.data?.detail || error.message || "Unknown error";
       toast.error(`Failed to pin: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
-      throw error; // re-throw so canvas knows it failed
+      throw error;
     }
   };
 
@@ -77,11 +127,18 @@ export default function InsightsChat({ user, activeCollegeId, onPinsChanged }) {
     try {
       await insightsAPI.deletePin(pinId);
       toast.success("Unpinned from dashboard");
-      onPinsChanged?.();  // notify parent to refresh pin list
+      onPinsChanged?.(); 
     } catch (error) {
       toast.error("Failed to unpin");
       throw error;
     }
+  };
+
+  const clearCompletedBgTasks = () => {
+    const tasks = JSON.parse(localStorage.getItem('insights_bg_tasks') || '[]');
+    const pending = tasks.filter(t => t.status === 'running');
+    localStorage.setItem('insights_bg_tasks', JSON.stringify(pending));
+    setBackgroundTasks(pending);
   };
 
   return (
@@ -90,8 +147,54 @@ export default function InsightsChat({ user, activeCollegeId, onPinsChanged }) {
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto w-full p-2 sm:p-4 pb-16 space-y-6 hide-scrollbar relative">
         
+        {/* Background Tasks Banner */}
+        {backgroundTasks.length > 0 && (
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-4 mb-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
+                <Database size={16} /> Background Tasks
+              </h3>
+              <button onClick={clearCompletedBgTasks} className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200">
+                Clear Completed
+              </button>
+            </div>
+            <div className="space-y-2">
+              {backgroundTasks.map(task => (
+                <div key={task.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700">
+                  <span className="text-sm text-slate-700 dark:text-slate-300 font-medium truncate max-w-md">
+                    "{task.query}"
+                  </span>
+                  <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                    {task.status === 'running' && (
+                      <span className="text-xs font-semibold text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-md flex items-center gap-1">
+                        <Loader2 size={12} className="animate-spin" /> Running
+                      </span>
+                    )}
+                    {task.status === 'completed' && (
+                      <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-md">
+                        Done
+                      </span>
+                    )}
+                    {task.status === 'error' && (
+                      <span className="text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-500/10 px-2 py-1 rounded-md">
+                        Failed
+                      </span>
+                    )}
+                    {task.status === 'completed' && !history.find(h => h.taskId === task.id) && (
+                       <button onClick={() => setHistory(prev => [...prev, { role: 'assistant', result: task.result, taskId: task.id }])}
+                               className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/20 dark:text-indigo-300 px-3 py-1 rounded-lg transition-colors">
+                         View Result
+                       </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Empty State / Suggestions */}
-        {history.length === 0 && (
+        {history.length === 0 && backgroundTasks.length === 0 && (
           <motion.div 
              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
              className="flex flex-col items-center justify-center pt-16 sm:pt-24 text-center"
@@ -118,7 +221,7 @@ export default function InsightsChat({ user, activeCollegeId, onPinsChanged }) {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   key={idx}
-                  onClick={() => setQuery(suggestion.text)}
+                  onClick={() => handleQuery(null, suggestion.text)}
                   className="flex items-center gap-4 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-800 p-4 rounded-2xl hover:border-indigo-500 hover:shadow-lg hover:shadow-indigo-500/10 transition-all text-left group"
                 >
                   <div className={`p-2 rounded-xl bg-slate-50 dark:bg-slate-800 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/10 transition-colors ${suggestion.color}`}>
@@ -166,8 +269,10 @@ export default function InsightsChat({ user, activeCollegeId, onPinsChanged }) {
                             <InsightsCanvas 
                               result={msg.result} 
                               onPin={async () => {
-                                const prevUserMsg = history[idx - 1];
-                                return handlePin(msg.result, prevUserMsg?.content);
+                                // Find previous user message
+                                const prevMsgs = history.slice(0, idx);
+                                const lastUserMsg = [...prevMsgs].reverse().find(h => h.role === 'user');
+                                return handlePin(msg.result, lastUserMsg?.content);
                               }}
                               onUnpin={handleUnpin}
                             />
@@ -185,10 +290,45 @@ export default function InsightsChat({ user, activeCollegeId, onPinsChanged }) {
                   <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
                      <Loader2 className="text-indigo-600 animate-spin" size={20} />
                   </div>
-                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-4 rounded-3xl rounded-tl-sm shadow-sm inline-block">
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-4 rounded-3xl rounded-tl-sm shadow-sm inline-block space-y-3">
                      <p className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
                         Querying database securely <span className="animate-pulse">...</span>
                      </p>
+                     
+                     {/* 10-second wait prompt or manual background trigger */}
+                     <AnimatePresence>
+                        {showBgPrompt && (
+                           <motion.div 
+                             initial={{ opacity: 0, height: 0 }} 
+                             animate={{ opacity: 1, height: 'auto' }} 
+                             className="pt-2 border-t border-slate-100 dark:border-slate-700"
+                           >
+                              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                 This is a complex query. Want to run it in the background?
+                              </p>
+                              <button 
+                                onClick={() => {
+                                  setLoading(false);
+                                  toast.info("Query moved to background. We'll notify you when it's done.");
+                                }}
+                                className="bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 px-4 py-2 rounded-xl text-sm font-bold w-full hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+                              >
+                                 Run in Background
+                              </button>
+                           </motion.div>
+                        )}
+                        {!showBgPrompt && (
+                           <button 
+                              onClick={() => {
+                                setLoading(false);
+                                toast.info("Query moved to background.");
+                              }}
+                              className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 underline font-medium"
+                           >
+                             Run in background
+                           </button>
+                        )}
+                     </AnimatePresence>
                   </div>
                </div>
             </motion.div>

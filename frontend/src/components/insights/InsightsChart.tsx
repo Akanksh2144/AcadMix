@@ -42,24 +42,55 @@ interface InsightsChartProps {
 }
 
 export default function InsightsChart({ data, columns, chartType = 'bar_chart' }: InsightsChartProps) {
-  const { xAxisCol, yAxisCol } = useMemo(() => {
-    let xCol: string | null = null;
-    let yCol: string | null = null;
+  const { xAxisCol, yAxisCol, chartData } = useMemo(() => {
+    if (!data.length) return { xAxisCol: columns[0], yAxisCol: columns[1] || columns[0], chartData: data };
 
-    if (data.length > 0) {
-      for (const col of columns) {
-        if (typeof data[0][col] === 'number') {
-          if (!yCol) yCol = col;
-        } else if (typeof data[0][col] === 'string') {
-          if (!xCol) xCol = col;
-        }
+    const stringCols: string[] = [];
+    const numCols: string[] = [];
+
+    for (const col of columns) {
+      const val = data[0][col];
+      if (typeof val === 'number') numCols.push(col);
+      else if (typeof val === 'string') stringCols.push(col);
+    }
+
+    const yCol = numCols[0] || columns[1] || columns[0];
+
+    if (stringCols.length === 0) {
+      return { xAxisCol: columns[0], yAxisCol: yCol, chartData: data };
+    }
+
+    // Priority columns — if the LLM returned one of these, use it immediately
+    const priorityNames = ['label', 'student_name', 'name', 'roll_number', 'faculty_name', 'course_name', 'subject_name'];
+    const priorityCol = stringCols.find(c => priorityNames.includes(c.toLowerCase()));
+    if (priorityCol) {
+      return { xAxisCol: priorityCol, yAxisCol: yCol, chartData: data };
+    }
+
+    // Score each string column by unique value count (higher = more descriptive)
+    const scored = stringCols.map(col => {
+      const uniques = new Set(data.map(row => row[col]));
+      return { col, uniqueCount: uniques.size };
+    });
+    scored.sort((a, b) => b.uniqueCount - a.uniqueCount);
+
+    const best = scored[0];
+
+    // If the best column has low cardinality relative to row count,
+    // try creating a composite from multiple string columns (e.g., department + section → "CSE-A")
+    if (best.uniqueCount < data.length * 0.5 && stringCols.length >= 2) {
+      const compositeKey = '__composite_label__';
+      const compositeData = data.map(row => ({
+        ...row,
+        [compositeKey]: stringCols.map(c => row[c]).filter(Boolean).join('-'),
+      }));
+      const compositeUniques = new Set(compositeData.map(r => r[compositeKey]));
+      if (compositeUniques.size > best.uniqueCount) {
+        return { xAxisCol: compositeKey, yAxisCol: yCol, chartData: compositeData };
       }
     }
 
-    if (!xCol) xCol = columns[0];
-    if (!yCol) yCol = columns[1] || columns[0];
-
-    return { xAxisCol: xCol!, yAxisCol: yCol! };
+    return { xAxisCol: best.col, yAxisCol: yCol, chartData: data };
   }, [data, columns]);
 
   if (!data || data.length === 0) {
@@ -70,9 +101,11 @@ export default function InsightsChart({ data, columns, chartType = 'bar_chart' }
     );
   }
 
-  /** Pretty-print column names: total_students → Total Students */
-  const formatLabel = (key: string) =>
-    key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  /** Pretty-print column names: total_students → Total Students, hide internal composite key */
+  const formatLabel = (key: string) => {
+    if (key === '__composite_label__') return 'Label';
+    return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -105,24 +138,24 @@ export default function InsightsChart({ data, columns, chartType = 'bar_chart' }
   // Compute dynamic left margin based on the largest Y value
   const maxYValue = useMemo(() => {
     let max = 0;
-    for (const row of data) {
+    for (const row of chartData) {
       const val = Number(row[yAxisCol]) || 0;
       if (val > max) max = val;
     }
     return max;
-  }, [data, yAxisCol]);
+  }, [chartData, yAxisCol]);
 
   const leftMargin = maxYValue >= 1_000_000 ? 20 : maxYValue >= 10_000 ? 15 : 10;
 
   // Cap bar width for small datasets — prevents a single bar from filling the entire chart
-  const maxBarSize = data.length <= 3 ? 80 : data.length <= 6 ? 60 : undefined;
+  const maxBarSize = chartData.length <= 3 ? 80 : chartData.length <= 6 ? 60 : undefined;
 
   const renderChart = () => {
     if (chartType === 'pie_chart') {
       return (
         <PieChart>
           <Pie
-            data={data}
+            data={chartData}
             dataKey={yAxisCol}
             nameKey={xAxisCol}
             cx="50%"
@@ -134,7 +167,7 @@ export default function InsightsChart({ data, columns, chartType = 'bar_chart' }
             stroke="var(--color-background)"
             label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
           >
-            {data.map((_entry, index) => (
+            {chartData.map((_entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
@@ -152,7 +185,7 @@ export default function InsightsChart({ data, columns, chartType = 'bar_chart' }
 
     if (chartType === 'line_chart') {
       return (
-        <LineChart data={data} margin={{ top: 10, right: 30, left: leftMargin, bottom: 20 }}>
+        <LineChart data={chartData} margin={{ top: 10, right: 30, left: leftMargin, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} opacity={0.5} />
           <XAxis
             dataKey={xAxisCol}
@@ -187,7 +220,7 @@ export default function InsightsChart({ data, columns, chartType = 'bar_chart' }
 
     // Default: Bar Chart
     return (
-      <BarChart data={data} margin={{ top: 10, right: 30, left: leftMargin, bottom: 20 }}>
+      <BarChart data={chartData} margin={{ top: 10, right: 30, left: leftMargin, bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} opacity={0.5} />
         <XAxis
           dataKey={xAxisCol}
@@ -196,9 +229,9 @@ export default function InsightsChart({ data, columns, chartType = 'bar_chart' }
           tickLine={false}
           axisLine={{ stroke: 'var(--color-border)' }}
           interval={0}
-          angle={data.length > 8 ? -35 : 0}
-          textAnchor={data.length > 8 ? 'end' : 'middle'}
-          height={data.length > 8 ? 60 : 30}
+          angle={chartData.length > 8 ? -35 : 0}
+          textAnchor={chartData.length > 8 ? 'end' : 'middle'}
+          height={chartData.length > 8 ? 60 : 30}
         />
         <YAxis
           stroke="var(--color-text-secondary)"
@@ -219,7 +252,7 @@ export default function InsightsChart({ data, columns, chartType = 'bar_chart' }
           animationDuration={800}
           animationEasing="ease-out"
         >
-          {data.map((_entry, index) => (
+          {chartData.map((_entry, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Bar>
