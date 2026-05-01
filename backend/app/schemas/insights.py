@@ -15,7 +15,11 @@ class InsightsQueryResponse(BaseModel):
     summary: str = Field(..., description="Natural language summary of the results")
     data: List[Dict[str, Any]] = Field(default_factory=list, description="Row data from the database query")
     columns: List[str] = Field(default_factory=list, description="List of columns for table display")
-    chart_suggestion: Optional[str] = Field(None, description="'bar_chart', 'pie_chart' or None")
+    chart_suggestion: Optional[str] = Field(None, description="'bar_chart', 'grouped_bar', 'stacked_bar', 'line_chart', 'pie_chart', 'kpi_card' or None")
+    x_column: Optional[str] = Field(None, description="Column for X-axis (category/label)")
+    y_column: Optional[str] = Field(None, description="Primary numeric column for Y-axis")
+    group_column: Optional[str] = Field(None, description="Secondary categorical dimension for multi-series charts")
+    all_metrics: List[str] = Field(default_factory=list, description="All numeric column names for metric switching")
     exportable: bool = Field(True, description="True if the data can be exported to CSV")
     generated_sql: Optional[str] = Field(None, description="The SQL query that was executed (for debugging/transparency)")
 

@@ -114,9 +114,18 @@ function resolveColumns(
   const row = data[0];
   const strCols: string[] = [];
   const numCols: string[] = [];
+
+  // Scan up to 10 rows to determine column types (handles null in first row)
   for (const col of columns) {
-    if (typeof row[col] === 'number') numCols.push(col);
-    else if (typeof row[col] === 'string') strCols.push(col);
+    let foundStr = false;
+    let foundNum = false;
+    for (let i = 0; i < Math.min(data.length, 10); i++) {
+      const val = data[i][col];
+      if (typeof val === 'string') { foundStr = true; break; }
+      if (typeof val === 'number') { foundNum = true; break; }
+    }
+    if (foundStr) strCols.push(col);
+    else if (foundNum) numCols.push(col);
   }
 
   // Trust LLM columns if they exist in the data
@@ -359,6 +368,11 @@ export default function InsightsChart({
     [data, columns, xColumn, yColumn, groupColumn, allMetricsProp]
   );
 
+  // DEBUG: remove after fixing
+  console.log('[InsightsChart] Props:', { xColumn, yColumn, groupColumn, allMetrics: allMetricsProp, chartSuggestion, columns });
+  console.log('[InsightsChart] Resolved:', resolved);
+  console.log('[InsightsChart] First row:', data[0]);
+
   const [activeMetric, setActiveMetric] = useState<string | null>(null);
   const yCol = activeMetric && data[0]?.[activeMetric] !== undefined ? activeMetric : resolved.yCol;
 
@@ -366,6 +380,7 @@ export default function InsightsChart({
     () => detectShape(data, resolved, chartSuggestion),
     [data, resolved, chartSuggestion]
   );
+  console.log('[InsightsChart] Mode:', mode, 'ChartType:', chartType);
 
   // Override mode if user manually selected a chart type from the sidebar
   const effectiveMode = useMemo((): ChartMode => {
