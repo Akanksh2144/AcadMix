@@ -52,6 +52,12 @@ if (import.meta.env.VITE_DD_APPLICATION_ID) {
       trackResources: true,
       trackLongTasks: true,
       defaultPrivacyLevel: 'mask-user-input',
+      // Distributed tracing — connects frontend sessions to backend APM traces
+      allowedTracingUrls: [
+        { match: /https?:\/\/(.*\.)?acadmix\.(org|com)/, propagatorTypes: ['datadog'] },
+        { match: /https?:\/\/localhost/, propagatorTypes: ['datadog'] },
+        { match: /https?:\/\/aits\.localhost/, propagatorTypes: ['datadog'] },
+      ],
     });
   });
 }
