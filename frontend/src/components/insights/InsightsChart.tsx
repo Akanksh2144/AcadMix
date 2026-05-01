@@ -368,11 +368,6 @@ export default function InsightsChart({
     [data, columns, xColumn, yColumn, groupColumn, allMetricsProp]
   );
 
-  // DEBUG: remove after fixing
-  console.log('[InsightsChart] Props:', { xColumn, yColumn, groupColumn, allMetrics: allMetricsProp, chartSuggestion, columns });
-  console.log('[InsightsChart] Resolved:', resolved);
-  console.log('[InsightsChart] First row:', data[0]);
-
   const [activeMetric, setActiveMetric] = useState<string | null>(null);
   const yCol = activeMetric && data[0]?.[activeMetric] !== undefined ? activeMetric : resolved.yCol;
 
@@ -380,7 +375,6 @@ export default function InsightsChart({
     () => detectShape(data, resolved, chartSuggestion),
     [data, resolved, chartSuggestion]
   );
-  console.log('[InsightsChart] Mode:', mode, 'ChartType:', chartType);
 
   // Override mode if user manually selected a chart type from the sidebar
   const effectiveMode = useMemo((): ChartMode => {
@@ -400,7 +394,11 @@ export default function InsightsChart({
     // Wide format: data already has multiple numeric columns (e.g., male_students, female_students)
     // Use allMetrics as series keys (excluding total/summary columns)
     if ((effectiveMode === 'grouped_bar' || effectiveMode === 'stacked_bar') && !resolved.groupCol && resolved.allMetrics.length >= 2) {
-      const series = resolved.allMetrics.filter(m => !/total|sum|count_all|grand/i.test(m));
+      // Keep only core count columns — exclude totals, percentages, and rates
+      const series = resolved.allMetrics.filter(m => 
+        !/total|sum|count_all|grand/i.test(m) && 
+        !/pct|percent|percentage|rate|ratio/i.test(m)
+      );
       if (series.length >= 2) {
         return { pivotedData: data, seriesKeys: series };
       }
