@@ -129,6 +129,31 @@ function resolveColumns(
     resolvedX = strCols[0];
   }
 
+  // ── Temporal/index column detection for all-numeric data ──
+  // When both X and Y are numeric, detect which one is the sequential index (e.g., semester 1-6)
+  // vs the metric (e.g., pass_rate 96.43). The index column has small sequential integers.
+  if (typeof row[resolvedX] === 'number' && typeof row[resolvedY] === 'number') {
+    const temporalPattern = /semester|sem|month|year|week|quarter|period|batch|term/i;
+    const xIsTemporal = temporalPattern.test(resolvedX);
+    const yIsTemporal = temporalPattern.test(resolvedY);
+    
+    if (yIsTemporal && !xIsTemporal) {
+      // Y has the temporal name but is on the wrong axis
+      [resolvedX, resolvedY] = [resolvedY, resolvedX];
+    } else if (!xIsTemporal && !yIsTemporal) {
+      // Neither has a temporal name — use heuristic: the column with smaller, 
+      // sequential integer values is likely the index
+      const xVals = data.map(r => Number(r[resolvedX]));
+      const yVals = data.map(r => Number(r[resolvedY]));
+      const xIsIndex = xVals.every(v => Number.isInteger(v)) && Math.max(...xVals) <= data.length * 3;
+      const yIsIndex = yVals.every(v => Number.isInteger(v)) && Math.max(...yVals) <= data.length * 3;
+      
+      if (!xIsIndex && yIsIndex) {
+        [resolvedX, resolvedY] = [resolvedY, resolvedX];
+      }
+    }
+  }
+
   let resolvedG: string | null = gValid ? groupColumn! : null;
 
   // ── Auto-detect group column if LLM didn't specify one ──
@@ -177,8 +202,10 @@ function detectShape(
   };
   if (chartSuggestion && llmMap[chartSuggestion]) {
     const suggested = llmMap[chartSuggestion];
-    // Validate: grouped needs a group column
-    if ((suggested === 'grouped_bar' || suggested === 'stacked_bar' || suggested === 'multi_line') && !resolved.groupCol) {
+    // Validate: grouped/stacked needs either a group column OR multiple metrics (wide format)
+    if ((suggested === 'grouped_bar' || suggested === 'stacked_bar') && !resolved.groupCol && resolved.allMetrics.length < 2) {
+      // Fall through to auto-detection
+    } else if (suggested === 'multi_line' && !resolved.groupCol) {
       // Fall through to auto-detection
     } else {
       return suggested;
@@ -190,6 +217,11 @@ function detectShape(
   if (resolved.groupCol) {
     const isTemporalX = /semester|month|year|week|quarter|period/i.test(resolved.xCol);
     return isTemporalX ? 'multi_line' : 'grouped_bar';
+  }
+  // Wide-format detection: multiple metrics with semantic names (male/female, paid/unpaid)
+  if (!resolved.groupCol && resolved.allMetrics.length >= 2) {
+    const semanticPairs = resolved.allMetrics.filter(m => /male|female|boy|girl|pass|fail|paid|unpaid|present|absent/i.test(m));
+    if (semanticPairs.length >= 2) return 'grouped_bar';
   }
   if (/semester|month|year|week|quarter|period/i.test(resolved.xCol)) return 'line';
   if (n <= 5 && resolved.allMetrics.length === 1) return 'pie';
@@ -335,11 +367,20 @@ export default function InsightsChart({
   // Pivot data for grouped/stacked modes
   const { pivotedData, seriesKeys } = useMemo(() => {
     if ((effectiveMode === 'grouped_bar' || effectiveMode === 'stacked_bar' || effectiveMode === 'multi_line') && resolved.groupCol) {
+      // Long format → pivot to wide
       const { pivoted, seriesKeys } = pivotData(data, resolved.xCol, resolved.groupCol, yCol);
       return { pivotedData: pivoted, seriesKeys };
     }
+    // Wide format: data already has multiple numeric columns (e.g., male_students, female_students)
+    // Use allMetrics as series keys (excluding total/summary columns)
+    if ((effectiveMode === 'grouped_bar' || effectiveMode === 'stacked_bar') && !resolved.groupCol && resolved.allMetrics.length >= 2) {
+      const series = resolved.allMetrics.filter(m => !/total|sum|count_all|grand/i.test(m));
+      if (series.length >= 2) {
+        return { pivotedData: data, seriesKeys: series };
+      }
+    }
     return { pivotedData: data, seriesKeys: [] as string[] };
-  }, [data, effectiveMode, resolved.xCol, resolved.groupCol, yCol]);
+  }, [data, effectiveMode, resolved.xCol, resolved.groupCol, yCol, resolved.allMetrics]);
 
   // Truncate large datasets for chart (table shows all)
   const chartData = useMemo(() => {
