@@ -26,7 +26,15 @@ const SEMANTIC_COLORS: Record<string, string> = {
 };
 
 function getSeriesColor(value: string, index: number): string {
-  return SEMANTIC_COLORS[value.toLowerCase().trim()] || RAINBOW[index % RAINBOW.length];
+  const lower = value.toLowerCase().trim();
+  // Exact match first
+  if (SEMANTIC_COLORS[lower]) return SEMANTIC_COLORS[lower];
+  // Partial word match: "male_students" → check "male", "students"
+  const words = lower.split(/[_\s-]+/);
+  for (const word of words) {
+    if (SEMANTIC_COLORS[word]) return SEMANTIC_COLORS[word];
+  }
+  return RAINBOW[index % RAINBOW.length];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -195,7 +203,15 @@ function detectShape(
 ): ChartMode {
   const n = data.length;
 
-  // Map LLM suggestion to mode
+  // ── Wide-format detection (runs FIRST, overrides everything) ──
+  // If multiple metric columns have semantic names (male/female, paid/unpaid), 
+  // this is ALWAYS a grouped bar chart regardless of what LLM suggested
+  if (resolved.allMetrics.length >= 2) {
+    const semanticPairs = resolved.allMetrics.filter(m => /male|female|boy|girl|pass|fail|paid|unpaid|present|absent/i.test(m));
+    if (semanticPairs.length >= 2) return 'grouped_bar';
+  }
+
+  // ── LLM suggestion ──
   const llmMap: Record<string, ChartMode> = {
     kpi_card: 'kpi', grouped_bar: 'grouped_bar', stacked_bar: 'stacked_bar',
     multi_line: 'multi_line', line_chart: 'line', pie_chart: 'pie', bar_chart: 'bar',
@@ -212,16 +228,11 @@ function detectShape(
     }
   }
 
-  // Auto-detection
+  // ── Auto-detection ──
   if (n <= 2 && resolved.allMetrics.length <= 3) return 'kpi';
   if (resolved.groupCol) {
     const isTemporalX = /semester|month|year|week|quarter|period/i.test(resolved.xCol);
     return isTemporalX ? 'multi_line' : 'grouped_bar';
-  }
-  // Wide-format detection: multiple metrics with semantic names (male/female, paid/unpaid)
-  if (!resolved.groupCol && resolved.allMetrics.length >= 2) {
-    const semanticPairs = resolved.allMetrics.filter(m => /male|female|boy|girl|pass|fail|paid|unpaid|present|absent/i.test(m));
-    if (semanticPairs.length >= 2) return 'grouped_bar';
   }
   if (/semester|month|year|week|quarter|period/i.test(resolved.xCol)) return 'line';
   if (n <= 5 && resolved.allMetrics.length === 1) return 'pie';
@@ -499,7 +510,7 @@ export default function InsightsChart({
               radius={[4, 4, 0, 0]} maxBarSize={maxBarSize} animationDuration={800} />
           ))}
           <Legend iconType="circle" iconSize={10}
-            formatter={(v: string) => <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{v}</span>} />
+            formatter={(v: string) => <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{formatColName(v)}</span>} />
         </BarChart>
       );
     }
