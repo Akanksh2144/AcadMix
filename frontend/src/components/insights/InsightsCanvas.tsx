@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Table as TableIcon, BarChart2, PieChart as PieChartIcon, LineChart as LineChartIcon, Download, Pin, PinOff, Loader2 } from 'lucide-react';
-import InsightsTable from './InsightsTable';
-import InsightsChart from './InsightsChart';
+import { BarChart2, Download, LineChart as LineChartIcon, Loader2, PieChart as PieChartIcon, Pin, PinOff, Table as TableIcon } from 'lucide-react';
+import { useState } from 'react';
 import * as XLSX from 'xlsx';
+import InsightsChart from './InsightsChart';
+import InsightsTable from './InsightsTable';
 
 export default function InsightsCanvas({ result, onPin, onUnpin }) {
   const defaultView = result.chart_suggestion ? result.chart_suggestion : 'table';
@@ -79,7 +79,16 @@ export default function InsightsCanvas({ result, onPin, onUnpin }) {
               )}
             </div>
           ) : (
-            <InsightsChart data={result.data} columns={result.columns} chartType={view} />
+            <InsightsChart
+              data={result.data}
+              columns={result.columns}
+              chartType={view}
+              chartSuggestion={result.chart_suggestion}
+              xColumn={result.x_column}
+              yColumn={result.y_column}
+              groupColumn={result.group_column}
+              allMetrics={result.all_metrics || []}
+            />
           )}
         </div>
       </div>

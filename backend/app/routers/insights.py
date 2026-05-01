@@ -189,6 +189,10 @@ async def query_insights(
         "data": result["data"],
         "columns": result["columns"],
         "chart_suggestion": summary_info.get("chart_suggestion"),
+        "x_column": summary_info.get("x_column"),
+        "y_column": summary_info.get("y_column"),
+        "group_column": summary_info.get("group_column"),
+        "all_metrics": summary_info.get("all_metrics", []),
         "exportable": True,
         "generated_sql": generated_sql
     }

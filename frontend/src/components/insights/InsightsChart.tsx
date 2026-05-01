@@ -1,270 +1,482 @@
-import React, { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  Legend,
+    Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart,
+    Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 
-const COLORS = [
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const RAINBOW = [
   '#6366f1', '#f97316', '#8b5cf6', '#ec4899', '#14b8a6',
   '#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#a855f7',
   '#06b6d4', '#e11d48'
 ];
 
-/** Format large numbers: 187200 → "187.2K", 1500000 → "1.5M" */
-function formatAxisTick(value: number): string {
+/** Semantic colors for known group values — case-insensitive lookup */
+const SEMANTIC_COLORS: Record<string, string> = {
+  male: '#6366f1', m: '#6366f1', boys: '#6366f1', boy: '#6366f1',
+  female: '#ec4899', f: '#ec4899', girls: '#ec4899', girl: '#ec4899',
+  pass: '#22c55e', passed: '#22c55e', present: '#22c55e', yes: '#22c55e',
+  paid: '#22c55e', active: '#22c55e', approved: '#22c55e', occupied: '#22c55e',
+  fail: '#ef4444', failed: '#ef4444', absent: '#ef4444', no: '#ef4444',
+  unpaid: '#ef4444', inactive: '#ef4444', rejected: '#ef4444', vacant: '#ef4444',
+  pending: '#f59e0b', partial: '#f59e0b', overdue: '#f59e0b',
+};
+
+function getSeriesColor(value: string, index: number): string {
+  return SEMANTIC_COLORS[value.toLowerCase().trim()] || RAINBOW[index % RAINBOW.length];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** avg_cgpa → "Avg CGPA", total_students → "Total Students" */
+function formatColName(key: string): string {
+  if (!key) return '';
+  return key
+    .replace(/__composite_label__/g, 'Label')
+    .replace(/[-_]/g, ' ')
+    .replace(/\b(cgpa|sgpa|id|hod|it|ece|cse|aiml)\b/gi, m => m.toUpperCase())
+    .replace(/\bpct\b/gi, '%')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/** 187200 → "187.2K" */
+function fmtTick(value: number): string {
   if (typeof value !== 'number') return String(value);
   if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}K`;
   return value.toLocaleString();
 }
 
-/** Format tooltip values with full comma-separated numbers */
-function formatTooltipValue(value: number): string {
-  if (typeof value !== 'number') return String(value);
-  return value.toLocaleString();
+/** Detect if a column is a percentage based on name */
+function isPctCol(name: string): boolean {
+  return /pct|percent|rate|ratio/i.test(name);
 }
+
+/** Format tick for percentage columns */
+function fmtPctTick(value: number): string {
+  if (typeof value !== 'number') return String(value);
+  return `${value}%`;
+}
+
+/** Pivot long-format grouped data to wide format for Recharts */
+function pivotData(
+  data: Record<string, any>[],
+  xCol: string,
+  groupCol: string,
+  yCol: string
+): { pivoted: Record<string, any>[]; seriesKeys: string[] } {
+  const xMap = new Map<string, Record<string, any>>();
+  const seriesSet = new Set<string>();
+
+  for (const row of data) {
+    const xVal = String(row[xCol] ?? '');
+    const gVal = String(row[groupCol] ?? '');
+    const yVal = row[yCol];
+    seriesSet.add(gVal);
+    if (!xMap.has(xVal)) xMap.set(xVal, { [xCol]: xVal });
+    xMap.get(xVal)![gVal] = yVal;
+  }
+
+  return { pivoted: Array.from(xMap.values()), seriesKeys: Array.from(seriesSet) };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COLUMN RESOLUTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface ResolvedCols {
+  xCol: string;
+  yCol: string;
+  groupCol: string | null;
+  allMetrics: string[];
+}
+
+function resolveColumns(
+  data: Record<string, any>[],
+  columns: string[],
+  xColumn?: string, yColumn?: string, groupColumn?: string, allMetrics?: string[]
+): ResolvedCols {
+  if (!data.length) return { xCol: columns[0], yCol: columns[1] || columns[0], groupCol: null, allMetrics: [] };
+
+  const row = data[0];
+  const strCols: string[] = [];
+  const numCols: string[] = [];
+  for (const col of columns) {
+    if (typeof row[col] === 'number') numCols.push(col);
+    else if (typeof row[col] === 'string') strCols.push(col);
+  }
+
+  // Trust LLM columns if they exist in the data
+  const xValid = xColumn && row[xColumn] !== undefined;
+  const yValid = yColumn && row[yColumn] !== undefined;
+  const gValid = groupColumn && row[groupColumn] !== undefined;
+
+  const resolvedX = xValid ? xColumn! : strCols[0] || columns[0];
+  const resolvedY = yValid ? yColumn! : numCols[numCols.length - 1] || columns[1] || columns[0];
+  const resolvedG = gValid ? groupColumn! : null;
+
+  // Build all_metrics
+  const metrics = allMetrics?.length ? allMetrics.filter(m => row[m] !== undefined) : numCols;
+
+  return { xCol: resolvedX, yCol: resolvedY, groupCol: resolvedG, allMetrics: metrics };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA SHAPE DETECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+type ChartMode = 'kpi' | 'bar' | 'grouped_bar' | 'stacked_bar' | 'line' | 'multi_line' | 'pie';
+
+function detectShape(
+  data: Record<string, any>[],
+  resolved: ResolvedCols,
+  chartSuggestion?: string,
+): ChartMode {
+  const n = data.length;
+
+  // Map LLM suggestion to mode
+  const llmMap: Record<string, ChartMode> = {
+    kpi_card: 'kpi', grouped_bar: 'grouped_bar', stacked_bar: 'stacked_bar',
+    multi_line: 'multi_line', line_chart: 'line', pie_chart: 'pie', bar_chart: 'bar',
+  };
+  if (chartSuggestion && llmMap[chartSuggestion]) {
+    const suggested = llmMap[chartSuggestion];
+    // Validate: grouped needs a group column
+    if ((suggested === 'grouped_bar' || suggested === 'stacked_bar' || suggested === 'multi_line') && !resolved.groupCol) {
+      // Fall through to auto-detection
+    } else {
+      return suggested;
+    }
+  }
+
+  // Auto-detection
+  if (n <= 2 && resolved.allMetrics.length <= 3) return 'kpi';
+  if (resolved.groupCol) {
+    const isTemporalX = /semester|month|year|week|quarter|period/i.test(resolved.xCol);
+    return isTemporalX ? 'multi_line' : 'grouped_bar';
+  }
+  if (/semester|month|year|week|quarter|period/i.test(resolved.xCol)) return 'line';
+  if (n <= 5 && resolved.allMetrics.length === 1) return 'pie';
+  return 'bar';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUBCOMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function KpiCard({ data, allMetrics, xCol }: { data: Record<string, any>[]; allMetrics: string[]; xCol: string }) {
+  if (!data.length) return null;
+  const row = data[0];
+
+  if (data.length === 1) {
+    // Single value or profile
+    const metrics = allMetrics.length ? allMetrics : Object.keys(row).filter(k => typeof row[k] === 'number');
+    return (
+      <div className="flex flex-wrap gap-4 justify-center py-6">
+        {metrics.map(m => (
+          <div key={m} className="flex flex-col items-center px-8 py-6 rounded-2xl"
+            style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+            <span className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+              {formatColName(m)}
+            </span>
+            <span className="text-4xl font-bold" style={{ color: 'var(--color-primary)' }}>
+              {typeof row[m] === 'number' ? (isPctCol(m) ? `${row[m]}%` : row[m].toLocaleString()) : row[m]}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // 2 rows = comparison
+  return (
+    <div className="flex flex-wrap gap-6 justify-center py-6">
+      {data.map((r, i) => (
+        <div key={i} className="flex flex-col items-center px-8 py-6 rounded-2xl min-w-[180px]"
+          style={{ background: 'var(--color-surface)', border: `2px solid ${RAINBOW[i]}` }}>
+          <span className="text-sm font-semibold mb-2" style={{ color: RAINBOW[i] }}>
+            {r[xCol] || `Group ${i + 1}`}
+          </span>
+          {allMetrics.slice(0, 3).map(m => (
+            <div key={m} className="text-center mt-2">
+              <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{formatColName(m)}</span>
+              <div className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                {typeof r[m] === 'number' ? (isPctCol(m) ? `${r[m]}%` : r[m].toLocaleString()) : r[m]}
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MetricDropdown({ metrics, active, onChange }: { metrics: string[]; active: string; onChange: (m: string) => void }) {
+  if (metrics.length < 2) return null;
+  return (
+    <div className="flex items-center gap-2 mb-3 px-1">
+      <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Metric:</span>
+      <select
+        value={active}
+        onChange={e => onChange(e.target.value)}
+        className="text-xs font-semibold px-2 py-1 rounded-lg border-none outline-none cursor-pointer"
+        style={{
+          background: 'var(--color-surface)',
+          color: 'var(--color-primary)',
+          border: '1px solid var(--color-border)',
+        }}
+      >
+        {metrics.map(m => <option key={m} value={m}>{formatColName(m)}</option>)}
+      </select>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHARED CHART ELEMENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-xl shadow-2xl shadow-black/10 backdrop-blur-sm"
+      style={{ pointerEvents: 'none' }}>
+      <p className="text-slate-900 dark:text-white font-bold text-sm mb-1.5 border-b border-slate-100 dark:border-slate-700 pb-1.5">
+        {label || payload[0]?.name}
+      </p>
+      {payload.map((entry: any, i: number) => (
+        <p key={i} className="text-sm flex items-center gap-2 mt-1">
+          <span className="w-2.5 h-2.5 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: entry.color || entry.fill }} />
+          <span className="text-slate-500 dark:text-slate-400">{formatColName(entry.name || entry.dataKey)}:</span>
+          <span className="font-bold text-slate-900 dark:text-white ml-auto pl-3">
+            {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
+          </span>
+        </p>
+      ))}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface InsightsChartProps {
   data: Record<string, any>[];
   columns: string[];
   chartType?: string;
+  chartSuggestion?: string;
+  xColumn?: string;
+  yColumn?: string;
+  groupColumn?: string;
+  allMetrics?: string[];
 }
 
-export default function InsightsChart({ data, columns, chartType = 'bar_chart' }: InsightsChartProps) {
-  const { xAxisCol, yAxisCol, chartData } = useMemo(() => {
-    if (!data.length) return { xAxisCol: columns[0], yAxisCol: columns[1] || columns[0], chartData: data };
+export default function InsightsChart({
+  data, columns, chartType, chartSuggestion, xColumn, yColumn, groupColumn, allMetrics: allMetricsProp
+}: InsightsChartProps) {
+  const resolved = useMemo(
+    () => resolveColumns(data, columns, xColumn, yColumn, groupColumn, allMetricsProp),
+    [data, columns, xColumn, yColumn, groupColumn, allMetricsProp]
+  );
 
-    const stringCols: string[] = [];
-    const numCols: string[] = [];
+  const [activeMetric, setActiveMetric] = useState<string | null>(null);
+  const yCol = activeMetric && data[0]?.[activeMetric] !== undefined ? activeMetric : resolved.yCol;
 
-    for (const col of columns) {
-      const val = data[0][col];
-      if (typeof val === 'number') numCols.push(col);
-      else if (typeof val === 'string') stringCols.push(col);
+  const mode = useMemo(
+    () => detectShape(data, resolved, chartSuggestion),
+    [data, resolved, chartSuggestion]
+  );
+
+  // Override mode if user manually selected a chart type from the sidebar
+  const effectiveMode = useMemo((): ChartMode => {
+    if (chartType === 'pie_chart') return 'pie';
+    if (chartType === 'line_chart') return mode === 'multi_line' ? 'multi_line' : 'line';
+    if (chartType === 'bar_chart') return mode === 'grouped_bar' ? 'grouped_bar' : mode === 'stacked_bar' ? 'stacked_bar' : 'bar';
+    return mode;
+  }, [chartType, mode]);
+
+  // Pivot data for grouped/stacked modes
+  const { pivotedData, seriesKeys } = useMemo(() => {
+    if ((effectiveMode === 'grouped_bar' || effectiveMode === 'stacked_bar' || effectiveMode === 'multi_line') && resolved.groupCol) {
+      const { pivoted, seriesKeys } = pivotData(data, resolved.xCol, resolved.groupCol, yCol);
+      return { pivotedData: pivoted, seriesKeys };
     }
+    return { pivotedData: data, seriesKeys: [] as string[] };
+  }, [data, effectiveMode, resolved.xCol, resolved.groupCol, yCol]);
 
-    const yCol = numCols[0] || columns[1] || columns[0];
+  // Truncate large datasets for chart (table shows all)
+  const chartData = useMemo(() => {
+    const maxBars = 30;
+    const src = seriesKeys.length ? pivotedData : data;
+    return src.length > maxBars ? src.slice(0, maxBars) : src;
+  }, [data, pivotedData, seriesKeys]);
+  const isTruncated = (seriesKeys.length ? pivotedData : data).length > chartData.length;
 
-    if (stringCols.length === 0) {
-      return { xAxisCol: columns[0], yAxisCol: yCol, chartData: data };
-    }
-
-    // Priority columns — if the LLM returned one of these, use it immediately
-    const priorityNames = ['label', 'student_name', 'name', 'roll_number', 'faculty_name', 'course_name', 'subject_name'];
-    const priorityCol = stringCols.find(c => priorityNames.includes(c.toLowerCase()));
-    if (priorityCol) {
-      return { xAxisCol: priorityCol, yAxisCol: yCol, chartData: data };
-    }
-
-    // Score each string column by unique value count (higher = more descriptive)
-    const scored = stringCols.map(col => {
-      const uniques = new Set(data.map(row => row[col]));
-      return { col, uniqueCount: uniques.size };
-    });
-    scored.sort((a, b) => b.uniqueCount - a.uniqueCount);
-
-    const best = scored[0];
-
-    // If the best column has low cardinality relative to row count,
-    // try creating a composite from multiple string columns (e.g., department + section → "CSE-A")
-    if (best.uniqueCount < data.length * 0.5 && stringCols.length >= 2) {
-      const compositeKey = '__composite_label__';
-      const compositeData = data.map(row => ({
-        ...row,
-        [compositeKey]: stringCols.map(c => row[c]).filter(Boolean).join('-'),
-      }));
-      const compositeUniques = new Set(compositeData.map(r => r[compositeKey]));
-      if (compositeUniques.size > best.uniqueCount) {
-        return { xAxisCol: compositeKey, yAxisCol: yCol, chartData: compositeData };
-      }
-    }
-
-    return { xAxisCol: best.col, yAxisCol: yCol, chartData: data };
-  }, [data, columns]);
-
-  if (!data || data.length === 0) {
+  // ── Empty State ──
+  if (!data || !data.length) {
     return (
-      <div className="flex items-center justify-center h-48 text-[var(--color-text-secondary)] font-medium text-sm">
+      <div className="flex items-center justify-center h-48 text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
         No data to chart.
       </div>
     );
   }
 
-  /** Pretty-print column names: total_students → Total Students, hide internal composite key */
-  const formatLabel = (key: string) => {
-    if (key === '__composite_label__') return 'Label';
-    return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  };
+  // ── KPI Card ──
+  if (effectiveMode === 'kpi') {
+    return <KpiCard data={data} allMetrics={resolved.allMetrics} xCol={resolved.xCol} />;
+  }
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div
-          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-xl shadow-2xl shadow-black/10 backdrop-blur-sm"
-          style={{ pointerEvents: 'none' }}
-        >
-          <p className="text-slate-900 dark:text-white font-bold text-sm mb-1.5 border-b border-slate-100 dark:border-slate-700 pb-1.5">
-            {label || payload[0]?.name}
-          </p>
-          {payload.map((entry: any, index: number) => (
-            <p key={index} className="text-sm flex items-center gap-2 mt-1">
-              <span
-                className="w-2.5 h-2.5 rounded-full inline-block flex-shrink-0"
-                style={{ backgroundColor: entry.color || entry.fill }}
-              />
-              <span className="text-slate-500 dark:text-slate-400">{formatLabel(entry.name)}:</span>
-              <span className="font-bold text-slate-900 dark:text-white ml-auto pl-3">
-                {formatTooltipValue(entry.value)}
-              </span>
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // Compute dynamic left margin based on the largest Y value
-  const maxYValue = useMemo(() => {
-    let max = 0;
-    for (const row of chartData) {
-      const val = Number(row[yAxisCol]) || 0;
-      if (val > max) max = val;
-    }
-    return max;
-  }, [chartData, yAxisCol]);
-
-  const leftMargin = maxYValue >= 1_000_000 ? 20 : maxYValue >= 10_000 ? 15 : 10;
-
-  // Cap bar width for small datasets — prevents a single bar from filling the entire chart
+  // ── Shared config ──
+  const usePct = isPctCol(yCol);
+  const tickFn = usePct ? fmtPctTick : fmtTick;
+  const maxY = Math.max(...chartData.map(r => {
+    if (seriesKeys.length) return Math.max(...seriesKeys.map(k => Number(r[k]) || 0));
+    return Number(r[yCol]) || 0;
+  }));
+  const leftMargin = maxY >= 1_000_000 ? 20 : maxY >= 10_000 ? 15 : 10;
+  const needsAngle = chartData.length > 8;
   const maxBarSize = chartData.length <= 3 ? 80 : chartData.length <= 6 ? 60 : undefined;
 
+  const xAxisProps = {
+    dataKey: resolved.xCol,
+    stroke: 'var(--color-text-secondary)',
+    tick: { fill: 'var(--color-text-secondary)', fontSize: 12, fontWeight: 500 },
+    tickLine: false,
+    axisLine: { stroke: 'var(--color-border)' },
+    interval: 0 as any,
+    angle: needsAngle ? -35 : 0,
+    textAnchor: (needsAngle ? 'end' : 'middle') as any,
+    height: needsAngle ? 70 : 30,
+  };
+
+  const yAxisProps = {
+    stroke: 'var(--color-text-secondary)',
+    tick: { fill: 'var(--color-text-secondary)', fontSize: 12 },
+    tickFormatter: tickFn,
+    tickLine: false,
+    axisLine: false as any,
+    width: 65,
+  };
+
+  // ── Render ──
   const renderChart = () => {
-    if (chartType === 'pie_chart') {
+    // PIE
+    if (effectiveMode === 'pie') {
       return (
         <PieChart>
-          <Pie
-            data={chartData}
-            dataKey={yAxisCol}
-            nameKey={xAxisCol}
-            cx="50%"
-            cy="50%"
-            outerRadius={120}
-            innerRadius={60}
-            paddingAngle={2}
-            strokeWidth={2}
+          <Pie data={chartData} dataKey={yCol} nameKey={resolved.xCol} cx="50%" cy="50%"
+            outerRadius={120} innerRadius={60} paddingAngle={2} strokeWidth={2}
             stroke="var(--color-background)"
-            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-          >
-            {chartData.map((_entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
+            {chartData.map((entry, i) => (
+              <Cell key={i} fill={getSeriesColor(String(entry[resolved.xCol] || ''), i)} />
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />
-          <Legend
-            iconType="circle"
-            iconSize={10}
-            formatter={(value: string) => (
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{formatLabel(value)}</span>
-            )}
-          />
+          <Legend iconType="circle" iconSize={10}
+            formatter={(v: string) => <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{formatColName(v)}</span>} />
         </PieChart>
       );
     }
 
-    if (chartType === 'line_chart') {
+    // LINE / MULTI-LINE
+    if (effectiveMode === 'line' || effectiveMode === 'multi_line') {
+      const lineData = seriesKeys.length ? pivotedData : chartData;
       return (
-        <LineChart data={chartData} margin={{ top: 10, right: 30, left: leftMargin, bottom: 20 }}>
+        <LineChart data={lineData} margin={{ top: 10, right: 30, left: leftMargin, bottom: needsAngle ? 50 : 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} opacity={0.5} />
-          <XAxis
-            dataKey={xAxisCol}
-            stroke="var(--color-text-secondary)"
-            tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }}
-            tickLine={false}
-            axisLine={{ stroke: 'var(--color-border)' }}
-          />
-          <YAxis
-            stroke="var(--color-text-secondary)"
-            tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }}
-            tickFormatter={formatAxisTick}
-            tickLine={false}
-            axisLine={false}
-            width={65}
-          />
-          <Tooltip
-            content={<CustomTooltip />}
-            cursor={{ stroke: 'var(--color-primary)', strokeWidth: 1, strokeDasharray: '4 4' }}
-          />
-          <Line
-            type="monotone"
-            dataKey={yAxisCol}
-            stroke={COLORS[0]}
-            strokeWidth={3}
-            dot={{ r: 5, fill: COLORS[0], strokeWidth: 2, stroke: '#fff' }}
-            activeDot={{ r: 7, strokeWidth: 0, fill: COLORS[0] }}
-          />
+          <XAxis {...xAxisProps} />
+          <YAxis {...yAxisProps} />
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--color-primary)', strokeWidth: 1, strokeDasharray: '4 4' }} />
+          {seriesKeys.length ? (
+            <>
+              {seriesKeys.map((sk, i) => (
+                <Line key={sk} type="monotone" dataKey={sk} name={sk}
+                  stroke={getSeriesColor(sk, i)} strokeWidth={3}
+                  dot={{ r: 4, fill: getSeriesColor(sk, i), strokeWidth: 2, stroke: '#fff' }}
+                  activeDot={{ r: 6, strokeWidth: 0 }} />
+              ))}
+              <Legend iconType="circle" iconSize={10}
+                formatter={(v: string) => <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{v}</span>} />
+            </>
+          ) : (
+            <Line type="monotone" dataKey={yCol} stroke={RAINBOW[0]} strokeWidth={3}
+              dot={{ r: 5, fill: RAINBOW[0], strokeWidth: 2, stroke: '#fff' }}
+              activeDot={{ r: 7, strokeWidth: 0, fill: RAINBOW[0] }} />
+          )}
         </LineChart>
       );
     }
 
-    // Default: Bar Chart
-    return (
-      <BarChart data={chartData} margin={{ top: 10, right: 30, left: leftMargin, bottom: 20 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} opacity={0.5} />
-        <XAxis
-          dataKey={xAxisCol}
-          stroke="var(--color-text-secondary)"
-          tick={{ fill: 'var(--color-text-secondary)', fontSize: 12, fontWeight: 500 }}
-          tickLine={false}
-          axisLine={{ stroke: 'var(--color-border)' }}
-          interval={0}
-          angle={chartData.length > 8 ? -35 : 0}
-          textAnchor={chartData.length > 8 ? 'end' : 'middle'}
-          height={chartData.length > 8 ? 60 : 30}
-        />
-        <YAxis
-          stroke="var(--color-text-secondary)"
-          tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }}
-          tickFormatter={formatAxisTick}
-          tickLine={false}
-          axisLine={false}
-          width={65}
-        />
-        <Tooltip
-          content={<CustomTooltip />}
-          cursor={{ fill: 'var(--color-primary)', opacity: 0.06 }}
-        />
-        <Bar
-          dataKey={yAxisCol}
-          radius={[6, 6, 0, 0]}
-          maxBarSize={maxBarSize}
-          animationDuration={800}
-          animationEasing="ease-out"
-        >
-          {chartData.map((_entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+    // GROUPED BAR
+    if (effectiveMode === 'grouped_bar' && seriesKeys.length) {
+      return (
+        <BarChart data={chartData} margin={{ top: 10, right: 30, left: leftMargin, bottom: needsAngle ? 50 : 20 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} opacity={0.5} />
+          <XAxis {...xAxisProps} />
+          <YAxis {...yAxisProps} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-primary)', opacity: 0.06 }} />
+          {seriesKeys.map((sk, i) => (
+            <Bar key={sk} dataKey={sk} name={sk} fill={getSeriesColor(sk, i)}
+              radius={[4, 4, 0, 0]} maxBarSize={maxBarSize} animationDuration={800} />
           ))}
+          <Legend iconType="circle" iconSize={10}
+            formatter={(v: string) => <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{v}</span>} />
+        </BarChart>
+      );
+    }
+
+    // STACKED BAR
+    if (effectiveMode === 'stacked_bar' && seriesKeys.length) {
+      return (
+        <BarChart data={chartData} margin={{ top: 10, right: 30, left: leftMargin, bottom: needsAngle ? 50 : 20 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} opacity={0.5} />
+          <XAxis {...xAxisProps} />
+          <YAxis {...yAxisProps} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-primary)', opacity: 0.06 }} />
+          {seriesKeys.map((sk, i) => (
+            <Bar key={sk} dataKey={sk} name={sk} fill={getSeriesColor(sk, i)}
+              stackId="stack" maxBarSize={maxBarSize} animationDuration={800} />
+          ))}
+          <Legend iconType="circle" iconSize={10}
+            formatter={(v: string) => <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{v}</span>} />
+        </BarChart>
+      );
+    }
+
+    // DEFAULT: Simple Bar
+    return (
+      <BarChart data={chartData} margin={{ top: 10, right: 30, left: leftMargin, bottom: needsAngle ? 50 : 20 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} opacity={0.5} />
+        <XAxis {...xAxisProps} />
+        <YAxis {...yAxisProps} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-primary)', opacity: 0.06 }} />
+        <Bar dataKey={yCol} radius={[6, 6, 0, 0]} maxBarSize={maxBarSize} animationDuration={800} animationEasing="ease-out">
+          {chartData.map((_e, i) => <Cell key={i} fill={RAINBOW[i % RAINBOW.length]} />)}
         </Bar>
       </BarChart>
     );
   };
 
   return (
-    <div className="w-full h-80 min-h-[320px]">
-      <ResponsiveContainer width="100%" height="100%">
-        {renderChart()}
-      </ResponsiveContainer>
+    <div className="w-full">
+      <MetricDropdown metrics={resolved.allMetrics} active={yCol} onChange={setActiveMetric} />
+      <div className="w-full h-80 min-h-[320px]">
+        <ResponsiveContainer width="100%" height="100%">
+          {renderChart()}
+        </ResponsiveContainer>
+      </div>
+      {isTruncated && (
+        <p className="text-xs mt-2 px-1 italic" style={{ color: 'var(--color-text-secondary)' }}>
+          Showing top {chartData.length} of {(seriesKeys.length ? pivotedData : data).length} items. Switch to table view for full data.
+        </p>
+      )}
     </div>
   );
 }

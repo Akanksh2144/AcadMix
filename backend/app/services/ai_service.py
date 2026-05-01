@@ -524,6 +524,8 @@ RULES:
 15. When querying base tables, always use proper JOINs with the foreign key relationships shown in the schema. Filter with is_deleted = false where applicable.
 16. ALWAYS use the exact enum/status values shown in the ACTUAL DATA VALUES section above. NEVER guess or assume values.
 17. DESCRIPTIVE LABELS: When returning per-student rows, ALWAYS include the student's name (e.g., u.name AS student_name). When returning per-section or per-class rows, ALWAYS create a composite label: department || '-' || section AS label (e.g., 'CSE-A', 'AIML-B'). NEVER return section alone ('A', 'B') as the only categorical column — it is meaningless without context. Place the most descriptive label column FIRST in the SELECT list.
+18. TOP/BOTTOM N QUERIES: When the user asks for "top N", "best N", "highest N", "worst N", "bottom N", or "lowest N", you MUST include ORDER BY on the relevant metric column (DESC for top/best/highest, ASC for worst/bottom/lowest) AND LIMIT N. Never return all rows when the user explicitly asks for a subset.
+19. CHART-FRIENDLY OUTPUT: The label/category column should come FIRST in SELECT, grouping columns SECOND, and metric columns LAST. For example, for "top 5 departments by CGPA": SELECT department, ROUND(AVG(...)::NUMERIC, 2) AS avg_cgpa ... ORDER BY avg_cgpa DESC LIMIT 5. Do NOT include extra columns (like student_count) unless the user explicitly asked for them — keep the output focused on what was asked.
 
 GRADE_POINTS SNIPPET (use this exact JOIN for GPA/CGPA calculations):
   JOIN (VALUES ('O',10),('A+',9),('A',8),('B+',7),('B',6),('C',5),('D',4),('F',0)) AS gp(grade, points) ON sg.grade = gp.grade
@@ -549,30 +551,67 @@ Then compute CGPA as: ROUND(SUM(sg.credits_earned * gp.points)::numeric / NULLIF
         raise ValueError("Failed to generate database query. AI service unavailable.")
 
 async def format_insights_summary(user_query: str, data: List[dict]) -> dict:
-    """Generates a natural language summary and chart suggestion from execution results.
+    """Generates a natural language summary and chart visualization metadata.
     
     Production: AWS Bedrock Nova Lite
     Fallback:   LiteLLM → Groq / Gemini AI Studio
     """
     from app.services.llm_gateway import gateway
 
-    data_sample = data[:10]
+    data_sample = data[:15]
     row_count = len(data)
+    
+    # Detect all column names and their types for the LLM
+    col_info = {}
+    if data:
+        for key, val in data[0].items():
+            col_info[key] = type(val).__name__
 
     system_prompt = '''
-You are a helpful assistant for college administration. 
-You are given the user's question and the data resulting from their question.
-Provide a concise, 1-2 sentence natural language summary of the results. 
-Also suggest a chart type ('bar_chart', 'pie_chart', or None) if the data is suitable for visualization.
+You are a helpful data visualization assistant for college administration.
+You are given the user's question, the resulting data, and the column types.
+
+Your job:
+1. Write a concise 1-2 sentence natural language summary of the results.
+2. Decide the best chart type for this data.
+3. Specify EXACTLY which columns to use for visualization.
+
+CHART TYPE RULES:
+- "bar_chart": Standard vertical bars. Use for comparing a single metric across categories (departments, subjects, etc.).
+- "grouped_bar": Multiple bar series side by side per category. Use when there is a GROUPING dimension (e.g., gender, status, batch) creating multiple values per category.
+- "stacked_bar": Stacked segments per category. Use when showing parts of a whole (e.g., paid/unpaid within total fees per department).
+- "line_chart": Connected dots. Use for temporal/sequential data (semesters, months, years) with a single metric.
+- "multi_line": Multiple lines. Use for temporal data with a grouping dimension (e.g., pass rate by semester for each department).
+- "pie_chart": Use ONLY for 2-5 categories showing proportions of a whole (e.g., pass/fail split, paid/unpaid split).
+- "kpi_card": Use when the result is 1-2 rows with 1-3 numeric values. Show as big numbers, not charts.
+- null: Use when data is not suitable for any chart (e.g., free-text results, error responses).
+
+COLUMN SPECIFICATION RULES:
+- x_column: The category/label column for the X-axis. Must be a string/text column. Pick the most descriptive one.
+- y_column: The PRIMARY numeric metric column the user asked about. This is CRITICAL — pick the column that DIRECTLY answers the user's question, NOT a count column if they asked for a rate/average/percentage.
+- group_column: Set this ONLY if the data has a secondary categorical dimension that splits each X category into sub-groups (e.g., "gender", "status", "batch_year"). Set to null if there is no grouping.
+- all_metrics: List ALL numeric column names from the data. This powers a dropdown so users can switch metrics.
+
+EXAMPLES:
+- Q: "Average CGPA by department" → x_column: "department", y_column: "avg_cgpa", group_column: null
+- Q: "Gender distribution by department" → x_column: "department", y_column: "student_count", group_column: "gender"
+- Q: "Fee collection status by department" → x_column: "department", y_column: "collection_pct", group_column: null, all_metrics: ["total_students", "total_invoiced", "total_collected", "collection_pct"]
+- Q: "Semester-wise pass rate" → x_column: "semester", y_column: "pass_rate", group_column: null, chart_suggestion: "line_chart"
+- Q: "What is the average attendance?" (1 row) → chart_suggestion: "kpi_card"
+- Q: "Pass/fail split for ECE" (2 rows) → chart_suggestion: "pie_chart", x_column: "status", y_column: "count"
 
 Output strictly in JSON:
 {
   "summary": "...",
-  "chart_suggestion": "bar_chart"
+  "chart_suggestion": "bar_chart",
+  "x_column": "department",
+  "y_column": "avg_cgpa",
+  "group_column": null,
+  "all_metrics": ["total_students", "avg_cgpa"]
 }
 '''
     
-    user_prompt = f"Question: {user_query}\\nTotal Rows Found: {row_count}\\nData Sample: {json.dumps(data_sample)}"
+    user_prompt = f"Question: {user_query}\\nTotal Rows: {row_count}\\nColumn Types: {json.dumps(col_info)}\\nData Sample: {json.dumps(data_sample, default=str)}"
 
     try:
          content = await gateway.complete(
@@ -584,12 +623,32 @@ Output strictly in JSON:
              json_mode=True,
          )
          result = json.loads(content)
+         
+         # Ensure all_metrics is populated even if LLM missed it
+         if not result.get("all_metrics") and data:
+             result["all_metrics"] = [k for k, v in data[0].items() if isinstance(v, (int, float))]
+         
          return result
     except Exception as e:
          logger.error("Error generating insights summary: %s", e)
+         # Build fallback with auto-detected columns
+         all_metrics = []
+         x_col = None
+         y_col = None
+         if data:
+             for k, v in data[0].items():
+                 if isinstance(v, (int, float)):
+                     all_metrics.append(k)
+                 elif isinstance(v, str) and not x_col:
+                     x_col = k
+             y_col = all_metrics[-1] if all_metrics else None
          return {
              "summary": f"Found {row_count} records matching your query.",
-             "chart_suggestion": None
+             "chart_suggestion": "bar_chart" if row_count > 2 else "kpi_card",
+             "x_column": x_col,
+             "y_column": y_col,
+             "group_column": None,
+             "all_metrics": all_metrics
          }
 
 # ═══════════════════════════════════════════════════════════════════════════════
