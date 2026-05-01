@@ -16,6 +16,12 @@ load_dotenv(ROOT_DIR / ".env")
 import os as _os
 if _os.getenv("DD_TRACE_ENABLED", "").lower() == "true" and _os.getenv("DD_API_KEY"):
     try:
+        # Agentless mode: send traces directly to Datadog intake (no local agent needed)
+        _dd_site = _os.getenv("DD_SITE", "us5.datadoghq.com")
+        if not _os.getenv("DD_TRACE_AGENT_URL"):
+            _os.environ["DD_TRACE_AGENT_URL"] = f"https://trace.agent.{_dd_site}"
+        _os.environ.setdefault("DD_API_KEY", _os.getenv("DD_API_KEY", ""))
+
         from ddtrace import config as dd_config, patch_all, tracer
         dd_config.env = _os.getenv("DD_ENV", "development")
         dd_config.service = _os.getenv("DD_SERVICE", "acadmix-api")
@@ -31,8 +37,8 @@ if _os.getenv("DD_TRACE_ENABLED", "").lower() == "true" and _os.getenv("DD_API_K
         )
         import logging as _log
         _log.getLogger("acadmix.main").info(
-            "[datadog] APM initialized (service=%s, env=%s, site=%s)",
-            dd_config.service, dd_config.env, _os.getenv("DD_SITE", "us5.datadoghq.com")
+            "[datadog] APM initialized — agentless mode (service=%s, env=%s, site=%s)",
+            dd_config.service, dd_config.env, _dd_site
         )
     except ImportError:
         import logging as _log
