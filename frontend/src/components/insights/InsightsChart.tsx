@@ -116,9 +116,40 @@ function resolveColumns(
   const yValid = yColumn && row[yColumn] !== undefined;
   const gValid = groupColumn && row[groupColumn] !== undefined;
 
-  const resolvedX = xValid ? xColumn! : strCols[0] || columns[0];
-  const resolvedY = yValid ? yColumn! : numCols[numCols.length - 1] || columns[1] || columns[0];
-  const resolvedG = gValid ? groupColumn! : null;
+  let resolvedX = xValid ? xColumn! : strCols[0] || columns[0];
+  let resolvedY = yValid ? yColumn! : numCols[numCols.length - 1] || columns[1] || columns[0];
+
+  // ── Axis swap guard ──
+  // If LLM put a numeric column on X and a string/categorical on Y, swap them
+  if (typeof row[resolvedY] === 'string' && typeof row[resolvedX] === 'number') {
+    [resolvedX, resolvedY] = [resolvedY, resolvedX];
+  }
+  // If X is numeric but we have string columns available, prefer a string column for X
+  if (typeof row[resolvedX] === 'number' && strCols.length > 0) {
+    resolvedX = strCols[0];
+  }
+
+  let resolvedG: string | null = gValid ? groupColumn! : null;
+
+  // ── Auto-detect group column if LLM didn't specify one ──
+  // If the X column has repeated values and there's another string column with low cardinality,
+  // it's likely a grouping dimension (e.g., gender, status, batch)
+  if (!resolvedG && strCols.length >= 2) {
+    const xValues = data.map(r => r[resolvedX]);
+    const xUniques = new Set(xValues);
+    if (xUniques.size < data.length) {
+      // X has repeats — find the best candidate group column
+      const candidates = strCols.filter(c => c !== resolvedX);
+      for (const c of candidates) {
+        const uniques = new Set(data.map(r => r[c]));
+        // Group column should have low cardinality (2-10 unique values)
+        if (uniques.size >= 2 && uniques.size <= 10) {
+          resolvedG = c;
+          break;
+        }
+      }
+    }
+  }
 
   // Build all_metrics
   const metrics = allMetrics?.length ? allMetrics.filter(m => row[m] !== undefined) : numCols;
