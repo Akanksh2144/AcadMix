@@ -36,6 +36,27 @@ Sentry.init({
   }
 });
 
+// ── Datadog Real User Monitoring (RUM) ────────────────────────────────────────
+if (import.meta.env.VITE_DD_APPLICATION_ID) {
+  import('@datadog/browser-rum').then(({ datadogRum }) => {
+    datadogRum.init({
+      applicationId: import.meta.env.VITE_DD_APPLICATION_ID,
+      clientToken: import.meta.env.VITE_DD_CLIENT_TOKEN,
+      site: 'us5.datadoghq.com',
+      service: 'acadmix-frontend',
+      env: import.meta.env.MODE,
+      version: '2.0.0',
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: 20,
+      trackUserInteractions: true,
+      trackResources: true,
+      trackLongTasks: true,
+      defaultPrivacyLevel: 'mask-user-input',
+    });
+  });
+}
+
+
 const rootElement = document.getElementById("root") as HTMLElement; const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>

@@ -91,6 +91,14 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_ID: str = ""               # Razorpay key ID (empty = payments disabled)
     RAZORPAY_KEY_SECRET: str = ""           # Razorpay key secret
 
+    # Datadog APM (Observability)
+    DD_API_KEY: str = ""                    # Datadog API key (empty = Datadog disabled)
+    DD_SITE: str = "us5.datadoghq.com"     # Datadog site region
+    DD_SERVICE: str = "acadmix-api"        # Service name in APM dashboard
+    DD_ENV: str = "development"            # Environment tag (development | staging | production)
+    DD_VERSION: str = "2.0.0"             # Application version tag
+    DD_TRACE_ENABLED: bool = False         # Must be explicitly enabled via env var
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

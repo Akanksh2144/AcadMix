@@ -9,6 +9,36 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parent.parent  # backend/
 load_dotenv(ROOT_DIR / ".env")
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# DATADOG APM — Must be initialized BEFORE other imports
+# Auto-patches: FastAPI, SQLAlchemy, Redis, httpx, asyncio
+# ═══════════════════════════════════════════════════════════════════════════════
+import os as _os
+if _os.getenv("DD_TRACE_ENABLED", "").lower() == "true" and _os.getenv("DD_API_KEY"):
+    try:
+        from ddtrace import config as dd_config, patch_all, tracer
+        dd_config.env = _os.getenv("DD_ENV", "development")
+        dd_config.service = _os.getenv("DD_SERVICE", "acadmix-api")
+        dd_config.version = _os.getenv("DD_VERSION", "2.0.0")
+        # Auto-instrument all supported libraries
+        patch_all(
+            fastapi=True,
+            sqlalchemy=True,
+            redis=True,
+            httpx=True,
+            asyncio=True,
+            logging=True,   # Inject trace IDs into log records
+        )
+        import logging as _log
+        _log.getLogger("acadmix.main").info(
+            "[datadog] APM initialized (service=%s, env=%s, site=%s)",
+            dd_config.service, dd_config.env, _os.getenv("DD_SITE", "us5.datadoghq.com")
+        )
+    except ImportError:
+        import logging as _log
+        _log.getLogger("acadmix.main").warning("[datadog] ddtrace not installed — APM disabled")
+
+
 import os
 import logging
 from contextlib import asynccontextmanager
