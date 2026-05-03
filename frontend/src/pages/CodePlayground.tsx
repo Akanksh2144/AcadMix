@@ -1268,7 +1268,6 @@ const CodePlayground = ({ navigate, user }) => {
                 title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
                 className="w-full h-full border-0"
                 allow="clipboard-read; clipboard-write"
-                sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
               />
             </div>
           </div>
