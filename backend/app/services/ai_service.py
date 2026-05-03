@@ -615,13 +615,14 @@ GQ6 - Total Students, Faculty, HODs:
     (SELECT COUNT(DISTINCT hod_user_id) FROM v_departments WHERE hod_user_id IS NOT NULL) AS total_hods
 
 GQ7 - Top N Students by CGPA:
-  SELECT s.name AS student_name, s.roll_number, s.department, s.batch,
+  SELECT sg.student_name, sg.roll_number, sg.department, sg.batch, sg.section,
          ROUND(SUM(sg.credits_earned * gp.points)::NUMERIC / NULLIF(SUM(sg.credits_earned), 0), 2) AS cgpa
   FROM v_semester_grades sg
-  JOIN v_students s ON sg.student_id = s.id
   {gp_snippet}
-  GROUP BY s.id, s.name, s.roll_number, s.department, s.batch
+  GROUP BY sg.student_id, sg.student_name, sg.roll_number, sg.department, sg.batch, sg.section
   ORDER BY cgpa DESC LIMIT 10
+  NOTE: v_semester_grades already has student_name, roll_number, department, batch, section.
+  You do NOT need to JOIN v_students for these columns.
 
 GQ8 - Department-wise Average Attendance:
   SELECT a.department,
