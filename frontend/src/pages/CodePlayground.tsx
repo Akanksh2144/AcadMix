@@ -61,12 +61,10 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
     { id: 'de-fulladd', label: 'Full Adder', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=fulladd.txt', openLabel: 'Open in CircuitJS' },
   ],
   vlsi: [
-    { id: 'vlsi-verilog', label: 'Verilog', url: 'https://www.edaplayground.com/', openLabel: 'Open in EDA Playground' },
-    { id: 'vlsi-vhdl', label: 'VHDL', url: 'https://www.edaplayground.com/', openLabel: 'Open in EDA Playground' },
-    { id: 'vlsi-sv', label: 'SystemVerilog', url: 'https://www.edaplayground.com/', openLabel: 'Open in EDA Playground' },
+    { id: 'vlsi-makerchip', label: 'Makerchip IDE', url: 'https://makerchip.com/sandbox/', openLabel: 'Open in Makerchip' },
   ],
   pcb: [
-    { id: 'pcb-easyeda', label: 'EasyEDA Editor', url: 'https://easyeda.com/editor', openLabel: 'Open in EasyEDA' },
+    { id: 'pcb-kicanvas', label: 'KiCanvas Viewer', url: 'https://kicanvas.org/', openLabel: 'Open KiCanvas', externalUrl: 'https://easyeda.com/editor', externalLabel: 'Open EasyEDA Editor' },
   ],
 };
 
@@ -1295,81 +1293,36 @@ const CodePlayground = ({ navigate, user }) => {
                 </span>
               </div>
             )}
-            {/* Simulator content */}
-            {(simCategory === 'embedded' || simCategory === 'analog' || simCategory === 'digital') ? (
-              /* Embeddable simulators — iframe */
-              <div className="soft-card overflow-hidden flex-1 min-h-0 rounded-2xl" style={{ overscrollBehavior: 'contain' }}>
-                <iframe
-                  key={`${simCategory}-${wokwiBoard}`}
-                  src={_simActiveBoard?.url || _simBoards[0]?.url || ''}
-                  title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
-                  className="w-full h-full border-0"
-                  style={{ touchAction: 'none' }}
-                  allow="clipboard-read; clipboard-write; fullscreen"
-                />
-              </div>
-            ) : (
-              /* Non-embeddable platforms — launcher card */
-              <div className="soft-card flex-1 min-h-0 rounded-2xl flex items-center justify-center p-8">
-                <div className="max-w-lg w-full text-center space-y-6">
-                  {/* Icon */}
-                  <div className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl ${SIM_ACCENT_CLASSES[_simCat.accent]?.pill || 'bg-slate-100'}`}>
-                    <span className="text-4xl">{_simCat.icon && React.cloneElement(_simCat.icon as React.ReactElement, { size: 40 })}</span>
-                  </div>
-                  {/* Title */}
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{_simCat.label}</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                      {simCategory === 'vlsi'
-                        ? 'Design and simulate digital circuits using hardware description languages. EDA Playground provides cloud-based compilation and simulation with industry-standard tools.'
-                        : 'Design professional PCB layouts with schematic capture, component libraries, and Gerber export. EasyEDA offers a complete PCB design workflow in the browser.'}
-                    </p>
-                  </div>
-                  {/* Features */}
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {(simCategory === 'vlsi'
-                      ? ['Verilog / VHDL / SystemVerilog', 'Waveform Viewer', 'Testbench Support', 'Multiple Simulators', 'Free Cloud Compilation']
-                      : ['Schematic Editor', 'PCB Layout', '1M+ Components', 'Gerber Export', 'SPICE Simulation']
-                    ).map(feat => (
-                      <span key={feat} className={`px-3 py-1 rounded-full text-xs font-semibold ${SIM_ACCENT_CLASSES[_simCat.accent]?.pill || 'bg-slate-100 text-slate-600'}`}>
-                        {feat}
-                      </span>
-                    ))}
-                  </div>
-                  {/* Board selector pills (if multiple) */}
-                  {_simBoards.length > 1 && (
-                    <div className="flex justify-center gap-2">
-                      {_simBoards.map(board => (
-                        <button
-                          key={board.id}
-                          onClick={() => setWokwiBoard(board.id)}
-                          className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-                            wokwiBoard === board.id
-                              ? SIM_ACCENT_CLASSES[_simCat.accent]?.active || 'bg-indigo-500 text-white'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                          }`}
-                        >
-                          {board.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {/* Launch button */}
-                  <a
-                    href={_simActiveBoard?.url || _simBoards[0]?.url || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.03] active:scale-[0.98] ${
-                      SIM_ACCENT_CLASSES[_simCat.accent]?.btn || 'bg-indigo-500 hover:bg-indigo-600'
-                    }`}
-                  >
-                    {_simActiveBoard?.openLabel || `Open ${_simCat.label}`}
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                    </svg>
-                  </a>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">Opens in a new tab — this platform doesn't support embedding</p>
-                </div>
+            {/* Simulator iframe — all categories now embeddable */}
+            <div className="soft-card overflow-hidden flex-1 min-h-0 rounded-2xl" style={{ overscrollBehavior: 'contain' }}>
+              <iframe
+                key={`${simCategory}-${wokwiBoard}`}
+                src={_simActiveBoard?.url || _simBoards[0]?.url || ''}
+                title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
+                className="w-full h-full border-0"
+                style={{ touchAction: 'none' }}
+                allow="clipboard-read; clipboard-write; fullscreen"
+              />
+            </div>
+            {/* External launcher for PCB — EasyEDA full editor */}
+            {(_simActiveBoard as any)?.externalUrl && (
+              <div className="flex items-center justify-between mt-2 px-1">
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  KiCanvas is a viewer/learning tool. For full PCB design →
+                </p>
+                <a
+                  href={(_simActiveBoard as any).externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:scale-[1.03] active:scale-[0.98] ${
+                    SIM_ACCENT_CLASSES[_simCat.accent]?.btn || 'bg-indigo-500 hover:bg-indigo-600'
+                  }`}
+                >
+                  {(_simActiveBoard as any).externalLabel || 'Open Full Editor'}
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                  </svg>
+                </a>
               </div>
             )}
           </div>
