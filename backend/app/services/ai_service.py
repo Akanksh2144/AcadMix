@@ -467,6 +467,22 @@ async def generate_insights_sql(user_query: str, history: List[Dict[str, str]] =
             f"The v_ views already handle this filtering — this rule applies ONLY to base table queries. "
             f"NEVER return data from other departments."
         )
+
+    # ── MANDATORY BATCH SCOPING ──────────────────────────────────────────────
+    # This is the #1 cause of bad insights. Multiple simultaneous batches exist.
+    # Actual batch values are auto-discovered from the DB via get_domain_values().
+    # If the user does NOT specify a batch year, the LLM MUST add batch to GROUP BY.
+    constraints.append(
+        "MANDATORY BATCH SCOPING: The institution has multiple simultaneous student batches. "
+        "The EXACT batch values are listed in the ACTUAL DATA VALUES section above (user_profiles.batch). "
+        "Use ONLY those values — NEVER guess or hardcode batch years. "
+        "The `batch` column exists in v_students, v_semester_grades, v_faculty_assignments, etc. "
+        "When the user asks about students, grades, pass rate, attendance, or any student metric "
+        "WITHOUT specifying a batch year: you MUST add `batch` to the SELECT and GROUP BY. "
+        "This gives per-batch breakdown instead of a meaningless aggregate across all years. "
+        "Example: 'Pass rate for CSE' → GROUP BY department, batch. "
+        "ONLY skip batch if the user explicitly says 'all batches combined' or 'overall'."
+    )
     
     constraint_str = "\n".join(constraints) if constraints else ""
 
@@ -526,7 +542,7 @@ RULES:
 17. DESCRIPTIVE LABELS: When returning per-student rows, ALWAYS include the student's name (e.g., u.name AS student_name). When returning per-section or per-class rows, ALWAYS create a composite label: department || '-' || section AS label (e.g., 'CSE-A', 'AIML-B'). NEVER return section alone ('A', 'B') as the only categorical column — it is meaningless without context. Place the most descriptive label column FIRST in the SELECT list.
 18. TOP/BOTTOM N QUERIES: When the user asks for "top N", "best N", "highest N", "worst N", "bottom N", or "lowest N", you MUST include ORDER BY on the relevant metric column (DESC for top/best/highest, ASC for worst/bottom/lowest) AND LIMIT N. Never return all rows when the user explicitly asks for a subset.
 19. CHART-FRIENDLY OUTPUT: The label/category column should come FIRST in SELECT, grouping columns SECOND, and metric columns LAST. For example, for "top 5 departments by CGPA": SELECT department, ROUND(AVG(...)::NUMERIC, 2) AS avg_cgpa ... ORDER BY avg_cgpa DESC LIMIT 5. Do NOT include extra columns (like student_count) unless the user explicitly asked for them — keep the output focused on what was asked.
-20. BATCH SCOPING: Students belong to multiple batches (admission years: '2021','2022','2023','2024'). The `batch` column in v_students identifies the admission year. When the user asks about "students" or "CSE students" WITHOUT specifying a batch, include ALL batches but ADD `batch` to the GROUP BY — so results show per-batch breakdown. If the user says "current batch" or "this year students", filter to the latest batch only.
+20. BATCH SCOPING: Students belong to multiple batches. The EXACT batch values are in the ACTUAL DATA VALUES section (user_profiles.batch) — use ONLY those values. The `batch` column in v_students identifies the admission year. When the user asks about "students" or "CSE students" WITHOUT specifying a batch, include ALL batches but ADD `batch` to the GROUP BY — so results show per-batch breakdown. If the user says "current batch" or "this year students", filter to the latest batch only (the MAX value from the data).
 21. NULL FILTERING: ALWAYS add WHERE <column> IS NOT NULL for any categorical column used in GROUP BY (gender, status, batch, section). Null groups produce meaningless "null" labels in charts. Only include nulls if the user explicitly asks about missing data.
 22. HOSTEL QUERIES: When asked about hostel rooms, occupancy, or allocations, group by `hostel_name` (the building/block name). NEVER group by `bed_identifier` (A/B/C within a room) or `room_number` — these are not meaningful aggregation dimensions. `floor` is acceptable for sub-grouping within a hostel.
 23. HOD COUNTING: To count HODs, use: SELECT COUNT(DISTINCT hod_user_id) FROM v_departments WHERE hod_user_id IS NOT NULL. Do NOT query users WHERE role='HOD' — the role field is unreliable. The `hod_user_id` column in departments is the canonical source.
@@ -596,7 +612,13 @@ GQ8 - Department-wise Average Attendance:
     if history:
         for msg in history:
             messages_list.append(msg)
-    messages_list.append({"role": "user", "content": f"Write a query for: {user_query}"})
+    # Inject batch reminder directly into user message for maximum visibility
+    batch_reminder = ""
+    user_lower = user_query.lower()
+    if not any(kw in user_lower for kw in ['batch', 'all years', 'overall', 'combined', 'admission year']):
+        if any(kw in user_lower for kw in ['student', 'pass', 'fail', 'grade', 'cgpa', 'sgpa', 'attendance', 'rate', 'department']):
+            batch_reminder = " IMPORTANT: Include `batch` in SELECT and GROUP BY for per-batch breakdown."
+    messages_list.append({"role": "user", "content": f"Write a query for: {user_query}{batch_reminder}"})
 
     try:
         content = await gateway.complete_erp(user_query, messages_list)
