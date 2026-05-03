@@ -237,6 +237,10 @@ function detectShape(
     if (semanticPairs.length >= 2) return 'grouped_bar';
   }
 
+  // ── KPI override (runs BEFORE LLM suggestion) ──
+  // 1-2 rows with ≤3 metrics is ALWAYS a KPI card, regardless of what LLM says
+  if (n <= 2 && resolved.allMetrics.length <= 3 && !resolved.groupCol) return 'kpi';
+
   // ── LLM suggestion ──
   const llmMap: Record<string, ChartMode> = {
     kpi_card: 'kpi', grouped_bar: 'grouped_bar', stacked_bar: 'stacked_bar',
@@ -259,7 +263,6 @@ function detectShape(
   }
 
   // ── Auto-detection ──
-  if (n <= 2 && resolved.allMetrics.length <= 3) return 'kpi';
   if (resolved.groupCol) {
     const isTemporalX = /semester|month|year|week|quarter|period/i.test(resolved.xCol);
     return isTemporalX ? 'multi_line' : 'grouped_bar';
