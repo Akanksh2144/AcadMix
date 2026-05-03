@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { toast } from 'sonner';
 
@@ -22,6 +22,7 @@ const LANGUAGES = [
   { id: 'csharp', label: 'C#', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" alt="C#" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'ecelab', label: 'ECE Lab', icon: <Cpu size={20} weight="duotone" className="text-teal-500 shrink-0 drop-shadow-sm" /> },
   { id: 'eeelab', label: 'EEE Lab', icon: <Lightning size={20} weight="duotone" className="text-yellow-500 shrink-0 drop-shadow-sm" /> },
+  { id: 'civillab', label: 'Civil Lab', icon: <HardHat size={20} weight="duotone" className="text-orange-500 shrink-0 drop-shadow-sm" /> },
 ];
 
 const SIMULATOR_CATEGORIES = [
@@ -122,6 +123,42 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
   ],
 };
 
+// ── Civil Lab Categories & Boards ───────────────────────────────────────────
+const CIVIL_SIMULATOR_CATEGORIES = [
+  { id: 'structural', label: 'Structural Analysis', icon: <Blueprint size={16} weight="duotone" />, accent: 'rose' },
+  { id: 'geotechnical', label: 'Geotechnical', icon: <Atom size={16} weight="duotone" />, accent: 'amber' },
+  { id: 'fluid_mechanics', label: 'Fluid Mechanics', icon: <Drop size={16} weight="duotone" />, accent: 'sky' },
+  { id: 'surveying', label: 'Surveying & GIS', icon: <Compass size={16} weight="duotone" />, accent: 'emerald' },
+  { id: 'cad_bim', label: 'CAD / BIM', icon: <Cube size={16} weight="duotone" />, accent: 'violet' },
+];
+
+const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string }[]> = {
+  structural: [
+    { id: 'st-octave', label: 'GNU Octave (Stiffness)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'st-beam', label: 'Beam Calculator', url: 'https://clearcalcs.com/freetools/free-moment-of-inertia-calculator/us', openLabel: 'Open Calculator' },
+    { id: 'st-truss', label: 'Truss Solver', url: 'https://platform.engineeringexamples.net/', openLabel: 'Open Solver' },
+    { id: 'st-frame', label: 'Frame Analysis', url: 'https://structural-engineering.herokuapp.com/', openLabel: 'Open Analyzer' },
+  ],
+  geotechnical: [
+    { id: 'geo-octave', label: 'GNU Octave (Soil)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'geo-settle', label: 'Settlement Calc', url: 'https://www.geocalcs.com/', openLabel: 'Open GeoCalcs' },
+  ],
+  fluid_mechanics: [
+    { id: 'fm-octave', label: 'GNU Octave (Flow)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'fm-pipe', label: 'Pipe Flow Sim', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=rlc-ser.txt', openLabel: 'Open CircuitJS' },
+  ],
+  surveying: [
+    { id: 'sv-leaflet', label: 'OpenStreetMap', url: 'https://www.openstreetmap.org/', openLabel: 'Open OSM' },
+    { id: 'sv-qgis', label: 'QGIS Cloud', url: 'https://qgiscloud.com/', openLabel: 'Open QGIS Cloud' },
+    { id: 'sv-google-earth', label: 'Google Earth', url: 'https://earth.google.com/web/', openLabel: 'Open Earth' },
+  ],
+  cad_bim: [
+    { id: 'cad-sketchup', label: 'SketchUp Web', url: 'https://app.sketchup.com/', openLabel: 'Open SketchUp' },
+    { id: 'cad-tinkercad', label: 'TinkerCAD', url: 'https://www.tinkercad.com/', openLabel: 'Open TinkerCAD' },
+    { id: 'cad-onshape', label: 'Onshape CAD', url: 'https://cad.onshape.com/', openLabel: 'Open Onshape' },
+  ],
+};
+
 const SIM_ACCENT_CLASSES: Record<string, { active: string; pill: string; btn: string }> = {
   teal:    { active: 'bg-teal-500 text-white shadow-sm shadow-teal-500/25', pill: 'bg-teal-500/10 text-teal-600 dark:text-teal-400', btn: 'bg-teal-500 hover:bg-teal-600 shadow-teal-500/20' },
   violet:  { active: 'bg-violet-500 text-white shadow-sm shadow-violet-500/25', pill: 'bg-violet-500/10 text-violet-600 dark:text-violet-400', btn: 'bg-violet-500 hover:bg-violet-600 shadow-violet-500/20' },
@@ -190,10 +227,11 @@ const CodePlayground = ({ navigate, user }) => {
   const [wokwiBoard, setWokwiBoard] = useState('arduino-uno');
   const [simCategory, setSimCategory] = useState('embedded');
 
-  // ── ECE / EEE Lab computed values ──────────────────────────────────────────
+  // ── ECE / EEE / Civil Lab computed values ──────────────────────────────────
   const _isEEELab = language === 'eeelab';
-  const _activeCats = _isEEELab ? EEE_SIMULATOR_CATEGORIES : SIMULATOR_CATEGORIES;
-  const _activeBoards = _isEEELab ? EEE_SIMULATOR_BOARDS : SIMULATOR_BOARDS;
+  const _isCivilLab = language === 'civillab';
+  const _activeCats = _isCivilLab ? CIVIL_SIMULATOR_CATEGORIES : _isEEELab ? EEE_SIMULATOR_CATEGORIES : SIMULATOR_CATEGORIES;
+  const _activeBoards = _isCivilLab ? CIVIL_SIMULATOR_BOARDS : _isEEELab ? EEE_SIMULATOR_BOARDS : SIMULATOR_BOARDS;
   const _simCat = _activeCats.find(c => c.id === simCategory) || _activeCats[0];
   const _simBoards = _activeBoards[simCategory] || [];
   const _simActiveBoard = _simBoards.find(b => b.id === wokwiBoard) || _simBoards[0];
@@ -455,6 +493,9 @@ const CodePlayground = ({ navigate, user }) => {
     } else if (langId === 'ecelab') {
       setSimCategory('embedded');
       setWokwiBoard(SIMULATOR_BOARDS['embedded']?.[0]?.id || 'arduino-uno');
+    } else if (langId === 'civillab') {
+      setSimCategory('structural');
+      setWokwiBoard(CIVIL_SIMULATOR_BOARDS['structural']?.[0]?.id || '');
     }
     const saved = sessionStorage.getItem(getCodeStorageKey(activeChallenge, langId));
     if (saved !== null) {
@@ -1271,8 +1312,8 @@ const CodePlayground = ({ navigate, user }) => {
             </div>
           </div>
         </div>
-      ) : (language === 'ecelab' || language === 'eeelab') ? (
-        // ECE / EEE Lab — multi-simulator panel
+      ) : (language === 'ecelab' || language === 'eeelab' || language === 'civillab') ? (
+        // ECE / EEE / Civil Lab — multi-simulator panel
         <div className="flex-1 overflow-hidden flex flex-col" style={{ overscrollBehavior: 'contain' }}>
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
             {/* Category Tabs + Board Selector Toolbar */}
@@ -1283,8 +1324,8 @@ const CodePlayground = ({ navigate, user }) => {
                   <div className="relative" ref={langMenuRef}>
                     <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
                       className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-bold text-sm text-slate-700 dark:text-slate-300">
-                      {_isEEELab ? <Lightning size={20} weight="duotone" className="text-yellow-500" /> : <Cpu size={20} weight="duotone" className="text-teal-500" />}
-                      {_isEEELab ? 'EEE Lab' : 'ECE Lab'}
+                      {_isCivilLab ? <HardHat size={20} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={20} weight="duotone" className="text-yellow-500" /> : <Cpu size={20} weight="duotone" className="text-teal-500" />}
+                      {_isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}
                       <CaretDown size={14} weight="bold" />
                     </button>
                     {showLangMenu && (
@@ -1348,7 +1389,7 @@ const CodePlayground = ({ navigate, user }) => {
               )}
             </div>
             {/* Navigation helper for CircuitJS-based simulators */}
-            {(['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems'].includes(simCategory)) && (
+            {(['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems', 'fluid_mechanics'].includes(simCategory)) && (
               <div className={`flex items-center gap-4 text-xs font-medium px-4 py-2 rounded-xl mb-2 ${
                 SIM_ACCENT_CLASSES[_simCat.accent]?.pill || 'bg-slate-100 text-slate-600'
               }`}>
