@@ -1264,6 +1264,37 @@ const CodePlayground = ({ navigate, user }) => {
                 </div>
               )}
             </div>
+            {/* Navigation helper for CircuitJS-based simulators */}
+            {(simCategory === 'analog' || simCategory === 'digital') && (
+              <div className={`flex items-center gap-4 text-xs font-medium px-4 py-2 rounded-xl mb-2 ${
+                SIM_ACCENT_CLASSES[_simCat.accent]?.pill || 'bg-slate-100 text-slate-600'
+              }`}>
+                <span className="flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Right-click + Drag</kbd>
+                  <span className="opacity-80">Pan / Move</span>
+                </span>
+                <span className="w-px h-3.5 bg-current opacity-20" />
+                <span className="flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Scroll</kbd>
+                  <span className="opacity-80">Zoom</span>
+                </span>
+                <span className="w-px h-3.5 bg-current opacity-20" />
+                <span className="flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Click</kbd>
+                  <span className="opacity-80">Select</span>
+                </span>
+                <span className="w-px h-3.5 bg-current opacity-20" />
+                <span className="flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Delete</kbd>
+                  <span className="opacity-80">Remove</span>
+                </span>
+                <span className="w-px h-3.5 bg-current opacity-20" />
+                <span className="flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Ctrl + Z</kbd>
+                  <span className="opacity-80">Undo</span>
+                </span>
+              </div>
+            )}
             {/* Simulator iframe */}
             <div className="soft-card overflow-hidden flex-1 min-h-0 rounded-2xl" style={{ overscrollBehavior: 'contain' }}>
               <iframe
