@@ -432,7 +432,7 @@ async def generate_insights_sql(user_query: str, history: List[Dict[str, str]] =
     # ═════════════════════════════════════════════════════════════════════════
     # DYNAMIC SCHEMA EXTRACTION — views + full database schema
     # ═════════════════════════════════════════════════════════════════════════
-    from app.services.insights_executor import get_view_schemas_for_prompt, get_full_database_schema, get_domain_values
+    from app.services.insights_executor import get_view_schemas_for_prompt, get_full_database_schema, get_domain_values, get_business_rules
     
     view_schemas = get_view_schemas_for_prompt(role)
     view_schema_str = "\n".join(view_schemas)
@@ -452,6 +452,14 @@ async def generate_insights_sql(user_query: str, history: List[Dict[str, str]] =
             domain_values_str = await get_domain_values(db)
         except Exception as e:
             logger.warning("Could not fetch domain values: %s", e)
+    
+    # Auto-discover business rules (grade points, attendance semantics, etc.)
+    biz = {}
+    if db:
+        try:
+            biz = await get_business_rules(db)
+        except Exception as e:
+            logger.warning("Could not fetch business rules: %s", e)
     
     # Role-specific constraints
     constraints = []
@@ -498,6 +506,13 @@ Column format: column_name:data_type [PK] [FK→referenced_table(column)]
 {full_schema_str}
 """
 
+    # Build dynamic snippets from live business rules
+    gp_snippet = biz.get('grade_points_snippet', "JOIN (VALUES ('O',10),('A+',9),('A',8),('B+',7),('B',6),('C',5),('D',4),('F',0)) AS gp(grade, points) ON sg.grade = gp.grade")
+    att_statuses = biz.get('attended_statuses', "'present','late','od','medical'")
+    fail_grade = biz.get('fail_grade', 'F')
+    pay_success = biz.get('payment_success_statuses', "'success'")
+    alloc_active = biz.get('active_alloc_statuses', "'active'")
+
     schema_context = f'''
 PREFERRED: Query these pre-built views first. They are role-scoped, tenant-filtered, and have clean column names:
 {view_schema_str}
@@ -506,17 +521,23 @@ PREFERRED: Query these pre-built views first. They are role-scoped, tenant-filte
 ACTUAL DATA VALUES (auto-discovered from database — use these EXACT values in your queries):
 {domain_values_str}
 
-BUSINESS RULES (how to calculate things):
-- ATTENDANCE: To calculate attendance %, use: ROUND(COUNT(CASE WHEN status IN ('present','late','od','medical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS attendance_pct.
-  'present', 'late', 'od', and 'medical' all count as ATTENDED. Only 'absent' is not attended.
+BUSINESS RULES (how to calculate things — all values below are auto-discovered from the live database):
+- ATTENDANCE: To calculate attendance %, use: ROUND(COUNT(CASE WHEN status IN ({att_statuses}) THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS attendance_pct.
+  Statuses that count as ATTENDED: {att_statuses}. Everything else is NOT attended.
 
 - GRADES/GPA: To calculate GPA: use the GRADE_POINTS snippet below.
-  "Top performing" or "best students" means highest CGPA. "Pass rate" means % of non-'F' grades.
-  CGPA = GPA across ALL semesters. SGPA = GPA for a SPECIFIC semester. Default to CGPA.
+  "Top performing" or "best students" means highest CGPA. Default to CGPA over SGPA.
+  CGPA = GPA across ALL semesters. SGPA = GPA for a SPECIFIC semester.
   IMPORTANT: ALWAYS compute GPA from v_semester_grades. Do NOT use v_student_rankings — it is a precomputed cache that may be empty.
 
-- FEES: "Fee collection rate" = SUM(amount_paid where payment status is successful) / SUM(total_amount).
-  To find unpaid: LEFT JOIN v_payments ON invoice_id, check where payment is NULL or status is not successful.
+- PASS RATE: "Pass rate" = percentage of GRADE ENTRIES (rows in v_semester_grades) that are NOT '{fail_grade}'.
+  CRITICAL FORMULA: ROUND(COUNT(CASE WHEN sg.grade != '{fail_grade}' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2)
+  The denominator MUST be COUNT(*) — counting ALL grade entry rows.
+  NEVER use COUNT(DISTINCT student_id) as the denominator — that counts STUDENTS, not grade entries, and produces absurd values like 4000%.
+  Each student has MANY grade entries (one per subject per semester). Pass rate is PER GRADE ENTRY, not per student.
+
+- FEES: "Fee collection rate" = SUM(amount_paid where payment status IN ({pay_success})) / SUM(total_amount).
+  To find unpaid: LEFT JOIN v_payments ON invoice_id, check where payment is NULL or status NOT IN ({pay_success}).
 
 - MARKS: To find highest scorers, calculate marks_obtained as percentage of max_marks.
 
@@ -533,7 +554,7 @@ RULES:
 8. When comparing departments, show ALL departments sorted by the metric, not just the top one.
 9. Use ROUND(expression::NUMERIC, 2) for percentages and decimals. ALWAYS cast to ::NUMERIC inside ROUND() — PostgreSQL does NOT support ROUND(double precision, integer).
 10. DEFAULT SORTING: Only add ORDER BY to the OUTERMOST query. Never add empty ORDER BY clauses.
-11. For "pass rate" queries, count grades != 'F' as pass, 'F' as fail.
+11. For "pass rate" queries, the denominator is ALWAYS COUNT(*) (total grade entries). NEVER use COUNT(DISTINCT student_id) — this is wrong because each student has multiple grade rows.
 12. When asked about faculty workload, use v_faculty_assignments (hours_per_week, credits).
 13. You are STRICTLY a SQL query generator. You are NOT a chatbot. NEVER generate conversational responses, greetings, or commentary. If the user sends greetings, small-talk, or anything that is NOT a data question, respond with EXACTLY: NOT_A_DATA_QUERY
 14. NEVER generate SQL that returns hardcoded strings (e.g. SELECT 'Hello' AS message). Every query MUST reference at least one table or view.
@@ -541,7 +562,7 @@ RULES:
 16. ALWAYS use the exact enum/status values shown in the ACTUAL DATA VALUES section above. NEVER guess or assume values.
 17. DESCRIPTIVE LABELS: When returning per-student rows, ALWAYS include the student's name (e.g., u.name AS student_name). When returning per-section or per-class rows, ALWAYS create a composite label: department || '-' || section AS label (e.g., 'CSE-A', 'AIML-B'). NEVER return section alone ('A', 'B') as the only categorical column — it is meaningless without context. Place the most descriptive label column FIRST in the SELECT list.
 18. TOP/BOTTOM N QUERIES: When the user asks for "top N", "best N", "highest N", "worst N", "bottom N", or "lowest N", you MUST include ORDER BY on the relevant metric column (DESC for top/best/highest, ASC for worst/bottom/lowest) AND LIMIT N. Never return all rows when the user explicitly asks for a subset.
-19. CHART-FRIENDLY OUTPUT: The label/category column should come FIRST in SELECT, grouping columns SECOND, and metric columns LAST. For example, for "top 5 departments by CGPA": SELECT department, ROUND(AVG(...)::NUMERIC, 2) AS avg_cgpa ... ORDER BY avg_cgpa DESC LIMIT 5. Do NOT include extra columns (like student_count) unless the user explicitly asked for them — keep the output focused on what was asked.
+19. CHART-FRIENDLY OUTPUT: The label/category column should come FIRST in SELECT, grouping columns SECOND, and metric columns LAST. Do NOT include extra columns (like student_count) unless the user explicitly asked for them — keep the output focused on what was asked.
 20. BATCH SCOPING: Students belong to multiple batches. The EXACT batch values are in the ACTUAL DATA VALUES section (user_profiles.batch) — use ONLY those values. The `batch` column in v_students identifies the admission year. When the user asks about "students" or "CSE students" WITHOUT specifying a batch, include ALL batches but ADD `batch` to the GROUP BY — so results show per-batch breakdown. If the user says "current batch" or "this year students", filter to the latest batch only (the MAX value from the data).
 21. NULL FILTERING: ALWAYS add WHERE <column> IS NOT NULL for any categorical column used in GROUP BY (gender, status, batch, section). Null groups produce meaningless "null" labels in charts. Only include nulls if the user explicitly asks about missing data.
 22. HOSTEL QUERIES: When asked about hostel rooms, occupancy, or allocations, group by `hostel_name` (the building/block name). NEVER group by `bed_identifier` (A/B/C within a room) or `room_number` — these are not meaningful aggregation dimensions. `floor` is acceptable for sub-grouping within a hostel.
@@ -549,18 +570,18 @@ RULES:
 24. LONG-FORMAT FOR GROUPED DATA: When the query involves a grouping dimension (gender, status, batch, section), ALWAYS return LONG FORMAT with exactly 3 columns: (category, group, metric). Example for "gender distribution by department": SELECT department, gender, COUNT(*) AS student_count GROUP BY department, gender ORDER BY department, gender. NEVER return wide-format (e.g., male_count, female_count as separate columns).
 25. GRANULARITY OVER AMBIGUITY: If the user's question is ambiguous and could return different results depending on interpretation, generate the MOST GRANULAR query including ALL relevant dimensions. Example: "pass rate for CSE" → include batch in GROUP BY. "attendance by department" → include semester in GROUP BY if multiple semesters exist.
 
-GRADE_POINTS SNIPPET (use this exact JOIN for GPA/CGPA calculations):
-  JOIN (VALUES ('O',10),('A+',9),('A',8),('B+',7),('B',6),('C',5),('D',4),('F',0)) AS gp(grade, points) ON sg.grade = gp.grade
+GRADE_POINTS SNIPPET (use this exact JOIN for GPA/CGPA calculations — built from live database grades):
+  {gp_snippet}
 Then compute CGPA as: ROUND(SUM(sg.credits_earned * gp.points)::numeric / NULLIF(SUM(sg.credits_earned), 0), 2)
 
-GOLDEN QUERIES (use these EXACT patterns when the user asks similar questions):
+GOLDEN QUERIES (use these EXACT patterns when the user asks similar questions — all values are from the live database):
 
 GQ1 - Attendance Defaulters (students below X% attendance):
   SELECT s.name AS student_name, s.roll_number, s.department, s.batch,
-         ROUND(COUNT(CASE WHEN a.status IN ('present','late','od','medical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS attendance_pct
+         ROUND(COUNT(CASE WHEN a.status IN ({att_statuses}) THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS attendance_pct
   FROM v_students s JOIN v_attendance a ON s.id = a.student_id
   GROUP BY s.id, s.name, s.roll_number, s.department, s.batch
-  HAVING ROUND(COUNT(CASE WHEN a.status IN ('present','late','od','medical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) < 50
+  HAVING ROUND(COUNT(CASE WHEN a.status IN ({att_statuses}) THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) < 50
   ORDER BY attendance_pct ASC
 
 GQ2 - Gender Distribution by Department:
@@ -570,20 +591,21 @@ GQ2 - Gender Distribution by Department:
 
 GQ3 - Hostel Occupancy:
   SELECT hostel_name, COUNT(*) AS occupied_beds
-  FROM v_hostel_allocations WHERE status = 'active'
+  FROM v_hostel_allocations WHERE status IN ({alloc_active})
   GROUP BY hostel_name ORDER BY occupied_beds DESC
 
 GQ4 - Pass Rate by Department (per batch):
   SELECT sg.department, sg.batch,
-         ROUND(COUNT(CASE WHEN sg.grade != 'F' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS pass_rate
+         ROUND(COUNT(CASE WHEN sg.grade != '{fail_grade}' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS pass_rate
   FROM v_semester_grades sg WHERE sg.batch IS NOT NULL
   GROUP BY sg.department, sg.batch ORDER BY sg.department, sg.batch
+  NOTE: The denominator is COUNT(*) — counting ALL grade entry rows. NEVER use COUNT(DISTINCT student_id).
 
 GQ5 - Fee Collection Status:
   SELECT i.department,
          COUNT(DISTINCT i.id) AS total_invoices,
          ROUND(SUM(COALESCE(fp.amount_paid, 0))::NUMERIC / NULLIF(SUM(i.total_amount), 0) * 100, 2) AS collection_pct
-  FROM v_invoices i LEFT JOIN v_payments fp ON i.id = fp.invoice_id AND fp.status = 'success'
+  FROM v_invoices i LEFT JOIN v_payments fp ON i.id = fp.invoice_id AND fp.status IN ({pay_success})
   GROUP BY i.department ORDER BY collection_pct DESC
 
 GQ6 - Total Students, Faculty, HODs:
@@ -597,13 +619,13 @@ GQ7 - Top N Students by CGPA:
          ROUND(SUM(sg.credits_earned * gp.points)::NUMERIC / NULLIF(SUM(sg.credits_earned), 0), 2) AS cgpa
   FROM v_semester_grades sg
   JOIN v_students s ON sg.student_id = s.id
-  JOIN (VALUES ('O',10),('A+',9),('A',8),('B+',7),('B',6),('C',5),('D',4),('F',0)) AS gp(grade, points) ON sg.grade = gp.grade
+  {gp_snippet}
   GROUP BY s.id, s.name, s.roll_number, s.department, s.batch
   ORDER BY cgpa DESC LIMIT 10
 
 GQ8 - Department-wise Average Attendance:
   SELECT a.department,
-         ROUND(COUNT(CASE WHEN a.status IN ('present','late','od','medical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS avg_attendance_pct
+         ROUND(COUNT(CASE WHEN a.status IN ({att_statuses}) THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS avg_attendance_pct
   FROM v_attendance a GROUP BY a.department ORDER BY avg_attendance_pct DESC
 {constraint_str}
 '''

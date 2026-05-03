@@ -209,6 +209,132 @@ async def get_domain_values(session: AsyncSession) -> str:
         logger.error("Failed to introspect domain values: %s", e)
         return ""
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DYNAMIC BUSINESS RULES — Grade points & attendance semantics from live data
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Grade-to-point mapping (JNTUH/CBCS scale). This IS business configuration —
+# the point values are institutional policy, not discoverable from data.
+# But the grade LETTERS are validated against what actually exists in the DB.
+_GRADE_POINTS_CONFIG = {
+    "O": 10, "A+": 9, "A": 8, "B+": 7, "B": 6, "C": 5, "D": 4, "F": 0,
+}
+
+# Attendance statuses that count as "attended" (institutional policy).
+# Validated against actual DB values at runtime.
+_ATTENDED_STATUSES = {"present", "late", "od", "medical"}
+
+_business_rules_cache: dict = {"rules": None, "fetched_at": 0}
+_BUSINESS_RULES_CACHE_TTL = 3600  # 1 hour
+
+
+async def get_business_rules(session: AsyncSession) -> dict:
+    """
+    Dynamically builds business rule snippets from live DB data.
+    
+    Returns a dict with:
+      - grade_points_snippet: the VALUES clause for grade-to-points JOIN
+      - attended_statuses: comma-separated list of statuses that count as attended
+      - not_attended_statuses: statuses that DON'T count
+      - payment_success_statuses: statuses that count as successful payment
+      - pass_fail_grade: which grade is 'fail'
+    
+    All values are validated against what actually exists in the database.
+    """
+    now = time.time()
+    if _business_rules_cache["rules"] and (now - _business_rules_cache["fetched_at"]) < _BUSINESS_RULES_CACHE_TTL:
+        return _business_rules_cache["rules"]
+    
+    rules = {}
+    
+    try:
+        # 1. Grade points — query actual grades from DB, map to configured points
+        try:
+            result = await session.execute(text(
+                "SELECT DISTINCT grade FROM semester_grades WHERE grade IS NOT NULL ORDER BY grade"
+            ))
+            db_grades = [row[0] for row in result.fetchall()]
+        except Exception:
+            db_grades = list(_GRADE_POINTS_CONFIG.keys())
+        
+        # Build VALUES clause only for grades that actually exist in the DB
+        grade_values = []
+        for grade in db_grades:
+            points = _GRADE_POINTS_CONFIG.get(grade)
+            if points is not None:
+                grade_values.append(f"('{grade}',{points})")
+            else:
+                logger.warning("Unknown grade '%s' found in DB — not in _GRADE_POINTS_CONFIG", grade)
+        
+        if grade_values:
+            rules["grade_points_snippet"] = (
+                f"JOIN (VALUES {','.join(grade_values)}) AS gp(grade, points) ON sg.grade = gp.grade"
+            )
+            rules["fail_grade"] = "F" if "F" in db_grades else db_grades[-1] if db_grades else "F"
+        else:
+            # Fallback if DB is empty
+            rules["grade_points_snippet"] = (
+                "JOIN (VALUES ('O',10),('A+',9),('A',8),('B+',7),('B',6),('C',5),('D',4),('F',0)) "
+                "AS gp(grade, points) ON sg.grade = gp.grade"
+            )
+            rules["fail_grade"] = "F"
+        
+        # 2. Attendance statuses — query actual statuses, classify as attended/not
+        try:
+            result = await session.execute(text(
+                "SELECT DISTINCT status FROM attendance_records WHERE status IS NOT NULL ORDER BY status"
+            ))
+            db_att_statuses = [row[0] for row in result.fetchall()]
+        except Exception:
+            db_att_statuses = list(_ATTENDED_STATUSES) + ["absent"]
+        
+        attended = [s for s in db_att_statuses if s in _ATTENDED_STATUSES]
+        not_attended = [s for s in db_att_statuses if s not in _ATTENDED_STATUSES]
+        
+        rules["attended_statuses"] = ",".join(f"'{s}'" for s in attended)
+        rules["not_attended_statuses"] = ",".join(f"'{s}'" for s in not_attended)
+        
+        # 3. Payment statuses — query actual values
+        try:
+            result = await session.execute(text(
+                "SELECT DISTINCT status FROM fee_payments WHERE status IS NOT NULL ORDER BY status"
+            ))
+            db_pay_statuses = [row[0] for row in result.fetchall()]
+        except Exception:
+            db_pay_statuses = ["success"]
+        
+        rules["payment_success_statuses"] = ",".join(f"'{s}'" for s in db_pay_statuses if "success" in s.lower() or "paid" in s.lower()) or "'success'"
+        rules["all_payment_statuses"] = ",".join(f"'{s}'" for s in db_pay_statuses)
+        
+        # 4. Hostel allocation statuses
+        try:
+            result = await session.execute(text(
+                "SELECT DISTINCT status FROM allocations WHERE status IS NOT NULL ORDER BY status"
+            ))
+            db_alloc_statuses = [row[0] for row in result.fetchall()]
+        except Exception:
+            db_alloc_statuses = ["active"]
+        
+        rules["active_alloc_statuses"] = ",".join(f"'{s}'" for s in db_alloc_statuses if "active" in s.lower()) or "'active'"
+        
+        _business_rules_cache["rules"] = rules
+        _business_rules_cache["fetched_at"] = now
+        logger.info("Business rules cached: %d grades, %d attendance statuses", len(grade_values), len(db_att_statuses))
+        return rules
+        
+    except Exception as e:
+        logger.error("Failed to build business rules: %s", e)
+        return {
+            "grade_points_snippet": "JOIN (VALUES ('O',10),('A+',9),('A',8),('B+',7),('B',6),('C',5),('D',4),('F',0)) AS gp(grade, points) ON sg.grade = gp.grade",
+            "fail_grade": "F",
+            "attended_statuses": "'present','late','od','medical'",
+            "not_attended_statuses": "'absent'",
+            "payment_success_statuses": "'success'",
+            "all_payment_statuses": "'success'",
+            "active_alloc_statuses": "'active'",
+        }
+
 def _build_views(col_filter: str, dept_filter: str, dept_filter_direct: str, role_upper: str) -> list[str]:
     """
     Returns the list of CREATE TEMPORARY VIEW SQL statements for the given role.
