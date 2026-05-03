@@ -20,6 +20,7 @@ class InsightsQueryResponse(BaseModel):
     y_column: Optional[str] = Field(None, description="Primary numeric column for Y-axis")
     group_column: Optional[str] = Field(None, description="Secondary categorical dimension for multi-series charts")
     all_metrics: List[str] = Field(default_factory=list, description="All numeric column names for metric switching")
+    metric_chart_map: Dict[str, str] = Field(default_factory=dict, description="Maps each metric to its best chart type (e.g., {'student_count': 'grouped_bar', 'avg_cgpa': 'bar_chart'})")
     exportable: bool = Field(True, description="True if the data can be exported to CSV")
     generated_sql: Optional[str] = Field(None, description="The SQL query that was executed (for debugging/transparency)")
 

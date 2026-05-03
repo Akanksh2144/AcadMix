@@ -173,24 +173,41 @@ function resolveColumns(
 
   let resolvedG: string | null = gValid ? groupColumn! : null;
 
-  // ── Auto-detect group column if LLM didn't specify one ──
-  // If the X column has repeated values and there's another string column with low cardinality,
-  // it's likely a grouping dimension (e.g., gender, status, batch)
-  if (!resolvedG && strCols.length >= 2) {
-    const xValues = data.map(r => r[resolvedX]);
-    const xUniques = new Set(xValues);
-    if (xUniques.size < data.length) {
-      // X has repeats — find the best candidate group column
-      const candidates = strCols.filter(c => c !== resolvedX);
-      for (const c of candidates) {
-        const uniques = new Set(data.map(r => r[c]));
-        // Group column should have low cardinality (2-10 unique values)
-        if (uniques.size >= 2 && uniques.size <= 10) {
-          resolvedG = c;
-          break;
-        }
+  // ── Cardinality-based X/Group override ──
+  // When we have 2+ string columns, use cardinality to assign:
+  // X = highest cardinality (more categories, e.g., department with 11 values)
+  // Group = lowest cardinality (fewer groups, e.g., gender with 3 values)
+  // This overrides bad LLM assignments (e.g., gender on X-axis)
+  if (strCols.length >= 2) {
+    const cards = strCols.map(col => ({
+      col,
+      uniques: new Set(data.map(r => r[col]).filter(v => v != null)).size
+    }));
+    cards.sort((a, b) => b.uniques - a.uniques); // highest cardinality first
+
+    const highCard = cards[0]; // e.g., department (11 values)
+    const lowCard = cards[1];  // e.g., gender (3 values)
+
+    // Override if LLM put low-cardinality on X-axis
+    if (resolvedX === lowCard.col && lowCard.uniques <= 5 && highCard.uniques > lowCard.uniques) {
+      resolvedX = highCard.col;
+      resolvedG = lowCard.col;
+    }
+
+    // Auto-detect group even if LLM didn't set one
+    if (!resolvedG && lowCard.uniques >= 2 && lowCard.uniques <= 10) {
+      const xValues = data.map(r => r[highCard.col]);
+      const xUniques = new Set(xValues);
+      if (xUniques.size < data.length) {
+        // X has repeated values → this IS grouped data
+        resolvedX = highCard.col;
+        resolvedG = lowCard.col;
       }
     }
+  }
+  // Fallback: single string column, try to find a group from remaining columns
+  else if (!resolvedG && strCols.length === 1) {
+    // No second string column — no group possible
   }
 
   // Build all_metrics

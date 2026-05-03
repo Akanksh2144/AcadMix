@@ -526,10 +526,69 @@ RULES:
 17. DESCRIPTIVE LABELS: When returning per-student rows, ALWAYS include the student's name (e.g., u.name AS student_name). When returning per-section or per-class rows, ALWAYS create a composite label: department || '-' || section AS label (e.g., 'CSE-A', 'AIML-B'). NEVER return section alone ('A', 'B') as the only categorical column — it is meaningless without context. Place the most descriptive label column FIRST in the SELECT list.
 18. TOP/BOTTOM N QUERIES: When the user asks for "top N", "best N", "highest N", "worst N", "bottom N", or "lowest N", you MUST include ORDER BY on the relevant metric column (DESC for top/best/highest, ASC for worst/bottom/lowest) AND LIMIT N. Never return all rows when the user explicitly asks for a subset.
 19. CHART-FRIENDLY OUTPUT: The label/category column should come FIRST in SELECT, grouping columns SECOND, and metric columns LAST. For example, for "top 5 departments by CGPA": SELECT department, ROUND(AVG(...)::NUMERIC, 2) AS avg_cgpa ... ORDER BY avg_cgpa DESC LIMIT 5. Do NOT include extra columns (like student_count) unless the user explicitly asked for them — keep the output focused on what was asked.
+20. BATCH SCOPING: Students belong to multiple batches (admission years: '2021','2022','2023','2024'). The `batch` column in v_students identifies the admission year. When the user asks about "students" or "CSE students" WITHOUT specifying a batch, include ALL batches but ADD `batch` to the GROUP BY — so results show per-batch breakdown. If the user says "current batch" or "this year students", filter to the latest batch only.
+21. NULL FILTERING: ALWAYS add WHERE <column> IS NOT NULL for any categorical column used in GROUP BY (gender, status, batch, section). Null groups produce meaningless "null" labels in charts. Only include nulls if the user explicitly asks about missing data.
+22. HOSTEL QUERIES: When asked about hostel rooms, occupancy, or allocations, group by `hostel_name` (the building/block name). NEVER group by `bed_identifier` (A/B/C within a room) or `room_number` — these are not meaningful aggregation dimensions. `floor` is acceptable for sub-grouping within a hostel.
+23. HOD COUNTING: To count HODs, use: SELECT COUNT(DISTINCT hod_user_id) FROM v_departments WHERE hod_user_id IS NOT NULL. Do NOT query users WHERE role='HOD' — the role field is unreliable. The `hod_user_id` column in departments is the canonical source.
+24. LONG-FORMAT FOR GROUPED DATA: When the query involves a grouping dimension (gender, status, batch, section), ALWAYS return LONG FORMAT with exactly 3 columns: (category, group, metric). Example for "gender distribution by department": SELECT department, gender, COUNT(*) AS student_count GROUP BY department, gender ORDER BY department, gender. NEVER return wide-format (e.g., male_count, female_count as separate columns).
+25. GRANULARITY OVER AMBIGUITY: If the user's question is ambiguous and could return different results depending on interpretation, generate the MOST GRANULAR query including ALL relevant dimensions. Example: "pass rate for CSE" → include batch in GROUP BY. "attendance by department" → include semester in GROUP BY if multiple semesters exist.
 
 GRADE_POINTS SNIPPET (use this exact JOIN for GPA/CGPA calculations):
   JOIN (VALUES ('O',10),('A+',9),('A',8),('B+',7),('B',6),('C',5),('D',4),('F',0)) AS gp(grade, points) ON sg.grade = gp.grade
 Then compute CGPA as: ROUND(SUM(sg.credits_earned * gp.points)::numeric / NULLIF(SUM(sg.credits_earned), 0), 2)
+
+GOLDEN QUERIES (use these EXACT patterns when the user asks similar questions):
+
+GQ1 - Attendance Defaulters (students below X% attendance):
+  SELECT s.name AS student_name, s.roll_number, s.department, s.batch,
+         ROUND(COUNT(CASE WHEN a.status IN ('present','late','od','medical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS attendance_pct
+  FROM v_students s JOIN v_attendance a ON s.id = a.student_id
+  GROUP BY s.id, s.name, s.roll_number, s.department, s.batch
+  HAVING ROUND(COUNT(CASE WHEN a.status IN ('present','late','od','medical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) < 50
+  ORDER BY attendance_pct ASC
+
+GQ2 - Gender Distribution by Department:
+  SELECT s.department, s.gender, COUNT(*) AS student_count
+  FROM v_students s WHERE s.gender IS NOT NULL
+  GROUP BY s.department, s.gender ORDER BY s.department, s.gender
+
+GQ3 - Hostel Occupancy:
+  SELECT hostel_name, COUNT(*) AS occupied_beds
+  FROM v_hostel_allocations WHERE status = 'active'
+  GROUP BY hostel_name ORDER BY occupied_beds DESC
+
+GQ4 - Pass Rate by Department (per batch):
+  SELECT sg.department, sg.batch,
+         ROUND(COUNT(CASE WHEN sg.grade != 'F' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS pass_rate
+  FROM v_semester_grades sg WHERE sg.batch IS NOT NULL
+  GROUP BY sg.department, sg.batch ORDER BY sg.department, sg.batch
+
+GQ5 - Fee Collection Status:
+  SELECT i.department,
+         COUNT(DISTINCT i.id) AS total_invoices,
+         ROUND(SUM(COALESCE(fp.amount_paid, 0))::NUMERIC / NULLIF(SUM(i.total_amount), 0) * 100, 2) AS collection_pct
+  FROM v_invoices i LEFT JOIN v_payments fp ON i.id = fp.invoice_id AND fp.status = 'success'
+  GROUP BY i.department ORDER BY collection_pct DESC
+
+GQ6 - Total Students, Faculty, HODs:
+  SELECT
+    (SELECT COUNT(*) FROM v_students) AS total_students,
+    (SELECT COUNT(*) FROM v_faculty) AS total_faculty,
+    (SELECT COUNT(DISTINCT hod_user_id) FROM v_departments WHERE hod_user_id IS NOT NULL) AS total_hods
+
+GQ7 - Top N Students by CGPA:
+  SELECT s.name AS student_name, s.roll_number, s.department, s.batch,
+         ROUND(SUM(sg.credits_earned * gp.points)::NUMERIC / NULLIF(SUM(sg.credits_earned), 0), 2) AS cgpa
+  FROM v_semester_grades sg
+  JOIN v_students s ON sg.student_id = s.id
+  JOIN (VALUES ('O',10),('A+',9),('A',8),('B+',7),('B',6),('C',5),('D',4),('F',0)) AS gp(grade, points) ON sg.grade = gp.grade
+  GROUP BY s.id, s.name, s.roll_number, s.department, s.batch
+  ORDER BY cgpa DESC LIMIT 10
+
+GQ8 - Department-wise Average Attendance:
+  SELECT a.department,
+         ROUND(COUNT(CASE WHEN a.status IN ('present','late','od','medical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS avg_attendance_pct
+  FROM v_attendance a GROUP BY a.department ORDER BY avg_attendance_pct DESC
 {constraint_str}
 '''
 
@@ -550,11 +609,50 @@ Then compute CGPA as: ROUND(SUM(sg.credits_earned * gp.points)::numeric / NULLIF
         logger.error("Error generating insights SQL: %s", e)
         raise ValueError("Failed to generate database query. AI service unavailable.")
 
-async def format_insights_summary(user_query: str, data: List[dict]) -> dict:
-    """Generates a natural language summary and chart visualization metadata.
+async def validate_insights_semantics(user_query: str, generated_sql: str) -> bool:
+    """
+    Agentic 2-pass semantic evaluator (from original architecture spec).
     
-    Production: AWS Bedrock Nova Lite
-    Fallback:   LiteLLM → Groq / Gemini AI Studio
+    Sends the user's question + generated SQL to a fast model to verify
+    the SQL semantically answers the question. Returns True if valid.
+    Uses erp_summary route (Gemini 2.0 Flash Lite — cheapest model).
+    """
+    from app.services.llm_gateway import gateway
+    
+    prompt = f"""Does this SQL correctly answer the user's question?
+
+Question: {user_query}
+SQL: {generated_sql}
+
+Check these specific things:
+- If user asked about a specific batch/year, does the SQL filter by batch?
+- If user asked about departments, does the SQL GROUP BY department?
+- If user asked for "top N", does the SQL have ORDER BY + LIMIT?
+- Does the SQL use the correct aggregation (COUNT vs AVG vs SUM)?
+- If user asked about gender/status distribution, does the SQL GROUP BY that dimension?
+- Does the SQL filter out NULLs from categorical GROUP BY columns?
+
+Respond ONLY with one word: VALID or INVALID"""
+
+    try:
+        result = await gateway.complete("erp_summary", messages=[
+            {"role": "user", "content": prompt}
+        ])
+        is_valid = result.strip().upper().startswith("VALID")
+        if not is_valid:
+            logger.warning("Semantic validator flagged query as INVALID for: %s", user_query[:100])
+        return is_valid
+    except Exception as e:
+        logger.warning("Semantic validator failed (non-blocking): %s", e)
+        return True  # Don't block on validator failures — graceful degradation
+
+
+async def format_insights_summary(user_query: str, data: List[dict]) -> dict:
+    """Generates a natural language summary, chart visualization metadata,
+    and metric-to-chart mapping.
+    
+    Includes cardinality injection so the LLM correctly assigns
+    x_column (high cardinality) vs group_column (low cardinality).
     """
     from app.services.llm_gateway import gateway
 
@@ -567,14 +665,27 @@ async def format_insights_summary(user_query: str, data: List[dict]) -> dict:
         for key, val in data[0].items():
             col_info[key] = type(val).__name__
 
+    # ── Cardinality injection — tells the LLM how many unique values each column has ──
+    cardinality = {}
+    if data:
+        for key in data[0]:
+            val = data[0][key]
+            if isinstance(val, str):
+                unique_vals = sorted(set(str(row.get(key, '')) for row in data if row.get(key) is not None))
+                cardinality[key] = {
+                    "unique_count": len(unique_vals),
+                    "sample_values": unique_vals[:8]
+                }
+
     system_prompt = '''
-You are a helpful data visualization assistant for college administration.
-You are given the user's question, the resulting data, and the column types.
+You are a data visualization assistant for college ERP administration.
+You are given the user's question, the resulting data, column types, and column cardinality.
 
 Your job:
 1. Write a concise 1-2 sentence natural language summary of the results.
 2. Decide the best chart type for this data.
 3. Specify EXACTLY which columns to use for visualization.
+4. Map which metrics are best suited for which chart types.
 
 CHART TYPE RULES:
 - "bar_chart": Standard vertical bars. Use for comparing a single metric across categories (departments, subjects, etc.).
@@ -587,31 +698,56 @@ CHART TYPE RULES:
 - null: Use when data is not suitable for any chart (e.g., free-text results, error responses).
 
 COLUMN SPECIFICATION RULES:
-- x_column: The category/label column for the X-axis. Must be a string/text column. Pick the most descriptive one.
-- y_column: The PRIMARY numeric metric column the user asked about. This is CRITICAL — pick the column that DIRECTLY answers the user's question, NOT a count column if they asked for a rate/average/percentage.
-- group_column: Set this ONLY if the data has a secondary categorical dimension that splits each X category into sub-groups (e.g., "gender", "status", "batch_year"). Set to null if there is no grouping.
+- x_column: The category/label column for the X-axis. Must be a string/text column.
+- y_column: The PRIMARY numeric metric column the user asked about. Pick the column that DIRECTLY answers the user's question.
+- group_column: Set this if the data has a secondary categorical dimension that splits each X category into sub-groups (e.g., "gender", "status", "batch"). Set to null if there is no grouping.
 - all_metrics: List ALL numeric column names from the data. This powers a dropdown so users can switch metrics.
 
+CRITICAL CARDINALITY RULE:
+When assigning x_column and group_column from 2+ string columns, ALWAYS use the Column Cardinality data:
+- x_column = the string column with HIGHER unique_count (more categories, e.g., department with 11 values)
+- group_column = the string column with LOWER unique_count (fewer groups, e.g., gender with 3 values)
+NEVER put the low-cardinality column on x_column. This is the #1 cause of bad charts.
+
+AUTO-DETECTION RULES:
+- If there are exactly 2 string columns and 1+ numeric columns → set chart_suggestion to "grouped_bar", x_column = higher cardinality string, group_column = lower cardinality string.
+- If there is 1 string column + 1 numeric column + temporal pattern (semester, month, year) → use "line_chart".
+- If result is 1-2 rows with only numeric columns → use "kpi_card".
+
+METRIC-TO-CHART MAPPING:
+For each metric in all_metrics, suggest which chart type best displays it:
+- Percentages/rates (pct, percent, rate, ratio) → best as line_chart or bar_chart
+- Counts (count, total, num) → best as bar_chart or grouped_bar
+- Averages (avg, mean) → best as bar_chart
+- KPI values (single numbers) → best as kpi_card
+
 EXAMPLES:
-- Q: "Average CGPA by department" → x_column: "department", y_column: "avg_cgpa", group_column: null
-- Q: "Gender distribution by department" → x_column: "department", y_column: "student_count", group_column: "gender"
-- Q: "Fee collection status by department" → x_column: "department", y_column: "collection_pct", group_column: null, all_metrics: ["total_students", "total_invoiced", "total_collected", "collection_pct"]
+- Q: "Average CGPA by department" → x_column: "department", y_column: "avg_cgpa", group_column: null, chart_suggestion: "bar_chart"
+- Q: "Gender distribution by department" → x_column: "department", y_column: "student_count", group_column: "gender", chart_suggestion: "grouped_bar"
 - Q: "Semester-wise pass rate" → x_column: "semester", y_column: "pass_rate", group_column: null, chart_suggestion: "line_chart"
+- Q: "Pass rate by department per batch" → x_column: "department", y_column: "pass_rate", group_column: "batch", chart_suggestion: "grouped_bar"
 - Q: "What is the average attendance?" (1 row) → chart_suggestion: "kpi_card"
 - Q: "Pass/fail split for ECE" (2 rows) → chart_suggestion: "pie_chart", x_column: "status", y_column: "count"
 
 Output strictly in JSON:
 {
   "summary": "...",
-  "chart_suggestion": "bar_chart",
+  "chart_suggestion": "grouped_bar",
   "x_column": "department",
-  "y_column": "avg_cgpa",
-  "group_column": null,
-  "all_metrics": ["total_students", "avg_cgpa"]
+  "y_column": "student_count",
+  "group_column": "gender",
+  "all_metrics": ["student_count"],
+  "metric_chart_map": {"student_count": "grouped_bar", "avg_cgpa": "bar_chart"}
 }
 '''
     
-    user_prompt = f"Question: {user_query}\\nTotal Rows: {row_count}\\nColumn Types: {json.dumps(col_info)}\\nData Sample: {json.dumps(data_sample, default=str)}"
+    user_prompt = (
+        f"Question: {user_query}\n"
+        f"Total Rows: {row_count}\n"
+        f"Column Types: {json.dumps(col_info)}\n"
+        f"Column Cardinality: {json.dumps(cardinality)}\n"
+        f"Data Sample: {json.dumps(data_sample, default=str)}"
+    )
 
     try:
          content = await gateway.complete(
@@ -631,24 +767,40 @@ Output strictly in JSON:
          return result
     except Exception as e:
          logger.error("Error generating insights summary: %s", e)
-         # Build fallback with auto-detected columns
+         # Build fallback with cardinality-based auto-detection
          all_metrics = []
-         x_col = None
-         y_col = None
+         str_cols = []
          if data:
              for k, v in data[0].items():
                  if isinstance(v, (int, float)):
                      all_metrics.append(k)
-                 elif isinstance(v, str) and not x_col:
-                     x_col = k
-             y_col = all_metrics[-1] if all_metrics else None
+                 elif isinstance(v, str):
+                     str_cols.append(k)
+         
+         # Cardinality-based column assignment for fallback
+         x_col = None
+         g_col = None
+         if str_cols:
+             if len(str_cols) >= 2:
+                 cards = [(c, len(set(str(row.get(c, '')) for row in data if row.get(c)))) for c in str_cols]
+                 cards.sort(key=lambda x: x[1], reverse=True)
+                 x_col = cards[0][0]
+                 if cards[1][1] >= 2 and cards[1][1] <= 10:
+                     g_col = cards[1][0]
+             else:
+                 x_col = str_cols[0]
+         
+         y_col = all_metrics[-1] if all_metrics else None
+         chart = "grouped_bar" if g_col else ("bar_chart" if row_count > 2 else "kpi_card")
+         
          return {
              "summary": f"Found {row_count} records matching your query.",
-             "chart_suggestion": "bar_chart" if row_count > 2 else "kpi_card",
+             "chart_suggestion": chart,
              "x_column": x_col,
              "y_column": y_col,
-             "group_column": None,
-             "all_metrics": all_metrics
+             "group_column": g_col,
+             "all_metrics": all_metrics,
+             "metric_chart_map": {}
          }
 
 # ═══════════════════════════════════════════════════════════════════════════════

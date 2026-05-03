@@ -7,7 +7,7 @@ import json
 import logging
 
 from app.schemas.insights import InsightsQueryRequest, InsightsQueryResponse, PinnedInsightCreate, PinnedInsightResponse
-from app.services.ai_service import generate_insights_sql, format_insights_summary
+from app.services.ai_service import generate_insights_sql, format_insights_summary, validate_insights_semantics
 from app.services.insights_executor import execute_insights_query
 from app.core.security import get_current_user
 from database import get_db
@@ -38,7 +38,7 @@ def _insights_cache_key(sql: str, role: str) -> str:
     the same SQL will share the same cache entry.
     """
     digest = hashlib.sha256(f"{role}:{sql.strip()}".encode()).hexdigest()
-    return f"insights_cache:{digest}"
+    return f"insights_cache:v3:{digest}"
 
 
 @router.post("/query", response_model=InsightsQueryResponse)
@@ -81,6 +81,30 @@ async def query_insights(
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
+    # ── Semantic Validation (2-pass agentic evaluator) ────────────────────
+    # Runs for ALL queries — validates the SQL semantically matches the question
+    if not request.cached_sql:
+        try:
+            is_valid = await validate_insights_semantics(request.message, generated_sql)
+            if not is_valid:
+                logger.info("Semantic validator rejected SQL — regenerating with stricter constraints")
+                history_dicts = [{"role": msg.role, "content": msg.content} for msg in request.session_history]
+                history_dicts.append({"role": "assistant", "content": generated_sql})
+                history_dicts.append({
+                    "role": "user",
+                    "content": (
+                        "The previous SQL was flagged as not matching the user's intent. "
+                        "Re-read the question carefully and regenerate. "
+                        "Make sure to include all relevant GROUP BY dimensions (batch, department, gender, etc). "
+                        "Return ONLY the corrected SQL."
+                    )
+                })
+                generated_sql = await generate_insights_sql(
+                    request.message, history_dicts, role, db=db, department=user_department
+                )
+        except Exception as e:
+            logger.warning("Semantic validation step failed (non-blocking): %s", e)
 
     # ── Cache Lookup (keyed on generated SQL for semantic dedup) ──────────
     r = await _get_redis()
@@ -193,6 +217,7 @@ async def query_insights(
         "y_column": summary_info.get("y_column"),
         "group_column": summary_info.get("group_column"),
         "all_metrics": summary_info.get("all_metrics", []),
+        "metric_chart_map": summary_info.get("metric_chart_map", {}),
         "exportable": True,
         "generated_sql": generated_sql
     }
