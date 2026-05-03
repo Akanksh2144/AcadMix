@@ -1192,8 +1192,8 @@ const CodePlayground = ({ navigate, user }) => {
         </div>
       ) : language === 'ecelab' ? (
         // ECE Lab — multi-simulator panel
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0">
+        <div className="flex-1 overflow-hidden flex flex-col" style={{ overscrollBehavior: 'contain' }}>
+          <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
             {/* Category Tabs + Board Selector Toolbar */}
             <div className="soft-card p-3 shrink-0 mb-4 space-y-3">
               {/* Row 1: Language switch + Category tabs + Open External */}
@@ -1265,13 +1265,14 @@ const CodePlayground = ({ navigate, user }) => {
               )}
             </div>
             {/* Simulator iframe */}
-            <div className="soft-card overflow-hidden flex-1 min-h-0 rounded-2xl">
+            <div className="soft-card overflow-hidden flex-1 min-h-0 rounded-2xl" style={{ overscrollBehavior: 'contain' }}>
               <iframe
                 key={`${simCategory}-${wokwiBoard}`}
                 src={_simActiveBoard?.url || _simBoards[0]?.url || ''}
                 title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
                 className="w-full h-full border-0"
-                allow="clipboard-read; clipboard-write"
+                style={{ touchAction: 'none' }}
+                allow="clipboard-read; clipboard-write; fullscreen"
               />
             </div>
           </div>
