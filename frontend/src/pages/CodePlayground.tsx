@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { toast } from 'sonner';
 
@@ -20,6 +20,18 @@ const LANGUAGES = [
   { id: 'bash', label: 'Bash', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg" alt="Bash" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'go', label: 'Go', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/go/go-original.svg" alt="Go" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'csharp', label: 'C#', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" alt="C#" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
+  { id: 'wokwi', label: 'Wokwi', icon: <Cpu size={20} weight="duotone" className="text-teal-500 shrink-0 drop-shadow-sm" /> },
+];
+
+const WOKWI_BOARDS = [
+  { id: 'arduino-uno', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno' },
+  { id: 'arduino-mega', label: 'Arduino Mega', url: 'https://wokwi.com/projects/new/arduino-mega' },
+  { id: 'arduino-nano', label: 'Arduino Nano', url: 'https://wokwi.com/projects/new/arduino-nano' },
+  { id: 'esp32', label: 'ESP32', url: 'https://wokwi.com/projects/new/esp32' },
+  { id: 'stm32', label: 'STM32', url: 'https://wokwi.com/projects/new/stm32' },
+  { id: 'pi-pico', label: 'Raspberry Pi Pico', url: 'https://wokwi.com/projects/new/micropython-pi-pico' },
+  { id: 'attiny85', label: 'ATtiny85', url: 'https://wokwi.com/projects/new/attiny85' },
+  { id: 'atmega328p', label: 'ATmega328P', url: 'https://wokwi.com/projects/new/atmega328p' },
 ];
 
 const DEFAULT_TEMPLATES = {
@@ -77,6 +89,7 @@ const CodePlayground = ({ navigate, user }) => {
   const [execTime, setExecTime] = useState(null);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const langMenuRef = useRef(null);
+  const [wokwiBoard, setWokwiBoard] = useState('arduino-uno');
 
   const [rPlots, setRPlots] = useState([]);
   const [remoteImages, setRemoteImages] = useState([]);
@@ -1124,6 +1137,71 @@ const CodePlayground = ({ navigate, user }) => {
               </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      ) : language === 'wokwi' ? (
+        // Wokwi Embedded Simulator — full-panel iframe
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0">
+            {/* Board Selector Toolbar */}
+            <div className="soft-card p-3 flex items-center justify-between shrink-0 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative" ref={langMenuRef}>
+                  <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-bold text-sm text-slate-700 dark:text-slate-300">
+                    <Cpu size={20} weight="duotone" className="text-teal-500" />
+                    Wokwi Simulator
+                    <CaretDown size={14} weight="bold" />
+                  </button>
+                  {showLangMenu && (
+                    <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1 z-50 min-w-[180px]">
+                      {LANGUAGES.map(lang => (
+                        <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
+                          className={`w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>
+                          <span className="text-base">{lang.icon}</span>
+                          {lang.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* Board Selector — pill-shaped */}
+                <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1 gap-0.5 overflow-x-auto max-w-[600px] custom-scrollbar">
+                  {WOKWI_BOARDS.map(board => (
+                    <button
+                      key={board.id}
+                      onClick={() => setWokwiBoard(board.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                        wokwiBoard === board.id
+                          ? 'bg-teal-500 text-white shadow-sm shadow-teal-500/25'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {board.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <a
+                href={WOKWI_BOARDS.find(b => b.id === wokwiBoard)?.url || WOKWI_BOARDS[0].url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-sm font-bold shadow-sm shadow-teal-500/20 transition-all flex items-center gap-2"
+              >
+                Open in Wokwi ↗
+              </a>
+            </div>
+            {/* Wokwi iframe */}
+            <div className="soft-card overflow-hidden flex-1 min-h-0 rounded-2xl">
+              <iframe
+                key={wokwiBoard}
+                src={WOKWI_BOARDS.find(b => b.id === wokwiBoard)?.url || WOKWI_BOARDS[0].url}
+                title={`Wokwi ${WOKWI_BOARDS.find(b => b.id === wokwiBoard)?.label || 'Simulator'}`}
+                className="w-full h-full border-0"
+                allow="clipboard-read; clipboard-write"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
+              />
             </div>
           </div>
         </div>
