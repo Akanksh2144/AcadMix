@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { toast } from 'sonner';
 
@@ -21,6 +21,7 @@ const LANGUAGES = [
   { id: 'go', label: 'Go', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/go/go-original.svg" alt="Go" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'csharp', label: 'C#', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" alt="C#" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'ecelab', label: 'ECE Lab', icon: <Cpu size={20} weight="duotone" className="text-teal-500 shrink-0 drop-shadow-sm" /> },
+  { id: 'eeelab', label: 'EEE Lab', icon: <Lightning size={20} weight="duotone" className="text-yellow-500 shrink-0 drop-shadow-sm" /> },
 ];
 
 const SIMULATOR_CATEGORIES = [
@@ -36,9 +37,13 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
     { id: 'arduino-uno', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
     { id: 'arduino-mega', label: 'Arduino Mega', url: 'https://wokwi.com/projects/new/arduino-mega', openLabel: 'Open in Wokwi' },
     { id: 'arduino-nano', label: 'Arduino Nano', url: 'https://wokwi.com/projects/new/arduino-nano', openLabel: 'Open in Wokwi' },
-    { id: 'esp32', label: 'ESP32', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
+    { id: 'esp32', label: 'ESP32 (Core)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
+    { id: 'esp32-c3', label: 'ESP32-C3 (RISC-V)', url: 'https://wokwi.com/projects/new/esp32-c3', openLabel: 'Open in Wokwi' },
+    { id: 'esp32-s3', label: 'ESP32-S3 (Edge AI)', url: 'https://wokwi.com/projects/new/esp32-s3', openLabel: 'Open in Wokwi' },
+    { id: 'esp32-rust', label: 'Embedded Rust', url: 'https://wokwi.com/projects/new/rust-esp32', openLabel: 'Open in Wokwi' },
     { id: 'stm32', label: 'STM32', url: 'https://wokwi.com/projects/new/stm32', openLabel: 'Open in Wokwi' },
-    { id: 'pi-pico', label: 'RPi Pico', url: 'https://wokwi.com/projects/new/micropython-pi-pico', openLabel: 'Open in Wokwi' },
+    { id: 'pi-pico', label: 'RPi Pico', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
+    { id: 'micropython-esp32', label: 'MicroPython', url: 'https://wokwi.com/projects/new/micropython-esp32', openLabel: 'Open in Wokwi' },
     { id: 'attiny85', label: 'ATtiny85', url: 'https://wokwi.com/projects/new/attiny85', openLabel: 'Open in Wokwi' },
     { id: 'atmega328p', label: 'ATmega328P', url: 'https://wokwi.com/projects/new/atmega328p', openLabel: 'Open in Wokwi' },
   ],
@@ -68,12 +73,63 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
   ],
 };
 
+// ── EEE Lab Categories & Boards ─────────────────────────────────────────────
+const EEE_SIMULATOR_CATEGORIES = [
+  { id: 'power_electronics', label: 'Power Electronics', icon: <WaveSine size={16} weight="duotone" />, accent: 'rose' },
+  { id: 'control_systems', label: 'Control Systems', icon: <ChartLineUp size={16} weight="duotone" />, accent: 'indigo' },
+  { id: 'electrical_machines', label: 'Electrical Machines', icon: <Atom size={16} weight="duotone" />, accent: 'amber' },
+  { id: 'power_systems', label: 'Power Systems', icon: <Lightning size={16} weight="duotone" />, accent: 'violet' },
+  { id: 'industrial_automation', label: 'Industrial Automation', icon: <Cpu size={16} weight="duotone" />, accent: 'teal' },
+];
+
+const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string }[]> = {
+  power_electronics: [
+    { id: 'pe-blank', label: 'Blank Circuit', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcA2aAOMB2ALGXyEBOAbmAmwmwFMBaMMAKACcQUFDxCRsKBmEbqh7ce-YUJR1BkEJByYAHiGC4ALpzV8hOvYb37MBg5QCMvIbsPG6Zjlx5A', openLabel: 'Open in CircuitJS' },
+    { id: 'pe-halfwave', label: 'Half-Wave Rectifier', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=fullrect.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'pe-bridge', label: 'Bridge Rectifier', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=fullrect.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'pe-buck', label: 'Buck Converter', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=dcdcconv.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'pe-boost', label: 'Boost Converter', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=dcdcboost.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'pe-inverter', label: 'H-Bridge Inverter', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=hbridge.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'pe-555pwm', label: '555 PWM', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=555square.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'pe-thyristor', label: 'SCR Phase Control', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=scr.txt', openLabel: 'Open in CircuitJS' },
+  ],
+  control_systems: [
+    { id: 'cs-octave', label: 'GNU Octave Online', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'cs-opamp-pid', label: 'Op-Amp PID', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=opamp.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'cs-integrator', label: 'Integrator', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=opampint.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'cs-differentiator', label: 'Differentiator', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=opampdiff.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'cs-schmitt', label: 'Schmitt Trigger', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=schmitt.txt', openLabel: 'Open in CircuitJS' },
+  ],
+  electrical_machines: [
+    { id: 'em-motor-sim', label: 'Motor Simulator', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
+    { id: 'em-esp32-motor', label: 'ESP32 Motor PWM', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
+    { id: 'em-stepper', label: 'Stepper Control', url: 'https://wokwi.com/projects/new/arduino-mega', openLabel: 'Open in Wokwi' },
+    { id: 'em-transformer', label: 'Transformer', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=transformer.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'em-induction', label: 'Induction Motor Equiv', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=rlc-par.txt', openLabel: 'Open in CircuitJS' },
+  ],
+  power_systems: [
+    { id: 'ps-octave', label: 'GNU Octave (Load Flow)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'ps-3phase', label: '3-Phase System', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=phase3.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'ps-relay', label: 'Relay Protection', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=relay.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'ps-transmission', label: 'Transmission Line', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=tline.txt', openLabel: 'Open in CircuitJS' },
+  ],
+  industrial_automation: [
+    { id: 'ia-arduino-plc', label: 'Arduino (PLC Sim)', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
+    { id: 'ia-esp32-scada', label: 'ESP32 (SCADA Node)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
+    { id: 'ia-pico-vfd', label: 'RPi Pico (VFD Sim)', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
+    { id: 'ia-stm32-drive', label: 'STM32 (Drive Control)', url: 'https://wokwi.com/projects/new/stm32', openLabel: 'Open in Wokwi' },
+    { id: 'ia-ladder', label: 'OpenPLC Editor', url: 'https://autonomylogic.com/', openLabel: 'Open OpenPLC', externalUrl: 'https://autonomylogic.com/', externalLabel: 'Download OpenPLC' },
+  ],
+};
+
 const SIM_ACCENT_CLASSES: Record<string, { active: string; pill: string; btn: string }> = {
   teal:    { active: 'bg-teal-500 text-white shadow-sm shadow-teal-500/25', pill: 'bg-teal-500/10 text-teal-600 dark:text-teal-400', btn: 'bg-teal-500 hover:bg-teal-600 shadow-teal-500/20' },
   violet:  { active: 'bg-violet-500 text-white shadow-sm shadow-violet-500/25', pill: 'bg-violet-500/10 text-violet-600 dark:text-violet-400', btn: 'bg-violet-500 hover:bg-violet-600 shadow-violet-500/20' },
   sky:     { active: 'bg-sky-500 text-white shadow-sm shadow-sky-500/25', pill: 'bg-sky-500/10 text-sky-600 dark:text-sky-400', btn: 'bg-sky-500 hover:bg-sky-600 shadow-sky-500/20' },
   amber:   { active: 'bg-amber-500 text-white shadow-sm shadow-amber-500/25', pill: 'bg-amber-500/10 text-amber-600 dark:text-amber-400', btn: 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' },
   emerald: { active: 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25', pill: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', btn: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20' },
+  rose:    { active: 'bg-rose-500 text-white shadow-sm shadow-rose-500/25', pill: 'bg-rose-500/10 text-rose-600 dark:text-rose-400', btn: 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/20' },
+  indigo:  { active: 'bg-indigo-500 text-white shadow-sm shadow-indigo-500/25', pill: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400', btn: 'bg-indigo-500 hover:bg-indigo-600 shadow-indigo-500/20' },
 };
 
 const DEFAULT_TEMPLATES = {
@@ -134,9 +190,12 @@ const CodePlayground = ({ navigate, user }) => {
   const [wokwiBoard, setWokwiBoard] = useState('arduino-uno');
   const [simCategory, setSimCategory] = useState('embedded');
 
-  // ── ECE Lab computed values ───────────────────────────────────────────────
-  const _simCat = SIMULATOR_CATEGORIES.find(c => c.id === simCategory) || SIMULATOR_CATEGORIES[0];
-  const _simBoards = SIMULATOR_BOARDS[simCategory] || [];
+  // ── ECE / EEE Lab computed values ──────────────────────────────────────────
+  const _isEEELab = language === 'eeelab';
+  const _activeCats = _isEEELab ? EEE_SIMULATOR_CATEGORIES : SIMULATOR_CATEGORIES;
+  const _activeBoards = _isEEELab ? EEE_SIMULATOR_BOARDS : SIMULATOR_BOARDS;
+  const _simCat = _activeCats.find(c => c.id === simCategory) || _activeCats[0];
+  const _simBoards = _activeBoards[simCategory] || [];
   const _simActiveBoard = _simBoards.find(b => b.id === wokwiBoard) || _simBoards[0];
   const _simAccent = SIM_ACCENT_CLASSES[_simCat.accent] || SIM_ACCENT_CLASSES.teal;
   const [rPlots, setRPlots] = useState([]);
@@ -174,6 +233,8 @@ const CodePlayground = ({ navigate, user }) => {
   const [challenges, setChallenges] = useState([]);
   const [isChallengesLoading, setIsChallengesLoading] = useState(true);
   const [stats, setStats] = useState(null);
+
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
 
   const [activeConsoleTab, setActiveConsoleTab] = useState('test_cases');
   const formatPythonLiteral = (str) => {
@@ -387,6 +448,14 @@ const CodePlayground = ({ navigate, user }) => {
 
   const handleLanguageChange = (langId) => {
     setLanguage(langId);
+    // Reset simulator category defaults when switching lab modes
+    if (langId === 'eeelab') {
+      setSimCategory('power_electronics');
+      setWokwiBoard(EEE_SIMULATOR_BOARDS['power_electronics']?.[0]?.id || '');
+    } else if (langId === 'ecelab') {
+      setSimCategory('embedded');
+      setWokwiBoard(SIMULATOR_BOARDS['embedded']?.[0]?.id || 'arduino-uno');
+    }
     const saved = sessionStorage.getItem(getCodeStorageKey(activeChallenge, langId));
     if (saved !== null) {
       setCode(saved);
@@ -801,37 +870,51 @@ const CodePlayground = ({ navigate, user }) => {
 
   return (
     <div className="h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
-      <PageHeader
-        navigate={navigate} user={user} title="Code Playground"
-        subtitle="Practice coding algorithms & data structures"
-        maxWidth="max-w-[1600px]"
-        rightContent={
-          <>
-            <button 
-              onClick={() => navigate('/sql-practice')}
-              className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2"
-            >
-              <Database size={16} weight="fill" />
-              Practice SQL
-            </button>
-            <button
-              onClick={() => setShowInsightsModal(true)}
-              className="hidden lg:flex bg-white hover:bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 !px-4 !py-2.5 text-sm font-semibold rounded-xl transition-all shadow-sm items-center gap-2"
-            >
-              <ChartBar size={16} weight="duotone" />
-              Insights
-            </button>
-            <button
-              data-testid="challenges-button"
-              onClick={() => setShowChallengesModal(true)}
-              className="hidden lg:flex btn-primary !px-4 !py-2.5 text-sm items-center gap-2"
-            >
-              <Lightning size={16} weight="duotone" />
-              Problem List
-            </button>
-          </>
-        }
-      />
+      {/* Collapsible Header Wrapper */}
+      <div className="relative z-40 shrink-0">
+        <div className={`overflow-hidden transition-all duration-300 origin-top ${isHeaderCollapsed ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'}`}>
+          <PageHeader
+            navigate={navigate} user={user} title="Code Playground"
+            subtitle="Practice coding algorithms & data structures"
+            maxWidth="max-w-[1600px]"
+            rightContent={
+              <>
+                <button 
+                  onClick={() => navigate('/sql-practice')}
+                  className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2"
+                >
+                  <Database size={16} weight="fill" />
+                  Practice SQL
+                </button>
+                <button
+                  onClick={() => setShowInsightsModal(true)}
+                  className="hidden lg:flex bg-white hover:bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 !px-4 !py-2.5 text-sm font-semibold rounded-xl transition-all shadow-sm items-center gap-2"
+                >
+                  <ChartBar size={16} weight="duotone" />
+                  Insights
+                </button>
+                <button
+                  data-testid="challenges-button"
+                  onClick={() => setShowChallengesModal(true)}
+                  className="hidden lg:flex btn-primary !px-4 !py-2.5 text-sm items-center gap-2"
+                >
+                  <Lightning size={16} weight="duotone" />
+                  Problem List
+                </button>
+              </>
+            }
+          />
+        </div>
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-full flex justify-center pointer-events-none z-50">
+          <button 
+            onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
+            className="pointer-events-auto bg-white dark:bg-[#1A202C] border border-t-0 border-slate-200 dark:border-slate-700 shadow-sm px-6 py-1 rounded-b-2xl text-slate-400 hover:text-indigo-500 transition-colors flex items-center justify-center cursor-pointer"
+            title={isHeaderCollapsed ? "Expand Header" : "Collapse Header"}
+          >
+            {isHeaderCollapsed ? <CaretDown size={16} weight="bold" /> : <CaretUp size={16} weight="bold" />}
+          </button>
+        </div>
+      </div>
 
       {/* Main Layout Area */}
       {activeChallenge ? (
@@ -969,7 +1052,7 @@ const CodePlayground = ({ navigate, user }) => {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => { setCode(DEFAULT_TEMPLATES[language] || ''); setOutput(null); }} className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 dark:text-slate-400 transition-colors mr-2" title="Reset Code">
+                  <button onClick={() => { setCode(DEFAULT_TEMPLATES[language] || ''); setOutput(null); }} className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-500 dark:text-slate-400 transition-colors mr-2" title="Reset Code">
                     <ArrowCounterClockwise size={18} weight="duotone" />
                   </button>
 
@@ -1188,8 +1271,8 @@ const CodePlayground = ({ navigate, user }) => {
             </div>
           </div>
         </div>
-      ) : language === 'ecelab' ? (
-        // ECE Lab — multi-simulator panel
+      ) : (language === 'ecelab' || language === 'eeelab') ? (
+        // ECE / EEE Lab — multi-simulator panel
         <div className="flex-1 overflow-hidden flex flex-col" style={{ overscrollBehavior: 'contain' }}>
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
             {/* Category Tabs + Board Selector Toolbar */}
@@ -1200,8 +1283,8 @@ const CodePlayground = ({ navigate, user }) => {
                   <div className="relative" ref={langMenuRef}>
                     <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
                       className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-bold text-sm text-slate-700 dark:text-slate-300">
-                      <Cpu size={20} weight="duotone" className="text-teal-500" />
-                      ECE Lab
+                      {_isEEELab ? <Lightning size={20} weight="duotone" className="text-yellow-500" /> : <Cpu size={20} weight="duotone" className="text-teal-500" />}
+                      {_isEEELab ? 'EEE Lab' : 'ECE Lab'}
                       <CaretDown size={14} weight="bold" />
                     </button>
                     {showLangMenu && (
@@ -1218,10 +1301,10 @@ const CodePlayground = ({ navigate, user }) => {
                   </div>
                   {/* Category Pills */}
                   <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1 gap-0.5">
-                    {SIMULATOR_CATEGORIES.map(cat => (
+                    {_activeCats.map(cat => (
                       <button
                         key={cat.id}
-                        onClick={() => { setSimCategory(cat.id); setWokwiBoard(SIMULATOR_BOARDS[cat.id]?.[0]?.id || ''); }}
+                        onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
                         className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                           simCategory === cat.id
                             ? SIM_ACCENT_CLASSES[cat.accent]?.active || 'bg-teal-500 text-white'
@@ -1234,14 +1317,16 @@ const CodePlayground = ({ navigate, user }) => {
                     ))}
                   </div>
                 </div>
-                <a
-                  href={_simActiveBoard?.url || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`px-4 py-2 text-white rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2 shrink-0 ${_simAccent.btn}`}
-                >
-                  {_simActiveBoard?.openLabel || 'Open External'} ↗
-                </a>
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={_simActiveBoard?.url || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`px-4 py-2 text-white rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2 ${_simAccent.btn}`}
+                  >
+                    {_simActiveBoard?.openLabel || 'Open External'} ↗
+                  </a>
+                </div>
               </div>
               {/* Row 2: Sub-board/preset pills (if more than 1 option) */}
               {_simBoards.length > 1 && (
@@ -1263,7 +1348,7 @@ const CodePlayground = ({ navigate, user }) => {
               )}
             </div>
             {/* Navigation helper for CircuitJS-based simulators */}
-            {(simCategory === 'analog' || simCategory === 'digital') && (
+            {(['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems'].includes(simCategory)) && (
               <div className={`flex items-center gap-4 text-xs font-medium px-4 py-2 rounded-xl mb-2 ${
                 SIM_ACCENT_CLASSES[_simCat.accent]?.pill || 'bg-slate-100 text-slate-600'
               }`}>

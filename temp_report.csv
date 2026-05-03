@@ -1,0 +1,27 @@
+Service description,Service ID,SKU description,SKU ID,Usage amount,Usage unit,Cost (₹),Savings programs (₹),Other savings (₹),Unrounded subtotal (₹),Subtotal (₹),Percent change in subtotal compared to previous period
+Vertex AI,C7E2-9256-1C43,Gemini 2.5 Pro Thinking Text Output - Predictions,E367-697F-F274,"284,255",count,269.51,0.00,0.00,269.509249,269.51,New
+Gemini API,AEFD-7695-64FA,Generate content output token count gemini 2.5 flash short input text,911A-8880-A243,"815,742",count,193.36,0.00,0.00,193.356319,193.36,New
+Vertex AI,C7E2-9256-1C43,Gemini 2.5 Pro Text Input - Predictions,A121-E2B5-1418,"1,431,267",count,169.63,0.00,0.00,169.627487,169.63,New
+Vertex AI,C7E2-9256-1C43,Gemini 2.5 Flash GA Text Input - Predictions,FDAB-647C-5A22,"1,489,487",count,42.37,0.00,0.00,42.366550,42.37,New
+Vertex AI,C7E2-9256-1C43,Gemini 2.5 Pro Text Output - Predictions,5DA2-3F77-1CA5,"33,887",count,32.13,0.00,0.00,32.129092,32.13,New
+Vertex AI,C7E2-9256-1C43, Gemini 2.5 Pro Input Text Caching,E941-1B12-88B9,"1,027,851",count,12.18,0.00,0.00,12.181634,12.18,New
+Vertex AI,C7E2-9256-1C43,Gemini 2.5 Flash GA Thinking Text Output - Predictions,CD33-11F4-1220,"36,872",count,8.74,0.00,0.00,8.739767,8.74,New
+Gemini API,AEFD-7695-64FA,Generate content input token count gemini 2.5 flash short input text,981A-C057-0BF9,"282,243",count,8.03,0.00,0.00,8.028021,8.03,New
+Vertex AI,C7E2-9256-1C43,Gemini 2.5 Flash GA Text Output (Thinking On) - Predictions,A253-E8A3-DE5C,"23,874",count,5.66,0.00,0.00,5.658848,5.66,New
+Vertex AI,C7E2-9256-1C43, Gemini 2.5 Flash GA Text Output - Predictions,AF56-1BF9-492A,"10,920",count,2.59,0.00,0.00,2.588374,2.59,New
+Vertex AI,C7E2-9256-1C43,Gemini 2.5 Flash Lite Text Input - Predictions,F91E-007E-3BA1,"252,246",count,2.39,0.00,0.00,2.391581,2.39,New
+Vertex AI,C7E2-9256-1C43,Gemini 2.5 Flash Lite Text Output - Predictions,2D6E-6AC5-B1FD,"35,523",count,1.35,0.00,0.00,1.347175,1.35,New
+Vertex AI,C7E2-9256-1C43, Gemini 2.5 Flash GA Input Text Caching,A1C1-77CC-6FAE,"342,159",count,0.97,0.00,0.00,0.973222,0.97,New
+Gemini API,AEFD-7695-64FA,Generate content output token count gemini 3.1 flash lite preview text,5882-9C22-CC57,"1,210",count,0.17,0.00,0.00,0.172082,0.17,New
+Vertex AI,C7E2-9256-1C43,Gemini 3.0 Pro Text Output - Predictions,2737-2D33-D986,95,count,0.11,0.00,0.00,0.108085,0.11,New
+Gemini API,AEFD-7695-64FA,Generate content cached input token count gemini 2.5 flash input short text,5CDC-4C82-2AEC,"22,221",count,0.06,0.00,0.00,0.063200,0.06,New
+Gemini API,AEFD-7695-64FA,Generate content input token count gemini 3.1 flash lite preview text,54F8-C433-9340,"2,284",count,0.05,0.00,0.00,0.054134,0.05,New
+Cloud Storage,95FF-2EF5-5EA1,Standard Storage Asia Multi-region,E653-0A40-3B69,0.01,gibibyte month,0.01,0.00,0.00,0.013482,0.01,-50%
+App Engine,F17B-412E-CB64,Cloud Firestore Zonal Backup Storage Mumbai,234C-01FA-2471,0,gibibyte month,0.01,0.00,0.00,0.011824,0.01,0%
+App Engine,F17B-412E-CB64,Cloud Firestore Point-in-time Recovery Storage Mumbai,F867-A8A9-072D,0,gibibyte month,0.01,0.00,0.00,0.008151,0.01,0%
+Vertex AI,C7E2-9256-1C43,Gemini 3.0 Pro Text Input - Predictions,EAC4-305F-1249,1,count,0.00,0.00,0.00,0.000189,0.00,New
+App Engine,F17B-412E-CB64,Cloud Firestore Read Ops Mumbai,CE3B-4AB1-8645,34,count,0.00,0.00,0.00,0.000000,0.00,0%
+App Engine,F17B-412E-CB64,Cloud Firestore Entity Writes Mumbai,EA5C-8FFA-46EB,4,count,0.00,0.00,0.00,0.000000,0.00,0%
+,,,,,,,,Subtotal,749.328466,749.33
+,,,,,,,,Tax,0.000000,0.00
+,,,,,,,,Total,749.329303,749.33

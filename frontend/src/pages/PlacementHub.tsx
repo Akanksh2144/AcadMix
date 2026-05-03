@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   Microphone, Database, Brain, Buildings, Target, Lightning,
-  ArrowRight, Sparkle, Lock
+  ArrowRight, Sparkle, Lock, Cpu
 } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 
@@ -39,6 +39,20 @@ const ARENAS = [
     route: '/sql-practice',
     ready: true,
     tags: ['TCS NQT', 'Infosys', 'Wipro', 'Cognizant'],
+  },
+  {
+    id: 'hardware-arena',
+    title: 'Hardware Arena',
+    subtitle: 'Enterprise-grade ECE problem dungeon for RTL, Embedded, and VLSI',
+    icon: Cpu,
+    color: 'from-emerald-500 to-teal-600',
+    iconBg: 'bg-emerald-50 dark:bg-emerald-500/10',
+    iconColor: 'text-emerald-500',
+    borderHover: 'hover:border-emerald-500',
+    shadowHover: 'hover:shadow-emerald-500/10',
+    route: '/hardware-arena',
+    ready: true,
+    tags: ['Embedded', 'VLSI', 'Digital', 'Analog', 'PCB'],
   },
   {
     id: 'aptitude',
