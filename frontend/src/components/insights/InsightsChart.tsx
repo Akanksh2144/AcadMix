@@ -244,6 +244,10 @@ function detectShape(
   };
   if (chartSuggestion && llmMap[chartSuggestion]) {
     const suggested = llmMap[chartSuggestion];
+    // Override: if LLM said 'bar' but resolveColumns found a group column, force grouped_bar
+    if (suggested === 'bar' && resolved.groupCol) {
+      return 'grouped_bar';
+    }
     // Validate: grouped/stacked needs either a group column OR multiple metrics (wide format)
     if ((suggested === 'grouped_bar' || suggested === 'stacked_bar') && !resolved.groupCol && resolved.allMetrics.length < 2) {
       // Fall through to auto-detection
