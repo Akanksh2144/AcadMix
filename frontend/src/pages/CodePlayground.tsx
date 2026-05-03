@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube, Broadcast, Equalizer, SunHorizon, Gauge, Path, Tree, Wall } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { toast } from 'sonner';
 
@@ -31,6 +31,8 @@ const SIMULATOR_CATEGORIES = [
   { id: 'digital', label: 'Digital Electronics', icon: <Circuitry size={16} weight="duotone" />, accent: 'sky' },
   { id: 'vlsi', label: 'VLSI Design', icon: <Atom size={16} weight="duotone" />, accent: 'amber' },
   { id: 'pcb', label: 'PCB Design', icon: <Blueprint size={16} weight="duotone" />, accent: 'emerald' },
+  { id: 'communication', label: 'Communication Systems', icon: <Broadcast size={16} weight="duotone" />, accent: 'rose' },
+  { id: 'dsp', label: 'DSP / Signal Processing', icon: <Equalizer size={16} weight="duotone" />, accent: 'indigo' },
 ];
 
 const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string }[]> = {
@@ -72,6 +74,17 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
   pcb: [
     { id: 'pcb-kicanvas', label: 'KiCanvas Viewer', url: 'https://kicanvas.org/', openLabel: 'Open KiCanvas', externalUrl: 'https://easyeda.com/editor', externalLabel: 'Open EasyEDA Editor' },
   ],
+  communication: [
+    { id: 'comm-blank', label: 'Blank Circuit', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcA2aAOMB2ALGXyEBOAbmAmwmwFMBaMMAKACcQUFDxCRsKBmEbqh7ce-YUJR1BkEJByYAHiGC4ALpzV8hOvYb37MBg5QCMvIbsPG6Zjlx5A', openLabel: 'Open in CircuitJS' },
+    { id: 'comm-am', label: 'AM Modulation', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=amdetect.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'comm-fm', label: 'FM Modulation', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=fm.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'comm-octave', label: 'GNU Octave (Comms)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+  ],
+  dsp: [
+    { id: 'dsp-octave', label: 'GNU Octave (DSP)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'dsp-fft', label: 'FFT Visualizer', url: 'https://www.falstad.com/fourier/', openLabel: 'Open Fourier' },
+    { id: 'dsp-filter', label: 'Filter Designer', url: 'https://www.falstad.com/dfilter/', openLabel: 'Open Filter Tool' },
+  ],
 };
 
 // ── EEE Lab Categories & Boards ─────────────────────────────────────────────
@@ -81,6 +94,8 @@ const EEE_SIMULATOR_CATEGORIES = [
   { id: 'electrical_machines', label: 'Electrical Machines', icon: <Atom size={16} weight="duotone" />, accent: 'amber' },
   { id: 'power_systems', label: 'Power Systems', icon: <Lightning size={16} weight="duotone" />, accent: 'violet' },
   { id: 'industrial_automation', label: 'Industrial Automation', icon: <Cpu size={16} weight="duotone" />, accent: 'teal' },
+  { id: 'measurements', label: 'Measurements & Instrumentation', icon: <Gauge size={16} weight="duotone" />, accent: 'sky' },
+  { id: 'renewable_energy', label: 'Renewable Energy', icon: <SunHorizon size={16} weight="duotone" />, accent: 'emerald' },
 ];
 
 const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string }[]> = {
@@ -121,6 +136,19 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
     { id: 'ia-stm32-drive', label: 'STM32 (Drive Control)', url: 'https://wokwi.com/projects/new/stm32', openLabel: 'Open in Wokwi' },
     { id: 'ia-ladder', label: 'OpenPLC Editor', url: 'https://autonomylogic.com/', openLabel: 'Open OpenPLC', externalUrl: 'https://autonomylogic.com/', externalLabel: 'Download OpenPLC' },
   ],
+  measurements: [
+    { id: 'mi-blank', label: 'Blank Circuit', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcA2aAOMB2ALGXyEBOAbmAmwmwFMBaMMAKACcQUFDxCRsKBmEbqh7ce-YUJR1BkEJByYAHiGC4ALpzV8hOvYb37MBg5QCMvIbsPG6Zjlx5A', openLabel: 'Open in CircuitJS' },
+    { id: 'mi-wheatstone', label: 'Wheatstone Bridge', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=wheatstone.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'mi-cro', label: 'Virtual CRO', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=lissajous.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'mi-octave', label: 'GNU Octave (Analysis)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+  ],
+  renewable_energy: [
+    { id: 're-solar', label: 'Solar Cell Circuit', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=diodevar.txt', openLabel: 'Open in CircuitJS' },
+    { id: 're-boost', label: 'Boost Converter (MPPT)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=dcdcboost.txt', openLabel: 'Open in CircuitJS' },
+    { id: 're-inverter', label: 'Grid-Tied Inverter', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=hbridge.txt', openLabel: 'Open in CircuitJS' },
+    { id: 're-octave', label: 'GNU Octave (Modeling)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 're-esp32', label: 'ESP32 (IoT Monitor)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
+  ],
 };
 
 // ── Civil Lab Categories & Boards ───────────────────────────────────────────
@@ -130,6 +158,9 @@ const CIVIL_SIMULATOR_CATEGORIES = [
   { id: 'fluid_mechanics', label: 'Fluid Mechanics', icon: <Drop size={16} weight="duotone" />, accent: 'sky' },
   { id: 'surveying', label: 'Surveying & GIS', icon: <Compass size={16} weight="duotone" />, accent: 'emerald' },
   { id: 'cad_bim', label: 'CAD / BIM', icon: <Cube size={16} weight="duotone" />, accent: 'violet' },
+  { id: 'transportation', label: 'Transportation Engg', icon: <Path size={16} weight="duotone" />, accent: 'indigo' },
+  { id: 'environmental', label: 'Environmental Engg', icon: <Tree size={16} weight="duotone" />, accent: 'teal' },
+  { id: 'concrete_steel', label: 'Concrete & Steel Design', icon: <Wall size={16} weight="duotone" />, accent: 'rose' },
 ];
 
 const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string }[]> = {
@@ -156,6 +187,19 @@ const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: s
     { id: 'cad-sketchup', label: 'SketchUp Web', url: 'https://app.sketchup.com/', openLabel: 'Open SketchUp' },
     { id: 'cad-tinkercad', label: 'TinkerCAD', url: 'https://www.tinkercad.com/', openLabel: 'Open TinkerCAD' },
     { id: 'cad-onshape', label: 'Onshape CAD', url: 'https://cad.onshape.com/', openLabel: 'Open Onshape' },
+  ],
+  transportation: [
+    { id: 'tr-octave', label: 'GNU Octave (Traffic)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'tr-osm', label: 'OpenStreetMap (Roads)', url: 'https://www.openstreetmap.org/', openLabel: 'Open OSM' },
+    { id: 'tr-sumo', label: 'SUMO Traffic Sim', url: 'https://sumo.dlr.de/docs/', openLabel: 'Open SUMO Docs', externalUrl: 'https://sumo.dlr.de/docs/Downloads.php', externalLabel: 'Download SUMO' },
+  ],
+  environmental: [
+    { id: 'env-octave', label: 'GNU Octave (WTP/STP)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'env-earth', label: 'Google Earth (Site)', url: 'https://earth.google.com/web/', openLabel: 'Open Earth' },
+  ],
+  concrete_steel: [
+    { id: 'cs-octave', label: 'GNU Octave (IS 456)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'cs-sketchup', label: 'SketchUp (Detailing)', url: 'https://app.sketchup.com/', openLabel: 'Open SketchUp' },
   ],
 };
 
@@ -1389,7 +1433,7 @@ const CodePlayground = ({ navigate, user }) => {
               )}
             </div>
             {/* Navigation helper for CircuitJS-based simulators */}
-            {(['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems', 'fluid_mechanics'].includes(simCategory)) && (
+            {(['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems', 'fluid_mechanics', 'communication', 'dsp', 'measurements', 'renewable_energy'].includes(simCategory)) && (
               <div className={`flex items-center gap-4 text-xs font-medium px-4 py-2 rounded-xl mb-2 ${
                 SIM_ACCENT_CLASSES[_simCat.accent]?.pill || 'bg-slate-100 text-slate-600'
               }`}>
