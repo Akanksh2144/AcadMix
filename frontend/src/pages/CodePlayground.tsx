@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { toast } from 'sonner';
 
@@ -20,19 +20,59 @@ const LANGUAGES = [
   { id: 'bash', label: 'Bash', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg" alt="Bash" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'go', label: 'Go', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/go/go-original.svg" alt="Go" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'csharp', label: 'C#', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" alt="C#" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
-  { id: 'wokwi', label: 'Wokwi', icon: <Cpu size={20} weight="duotone" className="text-teal-500 shrink-0 drop-shadow-sm" /> },
+  { id: 'ecelab', label: 'ECE Lab', icon: <Cpu size={20} weight="duotone" className="text-teal-500 shrink-0 drop-shadow-sm" /> },
 ];
 
-const WOKWI_BOARDS = [
-  { id: 'arduino-uno', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno' },
-  { id: 'arduino-mega', label: 'Arduino Mega', url: 'https://wokwi.com/projects/new/arduino-mega' },
-  { id: 'arduino-nano', label: 'Arduino Nano', url: 'https://wokwi.com/projects/new/arduino-nano' },
-  { id: 'esp32', label: 'ESP32', url: 'https://wokwi.com/projects/new/esp32' },
-  { id: 'stm32', label: 'STM32', url: 'https://wokwi.com/projects/new/stm32' },
-  { id: 'pi-pico', label: 'Raspberry Pi Pico', url: 'https://wokwi.com/projects/new/micropython-pi-pico' },
-  { id: 'attiny85', label: 'ATtiny85', url: 'https://wokwi.com/projects/new/attiny85' },
-  { id: 'atmega328p', label: 'ATmega328P', url: 'https://wokwi.com/projects/new/atmega328p' },
+const SIMULATOR_CATEGORIES = [
+  { id: 'embedded', label: 'Embedded Systems', icon: <Cpu size={16} weight="duotone" />, accent: 'teal' },
+  { id: 'analog', label: 'Analog Electronics', icon: <WaveSine size={16} weight="duotone" />, accent: 'violet' },
+  { id: 'digital', label: 'Digital Electronics', icon: <Circuitry size={16} weight="duotone" />, accent: 'sky' },
+  { id: 'vlsi', label: 'VLSI Design', icon: <Atom size={16} weight="duotone" />, accent: 'amber' },
+  { id: 'pcb', label: 'PCB Design', icon: <Blueprint size={16} weight="duotone" />, accent: 'emerald' },
 ];
+
+const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string }[]> = {
+  embedded: [
+    { id: 'arduino-uno', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
+    { id: 'arduino-mega', label: 'Arduino Mega', url: 'https://wokwi.com/projects/new/arduino-mega', openLabel: 'Open in Wokwi' },
+    { id: 'arduino-nano', label: 'Arduino Nano', url: 'https://wokwi.com/projects/new/arduino-nano', openLabel: 'Open in Wokwi' },
+    { id: 'esp32', label: 'ESP32', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
+    { id: 'stm32', label: 'STM32', url: 'https://wokwi.com/projects/new/stm32', openLabel: 'Open in Wokwi' },
+    { id: 'pi-pico', label: 'RPi Pico', url: 'https://wokwi.com/projects/new/micropython-pi-pico', openLabel: 'Open in Wokwi' },
+    { id: 'attiny85', label: 'ATtiny85', url: 'https://wokwi.com/projects/new/attiny85', openLabel: 'Open in Wokwi' },
+    { id: 'atmega328p', label: 'ATmega328P', url: 'https://wokwi.com/projects/new/atmega328p', openLabel: 'Open in Wokwi' },
+  ],
+  analog: [
+    { id: 'ae-blank', label: 'Blank Circuit', url: 'https://www.falstad.com/circuit/circuitjs.html', openLabel: 'Open in CircuitJS' },
+    { id: 'ae-opamp', label: 'Op-Amp', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxAUgosgCgBzEPFMFPEbKlNr7kAWTlx59BkYcPHjSAJxCpMo8eGnYFsgO5L1yurHwATEFE6ZcIrjxi9tZGMAAs1IA', openLabel: 'Open in CircuitJS' },
+    { id: 'ae-rc', label: 'RC Filter', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxAUgoqQBYKaBTAWjDACgAZEbFMfCnwpCeEQKTCxAJxDBcAFyEixIyfLlKVJOPIAmIAM44RBjcYPhz5y9bv2HTp85ehZSAWQAyAGQACAXQNTCyt1bT19IxNXCy9fAKp-YKD6UKDhNQ1I7X9DcXik2B5sEHIwUk9ECAB3CrIq6qrFWsUARwAXAAMAJQYlBgBLAGcAFyYAN3KerJhcIh6IclIZoA', openLabel: 'Open in CircuitJS' },
+    { id: 'ae-bjt', label: 'BJT Amp', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxAUgoqQBYKaBTAWjDACgA3EFMbPKjz5Cq1ATLECR4gE4hUmAC5yBM2YtLKSAcxAAzHCIS79R42fMo5V25Qkpe11FRAGXIAGYArACYBrACc-AH0wADsAexCGACMAQwAbABNSYNCOBniwyMA7RQBDAGcAFxcANwKo2DyiIqrMWEKYUjKgA', openLabel: 'Open in CircuitJS' },
+    { id: 'ae-mosfet', label: 'MOSFET', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxAUgoqQBYKaBTAWjDACgA3EPFMfCjz5DqwuIIGkATiFSYALgMEzZCpapIBzEADMc-PWeMnzF8zcr3LYNJLqXUUEcawAZACoB9AKYBjADYhAA4AhjAAJh4MIaE+sf4AlqT+ANIA', openLabel: 'Open in CircuitJS' },
+  ],
+  digital: [
+    { id: 'de-blank', label: 'Blank Circuit', url: 'https://www.falstad.com/circuit/circuitjs.html', openLabel: 'Open in CircuitJS' },
+    { id: 'de-gates', label: 'Logic Gates', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxAUgoqQBYKaBTAWjDACgAZEbPQ8CrwpCeAkCKTh4gE4hguAC4DB02YuUqly0nDAATEOuAj9xk+cvW7D58-uuQYMHE6g7qKCAHcQAGRAAdljkUjhRcCKBoeHRYaFxcRFhAEYAlgDOAC4MAG4JCTlQOUSZxfkVBSUAdgD2tQwAhvUApgCOAK4AJg3NrZ3dvQPdw23OTm4eLlQ8MCA', openLabel: 'Open in CircuitJS' },
+    { id: 'de-flipflop', label: 'Flip-Flops', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxAUgoqQBYKaBTAWjDACgAZEbPQ8CL3LCeAkOKTh4gE4hguAC4ChsmXMXKVy0nANLYnCHuBGTZi1dt2Hzl6Fmce-OvPrMAGQAqAJQCupoaeAHYAzgAuDABufoHhBMlJ6URpmSlhGdlZBQB2APYMPAA', openLabel: 'Open in CircuitJS' },
+    { id: 'de-counter', label: '4-bit Counter', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxAUgoqQBYKaBTAWjDACgAZEFPQ8CL0pDuA0uKTh44gE4hguAC6CBM2cpXLVK5SQDmIAGY4RB-SdPmLV23YfOXoDTkH3U0EAO4gAMiAB2WORSnDFwIiHhkbExiTFxCQkAFgBWAIYAJgBOAKaJ-gD6ANYA', openLabel: 'Open in CircuitJS' },
+  ],
+  vlsi: [
+    { id: 'vlsi-verilog', label: 'Verilog', url: 'https://www.edaplayground.com/x/LzN', openLabel: 'Open in EDA Playground' },
+    { id: 'vlsi-vhdl', label: 'VHDL', url: 'https://www.edaplayground.com/x/2Nk', openLabel: 'Open in EDA Playground' },
+    { id: 'vlsi-sv', label: 'SystemVerilog', url: 'https://www.edaplayground.com/x/4B2r', openLabel: 'Open in EDA Playground' },
+  ],
+  pcb: [
+    { id: 'pcb-easyeda', label: 'EasyEDA Editor', url: 'https://easyeda.com/editor', openLabel: 'Open in EasyEDA' },
+    { id: 'pcb-easyeda-std', label: 'EasyEDA Std', url: 'https://easyeda.com/editor', openLabel: 'Open in EasyEDA' },
+  ],
+};
+
+const SIM_ACCENT_CLASSES: Record<string, { active: string; pill: string; btn: string }> = {
+  teal:    { active: 'bg-teal-500 text-white shadow-sm shadow-teal-500/25', pill: 'bg-teal-500/10 text-teal-600 dark:text-teal-400', btn: 'bg-teal-500 hover:bg-teal-600 shadow-teal-500/20' },
+  violet:  { active: 'bg-violet-500 text-white shadow-sm shadow-violet-500/25', pill: 'bg-violet-500/10 text-violet-600 dark:text-violet-400', btn: 'bg-violet-500 hover:bg-violet-600 shadow-violet-500/20' },
+  sky:     { active: 'bg-sky-500 text-white shadow-sm shadow-sky-500/25', pill: 'bg-sky-500/10 text-sky-600 dark:text-sky-400', btn: 'bg-sky-500 hover:bg-sky-600 shadow-sky-500/20' },
+  amber:   { active: 'bg-amber-500 text-white shadow-sm shadow-amber-500/25', pill: 'bg-amber-500/10 text-amber-600 dark:text-amber-400', btn: 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' },
+  emerald: { active: 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25', pill: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', btn: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20' },
+};
 
 const DEFAULT_TEMPLATES = {
   python: '# Write your Python code here\n\ndef main():\n    print("Hello, World!")\n\nmain()\n',
@@ -90,7 +130,13 @@ const CodePlayground = ({ navigate, user }) => {
   const [showLangMenu, setShowLangMenu] = useState(false);
   const langMenuRef = useRef(null);
   const [wokwiBoard, setWokwiBoard] = useState('arduino-uno');
+  const [simCategory, setSimCategory] = useState('embedded');
 
+  // ── ECE Lab computed values ───────────────────────────────────────────────
+  const _simCat = SIMULATOR_CATEGORIES.find(c => c.id === simCategory) || SIMULATOR_CATEGORIES[0];
+  const _simBoards = SIMULATOR_BOARDS[simCategory] || [];
+  const _simActiveBoard = _simBoards.find(b => b.id === wokwiBoard) || _simBoards[0];
+  const _simAccent = SIM_ACCENT_CLASSES[_simCat.accent] || SIM_ACCENT_CLASSES.teal;
   const [rPlots, setRPlots] = useState([]);
   const [remoteImages, setRemoteImages] = useState([]);
   const [webrLoading, setWebrLoading] = useState(false);
@@ -1140,41 +1186,71 @@ const CodePlayground = ({ navigate, user }) => {
             </div>
           </div>
         </div>
-      ) : language === 'wokwi' ? (
-        // Wokwi Embedded Simulator — full-panel iframe
+      ) : language === 'ecelab' ? (
+        // ECE Lab — multi-simulator panel
         <div className="flex-1 overflow-hidden flex flex-col">
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0">
-            {/* Board Selector Toolbar */}
-            <div className="soft-card p-3 flex items-center justify-between shrink-0 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="relative" ref={langMenuRef}>
-                  <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-bold text-sm text-slate-700 dark:text-slate-300">
-                    <Cpu size={20} weight="duotone" className="text-teal-500" />
-                    Wokwi Simulator
-                    <CaretDown size={14} weight="bold" />
-                  </button>
-                  {showLangMenu && (
-                    <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1 z-50 min-w-[180px]">
-                      {LANGUAGES.map(lang => (
-                        <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
-                          className={`w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>
-                          <span className="text-base">{lang.icon}</span>
-                          {lang.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+            {/* Category Tabs + Board Selector Toolbar */}
+            <div className="soft-card p-3 shrink-0 mb-4 space-y-3">
+              {/* Row 1: Language switch + Category tabs + Open External */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="relative" ref={langMenuRef}>
+                    <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-bold text-sm text-slate-700 dark:text-slate-300">
+                      <Cpu size={20} weight="duotone" className="text-teal-500" />
+                      ECE Lab
+                      <CaretDown size={14} weight="bold" />
+                    </button>
+                    {showLangMenu && (
+                      <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1 z-50 min-w-[180px]">
+                        {LANGUAGES.map(lang => (
+                          <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
+                            className={`w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>
+                            <span className="text-base">{lang.icon}</span>
+                            {lang.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {/* Category Pills */}
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1 gap-0.5">
+                    {SIMULATOR_CATEGORIES.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => { setSimCategory(cat.id); setWokwiBoard(SIMULATOR_BOARDS[cat.id]?.[0]?.id || ''); }}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                          simCategory === cat.id
+                            ? SIM_ACCENT_CLASSES[cat.accent]?.active || 'bg-teal-500 text-white'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {cat.icon}
+                        <span className="hidden sm:inline">{cat.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                {/* Board Selector — pill-shaped */}
-                <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1 gap-0.5 overflow-x-auto max-w-[600px] custom-scrollbar">
-                  {WOKWI_BOARDS.map(board => (
+                <a
+                  href={_simActiveBoard?.url || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`px-4 py-2 text-white rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2 shrink-0 ${_simAccent.btn}`}
+                >
+                  {_simActiveBoard?.openLabel || 'Open External'} ↗
+                </a>
+              </div>
+              {/* Row 2: Sub-board/preset pills (if more than 1 option) */}
+              {_simBoards.length > 1 && (
+                <div className="flex items-center bg-slate-50 dark:bg-slate-800/50 rounded-full p-1 gap-0.5 overflow-x-auto custom-scrollbar">
+                  {_simBoards.map(board => (
                     <button
                       key={board.id}
                       onClick={() => setWokwiBoard(board.id)}
                       className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                         wokwiBoard === board.id
-                          ? 'bg-teal-500 text-white shadow-sm shadow-teal-500/25'
+                          ? _simAccent.active
                           : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
@@ -1182,22 +1258,14 @@ const CodePlayground = ({ navigate, user }) => {
                     </button>
                   ))}
                 </div>
-              </div>
-              <a
-                href={WOKWI_BOARDS.find(b => b.id === wokwiBoard)?.url || WOKWI_BOARDS[0].url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-sm font-bold shadow-sm shadow-teal-500/20 transition-all flex items-center gap-2"
-              >
-                Open in Wokwi ↗
-              </a>
+              )}
             </div>
-            {/* Wokwi iframe */}
+            {/* Simulator iframe */}
             <div className="soft-card overflow-hidden flex-1 min-h-0 rounded-2xl">
               <iframe
-                key={wokwiBoard}
-                src={WOKWI_BOARDS.find(b => b.id === wokwiBoard)?.url || WOKWI_BOARDS[0].url}
-                title={`Wokwi ${WOKWI_BOARDS.find(b => b.id === wokwiBoard)?.label || 'Simulator'}`}
+                key={`${simCategory}-${wokwiBoard}`}
+                src={_simActiveBoard?.url || _simBoards[0]?.url || ''}
+                title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
                 className="w-full h-full border-0"
                 allow="clipboard-read; clipboard-write"
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
