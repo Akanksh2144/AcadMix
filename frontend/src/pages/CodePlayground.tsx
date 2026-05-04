@@ -1408,10 +1408,10 @@ const CodePlayground = ({ navigate, user }) => {
                 <div className="flex items-center gap-2 shrink-0">
                   {/* Python / Octave toggle — shown only when active board has octaveUrl */}
                   {(_simActiveBoard as any)?.octaveUrl && (
-                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-0.5">
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-0.5 shrink-0">
                       <button
                         onClick={() => setUseOctaveMode(false)}
-                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                           !useOctaveMode
                             ? 'bg-indigo-500 text-white shadow-sm'
                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
@@ -1422,7 +1422,7 @@ const CodePlayground = ({ navigate, user }) => {
                       </button>
                       <button
                         onClick={() => setUseOctaveMode(true)}
-                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                           useOctaveMode
                             ? 'bg-orange-500 text-white shadow-sm'
                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
