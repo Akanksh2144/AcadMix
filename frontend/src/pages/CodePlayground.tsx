@@ -1367,7 +1367,7 @@ const CodePlayground = ({ navigate, user }) => {
             <div className="soft-card p-3 shrink-0 mb-4 space-y-3">
               {/* Row 1: Language switch + Category tabs + Open External */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0 overflow-hidden flex-1">
                   <div className="relative" ref={langMenuRef}>
                     <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
                       className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-bold text-sm text-slate-700 dark:text-slate-300">
@@ -1405,7 +1405,7 @@ const CodePlayground = ({ navigate, user }) => {
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 ml-2">
                   {/* Python / Octave toggle — shown only when active board has octaveUrl */}
                   {(_simActiveBoard as any)?.octaveUrl && (
                     <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-0.5 shrink-0">
