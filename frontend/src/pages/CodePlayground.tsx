@@ -37,7 +37,6 @@ const SIMULATOR_CATEGORIES = [
 
 const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; noEmbed?: boolean }[]> = {
   embedded: [
-    { id: 'tinkercad', label: 'Tinkercad Circuits', url: 'https://www.tinkercad.com/circuits', openLabel: 'Open Tinkercad', noEmbed: true },
     { id: 'arduino-uno', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
     { id: 'arduino-mega', label: 'Arduino Mega', url: 'https://wokwi.com/projects/new/arduino-mega', openLabel: 'Open in Wokwi' },
     { id: 'arduino-nano', label: 'Arduino Nano', url: 'https://wokwi.com/projects/new/arduino-nano', openLabel: 'Open in Wokwi' },
@@ -136,7 +135,6 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
   ],
   industrial_automation: [
     { id: 'ia-plcfiddle', label: 'PLC Fiddle (Ladder)', url: 'https://www.plcfiddle.com/', openLabel: 'Open PLC Fiddle' },
-    { id: 'ia-tinkercad', label: 'Tinkercad Circuits', url: 'https://www.tinkercad.com/circuits', openLabel: 'Open Tinkercad', noEmbed: true },
     { id: 'ia-arduino-plc', label: 'Arduino (PLC Sim)', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
     { id: 'ia-esp32-scada', label: 'ESP32 (SCADA Node)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
     { id: 'ia-pico-vfd', label: 'RPi Pico (VFD Sim)', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
@@ -153,7 +151,6 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
     { id: 're-fullrect', label: 'Full-Wave Rectifier', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=fullrect.txt', openLabel: 'Open in CircuitJS' },
     { id: 're-voltdouble', label: 'Voltage Doubler', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=voltdouble.txt', openLabel: 'Open in CircuitJS' },
     { id: 're-octave', label: 'GNU Octave (Modeling)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
-    { id: 're-tinkercad', label: 'Tinkercad Circuits', url: 'https://www.tinkercad.com/circuits', openLabel: 'Open Tinkercad', noEmbed: true },
     { id: 're-esp32', label: 'ESP32 (IoT Monitor)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
   ],
 };
@@ -188,12 +185,9 @@ const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: s
   surveying: [
     { id: 'sv-leaflet', label: 'OpenStreetMap', url: 'https://www.openstreetmap.org/', openLabel: 'Open OSM' },
     { id: 'sv-qgis', label: 'QGIS Cloud', url: 'https://qgiscloud.com/', openLabel: 'Open QGIS Cloud' },
-    { id: 'sv-google-earth', label: 'Google Earth', url: 'https://earth.google.com/web/', openLabel: 'Open Earth' },
   ],
   cad_bim: [
-    { id: 'cad-sketchup', label: 'SketchUp Web', url: 'https://app.sketchup.com/', openLabel: 'Open SketchUp' },
-    { id: 'cad-tinkercad', label: 'TinkerCAD', url: 'https://www.tinkercad.com/', openLabel: 'Open TinkerCAD' },
-    { id: 'cad-onshape', label: 'Onshape CAD', url: 'https://cad.onshape.com/', openLabel: 'Open Onshape' },
+    { id: 'cad-octave', label: 'GNU Octave (CAD Math)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
   ],
   transportation: [
     { id: 'tr-octave', label: 'GNU Octave (Traffic)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
@@ -202,11 +196,9 @@ const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: s
   ],
   environmental: [
     { id: 'env-octave', label: 'GNU Octave (WTP/STP)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
-    { id: 'env-earth', label: 'Google Earth (Site)', url: 'https://earth.google.com/web/', openLabel: 'Open Earth' },
   ],
   concrete_steel: [
     { id: 'cs-octave', label: 'GNU Octave (IS 456)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
-    { id: 'cs-sketchup', label: 'SketchUp (Detailing)', url: 'https://app.sketchup.com/', openLabel: 'Open SketchUp' },
   ],
 };
 
@@ -1531,6 +1523,38 @@ const CodePlayground = ({ navigate, user }) => {
                 </a>
               </div>
             )}
+            {/* External fallback tools — quick-launch bar */}
+            {(() => {
+              const externalTools: { label: string; url: string }[] = [];
+              if (language === 'ecelab' && simCategory === 'embedded') {
+                externalTools.push({ label: 'Tinkercad', url: 'https://www.tinkercad.com/circuits' });
+              }
+              if (language === 'civillab') {
+                if (['cad_bim', 'concrete_steel'].includes(simCategory)) {
+                  externalTools.push({ label: 'SketchUp', url: 'https://app.sketchup.com/' });
+                  externalTools.push({ label: 'Onshape', url: 'https://cad.onshape.com/' });
+                  externalTools.push({ label: 'TinkerCAD 3D', url: 'https://www.tinkercad.com/' });
+                }
+                if (['surveying', 'environmental'].includes(simCategory)) {
+                  externalTools.push({ label: 'Google Earth', url: 'https://earth.google.com/web/' });
+                }
+              }
+              if (externalTools.length === 0) return null;
+              return (
+                <div className="flex items-center gap-2 mt-2 px-1 flex-wrap">
+                  <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">External:</span>
+                  {externalTools.map(t => (
+                    <a key={t.label} href={t.url} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200/70 dark:border-white/10 transition-all">
+                      {t.label}
+                      <svg className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                      </svg>
+                    </a>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </div>
       ) : (
