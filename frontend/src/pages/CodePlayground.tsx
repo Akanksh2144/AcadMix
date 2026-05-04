@@ -35,9 +35,9 @@ const SIMULATOR_CATEGORIES = [
   { id: 'dsp', label: 'DSP / Signal Processing', icon: <Equalizer size={16} weight="duotone" />, accent: 'indigo' },
 ];
 
-const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string }[]> = {
+const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; noEmbed?: boolean }[]> = {
   embedded: [
-    { id: 'tinkercad', label: 'Tinkercad Circuits', url: 'https://www.tinkercad.com/circuits', openLabel: 'Open Tinkercad' },
+    { id: 'tinkercad', label: 'Tinkercad Circuits', url: 'https://www.tinkercad.com/circuits', openLabel: 'Open Tinkercad', noEmbed: true },
     { id: 'arduino-uno', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
     { id: 'arduino-mega', label: 'Arduino Mega', url: 'https://wokwi.com/projects/new/arduino-mega', openLabel: 'Open in Wokwi' },
     { id: 'arduino-nano', label: 'Arduino Nano', url: 'https://wokwi.com/projects/new/arduino-nano', openLabel: 'Open in Wokwi' },
@@ -100,7 +100,7 @@ const EEE_SIMULATOR_CATEGORIES = [
   { id: 'renewable_energy', label: 'Renewable Energy', icon: <SunHorizon size={16} weight="duotone" />, accent: 'emerald' },
 ];
 
-const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string }[]> = {
+const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; noEmbed?: boolean }[]> = {
   power_electronics: [
     { id: 'pe-blank', label: 'Blank Circuit', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcA2aAOMB2ALGXyEBOAbmAmwmwFMBaMMAKACcQUFDxCRsKBmEbqh7ce-YUJR1BkEJByYAHiGC4ALpzV8hOvYb37MBg5QCMvIbsPG6Zjlx5A', openLabel: 'Open in CircuitJS' },
     { id: 'pe-halfwave', label: 'Half-Wave Rectifier', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=rectify.txt', openLabel: 'Open in CircuitJS' },
@@ -136,7 +136,7 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
   ],
   industrial_automation: [
     { id: 'ia-plcfiddle', label: 'PLC Fiddle (Ladder)', url: 'https://www.plcfiddle.com/', openLabel: 'Open PLC Fiddle' },
-    { id: 'ia-tinkercad', label: 'Tinkercad Circuits', url: 'https://www.tinkercad.com/circuits', openLabel: 'Open Tinkercad' },
+    { id: 'ia-tinkercad', label: 'Tinkercad Circuits', url: 'https://www.tinkercad.com/circuits', openLabel: 'Open Tinkercad', noEmbed: true },
     { id: 'ia-arduino-plc', label: 'Arduino (PLC Sim)', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
     { id: 'ia-esp32-scada', label: 'ESP32 (SCADA Node)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
     { id: 'ia-pico-vfd', label: 'RPi Pico (VFD Sim)', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
@@ -153,7 +153,7 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
     { id: 're-fullrect', label: 'Full-Wave Rectifier', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=fullrect.txt', openLabel: 'Open in CircuitJS' },
     { id: 're-voltdouble', label: 'Voltage Doubler', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=voltdouble.txt', openLabel: 'Open in CircuitJS' },
     { id: 're-octave', label: 'GNU Octave (Modeling)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
-    { id: 're-tinkercad', label: 'Tinkercad Circuits', url: 'https://www.tinkercad.com/circuits', openLabel: 'Open Tinkercad' },
+    { id: 're-tinkercad', label: 'Tinkercad Circuits', url: 'https://www.tinkercad.com/circuits', openLabel: 'Open Tinkercad', noEmbed: true },
     { id: 're-esp32', label: 'ESP32 (IoT Monitor)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
   ],
 };
@@ -1470,16 +1470,45 @@ const CodePlayground = ({ navigate, user }) => {
                 </span>
               </div>
             )}
-            {/* Simulator iframe — all categories now embeddable */}
+            {/* Simulator iframe — or external-launch card for noEmbed boards */}
             <div className="soft-card overflow-hidden flex-1 min-h-0 rounded-2xl" style={{ overscrollBehavior: 'contain' }}>
-              <iframe
-                key={`${simCategory}-${wokwiBoard}`}
-                src={_simActiveBoard?.url || _simBoards[0]?.url || ''}
-                title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
-                className="w-full h-full border-0"
-                style={{ touchAction: 'none' }}
-                allow="clipboard-read; clipboard-write; fullscreen"
-              />
+              {(_simActiveBoard as any)?.noEmbed ? (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/60 dark:to-slate-900/60 p-8">
+                  <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-teal-500/25 flex items-center justify-center">
+                    <Cpu size={36} weight="duotone" className="text-white" />
+                  </div>
+                  <div className="text-center max-w-md">
+                    <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2">{_simActiveBoard?.label}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                      This simulator runs in its own environment and opens in a new tab. Build, simulate, and test your circuits with zero compile queues.
+                    </p>
+                  </div>
+                  <a
+                    href={_simActiveBoard?.url || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`px-8 py-3.5 text-white rounded-2xl text-sm font-bold shadow-lg transition-all hover:scale-[1.04] active:scale-[0.97] flex items-center gap-2.5 ${_simAccent.btn}`}
+                  >
+                    {_simActiveBoard?.openLabel || 'Open External'}
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                  </a>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    No compile queues — instant simulation
+                  </p>
+                </div>
+              ) : (
+                <iframe
+                  key={`${simCategory}-${wokwiBoard}`}
+                  src={_simActiveBoard?.url || _simBoards[0]?.url || ''}
+                  title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
+                  className="w-full h-full border-0"
+                  style={{ touchAction: 'none' }}
+                  allow="clipboard-read; clipboard-write; fullscreen"
+                />
+              )}
             </div>
             {/* External launcher for PCB — EasyEDA full editor */}
             {(_simActiveBoard as any)?.externalUrl && (
