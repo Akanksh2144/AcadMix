@@ -1363,52 +1363,39 @@ const CodePlayground = ({ navigate, user }) => {
         // ECE / EEE / Civil Lab — multi-simulator panel
         <div className="flex-1 overflow-hidden flex flex-col" style={{ overscrollBehavior: 'contain' }}>
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
-            {/* ── Simulator Toolbar ─────────────────────────────────── */}
-            <div className="soft-card shrink-0 mb-4 overflow-hidden">
-              {/* Header Strip: Lab branding + Engine toggle + External launch */}
-              <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-slate-50 via-slate-50 to-transparent dark:from-slate-800/80 dark:via-slate-800/60 dark:to-transparent border-b border-slate-100 dark:border-white/[0.06]">
-                <div className="flex items-center gap-3">
-                  <div className="relative" ref={langMenuRef}>
-                    <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
-                      className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl hover:bg-white/60 dark:hover:bg-white/[0.06] transition-colors">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-sm ${
-                        _isCivilLab ? 'bg-gradient-to-br from-orange-400 to-orange-600' : _isEEELab ? 'bg-gradient-to-br from-yellow-400 to-amber-600' : 'bg-gradient-to-br from-teal-400 to-cyan-600'
-                      }`}>
-                        {_isCivilLab ? <HardHat size={18} weight="fill" className="text-white" /> : _isEEELab ? <Lightning size={18} weight="fill" className="text-white" /> : <Cpu size={18} weight="fill" className="text-white" />}
-                      </div>
-                      <div className="text-left">
-                        <div className="text-sm font-black text-slate-800 dark:text-white leading-tight">
-                          {_isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}
-                        </div>
-                        <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-tight">
-                          {_simCat.label}
-                        </div>
-                      </div>
-                      <CaretDown size={12} weight="bold" className="text-slate-400" />
-                    </button>
-                    {showLangMenu && (
-                      <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1 z-50 min-w-[180px]">
-                        {LANGUAGES.map(lang => (
-                          <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
-                            className={`w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>
-                            <span className="text-base">{lang.icon}</span>
-                            {lang.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+            {/* Category Tabs + Board Selector Toolbar */}
+            <div className="soft-card p-3 shrink-0 mb-4 space-y-2">
+              {/* Row 1: Lab selector + Python/Octave toggle + Open External */}
+              <div className="flex items-center justify-between">
+                <div className="relative" ref={langMenuRef}>
+                  <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-bold text-sm text-slate-700 dark:text-slate-300">
+                    {_isCivilLab ? <HardHat size={20} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={20} weight="duotone" className="text-yellow-500" /> : <Cpu size={20} weight="duotone" className="text-teal-500" />}
+                    {_isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}
+                    <CaretDown size={14} weight="bold" />
+                  </button>
+                  {showLangMenu && (
+                    <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1 z-50 min-w-[180px]">
+                      {LANGUAGES.map(lang => (
+                        <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
+                          className={`w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>
+                          <span className="text-base">{lang.icon}</span>
+                          {lang.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2.5">
-                  {/* Python / Octave Engine Toggle */}
+                <div className="flex items-center gap-2">
+                  {/* Python / Octave toggle */}
                   {(_simActiveBoard as any)?.octaveUrl && (
-                    <div className="flex items-center bg-white dark:bg-slate-800 rounded-lg p-0.5 shadow-sm border border-slate-200/60 dark:border-white/10">
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-0.5">
                       <button
                         onClick={() => setUseOctaveMode(false)}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                           !useOctaveMode
-                            ? 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-sm shadow-indigo-500/25'
-                            : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'
+                            ? 'bg-indigo-500 text-white shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
                         }`}
                       >
                         <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="" className="w-3.5 h-3.5" />
@@ -1416,10 +1403,10 @@ const CodePlayground = ({ navigate, user }) => {
                       </button>
                       <button
                         onClick={() => setUseOctaveMode(true)}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                           useOctaveMode
-                            ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-sm shadow-orange-500/25'
-                            : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'
+                            ? 'bg-orange-500 text-white shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
                         }`}
                       >
                         <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/matlab/matlab-original.svg" alt="" className="w-3.5 h-3.5" />
@@ -1431,52 +1418,40 @@ const CodePlayground = ({ navigate, user }) => {
                     href={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`px-3.5 py-1.5 text-white rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 whitespace-nowrap hover:scale-[1.02] active:scale-[0.98] ${_simAccent.btn}`}
+                    className={`px-4 py-2 text-white rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2 whitespace-nowrap ${_simAccent.btn}`}
                   >
                     {useOctaveMode && (_simActiveBoard as any)?.octaveUrl ? 'Open Octave' : (_simActiveBoard?.openLabel || 'Open External')} ↗
                   </a>
                 </div>
               </div>
-              {/* Category Tab Bar — underline style */}
-              <div className="flex items-center gap-0 overflow-x-auto custom-scrollbar border-b border-slate-100 dark:border-white/[0.06]">
-                {_activeCats.map(cat => {
-                  const isActive = simCategory === cat.id;
-                  const accentColors: Record<string, string> = {
-                    teal: 'border-teal-500 text-teal-600 dark:text-teal-400',
-                    violet: 'border-violet-500 text-violet-600 dark:text-violet-400',
-                    sky: 'border-sky-500 text-sky-600 dark:text-sky-400',
-                    amber: 'border-amber-500 text-amber-600 dark:text-amber-400',
-                    emerald: 'border-emerald-500 text-emerald-600 dark:text-emerald-400',
-                    rose: 'border-rose-500 text-rose-600 dark:text-rose-400',
-                    indigo: 'border-indigo-500 text-indigo-600 dark:text-indigo-400',
-                  };
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
-                      className={`group flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold whitespace-nowrap transition-all border-b-2 ${
-                        isActive
-                          ? accentColors[cat.accent] || 'border-teal-500 text-teal-600'
-                          : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
-                      }`}
-                    >
-                      <span className={`transition-transform ${isActive ? 'scale-110' : 'group-hover:scale-105'}`}>{cat.icon}</span>
-                      {cat.label}
-                    </button>
-                  );
-                })}
+              {/* Row 2: Category pills (full width) */}
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1 gap-0.5 overflow-x-auto custom-scrollbar">
+                {_activeCats.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                      simCategory === cat.id
+                        ? SIM_ACCENT_CLASSES[cat.accent]?.active || 'bg-teal-500 text-white'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {cat.icon}
+                    {cat.label}
+                  </button>
+                ))}
               </div>
-              {/* Board Presets Row */}
+              {/* Row 3: Sub-board/preset pills (if more than 1 option) */}
               {_simBoards.length > 1 && (
-                <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto custom-scrollbar">
+                <div className="flex items-center bg-slate-50 dark:bg-slate-800/50 rounded-full p-1 gap-0.5 overflow-x-auto custom-scrollbar">
                   {_simBoards.map(board => (
                     <button
                       key={board.id}
                       onClick={() => setWokwiBoard(board.id)}
-                      className={`px-3 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                         wokwiBoard === board.id
-                          ? `${_simAccent.active} rounded-lg`
-                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
+                          ? _simAccent.active
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
                       {board.label}
