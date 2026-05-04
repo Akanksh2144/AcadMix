@@ -170,16 +170,16 @@ const CIVIL_SIMULATOR_CATEGORIES = [
   { id: 'concrete_steel', label: 'Concrete & Steel Design', icon: <Wall size={16} weight="duotone" />, accent: 'rose' },
 ];
 
-const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; octaveUrl?: string; noEmbed?: boolean }[]> = {
+const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; octaveUrl?: string }[]> = {
   structural: [
     { id: 'st-python', label: 'Python (Stiffness)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
-    { id: 'st-beam', label: 'Beam Calculator', url: 'https://clearcalcs.com/freetools/free-moment-of-inertia-calculator/us', openLabel: 'Open Calculator', noEmbed: true },
-    { id: 'st-truss', label: 'Truss Solver', url: 'https://platform.engineeringexamples.net/', openLabel: 'Open Solver', noEmbed: true },
-    { id: 'st-frame', label: 'Frame Analysis', url: 'https://structural-engineering.herokuapp.com/', openLabel: 'Open Analyzer', noEmbed: true },
+    { id: 'st-beam', label: 'Beam Calculator', url: 'https://clearcalcs.com/freetools/free-moment-of-inertia-calculator/us', openLabel: 'Open Calculator' },
+    { id: 'st-truss', label: 'Truss Solver', url: 'https://platform.engineeringexamples.net/', openLabel: 'Open Solver' },
+    { id: 'st-frame', label: 'Frame Analysis', url: 'https://structural-engineering.herokuapp.com/', openLabel: 'Open Analyzer' },
   ],
   geotechnical: [
     { id: 'geo-python', label: 'Python (Soil)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
-    { id: 'geo-settle', label: 'Settlement Calc', url: 'https://www.geocalcs.com/', openLabel: 'Open GeoCalcs', noEmbed: true },
+    { id: 'geo-settle', label: 'Settlement Calc', url: 'https://www.geocalcs.com/', openLabel: 'Open GeoCalcs' },
   ],
   fluid_mechanics: [
     { id: 'fm-python', label: 'Python (Flow)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
@@ -187,7 +187,7 @@ const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: s
   ],
   surveying: [
     { id: 'sv-leaflet', label: 'OpenStreetMap', url: 'https://www.openstreetmap.org/', openLabel: 'Open OSM' },
-    { id: 'sv-qgis', label: 'QGIS Cloud', url: 'https://qgiscloud.com/', openLabel: 'Open QGIS Cloud', noEmbed: true },
+    { id: 'sv-qgis', label: 'QGIS Cloud', url: 'https://qgiscloud.com/', openLabel: 'Open QGIS Cloud' },
   ],
   cad_bim: [
     { id: 'cad-python', label: 'Python (CAD Math)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
@@ -195,7 +195,7 @@ const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: s
   transportation: [
     { id: 'tr-python', label: 'Python (Traffic)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'tr-osm', label: 'OpenStreetMap (Roads)', url: 'https://www.openstreetmap.org/', openLabel: 'Open OSM' },
-    { id: 'tr-sumo', label: 'SUMO Traffic Sim', url: 'https://sumo.dlr.de/docs/', openLabel: 'Open SUMO Docs', externalUrl: 'https://sumo.dlr.de/docs/Downloads.php', externalLabel: 'Download SUMO', noEmbed: true },
+    { id: 'tr-sumo', label: 'SUMO Traffic Sim', url: 'https://sumo.dlr.de/docs/', openLabel: 'Open SUMO Docs', externalUrl: 'https://sumo.dlr.de/docs/Downloads.php', externalLabel: 'Download SUMO' },
   ],
   environmental: [
     { id: 'env-python', label: 'Python (WTP/STP)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
