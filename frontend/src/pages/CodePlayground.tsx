@@ -37,6 +37,7 @@ const SIMULATOR_CATEGORIES = [
 
 const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string }[]> = {
   embedded: [
+    { id: 'tinkercad', label: 'Tinkercad Circuits', url: 'https://www.tinkercad.com/circuits', openLabel: 'Open Tinkercad' },
     { id: 'arduino-uno', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
     { id: 'arduino-mega', label: 'Arduino Mega', url: 'https://wokwi.com/projects/new/arduino-mega', openLabel: 'Open in Wokwi' },
     { id: 'arduino-nano', label: 'Arduino Nano', url: 'https://wokwi.com/projects/new/arduino-nano', openLabel: 'Open in Wokwi' },
@@ -135,6 +136,7 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
   ],
   industrial_automation: [
     { id: 'ia-plcfiddle', label: 'PLC Fiddle (Ladder)', url: 'https://www.plcfiddle.com/', openLabel: 'Open PLC Fiddle' },
+    { id: 'ia-tinkercad', label: 'Tinkercad Circuits', url: 'https://www.tinkercad.com/circuits', openLabel: 'Open Tinkercad' },
     { id: 'ia-arduino-plc', label: 'Arduino (PLC Sim)', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
     { id: 'ia-esp32-scada', label: 'ESP32 (SCADA Node)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
     { id: 'ia-pico-vfd', label: 'RPi Pico (VFD Sim)', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
@@ -151,6 +153,7 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
     { id: 're-fullrect', label: 'Full-Wave Rectifier', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=fullrect.txt', openLabel: 'Open in CircuitJS' },
     { id: 're-voltdouble', label: 'Voltage Doubler', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=voltdouble.txt', openLabel: 'Open in CircuitJS' },
     { id: 're-octave', label: 'GNU Octave (Modeling)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 're-tinkercad', label: 'Tinkercad Circuits', url: 'https://www.tinkercad.com/circuits', openLabel: 'Open Tinkercad' },
     { id: 're-esp32', label: 'ESP32 (IoT Monitor)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
   ],
 };
