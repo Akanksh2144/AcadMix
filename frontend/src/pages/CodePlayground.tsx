@@ -1418,7 +1418,7 @@ const CodePlayground = ({ navigate, user }) => {
                     href={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`px-4 py-2 text-white rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2 whitespace-nowrap ${_simAccent.btn}`}
+                    className={`px-4 py-1.5 text-white rounded-[10px] text-[11px] font-bold shadow-sm transition-all flex items-center gap-2 whitespace-nowrap ${_simAccent.btn}`}
                   >
                     {useOctaveMode && (_simActiveBoard as any)?.octaveUrl ? 'Open Octave' : (_simActiveBoard?.openLabel || 'Open External')} ↗
                   </a>
