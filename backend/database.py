@@ -42,25 +42,28 @@ from sqlalchemy.pool import NullPool
 # Postgres GUC variables so that future CREATE POLICY rules can reference them.
 #
 # Pool sizing strategy:
-#   - With PgBouncer (production): small pool (5/10) — PgBouncer multiplexes.
-#   - Without PgBouncer (dev/staging): larger pool (20/30) — direct connections.
+#   Supabase Pooler (port 6543) handles connection multiplexing externally.
+#   Keep the LOCAL pool small (5+10=15 max) so we don't overwhelm the
+#   pooler's slot limit (~15-60 depending on plan). Large local pools
+#   cause TimeoutError when every local slot tries to open a real TCP
+#   connection that the remote pooler rejects.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _PGBOUNCER_MODE = os.getenv("PGBOUNCER_ENABLED", "false").lower() == "true"
-_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "5" if _PGBOUNCER_MODE else "20"))
-_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "10" if _PGBOUNCER_MODE else "30"))
+_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "5"))
+_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "10"))
 
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
     pool_size=_POOL_SIZE,
     max_overflow=_MAX_OVERFLOW,
-    pool_timeout=30,
-    pool_recycle=300,
-    pool_pre_ping=True,
+    pool_timeout=15,          # fail fast instead of blocking 30s
+    pool_recycle=180,         # recycle connections more frequently
+    pool_pre_ping=True,       # detect stale connections before use
     connect_args={
         "statement_cache_size": 0,
-        "timeout": 30,
+        "timeout": 15,        # TCP connect timeout (reduced from 30s)
         "command_timeout": 30,
         "server_settings": {"jit": "off"},
     },
@@ -87,7 +90,7 @@ admin_engine = create_async_engine(
     poolclass=NullPool,
     connect_args={
         "statement_cache_size": 0,
-        "timeout": 10,
+        "timeout": 15,        # increased from 10s — NullPool needs time for TCP setup
         "command_timeout": 60,  # longer timeout for bulk/migration operations
         "server_settings": {"jit": "off"},
     },
@@ -346,13 +349,26 @@ async def get_db():
 
     RLS enforcement: sets app.college_id GUC from the contextvars
     tenant_context so PostgreSQL policies can isolate rows.
+
+    Connection resilience: catches TimeoutError / OSError during session
+    setup and raises HTTP 503 instead of letting the exception bubble
+    up as an unhandled 500.
     """
-    async with AsyncSessionLocal() as session:
-        async with session.begin():
-            # Set RLS GUC from Python-level tenant context
-            college_id = tenant_context.get()
-            await _set_tenant_guc(session, college_id)
-            yield session
+    from fastapi import HTTPException
+
+    try:
+        async with AsyncSessionLocal() as session:
+            async with session.begin():
+                # Set RLS GUC from Python-level tenant context
+                college_id = tenant_context.get()
+                await _set_tenant_guc(session, college_id)
+                yield session
+    except (TimeoutError, OSError, ConnectionRefusedError) as e:
+        logger.error("DB connection failed in get_db: %s", type(e).__name__)
+        raise HTTPException(
+            status_code=503,
+            detail="Database temporarily unavailable. Please retry.",
+        )
 
 
 async def get_admin_db():
