@@ -173,9 +173,9 @@ const CIVIL_SIMULATOR_CATEGORIES = [
 const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; octaveUrl?: string }[]> = {
   structural: [
     { id: 'st-python', label: 'Python (Stiffness)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
-    { id: 'st-beam', label: 'Beam Calculator', url: 'https://clearcalcs.com/freetools/free-moment-of-inertia-calculator/us', openLabel: 'Open Calculator' },
-    { id: 'st-truss', label: 'Truss Solver', url: 'https://platform.engineeringexamples.net/', openLabel: 'Open Solver' },
-    { id: 'st-frame', label: 'Frame Analysis', url: 'https://structural-engineering.herokuapp.com/', openLabel: 'Open Analyzer' },
+    { id: 'st-beam', label: 'Beam Calculator', url: 'https://structurecalcs.com/beam', openLabel: 'Open Calculator' },
+    { id: 'st-truss', label: 'Truss Solver', url: 'https://structurecalcs.com/truss', openLabel: 'Open Solver' },
+    { id: 'st-frame', label: 'Frame Analysis', url: 'https://structurecalcs.com/beam', openLabel: 'Open Analyzer' },
   ],
   geotechnical: [
     { id: 'geo-python', label: 'Python (Soil)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
