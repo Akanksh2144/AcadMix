@@ -58,12 +58,12 @@ engine = create_async_engine(
     echo=False,
     pool_size=_POOL_SIZE,
     max_overflow=_MAX_OVERFLOW,
-    pool_timeout=15,          # fail fast instead of blocking 30s
-    pool_recycle=180,         # recycle connections more frequently
+    pool_timeout=45,          # generous: initial TCP to Supabase takes 10-15s
+    pool_recycle=180,         # recycle frequently to keep connections warm
     pool_pre_ping=True,       # detect stale connections before use
     connect_args={
         "statement_cache_size": 0,
-        "timeout": 15,        # TCP connect timeout (reduced from 30s)
+        "timeout": 30,        # TCP connect timeout (10-15s observed on this network)
         "command_timeout": 30,
         "server_settings": {"jit": "off"},
     },
@@ -90,7 +90,7 @@ admin_engine = create_async_engine(
     poolclass=NullPool,
     connect_args={
         "statement_cache_size": 0,
-        "timeout": 15,        # increased from 10s — NullPool needs time for TCP setup
+        "timeout": 30,        # NullPool opens fresh TCP each time — needs full 30s
         "command_timeout": 60,  # longer timeout for bulk/migration operations
         "server_settings": {"jit": "off"},
     },

@@ -33,7 +33,7 @@ NEGATIVE_CACHE_TTL = 60  # 1 minute for "not found" slugs
 
 # Max retries for transient DB failures
 _DB_RESOLVE_MAX_RETRIES = 2
-_DB_RESOLVE_RETRY_DELAY = 0.5  # seconds
+_DB_RESOLVE_RETRY_DELAY = 2.0  # seconds (initial TCP to Supabase takes 10-15s)
 
 # Slugs that bypass tenant resolution (public endpoints)
 PUBLIC_PATHS = {"/api/health", "/api/health/db", "/api/auth/login", "/api/auth/register", "/docs", "/openapi.json"}
