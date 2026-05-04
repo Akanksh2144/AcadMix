@@ -35,7 +35,10 @@ const SIMULATOR_CATEGORIES = [
   { id: 'dsp', label: 'DSP / Signal Processing', icon: <Equalizer size={16} weight="duotone" />, accent: 'indigo' },
 ];
 
-const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; noEmbed?: boolean }[]> = {
+const JUPYTERLITE_URL = 'https://jupyterlite.github.io/demo/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab%20Dark';
+const OCTAVE_URL = 'https://octave-online.net/';
+
+const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; noEmbed?: boolean; octaveUrl?: string }[]> = {
   embedded: [
     { id: 'arduino-uno', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
     { id: 'arduino-mega', label: 'Arduino Mega', url: 'https://wokwi.com/projects/new/arduino-mega', openLabel: 'Open in Wokwi' },
@@ -79,10 +82,10 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
     { id: 'comm-am', label: 'AM Detector', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=amdetect.txt', openLabel: 'Open in CircuitJS' },
     { id: 'comm-vco', label: 'VCO (FM Basis)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=vco.txt', openLabel: 'Open in CircuitJS' },
     { id: 'comm-phaseshiftosc', label: 'Phase-Shift Oscillator', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=phaseshiftosc.txt', openLabel: 'Open in CircuitJS' },
-    { id: 'comm-octave', label: 'GNU Octave (Comms)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'comm-python', label: 'Python (Comms)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   dsp: [
-    { id: 'dsp-octave', label: 'GNU Octave (DSP)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'dsp-python', label: 'Python (DSP)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'dsp-fft', label: 'FFT Visualizer', url: 'https://www.falstad.com/fourier/', openLabel: 'Open Fourier' },
     { id: 'dsp-filter', label: 'Filter Designer', url: 'https://www.falstad.com/dfilter/', openLabel: 'Open Filter Tool' },
   ],
@@ -99,7 +102,7 @@ const EEE_SIMULATOR_CATEGORIES = [
   { id: 'renewable_energy', label: 'Renewable Energy', icon: <SunHorizon size={16} weight="duotone" />, accent: 'emerald' },
 ];
 
-const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; noEmbed?: boolean }[]> = {
+const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; noEmbed?: boolean; octaveUrl?: string }[]> = {
   power_electronics: [
     { id: 'pe-blank', label: 'Blank Circuit', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcA2aAOMB2ALGXyEBOAbmAmwmwFMBaMMAKACcQUFDxCRsKBmEbqh7ce-YUJR1BkEJByYAHiGC4ALpzV8hOvYb37MBg5QCMvIbsPG6Zjlx5A', openLabel: 'Open in CircuitJS' },
     { id: 'pe-halfwave', label: 'Half-Wave Rectifier', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=rectify.txt', openLabel: 'Open in CircuitJS' },
@@ -110,7 +113,7 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
     { id: 'pe-schmitt', label: 'Schmitt Trigger', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=amp-schmitt.txt', openLabel: 'Open in CircuitJS' },
   ],
   control_systems: [
-    { id: 'cs-octave', label: 'GNU Octave Online', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'cs-python', label: 'Python (Controls)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'cs-opamp', label: 'Op-Amp', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=opamp.txt', openLabel: 'Open in CircuitJS' },
     { id: 'cs-integrator', label: 'Integrator', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=amp-integ.txt', openLabel: 'Open in CircuitJS' },
     { id: 'cs-differentiator', label: 'Differentiator', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=amp-dfdx.txt', openLabel: 'Open in CircuitJS' },
@@ -123,10 +126,10 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
     { id: 'em-inductive', label: 'Inductive Kickback', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=inductkick.txt', openLabel: 'Open in CircuitJS' },
     { id: 'em-powerfactor', label: 'Power Factor', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=powerfactor1.txt', openLabel: 'Open in CircuitJS' },
     { id: 'em-pfc', label: 'Power Factor Correction', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=powerfactor2.txt', openLabel: 'Open in CircuitJS' },
-    { id: 'em-octave', label: 'GNU Octave (Machines)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'em-python', label: 'Python (Machines)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   power_systems: [
-    { id: 'ps-octave', label: 'GNU Octave (Load Flow)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'ps-python', label: 'Python (Load Flow)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'ps-phaseseq', label: 'Phase-Sequence Network', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=phaseseq.txt', openLabel: 'Open in CircuitJS' },
     { id: 'ps-longdist', label: 'Long Distance Transmission', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=longdist.txt', openLabel: 'Open in CircuitJS' },
     { id: 'ps-tl', label: 'Transmission Line', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=tl.txt', openLabel: 'Open in CircuitJS' },
@@ -144,13 +147,13 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
     { id: 'mi-voltdivide', label: 'Voltage Divider', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=voltdivide.txt', openLabel: 'Open in CircuitJS' },
     { id: 'mi-thevenin', label: 'Thevenin Theorem', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=thevenin.txt', openLabel: 'Open in CircuitJS' },
     { id: 'mi-norton', label: 'Norton Theorem', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=norton.txt', openLabel: 'Open in CircuitJS' },
-    { id: 'mi-octave', label: 'GNU Octave (Analysis)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'mi-python', label: 'Python (Analysis)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   renewable_energy: [
     { id: 're-diode', label: 'Solar Cell (Diode)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=diodevar.txt', openLabel: 'Open in CircuitJS' },
     { id: 're-fullrect', label: 'Full-Wave Rectifier', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=fullrect.txt', openLabel: 'Open in CircuitJS' },
     { id: 're-voltdouble', label: 'Voltage Doubler', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=voltdouble.txt', openLabel: 'Open in CircuitJS' },
-    { id: 're-octave', label: 'GNU Octave (Modeling)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 're-python', label: 'Python (Modeling)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 're-esp32', label: 'ESP32 (IoT Monitor)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
   ],
 };
@@ -167,19 +170,19 @@ const CIVIL_SIMULATOR_CATEGORIES = [
   { id: 'concrete_steel', label: 'Concrete & Steel Design', icon: <Wall size={16} weight="duotone" />, accent: 'rose' },
 ];
 
-const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string }[]> = {
+const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; octaveUrl?: string }[]> = {
   structural: [
-    { id: 'st-octave', label: 'GNU Octave (Stiffness)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'st-python', label: 'Python (Stiffness)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'st-beam', label: 'Beam Calculator', url: 'https://clearcalcs.com/freetools/free-moment-of-inertia-calculator/us', openLabel: 'Open Calculator' },
     { id: 'st-truss', label: 'Truss Solver', url: 'https://platform.engineeringexamples.net/', openLabel: 'Open Solver' },
     { id: 'st-frame', label: 'Frame Analysis', url: 'https://structural-engineering.herokuapp.com/', openLabel: 'Open Analyzer' },
   ],
   geotechnical: [
-    { id: 'geo-octave', label: 'GNU Octave (Soil)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'geo-python', label: 'Python (Soil)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'geo-settle', label: 'Settlement Calc', url: 'https://www.geocalcs.com/', openLabel: 'Open GeoCalcs' },
   ],
   fluid_mechanics: [
-    { id: 'fm-octave', label: 'GNU Octave (Flow)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'fm-python', label: 'Python (Flow)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'fm-rlc', label: 'RLC Circuit (Pipe Analogy)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=lrc.txt', openLabel: 'Open in CircuitJS' },
   ],
   surveying: [
@@ -187,18 +190,18 @@ const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: s
     { id: 'sv-qgis', label: 'QGIS Cloud', url: 'https://qgiscloud.com/', openLabel: 'Open QGIS Cloud' },
   ],
   cad_bim: [
-    { id: 'cad-octave', label: 'GNU Octave (CAD Math)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'cad-python', label: 'Python (CAD Math)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   transportation: [
-    { id: 'tr-octave', label: 'GNU Octave (Traffic)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'tr-python', label: 'Python (Traffic)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'tr-osm', label: 'OpenStreetMap (Roads)', url: 'https://www.openstreetmap.org/', openLabel: 'Open OSM' },
     { id: 'tr-sumo', label: 'SUMO Traffic Sim', url: 'https://sumo.dlr.de/docs/', openLabel: 'Open SUMO Docs', externalUrl: 'https://sumo.dlr.de/docs/Downloads.php', externalLabel: 'Download SUMO' },
   ],
   environmental: [
-    { id: 'env-octave', label: 'GNU Octave (WTP/STP)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'env-python', label: 'Python (WTP/STP)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   concrete_steel: [
-    { id: 'cs-octave', label: 'GNU Octave (IS 456)', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'cs-python', label: 'Python (IS 456)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
 };
 
@@ -269,6 +272,7 @@ const CodePlayground = ({ navigate, user }) => {
   const langMenuRef = useRef(null);
   const [wokwiBoard, setWokwiBoard] = useState('arduino-uno');
   const [simCategory, setSimCategory] = useState('embedded');
+  const [useOctaveMode, setUseOctaveMode] = useState(false);
 
   // ── ECE / EEE / Civil Lab computed values ──────────────────────────────────
   const _isEEELab = language === 'eeelab';
@@ -1402,13 +1406,40 @@ const CodePlayground = ({ navigate, user }) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  {/* Python / Octave toggle — shown only when active board has octaveUrl */}
+                  {(_simActiveBoard as any)?.octaveUrl && (
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-0.5">
+                      <button
+                        onClick={() => setUseOctaveMode(false)}
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                          !useOctaveMode
+                            ? 'bg-indigo-500 text-white shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                        }`}
+                      >
+                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="" className="w-3.5 h-3.5" />
+                        Python
+                      </button>
+                      <button
+                        onClick={() => setUseOctaveMode(true)}
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                          useOctaveMode
+                            ? 'bg-orange-500 text-white shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                        }`}
+                      >
+                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/matlab/matlab-original.svg" alt="" className="w-3.5 h-3.5" />
+                        Octave
+                      </button>
+                    </div>
+                  )}
                   <a
-                    href={_simActiveBoard?.url || '#'}
+                    href={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`px-4 py-2 text-white rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2 ${_simAccent.btn}`}
                   >
-                    {_simActiveBoard?.openLabel || 'Open External'} ↗
+                    {useOctaveMode && (_simActiveBoard as any)?.octaveUrl ? 'Open Octave' : (_simActiveBoard?.openLabel || 'Open External')} ↗
                   </a>
                 </div>
               </div>
@@ -1493,8 +1524,8 @@ const CodePlayground = ({ navigate, user }) => {
                 </div>
               ) : (
                 <iframe
-                  key={`${simCategory}-${wokwiBoard}`}
-                  src={_simActiveBoard?.url || _simBoards[0]?.url || ''}
+                  key={`${simCategory}-${wokwiBoard}-${useOctaveMode ? 'octave' : 'python'}`}
+                  src={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || _simBoards[0]?.url || ''}
                   title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
                   className="w-full h-full border-0"
                   style={{ touchAction: 'none' }}
