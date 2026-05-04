@@ -1364,51 +1364,32 @@ const CodePlayground = ({ navigate, user }) => {
         <div className="flex-1 overflow-hidden flex flex-col" style={{ overscrollBehavior: 'contain' }}>
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
             {/* Category Tabs + Board Selector Toolbar */}
-            <div className="soft-card p-3 shrink-0 mb-4 space-y-3">
-              {/* Row 1: Language switch + Category tabs + Open External */}
+            <div className="soft-card p-3 shrink-0 mb-4 space-y-2">
+              {/* Row 1: Lab selector + Python/Octave toggle + Open External */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0 overflow-hidden flex-1">
-                  <div className="relative" ref={langMenuRef}>
-                    <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-bold text-sm text-slate-700 dark:text-slate-300">
-                      {_isCivilLab ? <HardHat size={20} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={20} weight="duotone" className="text-yellow-500" /> : <Cpu size={20} weight="duotone" className="text-teal-500" />}
-                      {_isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}
-                      <CaretDown size={14} weight="bold" />
-                    </button>
-                    {showLangMenu && (
-                      <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1 z-50 min-w-[180px]">
-                        {LANGUAGES.map(lang => (
-                          <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
-                            className={`w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>
-                            <span className="text-base">{lang.icon}</span>
-                            {lang.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {/* Category Pills */}
-                  <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1 gap-0.5 overflow-x-auto custom-scrollbar min-w-0">
-                    {_activeCats.map(cat => (
-                      <button
-                        key={cat.id}
-                        onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                          simCategory === cat.id
-                            ? SIM_ACCENT_CLASSES[cat.accent]?.active || 'bg-teal-500 text-white'
-                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
-                        }`}
-                      >
-                        {cat.icon}
-                        <span className="hidden sm:inline">{cat.label}</span>
-                      </button>
-                    ))}
-                  </div>
+                <div className="relative" ref={langMenuRef}>
+                  <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-bold text-sm text-slate-700 dark:text-slate-300">
+                    {_isCivilLab ? <HardHat size={20} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={20} weight="duotone" className="text-yellow-500" /> : <Cpu size={20} weight="duotone" className="text-teal-500" />}
+                    {_isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}
+                    <CaretDown size={14} weight="bold" />
+                  </button>
+                  {showLangMenu && (
+                    <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1 z-50 min-w-[180px]">
+                      {LANGUAGES.map(lang => (
+                        <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
+                          className={`w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>
+                          <span className="text-base">{lang.icon}</span>
+                          {lang.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 shrink-0 ml-2">
-                  {/* Python / Octave toggle — shown only when active board has octaveUrl */}
+                <div className="flex items-center gap-2">
+                  {/* Python / Octave toggle */}
                   {(_simActiveBoard as any)?.octaveUrl && (
-                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-0.5 shrink-0">
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-0.5">
                       <button
                         onClick={() => setUseOctaveMode(false)}
                         className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
@@ -1437,13 +1418,30 @@ const CodePlayground = ({ navigate, user }) => {
                     href={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`px-4 py-2 text-white rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2 ${_simAccent.btn}`}
+                    className={`px-4 py-2 text-white rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2 whitespace-nowrap ${_simAccent.btn}`}
                   >
                     {useOctaveMode && (_simActiveBoard as any)?.octaveUrl ? 'Open Octave' : (_simActiveBoard?.openLabel || 'Open External')} ↗
                   </a>
                 </div>
               </div>
-              {/* Row 2: Sub-board/preset pills (if more than 1 option) */}
+              {/* Row 2: Category pills (full width) */}
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1 gap-0.5 overflow-x-auto custom-scrollbar">
+                {_activeCats.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                      simCategory === cat.id
+                        ? SIM_ACCENT_CLASSES[cat.accent]?.active || 'bg-teal-500 text-white'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {cat.icon}
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+              {/* Row 3: Sub-board/preset pills (if more than 1 option) */}
               {_simBoards.length > 1 && (
                 <div className="flex items-center bg-slate-50 dark:bg-slate-800/50 rounded-full p-1 gap-0.5 overflow-x-auto custom-scrollbar">
                   {_simBoards.map(board => (
