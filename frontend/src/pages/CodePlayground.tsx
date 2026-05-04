@@ -1425,12 +1425,12 @@ const CodePlayground = ({ navigate, user }) => {
                 </div>
               </div>
               {/* Row 2: Category pills (full width) */}
-              <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1 gap-0.5 overflow-x-auto custom-scrollbar">
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1 gap-0.5 overflow-x-auto custom-scrollbar">
                 {_activeCats.map(cat => (
                   <button
                     key={cat.id}
                     onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    className={`px-3.5 py-1.5 rounded-[10px] text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                       simCategory === cat.id
                         ? SIM_ACCENT_CLASSES[cat.accent]?.active || 'bg-teal-500 text-white'
                         : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -1443,12 +1443,12 @@ const CodePlayground = ({ navigate, user }) => {
               </div>
               {/* Row 3: Sub-board/preset pills (if more than 1 option) */}
               {_simBoards.length > 1 && (
-                <div className="flex items-center bg-slate-50 dark:bg-slate-800/50 rounded-full p-1 gap-0.5 overflow-x-auto custom-scrollbar">
+                <div className="flex items-center bg-slate-50 dark:bg-slate-800/50 rounded-xl p-1 gap-0.5 overflow-x-auto custom-scrollbar">
                   {_simBoards.map(board => (
                     <button
                       key={board.id}
                       onClick={() => setWokwiBoard(board.id)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                      className={`px-3 py-1.5 rounded-[10px] text-xs font-bold whitespace-nowrap transition-all ${
                         wokwiBoard === board.id
                           ? _simAccent.active
                           : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
