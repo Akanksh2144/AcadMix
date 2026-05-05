@@ -143,20 +143,12 @@ export default function CampusMap({ user }: CampusMapProps) {
               gridTemplateRows: `repeat(${maxY}, 20px)`,
               gap: 2, minWidth: 720, position: 'relative',
             }}>
-              {/* ── Zone Backgrounds ── */}
-              {[1,6,12,22,28,34,42].map((startRow, i) => {
-                const endRows = [5,11,21,27,33,41,47];
-                return (
-                  <div key={`zone-${i}`} style={{
-                    gridColumn: '1 / -1',
-                    gridRow: `${startRow + 1} / ${endRows[i] + 1}`,
-                    background: 'var(--zone-bg, rgba(241,245,249,0.7))',
-                    borderRadius: 6,
-                    pointerEvents: 'none',
-                    zIndex: 0,
-                  }} />
-                );
-              })}
+              {/* ── Full grid background ── */}
+              <div style={{
+                gridColumn: '1 / -1', gridRow: `1 / ${maxY + 1}`,
+                background: 'var(--zone-bg, rgba(241,245,249,0.7))',
+                borderRadius: 4, pointerEvents: 'none', zIndex: 0,
+              }} />
 
               {/* ── Horizontal Roads ── */}
               {H_ROADS.map(r => (
@@ -164,6 +156,7 @@ export default function CampusMap({ user }: CampusMapProps) {
                   gridColumn: '1 / -1', gridRow: `${r.row + 1}`,
                   background: 'var(--road-bg, #d1d5db)', borderRadius: 2,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  zIndex: 1,
                 }}>
                   <div style={{ flex: 1, height: 1, borderTop: '2px dashed var(--road-line, #fbbf24)' }} />
                   <span style={{ fontSize: 7, fontWeight: 800, color: 'var(--road-text, #6b7280)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -178,7 +171,7 @@ export default function CampusMap({ user }: CampusMapProps) {
                 <div key={`vr-${col}`} style={{
                   gridColumn: `${col + 1}`, gridRow: `1 / ${maxY + 1}`,
                   background: 'var(--road-bg, #e2e8f0)', borderRadius: 2,
-                  position: 'relative', pointerEvents: 'none', zIndex: 0,
+                  position: 'relative', pointerEvents: 'none', zIndex: 1,
                 }}>
                   <div style={{
                     position: 'absolute', left: '50%', top: 0, bottom: 0, width: 0,
@@ -187,12 +180,12 @@ export default function CampusMap({ user }: CampusMapProps) {
                 </div>
               ))}
 
-              {/* ── Trees (scattered greenery) ── */}
+              {/* ── Trees (in empty building areas, never on roads) ── */}
               {[
-                {x:6,y:2},{x:6,y:8},{x:6,y:14},{x:6,y:23},{x:6,y:30},{x:6,y:40},
-                {x:16,y:3},{x:16,y:9},{x:16,y:15},{x:16,y:24},{x:16,y:31},{x:16,y:40},
-                {x:0,y:5},{x:3,y:11},{x:12,y:5},{x:20,y:5},{x:22,y:11},{x:15,y:21},
-                {x:2,y:21},{x:22,y:27},{x:5,y:33},{x:16,y:33},{x:23,y:33},{x:3,y:41},
+                {x:6,y:3},{x:6,y:9},{x:6,y:16},{x:6,y:24},{x:6,y:31},{x:6,y:36},
+                {x:0,y:16},{x:5,y:6},{x:5,y:22},{x:0,y:36},
+                {x:14,y:7},{x:15,y:14},{x:16,y:18},{x:16,y:24},{x:16,y:36},
+                {x:22,y:7},{x:23,y:16},{x:22,y:30},{x:23,y:36},{x:23,y:44},
               ].map((t, i) => (
                 <div key={`tree-${i}`} style={{
                   gridColumn: `${t.x + 1}`, gridRow: `${t.y + 1}`,
