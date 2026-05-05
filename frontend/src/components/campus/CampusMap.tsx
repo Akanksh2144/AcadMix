@@ -218,9 +218,9 @@ export default function CampusMap({ user }: CampusMapProps) {
                       gap: 2, padding: 4, cursor: 'pointer', position: 'relative', overflow: 'hidden',
                       background: isSelected ? `${b.color}50` : `${b.color || '#6366f1'}30`,
                       border: 'none', borderRadius: 0,
-                      outline: isSelected ? `2px solid ${b.color}80` : 'none',
+                      boxShadow: isSelected ? `inset 0 0 0 2px ${b.color || '#6366f1'}90` : 'inset 0 0 0 0px transparent',
                       zIndex: 1,
-                      transition: 'outline 0.15s ease',
+                      transition: 'box-shadow 0.25s ease',
                     }}
                   >
                     {/* Parking lot internal dividers */}
