@@ -137,66 +137,81 @@ export default function CampusMap({ user }: CampusMapProps) {
 
       {/* ── Map View ────────────────────────────────────────────── */}
       {viewMode === 'map' && (
-        <div
-          className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-sm p-3 sm:p-4"
-          style={{
+        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-sm p-3 sm:p-4 overflow-x-auto">
+          <div style={{
             display: 'grid',
-            gridTemplateColumns: `repeat(${maxX}, 1fr)`,
-            gridTemplateRows: `repeat(${maxY}, minmax(90px, 1fr))`,
-            gap: 6,
+            gridTemplateColumns: `72px repeat(${maxX}, 1fr)`,
+            gridTemplateRows: `repeat(${maxY}, minmax(80px, 1fr))`,
+            gap: 5, minWidth: 600,
           }}>
-          {buildings.map(b => {
-            const IconComp = ICON_MAP[b.icon || 'Buildings'] || Buildings;
-            const evtCount = b.event_count;
-            const isSelected = selectedBuilding?.id === b.id;
-            const canPin = b.building_type !== 'gate' && b.building_type !== 'parking';
-            return (
-              <motion.div
-                key={b.id}
-                whileHover={{ scale: 1.04, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => handleBuildingClick(b)}
-                className="relative cursor-pointer transition-all"
-                style={{
-                  gridColumn: `${b.grid_x + 1} / span ${b.grid_w}`,
-                  gridRow: `${b.grid_y + 1} / span ${b.grid_h}`,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  gap: 4, padding: 10, borderRadius: 14, overflow: 'hidden',
-                  background: isSelected
-                    ? `linear-gradient(135deg, ${b.color || '#6366f1'}22, ${b.color || '#6366f1'}11)`
-                    : 'var(--card-bg-alt, #f8fafc)',
-                  border: `2px solid ${isSelected ? b.color || '#6366f1' : 'var(--border, #e2e8f0)'}`,
-                  boxShadow: isSelected ? `0 4px 16px ${b.color || '#6366f1'}33` : 'none',
-                }}
-              >
-                {/* Event badge */}
-                {evtCount > 0 && (
-                  <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-[10px] font-bold" style={{ animation: 'pulse 2s infinite' }}>
-                    {evtCount}
+            {/* ── Zone Labels (left column) ─── */}
+            {[
+              { row: 0, label: '🚪 Entrance', color: '#78716c' },
+              { row: 1, label: '🏛 Admin', color: '#8b5cf6' },
+              { row: 2, label: '📚 Academic', color: '#6366f1', span: 2 },
+              { row: 4, label: '📖 Resources', color: '#0d9488' },
+              { row: 5, label: '🎭 Social', color: '#ec4899' },
+              { row: 6, label: '⚽ Sports', color: '#16a34a', span: 2 },
+              { row: 8, label: '🏠 Hostels', color: '#3b82f6' },
+            ].map(z => (
+              <div key={z.row} style={{
+                gridColumn: '1', gridRow: `${z.row + 1} / span ${z.span || 1}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)',
+                fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase',
+                color: z.color, opacity: 0.7, userSelect: 'none',
+              }}>
+                {z.label}
+              </div>
+            ))}
+
+            {/* ── Building Cells ─── */}
+            {buildings.map(b => {
+              const IconComp = ICON_MAP[b.icon || 'Buildings'] || Buildings;
+              const evtCount = b.event_count;
+              const isSelected = selectedBuilding?.id === b.id;
+              return (
+                <motion.div
+                  key={b.id}
+                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleBuildingClick(b)}
+                  className="relative cursor-pointer transition-all group"
+                  style={{
+                    gridColumn: `${b.grid_x + 2} / span ${b.grid_w}`,
+                    gridRow: `${b.grid_y + 1} / span ${b.grid_h}`,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 3, padding: 8, borderRadius: 12, overflow: 'hidden',
+                    background: isSelected
+                      ? `linear-gradient(135deg, ${b.color || '#6366f1'}22, ${b.color || '#6366f1'}11)`
+                      : 'var(--card-bg-alt, #f8fafc)',
+                    border: `2px solid ${isSelected ? b.color || '#6366f1' : 'var(--border, #e2e8f0)'}`,
+                    boxShadow: isSelected ? `0 4px 16px ${b.color || '#6366f1'}33` : 'none',
+                  }}
+                >
+                  {/* Event badge */}
+                  {evtCount > 0 && (
+                    <div className="absolute top-1 right-1 w-4.5 h-4.5 rounded-full bg-red-500 text-white flex items-center justify-center text-[9px] font-bold" style={{ animation: 'pulse 2s infinite', width: 18, height: 18 }}>
+                      {evtCount}
+                    </div>
+                  )}
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 7,
+                    background: `${b.color || '#6366f1'}18`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <IconComp size={15} weight="duotone" style={{ color: b.color || '#6366f1' }} />
                   </div>
-                )}
-                {/* Pin icon on hover */}
-                {canPin && (
-                  <div className="absolute top-1.5 left-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MapPin size={14} weight="fill" className="text-indigo-400" />
-                  </div>
-                )}
-                <div style={{
-                  width: 32, height: 32, borderRadius: 8,
-                  background: `${b.color || '#6366f1'}18`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <IconComp size={18} weight="duotone" style={{ color: b.color || '#6366f1' }} />
-                </div>
-                <span className="text-[11px] font-bold text-center text-slate-800 dark:text-white leading-tight">
-                  {b.short_name || b.name}
-                </span>
-                <span className="text-[9px] text-slate-400 text-center leading-tight hidden sm:block">
-                  {b.name !== (b.short_name || b.name) ? b.name : b.building_type}
+                  <span className="text-[10px] font-bold text-center text-slate-800 dark:text-white leading-tight">
+                    {b.short_name || b.name}
+                  </span>
+                  <span className="text-[8px] text-slate-400 text-center leading-tight hidden sm:block truncate w-full px-1">
+                    {b.name !== (b.short_name || b.name) ? b.name : b.building_type}
                 </span>
               </motion.div>
             );
           })}
+          </div>
         </div>
       )}
 
