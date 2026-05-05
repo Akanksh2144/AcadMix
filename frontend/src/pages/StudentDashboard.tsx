@@ -402,34 +402,60 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
         </motion.div>
         )}
 
-        {/* ── Quick Access (Spring Stagger) ─────────────── */}
+        {/* ── Quick Access — Academics & Tools ─────────────── */}
+        <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Academics & Tools</h3>
         <motion.div
           variants={containerVariants} initial="hidden" animate="show"
-          className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6 sm:mb-8"
+          className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6"
         >
           {[
             { id: 'quiz-results', icon: BookOpen, label: 'Quiz Results', sub: 'View all attempts', iconBg: 'bg-indigo-50 dark:bg-indigo-500/10 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20', iconText: 'text-indigo-500', testId: 'view-all-quizzes-button' },
             { id: 'semester-results', icon: Calendar, label: 'Semester Results', sub: 'Check your grades', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-semester-results-button' },
             { id: 'analytics', icon: ChartLine, label: 'Analytics', sub: 'Track performance', iconBg: 'bg-amber-50 dark:bg-amber-500/10 group-hover:bg-amber-100 dark:group-hover:bg-amber-500/20', iconText: 'text-amber-500', testId: 'view-analytics-button' },
             { id: 'code-playground', icon: Terminal, label: 'Code Playground', sub: 'Practice coding', iconBg: 'bg-purple-50 dark:bg-purple-500/10 group-hover:bg-purple-100 dark:group-hover:bg-purple-500/20', iconText: 'text-purple-500', testId: 'view-code-playground-button' },
+            { id: 'career-toolkit', icon: Toolbox, label: 'Career Toolkit', sub: '10 AI career tools', iconBg: 'bg-cyan-50 dark:bg-cyan-500/10 group-hover:bg-cyan-100 dark:group-hover:bg-cyan-500/20', iconText: 'text-cyan-500', testId: 'view-career-toolkit-button' },
+          ].map((item: any) => {
+            const Icon = item.icon;
+            return (
+              <motion.button key={item.id} variants={itemVariants} whileHover={cardHover} whileTap={{ scale: 0.97 }}
+                data-testid={item.testId} onClick={() => navigate(item.id)}
+                className="soft-card-hover p-4 sm:p-5 text-left flex items-center gap-3 group"
+              >
+                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 ${item.iconBg}`}>
+                  <Icon size={20} weight="duotone" className={item.iconText} />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-extrabold text-sm text-slate-900 dark:text-white truncate">{item.label}</p>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 truncate">{item.sub}</p>
+                </div>
+              </motion.button>
+            );
+          })}
+        </motion.div>
+
+        {/* ── Quick Access — Campus Life ───────────────── */}
+        <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Campus Life</h3>
+        <motion.div
+          variants={containerVariants} initial="hidden" animate="show"
+          className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8"
+        >
+          {[
             isHostelVisible ? { id: 'hostel-booking', icon: House, label: 'Hostel Booking', sub: 'Book your bed', iconBg: 'bg-pink-50 dark:bg-pink-500/10 group-hover:bg-pink-100 dark:group-hover:bg-pink-500/20', iconText: 'text-pink-500', testId: 'view-hostel-booking-button' } : null,
             { id: 'transport', label: 'Bus Tracker', sub: 'Track your bus', icon: Bus, iconBg: 'bg-emerald-50 dark:bg-emerald-500/10 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/20', iconText: 'text-emerald-500', testId: 'view-transport-button', isTab: true },
-            { id: 'campus-map', label: 'Campus Map', sub: 'Buildings & events', icon: MapPin, iconBg: 'bg-rose-50 dark:bg-rose-500/10 group-hover:bg-rose-100 dark:group-hover:bg-rose-500/20', iconText: 'text-rose-500', testId: 'view-campus-map-button', isTab: true, tabId: 'campus' },
-            { id: 'career-toolkit', icon: Toolbox, label: 'Career Toolkit', sub: '10 AI career tools', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-career-toolkit-button' },
-
+            { id: 'campus-map', label: 'Campus Map', sub: 'Pin events on map', icon: MapPin, iconBg: 'bg-rose-50 dark:bg-rose-500/10 group-hover:bg-rose-100 dark:group-hover:bg-rose-500/20', iconText: 'text-rose-500', testId: 'view-campus-map-button', isTab: true, tabId: 'campus' },
           ].filter(Boolean).map((item: any) => {
             const Icon = item.icon;
             return (
               <motion.button key={item.id} variants={itemVariants} whileHover={cardHover} whileTap={{ scale: 0.97 }}
                 data-testid={item.testId} onClick={() => item.isTab ? handleTabChange(item.tabId || item.id) : navigate(item.id)}
-                className="soft-card-hover p-4 sm:p-6 text-left flex items-center gap-3 sm:gap-4 group"
+                className="soft-card-hover p-4 sm:p-5 text-left flex items-center gap-3 group"
               >
-                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-colors ${item.iconBg}`}>
-                  <Icon size={22} weight="duotone" className={item.iconText} />
+                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 ${item.iconBg}`}>
+                  <Icon size={20} weight="duotone" className={item.iconText} />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white truncate">{item.label}</p>
-                  <p className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 truncate">{item.sub}</p>
+                  <p className="font-extrabold text-sm text-slate-900 dark:text-white truncate">{item.label}</p>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 truncate">{item.sub}</p>
                 </div>
               </motion.button>
             );

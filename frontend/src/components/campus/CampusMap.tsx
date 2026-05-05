@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Buildings, MapPin, Calendar, Lightning, X, Plus, ForkKnife, Desktop, Radio, BookOpen, Wrench, HardHat, Microphone, Trophy, Car, House, DoorOpen, Crown, SoccerBall, CaretDown, Clock, Users as UsersIcon, CheckCircle, Warning } from '@phosphor-icons/react';
+import { Buildings, MapPin, Calendar, X, ForkKnife, Desktop, Radio, BookOpen, Wrench, HardHat, Microphone, Trophy, Car, House, DoorOpen, Crown, SoccerBall, Lightning } from '@phosphor-icons/react';
 import api from '../../services/api';
 import CreateEventModal from './CreateEventModal';
 
@@ -18,9 +18,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending_hod: { label: 'Pending HOD', color: '#f59e0b' },
   approved_dept: { label: 'Dept Live', color: '#22c55e' },
-  pending_principal: { label: 'Pending Principal', color: '#f59e0b' },
   approved_college: { label: 'College Live', color: '#3b82f6' },
-  pending_director: { label: 'Pending Director', color: '#f59e0b' },
   approved_group: { label: 'Group Live', color: '#8b5cf6' },
   rejected: { label: 'Rejected', color: '#ef4444' },
 };
@@ -51,7 +49,7 @@ export default function CampusMap({ user }: CampusMapProps) {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [events, setEvents] = useState<CampusEvent[]>([]);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
-  const [showCreateEvent, setShowCreateEvent] = useState(false);
+  const [pinBuilding, setPinBuilding] = useState<Building | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'map' | 'events'>('map');
 
@@ -80,79 +78,81 @@ export default function CampusMap({ user }: CampusMapProps) {
   const buildingEvents = (buildingId: string) =>
     events.filter(e => e.building_id === buildingId);
 
+  const handleBuildingClick = (b: Building) => {
+    if (selectedBuilding?.id === b.id) {
+      setSelectedBuilding(null);
+    } else {
+      setSelectedBuilding(b);
+    }
+  };
+
+  const handlePinEvent = (b: Building) => {
+    setPinBuilding(b);
+  };
+
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+      <div className="flex justify-center items-center" style={{ minHeight: 300 }}>
         <div style={{ width: 40, height: 40, border: '4px solid #6366f1', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="flex flex-col gap-4">
       {/* ── Header ──────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+      <div className="flex justify-between items-center flex-wrap gap-3">
         <div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary, #1e293b)' }}>
-            <MapPin size={22} weight="duotone" style={{ verticalAlign: -3, marginRight: 8, color: '#6366f1' }} />
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            <MapPin size={20} weight="duotone" className="text-indigo-500" />
             Campus Map
           </h2>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-secondary, #64748b)' }}>
-            {buildings.length} buildings · {events.length} active events
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {buildings.length} buildings · {events.length} active events · <span className="text-indigo-400 font-semibold">Click a building to pin an event</span>
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {/* View toggle pill */}
-          <div style={{ display: 'flex', background: 'var(--card-bg, #f1f5f9)', borderRadius: 999, padding: 3 }}>
-            {(['map', 'events'] as const).map(v => (
-              <button key={v} onClick={() => setViewMode(v)} style={{
-                padding: '6px 16px', borderRadius: 999, border: 'none', cursor: 'pointer',
-                fontSize: 13, fontWeight: 600, transition: 'all 0.2s',
-                background: viewMode === v ? '#6366f1' : 'transparent',
-                color: viewMode === v ? '#fff' : 'var(--text-secondary, #64748b)',
-              }}>
-                {v === 'map' ? '🗺 Map' : '📅 Events'}
-              </button>
-            ))}
-          </div>
-          <button onClick={() => setShowCreateEvent(true)} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-            borderRadius: 999, border: 'none', cursor: 'pointer',
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff',
-            fontSize: 13, fontWeight: 600, boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
-          }}>
-            <Plus size={16} weight="bold" /> Pin Event
-          </button>
+        {/* View toggle pill */}
+        <div className="flex bg-slate-100 dark:bg-white/[0.06] rounded-full p-0.5">
+          {(['map', 'events'] as const).map(v => (
+            <button key={v} onClick={() => setViewMode(v)}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                viewMode === v
+                  ? 'bg-indigo-500 text-white shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+              }`}>
+              {v === 'map' ? '🗺 Map' : '📅 Events'}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* ── Map View ────────────────────────────────────────────── */}
       {viewMode === 'map' && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${maxX}, 1fr)`,
-          gridTemplateRows: `repeat(${maxY}, minmax(100px, 1fr))`,
-          gap: 8, padding: 16, borderRadius: 16,
-          background: 'var(--card-bg, #ffffff)',
-          border: '1px solid var(--border, #e2e8f0)',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
-        }}>
+        <div
+          className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-sm p-3 sm:p-4"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${maxX}, 1fr)`,
+            gridTemplateRows: `repeat(${maxY}, minmax(90px, 1fr))`,
+            gap: 6,
+          }}>
           {buildings.map(b => {
             const IconComp = ICON_MAP[b.icon || 'Buildings'] || Buildings;
             const evtCount = b.event_count;
             const isSelected = selectedBuilding?.id === b.id;
+            const canPin = b.building_type !== 'gate' && b.building_type !== 'parking';
             return (
               <motion.div
                 key={b.id}
-                whileHover={{ scale: 1.03, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setSelectedBuilding(isSelected ? null : b)}
+                whileHover={{ scale: 1.04, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => handleBuildingClick(b)}
+                className="relative cursor-pointer transition-all"
                 style={{
                   gridColumn: `${b.grid_x + 1} / span ${b.grid_w}`,
                   gridRow: `${b.grid_y + 1} / span ${b.grid_h}`,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  gap: 6, padding: 12, borderRadius: 14, cursor: 'pointer',
-                  position: 'relative', overflow: 'hidden', transition: 'all 0.2s',
+                  gap: 4, padding: 10, borderRadius: 14, overflow: 'hidden',
                   background: isSelected
                     ? `linear-gradient(135deg, ${b.color || '#6366f1'}22, ${b.color || '#6366f1'}11)`
                     : 'var(--card-bg-alt, #f8fafc)',
@@ -162,27 +162,28 @@ export default function CampusMap({ user }: CampusMapProps) {
               >
                 {/* Event badge */}
                 {evtCount > 0 && (
-                  <div style={{
-                    position: 'absolute', top: 6, right: 6, width: 22, height: 22,
-                    borderRadius: '50%', background: '#ef4444', color: '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 700, animation: 'pulse 2s infinite',
-                  }}>
+                  <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-[10px] font-bold" style={{ animation: 'pulse 2s infinite' }}>
                     {evtCount}
                   </div>
                 )}
+                {/* Pin icon on hover */}
+                {canPin && (
+                  <div className="absolute top-1.5 left-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <MapPin size={14} weight="fill" className="text-indigo-400" />
+                  </div>
+                )}
                 <div style={{
-                  width: 36, height: 36, borderRadius: 10,
+                  width: 32, height: 32, borderRadius: 8,
                   background: `${b.color || '#6366f1'}18`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <IconComp size={20} weight="duotone" style={{ color: b.color || '#6366f1' }} />
+                  <IconComp size={18} weight="duotone" style={{ color: b.color || '#6366f1' }} />
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 700, textAlign: 'center', color: 'var(--text-primary, #1e293b)' }}>
+                <span className="text-[11px] font-bold text-center text-slate-800 dark:text-white leading-tight">
                   {b.short_name || b.name}
                 </span>
-                <span style={{ fontSize: 10, color: 'var(--text-secondary, #94a3b8)', textAlign: 'center' }}>
-                  {b.name}
+                <span className="text-[9px] text-slate-400 text-center leading-tight hidden sm:block">
+                  {b.name !== (b.short_name || b.name) ? b.name : b.building_type}
                 </span>
               </motion.div>
             );
@@ -192,45 +193,36 @@ export default function CampusMap({ user }: CampusMapProps) {
 
       {/* ── Events List View ─────────────────────────────────────── */}
       {viewMode === 'events' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="flex flex-col gap-2.5">
           {events.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-secondary, #94a3b8)' }}>
-              <Calendar size={48} weight="duotone" style={{ marginBottom: 12, opacity: 0.5 }} />
-              <p style={{ fontSize: 15, fontWeight: 600 }}>No active events</p>
-              <p style={{ fontSize: 13 }}>Pin an event to get started!</p>
+            <div className="text-center py-12 text-slate-400">
+              <Calendar size={48} weight="duotone" className="mx-auto mb-3 opacity-50" />
+              <p className="text-sm font-semibold">No active events</p>
+              <p className="text-xs">Click a building on the map to pin one!</p>
             </div>
           ) : events.map(e => (
             <motion.div key={e.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              style={{
-                display: 'flex', gap: 14, padding: 16, borderRadius: 14,
-                background: 'var(--card-bg, #fff)', border: '1px solid var(--border, #e2e8f0)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-              }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-                background: `${CATEGORY_COLORS[e.category] || '#94a3b8'}18`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Calendar size={22} weight="duotone" style={{ color: CATEGORY_COLORS[e.category] || '#94a3b8' }} />
+              className="flex gap-3.5 p-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 shadow-sm">
+              <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center"
+                style={{ background: `${CATEGORY_COLORS[e.category] || '#94a3b8'}18` }}>
+                <Calendar size={20} weight="duotone" style={{ color: CATEGORY_COLORS[e.category] || '#94a3b8' }} />
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary, #1e293b)' }}>{e.title}</h4>
-                  <span style={{
-                    padding: '2px 8px', borderRadius: 999, fontSize: 10, fontWeight: 700, flexShrink: 0,
-                    background: `${STATUS_LABELS[e.status]?.color || '#94a3b8'}18`,
-                    color: STATUS_LABELS[e.status]?.color || '#94a3b8',
-                  }}>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start gap-2">
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-white truncate">{e.title}</h4>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0"
+                    style={{
+                      background: `${STATUS_LABELS[e.status]?.color || '#94a3b8'}18`,
+                      color: STATUS_LABELS[e.status]?.color || '#94a3b8',
+                    }}>
                     {STATUS_LABELS[e.status]?.label || e.status}
                   </span>
                 </div>
-                <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-secondary, #64748b)' }}>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   📍 {e.building_name || 'Unknown'} · 🕐 {new Date(e.starts_at).toLocaleString()}
                 </p>
                 {e.description && (
-                  <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-secondary, #94a3b8)' }}>
-                    {e.description}
-                  </p>
+                  <p className="text-xs text-slate-400 mt-1 line-clamp-2">{e.description}</p>
                 )}
               </div>
             </motion.div>
@@ -243,79 +235,71 @@ export default function CampusMap({ user }: CampusMapProps) {
         {selectedBuilding && (
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            style={{
-              padding: 20, borderRadius: 16, background: 'var(--card-bg, #fff)',
-              border: `2px solid ${selectedBuilding.color || '#6366f1'}44`,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-            }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 12,
-                  background: `${selectedBuilding.color || '#6366f1'}18`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
+            className="rounded-2xl bg-white dark:bg-white/[0.03] shadow-lg"
+            style={{ padding: 20, border: `2px solid ${selectedBuilding.color || '#6366f1'}44` }}>
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ background: `${selectedBuilding.color || '#6366f1'}18` }}>
                   {React.createElement(ICON_MAP[selectedBuilding.icon || 'Buildings'] || Buildings, {
-                    size: 24, weight: 'duotone', style: { color: selectedBuilding.color || '#6366f1' }
+                    size: 22, weight: 'duotone', style: { color: selectedBuilding.color || '#6366f1' }
                   })}
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary, #1e293b)' }}>
-                    {selectedBuilding.name}
-                  </h3>
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary, #64748b)' }}>
-                    {selectedBuilding.building_type} · {selectedBuilding.floor_count} floors
-                  </p>
+                  <h3 className="text-base font-bold text-slate-800 dark:text-white">{selectedBuilding.name}</h3>
+                  <p className="text-xs text-slate-500">{selectedBuilding.building_type} · {selectedBuilding.floor_count} floors</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedBuilding(null)} style={{
-                width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer',
-                background: 'var(--card-bg-alt, #f1f5f9)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <X size={16} />
-              </button>
+              <div className="flex items-center gap-2">
+                {selectedBuilding.building_type !== 'gate' && selectedBuilding.building_type !== 'parking' && (
+                  <button onClick={() => handlePinEvent(selectedBuilding)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>
+                    <MapPin size={14} weight="bold" /> Pin Event Here
+                  </button>
+                )}
+                <button onClick={() => setSelectedBuilding(null)}
+                  className="w-8 h-8 rounded-lg border-none cursor-pointer bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+                  <X size={14} />
+                </button>
+              </div>
             </div>
 
             {/* Departments */}
             {selectedBuilding.departments.length > 0 && (
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+              <div className="flex gap-1.5 flex-wrap mb-3">
                 {selectedBuilding.departments.map((d: string) => (
-                  <span key={d} style={{
-                    padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600,
-                    background: `${selectedBuilding.color || '#6366f1'}15`,
-                    color: selectedBuilding.color || '#6366f1',
-                  }}>{d}</span>
+                  <span key={d} className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+                    style={{ background: `${selectedBuilding.color || '#6366f1'}15`, color: selectedBuilding.color || '#6366f1' }}>
+                    {d}
+                  </span>
                 ))}
               </div>
             )}
 
             {/* Facilities */}
             {selectedBuilding.facilities.length > 0 && (
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+              <div className="flex gap-1.5 flex-wrap mb-4">
                 {selectedBuilding.facilities.map((f: string) => (
-                  <span key={f} style={{
-                    padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 500,
-                    background: 'var(--card-bg-alt, #f1f5f9)', color: 'var(--text-secondary, #64748b)',
-                  }}>✓ {f}</span>
+                  <span key={f} className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400">
+                    ✓ {f}
+                  </span>
                 ))}
               </div>
             )}
 
             {/* Events in building */}
-            <h4 style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: 'var(--text-primary, #1e293b)' }}>
+            <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
               Events ({buildingEvents(selectedBuilding.id).length})
             </h4>
             {buildingEvents(selectedBuilding.id).length === 0 ? (
-              <p style={{ fontSize: 12, color: 'var(--text-secondary, #94a3b8)' }}>No active events here.</p>
+              <p className="text-xs text-slate-400">No active events here.</p>
             ) : buildingEvents(selectedBuilding.id).map(e => (
-              <div key={e.id} style={{
-                display: 'flex', gap: 10, padding: 10, borderRadius: 10, marginBottom: 6,
-                background: 'var(--card-bg-alt, #f8fafc)', border: '1px solid var(--border, #e2e8f0)',
-              }}>
-                <div style={{ width: 6, borderRadius: 3, background: CATEGORY_COLORS[e.category] || '#94a3b8', flexShrink: 0 }} />
+              <div key={e.id} className="flex gap-2.5 p-2.5 rounded-xl mb-1.5 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10">
+                <div className="w-1.5 rounded-sm flex-shrink-0" style={{ background: CATEGORY_COLORS[e.category] || '#94a3b8' }} />
                 <div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary, #1e293b)' }}>{e.title}</span>
-                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-secondary, #64748b)' }}>
+                  <span className="text-xs font-bold text-slate-800 dark:text-white">{e.title}</span>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
                     {new Date(e.starts_at).toLocaleString()} — by {e.creator_name || 'Unknown'}
                   </p>
                 </div>
@@ -325,12 +309,13 @@ export default function CampusMap({ user }: CampusMapProps) {
         )}
       </AnimatePresence>
 
-      {/* ── Create Event Modal ───────────────────────────────────── */}
-      {showCreateEvent && (
+      {/* ── Create Event Modal (triggered by map click) ───────────── */}
+      {pinBuilding && (
         <CreateEventModal
           buildings={buildings}
-          onClose={() => setShowCreateEvent(false)}
-          onCreated={() => { setShowCreateEvent(false); loadData(); }}
+          selectedBuilding={pinBuilding}
+          onClose={() => setPinBuilding(null)}
+          onCreated={() => { setPinBuilding(null); loadData(); }}
         />
       )}
 

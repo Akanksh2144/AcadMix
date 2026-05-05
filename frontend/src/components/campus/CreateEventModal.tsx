@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, MapPin, Calendar, Tag, Lightning, PaperPlaneTilt } from '@phosphor-icons/react';
+import { X, MapPin, Calendar, Tag, PaperPlaneTilt } from '@phosphor-icons/react';
 import api from '../../services/api';
 
 interface Building {
@@ -9,6 +9,7 @@ interface Building {
 
 interface CreateEventModalProps {
   buildings: Building[];
+  selectedBuilding?: Building | null;
   onClose: () => void;
   onCreated: () => void;
 }
@@ -23,13 +24,17 @@ const CATEGORIES = [
   { value: 'other', label: '📌 Other', color: '#94a3b8' },
 ];
 
-export default function CreateEventModal({ buildings, onClose, onCreated }: CreateEventModalProps) {
+export default function CreateEventModal({ buildings, selectedBuilding, onClose, onCreated }: CreateEventModalProps) {
   const [form, setForm] = useState({
-    title: '', description: '', building_id: '', category: 'other',
+    title: '', description: '',
+    building_id: selectedBuilding?.id || '',
+    category: 'other',
     starts_at: '', ends_at: '', contact_info: '', max_attendees: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const pinBuilding = selectedBuilding || buildings.find(b => b.id === form.building_id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +77,7 @@ export default function CreateEventModal({ buildings, onClose, onCreated }: Crea
         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
         onClick={e => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 500, maxHeight: '90vh', overflow: 'auto',
+          width: '100%', maxWidth: 480, maxHeight: '90vh', overflow: 'auto',
           borderRadius: 20, padding: 28, background: 'var(--card-bg, #fff)',
           boxShadow: '0 24px 64px rgba(0,0,0,0.15)',
         }}>
@@ -100,23 +105,55 @@ export default function CreateEventModal({ buildings, onClose, onCreated }: Crea
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Pinned Location Chip */}
+          <div>
+            <label style={labelStyle}><MapPin size={14} style={{ verticalAlign: -2 }} /> Pinned Location</label>
+            {pinBuilding ? (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                borderRadius: 12, border: `2px solid ${pinBuilding.color || '#6366f1'}44`,
+                background: `${pinBuilding.color || '#6366f1'}08`,
+              }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                  background: `${pinBuilding.color || '#6366f1'}18`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <MapPin size={16} weight="duotone" style={{ color: pinBuilding.color || '#6366f1' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary, #1e293b)' }}>
+                    {pinBuilding.name}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary, #94a3b8)', marginLeft: 8 }}>
+                    {pinBuilding.building_type}
+                  </span>
+                </div>
+                {!selectedBuilding && (
+                  <button type="button" onClick={() => setForm({ ...form, building_id: '' })} style={{
+                    width: 24, height: 24, borderRadius: 6, border: 'none', cursor: 'pointer',
+                    background: 'var(--card-bg-alt, #f1f5f9)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <select style={{ ...inputStyle, cursor: 'pointer' }}
+                value={form.building_id} onChange={e => setForm({ ...form, building_id: e.target.value })}>
+                <option value="">Select building...</option>
+                {buildings.filter(b => b.building_type !== 'gate' && b.building_type !== 'parking').map(b => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
           {/* Title */}
           <div>
             <label style={labelStyle}>Event Title *</label>
             <input style={inputStyle} placeholder="e.g. Dominos Party 🍕"
               value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
-          </div>
-
-          {/* Building */}
-          <div>
-            <label style={labelStyle}><MapPin size={14} style={{ verticalAlign: -2 }} /> Location *</label>
-            <select style={{ ...inputStyle, cursor: 'pointer' }}
-              value={form.building_id} onChange={e => setForm({ ...form, building_id: e.target.value })}>
-              <option value="">Select building...</option>
-              {buildings.filter(b => b.building_type !== 'gate' && b.building_type !== 'parking').map(b => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
           </div>
 
           {/* Category */}
