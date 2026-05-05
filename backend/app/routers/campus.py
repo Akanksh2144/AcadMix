@@ -18,7 +18,7 @@ from datetime import datetime
 from database import get_db
 from app.models.campus import CampusBuilding, CampusEvent, CampusEventApproval, Campus
 from app.models.core import College, Department
-from app.dependencies import get_current_user
+from app.core.security import get_current_user
 
 router = APIRouter(prefix="/campus", tags=["campus"])
 
@@ -95,12 +95,11 @@ APPROVAL_TRANSITIONS = {
 @router.get("/buildings", response_model=List[BuildingOut])
 async def get_campus_buildings(
     db: AsyncSession = Depends(get_db),
-    user=Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     """Get all buildings for the user's college campus."""
-    # Find campus_id from the user's college
     college = (await db.execute(
-        select(College).where(College.id == user.college_id)
+        select(College).where(College.id == user["college_id"])
     )).scalar_one_or_none()
 
     if not college or not college.campus_id:
@@ -161,13 +160,13 @@ async def get_campus_buildings(
 async def get_campus_events(
     status: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
-    user=Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     """Get visible events based on user's role and department."""
     from app.models.core import User, UserProfile
 
     college = (await db.execute(
-        select(College).where(College.id == user.college_id)
+        select(College).where(College.id == user["college_id"])
     )).scalar_one_or_none()
 
     if not college or not college.campus_id:
@@ -194,21 +193,23 @@ async def get_campus_events(
             CampusEvent.ends_at > now,
         )
 
+    user_role = user["role"]
+
     # Visibility filtering
-    if user.role not in ("principal", "director", "admin", "super_admin"):
+    if user_role not in ("principal", "director", "admin", "super_admin"):
         # Get user's department
         profile = (await db.execute(
-            select(UserProfile).where(UserProfile.user_id == user.id)
+            select(UserProfile).where(UserProfile.user_id == user["id"])
         )).scalar_one_or_none()
 
         user_dept = profile.department if profile else None
 
-        if user.role == "hod":
+        if user_role == "hod":
             # HOD sees their department events (any status) + college-wide approved
             if user_dept:
                 dept = (await db.execute(
                     select(Department).where(
-                        Department.college_id == user.college_id,
+                        Department.college_id == user["college_id"],
                         Department.code == user_dept,
                     )
                 )).scalar_one_or_none()
@@ -226,7 +227,7 @@ async def get_campus_events(
                     CampusEvent.visibility.in_(["college", "campus", "group"]),
                     and_(
                         CampusEvent.visibility == "department",
-                        CampusEvent.college_id == user.college_id,
+                        CampusEvent.college_id == user["college_id"],
                     ),
                 )
             )
@@ -281,13 +282,13 @@ async def get_campus_events(
 async def create_campus_event(
     data: EventCreate,
     db: AsyncSession = Depends(get_db),
-    user=Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     """Create a new event pinned to a building."""
     from app.models.core import UserProfile
 
     college = (await db.execute(
-        select(College).where(College.id == user.college_id)
+        select(College).where(College.id == user["college_id"])
     )).scalar_one_or_none()
 
     if not college or not college.campus_id:
@@ -307,14 +308,14 @@ async def create_campus_event(
 
     # Get user's department
     profile = (await db.execute(
-        select(UserProfile).where(UserProfile.user_id == user.id)
+        select(UserProfile).where(UserProfile.user_id == user["id"])
     )).scalar_one_or_none()
 
     dept_id = None
     if profile and profile.department:
         dept = (await db.execute(
             select(Department).where(
-                Department.college_id == user.college_id,
+                Department.college_id == user["college_id"],
                 Department.code == profile.department,
             )
         )).scalar_one_or_none()
@@ -326,9 +327,9 @@ async def create_campus_event(
         id=str(uuid.uuid4()),
         campus_id=college.campus_id,
         building_id=data.building_id,
-        college_id=user.college_id,
+        college_id=user["college_id"],
         department_id=dept_id,
-        created_by=user.id,
+        created_by=user["id"],
         title=data.title,
         description=data.description,
         category=data.category,
@@ -350,7 +351,7 @@ async def create_campus_event(
         college_id=event.college_id,
         department_id=event.department_id,
         created_by=event.created_by,
-        creator_name=user.name,
+        creator_name=user["name"],
         title=event.title,
         description=event.description,
         category=event.category,
@@ -369,7 +370,7 @@ async def approve_event(
     event_id: str,
     body: ApprovalAction,
     db: AsyncSession = Depends(get_db),
-    user=Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     """Approve an event to the next visibility level."""
     event = (await db.execute(
@@ -379,9 +380,9 @@ async def approve_event(
     if not event:
         raise HTTPException(404, "Event not found")
 
-    key = (event.status, user.role)
+    key = (event.status, user["role"])
     if key not in APPROVAL_TRANSITIONS:
-        raise HTTPException(403, f"Cannot approve: event is '{event.status}' and your role is '{user.role}'")
+        raise HTTPException(403, f"Cannot approve: event is '{event.status}' and your role is '{user['role']}'")
 
     next_status, new_visibility = APPROVAL_TRANSITIONS[key]
     event.status = next_status
@@ -391,8 +392,8 @@ async def approve_event(
     approval = CampusEventApproval(
         id=str(uuid.uuid4()),
         event_id=event_id,
-        approved_by=user.id,
-        role=user.role,
+        approved_by=user["id"],
+        role=user["role"],
         action="approved",
         comment=body.comment,
     )
@@ -407,7 +408,7 @@ async def reject_event(
     event_id: str,
     body: ApprovalAction,
     db: AsyncSession = Depends(get_db),
-    user=Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     """Reject an event."""
     event = (await db.execute(
@@ -417,7 +418,7 @@ async def reject_event(
     if not event:
         raise HTTPException(404, "Event not found")
 
-    if user.role not in ("hod", "principal", "director", "admin", "super_admin"):
+    if user["role"] not in ("hod", "principal", "director", "admin", "super_admin"):
         raise HTTPException(403, "Not authorized to reject events")
 
     event.status = "rejected"
@@ -426,8 +427,8 @@ async def reject_event(
     approval = CampusEventApproval(
         id=str(uuid.uuid4()),
         event_id=event_id,
-        approved_by=user.id,
-        role=user.role,
+        approved_by=user["id"],
+        role=user["role"],
         action="rejected",
         comment=body.comment,
     )
