@@ -229,15 +229,19 @@ const MECH_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: st
     { id: 'fl-pipe-rlc', label: 'Pipe Flow (RLC Analogy)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=lrc.txt', openLabel: 'Open in CircuitJS' },
   ],
   som: [
-    { id: 'som-python', label: 'Python (SOM)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'som-mohr', label: "Mohr's Circle", url: 'https://mechanicalc.com/calculators/mohrs-circle/', openLabel: 'Open Mechanicalc' },
     { id: 'som-beam', label: 'Beam Calculator', url: 'https://structurecalcs.com/beam', openLabel: 'Open Calculator' },
     { id: 'som-truss', label: 'Truss Solver', url: 'https://structurecalcs.com/truss', openLabel: 'Open Solver' },
+    { id: 'som-python', label: 'Python (SOM)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   machine_design: [
+    { id: 'md-4bar', label: '4-Bar Linkage Sim', url: 'https://mevirtuoso.com/four-bar-linkage-simulator/', openLabel: 'Open ME Virtuoso' },
     { id: 'md-python', label: 'Python (Mechanisms)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   manufacturing: [
-    { id: 'mfg-python', label: 'Python (G-code)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'mfg-ncviewer', label: 'G-code Viewer', url: 'https://ncviewer.com/', openLabel: 'Open NC Viewer' },
+    { id: 'mfg-gcodews', label: 'G-code Analyzer', url: 'https://gcode.ws/', openLabel: 'Open gCode.ws' },
+    { id: 'mfg-python', label: 'Python (CNC)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   mechatronics: [
     { id: 'mt-arduino', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
@@ -246,8 +250,8 @@ const MECH_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: st
     { id: 'mt-python', label: 'Python (Control)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   dynamics: [
-    { id: 'dy-python', label: 'Python (Vibrations)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'dy-spring-rlc', label: 'Spring-Mass (RLC)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=lrc.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'dy-python', label: 'Python (Vibrations)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   automotive: [
     { id: 'au-python', label: 'Python (Engines)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
