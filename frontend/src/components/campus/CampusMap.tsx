@@ -204,12 +204,12 @@ export default function CampusMap({ user }: CampusMapProps) {
                       gridRow: `${b.grid_y + 1} / span ${b.grid_h}`,
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                       gap: 2, padding: 4, cursor: 'pointer', position: 'relative', overflow: 'hidden',
-                      borderRadius: isSports ? 8 : 5,
-                      background: isSelected ? `${b.color}35` : `${b.color || '#6366f1'}20`,
-                      border: `1.5px solid ${b.color || '#6366f1'}${isSelected ? '60' : '40'}`,
+                      background: isSelected ? `${b.color}50` : `${b.color || '#6366f1'}30`,
+                      border: 'none',
+                      borderRadius: 0,
                       boxShadow: isSelected
-                        ? `0 0 0 2px ${b.color}30, 0 2px 8px ${b.color}20`
-                        : '0 1px 3px rgba(0,0,0,0.06)',
+                        ? `0 0 0 2px ${b.color}60, 0 2px 8px ${b.color}30`
+                        : 'none',
                       transition: 'all 0.15s ease',
                     }}
                   >
@@ -225,10 +225,10 @@ export default function CampusMap({ user }: CampusMapProps) {
                     <IconComp size={isLarge ? 14 : 10} weight="duotone" style={{ color: b.color || '#6366f1', flexShrink: 0 }} />
                     <span style={{
                       fontSize: isLarge ? 8 : 6.5, fontWeight: 800, textAlign: 'center', lineHeight: 1.1,
-                      color: b.color || '#6366f1', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
+                      color: 'var(--text-primary, #1e293b)', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
                     }}>{b.short_name}</span>
                     {isLarge && (
-                      <span style={{ fontSize: 6, fontWeight: 600, color: b.color || '#6366f1', opacity: 0.7, textAlign: 'center', lineHeight: 1.1 }}>
+                      <span style={{ fontSize: 6, fontWeight: 600, color: 'var(--text-muted, #64748b)', textAlign: 'center', lineHeight: 1.1 }}>
                         {b.name}
                       </span>
                     )}
