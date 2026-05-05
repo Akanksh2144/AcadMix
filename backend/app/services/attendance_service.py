@@ -103,9 +103,23 @@ class AttendanceService:
         self.session.add_all(records)
         await log_audit(self.session, user["id"], "attendance", "mark_batch", 
                         {"slot_id": slot.id, "date": req.date, "is_late": is_late_entry, "count": len(records)})
+
+        # ── Record topic coverage if topics were selected ──────────────────
+        topics_covered = 0
+        if hasattr(req, 'covered_topic_ids') and req.covered_topic_ids:
+            from app.services.syllabus_service import SyllabusService
+            syl_svc = SyllabusService(self.session)
+            topics_covered = await syl_svc.record_coverage(
+                topic_ids=req.covered_topic_ids,
+                faculty_id=user["id"],
+                period_slot_id=slot.id,
+                date_str=req.date,
+                college_id=user["college_id"],
+            )
+
         await self.session.commit()
         
-        return {"message": f"Successfully marked attendance for {len(records)} students", "is_late_entry": is_late_entry}
+        return {"message": f"Successfully marked attendance for {len(records)} students", "is_late_entry": is_late_entry, "topics_covered": topics_covered}
 
     async def get_student_consolidated(self, student_id: str) -> List[Dict[str, Any]]:
         stmt = text("""

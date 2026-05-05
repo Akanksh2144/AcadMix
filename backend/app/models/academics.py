@@ -261,3 +261,69 @@ class StudentProgression(Base, SoftDeleteMixin):
     )
 
 
+# ─── Phase 8: Syllabus Tracker ───────────────────────────────────────────────
+
+
+class SyllabusUnit(Base, SoftDeleteMixin):
+    """Master syllabus: Unit breakdown for a course.
+    Typically 5 units per course (JNTUH regulation).
+    Faculty creates manually, pre-seeded from regulation PDFs, or AI-parsed from uploads.
+    """
+    __tablename__ = "syllabus_units"
+    id            = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id    = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    course_id     = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    unit_no       = Column(Integer, nullable=False)            # 1, 2, 3, 4, 5
+    title         = Column(String, nullable=False)             # "Thermodynamics - First Law"
+    total_hours   = Column(Integer, nullable=False, default=0) # planned teaching hours
+    created_by    = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at    = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("course_id", "unit_no", name="uq_syllabus_unit"),
+        Index("ix_syllabus_unit_course", "college_id", "course_id"),
+    )
+
+
+class SyllabusTopic(Base, SoftDeleteMixin):
+    """Topics within each unit. Maps to Course Outcomes for NAAC.
+    Ordered by topic_no within the parent unit.
+    """
+    __tablename__ = "syllabus_topics"
+    id         = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    unit_id    = Column(String, ForeignKey("syllabus_units.id", ondelete="CASCADE"), nullable=False)
+    topic_no   = Column(Integer, nullable=False)               # ordering within unit
+    title      = Column(String, nullable=False)                # "Zeroth Law and Temperature Scales"
+    hours      = Column(Integer, nullable=False, default=1)    # planned hours for this topic
+    co_id      = Column(String, ForeignKey("course_outcomes.id", ondelete="SET NULL"), nullable=True) # maps to CO for NAAC
+
+    __table_args__ = (
+        UniqueConstraint("unit_id", "topic_no", name="uq_syllabus_topic"),
+        Index("ix_syllabus_topic_unit", "unit_id"),
+    )
+
+
+class TopicCoverage(Base, SoftDeleteMixin):
+    """Tracks which topics were covered in which period slot, by which faculty.
+    Created when faculty selects topics during attendance marking.
+    Separate from SyllabusTopic (not a boolean) because:
+    - Same topic can be taught to different sections by different faculty
+    - Full audit trail: who covered what, when
+    - Revision classes: same topic can be covered multiple times
+    """
+    __tablename__ = "topic_coverage"
+    id              = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id      = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    topic_id        = Column(String, ForeignKey("syllabus_topics.id", ondelete="CASCADE"), nullable=False)
+    faculty_id      = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    period_slot_id  = Column(String, ForeignKey("period_slots.id", ondelete="RESTRICT"), nullable=False)
+    date            = Column(Date, nullable=False)
+    remarks         = Column(String, nullable=True)
+    created_at      = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("topic_id", "faculty_id", "date", name="uq_topic_coverage"),
+        Index("ix_topic_coverage_faculty_date", "faculty_id", "date"),
+        Index("ix_topic_coverage_college", "college_id"),
+    )

@@ -9,6 +9,7 @@ from app.routers import (
     interview, resume, hostel, career_tools, iot_webhooks, transport, transport_admin, library,
     visitors, websocket, notifications, audit, insights, pre_enroll, modules, resume_vault, outcomes, assessments, placement_prep, accreditation
 )
+from app.api.v1.endpoints import syllabus as syllabus_endpoints
 from app.routers import nodal_routes, superadmin
 
 api_router = APIRouter()
@@ -65,6 +66,7 @@ api_router.include_router(parents.router, tags=["parents"])
 api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(leaves.router, tags=["leaves"])
 api_router.include_router(attendance.router, tags=["attendance"])
+api_router.include_router(syllabus_endpoints.router, tags=["syllabus"])
 api_router.include_router(cia.router, tags=["cia"])
 api_router.include_router(marks.router, tags=["marks"])
 api_router.include_router(websocket.router, tags=["websocket"])

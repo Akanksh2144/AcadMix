@@ -315,6 +315,15 @@ export const attendanceAPI = {
   getHodDefaulters: (departmentId, threshold) => api.get('/hod/attendance/defaulters', { params: { department_id: departmentId, threshold } }),
 };
 
+// Syllabus Tracker
+export const syllabusAPI = {
+  getTopicsBySubject: (subjectCode) => api.get(`/syllabus/topics-by-subject/${subjectCode}`),
+  getSyllabus: (courseId) => api.get(`/syllabus/${courseId}`),
+  upsertSyllabus: (courseId, data) => api.post(`/syllabus/${courseId}`, data),
+  hodCoverage: () => api.get('/hod/syllabus/coverage'),
+  principalCoverage: () => api.get('/principal/syllabus/coverage'),
+};
+
 // Leave Management
 export const leaveAPI = {
   apply: (data) => api.post('/leave/apply', data),

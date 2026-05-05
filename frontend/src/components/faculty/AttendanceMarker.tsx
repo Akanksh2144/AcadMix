@@ -1,22 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { timetableAPI, attendanceAPI } from '../../services/api';
+import { timetableAPI, attendanceAPI, syllabusAPI } from '../../services/api';
 import { useToast } from '../../hooks/use-toast';
-import { ClipboardText, ArrowLeft, Check, X as XIcon, UserCircle, CalendarCheck, Clock, Users } from '@phosphor-icons/react';
+import { ClipboardText, ArrowLeft, Check, X as XIcon, UserCircle, CalendarCheck, Clock, Users, BookOpenText, CaretDown, CaretUp, CheckCircle } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+interface PeriodSlot {
+  id: string;
+  period_no: number;
+  start_time: string;
+  end_time: string;
+  subject_code: string;
+  subject_name?: string;
+  batch: string;
+  section: string;
+  room?: string;
+}
+
+interface Student {
+  id: string;
+  name: string;
+  rollNo: string;
+}
+
+interface SyllabusTopic {
+  id: string;
+  topic_no: number;
+  title: string;
+  hours: number;
+}
+
+interface SyllabusUnit {
+  unit_id: string;
+  unit_no: number;
+  unit_title: string;
+  topics: SyllabusTopic[];
+}
+
+interface AttendanceMarkerProps {
+  user: {
+    id: string;
+    name: string;
+    role: string;
+    college_id: string;
+  };
+}
 
 const cardVariants = {
   hidden: { opacity: 0, y: 16 },
   show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
 };
 
-export default function AttendanceMarker({ user }) {
-  const [todayPeriods, setTodayPeriods] = useState([]);
+export default function AttendanceMarker({ user }: AttendanceMarkerProps) {
+  const [todayPeriods, setTodayPeriods] = useState<PeriodSlot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSlot, setSelectedSlot] = useState(null);
-  const [students, setStudents] = useState([]);
-  const [attendanceState, setAttendanceState] = useState({});
+  const [selectedSlot, setSelectedSlot] = useState<PeriodSlot | null>(null);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [attendanceState, setAttendanceState] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+
+  // Syllabus topic states
+  const [syllabusUnits, setSyllabusUnits] = useState<SyllabusUnit[]>([]);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
+  const [topicSelectorOpen, setTopicSelectorOpen] = useState(false);
+  const [loadingTopics, setLoadingTopics] = useState(false);
 
   useEffect(() => { fetchTodayPeriods(); }, []);
 
@@ -36,9 +83,23 @@ export default function AttendanceMarker({ user }) {
     } finally { setLoading(false); }
   };
 
-  const handleSelectSlot = (slot) => {
+  const fetchSyllabusTopics = async (subjectCode: string) => {
+    setLoadingTopics(true);
+    try {
+      const res = await syllabusAPI.getTopicsBySubject(subjectCode);
+      setSyllabusUnits(res.data || []);
+    } catch {
+      setSyllabusUnits([]);
+    } finally { setLoadingTopics(false); }
+  };
+
+  const handleSelectSlot = (slot: PeriodSlot) => {
     setSelectedSlot(slot);
-    const mockStudents = [
+    setSelectedTopicIds([]);
+    setTopicSelectorOpen(false);
+    fetchSyllabusTopics(slot.subject_code);
+
+    const mockStudents: Student[] = [
       { id: 'S001', name: 'Aarav Patel', rollNo: '22WJ1A0501' },
       { id: 'S002', name: 'Diya Sharma', rollNo: '22WJ1A0502' },
       { id: 'S003', name: 'Kabir Singh', rollNo: '22WJ1A0503' },
@@ -46,25 +107,36 @@ export default function AttendanceMarker({ user }) {
       { id: 'S005', name: 'Rohan Verma', rollNo: '22WJ1A0505' },
     ];
     setStudents(mockStudents);
-    const defaultState = {};
+    const defaultState: Record<string, string> = {};
     mockStudents.forEach(s => defaultState[s.id] = 'present');
     setAttendanceState(defaultState);
   };
 
-  const toggleStudent = (studentId, status) => {
+  const toggleStudent = (studentId: string, status: string) => {
     setAttendanceState(prev => ({ ...prev, [studentId]: status }));
+  };
+
+  const toggleTopic = (topicId: string) => {
+    setSelectedTopicIds(prev =>
+      prev.includes(topicId)
+        ? prev.filter(id => id !== topicId)
+        : [...prev, topicId]
+    );
   };
 
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
       await attendanceAPI.mark({
-        period_slot_id: selectedSlot.id,
+        period_slot_id: selectedSlot!.id,
         date: new Date().toISOString().split('T')[0],
-        records: Object.entries(attendanceState).map(([student_id, status]) => ({ student_id, status }))
+        entries: Object.entries(attendanceState).map(([student_id, status]) => ({ student_id, status })),
+        covered_topic_ids: selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
       });
-      toast({ title: 'Attendance Saved', description: 'Records successfully logged.' });
+      toast({ title: 'Attendance Saved', description: `Records logged${selectedTopicIds.length ? ` · ${selectedTopicIds.length} topic(s) marked` : ''}.` });
       setSelectedSlot(null);
+      setSyllabusUnits([]);
+      setSelectedTopicIds([]);
     } catch (err) {
       toast({ title: 'Saved (Demo)', description: 'Mock submission — backend may not be connected.', variant: 'default' });
       setSelectedSlot(null);
@@ -182,7 +254,7 @@ export default function AttendanceMarker({ user }) {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setSelectedSlot(null)}
+                    onClick={() => { setSelectedSlot(null); setSyllabusUnits([]); setSelectedTopicIds([]); }}
                     className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors"
                   >
                     <ArrowLeft size={18} weight="bold" />
@@ -198,13 +270,13 @@ export default function AttendanceMarker({ user }) {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => { const s = {}; students.forEach(st => s[st.id] = 'absent'); setAttendanceState(s); }}
+                    onClick={() => { const s: Record<string, string> = {}; students.forEach(st => s[st.id] = 'absent'); setAttendanceState(s); }}
                     className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
                   >
                     Mark All Absent
                   </button>
                   <button
-                    onClick={() => { const s = {}; students.forEach(st => s[st.id] = 'present'); setAttendanceState(s); }}
+                    onClick={() => { const s: Record<string, string> = {}; students.forEach(st => s[st.id] = 'present'); setAttendanceState(s); }}
                     className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 shadow-md shadow-emerald-500/20 transition-colors"
                   >
                     Mark All Present
@@ -212,6 +284,115 @@ export default function AttendanceMarker({ user }) {
                 </div>
               </div>
             </div>
+
+            {/* ── Topic Selector (NEW) ─────────── */}
+            {syllabusUnits.length > 0 && (
+              <div className="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-white/[0.06] bg-indigo-50/50 dark:bg-indigo-500/[0.04]">
+                <button
+                  onClick={() => setTopicSelectorOpen(!topicSelectorOpen)}
+                  className="flex items-center justify-between w-full group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center">
+                      <BookOpenText size={16} weight="duotone" className="text-indigo-500" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-slate-800 dark:text-white">
+                        Topics Covered This Period
+                      </p>
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        {selectedTopicIds.length > 0
+                          ? `${selectedTopicIds.length} topic${selectedTopicIds.length > 1 ? 's' : ''} selected`
+                          : 'Select topics taught in this class'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {selectedTopicIds.length > 0 && (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-indigo-500 text-white">
+                        {selectedTopicIds.length}
+                      </span>
+                    )}
+                    {topicSelectorOpen
+                      ? <CaretUp size={16} weight="bold" className="text-slate-400" />
+                      : <CaretDown size={16} weight="bold" className="text-slate-400" />
+                    }
+                  </div>
+                </button>
+
+                <AnimatePresence>
+                  {topicSelectorOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-3 max-h-64 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                        {syllabusUnits.map(unit => (
+                          <div key={unit.unit_id}>
+                            <p className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5">
+                              Unit {unit.unit_no}: {unit.unit_title}
+                            </p>
+                            <div className="space-y-1">
+                              {unit.topics.map(topic => {
+                                const isSelected = selectedTopicIds.includes(topic.id);
+                                return (
+                                  <button
+                                    key={topic.id}
+                                    onClick={() => toggleTopic(topic.id)}
+                                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all duration-150 ${
+                                      isSelected
+                                        ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20'
+                                        : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 border border-slate-100 dark:border-white/[0.06]'
+                                    }`}
+                                  >
+                                    <div className={`w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                                      isSelected ? 'bg-white/20' : 'bg-slate-100 dark:bg-white/10'
+                                    }`}>
+                                      {isSelected && <Check size={12} weight="bold" className="text-white" />}
+                                    </div>
+                                    <span className="text-xs font-semibold flex-1 truncate">
+                                      {topic.topic_no}. {topic.title}
+                                    </span>
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                                      isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400'
+                                    }`}>
+                                      {topic.hours}h
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* Show a subtle hint if no syllabus is defined */}
+            {syllabusUnits.length === 0 && !loadingTopics && (
+              <div className="px-5 sm:px-6 py-3 border-b border-slate-100 dark:border-white/[0.06] bg-amber-50/50 dark:bg-amber-500/[0.03]">
+                <div className="flex items-center gap-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+                  <BookOpenText size={14} weight="duotone" />
+                  No syllabus defined for this subject — topic tracking will be skipped
+                </div>
+              </div>
+            )}
+
+            {loadingTopics && (
+              <div className="px-5 sm:px-6 py-3 border-b border-slate-100 dark:border-white/[0.06]">
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                  <div className="w-3 h-3 rounded-full bg-indigo-500 animate-pulse" />
+                  Loading syllabus topics...
+                </div>
+              </div>
+            )}
 
             {/* Student Roster */}
             <div className="divide-y divide-slate-50 dark:divide-white/[0.04]">
@@ -280,6 +461,11 @@ export default function AttendanceMarker({ user }) {
                 <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
                   <div className="w-2.5 h-2.5 rounded-full bg-amber-500" /> {odCount} On Duty
                 </span>
+                {selectedTopicIds.length > 0 && (
+                  <span className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400">
+                    <BookOpenText size={14} weight="duotone" /> {selectedTopicIds.length} Topics
+                  </span>
+                )}
               </div>
               <button
                 disabled={submitting}

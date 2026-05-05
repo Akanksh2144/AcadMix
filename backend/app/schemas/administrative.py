@@ -20,6 +20,7 @@ class AttendanceMarkBatch(BaseModel):
     period_slot_id: str
     date: str          # "YYYY-MM-DD"
     entries: List[AttendanceMarkItem]
+    covered_topic_ids: Optional[List[str]] = None  # syllabus topic IDs covered this period
 
 
 class LeaveApply(BaseModel):
