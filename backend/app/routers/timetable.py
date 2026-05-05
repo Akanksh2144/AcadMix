@@ -111,6 +111,158 @@ async def get_department_timetable(
     } for s in slots]
 
 
+class SubjectAllocation(BaseModel):
+    subject_code: str
+    subject_name: str
+    faculty_id: str
+    hours_per_week: int
+    is_lab: bool
+
+class GenerateTimetableRequest(BaseModel):
+    department_id: str
+    batch: str
+    section: str
+    academic_year: str
+    semester: int
+    allocations: List[SubjectAllocation]
+
+
+@router.post("/hod/timetable/generate")
+async def generate_timetable(
+    req: GenerateTimetableRequest,
+    user: dict = Depends(require_role("hod", "admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    from app.models.core import College
+    # 1. Fetch config
+    res = await session.execute(select(College).where(College.id == user["college_id"]))
+    college = res.scalars().first()
+    settings = college.settings or {}
+    config = settings.get("timetable_config", {
+        "periods_per_day": 8,
+        "working_days": ["MON", "TUE", "WED", "THU", "FRI"],
+        "lab_consecutive_periods": 3,
+        "breaks": [{"type": "lunch", "after_period": 4, "duration_mins": 60}]
+    })
+
+    periods_per_day = config["periods_per_day"]
+    working_days = config["working_days"]
+    lab_len = config["lab_consecutive_periods"]
+    breaks = [b["after_period"] for b in config["breaks"]]
+
+    # 2. Fetch global faculty usage for this academic year
+    exist_res = await session.execute(
+        select(models.PeriodSlot).where(
+            models.PeriodSlot.college_id == user["college_id"],
+            models.PeriodSlot.academic_year == req.academic_year
+        )
+    )
+    existing_slots = exist_res.scalars().all()
+
+    faculty_map = {}
+    for s in existing_slots:
+        if not s.faculty_id: continue
+        if s.faculty_id not in faculty_map:
+            faculty_map[s.faculty_id] = {}
+        if s.day not in faculty_map[s.faculty_id]:
+            faculty_map[s.faculty_id][s.day] = set()
+        faculty_map[s.faculty_id][s.day].add(s.period_no)
+
+    section_map = {day: set() for day in working_days}
+
+    # Validate break crossing
+    def crosses_break(start_p, length):
+        for b in breaks:
+            if start_p <= b < start_p + length - 1:
+                return True
+        return False
+
+    generated = []
+    
+    # helper to check faculty free
+    def is_faculty_free(fac_id, day, period):
+        return period not in faculty_map.get(fac_id, {}).get(day, set())
+
+    # 3. Schedule Labs
+    labs = [a for a in req.allocations if a.is_lab]
+    for lab in labs:
+        blocks_needed = max(1, lab.hours_per_week // lab_len)
+        placed_blocks = 0
+        for day in working_days:
+            if placed_blocks >= blocks_needed: break
+            
+            for start_p in range(1, periods_per_day - lab_len + 2):
+                if crosses_break(start_p, lab_len): continue
+                
+                # check section & faculty free
+                free = True
+                for p in range(start_p, start_p + lab_len):
+                    if p in section_map[day] or not is_faculty_free(lab.faculty_id, day, p):
+                        free = False
+                        break
+                
+                if free:
+                    for p in range(start_p, start_p + lab_len):
+                        section_map[day].add(p)
+                        if lab.faculty_id not in faculty_map: faculty_map[lab.faculty_id] = {}
+                        if day not in faculty_map[lab.faculty_id]: faculty_map[lab.faculty_id][day] = set()
+                        faculty_map[lab.faculty_id][day].add(p)
+                        
+                        generated.append({
+                            "department_id": req.department_id,
+                            "batch": req.batch, "section": req.section,
+                            "semester": req.semester, "academic_year": req.academic_year,
+                            "day": day, "period_no": p,
+                            "start_time": "", "end_time": "", # Handled by UI template mapping
+                            "subject_code": lab.subject_code, "subject_name": lab.subject_name,
+                            "faculty_id": lab.faculty_id, "slot_type": "lab"
+                        })
+                    placed_blocks += 1
+                    break
+        
+        if placed_blocks < blocks_needed:
+            raise HTTPException(400, f"Unresolvable Conflict: Cannot find free contiguous slots for Lab: {lab.subject_name} ({lab.faculty_id}). Adjust allocations or college config.")
+
+    # 4. Schedule Theory
+    theory = [a for a in req.allocations if not a.is_lab]
+    for th in theory:
+        placed_hours = 0
+        
+        # Max 2 periods per day for same subject
+        daily_counts = {day: 0 for day in working_days}
+        
+        for _ in range(th.hours_per_week):
+            placed = False
+            for day in working_days:
+                if daily_counts[day] >= 2: continue
+                if placed: break
+                
+                for p in range(1, periods_per_day + 1):
+                    if p not in section_map[day] and is_faculty_free(th.faculty_id, day, p):
+                        # Place!
+                        section_map[day].add(p)
+                        if th.faculty_id not in faculty_map: faculty_map[th.faculty_id] = {}
+                        if day not in faculty_map[th.faculty_id]: faculty_map[th.faculty_id][day] = set()
+                        faculty_map[th.faculty_id][day].add(p)
+                        
+                        generated.append({
+                            "department_id": req.department_id,
+                            "batch": req.batch, "section": req.section,
+                            "semester": req.semester, "academic_year": req.academic_year,
+                            "day": day, "period_no": p,
+                            "start_time": "", "end_time": "", 
+                            "subject_code": th.subject_code, "subject_name": th.subject_name,
+                            "faculty_id": th.faculty_id, "slot_type": "regular"
+                        })
+                        daily_counts[day] += 1
+                        placed = True
+                        break
+            if not placed:
+                raise HTTPException(400, f"Unresolvable Conflict: Cannot schedule {th.subject_name} for faculty {th.faculty_id}. The faculty is completely booked across the college.")
+                
+    return {"slots": generated}
+
+
 @router.get("/faculty/timetable/today")
 async def get_faculty_today_timetable(
     week: bool = False,

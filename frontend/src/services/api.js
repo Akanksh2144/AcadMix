@@ -7,7 +7,7 @@ if (API_URL && !API_URL.endsWith('/api')) {
   API_URL = '/api';
 }
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: API_URL,
   headers: { 
     'Content-Type': 'application/json',
@@ -278,8 +278,8 @@ export const studentAPI = {
 
 // Timetable (HOD & Faculty)
 export const timetableAPI = {
-  getHod: (departmentId, batch, semester) => api.get('/hod/timetable', { params: { department_id: departmentId, batch, semester } }),
-  saveHod: (slots) => api.put('/hod/timetable/slots', slots),
+  getHod: (departmentId, batch, section, academicYear) => api.get('/hod/timetable', { params: { department_id: departmentId, batch, section, academic_year: academicYear } }),
+  saveHod: (data) => api.put('/hod/timetable/slots', data),
   delete: (slotId) => api.delete(`/timetable/${slotId}`),
   getFacultyToday: () => api.get('/faculty/timetable/today'),
   getFacultyWeek: () => api.get('/faculty/timetable/today', { params: { week: true } }),

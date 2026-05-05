@@ -146,6 +146,53 @@ async def export_college_data(
     return await svc.export_college_data(admin["college_id"])
 
 
+@router.get("/admin/college/settings")
+async def get_college_settings(
+    admin: dict = Depends(require_role("admin", "principal")),
+    session: AsyncSession = Depends(get_db)
+):
+    from app.models.core import College
+    from sqlalchemy.future import select
+    from fastapi import HTTPException
+    
+    result = await session.execute(select(College).where(College.id == admin["college_id"]))
+    college = result.scalars().first()
+    if not college:
+        raise HTTPException(status_code=404, detail="College not found")
+        
+    return {"settings": college.settings or {}}
+
+
+@router.put("/admin/college/settings")
+async def update_college_settings(
+    settings: dict = Body(...),
+    admin: dict = Depends(require_role("admin", "principal")),
+    session: AsyncSession = Depends(get_db)
+):
+    from app.models.core import College
+    from sqlalchemy.future import select
+    from fastapi import HTTPException
+    
+    # Fetch college
+    result = await session.execute(select(College).where(College.id == admin["college_id"]))
+    college = result.scalars().first()
+    if not college:
+        raise HTTPException(status_code=404, detail="College not found")
+        
+    # Update settings
+    current_settings = college.settings or {}
+    for k, v in settings.items():
+        current_settings[k] = v
+        
+    college.settings = current_settings
+    
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(college, "settings")
+    
+    await session.commit()
+    return {"message": "College settings updated", "settings": current_settings}
+
+
 def get_gdpr_service(session: AsyncSession = Depends(get_db)):
     from app.services.gdpr_service import GDPRService
     return GDPRService(session)

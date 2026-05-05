@@ -17,6 +17,7 @@ import InsightsChat from '../components/insights/InsightsChat';
 import InsightsCanvas from '../components/insights/InsightsCanvas';
 import CampusLayoutDesigner from '../components/campus/CampusLayoutDesigner';
 import CampusMap from '../components/campus/CampusMap';
+import TimetableSettings from '../components/admin/TimetableSettings';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -253,7 +254,8 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
               { id: 'experts', label: 'Expert Management' },
               { id: 'insights', label: 'AI Insights' },
               { id: 'campus-map', label: 'Campus Map' },
-              { id: 'campus-layout', label: 'Campus Designer' }
+              { id: 'campus-layout', label: 'Campus Designer' },
+              { id: 'timetable-settings', label: 'Timetable Settings' }
             ].map(tab => (
               <button 
                 key={tab.id} 
@@ -657,6 +659,14 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
           <motion.div data-testid="campus-layout-content" variants={containerVariants} initial="hidden" animate="show">
             <motion.div variants={itemVariants}>
               <CampusLayoutDesigner onPreviewToggle={() => setActiveTab('campus-map')} />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === 'timetable-settings' && (
+          <motion.div data-testid="timetable-settings-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <TimetableSettings />
             </motion.div>
           </motion.div>
         )}
