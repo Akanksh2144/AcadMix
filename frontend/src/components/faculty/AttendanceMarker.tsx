@@ -64,6 +64,7 @@ export default function AttendanceMarker({ user }: AttendanceMarkerProps) {
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [topicSelectorOpen, setTopicSelectorOpen] = useState(false);
   const [loadingTopics, setLoadingTopics] = useState(false);
+  const [activeUnitId, setActiveUnitId] = useState<string | null>(null);
 
   useEffect(() => { fetchTodayPeriods(); }, []);
 
@@ -97,6 +98,7 @@ export default function AttendanceMarker({ user }: AttendanceMarkerProps) {
     setSelectedSlot(slot);
     setSelectedTopicIds([]);
     setTopicSelectorOpen(false);
+    setActiveUnitId(null);
     fetchSyllabusTopics(slot.subject_code);
 
     const mockStudents: Student[] = [
@@ -330,10 +332,41 @@ export default function AttendanceMarker({ user }: AttendanceMarkerProps) {
                       transition={{ duration: 0.25 }}
                       className="overflow-hidden"
                     >
-                      <div className="mt-3 max-h-64 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
-                        {syllabusUnits.map(unit => (
-                          <div key={unit.unit_id}>
-                            <p className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5">
+                      {/* ── Unit Pill Tabs ─────────── */}
+                      <div className="mt-3 flex items-center gap-1.5 p-1 bg-white/80 dark:bg-white/[0.04] rounded-full border border-slate-200/60 dark:border-white/[0.06] overflow-x-auto hide-scrollbar">
+                        {syllabusUnits.map(unit => {
+                          const isActive = activeUnitId === unit.unit_id;
+                          const unitSelectedCount = unit.topics.filter(t => selectedTopicIds.includes(t.id)).length;
+                          return (
+                            <button
+                              key={unit.unit_id}
+                              onClick={() => setActiveUnitId(isActive ? null : unit.unit_id)}
+                              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200 ${
+                                isActive
+                                  ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25'
+                                  : 'text-slate-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-300'
+                              }`}
+                            >
+                              Unit {unit.unit_no}
+                              {unitSelectedCount > 0 && (
+                                <span className={`w-4 h-4 rounded-full text-[9px] font-extrabold flex items-center justify-center ${
+                                  isActive ? 'bg-white/25 text-white' : 'bg-indigo-500 text-white'
+                                }`}>
+                                  {unitSelectedCount}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* ── Active Unit Title + Topics ─────────── */}
+                      {activeUnitId && (() => {
+                        const unit = syllabusUnits.find(u => u.unit_id === activeUnitId);
+                        if (!unit) return null;
+                        return (
+                          <div className="mt-3">
+                            <p className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-2">
                               Unit {unit.unit_no}: {unit.unit_title}
                             </p>
                             <div className="space-y-1">
@@ -367,8 +400,17 @@ export default function AttendanceMarker({ user }: AttendanceMarkerProps) {
                               })}
                             </div>
                           </div>
-                        ))}
-                      </div>
+                        );
+                      })()}
+
+                      {/* Hint when no unit selected */}
+                      {!activeUnitId && (
+                        <div className="mt-3 py-6 text-center">
+                          <p className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                            Select a unit above to view its topics
+                          </p>
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
