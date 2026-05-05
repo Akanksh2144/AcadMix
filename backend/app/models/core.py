@@ -31,6 +31,8 @@ class College(Base, SoftDeleteMixin):
     name = Column(String, nullable=False)
     domain = Column(String, nullable=True)
     settings = Column(JSONB, nullable=False, server_default='{}')
+    group_id = Column(String, ForeignKey("college_groups.id"), nullable=True)
+    campus_id = Column(String, ForeignKey("campuses.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

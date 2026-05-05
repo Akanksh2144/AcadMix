@@ -63,6 +63,7 @@ const TransportAdminDashboard = React.lazy(() => import('./pages/TransportAdminD
 const LibrarianDashboard = React.lazy(() => import('./pages/LibrarianDashboard'));
 const SecurityDashboard = React.lazy(() => import('./pages/SecurityDashboard'));
 const VisitorManagement = React.lazy(() => import('./pages/VisitorManagement'));
+const DirectorDashboard = React.lazy(() => import('./pages/DirectorDashboard'));
 
 
 
@@ -122,6 +123,7 @@ const PAGE_TO_PATH = {
   'hardware-arena': '/hardware-arena',
   'visitor-management': '/visitors',
   'student-profile': '/student/profile',
+  'director-dashboard': '/director',
 
 };
 
@@ -143,6 +145,7 @@ const ROLE_DASHBOARD = {
   transport_admin: '/transport-admin',
   librarian: '/librarian',
   security: '/security',
+  director: '/director',
 };
 
 
@@ -309,6 +312,11 @@ function AppRoutes({ user, onLogin, onLogout }) {
       <Route path="/security" element={
         <ProtectedRoute user={user} allowedRoles={['security']}>
           <VisitorManagement navigate={navigate} user={user} onLogout={onLogout} />
+        </ProtectedRoute>
+      } />
+      <Route path="/director" element={
+        <ProtectedRoute user={user} allowedRoles={['director']}>
+          <DirectorDashboard navigate={navigate} user={user} onLogout={onLogout} />
         </ProtectedRoute>
       } />
 

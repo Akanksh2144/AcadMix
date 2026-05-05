@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Trophy, ChartLine, Fire, BookOpen, Calendar, Target, SignOut, Terminal, ArrowRight, GraduationCap, Play, Medal, Lightning, Warning, Bell, Exam, Briefcase, Sun, Moon, CalendarDots, Chalkboard, UserCircle, ListBullets, Microphone, House, FileText, Toolbox, Bus } from '@phosphor-icons/react';
+import { Clock, Trophy, ChartLine, Fire, BookOpen, Calendar, Target, SignOut, Terminal, ArrowRight, GraduationCap, Play, Medal, Lightning, Warning, Bell, Exam, Briefcase, Sun, Moon, CalendarDots, Chalkboard, UserCircle, ListBullets, Microphone, House, FileText, Toolbox, Bus, MapPin } from '@phosphor-icons/react';
 import { analyticsAPI, interviewAPI, resumeAPI, notificationsAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
@@ -28,6 +28,7 @@ const getGreeting = () => {
 // Lazy load heavy components
 const WeakTopicsChart = React.lazy(() => import('../components/student/WeakTopicsChart'));
 const LazyLottie = React.lazy(() => import('../components/LazyLottie'));
+const CampusMap = React.lazy(() => import('../components/campus/CampusMap'));
 
 /* ── Time-ago helper ──────────────────────────────────── */
 const timeAgo = (ts) => {
@@ -348,6 +349,7 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
               { id: 'subjects', label: 'Subjects' },
               { id: 'calendar', label: 'Calendar' },
               { id: 'transport', label: 'Transport' },
+              { id: 'campus', label: 'Campus' },
               { id: 'fees', label: 'Fees & Payments' },
             ].map(tab => {
               const hasBadge = (tab.id === 'quizzes' && showQuizBadge) || (tab.id === 'fees' && showFeesBadge);
@@ -697,6 +699,12 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
         {activeTab === 'calendar' && <StudentAcademicCalendar />}
 
         {activeTab === 'transport' && <StudentTransport />}
+
+        {activeTab === 'campus' && (
+          <React.Suspense fallback={<div style={{display:'flex',justifyContent:'center',padding:32}}><div style={{width:32,height:32,border:'3px solid #6366f1',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite'}}/></div>}>
+            <CampusMap user={user} navigate={navigate} />
+          </React.Suspense>
+        )}
 
         {activeTab === 'fees' && <FeePaymentModule user={user} />}
 

@@ -7,7 +7,8 @@ from app.routers import (
     exam_cell_core, student_core, hod_core, faculty_core, admin_core, attempts, results, analytics, 
     leaderboard, dashboards, marks_extra, timetable_extra, announcements, challenges, industry, tpo, fees, webhooks,
     interview, resume, hostel, career_tools, iot_webhooks, transport, transport_admin, library,
-    visitors, websocket, notifications, audit, insights, pre_enroll, modules, resume_vault, outcomes, assessments, placement_prep, accreditation
+    visitors, websocket, notifications, audit, insights, pre_enroll, modules, resume_vault, outcomes, assessments, placement_prep, accreditation,
+    campus
 )
 from app.api.v1.endpoints import syllabus as syllabus_endpoints
 from app.routers import nodal_routes, superadmin
