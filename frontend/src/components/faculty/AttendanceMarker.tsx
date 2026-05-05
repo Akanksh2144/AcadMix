@@ -332,85 +332,130 @@ export default function AttendanceMarker({ user }: AttendanceMarkerProps) {
                       transition={{ duration: 0.25 }}
                       className="overflow-hidden"
                     >
-                      {/* ── Unit Pill Tabs ─────────── */}
-                      <div className="mt-3 flex items-center gap-1.5 p-1 bg-white/80 dark:bg-white/[0.04] rounded-full border border-slate-200/60 dark:border-white/[0.06] overflow-x-auto hide-scrollbar">
-                        {syllabusUnits.map(unit => {
-                          const isActive = activeUnitId === unit.unit_id;
-                          const unitSelectedCount = unit.topics.filter(t => selectedTopicIds.includes(t.id)).length;
-                          return (
-                            <button
-                              key={unit.unit_id}
-                              onClick={() => setActiveUnitId(isActive ? null : unit.unit_id)}
-                              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200 ${
-                                isActive
-                                  ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25'
-                                  : 'text-slate-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-300'
-                              }`}
-                            >
-                              Unit {unit.unit_no}
-                              {unitSelectedCount > 0 && (
-                                <span className={`w-4 h-4 rounded-full text-[9px] font-extrabold flex items-center justify-center ${
-                                  isActive ? 'bg-white/25 text-white' : 'bg-indigo-500 text-white'
-                                }`}>
-                                  {unitSelectedCount}
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      {/* ── Unit Dropdown ─────────── */}
+                      <div className="mt-3 relative">
+                        <button
+                          onClick={() => setActiveUnitId(activeUnitId === '__dropdown_open__' ? null : (activeUnitId && activeUnitId !== '__dropdown_open__' ? '__dropdown_open__' : '__dropdown_open__'))}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/[0.08] hover:border-indigo-300 dark:hover:border-indigo-500/30 transition-all duration-200 shadow-sm group"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center">
+                              <BookOpenText size={14} weight="duotone" className="text-indigo-500" />
+                            </div>
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                              {activeUnitId && activeUnitId !== '__dropdown_open__'
+                                ? (() => {
+                                    const u = syllabusUnits.find(u => u.unit_id === activeUnitId);
+                                    return u ? `Unit ${u.unit_no}: ${u.unit_title}` : 'Select Unit';
+                                  })()
+                                : 'Select Unit / Chapter'
+                              }
+                            </span>
+                          </div>
+                          <CaretDown size={16} weight="bold" className={`text-slate-400 transition-transform duration-200 ${activeUnitId === '__dropdown_open__' ? 'rotate-180' : ''}`} />
+                        </button>
 
-                      {/* ── Active Unit Title + Topics ─────────── */}
-                      {activeUnitId && (() => {
-                        const unit = syllabusUnits.find(u => u.unit_id === activeUnitId);
-                        if (!unit) return null;
-                        return (
-                          <div className="mt-3">
-                            <p className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-2">
-                              Unit {unit.unit_no}: {unit.unit_title}
-                            </p>
-                            <div className="space-y-1">
-                              {unit.topics.map(topic => {
-                                const isSelected = selectedTopicIds.includes(topic.id);
+                        {/* Dropdown menu */}
+                        <AnimatePresence>
+                          {activeUnitId === '__dropdown_open__' && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                              transition={{ duration: 0.15, ease: 'easeOut' }}
+                              className="absolute z-20 left-0 right-0 mt-1.5 rounded-xl bg-white dark:bg-[#1E2432] border border-slate-200/80 dark:border-white/[0.08] shadow-xl shadow-slate-900/10 dark:shadow-black/30 overflow-hidden"
+                            >
+                              {syllabusUnits.map((unit, idx) => {
+                                const unitSelectedCount = unit.topics.filter(t => selectedTopicIds.includes(t.id)).length;
                                 return (
                                   <button
-                                    key={topic.id}
-                                    onClick={() => toggleTopic(topic.id)}
-                                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all duration-150 ${
-                                      isSelected
-                                        ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20'
-                                        : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 border border-slate-100 dark:border-white/[0.06]'
-                                    }`}
+                                    key={unit.unit_id}
+                                    onClick={() => setActiveUnitId(unit.unit_id)}
+                                    className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors duration-150 ${
+                                      idx < syllabusUnits.length - 1 ? 'border-b border-slate-50 dark:border-white/[0.04]' : ''
+                                    } hover:bg-indigo-50/70 dark:hover:bg-indigo-500/10`}
                                   >
-                                    <div className={`w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
-                                      isSelected ? 'bg-white/20' : 'bg-slate-100 dark:bg-white/10'
-                                    }`}>
-                                      {isSelected && <Check size={12} weight="bold" className="text-white" />}
+                                    <div className="flex items-center gap-3">
+                                      <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/15 to-violet-500/15 dark:from-indigo-500/20 dark:to-violet-500/20 flex items-center justify-center text-xs font-extrabold text-indigo-600 dark:text-indigo-400">
+                                        {unit.unit_no}
+                                      </span>
+                                      <div>
+                                        <p className="text-sm font-bold text-slate-800 dark:text-white">{unit.unit_title}</p>
+                                        <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">{unit.topics.length} topics</p>
+                                      </div>
                                     </div>
-                                    <span className="text-xs font-semibold flex-1 truncate">
-                                      {topic.topic_no}. {topic.title}
-                                    </span>
-                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
-                                      isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400'
-                                    }`}>
-                                      {topic.hours}h
-                                    </span>
+                                    {unitSelectedCount > 0 && (
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500 text-white">
+                                        {unitSelectedCount} ✓
+                                      </span>
+                                    )}
                                   </button>
                                 );
                               })}
-                            </div>
-                          </div>
-                        );
-                      })()}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
 
-                      {/* Hint when no unit selected */}
-                      {!activeUnitId && (
-                        <div className="mt-3 py-6 text-center">
-                          <p className="text-xs font-medium text-slate-400 dark:text-slate-500">
-                            Select a unit above to view its topics
-                          </p>
-                        </div>
-                      )}
+                      {/* ── Active Unit Topics ─────────── */}
+                      <AnimatePresence mode="wait">
+                        {activeUnitId && activeUnitId !== '__dropdown_open__' && (() => {
+                          const unit = syllabusUnits.find(u => u.unit_id === activeUnitId);
+                          if (!unit) return null;
+                          return (
+                            <motion.div
+                              key={unit.unit_id}
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -8 }}
+                              transition={{ duration: 0.2 }}
+                              className="mt-3"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                                  Unit {unit.unit_no}: {unit.unit_title}
+                                </p>
+                                <button
+                                  onClick={() => setActiveUnitId('__dropdown_open__')}
+                                  className="text-[10px] font-bold text-slate-400 hover:text-indigo-500 transition-colors"
+                                >
+                                  Change ↓
+                                </button>
+                              </div>
+                              <div className="space-y-1">
+                                {unit.topics.map(topic => {
+                                  const isSelected = selectedTopicIds.includes(topic.id);
+                                  return (
+                                    <button
+                                      key={topic.id}
+                                      onClick={() => toggleTopic(topic.id)}
+                                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all duration-150 ${
+                                        isSelected
+                                          ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20'
+                                          : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 border border-slate-100 dark:border-white/[0.06]'
+                                      }`}
+                                    >
+                                      <div className={`w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                                        isSelected ? 'bg-white/20' : 'bg-slate-100 dark:bg-white/10'
+                                      }`}>
+                                        {isSelected && <Check size={12} weight="bold" className="text-white" />}
+                                      </div>
+                                      <span className="text-xs font-semibold flex-1 truncate">
+                                        {topic.topic_no}. {topic.title}
+                                      </span>
+                                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                                        isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400'
+                                      }`}>
+                                        {topic.hours}h
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          );
+                        })()}
+                      </AnimatePresence>
                     </motion.div>
                   )}
                 </AnimatePresence>
