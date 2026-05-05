@@ -5,6 +5,8 @@ import { Users, GraduationCap, ChartBar, CalendarDots, ClockCountdown, Chalkboar
 import { parentAPI, grievanceAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
+import CampusMap from '../components/campus/CampusMap';
+
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || '';
 
@@ -713,6 +715,14 @@ const ParentDashboard = ({ navigate, user, onLogout }) => {
               </motion.div>
             )}
           </>
+        )}
+        
+        {activeTab === 'campus-map' && (
+          <motion.div data-testid="campus-map-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <CampusMap user={user} navigate={navigate} />
+            </motion.div>
+          </motion.div>
         )}
         <AnimatePresence>
         {showProfile && <UserProfileModal user={user} onClose={() => setShowProfile(false)} />}

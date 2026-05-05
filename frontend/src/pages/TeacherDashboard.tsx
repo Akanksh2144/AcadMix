@@ -16,6 +16,8 @@ import FacultyAnnouncements from '../components/faculty/FacultyAnnouncements';
 import InsightsChat from '../components/insights/InsightsChat';
 import InsightsCanvas from '../components/insights/InsightsCanvas';
 import FacultyCourseSetup from '../components/faculty/FacultyCourseSetup';
+import CampusMap from '../components/campus/CampusMap';
+
 
 const containerVariants = {
   hidden: { opacity: 0 },

@@ -76,6 +76,51 @@ class EventOut(BaseModel):
     created_at: datetime
 
 
+class BuildingCreate(BaseModel):
+    name: str
+    short_name: Optional[str] = None
+    building_type: str = "academic"
+    floor_count: int = 1
+    grid_x: int = 0
+    grid_y: int = 0
+    grid_w: int = 3
+    grid_h: int = 3
+    color: Optional[str] = "#6366f1"
+    icon: Optional[str] = "Buildings"
+    departments: list = []
+    facilities: list = []
+
+
+class BuildingUpdate(BaseModel):
+    name: Optional[str] = None
+    short_name: Optional[str] = None
+    building_type: Optional[str] = None
+    floor_count: Optional[int] = None
+    grid_x: Optional[int] = None
+    grid_y: Optional[int] = None
+    grid_w: Optional[int] = None
+    grid_h: Optional[int] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
+    departments: Optional[list] = None
+    facilities: Optional[list] = None
+
+
+class LayoutRoad(BaseModel):
+    row: Optional[int] = None
+    col: Optional[int] = None
+    label: Optional[str] = None
+
+
+class LayoutData(BaseModel):
+    grid_cols: int = 24
+    grid_rows: int = 48
+    horizontal_roads: List[LayoutRoad] = []
+    vertical_roads: List[LayoutRoad] = []
+    trees: List[dict] = []
+    auto_trees: bool = True
+
+
 class ApprovalAction(BaseModel):
     comment: Optional[str] = None
 
@@ -436,3 +481,214 @@ async def reject_event(
     await db.commit()
 
     return {"status": "rejected", "message": "Event rejected"}
+
+
+# ── Layout Designer Endpoints ─────────────────────────────────────────────────
+
+ADMIN_ROLES = ("admin", "super_admin", "principal")
+
+
+def _get_campus_id_query(user: dict):
+    """Helper to get campus_id from user's college."""
+    return select(College.campus_id).where(College.id == user["college_id"])
+
+
+@router.get("/layout")
+async def get_campus_layout(
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """Get the campus layout configuration (roads, trees, grid settings)."""
+    campus_id_result = (await db.execute(_get_campus_id_query(user))).scalar_one_or_none()
+    if not campus_id_result:
+        return {"grid_cols": 24, "grid_rows": 48, "horizontal_roads": [], "vertical_roads": [], "trees": [], "auto_trees": True}
+
+    campus = (await db.execute(
+        select(Campus).where(Campus.id == campus_id_result)
+    )).scalar_one_or_none()
+
+    if not campus:
+        return {"grid_cols": 24, "grid_rows": 48, "horizontal_roads": [], "vertical_roads": [], "trees": [], "auto_trees": True}
+
+    meta = campus.meta_data or {}
+    return {
+        "grid_cols": meta.get("grid_cols", 24),
+        "grid_rows": meta.get("grid_rows", 48),
+        "horizontal_roads": meta.get("horizontal_roads", []),
+        "vertical_roads": meta.get("vertical_roads", []),
+        "trees": meta.get("trees", []),
+        "auto_trees": meta.get("auto_trees", True),
+    }
+
+
+@router.put("/layout")
+async def update_campus_layout(
+    data: LayoutData,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """Save campus layout (roads, trees). Admin/principal only."""
+    if user["role"] not in ADMIN_ROLES:
+        raise HTTPException(403, "Only admin/principal can modify campus layout")
+
+    campus_id_result = (await db.execute(_get_campus_id_query(user))).scalar_one_or_none()
+    if not campus_id_result:
+        raise HTTPException(400, "College has no campus configured")
+
+    campus = (await db.execute(
+        select(Campus).where(Campus.id == campus_id_result)
+    )).scalar_one_or_none()
+
+    if not campus:
+        raise HTTPException(404, "Campus not found")
+
+    meta = campus.meta_data or {}
+    meta["grid_cols"] = data.grid_cols
+    meta["grid_rows"] = data.grid_rows
+    meta["horizontal_roads"] = [r.dict() for r in data.horizontal_roads]
+    meta["vertical_roads"] = [r.dict() for r in data.vertical_roads]
+    meta["trees"] = data.trees
+    meta["auto_trees"] = data.auto_trees
+
+    # Force SQLAlchemy to detect JSONB mutation
+    from sqlalchemy.orm.attributes import flag_modified
+    campus.meta_data = meta
+    flag_modified(campus, "meta_data")
+    await db.commit()
+
+    return {"message": "Layout saved", "layout": meta}
+
+
+@router.post("/buildings", response_model=BuildingOut)
+async def create_building(
+    data: BuildingCreate,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """Create a new campus building. Admin/principal only."""
+    if user["role"] not in ADMIN_ROLES:
+        raise HTTPException(403, "Only admin/principal can create buildings")
+
+    college = (await db.execute(
+        select(College).where(College.id == user["college_id"])
+    )).scalar_one_or_none()
+
+    if not college or not college.campus_id:
+        raise HTTPException(400, "College has no campus configured")
+
+    import uuid
+    building = CampusBuilding(
+        id=f"bld-{uuid.uuid4().hex[:8]}",
+        campus_id=college.campus_id,
+        college_id=user["college_id"],
+        name=data.name,
+        short_name=data.short_name,
+        building_type=data.building_type,
+        floor_count=data.floor_count,
+        grid_x=data.grid_x,
+        grid_y=data.grid_y,
+        grid_w=data.grid_w,
+        grid_h=data.grid_h,
+        color=data.color,
+        icon=data.icon,
+        departments=data.departments,
+        facilities=data.facilities,
+    )
+    db.add(building)
+    await db.commit()
+    await db.refresh(building)
+
+    return BuildingOut(
+        id=building.id,
+        campus_id=building.campus_id,
+        college_id=building.college_id,
+        name=building.name,
+        short_name=building.short_name,
+        building_type=building.building_type,
+        floor_count=building.floor_count,
+        grid_x=building.grid_x,
+        grid_y=building.grid_y,
+        grid_w=building.grid_w,
+        grid_h=building.grid_h,
+        color=building.color,
+        icon=building.icon,
+        departments=building.departments or [],
+        facilities=building.facilities or [],
+        meta_data=building.meta_data or {},
+        event_count=0,
+    )
+
+
+@router.put("/buildings/{building_id}", response_model=BuildingOut)
+async def update_building(
+    building_id: str,
+    data: BuildingUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """Update a campus building. Admin/principal only."""
+    if user["role"] not in ADMIN_ROLES:
+        raise HTTPException(403, "Only admin/principal can modify buildings")
+
+    building = (await db.execute(
+        select(CampusBuilding).where(
+            CampusBuilding.id == building_id,
+            CampusBuilding.is_deleted == False,
+        )
+    )).scalar_one_or_none()
+
+    if not building:
+        raise HTTPException(404, "Building not found")
+
+    update_data = data.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(building, key, value)
+
+    await db.commit()
+    await db.refresh(building)
+
+    return BuildingOut(
+        id=building.id,
+        campus_id=building.campus_id,
+        college_id=building.college_id,
+        name=building.name,
+        short_name=building.short_name,
+        building_type=building.building_type,
+        floor_count=building.floor_count,
+        grid_x=building.grid_x,
+        grid_y=building.grid_y,
+        grid_w=building.grid_w,
+        grid_h=building.grid_h,
+        color=building.color,
+        icon=building.icon,
+        departments=building.departments or [],
+        facilities=building.facilities or [],
+        meta_data=building.meta_data or {},
+        event_count=0,
+    )
+
+
+@router.delete("/buildings/{building_id}")
+async def delete_building(
+    building_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """Soft-delete a campus building. Admin/principal only."""
+    if user["role"] not in ADMIN_ROLES:
+        raise HTTPException(403, "Only admin/principal can delete buildings")
+
+    building = (await db.execute(
+        select(CampusBuilding).where(
+            CampusBuilding.id == building_id,
+            CampusBuilding.is_deleted == False,
+        )
+    )).scalar_one_or_none()
+
+    if not building:
+        raise HTTPException(404, "Building not found")
+
+    building.is_deleted = True
+    await db.commit()
+
+    return {"message": f"Building '{building.name}' deleted"}

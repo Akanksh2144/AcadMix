@@ -7,6 +7,8 @@ import {
 import PageHeader from '../components/PageHeader';
 import { libraryAPI } from '../services/api';
 import DashboardSkeleton from '../components/DashboardSkeleton';
+import CampusMap from '../components/campus/CampusMap';
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // LIBRARIAN DASHBOARD — Full library management interface

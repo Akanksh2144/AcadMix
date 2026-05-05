@@ -23,6 +23,8 @@ import DashboardSkeleton from "../components/DashboardSkeleton";
 import InsightsChat from "../components/insights/InsightsChat";
 import InsightsCanvas from "../components/insights/InsightsCanvas";
 import AlertModal from "../components/AlertModal";
+import CampusMap from '../components/campus/CampusMap';
+
 
 const containerVariants = {
   hidden: { opacity: 0 },

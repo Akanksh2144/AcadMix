@@ -7,6 +7,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 import InsightsChat from '../components/insights/InsightsChat';
 import InsightsCanvas from '../components/insights/InsightsCanvas';
+import CampusMap from '../components/campus/CampusMap';
+
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -1162,7 +1164,8 @@ const TPODashboard = ({ navigate, user, onLogout }) => {
               { id: 'companies', label: 'Companies' },
               { id: 'drives', label: 'Placement Drives' },
               { id: 'applications', label: 'Applications' },
-              { id: 'insights', label: 'AI Insights' }
+              { id: 'insights', label: 'AI Insights' },
+              { id: 'campus-map', label: 'Campus Map' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -1254,6 +1257,14 @@ const TPODashboard = ({ navigate, user, onLogout }) => {
             </motion.div>
           )}
         </AnimatePresence>
+        
+        {activeTab === 'campus-map' && (
+          <motion.div data-testid="campus-map-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <CampusMap user={user} navigate={navigate} />
+            </motion.div>
+          </motion.div>
+        )}
         <AnimatePresence>
         {showProfile && <UserProfileModal user={user} onClose={() => setShowProfile(false)} />}
       </AnimatePresence>

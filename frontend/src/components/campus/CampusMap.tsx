@@ -20,18 +20,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   rejected: { label: 'Rejected', color: '#ef4444' },
 };
 
-// Road definitions — creates an actual connected network
-const H_ROADS = [
-  { row: 0, label: 'Main Campus Road' },
-  { row: 5, label: 'Admin Avenue' },
-  { row: 11, label: 'Academic Ring Road' },
-  { row: 21, label: 'Knowledge Lane' },
-  { row: 27, label: 'Plaza Walkway' },
-  { row: 33, label: 'Sports Avenue' },
-  { row: 41, label: 'Residential Road' },
-];
-const V_ROAD_COLS = [7, 17]; // vertical spine roads connecting all H roads
-const GRID_COLS = 24;
+
 
 interface Building {
   id: string; campus_id: string; college_id: string | null;
@@ -53,6 +42,7 @@ interface CampusMapProps { user: any; navigate?: (page: string, data?: any) => v
 export default function CampusMap({ user }: CampusMapProps) {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [events, setEvents] = useState<CampusEvent[]>([]);
+  const [layout, setLayout] = useState({ horizontal_roads: [], vertical_roads: [], trees: [], auto_trees: true, grid_cols: 24, grid_rows: 48 });
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [pinBuilding, setPinBuilding] = useState<Building | null>(null);
   const [showCreateEvent, setShowCreateEvent] = useState(false);
@@ -64,14 +54,15 @@ export default function CampusMap({ user }: CampusMapProps) {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [bRes, eRes] = await Promise.all([api.get('/campus/buildings'), api.get('/campus/events')]);
+      const [bRes, eRes, lRes] = await Promise.all([api.get('/campus/buildings'), api.get('/campus/events'), api.get('/campus/layout')]);
       setBuildings(bRes.data?.data || bRes.data || []);
       setEvents(eRes.data?.data || eRes.data || []);
+      setLayout(lRes.data || { horizontal_roads: [], vertical_roads: [], trees: [], auto_trees: true, grid_cols: 24, grid_rows: 48 });
     } catch (err) { console.error('Failed to load campus data:', err); }
     finally { setLoading(false); }
   };
 
-  const maxY = Math.max(...buildings.map(b => b.grid_y + b.grid_h), 47);
+  const maxY = Math.max(...buildings.map(b => b.grid_y + b.grid_h), layout.grid_rows || 48);
   const buildingEvents = (id: string) => events.filter(e => e.building_id === id);
   const handleBuildingClick = (b: Building) => setSelectedBuilding(selectedBuilding?.id === b.id ? null : b);
   const handlePinEvent = (b: Building) => { setPinBuilding(b); setSelectedBuilding(null); };
@@ -137,15 +128,15 @@ export default function CampusMap({ user }: CampusMapProps) {
 
           {/* Grid */}
           <div style={{ overflow: 'auto', background: 'var(--zone-bg, #eef2f7)' }}>
-            <div style={{
+              <div style={{
               display: 'grid',
-              gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
+              gridTemplateColumns: `repeat(${layout.grid_cols || 24}, 1fr)`,
               gridTemplateRows: `repeat(${maxY}, 20px)`,
               gap: 2, minWidth: 720, position: 'relative', padding: 6,
             }}>
 
               {/* ── Horizontal Roads ── */}
-              {H_ROADS.map(r => (
+              {layout.horizontal_roads.map(r => (
                 <div key={`hr-${r.row}`} style={{
                   gridColumn: '1 / -1', gridRow: `${r.row + 1}`,
                   background: 'var(--road-bg, #d1d5db)', borderRadius: 2,
@@ -161,9 +152,9 @@ export default function CampusMap({ user }: CampusMapProps) {
               ))}
 
               {/* ── Vertical Roads ── */}
-              {V_ROAD_COLS.map(col => (
-                <div key={`vr-${col}`} style={{
-                  gridColumn: `${col + 1}`, gridRow: `1 / ${maxY + 1}`,
+              {layout.vertical_roads.map(vr => (
+                <div key={`vr-${vr.col}`} style={{
+                  gridColumn: `${vr.col + 1}`, gridRow: `1 / ${maxY + 1}`,
                   background: 'var(--road-bg, #e2e8f0)', borderRadius: 2,
                   position: 'relative', pointerEvents: 'none', zIndex: 1,
                 }}>
@@ -174,28 +165,33 @@ export default function CampusMap({ user }: CampusMapProps) {
                 </div>
               ))}
 
-              {/* ── Trees (dynamically avoid buildings + roads) ── */}
+              {/* ── Trees (Manual + Auto) ── */}
               {(() => {
-                const roadRows = new Set(H_ROADS.map(r => r.row));
-                const roadCols = new Set(V_ROAD_COLS);
-                const occupied = new Set<string>();
-                buildings.forEach(b => {
-                  for (let dx = 0; dx < b.grid_w; dx++)
-                    for (let dy = 0; dy < b.grid_h; dy++)
-                      occupied.add(`${b.grid_x + dx},${b.grid_y + dy}`);
-                });
-                const treeSpots: { x: number; y: number }[] = [];
-                const candidates = [
-                  {x:2,y:3},{x:5,y:3},{x:3,y:8},{x:6,y:9},{x:1,y:16},{x:5,y:17},
-                  {x:6,y:23},{x:3,y:25},{x:6,y:30},{x:5,y:36},{x:6,y:43},{x:2,y:46},
-                  {x:10,y:3},{x:14,y:8},{x:8,y:16},{x:15,y:18},{x:12,y:25},{x:16,y:30},{x:10,y:36},{x:15,y:43},
-                  {x:18,y:3},{x:23,y:8},{x:22,y:14},{x:23,y:20},{x:22,y:25},{x:21,y:30},{x:23,y:38},{x:21,y:44},
-                ];
-                candidates.forEach(c => {
-                  if (!roadRows.has(c.y) && !roadCols.has(c.x) && !occupied.has(`${c.x},${c.y}`)) {
-                    treeSpots.push(c);
-                  }
-                });
+                const treeSpots: { x: number; y: number }[] = [...(layout.trees || [])];
+                
+                if (layout.auto_trees) {
+                  const roadRows = new Set(layout.horizontal_roads.map(r => r.row));
+                  const roadCols = new Set(layout.vertical_roads.map(vr => vr.col));
+                  const occupied = new Set<string>();
+                  buildings.forEach(b => {
+                    for (let dx = 0; dx < b.grid_w; dx++)
+                      for (let dy = 0; dy < b.grid_h; dy++)
+                        occupied.add(`${b.grid_x + dx},${b.grid_y + dy}`);
+                  });
+                  const candidates = [
+                    {x:2,y:3},{x:5,y:3},{x:3,y:8},{x:6,y:9},{x:1,y:16},{x:5,y:17},
+                    {x:6,y:23},{x:3,y:25},{x:6,y:30},{x:5,y:36},{x:6,y:43},{x:2,y:46},
+                    {x:10,y:3},{x:14,y:8},{x:8,y:16},{x:15,y:18},{x:12,y:25},{x:16,y:30},{x:10,y:36},{x:15,y:43},
+                    {x:18,y:3},{x:23,y:8},{x:22,y:14},{x:23,y:20},{x:22,y:25},{x:21,y:30},{x:23,y:38},{x:21,y:44},
+                  ];
+                  candidates.forEach(c => {
+                    if (!roadRows.has(c.y) && !roadCols.has(c.x) && !occupied.has(`${c.x},${c.y}`)) {
+                      if (!treeSpots.some(t => t.x === c.x && t.y === c.y)) {
+                        treeSpots.push(c);
+                      }
+                    }
+                  });
+                }
                 return treeSpots.map((t, i) => (
                   <div key={`tree-${i}`} style={{
                     gridColumn: `${t.x + 1}`, gridRow: `${t.y + 1}`,

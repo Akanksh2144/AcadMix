@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { visitorAPI } from '../services/api';
 import PageHeader from '../components/PageHeader';
 import DashboardSkeleton from '../components/DashboardSkeleton';
+import CampusMap from '../components/campus/CampusMap';
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECURITY DASHBOARD — Main gate security guard's landing page

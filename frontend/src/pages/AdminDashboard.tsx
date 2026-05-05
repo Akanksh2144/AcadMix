@@ -15,6 +15,8 @@ import CIATemplateBuilder from '../components/admin/CIATemplateBuilder';
 import AdminFinanceModule from '../components/admin/AdminFinanceModule';
 import InsightsChat from '../components/insights/InsightsChat';
 import InsightsCanvas from '../components/insights/InsightsCanvas';
+import CampusLayoutDesigner from '../components/campus/CampusLayoutDesigner';
+import CampusMap from '../components/campus/CampusMap';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -249,7 +251,9 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
               { id: 'permissions', label: 'Permission Matrix' },
               { id: 'cia-builder', label: 'CIA Engine' },
               { id: 'experts', label: 'Expert Management' },
-              { id: 'insights', label: 'AI Insights' }
+              { id: 'insights', label: 'AI Insights' },
+              { id: 'campus-map', label: 'Campus Map' },
+              { id: 'campus-layout', label: 'Campus Designer' }
             ].map(tab => (
               <button 
                 key={tab.id} 
@@ -638,6 +642,22 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
                      </div>
                   </div>
               )}
+          </motion.div>
+        )}
+
+        {activeTab === 'campus-map' && (
+          <motion.div data-testid="campus-map-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <CampusMap user={user} navigate={navigate} />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === 'campus-layout' && (
+          <motion.div data-testid="campus-layout-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <CampusLayoutDesigner onPreviewToggle={() => setActiveTab('campus-map')} />
+            </motion.div>
           </motion.div>
         )}
 

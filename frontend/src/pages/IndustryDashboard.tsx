@@ -9,6 +9,8 @@ import {
 } from '@phosphor-icons/react';
 import { industryAPI, authAPI, setAuthToken } from '../services/api';
 import DashboardSkeleton from '../components/DashboardSkeleton';
+import CampusMap from '../components/campus/CampusMap';
+
 
 const fadeIn = {
   hidden: { opacity: 0, y: 15 },

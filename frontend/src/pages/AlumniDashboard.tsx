@@ -5,6 +5,8 @@ import { User, Briefcase, GraduationCap, CalendarBlank, SignOut, Sun, Moon, Bell
 import { alumniAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
+import CampusMap from '../components/campus/CampusMap';
+
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -381,6 +383,14 @@ const AlumniDashboard = ({ navigate, user, onLogout }) => {
           {activeTab === 'mentorship' && <MentorshipsContent key="mentorship" />}
           {activeTab === 'events' && <EventsContent key="events" />}
         </AnimatePresence>
+        
+        {activeTab === 'campus-map' && (
+          <motion.div data-testid="campus-map-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.div variants={itemVariants}>
+              <CampusMap user={user} navigate={navigate} />
+            </motion.div>
+          </motion.div>
+        )}
         <AnimatePresence>
         {showProfile && <UserProfileModal user={user} onClose={() => setShowProfile(false)} />}
       </AnimatePresence>

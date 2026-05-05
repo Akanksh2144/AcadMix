@@ -10,6 +10,8 @@ import {
 import { expertAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
+import CampusMap from '../components/campus/CampusMap';
+
 
 const containerVariants = {
   hidden: { opacity: 0 },

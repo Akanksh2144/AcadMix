@@ -4,6 +4,8 @@ import { Bus, SignOut, Sun, Moon, UserCircle, BookOpen, Bell, Briefcase, Info } 
 import { useTheme } from '../contexts/ThemeContext';
 import { notificationsAPI } from '../services/api';
 import AdminTransportPanel from '../components/admin/AdminTransportPanel';
+import CampusMap from '../components/campus/CampusMap';
+
 
 // ─── Notification Bell ─────────────────────────────────────────
 const NotifBell = () => {

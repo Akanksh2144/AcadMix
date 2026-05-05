@@ -9,6 +9,8 @@ import InsightsCanvas from '../components/insights/InsightsCanvas';
 import NAACMatrix from '../components/accreditation/NAACMatrix';
 import NBACoPoMatrix from '../components/accreditation/NBACoPoMatrix';
 import NEPTracker from '../components/accreditation/NEPTracker';
+import CampusMap from '../components/campus/CampusMap';
+
 
 // ─── Shared Notification Bell ──────────────────────────────────
 const NotifBell = () => {
