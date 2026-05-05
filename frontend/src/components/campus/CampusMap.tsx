@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Buildings, MapPin, Calendar, X, ForkKnife, Desktop, Radio, BookOpen, Wrench, HardHat, Microphone, Trophy, Car, House, DoorOpen, Crown, SoccerBall, Lightning } from '@phosphor-icons/react';
+import { Buildings, MapPin, Calendar, X, ForkKnife, Desktop, Radio, BookOpen, Wrench, HardHat, Microphone, Trophy, Car, House, DoorOpen, Crown, SoccerBall, Lightning, TreeEvergreen, Crosshair } from '@phosphor-icons/react';
 import api from '../../services/api';
 import CreateEventModal from './CreateEventModal';
 
@@ -21,6 +21,42 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   approved_college: { label: 'College Live', color: '#3b82f6' },
   approved_group: { label: 'Group Live', color: '#8b5cf6' },
   rejected: { label: 'Rejected', color: '#ef4444' },
+};
+
+// ── Zone definitions for road labels ─────────────────────────────────────────
+const ROAD_ROWS = [
+  { row: 0, label: 'Main Campus Road', icon: '🛣️' },
+  { row: 4, label: 'Admin Avenue', icon: '🏛️' },
+  { row: 10, label: 'Academic Ring Road', icon: '📚' },
+  { row: 19, label: 'Knowledge Lane', icon: '📖' },
+  { row: 25, label: 'Plaza Walkway', icon: '🎭' },
+  { row: 30, label: 'Sports Avenue', icon: '⚽' },
+  { row: 38, label: 'Residential Road', icon: '🏠' },
+];
+
+// Building type → background tint
+const TYPE_TINTS: Record<string, string> = {
+  gate: 'rgba(120,113,108,0.12)',
+  security: 'rgba(100,116,139,0.12)',
+  parking: 'rgba(148,163,184,0.08)',
+  transport: 'rgba(14,165,233,0.10)',
+  administrative: 'rgba(139,92,246,0.10)',
+  academic: 'rgba(99,102,241,0.10)',
+  library: 'rgba(13,148,136,0.12)',
+  auditorium: 'rgba(236,72,153,0.10)',
+  canteen: 'rgba(244,63,94,0.10)',
+  sports: 'rgba(22,163,74,0.08)',
+  hostel: 'rgba(59,130,246,0.10)',
+  amenity: 'rgba(34,197,94,0.10)',
+  medical: 'rgba(239,68,68,0.10)',
+  shop: 'rgba(245,158,11,0.10)',
+  workshop: 'rgba(168,85,247,0.10)',
+  research: 'rgba(14,165,233,0.10)',
+  infrastructure: 'rgba(71,85,105,0.10)',
+  amphitheatre: 'rgba(163,230,53,0.10)',
+  religious: 'rgba(245,158,11,0.10)',
+  garden: 'rgba(16,185,129,0.12)',
+  residential: 'rgba(15,118,110,0.10)',
 };
 
 interface Building {
@@ -72,9 +108,9 @@ export default function CampusMap({ user }: CampusMapProps) {
     }
   };
 
-  // Compute grid dimensions
-  const maxX = Math.max(...buildings.map(b => b.grid_x + b.grid_w), 4);
-  const maxY = Math.max(...buildings.map(b => b.grid_y + b.grid_h), 5);
+  // Compute grid dimensions from building data
+  const maxX = Math.max(...buildings.map(b => b.grid_x + b.grid_w), 24);
+  const maxY = Math.max(...buildings.map(b => b.grid_y + b.grid_h), 44);
 
   const buildingEvents = (buildingId: string) =>
     events.filter(e => e.building_id === buildingId);
@@ -89,7 +125,10 @@ export default function CampusMap({ user }: CampusMapProps) {
 
   const handlePinEvent = (b: Building) => {
     setPinBuilding(b);
+    setSelectedBuilding(null);
   };
+
+  const canPin = (b: Building) => b.building_type !== 'gate' && b.building_type !== 'parking';
 
   if (loading) {
     return (
@@ -109,11 +148,10 @@ export default function CampusMap({ user }: CampusMapProps) {
             Campus Map
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {buildings.length} buildings · {events.length} active events · <span className="text-indigo-400 font-semibold">Click a building to pin an event</span>
+            {buildings.length} buildings · {events.length} active events
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* View toggle pill */}
           <div className="flex bg-slate-100 dark:bg-white/[0.06] rounded-full p-0.5">
             {(['map', 'events'] as const).map(v => (
               <button key={v} onClick={() => setViewMode(v)}
@@ -126,7 +164,6 @@ export default function CampusMap({ user }: CampusMapProps) {
               </button>
             ))}
           </div>
-          {/* Pin Event button (opens modal with building dropdown) */}
           <button onClick={() => setShowCreateEvent(true)}
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold text-white"
             style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>
@@ -137,83 +174,278 @@ export default function CampusMap({ user }: CampusMapProps) {
 
       {/* ── Map View ────────────────────────────────────────────── */}
       {viewMode === 'map' && (
-        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-sm p-3 sm:p-4 overflow-x-auto">
+        <div style={{
+          borderRadius: 16, overflow: 'hidden',
+          border: '2px solid #1e293b',
+          background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+        }}>
+          {/* Map title bar */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: `72px repeat(${maxX}, 1fr)`,
-            gridTemplateRows: `repeat(${maxY}, minmax(80px, 1fr))`,
-            gap: 5, minWidth: 600,
+            padding: '8px 14px',
+            background: 'rgba(99,102,241,0.15)',
+            borderBottom: '1px solid rgba(99,102,241,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
-            {/* ── Zone Labels (left column) ─── */}
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#a5b4fc', letterSpacing: 1, textTransform: 'uppercase' }}>
+              📐 AITS Campus Blueprint — Hyderabad
+            </span>
+            <span style={{ fontSize: 10, color: '#64748b' }}>
+              30 × 44 grid · N↑
+            </span>
+          </div>
+
+          {/* Scrollable map area */}
+          <div style={{ overflow: 'auto', padding: 12 }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${maxX}, 1fr)`,
+              gridTemplateRows: `repeat(${maxY}, 18px)`,
+              gap: 2,
+              minWidth: 700,
+              position: 'relative',
+            }}>
+              {/* ── Roads ─── */}
+              {ROAD_ROWS.map(r => (
+                <div key={r.row} style={{
+                  gridColumn: `1 / -1`,
+                  gridRow: `${r.row + 1}`,
+                  background: 'rgba(148,163,184,0.12)',
+                  borderTop: '1px dashed rgba(148,163,184,0.25)',
+                  borderBottom: '1px dashed rgba(148,163,184,0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: 4, minHeight: 18,
+                }}>
+                  <div style={{
+                    flex: 1, height: 1,
+                    background: 'repeating-linear-gradient(90deg, rgba(250,204,21,0.4) 0px, rgba(250,204,21,0.4) 8px, transparent 8px, transparent 16px)',
+                  }} />
+                  <span style={{ fontSize: 8, fontWeight: 700, color: '#94a3b8', whiteSpace: 'nowrap', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                    {r.icon} {r.label}
+                  </span>
+                  <div style={{
+                    flex: 1, height: 1,
+                    background: 'repeating-linear-gradient(90deg, rgba(250,204,21,0.4) 0px, rgba(250,204,21,0.4) 8px, transparent 8px, transparent 16px)',
+                  }} />
+                </div>
+              ))}
+
+              {/* ── Green patches (decorative) ─── */}
+              {[
+                { x: 16, y: 5, w: 8, h: 5 },   // garden next to admin
+                { x: 20, y: 15, w: 4, h: 4 },   // garden near academic
+                { x: 24, y: 26, w: 3, h: 4 },   // garden near social
+              ].map((g, i) => (
+                <div key={`green-${i}`} style={{
+                  gridColumn: `${g.x + 1} / span ${g.w}`,
+                  gridRow: `${g.y + 1} / span ${g.h}`,
+                  background: 'radial-gradient(ellipse, rgba(34,197,94,0.08) 40%, transparent 70%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  pointerEvents: 'none',
+                }}>
+                  <TreeEvergreen size={14} weight="duotone" style={{ color: 'rgba(34,197,94,0.2)' }} />
+                </div>
+              ))}
+
+              {/* ── Building Cells ─── */}
+              {buildings.map(b => {
+                const IconComp = ICON_MAP[b.icon || 'Buildings'] || Buildings;
+                const evtCount = b.event_count;
+                const isSelected = selectedBuilding?.id === b.id;
+                const tint = TYPE_TINTS[b.building_type] || 'rgba(99,102,241,0.10)';
+                const isSports = b.building_type === 'sports' || b.building_type === 'garden' || b.building_type === 'amphitheatre';
+                const isLarge = b.grid_w >= 6 || b.grid_h >= 4;
+
+                return (
+                  <motion.div
+                    key={b.id}
+                    whileHover={{ scale: 1.03, zIndex: 10 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleBuildingClick(b)}
+                    className="group"
+                    style={{
+                      gridColumn: `${b.grid_x + 1} / span ${b.grid_w}`,
+                      gridRow: `${b.grid_y + 1} / span ${b.grid_h}`,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      gap: 2, padding: '4px 3px',
+                      borderRadius: isSports ? 6 : 4,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      position: 'relative',
+                      overflow: 'hidden',
+
+                      // Blueprint style: dark bg with colored border
+                      background: isSelected
+                        ? `linear-gradient(135deg, ${b.color || '#6366f1'}30, ${b.color || '#6366f1'}15)`
+                        : tint,
+                      border: `1.5px solid ${isSelected ? b.color || '#6366f1' : `${b.color || '#6366f1'}40`}`,
+                      boxShadow: isSelected
+                        ? `0 0 12px ${b.color || '#6366f1'}40, inset 0 0 20px ${b.color || '#6366f1'}10`
+                        : `inset 0 0 10px rgba(0,0,0,0.1)`,
+                    }}
+                  >
+                    {/* Event badge */}
+                    {evtCount > 0 && (
+                      <div style={{
+                        position: 'absolute', top: 2, right: 2,
+                        width: 16, height: 16, borderRadius: '50%',
+                        background: '#ef4444', color: '#fff',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 8, fontWeight: 800,
+                        animation: 'pulse 2s infinite',
+                        boxShadow: '0 0 6px rgba(239,68,68,0.5)',
+                      }}>
+                        {evtCount}
+                      </div>
+                    )}
+
+                    {/* Icon */}
+                    <div style={{
+                      width: isLarge ? 22 : 16, height: isLarge ? 22 : 16,
+                      borderRadius: 4,
+                      background: `${b.color || '#6366f1'}20`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      <IconComp size={isLarge ? 13 : 10} weight="duotone" style={{ color: b.color || '#6366f1' }} />
+                    </div>
+
+                    {/* Label */}
+                    <span style={{
+                      fontSize: isLarge ? 9 : 7,
+                      fontWeight: 700,
+                      color: '#e2e8f0',
+                      textAlign: 'center',
+                      lineHeight: 1.1,
+                      maxWidth: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}>
+                      {b.short_name || b.name}
+                    </span>
+
+                    {/* Sub-label (only for larger buildings) */}
+                    {isLarge && (
+                      <span style={{
+                        fontSize: 7, color: '#64748b',
+                        textAlign: 'center', lineHeight: 1.1,
+                        maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>
+                        {b.name !== (b.short_name || b.name) ? b.name : `${b.floor_count}F`}
+                      </span>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Map legend bar */}
+          <div style={{
+            padding: '6px 14px',
+            background: 'rgba(15,23,42,0.8)',
+            borderTop: '1px solid rgba(99,102,241,0.15)',
+            display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center',
+          }}>
             {[
-              { row: 0, label: '🚪 Entrance', color: '#78716c' },
-              { row: 1, label: '🏛 Admin', color: '#8b5cf6' },
-              { row: 2, label: '📚 Academic', color: '#6366f1', span: 2 },
-              { row: 4, label: '📖 Resources', color: '#0d9488' },
-              { row: 5, label: '🎭 Social', color: '#ec4899' },
-              { row: 6, label: '⚽ Sports', color: '#16a34a', span: 2 },
-              { row: 8, label: '🏠 Hostels', color: '#3b82f6' },
-            ].map(z => (
-              <div key={z.row} style={{
-                gridColumn: '1', gridRow: `${z.row + 1} / span ${z.span || 1}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)',
-                fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase',
-                color: z.color, opacity: 0.7, userSelect: 'none',
-              }}>
-                {z.label}
+              { label: 'Academic', color: '#6366f1' },
+              { label: 'Admin', color: '#8b5cf6' },
+              { label: 'Sports', color: '#16a34a' },
+              { label: 'Hostel', color: '#3b82f6' },
+              { label: 'Canteen', color: '#f43f5e' },
+              { label: 'Infra', color: '#64748b' },
+            ].map(l => (
+              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: l.color, border: `1px solid ${l.color}60` }} />
+                <span style={{ fontSize: 8, fontWeight: 600, color: '#94a3b8' }}>{l.label}</span>
               </div>
             ))}
-
-            {/* ── Building Cells ─── */}
-            {buildings.map(b => {
-              const IconComp = ICON_MAP[b.icon || 'Buildings'] || Buildings;
-              const evtCount = b.event_count;
-              const isSelected = selectedBuilding?.id === b.id;
-              return (
-                <motion.div
-                  key={b.id}
-                  whileHover={{ scale: 1.04, y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => handleBuildingClick(b)}
-                  className="relative cursor-pointer transition-all group"
-                  style={{
-                    gridColumn: `${b.grid_x + 2} / span ${b.grid_w}`,
-                    gridRow: `${b.grid_y + 1} / span ${b.grid_h}`,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    gap: 3, padding: 8, borderRadius: 12, overflow: 'hidden',
-                    background: isSelected
-                      ? `linear-gradient(135deg, ${b.color || '#6366f1'}22, ${b.color || '#6366f1'}11)`
-                      : 'var(--card-bg-alt, #f8fafc)',
-                    border: `2px solid ${isSelected ? b.color || '#6366f1' : 'var(--border, #e2e8f0)'}`,
-                    boxShadow: isSelected ? `0 4px 16px ${b.color || '#6366f1'}33` : 'none',
-                  }}
-                >
-                  {/* Event badge */}
-                  {evtCount > 0 && (
-                    <div className="absolute top-1 right-1 w-4.5 h-4.5 rounded-full bg-red-500 text-white flex items-center justify-center text-[9px] font-bold" style={{ animation: 'pulse 2s infinite', width: 18, height: 18 }}>
-                      {evtCount}
-                    </div>
-                  )}
-                  <div style={{
-                    width: 28, height: 28, borderRadius: 7,
-                    background: `${b.color || '#6366f1'}18`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <IconComp size={15} weight="duotone" style={{ color: b.color || '#6366f1' }} />
-                  </div>
-                  <span className="text-[10px] font-bold text-center text-slate-800 dark:text-white leading-tight">
-                    {b.short_name || b.name}
-                  </span>
-                  <span className="text-[8px] text-slate-400 text-center leading-tight hidden sm:block truncate w-full px-1">
-                    {b.name !== (b.short_name || b.name) ? b.name : b.building_type}
-                </span>
-              </motion.div>
-            );
-          })}
           </div>
         </div>
       )}
+
+      {/* ── Building Detail Panel ──────────────────────────────── */}
+      <AnimatePresence>
+        {selectedBuilding && (
+          <motion.div
+            key="detail"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4"
+            style={{ boxShadow: `0 4px 20px ${selectedBuilding.color || '#6366f1'}20` }}
+          >
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center gap-3">
+                <div style={{
+                  width: 40, height: 40, borderRadius: 12,
+                  background: `${selectedBuilding.color || '#6366f1'}15`,
+                  border: `2px solid ${selectedBuilding.color || '#6366f1'}30`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {React.createElement(ICON_MAP[selectedBuilding.icon || 'Buildings'] || Buildings, {
+                    size: 20, weight: 'duotone', style: { color: selectedBuilding.color || '#6366f1' }
+                  })}
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-800 dark:text-white">{selectedBuilding.name}</h3>
+                  <p className="text-[11px] text-slate-400">
+                    {selectedBuilding.building_type.replace('_', ' ')} · {selectedBuilding.floor_count} floor{selectedBuilding.floor_count > 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {canPin(selectedBuilding) && (
+                  <button onClick={() => handlePinEvent(selectedBuilding)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-white"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+                    <MapPin size={12} weight="bold" /> Pin Event Here
+                  </button>
+                )}
+                <button onClick={() => setSelectedBuilding(null)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center"
+                  style={{ background: 'var(--card-bg-alt, #f1f5f9)' }}>
+                  <X size={12} />
+                </button>
+              </div>
+            </div>
+
+            {/* Facilities */}
+            {selectedBuilding.facilities?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {selectedBuilding.facilities.map((f: string, i: number) => (
+                  <span key={i} className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                    style={{ background: `${selectedBuilding.color || '#6366f1'}12`, color: selectedBuilding.color || '#6366f1' }}>
+                    {f}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Events at this building */}
+            {buildingEvents(selectedBuilding.id).length > 0 && (
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase">Live Events</p>
+                {buildingEvents(selectedBuilding.id).map(e => (
+                  <div key={e.id} className="flex items-center gap-2 py-1.5 border-b border-slate-100 dark:border-white/5 last:border-0">
+                    <div style={{ width: 6, height: 6, borderRadius: 3, background: CATEGORY_COLORS[e.category] || '#94a3b8' }} />
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 dark:text-white">{e.title}</span>
+                      <p className="text-[10px] text-slate-500">
+                        {new Date(e.starts_at).toLocaleString()} — {e.creator_name || 'Unknown'}
+                      </p>
+                    </div>
+                    <span className="ml-auto px-2 py-0.5 rounded-full text-[9px] font-bold"
+                      style={{ background: `${STATUS_LABELS[e.status]?.color || '#94a3b8'}18`, color: STATUS_LABELS[e.status]?.color }}>
+                      {STATUS_LABELS[e.status]?.label || e.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Events List View ─────────────────────────────────────── */}
       {viewMode === 'events' && (
@@ -224,114 +456,34 @@ export default function CampusMap({ user }: CampusMapProps) {
               <p className="text-sm font-semibold">No active events</p>
               <p className="text-xs">Click a building on the map to pin one!</p>
             </div>
-          ) : events.map(e => (
-            <motion.div key={e.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              className="flex gap-3.5 p-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 shadow-sm">
-              <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center"
-                style={{ background: `${CATEGORY_COLORS[e.category] || '#94a3b8'}18` }}>
-                <Calendar size={20} weight="duotone" style={{ color: CATEGORY_COLORS[e.category] || '#94a3b8' }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start gap-2">
-                  <h4 className="text-sm font-bold text-slate-800 dark:text-white truncate">{e.title}</h4>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0"
-                    style={{
-                      background: `${STATUS_LABELS[e.status]?.color || '#94a3b8'}18`,
-                      color: STATUS_LABELS[e.status]?.color || '#94a3b8',
-                    }}>
-                    {STATUS_LABELS[e.status]?.label || e.status}
-                  </span>
+          ) : (
+            events.map(e => {
+              const bld = buildings.find(b => b.id === e.building_id);
+              return (
+                <div key={e.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 dark:border-white/10 bg-white dark:bg-white/[0.03]">
+                  <div style={{
+                    width: 10, height: 10, borderRadius: 5,
+                    background: CATEGORY_COLORS[e.category] || '#94a3b8',
+                    flexShrink: 0,
+                  }} />
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 dark:text-white">{e.title}</span>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {new Date(e.starts_at).toLocaleString()} — by {e.creator_name || 'Unknown'}
+                    </p>
+                  </div>
+                  {bld && (
+                    <span className="ml-auto px-2 py-0.5 rounded-full text-[9px] font-bold"
+                      style={{ background: `${bld.color || '#6366f1'}15`, color: bld.color || '#6366f1' }}>
+                      📍 {bld.short_name}
+                    </span>
+                  )}
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  📍 {e.building_name || 'Unknown'} · 🕐 {new Date(e.starts_at).toLocaleString()}
-                </p>
-                {e.description && (
-                  <p className="text-xs text-slate-400 mt-1 line-clamp-2">{e.description}</p>
-                )}
-              </div>
-            </motion.div>
-          ))}
+              );
+            })
+          )}
         </div>
       )}
-
-      {/* ── Building Detail Panel ────────────────────────────────── */}
-      <AnimatePresence>
-        {selectedBuilding && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className="rounded-2xl bg-white dark:bg-white/[0.03] shadow-lg"
-            style={{ padding: 20, border: `2px solid ${selectedBuilding.color || '#6366f1'}44` }}>
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center"
-                  style={{ background: `${selectedBuilding.color || '#6366f1'}18` }}>
-                  {React.createElement(ICON_MAP[selectedBuilding.icon || 'Buildings'] || Buildings, {
-                    size: 22, weight: 'duotone', style: { color: selectedBuilding.color || '#6366f1' }
-                  })}
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-800 dark:text-white">{selectedBuilding.name}</h3>
-                  <p className="text-xs text-slate-500">{selectedBuilding.building_type} · {selectedBuilding.floor_count} floors</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {selectedBuilding.building_type !== 'gate' && selectedBuilding.building_type !== 'parking' && (
-                  <button onClick={() => handlePinEvent(selectedBuilding)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>
-                    <MapPin size={14} weight="bold" /> Pin Event Here
-                  </button>
-                )}
-                <button onClick={() => setSelectedBuilding(null)}
-                  className="w-8 h-8 rounded-lg border-none cursor-pointer bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-                  <X size={14} />
-                </button>
-              </div>
-            </div>
-
-            {/* Departments */}
-            {selectedBuilding.departments.length > 0 && (
-              <div className="flex gap-1.5 flex-wrap mb-3">
-                {selectedBuilding.departments.map((d: string) => (
-                  <span key={d} className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
-                    style={{ background: `${selectedBuilding.color || '#6366f1'}15`, color: selectedBuilding.color || '#6366f1' }}>
-                    {d}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Facilities */}
-            {selectedBuilding.facilities.length > 0 && (
-              <div className="flex gap-1.5 flex-wrap mb-4">
-                {selectedBuilding.facilities.map((f: string) => (
-                  <span key={f} className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400">
-                    ✓ {f}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Events in building */}
-            <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Events ({buildingEvents(selectedBuilding.id).length})
-            </h4>
-            {buildingEvents(selectedBuilding.id).length === 0 ? (
-              <p className="text-xs text-slate-400">No active events here.</p>
-            ) : buildingEvents(selectedBuilding.id).map(e => (
-              <div key={e.id} className="flex gap-2.5 p-2.5 rounded-xl mb-1.5 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10">
-                <div className="w-1.5 rounded-sm flex-shrink-0" style={{ background: CATEGORY_COLORS[e.category] || '#94a3b8' }} />
-                <div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-white">{e.title}</span>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    {new Date(e.starts_at).toLocaleString()} — by {e.creator_name || 'Unknown'}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ── Create Event Modal (from map-click, building pre-selected) ── */}
       {pinBuilding && (
