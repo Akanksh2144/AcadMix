@@ -50,6 +50,7 @@ export default function CampusMap({ user }: CampusMapProps) {
   const [events, setEvents] = useState<CampusEvent[]>([]);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [pinBuilding, setPinBuilding] = useState<Building | null>(null);
+  const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'map' | 'events'>('map');
 
@@ -111,18 +112,26 @@ export default function CampusMap({ user }: CampusMapProps) {
             {buildings.length} buildings · {events.length} active events · <span className="text-indigo-400 font-semibold">Click a building to pin an event</span>
           </p>
         </div>
-        {/* View toggle pill */}
-        <div className="flex bg-slate-100 dark:bg-white/[0.06] rounded-full p-0.5">
-          {(['map', 'events'] as const).map(v => (
-            <button key={v} onClick={() => setViewMode(v)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                viewMode === v
-                  ? 'bg-indigo-500 text-white shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-              }`}>
-              {v === 'map' ? '🗺 Map' : '📅 Events'}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          {/* View toggle pill */}
+          <div className="flex bg-slate-100 dark:bg-white/[0.06] rounded-full p-0.5">
+            {(['map', 'events'] as const).map(v => (
+              <button key={v} onClick={() => setViewMode(v)}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  viewMode === v
+                    ? 'bg-indigo-500 text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                }`}>
+                {v === 'map' ? '🗺 Map' : '📅 Events'}
+              </button>
+            ))}
+          </div>
+          {/* Pin Event button (opens modal with building dropdown) */}
+          <button onClick={() => setShowCreateEvent(true)}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold text-white"
+            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>
+            <MapPin size={14} weight="bold" /> Pin Event
+          </button>
         </div>
       </div>
 
@@ -309,13 +318,22 @@ export default function CampusMap({ user }: CampusMapProps) {
         )}
       </AnimatePresence>
 
-      {/* ── Create Event Modal (triggered by map click) ───────────── */}
+      {/* ── Create Event Modal (from map-click, building pre-selected) ── */}
       {pinBuilding && (
         <CreateEventModal
           buildings={buildings}
           selectedBuilding={pinBuilding}
           onClose={() => setPinBuilding(null)}
           onCreated={() => { setPinBuilding(null); loadData(); }}
+        />
+      )}
+
+      {/* ── Create Event Modal (from header button, choose building) ── */}
+      {showCreateEvent && (
+        <CreateEventModal
+          buildings={buildings}
+          onClose={() => setShowCreateEvent(false)}
+          onCreated={() => { setShowCreateEvent(false); loadData(); }}
         />
       )}
 
