@@ -253,7 +253,7 @@ const MECH_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: st
     { id: 'au-python', label: 'Python (Engines)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   cad_3d: [
-    { id: 'cad-openscad', label: 'OpenSCAD (Parametric)', url: 'https://openscad.cloud/', openLabel: 'Open OpenSCAD' },
+    { id: 'cad-openscad', label: 'OpenJSCAD (Parametric)', url: 'https://openjscad.xyz/', openLabel: 'Open JSCAD' },
     { id: 'cad-threejs', label: 'Three.js Editor', url: 'https://threejs.org/editor/', openLabel: 'Open 3D Editor' },
     { id: 'cad-python', label: 'Python (CadQuery)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
