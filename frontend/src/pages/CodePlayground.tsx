@@ -216,6 +216,7 @@ const MECH_SIMULATOR_CATEGORIES = [
   { id: 'mechatronics', label: 'Mechatronics & Robotics', icon: <Robot size={16} weight="duotone" />, accent: 'teal' },
   { id: 'dynamics', label: 'Dynamics & Vibrations', icon: <WaveSine size={16} weight="duotone" />, accent: 'indigo' },
   { id: 'automotive', label: 'Automotive & IC Engines', icon: <Car size={16} weight="duotone" />, accent: 'rose' },
+  { id: 'cad_3d', label: 'CAD / 3D Modeling', icon: <Cube size={16} weight="duotone" />, accent: 'sky' },
 ];
 
 const MECH_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; octaveUrl?: string; noEmbed?: boolean }[]> = {
@@ -250,6 +251,11 @@ const MECH_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: st
   ],
   automotive: [
     { id: 'au-python', label: 'Python (Engines)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+  ],
+  cad_3d: [
+    { id: 'cad-openscad', label: 'OpenSCAD (Parametric)', url: 'https://openscad.cloud/', openLabel: 'Open OpenSCAD' },
+    { id: 'cad-threejs', label: 'Three.js Editor', url: 'https://threejs.org/editor/', openLabel: 'Open 3D Editor' },
+    { id: 'cad-python', label: 'Python (CadQuery)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
 };
 
