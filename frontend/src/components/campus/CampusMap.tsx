@@ -143,25 +143,20 @@ export default function CampusMap({ user }: CampusMapProps) {
               gridTemplateRows: `repeat(${maxY}, 20px)`,
               gap: 2, minWidth: 720, position: 'relative',
             }}>
-              {/* ── Zone Backgrounds (tinted areas between roads) ── */}
-              {[
-                { startRow: 1, endRow: 5, color: '#78716c', label: 'Entrance' },      // warm gray
-                { startRow: 6, endRow: 11, color: '#8b5cf6', label: 'Admin' },         // purple
-                { startRow: 12, endRow: 21, color: '#6366f1', label: 'Academic' },     // indigo
-                { startRow: 22, endRow: 27, color: '#0d9488', label: 'Resources' },    // teal
-                { startRow: 28, endRow: 33, color: '#ec4899', label: 'Social' },       // pink
-                { startRow: 34, endRow: 41, color: '#16a34a', label: 'Sports' },       // green
-                { startRow: 42, endRow: 47, color: '#3b82f6', label: 'Residential' },  // blue
-              ].map(z => (
-                <div key={z.label} style={{
-                  gridColumn: '1 / -1',
-                  gridRow: `${z.startRow + 1} / ${z.endRow + 1}`,
-                  background: `${z.color}14`,
-                  borderRadius: 6,
-                  pointerEvents: 'none',
-                  zIndex: 0,
-                }} />
-              ))}
+              {/* ── Zone Backgrounds ── */}
+              {[1,6,12,22,28,34,42].map((startRow, i) => {
+                const endRows = [5,11,21,27,33,41,47];
+                return (
+                  <div key={`zone-${i}`} style={{
+                    gridColumn: '1 / -1',
+                    gridRow: `${startRow + 1} / ${endRows[i] + 1}`,
+                    background: 'var(--zone-bg, rgba(241,245,249,0.7))',
+                    borderRadius: 6,
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                  }} />
+                );
+              })}
 
               {/* ── Horizontal Roads ── */}
               {H_ROADS.map(r => (
@@ -374,15 +369,18 @@ export default function CampusMap({ user }: CampusMapProps) {
         .campus-map-container {
           --road-bg: #e2e8f0; --road-line: #fbbf24; --road-text: #64748b;
           --building-bg: #ffffff; --building-border: #e2e8f0;
+          --zone-bg: rgba(241,245,249,0.7);
         }
         .dark .campus-map-container, [data-theme="dark"] .campus-map-container {
           --road-bg: #334155; --road-line: #ca8a04; --road-text: #94a3b8;
           --building-bg: #1e293b; --building-border: #334155;
+          --zone-bg: rgba(30,41,59,0.5);
         }
         @media (prefers-color-scheme: dark) {
           .campus-map-container {
             --road-bg: #334155; --road-line: #ca8a04; --road-text: #94a3b8;
             --building-bg: #1e293b; --building-border: #334155;
+            --zone-bg: rgba(30,41,59,0.5);
           }
         }
       `}</style>
