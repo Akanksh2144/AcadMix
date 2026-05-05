@@ -143,6 +143,26 @@ export default function CampusMap({ user }: CampusMapProps) {
               gridTemplateRows: `repeat(${maxY}, 20px)`,
               gap: 2, minWidth: 720, position: 'relative',
             }}>
+              {/* ── Zone Backgrounds (tinted areas between roads) ── */}
+              {[
+                { startRow: 1, endRow: 5, color: '#78716c', label: 'Entrance' },      // warm gray
+                { startRow: 6, endRow: 11, color: '#8b5cf6', label: 'Admin' },         // purple
+                { startRow: 12, endRow: 21, color: '#6366f1', label: 'Academic' },     // indigo
+                { startRow: 22, endRow: 27, color: '#0d9488', label: 'Resources' },    // teal
+                { startRow: 28, endRow: 33, color: '#ec4899', label: 'Social' },       // pink
+                { startRow: 34, endRow: 41, color: '#16a34a', label: 'Sports' },       // green
+                { startRow: 42, endRow: 47, color: '#3b82f6', label: 'Residential' },  // blue
+              ].map(z => (
+                <div key={z.label} style={{
+                  gridColumn: '1 / -1',
+                  gridRow: `${z.startRow + 1} / ${z.endRow + 1}`,
+                  background: `${z.color}14`,
+                  borderRadius: 6,
+                  pointerEvents: 'none',
+                  zIndex: 0,
+                }} />
+              ))}
+
               {/* ── Horizontal Roads ── */}
               {H_ROADS.map(r => (
                 <div key={`hr-${r.row}`} style={{
