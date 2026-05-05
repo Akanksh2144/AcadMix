@@ -205,8 +205,8 @@ export default function CampusMap({ user }: CampusMapProps) {
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                       gap: 2, padding: 4, cursor: 'pointer', position: 'relative', overflow: 'hidden',
                       borderRadius: isSports ? 8 : 5,
-                      background: isSelected ? `${b.color}30` : `${b.color || '#6366f1'}18`,
-                      border: 'none',
+                      background: isSelected ? `${b.color}35` : `${b.color || '#6366f1'}20`,
+                      border: `1.5px solid ${b.color || '#6366f1'}${isSelected ? '60' : '40'}`,
                       boxShadow: isSelected
                         ? `0 0 0 2px ${b.color}30, 0 2px 8px ${b.color}20`
                         : '0 1px 3px rgba(0,0,0,0.06)',
@@ -224,11 +224,11 @@ export default function CampusMap({ user }: CampusMapProps) {
                     )}
                     <IconComp size={isLarge ? 14 : 10} weight="duotone" style={{ color: b.color || '#6366f1', flexShrink: 0 }} />
                     <span style={{
-                      fontSize: isLarge ? 8 : 6.5, fontWeight: 700, textAlign: 'center', lineHeight: 1.1,
-                      color: 'var(--text-primary, #1e293b)', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
+                      fontSize: isLarge ? 8 : 6.5, fontWeight: 800, textAlign: 'center', lineHeight: 1.1,
+                      color: b.color || '#6366f1', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
                     }}>{b.short_name}</span>
                     {isLarge && (
-                      <span style={{ fontSize: 6, color: 'var(--text-muted, #94a3b8)', textAlign: 'center', lineHeight: 1.1 }}>
+                      <span style={{ fontSize: 6, fontWeight: 600, color: b.color || '#6366f1', opacity: 0.7, textAlign: 'center', lineHeight: 1.1 }}>
                         {b.name}
                       </span>
                     )}
