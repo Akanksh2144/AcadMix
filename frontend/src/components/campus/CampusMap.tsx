@@ -187,17 +187,29 @@ export default function CampusMap({ user }: CampusMapProps) {
                 </div>
               ))}
 
+              {/* ── Trees (scattered greenery) ── */}
+              {[
+                {x:6,y:2},{x:6,y:8},{x:6,y:14},{x:6,y:23},{x:6,y:30},{x:6,y:40},
+                {x:16,y:3},{x:16,y:9},{x:16,y:15},{x:16,y:24},{x:16,y:31},{x:16,y:40},
+                {x:0,y:5},{x:3,y:11},{x:12,y:5},{x:20,y:5},{x:22,y:11},{x:15,y:21},
+                {x:2,y:21},{x:22,y:27},{x:5,y:33},{x:16,y:33},{x:23,y:33},{x:3,y:41},
+              ].map((t, i) => (
+                <div key={`tree-${i}`} style={{
+                  gridColumn: `${t.x + 1}`, gridRow: `${t.y + 1}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  pointerEvents: 'none', zIndex: 0, fontSize: 10, opacity: 0.35,
+                }}>🌳</div>
+              ))}
+
               {/* ── Buildings ── */}
               {buildings.map(b => {
                 const IconComp = ICON_MAP[b.icon || 'Buildings'] || Buildings;
                 const isSelected = selectedBuilding?.id === b.id;
-                const isLarge = b.grid_w >= 5 || b.grid_h >= 4;
-                const isSports = ['sports','garden','amphitheatre'].includes(b.building_type);
+                const isLarge = b.grid_w >= 4 || b.grid_h >= 4;
+                const isParking = b.building_type === 'parking';
 
                 return (
-                  <motion.div key={b.id}
-                    whileHover={{ scale: 1.04, zIndex: 20 }}
-                    whileTap={{ scale: 0.97 }}
+                  <div key={b.id}
                     onClick={() => handleBuildingClick(b)}
                     style={{
                       gridColumn: `${b.grid_x + 1} / span ${b.grid_w}`,
@@ -205,14 +217,19 @@ export default function CampusMap({ user }: CampusMapProps) {
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                       gap: 2, padding: 4, cursor: 'pointer', position: 'relative', overflow: 'hidden',
                       background: isSelected ? `${b.color}50` : `${b.color || '#6366f1'}30`,
-                      border: 'none',
-                      borderRadius: 0,
-                      boxShadow: isSelected
-                        ? `0 0 0 2px ${b.color}60, 0 2px 8px ${b.color}30`
-                        : 'none',
-                      transition: 'all 0.15s ease',
+                      border: 'none', borderRadius: 0,
+                      outline: isSelected ? `2px solid ${b.color}80` : 'none',
+                      zIndex: 1,
+                      transition: 'outline 0.15s ease',
                     }}
                   >
+                    {/* Parking lot internal dividers */}
+                    {isParking && b.grid_w >= 6 && (
+                      <>
+                        <div style={{ position:'absolute', left:'33%', top:4, bottom:4, borderLeft:'1px dashed var(--road-text, #94a3b8)', opacity:0.4 }} />
+                        <div style={{ position:'absolute', left:'66%', top:4, bottom:4, borderLeft:'1px dashed var(--road-text, #94a3b8)', opacity:0.4 }} />
+                      </>
+                    )}
                     {/* Event badge */}
                     {b.event_count > 0 && (
                       <div style={{
@@ -232,7 +249,7 @@ export default function CampusMap({ user }: CampusMapProps) {
                         {b.name}
                       </span>
                     )}
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
