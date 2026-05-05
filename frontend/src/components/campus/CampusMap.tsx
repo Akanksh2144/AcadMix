@@ -206,7 +206,7 @@ export default function CampusMap({ user }: CampusMapProps) {
                       gap: 2, padding: 4, cursor: 'pointer', position: 'relative', overflow: 'hidden',
                       borderRadius: isSports ? 8 : 5,
                       background: isSelected ? `${b.color}30` : `${b.color || '#6366f1'}18`,
-                      border: `1.5px solid ${b.color || '#6366f1'}${isSelected ? '60' : '35'}`,
+                      border: 'none',
                       boxShadow: isSelected
                         ? `0 0 0 2px ${b.color}30, 0 2px 8px ${b.color}20`
                         : '0 1px 3px rgba(0,0,0,0.06)',
