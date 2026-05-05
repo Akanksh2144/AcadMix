@@ -65,6 +65,7 @@ export default function AttendanceMarker({ user }: AttendanceMarkerProps) {
   const [topicSelectorOpen, setTopicSelectorOpen] = useState(false);
   const [loadingTopics, setLoadingTopics] = useState(false);
   const [activeUnitId, setActiveUnitId] = useState<string | null>(null);
+  const [unitDropdownOpen, setUnitDropdownOpen] = useState(false);
 
   useEffect(() => { fetchTodayPeriods(); }, []);
 
@@ -99,6 +100,7 @@ export default function AttendanceMarker({ user }: AttendanceMarkerProps) {
     setSelectedTopicIds([]);
     setTopicSelectorOpen(false);
     setActiveUnitId(null);
+    setUnitDropdownOpen(false);
     fetchSyllabusTopics(slot.subject_code);
 
     const mockStudents: Student[] = [
@@ -335,29 +337,29 @@ export default function AttendanceMarker({ user }: AttendanceMarkerProps) {
                       {/* ── Unit Dropdown ─────────── */}
                       <div className="mt-3 relative">
                         <button
-                          onClick={() => setActiveUnitId(activeUnitId === '__dropdown_open__' ? null : (activeUnitId && activeUnitId !== '__dropdown_open__' ? '__dropdown_open__' : '__dropdown_open__'))}
-                          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/[0.08] hover:border-indigo-300 dark:hover:border-indigo-500/30 transition-all duration-200 shadow-sm group"
+                          onClick={() => setUnitDropdownOpen(!unitDropdownOpen)}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/[0.08] hover:border-indigo-300 dark:hover:border-indigo-500/30 transition-all duration-200 shadow-sm"
                         >
                           <div className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center">
                               <BookOpenText size={14} weight="duotone" className="text-indigo-500" />
                             </div>
                             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                              {activeUnitId && activeUnitId !== '__dropdown_open__'
+                              {activeUnitId
                                 ? (() => {
                                     const u = syllabusUnits.find(u => u.unit_id === activeUnitId);
-                                    return u ? `Unit ${u.unit_no}: ${u.unit_title}` : 'Select Unit';
+                                    return u ? `Unit ${u.unit_no}: ${u.unit_title}` : 'Select Unit / Chapter';
                                   })()
                                 : 'Select Unit / Chapter'
                               }
                             </span>
                           </div>
-                          <CaretDown size={16} weight="bold" className={`text-slate-400 transition-transform duration-200 ${activeUnitId === '__dropdown_open__' ? 'rotate-180' : ''}`} />
+                          <CaretDown size={16} weight="bold" className={`text-slate-400 transition-transform duration-200 ${unitDropdownOpen ? 'rotate-180' : ''}`} />
                         </button>
 
                         {/* Dropdown menu */}
                         <AnimatePresence>
-                          {activeUnitId === '__dropdown_open__' && (
+                          {unitDropdownOpen && (
                             <motion.div
                               initial={{ opacity: 0, y: -4, scale: 0.98 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -367,16 +369,21 @@ export default function AttendanceMarker({ user }: AttendanceMarkerProps) {
                             >
                               {syllabusUnits.map((unit, idx) => {
                                 const unitSelectedCount = unit.topics.filter(t => selectedTopicIds.includes(t.id)).length;
+                                const isActive = activeUnitId === unit.unit_id;
                                 return (
                                   <button
                                     key={unit.unit_id}
-                                    onClick={() => setActiveUnitId(unit.unit_id)}
+                                    onClick={() => { setActiveUnitId(unit.unit_id); setUnitDropdownOpen(false); }}
                                     className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors duration-150 ${
                                       idx < syllabusUnits.length - 1 ? 'border-b border-slate-50 dark:border-white/[0.04]' : ''
-                                    } hover:bg-indigo-50/70 dark:hover:bg-indigo-500/10`}
+                                    } ${isActive ? 'bg-indigo-50 dark:bg-indigo-500/10' : 'hover:bg-indigo-50/70 dark:hover:bg-indigo-500/10'}`}
                                   >
                                     <div className="flex items-center gap-3">
-                                      <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/15 to-violet-500/15 dark:from-indigo-500/20 dark:to-violet-500/20 flex items-center justify-center text-xs font-extrabold text-indigo-600 dark:text-indigo-400">
+                                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold ${
+                                        isActive
+                                          ? 'bg-indigo-500 text-white'
+                                          : 'bg-gradient-to-br from-indigo-500/15 to-violet-500/15 dark:from-indigo-500/20 dark:to-violet-500/20 text-indigo-600 dark:text-indigo-400'
+                                      }`}>
                                         {unit.unit_no}
                                       </span>
                                       <div>
@@ -399,7 +406,7 @@ export default function AttendanceMarker({ user }: AttendanceMarkerProps) {
 
                       {/* ── Active Unit Topics ─────────── */}
                       <AnimatePresence mode="wait">
-                        {activeUnitId && activeUnitId !== '__dropdown_open__' && (() => {
+                        {activeUnitId && (() => {
                           const unit = syllabusUnits.find(u => u.unit_id === activeUnitId);
                           if (!unit) return null;
                           return (
@@ -416,7 +423,7 @@ export default function AttendanceMarker({ user }: AttendanceMarkerProps) {
                                   Unit {unit.unit_no}: {unit.unit_title}
                                 </p>
                                 <button
-                                  onClick={() => setActiveUnitId('__dropdown_open__')}
+                                  onClick={() => setUnitDropdownOpen(true)}
                                   className="text-[10px] font-bold text-slate-400 hover:text-indigo-500 transition-colors"
                                 >
                                   Change ↓
