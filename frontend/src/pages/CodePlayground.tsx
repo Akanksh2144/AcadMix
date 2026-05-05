@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube, Broadcast, Equalizer, SunHorizon, Gauge, Path, Tree, Wall } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube, Broadcast, Equalizer, SunHorizon, Gauge, Path, Tree, Wall, Wrench, Gear, Engine, Robot, ThermometerHot, Car } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { toast } from 'sonner';
 
@@ -23,6 +23,7 @@ const LANGUAGES = [
   { id: 'ecelab', label: 'ECE Lab', icon: <Cpu size={20} weight="duotone" className="text-teal-500 shrink-0 drop-shadow-sm" /> },
   { id: 'eeelab', label: 'EEE Lab', icon: <Lightning size={20} weight="duotone" className="text-yellow-500 shrink-0 drop-shadow-sm" /> },
   { id: 'civillab', label: 'Civil Lab', icon: <HardHat size={20} weight="duotone" className="text-orange-500 shrink-0 drop-shadow-sm" /> },
+  { id: 'mechlab', label: 'Mech Lab', icon: <Wrench size={20} weight="duotone" className="text-red-500 shrink-0 drop-shadow-sm" /> },
 ];
 
 const SIMULATOR_CATEGORIES = [
@@ -205,6 +206,53 @@ const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: s
   ],
 };
 
+// ── Mech Lab Categories & Boards ─────────────────────────────────────────────
+const MECH_SIMULATOR_CATEGORIES = [
+  { id: 'thermodynamics', label: 'Thermodynamics', icon: <ThermometerHot size={16} weight="duotone" />, accent: 'rose' },
+  { id: 'fluid_mech', label: 'Fluid Mechanics', icon: <Drop size={16} weight="duotone" />, accent: 'sky' },
+  { id: 'som', label: 'Strength of Materials', icon: <Blueprint size={16} weight="duotone" />, accent: 'amber' },
+  { id: 'machine_design', label: 'Machine Design', icon: <Gear size={16} weight="duotone" />, accent: 'violet' },
+  { id: 'manufacturing', label: 'Manufacturing & CNC', icon: <Wrench size={16} weight="duotone" />, accent: 'emerald' },
+  { id: 'mechatronics', label: 'Mechatronics & Robotics', icon: <Robot size={16} weight="duotone" />, accent: 'teal' },
+  { id: 'dynamics', label: 'Dynamics & Vibrations', icon: <WaveSine size={16} weight="duotone" />, accent: 'indigo' },
+  { id: 'automotive', label: 'Automotive & IC Engines', icon: <Car size={16} weight="duotone" />, accent: 'rose' },
+];
+
+const MECH_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; octaveUrl?: string; noEmbed?: boolean }[]> = {
+  thermodynamics: [
+    { id: 'th-python', label: 'Python (Thermo)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'th-rc-thermal', label: 'RC Thermal Analogy', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=lrc.txt', openLabel: 'Open in CircuitJS' },
+  ],
+  fluid_mech: [
+    { id: 'fl-python', label: 'Python (Fluids)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'fl-pipe-rlc', label: 'Pipe Flow (RLC Analogy)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=lrc.txt', openLabel: 'Open in CircuitJS' },
+  ],
+  som: [
+    { id: 'som-python', label: 'Python (SOM)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'som-beam', label: 'Beam Calculator', url: 'https://structurecalcs.com/beam', openLabel: 'Open Calculator' },
+    { id: 'som-truss', label: 'Truss Solver', url: 'https://structurecalcs.com/truss', openLabel: 'Open Solver' },
+  ],
+  machine_design: [
+    { id: 'md-python', label: 'Python (Mechanisms)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+  ],
+  manufacturing: [
+    { id: 'mfg-python', label: 'Python (G-code)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+  ],
+  mechatronics: [
+    { id: 'mt-arduino', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
+    { id: 'mt-esp32', label: 'ESP32', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
+    { id: 'mt-pico', label: 'RPi Pico', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
+    { id: 'mt-python', label: 'Python (Control)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+  ],
+  dynamics: [
+    { id: 'dy-python', label: 'Python (Vibrations)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'dy-spring-rlc', label: 'Spring-Mass (RLC)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=lrc.txt', openLabel: 'Open in CircuitJS' },
+  ],
+  automotive: [
+    { id: 'au-python', label: 'Python (Engines)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+  ],
+};
+
 const SIM_ACCENT_CLASSES: Record<string, { active: string; pill: string; btn: string }> = {
   teal:    { active: 'bg-teal-500 text-white shadow-sm shadow-teal-500/25', pill: 'bg-teal-500/10 text-teal-600 dark:text-teal-400', btn: 'bg-teal-500 hover:bg-teal-600 shadow-teal-500/20' },
   violet:  { active: 'bg-violet-500 text-white shadow-sm shadow-violet-500/25', pill: 'bg-violet-500/10 text-violet-600 dark:text-violet-400', btn: 'bg-violet-500 hover:bg-violet-600 shadow-violet-500/20' },
@@ -277,8 +325,9 @@ const CodePlayground = ({ navigate, user }) => {
   // ── ECE / EEE / Civil Lab computed values ──────────────────────────────────
   const _isEEELab = language === 'eeelab';
   const _isCivilLab = language === 'civillab';
-  const _activeCats = _isCivilLab ? CIVIL_SIMULATOR_CATEGORIES : _isEEELab ? EEE_SIMULATOR_CATEGORIES : SIMULATOR_CATEGORIES;
-  const _activeBoards = _isCivilLab ? CIVIL_SIMULATOR_BOARDS : _isEEELab ? EEE_SIMULATOR_BOARDS : SIMULATOR_BOARDS;
+  const _isMechLab = language === 'mechlab';
+  const _activeCats = _isMechLab ? MECH_SIMULATOR_CATEGORIES : _isCivilLab ? CIVIL_SIMULATOR_CATEGORIES : _isEEELab ? EEE_SIMULATOR_CATEGORIES : SIMULATOR_CATEGORIES;
+  const _activeBoards = _isMechLab ? MECH_SIMULATOR_BOARDS : _isCivilLab ? CIVIL_SIMULATOR_BOARDS : _isEEELab ? EEE_SIMULATOR_BOARDS : SIMULATOR_BOARDS;
   const _simCat = _activeCats.find(c => c.id === simCategory) || _activeCats[0];
   const _simBoards = _activeBoards[simCategory] || [];
   const _simActiveBoard = _simBoards.find(b => b.id === wokwiBoard) || _simBoards[0];
@@ -543,6 +592,9 @@ const CodePlayground = ({ navigate, user }) => {
     } else if (langId === 'civillab') {
       setSimCategory('structural');
       setWokwiBoard(CIVIL_SIMULATOR_BOARDS['structural']?.[0]?.id || '');
+    } else if (langId === 'mechlab') {
+      setSimCategory('thermodynamics');
+      setWokwiBoard(MECH_SIMULATOR_BOARDS['thermodynamics']?.[0]?.id || '');
     }
     const saved = sessionStorage.getItem(getCodeStorageKey(activeChallenge, langId));
     if (saved !== null) {
@@ -1359,7 +1411,7 @@ const CodePlayground = ({ navigate, user }) => {
             </div>
           </div>
         </div>
-      ) : (language === 'ecelab' || language === 'eeelab' || language === 'civillab') ? (
+      ) : (language === 'ecelab' || language === 'eeelab' || language === 'civillab' || language === 'mechlab') ? (
         // ECE / EEE / Civil Lab — multi-simulator panel
         <div className="flex-1 overflow-hidden flex flex-col" style={{ overscrollBehavior: 'contain' }}>
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
@@ -1370,8 +1422,8 @@ const CodePlayground = ({ navigate, user }) => {
                 <div className="relative" ref={langMenuRef}>
                   <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-bold text-sm text-slate-700 dark:text-slate-300">
-                    {_isCivilLab ? <HardHat size={20} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={20} weight="duotone" className="text-yellow-500" /> : <Cpu size={20} weight="duotone" className="text-teal-500" />}
-                    {_isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}
+                    {_isMechLab ? <Wrench size={20} weight="duotone" className="text-red-500" /> : _isCivilLab ? <HardHat size={20} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={20} weight="duotone" className="text-yellow-500" /> : <Cpu size={20} weight="duotone" className="text-teal-500" />}
+                    {_isMechLab ? 'Mech Lab' : _isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}
                     <CaretDown size={14} weight="bold" />
                   </button>
                   {showLangMenu && (
@@ -1461,7 +1513,7 @@ const CodePlayground = ({ navigate, user }) => {
               )}
             </div>
             {/* Navigation helper for CircuitJS-based simulators */}
-            {(['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems', 'fluid_mechanics', 'communication', 'dsp', 'measurements', 'renewable_energy'].includes(simCategory)) && (
+            {(['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems', 'fluid_mechanics', 'communication', 'dsp', 'measurements', 'renewable_energy', 'dynamics'].includes(simCategory)) && (
               <div className={`flex items-center gap-4 text-xs font-medium px-4 py-2 rounded-xl mb-2 ${
                 SIM_ACCENT_CLASSES[_simCat.accent]?.pill || 'bg-slate-100 text-slate-600'
               }`}>
