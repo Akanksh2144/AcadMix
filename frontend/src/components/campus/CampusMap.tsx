@@ -136,7 +136,7 @@ export default function CampusMap({ user }: CampusMapProps) {
           </div>
 
           {/* Grid */}
-          <div style={{ overflow: 'auto', background: 'var(--zone-bg, #eef2f7)' }}>
+          <div style={{ overflow: 'auto', background: 'var(--zone-bg, #d5dce6)' }}>
             <div style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
@@ -385,18 +385,18 @@ export default function CampusMap({ user }: CampusMapProps) {
         .campus-map-container {
           --road-bg: #e2e8f0; --road-line: #fbbf24; --road-text: #64748b;
           --building-bg: #ffffff; --building-border: #e2e8f0;
-          --zone-bg: rgba(241,245,249,0.7);
+          --zone-bg: #d5dce6;
         }
         .dark .campus-map-container, [data-theme="dark"] .campus-map-container {
           --road-bg: #334155; --road-line: #ca8a04; --road-text: #94a3b8;
           --building-bg: #1e293b; --building-border: #334155;
-          --zone-bg: rgba(30,41,59,0.5);
+          --zone-bg: #1a2535;
         }
         @media (prefers-color-scheme: dark) {
           .campus-map-container {
             --road-bg: #334155; --road-line: #ca8a04; --road-text: #94a3b8;
             --building-bg: #1e293b; --building-border: #334155;
-            --zone-bg: rgba(30,41,59,0.5);
+            --zone-bg: #1a2535;
           }
         }
       `}</style>
