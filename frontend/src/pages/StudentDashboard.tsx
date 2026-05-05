@@ -348,8 +348,6 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
               { id: 'timetable', label: 'Timetable' },
               { id: 'subjects', label: 'Subjects' },
               { id: 'calendar', label: 'Calendar' },
-              { id: 'transport', label: 'Transport' },
-              { id: 'campus', label: 'Campus' },
               { id: 'fees', label: 'Fees & Payments' },
             ].map(tab => {
               const hasBadge = (tab.id === 'quizzes' && showQuizBadge) || (tab.id === 'fees' && showFeesBadge);
@@ -416,13 +414,14 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
             { id: 'code-playground', icon: Terminal, label: 'Code Playground', sub: 'Practice coding', iconBg: 'bg-purple-50 dark:bg-purple-500/10 group-hover:bg-purple-100 dark:group-hover:bg-purple-500/20', iconText: 'text-purple-500', testId: 'view-code-playground-button' },
             isHostelVisible ? { id: 'hostel-booking', icon: House, label: 'Hostel Booking', sub: 'Book your bed', iconBg: 'bg-pink-50 dark:bg-pink-500/10 group-hover:bg-pink-100 dark:group-hover:bg-pink-500/20', iconText: 'text-pink-500', testId: 'view-hostel-booking-button' } : null,
             { id: 'transport', label: 'Bus Tracker', sub: 'Track your bus', icon: Bus, iconBg: 'bg-emerald-50 dark:bg-emerald-500/10 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/20', iconText: 'text-emerald-500', testId: 'view-transport-button', isTab: true },
+            { id: 'campus-map', label: 'Campus Map', sub: 'Buildings & events', icon: MapPin, iconBg: 'bg-rose-50 dark:bg-rose-500/10 group-hover:bg-rose-100 dark:group-hover:bg-rose-500/20', iconText: 'text-rose-500', testId: 'view-campus-map-button', isTab: true, tabId: 'campus' },
             { id: 'career-toolkit', icon: Toolbox, label: 'Career Toolkit', sub: '10 AI career tools', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-career-toolkit-button' },
 
           ].filter(Boolean).map((item: any) => {
             const Icon = item.icon;
             return (
               <motion.button key={item.id} variants={itemVariants} whileHover={cardHover} whileTap={{ scale: 0.97 }}
-                data-testid={item.testId} onClick={() => item.isTab ? handleTabChange(item.id) : navigate(item.id)}
+                data-testid={item.testId} onClick={() => item.isTab ? handleTabChange(item.tabId || item.id) : navigate(item.id)}
                 className="soft-card-hover p-4 sm:p-6 text-left flex items-center gap-3 sm:gap-4 group"
               >
                 <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-colors ${item.iconBg}`}>
