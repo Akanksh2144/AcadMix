@@ -205,8 +205,8 @@ export default function CampusMap({ user }: CampusMapProps) {
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                       gap: 2, padding: 4, cursor: 'pointer', position: 'relative', overflow: 'hidden',
                       borderRadius: isSports ? 8 : 5,
-                      background: isSelected ? `${b.color}18` : 'var(--building-bg, #ffffff)',
-                      border: `1.5px solid ${isSelected ? b.color || '#6366f1' : 'var(--building-border, #e2e8f0)'}`,
+                      background: isSelected ? `${b.color}25` : `${b.color || '#6366f1'}0a`,
+                      border: `1.5px solid ${b.color || '#6366f1'}${isSelected ? '50' : '25'}`,
                       boxShadow: isSelected
                         ? `0 0 0 2px ${b.color}30, 0 2px 8px ${b.color}20`
                         : '0 1px 3px rgba(0,0,0,0.06)',
@@ -222,12 +222,7 @@ export default function CampusMap({ user }: CampusMapProps) {
                         fontSize: 7, fontWeight: 800,
                       }}>{b.event_count}</div>
                     )}
-                    {/* Color strip at top */}
-                    <div style={{
-                      position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-                      background: b.color || '#6366f1', borderRadius: '5px 5px 0 0', opacity: 0.7,
-                    }} />
-                    <IconComp size={isLarge ? 14 : 10} weight="duotone" style={{ color: b.color || '#6366f1', flexShrink: 0, marginTop: 2 }} />
+                    <IconComp size={isLarge ? 14 : 10} weight="duotone" style={{ color: b.color || '#6366f1', flexShrink: 0 }} />
                     <span style={{
                       fontSize: isLarge ? 8 : 6.5, fontWeight: 700, textAlign: 'center', lineHeight: 1.1,
                       color: 'var(--text-primary, #1e293b)', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
