@@ -45,6 +45,8 @@ import HODLeaveApprovalsTab from "../components/hod/HODLeaveApprovalsTab";
 import { useTheme } from "../contexts/ThemeContext";
 import DashboardSkeleton from "../components/DashboardSkeleton";
 import { mockSubjects } from "../lib/constants";
+import CampusMap from "../components/campus/CampusMap";
+import EventApprovalPanel from "../components/campus/EventApprovalPanel";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -665,6 +667,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
               { id: "progression", label: "Student Progression" },
               { id: "leave-approvals", label: "Leave Approvals" },
               { id: "insights", label: "AI Insights", icon: Sparkle },
+              { id: "campus", label: "Campus" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1825,6 +1828,15 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                     </div>
                 )}
             </div>
+        )}
+
+        {activeTab === "campus" && (
+          <div>
+            <EventApprovalPanel user={user} />
+            <div style={{ marginTop: 24 }}>
+              <CampusMap user={user} navigate={navigate} />
+            </div>
+          </div>
         )}
 
       </div>

@@ -28,6 +28,8 @@ import InsightsChat from "../components/insights/InsightsChat";
 import { useTheme } from "../contexts/ThemeContext";
 import DashboardSkeleton from "../components/DashboardSkeleton";
 import UserProfileModal from "../components/UserProfileModal";
+import CampusMap from "../components/campus/CampusMap";
+import EventApprovalPanel from "../components/campus/EventApprovalPanel";
 import {
   BarChart,
   Bar,
@@ -407,6 +409,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
               { id: "academics", label: "Academic Performance", icon: ChartLineUp },
               { id: "institution", label: "Institution Profile", icon: Buildings },
               { id: "insights", label: "AI Insights", icon: Sparkle },
+              { id: "campus", label: "Campus", icon: Buildings },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -809,6 +812,14 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                         </div>
                     )}
                 </div>
+            )}
+
+            {/* ─── Campus Tab ─── */}
+            {activeTab === "campus" && (
+              <div className="space-y-6">
+                <EventApprovalPanel user={user} />
+                <CampusMap user={user} navigate={navigate} />
+              </div>
             )}
 
           </motion.div>
