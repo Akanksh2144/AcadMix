@@ -136,19 +136,13 @@ export default function CampusMap({ user }: CampusMapProps) {
           </div>
 
           {/* Grid */}
-          <div style={{ overflow: 'auto', padding: 10 }}>
+          <div style={{ overflow: 'auto', background: 'var(--zone-bg, #eef2f7)' }}>
             <div style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
               gridTemplateRows: `repeat(${maxY}, 20px)`,
-              gap: 2, minWidth: 720, position: 'relative',
+              gap: 2, minWidth: 720, position: 'relative', padding: 6,
             }}>
-              {/* ── Full grid background ── */}
-              <div style={{
-                gridColumn: '1 / -1', gridRow: `1 / ${maxY + 1}`,
-                background: 'var(--zone-bg, rgba(241,245,249,0.7))',
-                borderRadius: 4, pointerEvents: 'none', zIndex: 0,
-              }} />
 
               {/* ── Horizontal Roads ── */}
               {H_ROADS.map(r => (
@@ -156,7 +150,7 @@ export default function CampusMap({ user }: CampusMapProps) {
                   gridColumn: '1 / -1', gridRow: `${r.row + 1}`,
                   background: 'var(--road-bg, #d1d5db)', borderRadius: 2,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  zIndex: 1,
+                  zIndex: 2,
                 }}>
                   <div style={{ flex: 1, height: 1, borderTop: '2px dashed var(--road-line, #fbbf24)' }} />
                   <span style={{ fontSize: 7, fontWeight: 800, color: 'var(--road-text, #6b7280)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -180,19 +174,36 @@ export default function CampusMap({ user }: CampusMapProps) {
                 </div>
               ))}
 
-              {/* ── Trees (in empty building areas, never on roads) ── */}
-              {[
-                {x:6,y:3},{x:6,y:9},{x:6,y:16},{x:6,y:24},{x:6,y:31},{x:6,y:36},
-                {x:0,y:16},{x:5,y:6},{x:5,y:22},{x:0,y:36},
-                {x:14,y:7},{x:15,y:14},{x:16,y:18},{x:16,y:24},{x:16,y:36},
-                {x:22,y:7},{x:23,y:16},{x:22,y:30},{x:23,y:36},{x:23,y:44},
-              ].map((t, i) => (
-                <div key={`tree-${i}`} style={{
-                  gridColumn: `${t.x + 1}`, gridRow: `${t.y + 1}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  pointerEvents: 'none', zIndex: 0, fontSize: 10, opacity: 0.35,
-                }}>🌳</div>
-              ))}
+              {/* ── Trees (dynamically avoid buildings + roads) ── */}
+              {(() => {
+                const roadRows = new Set(H_ROADS.map(r => r.row));
+                const roadCols = new Set(V_ROAD_COLS);
+                const occupied = new Set<string>();
+                buildings.forEach(b => {
+                  for (let dx = 0; dx < b.grid_w; dx++)
+                    for (let dy = 0; dy < b.grid_h; dy++)
+                      occupied.add(`${b.grid_x + dx},${b.grid_y + dy}`);
+                });
+                const treeSpots: { x: number; y: number }[] = [];
+                const candidates = [
+                  {x:2,y:3},{x:5,y:3},{x:3,y:8},{x:6,y:9},{x:1,y:16},{x:5,y:17},
+                  {x:6,y:23},{x:3,y:25},{x:6,y:30},{x:5,y:36},{x:6,y:43},{x:2,y:46},
+                  {x:10,y:3},{x:14,y:8},{x:8,y:16},{x:15,y:18},{x:12,y:25},{x:16,y:30},{x:10,y:36},{x:15,y:43},
+                  {x:18,y:3},{x:23,y:8},{x:22,y:14},{x:23,y:20},{x:22,y:25},{x:21,y:30},{x:23,y:38},{x:21,y:44},
+                ];
+                candidates.forEach(c => {
+                  if (!roadRows.has(c.y) && !roadCols.has(c.x) && !occupied.has(`${c.x},${c.y}`)) {
+                    treeSpots.push(c);
+                  }
+                });
+                return treeSpots.map((t, i) => (
+                  <div key={`tree-${i}`} style={{
+                    gridColumn: `${t.x + 1}`, gridRow: `${t.y + 1}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    pointerEvents: 'none', zIndex: 0, fontSize: 10, opacity: 0.3,
+                  }}>🌳</div>
+                ));
+              })()}
 
               {/* ── Buildings ── */}
               {buildings.map(b => {
