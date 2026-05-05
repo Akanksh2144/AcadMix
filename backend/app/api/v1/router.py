@@ -84,6 +84,7 @@ api_router.include_router(notifications.router, tags=["notifications"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
 api_router.include_router(pre_enroll.router, tags=["pre_enrollment"])
 api_router.include_router(modules.router, tags=["college_modules"])
+api_router.include_router(campus.router, tags=["campus"])
 
 # Nodal Router (historical top-level route, now safely namespaced if possible, keeping legacy /api scope mostly)
 api_router.include_router(nodal_routes.nodal_router, tags=["nodal_officer"])
