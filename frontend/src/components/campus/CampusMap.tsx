@@ -334,6 +334,7 @@ export default function CampusMap({ user }: CampusMapProps) {
           buildings={buildings}
           onClose={() => setShowCreateEvent(false)}
           onCreated={() => { setShowCreateEvent(false); loadData(); }}
+          onSwitchToMap={() => { setShowCreateEvent(false); setViewMode('map'); }}
         />
       )}
 
