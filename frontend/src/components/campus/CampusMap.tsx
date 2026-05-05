@@ -158,16 +158,16 @@ export default function CampusMap({ user }: CampusMapProps) {
                 </div>
               ))}
 
-              {/* ── Vertical Roads (connecting spines) ── */}
+              {/* ── Vertical Roads (thin dashed center lines) ── */}
               {V_ROAD_COLS.map(col => (
                 <div key={`vr-${col}`} style={{
                   gridColumn: `${col + 1}`, gridRow: `1 / ${maxY + 1}`,
-                  background: 'var(--road-bg, #d1d5db)',
-                  borderRadius: 2, position: 'relative',
+                  position: 'relative', pointerEvents: 'none', zIndex: 0,
                 }}>
                   <div style={{
                     position: 'absolute', left: '50%', top: 0, bottom: 0, width: 0,
-                    borderLeft: '2px dashed var(--road-line, #fbbf24)',
+                    borderLeft: '1.5px dashed var(--road-line, #d1d5db)',
+                    opacity: 0.5,
                   }} />
                 </div>
               ))}
