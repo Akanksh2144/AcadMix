@@ -168,6 +168,84 @@ class SyllabusService:
         await self.session.commit()
         return {"message": f"Syllabus saved: {created_units} units, {created_topics} topics"}
 
+    # ── Parse Syllabus PDF ───────────────────────────────────────────────────
+    async def parse_syllabus_pdf(self, course_id: str, college_id: str, user_id: str, pdf_bytes: bytes) -> Dict[str, Any]:
+        """Parse syllabus PDF using PyMuPDF and Gemini."""
+        try:
+            import fitz
+        except ImportError:
+            raise RuntimeError("PyMuPDF (fitz) is not installed. Please install it to use this feature.")
+            
+        # Extract text from PDF
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        text_content = ""
+        for page in doc:
+            text_content += page.get_text()
+            
+        doc.close()
+        
+        # Use Gemini to parse the extracted text
+        from app.services.ai_service import ai_service
+        
+        prompt = f"""
+        You are an expert academic assistant. I am providing you with the text extracted from a course syllabus document.
+        Please parse this text and extract the syllabus structure into units and topics.
+        
+        Return the result as a strict JSON object with this exact schema:
+        {{
+            "units": [
+                {{
+                    "unit_no": 1,
+                    "title": "Unit Title",
+                    "total_hours": 10,
+                    "topics": [
+                        {{
+                            "topic_no": 1,
+                            "title": "Topic 1",
+                            "hours": 2,
+                            "co_id": null
+                        }},
+                        ...
+                    ]
+                }},
+                ...
+            ]
+        }}
+        
+        If you cannot determine hours, just estimate or put 1. Ensure the JSON is valid and contains no markdown formatting outside the JSON itself.
+        
+        Here is the syllabus text:
+        {text_content[:20000]}  # Limiting to 20k chars to avoid token limits
+        """
+        
+        import json
+        
+        # Call Gemini
+        response_text = await ai_service.generate_text(prompt)
+        
+        # Parse the JSON response
+        try:
+            # Clean up potential markdown formatting from the response
+            if response_text.startswith("```json"):
+                response_text = response_text[7:-3].strip()
+            elif response_text.startswith("```"):
+                response_text = response_text[3:-3].strip()
+                
+            parsed_data = json.loads(response_text)
+        except Exception as e:
+            raise ValueError(f"Failed to parse AI response into JSON: {str(e)}\nResponse: {response_text}")
+            
+        # Import schemas to validate and format
+        from app import schemas
+        try:
+            syllabus_data = schemas.SyllabusBulkCreate(**parsed_data)
+        except Exception as e:
+             raise ValueError(f"AI response did not match the required schema: {str(e)}\nResponse: {response_text}")
+             
+        # Call upsert_syllabus with the parsed data
+        return await self.upsert_syllabus(course_id, college_id, user_id, syllabus_data)
+
+
     # ── Get syllabus topics for a subject code (used by AttendanceMarker) ────
     async def get_topics_by_subject_code(self, subject_code: str, college_id: str) -> List[Dict[str, Any]]:
         """Get all syllabus topics grouped by unit for a subject_code.

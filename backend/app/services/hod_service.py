@@ -19,13 +19,14 @@ class HodService:
 
     # ── Students & Progression ──────────────────────────────────────────────
 
-    async def get_at_risk_students(self, college_id: str, cgpa_threshold: float, backlog_threshold: int) -> List[Dict[str, Any]]:
-        students_r = await self.db.execute(
-            select(models.User).where(
-                models.User.college_id == college_id,
-                models.User.role == "student"
-            )
+    async def get_at_risk_students(self, college_id: str, cgpa_threshold: float, backlog_threshold: int, department: str = None) -> List[Dict[str, Any]]:
+        stmt = select(models.User).where(
+            models.User.college_id == college_id,
+            models.User.role == "student"
         )
+        if department:
+            stmt = stmt.outerjoin(models.UserProfile).where(models.UserProfile.department == department)
+        students_r = await self.db.execute(stmt)
         students = students_r.scalars().all()
         at_risk = []
         
@@ -62,6 +63,23 @@ class HodService:
                     "severity": severity
                 })
                 
+                # Fetch latest mood data for the at-risk student
+                mood_r = await self.db.execute(
+                    select(models.MoodCheckin)
+                    .where(models.MoodCheckin.student_id == student.id)
+                    .order_by(models.MoodCheckin.created_at.desc())
+                    .limit(1)
+                )
+                latest_mood = mood_r.scalars().first()
+                if latest_mood:
+                    at_risk[-1]["latest_mood_score"] = latest_mood.mood_score
+                    at_risk[-1]["latest_energy_score"] = latest_mood.energy_score
+                    at_risk[-1]["latest_mood_notes"] = latest_mood.notes
+                else:
+                    at_risk[-1]["latest_mood_score"] = None
+                    at_risk[-1]["latest_energy_score"] = None
+                    at_risk[-1]["latest_mood_notes"] = None
+                    
         at_risk.sort(key=lambda x: (x["severity"] != "critical", x["cgpa"]))
         return at_risk
 
@@ -88,14 +106,15 @@ class HodService:
 
     # ── Assignments ─────────────────────────────────────────────────────────
 
-    async def get_class_in_charges(self, college_id: str) -> List[Dict[str, Any]]:
-        result = await self.db.execute(
-            select(models.ClassInCharge, models.User).join(
-                models.User, models.ClassInCharge.faculty_id == models.User.id
-            ).where(
-                models.ClassInCharge.college_id == college_id
-            )
+    async def get_class_in_charges(self, college_id: str, department: str = None) -> List[Dict[str, Any]]:
+        stmt = select(models.ClassInCharge, models.User).join(
+            models.User, models.ClassInCharge.faculty_id == models.User.id
+        ).where(
+            models.ClassInCharge.college_id == college_id
         )
+        if department:
+            stmt = stmt.where(models.ClassInCharge.department == department)
+        result = await self.db.execute(stmt)
         return [{
             "id": c.id, "faculty_id": c.faculty_id, "faculty_name": u.name,
             "department": c.department, "batch": c.batch, "section": c.section, 
@@ -131,15 +150,17 @@ class HodService:
         ))
         await self.db.commit()
 
-    async def get_mentor_assignments(self, college_id: str) -> List[Dict[str, Any]]:
-        result = await self.db.execute(
-            select(models.MentorAssignment, models.User).join(
-                models.User, models.MentorAssignment.student_id == models.User.id
-            ).where(
-                models.MentorAssignment.college_id == college_id,
-                models.MentorAssignment.is_active == True
-            )
+    async def get_mentor_assignments(self, college_id: str, department: str = None) -> List[Dict[str, Any]]:
+        stmt = select(models.MentorAssignment, models.User).join(
+            models.User, models.MentorAssignment.student_id == models.User.id
+        ).where(
+            models.MentorAssignment.college_id == college_id,
+            models.MentorAssignment.is_active == True
         )
+        if department:
+            stmt = stmt.outerjoin(models.UserProfile, models.User.id == models.UserProfile.user_id).where(models.UserProfile.department == department)
+            
+        result = await self.db.execute(stmt)
         
         assignments = result.all()
         if not assignments: 
@@ -209,14 +230,16 @@ class HodService:
         await self.db.commit()
         return perm.status
 
-    async def get_pending_free_periods(self, college_id: str) -> List[Dict[str, Any]]:
-        res = await self.db.execute(
-            select(models.FreePeriodRequest).where(
-                models.FreePeriodRequest.college_id == college_id,
-                models.FreePeriodRequest.status == "pending",
-                models.FreePeriodRequest.is_deleted == False
-            )
+    async def get_pending_free_periods(self, college_id: str, department: str = None) -> List[Dict[str, Any]]:
+        stmt = select(models.FreePeriodRequest).where(
+            models.FreePeriodRequest.college_id == college_id,
+            models.FreePeriodRequest.status == "pending",
+            models.FreePeriodRequest.is_deleted == False
         )
+        if department:
+            stmt = stmt.outerjoin(models.UserProfile, models.FreePeriodRequest.faculty_id == models.UserProfile.user_id).where(models.UserProfile.department == department)
+            
+        res = await self.db.execute(stmt)
         reqs = res.scalars().all()
         if reqs:
             fac_ids = list(set(r.faculty_id for r in reqs))

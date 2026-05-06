@@ -33,6 +33,28 @@ async def upsert_syllabus(
 ):
     return await svc.upsert_syllabus(course_id, user["college_id"], user["id"], data)
 
+from fastapi import File, UploadFile
+
+# ── Faculty: Parse syllabus PDF ──────────────────────────────────────────────
+@router.post("/courses/{course_id}/parse-syllabus")
+async def parse_syllabus_pdf(
+    course_id: str,
+    file: UploadFile = File(...),
+    user: dict = Depends(require_role("teacher", "faculty", "hod", "admin")),
+    svc: SyllabusService = Depends(get_svc)
+):
+    """
+    Parse a syllabus PDF to automatically generate syllabus units and topics.
+    Requires PyMuPDF or pdfplumber, and Gemini integration.
+    """
+    if not file.filename.endswith(".pdf"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+        
+    content = await file.read()
+    return await svc.parse_syllabus_pdf(course_id, user["college_id"], user["id"], content)
+
+
 
 # ── AttendanceMarker: Get topics by subject_code ─────────────────────────────
 @router.get("/syllabus/topics-by-subject/{subject_code}")

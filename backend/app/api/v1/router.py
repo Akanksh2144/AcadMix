@@ -8,7 +8,7 @@ from app.routers import (
     leaderboard, dashboards, marks_extra, timetable_extra, announcements, challenges, industry, tpo, fees, webhooks,
     interview, resume, hostel, career_tools, iot_webhooks, transport, transport_admin, library,
     visitors, websocket, notifications, audit, insights, pre_enroll, modules, resume_vault, outcomes, assessments, placement_prep, accreditation,
-    campus
+    campus, flashcards, ai_study
 )
 from app.api.v1.endpoints import syllabus as syllabus_endpoints
 from app.routers import nodal_routes, superadmin
@@ -89,3 +89,5 @@ api_router.include_router(campus.router, tags=["campus"])
 # Nodal Router (historical top-level route, now safely namespaced if possible, keeping legacy /api scope mostly)
 api_router.include_router(nodal_routes.nodal_router, tags=["nodal_officer"])
 api_router.include_router(superadmin.router, tags=["superadmin"])
+api_router.include_router(flashcards.router, prefix="/flashcards-api", tags=["flashcards"])
+api_router.include_router(ai_study.router, prefix="/study-api", tags=["ai_study"])

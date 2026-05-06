@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List, Optional
+from datetime import datetime, date, timedelta
 
 from database import get_db
 from app.core.security import get_current_user
@@ -28,7 +29,7 @@ async def search_students(
     q: str = "", 
     department: Optional[str] = None, 
     college: Optional[str] = None, 
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(10000, ge=1),
     offset: int = Query(0, ge=0),
     user: dict = Depends(require_role("hod", "admin", "exam_cell", "teacher")), 
     session: AsyncSession = Depends(get_db)):
@@ -39,8 +40,11 @@ async def search_students(
     if q:
         stmt = stmt.where(
             models.User.name.ilike(f"%{q}%") |
-            models.UserProfile.roll_number.ilike(f"%{q}%")
+            models.UserProfile.roll_number.ilike(f"%{q}%") |
+            models.User.id.ilike(f"%{q}%")
         )
+    if department:
+        stmt = stmt.where(models.UserProfile.department == department)
     result = await session.execute(stmt.order_by(models.User.name).offset(offset).limit(limit))
     students = result.scalars().all()
     return [{"id": s.id, "name": s.name, "email": s.email, "role": s.role, **(s.profile_data or {})} for s in students]
@@ -220,7 +224,7 @@ async def get_student_application_history(user: dict = Depends(require_role("stu
 
 @router.get("/student/alumni-jobs")
 async def browse_alumni_jobs(
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(10000, ge=1),
     offset: int = Query(0, ge=0),
     user: dict = Depends(require_role("student")),
     session: AsyncSession = Depends(get_db)
@@ -238,7 +242,7 @@ async def browse_alumni_jobs(
 
 @router.get("/student/alumni-mentors")
 async def browse_available_mentors(
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(10000, ge=1),
     offset: int = Query(0, ge=0),
     user: dict = Depends(require_role("student")),
     session: AsyncSession = Depends(get_db)
@@ -284,7 +288,7 @@ async def request_mentorship(
 
 @router.get("/student/scholarships")
 async def get_available_scholarships(
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(10000, ge=1),
     offset: int = Query(0, ge=0),
     user: dict = Depends(require_role("student")), 
     session: AsyncSession = Depends(get_db)):
@@ -393,3 +397,109 @@ async def generate_resume_docx(
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Gamified Progress Analytics
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/students/ping-activity")
+async def ping_student_activity(
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db),
+):
+    """
+    Update student's streak and XP.
+    Should be called once per day per user when they interact with the platform.
+    """
+    student_r = await session.execute(
+        select(models.UserProfile).where(models.UserProfile.user_id == user["id"])
+    )
+    profile = student_r.scalars().first()
+
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    today = date.today()
+    
+    # If they already pinged today, just return current stats
+    if profile.last_active_date == today:
+        return {
+            "message": "Already active today",
+            "xp_points": profile.xp_points,
+            "current_streak": profile.current_streak,
+            "longest_streak": profile.longest_streak,
+            "last_active_date": profile.last_active_date
+        }
+
+    # Streak Logic
+    if profile.last_active_date == today - timedelta(days=1):
+        # Consecutive day
+        profile.current_streak += 1
+    else:
+        # Streak broken or first time
+        profile.current_streak = 1
+
+    # Update longest streak
+    if profile.current_streak > profile.longest_streak:
+        profile.longest_streak = profile.current_streak
+
+    # XP reward for logging in/activity (e.g. 10 XP)
+    profile.xp_points += 10
+    
+    # Extra XP for streak milestones (e.g., every 7 days)
+    if profile.current_streak % 7 == 0:
+        profile.xp_points += 50
+        
+    profile.last_active_date = today
+
+    await session.commit()
+    await session.refresh(profile)
+
+    return {
+        "message": "Activity tracked successfully",
+        "xp_points": profile.xp_points,
+        "current_streak": profile.current_streak,
+        "longest_streak": profile.longest_streak,
+        "last_active_date": profile.last_active_date
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Mental Health & Burnout Check-ins
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/students/mood")
+async def log_student_mood(
+    mood_score: int = Body(..., ge=1, le=5, description="1 to 5 (1=Terrible, 5=Great)"),
+    energy_score: int = Body(..., ge=1, le=5, description="1 to 5 (1=Exhausted, 5=Energized)"),
+    notes: Optional[str] = Body(None),
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db),
+):
+    """
+    Log daily mental health and burnout levels.
+    """
+    today = date.today()
+    # Check if already logged today
+    existing = await session.execute(
+        select(models.MoodCheckin).where(
+            models.MoodCheckin.student_id == user["id"],
+            models.MoodCheckin.created_at >= datetime.combine(today, datetime.min.time())
+        )
+    )
+    if existing.scalars().first():
+        raise HTTPException(status_code=400, detail="Mood already logged today")
+
+    checkin = models.MoodCheckin(
+        college_id=user["college_id"],
+        student_id=user["id"],
+        mood_score=mood_score,
+        energy_score=energy_score,
+        notes=notes
+    )
+    session.add(checkin)
+    await session.commit()
+    
+    return {"message": "Mood logged successfully", "id": checkin.id}
+
