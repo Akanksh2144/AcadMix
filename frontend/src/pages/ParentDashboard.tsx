@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, GraduationCap, ChartBar, CalendarDots, ClockCountdown, Chalkboard, SignOut, Sun, Moon, FileText, ChatCircleDots, CaretDown, Warning, CheckCircle, XCircle, Clock, BookOpen, UserCircle, Download, Bell } from '@phosphor-icons/react';
+import { Users, GraduationCap, ChartBar, CalendarDots, ClockCountdown, Chalkboard, SignOut, Sun, Moon, FileText, ChatCircleDots, CaretDown, Warning, CheckCircle, XCircle, Clock, BookOpen, UserCircle, Download, Bell, MapPin } from '@phosphor-icons/react';
 import { parentAPI, grievanceAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
@@ -332,12 +332,12 @@ const ParentDashboard = ({ navigate, user, onLogout }) => {
         )}
 
         {/* ── Tabs ────────────────────────── */}
-        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-full mb-8 hide-scrollbar">
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3.5 py-2 rounded-2xl text-xs font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 flex items-center gap-1.5 ${
+                className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 flex items-center gap-1.5 ${
                   activeTab === tab.id
                     ? 'bg-white dark:bg-[#1A202C] text-emerald-600 dark:text-emerald-400 shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5'
@@ -361,10 +361,11 @@ const ParentDashboard = ({ navigate, user, onLogout }) => {
                     { label: 'Current CGPA', value: latestCGPA?.toFixed(1) || '-', sub: `${academics?.semester_grades?.length || 0} semesters`, icon: GraduationCap, color: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' },
                     { label: 'Subjects', value: attendance.length || 0, sub: 'this semester', icon: BookOpen, color: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400' },
                     { label: 'Leave Requests', value: leaves.length || 0, sub: 'total', icon: CalendarDots, color: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400' },
+                    { label: 'Campus Map', value: 'View', sub: 'Interactive map', icon: MapPin, color: 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400', isTab: 'campus-map' },
                   ].map((stat, i) => {
                     const Icon = stat.icon;
                     return (
-                      <motion.div key={i} variants={itemVariants} whileHover={cardHover} className="soft-card-hover p-4 sm:p-6 relative overflow-hidden group">
+                      <motion.div key={i} variants={itemVariants} whileHover={cardHover} onClick={() => stat.isTab ? setActiveTab(stat.isTab) : null} className={`soft-card-hover p-4 sm:p-6 relative overflow-hidden group ${stat.isTab ? 'cursor-pointer' : ''}`}>
                         <div className="flex items-center justify-between mb-3 sm:mb-4">
                           <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{stat.label}</span>
                           <div className={`${stat.color} p-2 sm:p-2.5 rounded-xl`}><Icon size={18} weight="duotone" /></div>

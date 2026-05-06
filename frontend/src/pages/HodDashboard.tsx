@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen,
   Users,
+  MapPin,
   ClipboardText,
   CheckCircle,
   Clock,
@@ -362,6 +363,15 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
           onClick: () => setActiveTab("faculty"),
         },
         {
+          label: "Campus Map",
+          value: "View",
+          sub: "Live infrastructure",
+          icon: MapPin,
+          color: "bg-rose-50 dark:bg-rose-500/15 text-rose-500",
+          gradient: "from-rose-500 to-pink-500",
+          onClick: () => setActiveTab("campus"),
+        },
+        {
           label: "Students",
           value: dashboard ? String(dashboard.total_students) : "—",
           sub: "enrolled",
@@ -654,7 +664,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
         </motion.div>
 
         {/* Unified Navigation */}
-        <div className="flex overflow-x-auto gap-1 p-1 bg-slate-100/80 dark:bg-white/[0.04] rounded-2xl mb-8 hide-scrollbar backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06]">
+        <div className="flex overflow-x-auto gap-1 p-1 bg-slate-100/80 dark:bg-white/[0.04] rounded-full mb-8 hide-scrollbar backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06]">
             {[
               { id: "overview", label: "Overview" },
               { id: "marks-entry", label: "Marks Entry" },
@@ -667,13 +677,12 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
               { id: "progression", label: "Student Progression" },
               { id: "leave-approvals", label: "Leave Approvals" },
               { id: "insights", label: "AI Insights", icon: Sparkle },
-              { id: "campus", label: "Campus" },
             ].map((tab) => (
               <button
                 key={tab.id}
                 data-testid={`tab-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
+                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
                   activeTab === tab.id
                     ? "bg-gradient-to-r from-slate-800 to-slate-900 dark:from-white dark:to-slate-100 text-white dark:text-slate-900 shadow-lg shadow-slate-900/20 dark:shadow-white/10"
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-white/[0.06]'

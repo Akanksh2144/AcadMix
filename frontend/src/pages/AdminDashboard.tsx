@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UserProfileModal from '../components/UserProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Users, ChartBar, GraduationCap, SignOut, Database, Sun, Moon, Bell, Info, UserCircle, Sparkle, Trash } from '@phosphor-icons/react';
+import { BookOpen, Users, ChartBar, GraduationCap, SignOut, Database, Sun, Moon, Bell, Info, UserCircle, Sparkle, Trash, MapPin, Buildings } from '@phosphor-icons/react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { StudentResultsSearch } from '../components/StudentResultsSearch';
 import { analyticsAPI, insightsAPI } from '../services/api';
@@ -242,7 +242,7 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
         </motion.div>
 
         {/* Tabs */}
-        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-full mb-8 hide-scrollbar">
             {[
               { id: 'overview', label: 'Overview' }, 
               { id: 'metrics', label: 'Metrics' },
@@ -253,15 +253,13 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
               { id: 'cia-builder', label: 'CIA Engine' },
               { id: 'experts', label: 'Expert Management' },
               { id: 'insights', label: 'AI Insights' },
-              { id: 'campus-map', label: 'Campus Map' },
-              { id: 'campus-layout', label: 'Campus Designer' },
               { id: 'timetable-settings', label: 'Timetable Settings' }
             ].map(tab => (
               <button 
                 key={tab.id} 
                 data-testid={`tab-${tab.id}`} 
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
+                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id 
                     ? 'bg-white dark:bg-[#1A202C] text-indigo-600 dark:text-indigo-400 shadow-sm' 
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5'
@@ -289,7 +287,7 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
               })}
             </div>
 
-            <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+            <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
               <motion.button variants={itemVariants} whileHover={cardHover} data-testid="user-management-button" onClick={() => navigate('user-management')} className="soft-card-hover p-6 text-left flex items-center gap-4 group">
                 <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/15 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/30 transition-colors"><Users size={24} weight="duotone" className="text-indigo-500" /></div>
                 <div><p className="font-extrabold text-slate-900 dark:text-white">Manage</p><p className="text-sm font-medium text-slate-400">Students, Faculty & Depts</p></div>
@@ -301,6 +299,14 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
               <motion.button variants={itemVariants} whileHover={cardHover} data-testid="analytics-button" onClick={() => navigate('analytics')} className="soft-card-hover p-6 text-left flex items-center gap-4 group">
                 <div className="w-12 h-12 bg-amber-50 dark:bg-amber-500/15 rounded-xl flex items-center justify-center group-hover:bg-amber-100 dark:group-hover:bg-amber-500/30 transition-colors"><Database size={24} weight="duotone" className="text-amber-500" /></div>
                 <div><p className="font-extrabold text-slate-900 dark:text-white">Analytics</p><p className="text-sm font-medium text-slate-400">Insights & trends</p></div>
+              </motion.button>
+              <motion.button variants={itemVariants} whileHover={cardHover} onClick={() => setActiveTab('campus-map')} className="soft-card-hover p-6 text-left flex items-center gap-4 group">
+                <div className="w-12 h-12 bg-rose-50 dark:bg-rose-500/15 rounded-xl flex items-center justify-center group-hover:bg-rose-100 dark:group-hover:bg-rose-500/30 transition-colors"><MapPin size={24} weight="duotone" className="text-rose-500" /></div>
+                <div><p className="font-extrabold text-slate-900 dark:text-white">Campus Map</p><p className="text-sm font-medium text-slate-400">Live infrastructure</p></div>
+              </motion.button>
+              <motion.button variants={itemVariants} whileHover={cardHover} onClick={() => setActiveTab('campus-layout')} className="soft-card-hover p-6 text-left flex items-center gap-4 group">
+                <div className="w-12 h-12 bg-teal-50 dark:bg-teal-500/15 rounded-xl flex items-center justify-center group-hover:bg-teal-100 dark:group-hover:bg-teal-500/30 transition-colors"><Buildings size={24} weight="duotone" className="text-teal-500" /></div>
+                <div><p className="font-extrabold text-slate-900 dark:text-white">Layout Designer</p><p className="text-sm font-medium text-slate-400">Edit campus map</p></div>
               </motion.button>
             </motion.div>
 

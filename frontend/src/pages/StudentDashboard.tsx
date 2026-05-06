@@ -339,7 +339,7 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
         </motion.div>
 
         {/* Tabs */}
-        <div className="flex overflow-x-auto gap-1 p-1.5 bg-slate-100 dark:bg-white/[0.04] rounded-xl mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-full mb-8 hide-scrollbar">
             {[
               { id: 'overview', label: 'Overview' }, 
               { id: 'quizzes', label: 'Quizzes' },
@@ -355,7 +355,7 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
               <button 
                 key={tab.id} 
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap border border-transparent relative ${
+                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap border border-transparent relative ${
                   activeTab === tab.id 
                     ? 'bg-white dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 shadow-sm dark:border-indigo-500/25' 
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/[0.04]'

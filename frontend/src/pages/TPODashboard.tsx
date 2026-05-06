@@ -608,7 +608,7 @@ const EditDriveModal = ({ drive, companies, onClose, onUpdated }) => {
 
 
 // ─── Overview Tab ──────────────────────────────────────────────
-const OverviewContent = () => {
+const OverviewContent = ({ setActiveTab }) => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -642,7 +642,7 @@ const OverviewContent = () => {
         })}
       </div>
 
-      <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+      <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <motion.div variants={itemVariants} className="soft-card p-6 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
           <h4 className="font-extrabold text-xl mb-3">Placement Season</h4>
           <div className="space-y-2 text-sm font-medium text-white/90">
@@ -663,6 +663,15 @@ const OverviewContent = () => {
           <div>
             <p className="font-extrabold text-slate-900 dark:text-white">Export NAAC Report</p>
             <p className="text-sm font-medium text-slate-400">Download placement data as Excel</p>
+          </div>
+        </motion.div>
+        <motion.div variants={itemVariants} whileHover={cardHover} onClick={() => setActiveTab('campus-map')} className="soft-card-hover p-6 flex items-center gap-4 group cursor-pointer">
+          <div className="w-12 h-12 bg-rose-50 dark:bg-rose-500/15 rounded-xl flex items-center justify-center group-hover:bg-rose-100 transition-colors">
+            <MapPin size={24} weight="duotone" className="text-rose-500" />
+          </div>
+          <div>
+            <p className="font-extrabold text-slate-900 dark:text-white">Campus Map</p>
+            <p className="text-sm font-medium text-slate-400">Live Infrastructure map</p>
           </div>
         </motion.div>
       </motion.div>
@@ -1158,19 +1167,18 @@ const TPODashboard = ({ navigate, user, onLogout }) => {
         </motion.div>
 
         {/* Tabs — matching Admin/HOD pill-style */}
-        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-full mb-8 hide-scrollbar">
             {[
               { id: 'overview', label: 'Overview' },
               { id: 'companies', label: 'Companies' },
               { id: 'drives', label: 'Placement Drives' },
               { id: 'applications', label: 'Applications' },
-              { id: 'insights', label: 'AI Insights' },
-              { id: 'campus-map', label: 'Campus Map' }
+              { id: 'insights', label: 'AI Insights' }
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
+                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-white dark:bg-[#1A202C] text-rose-600 dark:text-rose-400 shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5'
@@ -1183,7 +1191,7 @@ const TPODashboard = ({ navigate, user, onLogout }) => {
 
         {/* Tab Content */}
         <AnimatePresence mode="wait">
-          {activeTab === 'overview' && <OverviewContent key="overview" />}
+          {activeTab === 'overview' && <OverviewContent key="overview" setActiveTab={setActiveTab} />}
           {activeTab === 'companies' && <CompaniesContent key="companies" />}
           {activeTab === 'drives' && <DrivesContent key="drives" onRefreshKey={driveRefreshKey} />}
           {activeTab === 'applications' && <ApplicationsContent key="applications" />}

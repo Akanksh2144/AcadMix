@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy import and_, or_
 from datetime import datetime, timezone
 from typing import List, Optional
+from pydantic import BaseModel
 
 from database import get_db
 from app.core.security import get_current_user

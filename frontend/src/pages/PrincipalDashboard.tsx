@@ -258,8 +258,16 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
       value: dashboard?.pending_activities || 0,
       sub: "Awaiting Principal Notation",
       icon: CheckCircle,
-      color: "bg-rose-50 text-rose-500",
-      onClick: () => setActiveTab("compliance")
+      color: "bg-blue-50 text-blue-600 dark:bg-blue-500/10",
+      onClick: () => setActiveTab("compliance"),
+    },
+    {
+      label: "Campus View",
+      value: "Live",
+      sub: "Infrastructure Map",
+      icon: Buildings,
+      color: "bg-rose-50 text-rose-600 dark:bg-rose-500/10",
+      onClick: () => setActiveTab("campus"),
     },
   ];
 
@@ -401,7 +409,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
         </motion.div>
 
         {/* Unified Navigation */}
-        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-full mb-8 hide-scrollbar">
             {[
               { id: "overview", label: "Overview", icon: ChartBar },
               { id: "leaves", label: "HOD Leaves", icon: EnvelopeOpen },
@@ -409,12 +417,11 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
               { id: "academics", label: "Academic Performance", icon: ChartLineUp },
               { id: "institution", label: "Institution Profile", icon: Buildings },
               { id: "insights", label: "AI Insights", icon: Sparkle },
-              { id: "campus", label: "Campus", icon: Buildings },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
+                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? "bg-slate-900 text-white shadow-md dark:bg-indigo-600"
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5'
