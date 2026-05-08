@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 
 from app.core.security import get_current_user
-from app.services.ai_service import ai_service
+from app.services.llm_gateway import gateway
 
 router = APIRouter()
 
@@ -31,17 +31,12 @@ async def chat_with_study_assistant(
         system_prompt += f"\n\nHere is some context material the student is studying. Use this to inform your answers:\n{request.context}"
         
     try:
-        # We need to construct the prompt from the messages
-        # Since ai_service.generate_text is a simple text-in-text-out function for now,
-        # we'll format the conversation history into a single prompt.
-        conversation_history = f"System: {system_prompt}\n\n"
+        llm_messages = [{"role": "system", "content": system_prompt}]
         for msg in request.messages:
-            role = "Student" if msg.role == "user" else "AI Tutor"
-            conversation_history += f"{role}: {msg.content}\n\n"
+            role = msg.role if msg.role in ["user", "system", "assistant"] else "user"
+            llm_messages.append({"role": role, "content": msg.content})
             
-        conversation_history += "AI Tutor:"
-        
-        response_text = await ai_service.generate_text(conversation_history)
+        response_text = await gateway.complete("ami_coach", messages=llm_messages)
         
         return {
             "role": "assistant",
