@@ -331,14 +331,14 @@ const AlumniDashboard = ({ navigate, user, onLogout }) => {
               
               <button
                 onClick={toggleTheme}
-                className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+                className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
                 aria-label="Toggle theme"
               >
                 {isDark ? <Sun size={20} weight="duotone" /> : <Moon size={20} weight="duotone" />}
               </button>
               
               <span className="btn-ghost !px-4 !py-2 text-sm">{profileData?.name || 'Alumni'}</span>
-              <button onClick={onLogout} className="p-2.5 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-colors" aria-label="Sign out">
+              <button onClick={onLogout} className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 transition-colors" aria-label="Sign out">
                 <SignOut size={20} weight="duotone" />
               </button>
             </div>
@@ -353,7 +353,7 @@ const AlumniDashboard = ({ navigate, user, onLogout }) => {
         </motion.div>
 
         {/* Tab Navigation consistent with all Dashboards */}
-        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-xl mb-8 hide-scrollbar">
             {[
               { id: 'overview', label: 'Overview' },
               { id: 'profile', label: 'My Profile' },

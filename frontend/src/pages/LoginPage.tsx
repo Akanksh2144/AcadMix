@@ -158,7 +158,7 @@ const LoginPage = ({ onLogin }) => {
                 : 'Your complete college quiz and results management system'}
             </p>
             {tenant.tenantSlug && (
-              <div className="mt-3 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-1.5 text-xs font-bold tracking-wide text-white/70">
+              <div className="mt-3 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-1.5 text-xs font-bold tracking-wide text-white/70">
                 Powered by AcadMix
               </div>
             )}
@@ -297,7 +297,7 @@ const LoginPage = ({ onLogin }) => {
                  <button 
                   type="button" 
                   onClick={() => setIsPreEnrollMode(!isPreEnrollMode)}
-                  className="text-xs font-bold text-indigo-500 hover:text-indigo-600 bg-indigo-500/10 px-3 py-1.5 rounded-full transition-colors"
+                  className="text-xs font-bold text-indigo-500 hover:text-indigo-600 bg-indigo-500/10 px-3 py-1.5 rounded-xl transition-colors"
                  >
                    {isPreEnrollMode ? "Standard Login" : "Guest Login"}
                  </button>

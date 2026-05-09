@@ -300,6 +300,8 @@ const StudentResultsSearch = ({ user, departmentLocked }) => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [activeSection, setActiveSection] = useState('All');
   const [activeDepartment, setActiveDepartment] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
   
   // Dynamically compute available departments and sections from the loaded student data
   const availableDepartments = ['All', ...Array.from(new Set(allStudents.map(s => s.department))).filter(Boolean).sort()];
@@ -313,7 +315,8 @@ const StudentResultsSearch = ({ user, departmentLocked }) => {
     const init = async () => {
       setLoading(true);
       try {
-        const { data } = await studentsAPI.search('', departmentLocked ? undefined : undefined);
+        const targetDept = departmentLocked ? (user?.scope?.department || user?.department) : undefined;
+        const { data } = await studentsAPI.search('', targetDept);
         setAllStudents(data);
         setStudents(data);
       } catch (err) { console.error(err); }
@@ -356,12 +359,16 @@ const StudentResultsSearch = ({ user, departmentLocked }) => {
     if (searchValue) {
       filtered = filtered.filter(s => 
         s.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-        s.college_id.toLowerCase().includes(searchValue.toLowerCase())
+        (s.roll_number || s.id).toLowerCase().includes(searchValue.toLowerCase())
       );
     }
     
     setStudents(filtered);
+    setCurrentPage(1);
   };
+
+  const totalPages = Math.ceil(students.length / pageSize);
+  const paginatedStudents = students.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   if (selectedStudent) {
     return <StudentProfileView studentId={selectedStudent} onBack={() => setSelectedStudent(null)} />;
@@ -419,7 +426,7 @@ const StudentResultsSearch = ({ user, departmentLocked }) => {
         <MagnifyingGlass size={18} weight="duotone" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
         <input data-testid="student-results-search-input" type="text" value={search}
           onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Search by name or college ID..."
+          placeholder="Search by name or roll number..."
           className="soft-input w-full pl-12" />
       </div>
 
@@ -428,7 +435,7 @@ const StudentResultsSearch = ({ user, departmentLocked }) => {
         <table className="w-full">
           <thead>
             <tr className="bg-slate-50 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/[0.05]">
-              <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">College ID</th>
+              <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Roll Number</th>
               <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Name</th>
               <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Department</th>
               <th className="text-left py-3 px-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Section</th>
@@ -437,9 +444,9 @@ const StudentResultsSearch = ({ user, departmentLocked }) => {
             </tr>
           </thead>
           <tbody>
-            {students.map(s => (
-              <tr key={s.id} className="border-b border-slate-50 dark:border-white/[0.05] hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors" data-testid={`result-student-${s.college_id}`}>
-                <td className="py-3 px-4 font-bold text-indigo-600">{s.college_id}</td>
+            {paginatedStudents.map(s => (
+              <tr key={s.id} className="border-b border-slate-50 dark:border-white/[0.05] hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors" data-testid={`result-student-${s.id}`}>
+                <td className="py-3 px-4 font-bold text-indigo-600">{s.roll_number || s.id}</td>
                 <td className="py-3 px-4 font-medium text-slate-800">{s.name}</td>
                 <td className="py-3 px-4 text-sm font-bold text-slate-500">{s.department || '-'}</td>
                 <td className="py-3 px-4 text-sm">
@@ -459,6 +466,34 @@ const StudentResultsSearch = ({ user, departmentLocked }) => {
         {students.length === 0 && (
           <div className="p-8 text-center">
             <p className="text-slate-400 font-medium">{loading ? 'Loading...' : 'No students found'}</p>
+          </div>
+        )}
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t border-slate-100 dark:border-white/[0.05] bg-white/50 dark:bg-[#0B0F19]/50">
+            <p className="text-sm text-slate-500">
+              Showing <span className="font-bold">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-bold">{Math.min(currentPage * pageSize, students.length)}</span> of <span className="font-bold">{students.length}</span> students
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-sm font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+              <div className="px-3 py-1.5 text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm">
+                Page {currentPage} of {totalPages}
+              </div>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 text-sm font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </div>

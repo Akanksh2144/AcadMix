@@ -48,7 +48,7 @@ function formatDateTime(iso) {
 function StatusBadge({ status }) {
   const s = STATUS_STYLES[status] || STATUS_STYLES.pending;
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${s.bg} ${s.text}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold ${s.bg} ${s.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
       {status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
     </span>

@@ -327,3 +327,42 @@ class TopicCoverage(Base, SoftDeleteMixin):
         Index("ix_topic_coverage_faculty_date", "faculty_id", "date"),
         Index("ix_topic_coverage_college", "college_id"),
     )
+
+
+# ─── Phase 9: Smart Flashcards (Spaced Repetition) ───────────────────────────
+
+class FlashcardDeck(Base, SoftDeleteMixin):
+    __tablename__ = "flashcard_decks"
+    id            = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id    = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    course_id     = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=True)
+    creator_id    = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    name          = Column(String, nullable=False)
+    description   = Column(Text, nullable=True)
+    is_public     = Column(Boolean, nullable=False, server_default=text('false')) # shared with college?
+    created_at    = Column(DateTime(timezone=True), server_default=func.now())
+
+class Flashcard(Base, SoftDeleteMixin):
+    __tablename__ = "flashcards"
+    id            = Column(String, primary_key=True, index=True, default=generate_uuid)
+    deck_id       = Column(String, ForeignKey("flashcard_decks.id", ondelete="CASCADE"), nullable=False)
+    front_text    = Column(Text, nullable=False)
+    back_text     = Column(Text, nullable=False)
+    created_at    = Column(DateTime(timezone=True), server_default=func.now())
+
+class FlashcardReview(Base):
+    """Tracks SM-2 spaced repetition progress per student per card."""
+    __tablename__ = "flashcard_reviews"
+    id               = Column(String, primary_key=True, index=True, default=generate_uuid)
+    card_id          = Column(String, ForeignKey("flashcards.id", ondelete="CASCADE"), nullable=False)
+    student_id       = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    next_review_date = Column(Date, nullable=False)
+    easiness_factor  = Column(Float, nullable=False, default=2.5)
+    interval         = Column(Integer, nullable=False, default=0) # days
+    repetitions      = Column(Integer, nullable=False, default=0)
+    last_reviewed_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("card_id", "student_id", name="uq_flashcard_review"),
+        Index("ix_flashcard_review_student_date", "student_id", "next_review_date"),
+    )

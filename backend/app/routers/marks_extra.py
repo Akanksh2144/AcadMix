@@ -23,12 +23,19 @@ async def my_assignments(user: dict = Depends(require_role("teacher", "hod")), s
 
 @router.get("/marks/submissions")
 async def list_submissions(status: Optional[str] = None, user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
-    stmt = select(models.MarkSubmission).where(models.MarkSubmission.college_id == user["college_id"])
+    department = user.get("scope", {}).get("department") or user.get("department")
+    stmt = select(models.MarkSubmission).outerjoin(
+        models.UserProfile, models.MarkSubmission.faculty_id == models.UserProfile.user_id
+    ).where(models.MarkSubmission.college_id == user["college_id"])
     
     if status:
         stmt = stmt.where(models.MarkSubmission.status == status)
     else:
         stmt = stmt.where(models.MarkSubmission.status.in_(['submitted', 'approved', 'rejected']))
+        
+    if user["role"] == "hod" and department:
+        stmt = stmt.where(models.UserProfile.department == department)
+        
         
     result = await session.execute(stmt)
     submissions = result.scalars().all()

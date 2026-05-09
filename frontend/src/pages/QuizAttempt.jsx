@@ -127,7 +127,7 @@ const FullscreenGate = ({ onEnter, violations, isReEntry }) => (
           : 'This quiz must be taken in fullscreen mode to ensure academic integrity.'}
       </p>
       {violations > 0 && (
-        <div className="inline-flex items-center gap-2 bg-red-500/20 text-red-400 px-4 py-2 rounded-full text-sm font-bold mb-6">
+        <div className="inline-flex items-center gap-2 bg-red-500/20 text-red-400 px-4 py-2 rounded-xl text-sm font-bold mb-6">
           <Warning size={16} weight="fill" /> {violations} violation{violations !== 1 ? 's' : ''} recorded
         </div>
       )}
@@ -165,7 +165,7 @@ const SubmitModal = ({ questions, answers, marked, onClose, onSubmit, submitting
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 sm:p-8 text-white relative">
           <button data-testid="close-submit-modal" onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white dark:bg-[#1A202C]/30 transition-colors">
+            className="absolute top-4 right-4 p-2 rounded-xl bg-white/20 hover:bg-white dark:bg-[#1A202C]/30 transition-colors">
             <X size={18} weight="bold" />
           </button>
           <div className="flex items-center gap-3 mb-2">

@@ -52,7 +52,7 @@ const AIInterviewTab = ({ navigate, quota, readiness }) => {
                 <span className="text-sm font-bold text-slate-400">/100</span>
               </div>
               {readiness.badge === 'interview_ready' && (
-                <span className="inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
+                <span className="inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
                   <Medal size={12} weight="fill" /> Interview Ready
                 </span>
               )}

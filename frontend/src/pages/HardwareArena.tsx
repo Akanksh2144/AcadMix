@@ -177,9 +177,9 @@ const HardwareArena = ({ navigate }: any) => {
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {p.skills.slice(0, 3).map((s: string, i: number) => (
-                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">{s}</span>
+                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">{s}</span>
                     ))}
-                    {p.skills.length > 3 && <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">+{p.skills.length - 3}</span>}
+                    {p.skills.length > 3 && <span className="text-[10px] px-2 py-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">+{p.skills.length - 3}</span>}
                   </div>
                 </div>
               </motion.div>

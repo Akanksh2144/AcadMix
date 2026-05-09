@@ -208,7 +208,7 @@ export const codeAPI = {
 
 // Faculty Management (HOD)
 export const facultyAPI = {
-  teachers: () => api.get('/faculty/teachers'),
+  teachers: (department) => api.get('/faculty/teachers', { params: department ? { department } : {} }),
   assignments: () => api.get('/faculty/assignments'),
   createAssignment: (data) => api.post('/faculty/assignments', data),
   deleteAssignment: (id) => api.delete(`/faculty/assignments/${id}`),
@@ -238,7 +238,7 @@ export const examCellAPI = {
 
 // Students Search & Profile
 export const studentsAPI = {
-  search: (q, department) => api.get('/students/search', { params: { q, ...(department ? { department } : {}) } }),
+  search: (q, department, limit, offset) => api.get('/students/search', { params: { q, ...(department ? { department } : {}), ...(limit ? { limit } : {}), ...(offset ? { offset } : {}) } }),
   profile: (studentId) => api.get(`/students/${studentId}/profile`),
 };
 
@@ -833,6 +833,8 @@ export const accreditationAPI = {
   getNAACSummary: (collegeId, academicYear) => api.get(`/accreditation/naac/summary/${collegeId}`, { params: { academic_year: academicYear } }),
   getNAACEvidence: (collegeId, criterionId) => api.get(`/accreditation/naac/evidence/${collegeId}/${criterionId}`),
   getNBAMatrix: (departmentId, academicYear) => api.get(`/accreditation/nba/attainment/${departmentId}`, { params: { academic_year: academicYear } }),
+  getNBASuccessRate: (collegeId, batchYear) => api.get(`/accreditation/nba/success-rate/${collegeId}`, { params: { batch_year: batchYear } }),
+  getNBAFacultyCadre: (collegeId) => api.get(`/accreditation/nba/faculty-cadre/${collegeId}`),
   getNEPStatus: (collegeId) => api.get(`/accreditation/nep/status/${collegeId}`),
   calculateCourseAttainment: (courseId, academicYear) => api.post(`/accreditation/calculate/course/${courseId}`, null, { params: { academic_year: academicYear } }),
   calculateDepartmentAttainment: (departmentId, academicYear) => api.post(`/accreditation/calculate/department/${departmentId}`, null, { params: { academic_year: academicYear } }),

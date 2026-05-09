@@ -957,7 +957,7 @@ const ApplicationsContent = () => {
                                   {app.student_name}
                               </h4>
                               {app.telemetry_strikes >= 3 && (
-                                  <div title="Integrity Risk: Multiple external paste attempts detected" className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-500/20 text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest border border-amber-200 dark:border-amber-500/30">
+                                  <div title="Integrity Risk: Multiple external paste attempts detected" className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-500/20 text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest border border-amber-200 dark:border-amber-500/30">
                                       🚩 <span>{app.telemetry_strikes} Strikes</span>
                                   </div>
                               )}
@@ -1153,7 +1153,7 @@ const TPODashboard = ({ navigate, user, onLogout }) => {
             </button>
 
             {/* Logout */}
-            <button onClick={onLogout} className="p-2.5 rounded-full bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500 transition-colors" aria-label="Sign out">
+            <button onClick={onLogout} className="p-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500 transition-colors" aria-label="Sign out">
               <SignOut size={20} weight="duotone" />
             </button>
           </div>
@@ -1167,7 +1167,7 @@ const TPODashboard = ({ navigate, user, onLogout }) => {
         </motion.div>
 
         {/* Tabs — matching Admin/HOD pill-style */}
-        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-full mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-xl mb-8 hide-scrollbar">
             {[
               { id: 'overview', label: 'Overview' },
               { id: 'companies', label: 'Companies' },
@@ -1178,7 +1178,7 @@ const TPODashboard = ({ navigate, user, onLogout }) => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
+                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-white dark:bg-[#1A202C] text-rose-600 dark:text-rose-400 shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5'

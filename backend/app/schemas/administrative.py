@@ -54,7 +54,10 @@ class ActivityPermissionCreate(BaseModel):
     description: Optional[str] = None
     date: str
     venue: Optional[str] = None
+    department_id: Optional[str] = None
 
+class ActivityEvidenceUpload(BaseModel):
+    evidence_urls: dict[str, str]
 
 class OutOfCampusCreate(BaseModel):
     destination: str

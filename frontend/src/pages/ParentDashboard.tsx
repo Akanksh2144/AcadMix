@@ -269,7 +269,7 @@ const ParentDashboard = ({ navigate, user, onLogout }) => {
             <div className="relative">
               <button
                   onClick={handleBellClick}
-                  className="p-2.5 rounded-full bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors relative"
+                  className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors relative"
                   aria-label="Notifications"
                 >
                   <Bell size={20} weight={showNotifications ? 'fill' : 'duotone'} />
@@ -306,7 +306,7 @@ const ParentDashboard = ({ navigate, user, onLogout }) => {
             </div>
 
             {/* Logout */}
-            <button onClick={onLogout} className="p-2.5 rounded-full bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500 transition-colors" aria-label="Sign out">
+            <button onClick={onLogout} className="p-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500 transition-colors" aria-label="Sign out">
               <SignOut size={20} weight="duotone" />
             </button>
           </div>
@@ -332,12 +332,12 @@ const ParentDashboard = ({ navigate, user, onLogout }) => {
         )}
 
         {/* ── Tabs ────────────────────────── */}
-        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-full mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-xl mb-8 hide-scrollbar">
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 flex items-center gap-1.5 ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 flex items-center gap-1.5 ${
                   activeTab === tab.id
                     ? 'bg-white dark:bg-[#1A202C] text-emerald-600 dark:text-emerald-400 shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5'

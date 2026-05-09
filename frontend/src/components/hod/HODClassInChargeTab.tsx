@@ -4,7 +4,7 @@ import api, { facultyAPI, hodAssignmentsAPI } from '../../services/api';
 import AssignmentCardGrid from './AssignmentCardGrid';
 
 
-const HODClassInChargeTab = () => {
+const HODClassInChargeTab = ({ departmentId }) => {
   const [sections, setSections] = useState([]);
   const [assignedItems, setAssignedItems] = useState([]);
   const [faculty, setFaculty] = useState([]);
@@ -19,7 +19,7 @@ const HODClassInChargeTab = () => {
       setLoading(true);
       const [secRes, facRes, assignRes] = await Promise.all([
         api.get('/api/sections'), // Get sections logic from server
-        facultyAPI.teachers(),
+        facultyAPI.teachers(departmentId),
         hodAssignmentsAPI.getClassInCharges()
       ]);
       

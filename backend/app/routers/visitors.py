@@ -265,7 +265,7 @@ async def get_visit_log(
     date_from: Optional[str] = Query(None),
     date_to: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(10000, ge=1),
     offset: int = Query(0, ge=0),
     user: dict = Depends(require_role("admin", "security", "warden")),
     svc: VisitorService = Depends(get_visitor_service),

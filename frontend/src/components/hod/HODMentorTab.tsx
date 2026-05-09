@@ -20,7 +20,7 @@ const HODMentorTab = ({ departmentId }) => {
       // Fetch all students (or fetch by department to save payload sz)
       const [studRes, facRes, assignRes] = await Promise.all([
         studentsAPI.search('', departmentId), 
-        facultyAPI.teachers(),
+        facultyAPI.teachers(departmentId),
         hodAssignmentsAPI.getMentors()
       ]);
       

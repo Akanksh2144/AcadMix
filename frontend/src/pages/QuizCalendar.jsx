@@ -225,7 +225,7 @@ const QuizCalendar = ({ navigate, user }) => {
                           <div className="flex items-center gap-2 mb-1.5">
                             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`}></div>
                             <h4 className="font-bold text-sm text-slate-900 truncate flex-1">{quiz.title}</h4>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ${cfg.badge}`}>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-xl ring-1 ${cfg.badge}`}>
                               {cfg.label}
                             </span>
                           </div>

@@ -1100,7 +1100,7 @@ const AIInterviewSession = ({ navigate, user, quizData: sessionConfig }) => {
             muted
             className="w-full h-full object-cover scale-x-[-1] pointer-events-none" 
           />
-          <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 pointer-events-none">
+          <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2 py-1 rounded-xl border border-white/10 pointer-events-none">
              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_#10b981]" />
              <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Active</span>
           </div>

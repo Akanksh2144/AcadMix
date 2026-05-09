@@ -2006,7 +2006,7 @@ const CodePlayground = ({ navigate, user }) => {
                      {Object.entries(stats.topics).map(([topic, count]) => (
                        <div key={topic} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-lg px-3 py-2">
                          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{topic}</span>
-                         <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-full">{count}</span>
+                         <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-xl">{count}</span>
                        </div>
                      ))}
                    </div>

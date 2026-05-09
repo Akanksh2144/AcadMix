@@ -170,21 +170,27 @@ async def admin_dashboard(user: dict = Depends(require_role("admin")), session: 
 @router.get("/dashboard/hod")
 async def hod_dashboard(user: dict = Depends(require_role("hod", "admin")), session: AsyncSession = Depends(get_db)):
     from sqlalchemy import func
-    teachers_r = await session.execute(
-        select(func.count(models.User.id)).where(
-            models.User.college_id == user["college_id"], models.User.role == "teacher"
-        )
+    department = user.get("scope", {}).get("department") or user.get("department")
+
+    teachers_stmt = select(func.count(models.User.id)).outerjoin(models.UserProfile).where(
+        models.User.college_id == user["college_id"], models.User.role == "teacher"
     )
-    students_r = await session.execute(
-        select(func.count(models.User.id)).where(
-            models.User.college_id == user["college_id"], models.User.role == "student"
-        )
+    if department:
+        teachers_stmt = teachers_stmt.where(models.UserProfile.department == department)
+    teachers_r = await session.execute(teachers_stmt)
+
+    students_stmt = select(func.count(models.User.id)).outerjoin(models.UserProfile).where(
+        models.User.college_id == user["college_id"], models.User.role == "student"
     )
-    assignments_r = await session.execute(
-        select(func.count(models.FacultyAssignment.id)).where(
-            models.FacultyAssignment.college_id == user["college_id"]
-        )
+    if department:
+        students_stmt = students_stmt.where(models.UserProfile.department == department)
+    students_r = await session.execute(students_stmt)
+    assignments_stmt = select(func.count(models.FacultyAssignment.id)).where(
+        models.FacultyAssignment.college_id == user["college_id"]
     )
+    if department:
+        assignments_stmt = assignments_stmt.where(models.FacultyAssignment.department == department)
+    assignments_r = await session.execute(assignments_stmt)
     
     pending_r = await session.execute(
         select(func.count(models.MarkSubmission.id)).where(

@@ -600,7 +600,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
             <button
               data-testid="logout-button"
               onClick={onLogout}
-              className="p-2.5 rounded-full bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 transition-colors"
+              className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 transition-colors"
               aria-label="Sign out"
             >
               <SignOut size={20} weight="duotone" />
@@ -664,7 +664,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
         </motion.div>
 
         {/* Unified Navigation */}
-        <div className="flex overflow-x-auto gap-1 p-1 bg-slate-100/80 dark:bg-white/[0.04] rounded-full mb-8 hide-scrollbar backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06]">
+        <div className="flex overflow-x-auto gap-1 p-1 bg-slate-100/80 dark:bg-white/[0.04] rounded-xl mb-8 hide-scrollbar backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06]">
             {[
               { id: "overview", label: "Overview" },
               { id: "marks-entry", label: "Marks Entry" },
@@ -682,7 +682,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                 key={tab.id}
                 data-testid={`tab-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
+                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
                   activeTab === tab.id
                     ? "bg-gradient-to-r from-slate-800 to-slate-900 dark:from-white dark:to-slate-100 text-white dark:text-slate-900 shadow-lg shadow-slate-900/20 dark:shadow-white/10"
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-white/[0.06]'
@@ -752,7 +752,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                 <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">
                   Recent Submissions
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
                   {dashboard.recent_submissions.map((s, i) => (
                     <div
                       key={i}
@@ -768,8 +768,11 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                         </p>
                       </div>
                       <button
-                        onClick={() => setActiveTab("review")}
-                        className="btn-primary !px-4 !py-2 text-sm"
+                        className="text-sm font-bold text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                        onClick={() => {
+                          // Navigate to submission details
+                          // navigate(`/hod/submissions/${s.id}`);
+                        }}
                       >
                         Review
                       </button>
@@ -980,7 +983,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
                           {subjectSearch && (
                             <button
                               onClick={handleClearSubject}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-100 transition-colors"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-xl hover:bg-slate-100 transition-colors"
                               type="button"
                             >
                               <X
@@ -1688,19 +1691,19 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
 
         {activeTab === "class-in-charge" && (
           <div data-testid="class-in-charge-content">
-            <HODClassInChargeTab />
+            <HODClassInChargeTab departmentId={user?.scope?.department || user?.department} />
           </div>
         )}
 
         {activeTab === "mentors" && (
           <div data-testid="mentors-content">
-            <HODMentorTab departmentId={user?.scope?.department} />
+            <HODMentorTab departmentId={user?.scope?.department || user?.department} />
           </div>
         )}
 
         {activeTab === "progression" && (
           <div data-testid="progression-content">
-            <HODProgressionTab departmentId={user?.scope?.department} />
+            <HODProgressionTab departmentId={user?.scope?.department || user?.department} />
           </div>
         )}
 

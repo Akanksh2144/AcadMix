@@ -285,7 +285,7 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
                 <button
                   data-testid="notification-bell"
                   onClick={handleBellClick}
-                  className="p-2.5 rounded-full bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors relative"
+                  className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors relative"
                   aria-label="Notifications"
                 >
                   <Bell size={20} weight={showNotifications ? 'fill' : 'duotone'} />
@@ -305,7 +305,7 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
                 <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-500 leading-tight mt-0.5">{user?.roll_number || user?.email} • {user?.department} • {user?.section}</p>
               </div>
             </button>
-            <button data-testid="logout-button" onClick={onLogout} className="p-2.5 rounded-full bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500 transition-colors" aria-label="Sign out">
+            <button data-testid="logout-button" onClick={onLogout} className="p-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500 transition-colors" aria-label="Sign out">
               <SignOut size={20} weight="duotone" />
             </button>
           </div>
@@ -339,7 +339,7 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
         </motion.div>
 
         {/* Tabs */}
-        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-full mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-xl mb-8 hide-scrollbar">
             {[
               { id: 'overview', label: 'Overview' }, 
               { id: 'quizzes', label: 'Quizzes' },
@@ -355,7 +355,7 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
               <button 
                 key={tab.id} 
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap border border-transparent relative ${
+                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap border border-transparent relative ${
                   activeTab === tab.id 
                     ? 'bg-white dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 shadow-sm dark:border-indigo-500/25' 
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/[0.04]'

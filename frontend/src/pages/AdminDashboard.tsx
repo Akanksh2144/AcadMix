@@ -229,7 +229,7 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
                 <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-500 leading-tight mt-0.5">{user?.department || 'Admin'} • {user?.role === 'admin' ? 'Administrator' : user?.role}</p>
               </div>
             </button>
-              <button data-testid="logout-button" onClick={onLogout} className="p-2.5 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-colors" aria-label="Sign out"><SignOut size={20} weight="duotone" /></button>
+              <button data-testid="logout-button" onClick={onLogout} className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 transition-colors" aria-label="Sign out"><SignOut size={20} weight="duotone" /></button>
             </div>
           </div>
         </div>
@@ -242,7 +242,7 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
         </motion.div>
 
         {/* Tabs */}
-        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-full mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-xl mb-8 hide-scrollbar">
             {[
               { id: 'overview', label: 'Overview' }, 
               { id: 'metrics', label: 'Metrics' },
@@ -259,7 +259,7 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
                 key={tab.id} 
                 data-testid={`tab-${tab.id}`} 
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
+                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id 
                     ? 'bg-white dark:bg-[#1A202C] text-indigo-600 dark:text-indigo-400 shadow-sm' 
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5'

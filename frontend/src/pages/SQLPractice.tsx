@@ -806,7 +806,7 @@ const SQLPractice = ({ navigate, user }: any) => {
                 <button onClick={() => setTab('expected')} className={`py-3 text-sm font-bold border-b-2 transition-colors ${tab === 'expected' ? 'border-indigo-500 text-indigo-500' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>Expected</button>
               </div>
               {isCorrect !== null && (
-                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${isCorrect ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10' : 'bg-red-50 text-red-600 dark:bg-red-500/10'}`}>
+                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold ${isCorrect ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10' : 'bg-red-50 text-red-600 dark:bg-red-500/10'}`}>
                   {isCorrect ? <CheckCircle weight="fill" /> : <XCircle weight="fill" />}
                   {isCorrect ? 'Correct' : 'Incorrect'}
                 </div>

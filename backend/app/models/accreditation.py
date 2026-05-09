@@ -149,6 +149,24 @@ class CourseExitSurvey(Base, SoftDeleteMixin):
         Index("ix_exit_survey_course_year", "course_id", "academic_year"),
     )
 
+class StudentSatisfactionSurvey(Base, SoftDeleteMixin):
+    """
+    NAAC Criterion 2.7.1: Student Satisfaction Survey (SSS).
+    Captures general institutional feedback.
+    """
+    __tablename__ = "student_satisfaction_surveys"
+    id             = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id     = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id     = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    academic_year  = Column(String, nullable=False)
+    responses      = Column(JSONB, nullable=False)   # NAAC SSS 21 Questionnaire (Q1-Q20 scored 0-4, Q21 text)
+    submitted_at   = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("student_id", "academic_year", name="uq_sss"),
+        Index("ix_sss_college_year", "college_id", "academic_year"),
+    )
+
 
 # ── GAP 6: Faculty Profile & Achievement ───────────────────────────────────
 
@@ -253,3 +271,136 @@ class NAACAuditSnapshot(Base, SoftDeleteMixin):
         CheckConstraint("criterion >= 1 AND criterion <= 7", name="ck_criterion_range"),
         Index("ix_naac_snapshot_college_year", "college_id", "academic_year"),
     )
+
+
+# ── GAP 10: Validation Layer & Report Generation ───────────────────────────
+
+
+class NAACQualitativeNarrative(Base, SoftDeleteMixin):
+    """
+    Stores 500-word qualitative narratives (QlM) for NAAC criteria.
+    Decoupled from numerical snapshots to allow iterative drafting and versioning.
+    """
+    __tablename__ = "naac_qualitative_narratives"
+    id             = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id     = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    academic_year  = Column(String, nullable=False)
+    criterion_code = Column(String, nullable=False)       # e.g., "2.1.1"
+    criterion_name = Column(String, nullable=False)       # e.g., "Student Enrollment - Demand Ratio"
+    narrative_text = Column(Text, nullable=True)          # Markdown format
+    last_edited_by = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    last_edited_at = Column(DateTime(timezone=True), nullable=True, onupdate=func.now())
+    is_complete    = Column(Boolean, nullable=False, server_default=text('false'))
+    created_at     = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("college_id", "academic_year", "criterion_code", name="uq_naac_qlm"),
+        Index("ix_naac_qlm_college_year", "college_id", "academic_year"),
+    )
+
+
+class AttainmentConfig(Base, SoftDeleteMixin):
+    """
+    Overrides for NBA attainment calculation logic (thresholds, weights) 
+    at the institution or department level for a specific batch/academic year.
+    """
+    __tablename__ = "attainment_configs"
+    id                   = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id           = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    department_id        = Column(String, ForeignKey("departments.id", ondelete="CASCADE"), nullable=True) # Null = institution wide
+    batch_year           = Column(String, nullable=False)
+    direct_threshold_pct = Column(Float, nullable=False, server_default=text('60.0'))
+    direct_weight        = Column(Float, nullable=False, server_default=text('0.80'))
+    indirect_weight      = Column(Float, nullable=False, server_default=text('0.20'))
+    po_target_level      = Column(Float, nullable=False, server_default=text('2.5')) # Target on a 3-point scale
+    created_at           = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at           = Column(DateTime(timezone=True), nullable=True, onupdate=func.now())
+
+    __table_args__ = (
+        Index("ix_attainment_cfg_college_dept_batch", "college_id", "department_id", "batch_year"),
+    )
+
+
+class AccreditationReportJob(Base, SoftDeleteMixin):
+    """
+    Tracks background report generation tasks (Celery) and provides versioning 
+    for exported reports across the academic cycle.
+    """
+    __tablename__ = "accreditation_report_jobs"
+    id             = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id     = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    report_type    = Column(String, nullable=False)        # "NAAC", "NBA", "NEP"
+    academic_year  = Column(String, nullable=False)
+    version        = Column(Integer, nullable=False, server_default=text('1'))
+    status         = Column(String, nullable=False, server_default=text("'PENDING'")) # PENDING, PROCESSING, COMPLETED, FAILED
+    celery_task_id = Column(String, nullable=True)
+    presigned_url  = Column(String, nullable=True)         # S3/R2 download URL
+    expires_at     = Column(DateTime(timezone=True), nullable=True)
+    created_by     = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at     = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("college_id", "report_type", "academic_year", "version", name="uq_report_job_version"),
+        Index("ix_report_job_college_type", "college_id", "report_type"),
+    )
+
+
+# ── GAP 11: Survey & Feedback Engine ───────────────────────────────────────
+
+
+class SurveyTemplate(Base, SoftDeleteMixin):
+    __tablename__ = "survey_templates"
+    id             = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id     = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    title          = Column(String, nullable=False)
+    description    = Column(Text, nullable=True)
+    survey_type    = Column(String, nullable=False)        # "ALUMNI", "EMPLOYER", "FACULTY", "STUDENT", "EXIT"
+    academic_year  = Column(String, nullable=False)
+    is_published   = Column(Boolean, nullable=False, server_default=text('false'))
+    created_at     = Column(DateTime(timezone=True), server_default=func.now())
+
+class SurveyQuestion(Base, SoftDeleteMixin):
+    __tablename__ = "survey_questions"
+    id             = Column(String, primary_key=True, index=True, default=generate_uuid)
+    template_id    = Column(String, ForeignKey("survey_templates.id", ondelete="CASCADE"), nullable=False, index=True)
+    question_text  = Column(Text, nullable=False)
+    question_type  = Column(String, nullable=False)        # "TEXT", "RATING", "MULTIPLE_CHOICE"
+    options        = Column(JSONB, nullable=True)          # List of choices if applicable
+    order_index    = Column(Integer, nullable=False, server_default=text('0'))
+
+class SurveyResponse(Base, SoftDeleteMixin):
+    __tablename__ = "survey_responses"
+    id             = Column(String, primary_key=True, index=True, default=generate_uuid)
+    template_id    = Column(String, ForeignKey("survey_templates.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id        = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True) # Optional for anonymous
+    answers        = Column(JSONB, nullable=False)         # Dict mapping question_id -> answer
+    submitted_at   = Column(DateTime(timezone=True), server_default=func.now())
+
+
+# ── GAP 12: Placement & Progression Tracker ─────────────────────────────────
+
+class PlacementRecord(Base, SoftDeleteMixin):
+    __tablename__ = "placement_records"
+    id             = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id     = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id     = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    academic_year  = Column(String, nullable=False)        # Year of placement
+    company_name   = Column(String, nullable=False)
+    package        = Column(Float, nullable=True)          # LPA or similar
+    offer_letter_url= Column(String, nullable=True)        # Proof for NAAC
+    placed_on      = Column(Date, nullable=True)
+    created_at     = Column(DateTime(timezone=True), server_default=func.now())
+
+class HigherEducationRecord(Base, SoftDeleteMixin):
+    __tablename__ = "higher_education_records"
+    id             = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id     = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id     = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    academic_year  = Column(String, nullable=False)        # Year of graduation
+    institution_name= Column(String, nullable=False)
+    program_name   = Column(String, nullable=False)        # M.Tech, MS, MBA
+    admission_proof= Column(String, nullable=True)         # Proof for NAAC
+    admitted_on    = Column(Date, nullable=True)
+    created_at     = Column(DateTime(timezone=True), server_default=func.now())
+
+

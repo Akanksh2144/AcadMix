@@ -144,7 +144,7 @@ const ExpertDashboard = ({ navigate, user, onLogout }) => {
                 <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-400 leading-tight mt-0.5">DHTE Expert</p>
               </div>
             </div>
-            <button onClick={onLogout} className="p-2.5 rounded-full bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500 transition-colors" aria-label="Sign out">
+            <button onClick={onLogout} className="p-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500 transition-colors" aria-label="Sign out">
               <SignOut size={20} weight="duotone" />
             </button>
           </div>
@@ -164,7 +164,7 @@ const ExpertDashboard = ({ navigate, user, onLogout }) => {
         </motion.div>
 
         {/* ── Secondary Nav Tabs ────────────────────── */}
-        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-xl mb-8 hide-scrollbar">
           {[
             { id: 'overview', label: 'Overview' },
             { id: 'assignments', label: 'Assigned Subjects' },

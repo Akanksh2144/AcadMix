@@ -26,7 +26,8 @@ async def get_at_risk_students(
     user: dict = Depends(require_role("hod", "admin")),
     svc: HodService = Depends(get_hod_service)
 ):
-    return await svc.get_at_risk_students(user["college_id"], cgpa_threshold, backlog_threshold)
+    department = user.get("scope", {}).get("department") or user.get("department")
+    return await svc.get_at_risk_students(user["college_id"], cgpa_threshold, backlog_threshold, department if user["role"] == "hod" else None)
 
 
 @router.get("/hod/assignments/class-in-charge")
@@ -34,7 +35,8 @@ async def get_class_in_charges(
     user: dict = Depends(require_role("hod", "admin")),
     svc: HodService = Depends(get_hod_service)
 ):
-    return await svc.get_class_in_charges(user["college_id"])
+    department = user.get("scope", {}).get("department") or user.get("department")
+    return await svc.get_class_in_charges(user["college_id"], department if user["role"] == "hod" else None)
 
 
 @router.post("/hod/assignments/class-in-charge")
@@ -62,7 +64,8 @@ async def get_mentor_assignments(
     user: dict = Depends(require_role("hod", "admin")),
     svc: HodService = Depends(get_hod_service)
 ):
-    return await svc.get_mentor_assignments(user["college_id"])
+    department = user.get("scope", {}).get("department") or user.get("department")
+    return await svc.get_mentor_assignments(user["college_id"], department if user["role"] == "hod" else None)
 
 
 @router.post("/hod/assignments/mentors")
@@ -182,7 +185,8 @@ async def get_pending_free_period_requests(
     user: dict = Depends(require_role("hod")),
     svc: HodService = Depends(get_hod_service)
 ):
-    return await svc.get_pending_free_periods(user["college_id"])
+    department = user.get("scope", {}).get("department") or user.get("department")
+    return await svc.get_pending_free_periods(user["college_id"], department)
 
 
 @router.put("/hod/free-period-requests/{req_id}")

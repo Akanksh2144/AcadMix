@@ -84,7 +84,7 @@ const TransportAdminDashboard = ({ navigate, user, onLogout }) => {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 leading-tight mt-0.5">Transport Admin</p>
               </div>
             </div>
-            <button onClick={onLogout} className="p-2.5 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-colors">
+            <button onClick={onLogout} className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 transition-colors">
               <SignOut size={20} weight="duotone" />
             </button>
           </div>

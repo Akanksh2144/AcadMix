@@ -143,6 +143,12 @@ class UserProfile(Base, SoftDeleteMixin):
     acad_tokens = Column(Float, nullable=False, server_default=text('0.0'))
     extra_data = Column(JSONB, nullable=True, server_default='{}')  # Extensible: notification_preferences, entitlements, etc.
 
+    # ── Gamification ─────────────────────────────────────────────────────────
+    xp_points = Column(Integer, nullable=False, server_default=text('0'))
+    current_streak = Column(Integer, nullable=False, server_default=text('0'))
+    longest_streak = Column(Integer, nullable=False, server_default=text('0'))
+    last_active_date = Column(Date, nullable=True)
+
     # ── NEP Compliance Fields (Student-Only) ─────────────────────────
     # These fields are ONLY meaningful when user.role == "student".
     # The service layer MUST enforce this constraint — never populate
@@ -217,4 +223,20 @@ class CollegeModule(Base, SoftDeleteMixin):
 
     __table_args__ = (
         UniqueConstraint("college_id", "module_name", name="uq_college_module"),
+    )
+
+
+class MoodCheckin(Base, SoftDeleteMixin):
+    """Tracks daily student mental health and burnout levels."""
+    __tablename__ = "mood_checkins"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    mood_score = Column(Integer, nullable=False) # 1 to 5 (1=Terrible, 5=Great)
+    energy_score = Column(Integer, nullable=False) # 1 to 5 (1=Exhausted, 5=Energized)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_mood_student", "student_id", "created_at"),
     )

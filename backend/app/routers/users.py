@@ -110,7 +110,7 @@ async def patch_user_permissions(
 @router.get("/users")
 async def list_users(
     role: Optional[str] = None,
-    limit: int = Query(50, ge=1, le=1000),
+    limit: int = Query(10000, ge=1),
     offset: int = Query(0, ge=0),
     user: dict = Depends(require_role("admin", "teacher", "hod", "exam_cell")),
     session: AsyncSession = Depends(get_db),

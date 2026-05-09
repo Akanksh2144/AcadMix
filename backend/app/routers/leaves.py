@@ -60,15 +60,20 @@ async def get_pending_faculty_leaves(
     user: dict = Depends(require_role("hod", "admin")), 
     session: AsyncSession = Depends(get_db)
 ):
-    result = await session.execute(
-        select(models.LeaveRequest, models.User).join(
-            models.User, models.LeaveRequest.applicant_id == models.User.id
-        ).where(
-            models.LeaveRequest.college_id == user["college_id"],
-            models.LeaveRequest.status.in_(["pending", "cancellation_requested", "partially_cancelled"]),
-            models.LeaveRequest.applicant_role.in_(["teacher", "faculty"])
-        )
+    department = user.get("scope", {}).get("department") or user.get("department")
+    stmt = select(models.LeaveRequest, models.User).join(
+        models.User, models.LeaveRequest.applicant_id == models.User.id
+    ).outerjoin(
+        models.UserProfile, models.User.id == models.UserProfile.user_id
+    ).where(
+        models.LeaveRequest.college_id == user["college_id"],
+        models.LeaveRequest.status.in_(["pending", "cancellation_requested", "partially_cancelled"]),
+        models.LeaveRequest.applicant_role.in_(["teacher", "faculty"])
     )
+    if user["role"] == "hod" and department:
+        stmt = stmt.where(models.UserProfile.department == department)
+        
+    result = await session.execute(stmt)
     return [{
         "id": l.id, "applicant_id": l.applicant_id, "applicant_name": u.name, "applicant_email": u.email,
         "leave_type": l.leave_type, "from_date": l.from_date.isoformat(), "to_date": l.to_date.isoformat(),
@@ -80,15 +85,20 @@ async def get_pending_student_leaves(
     user: dict = Depends(require_role("hod", "admin")), 
     session: AsyncSession = Depends(get_db)
 ):
-    result = await session.execute(
-        select(models.LeaveRequest, models.User).join(
-            models.User, models.LeaveRequest.applicant_id == models.User.id
-        ).where(
-            models.LeaveRequest.college_id == user["college_id"],
-            models.LeaveRequest.status.in_(["pending", "cancellation_requested", "partially_cancelled"]),
-            models.LeaveRequest.applicant_role == "student"
-        )
+    department = user.get("scope", {}).get("department") or user.get("department")
+    stmt = select(models.LeaveRequest, models.User).join(
+        models.User, models.LeaveRequest.applicant_id == models.User.id
+    ).outerjoin(
+        models.UserProfile, models.User.id == models.UserProfile.user_id
+    ).where(
+        models.LeaveRequest.college_id == user["college_id"],
+        models.LeaveRequest.status.in_(["pending", "cancellation_requested", "partially_cancelled"]),
+        models.LeaveRequest.applicant_role == "student"
     )
+    if user["role"] == "hod" and department:
+        stmt = stmt.where(models.UserProfile.department == department)
+        
+    result = await session.execute(stmt)
     return [{
         "id": l.id, "applicant_id": l.applicant_id, "applicant_name": u.name, 
         "batch": u.profile_data.get("batch") if u.profile_data else None,
@@ -130,12 +140,16 @@ async def get_free_period_pool(
     user: dict = Depends(require_role("hod", "admin")), 
     session: AsyncSession = Depends(get_db)
 ):
+    department = user.get("scope", {}).get("department") or user.get("department")
     stmt = select(models.PeriodSlot, models.User).outerjoin(
         models.User, models.PeriodSlot.original_faculty_id == models.User.id
     ).where(
         models.PeriodSlot.college_id == user["college_id"],
         models.PeriodSlot.slot_type == "released"
     )
+    if user["role"] == "hod" and department:
+        stmt = stmt.where(models.PeriodSlot.department_id == department)
+        
     result = await session.execute(stmt)
     return [{
         "id": s.id, "day": s.day, "period_no": s.period_no, "start_time": s.start_time, "end_time": s.end_time,

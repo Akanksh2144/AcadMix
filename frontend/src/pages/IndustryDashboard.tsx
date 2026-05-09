@@ -181,7 +181,7 @@ export default function IndustryDashboard({ navigate, user, onLogout }) {
         </motion.div>
 
         {/* Navigation Tabs */}
-        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-xl mb-8 hide-scrollbar">
           {navItems.map(item => (
             <button
               key={item.id}
@@ -249,7 +249,7 @@ export default function IndustryDashboard({ navigate, user, onLogout }) {
                         <h4 className="font-bold text-slate-800 dark:text-white">{mou.purpose}</h4>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Valid until: {mou.valid_until}</p>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${mou.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                      <span className={`px-3 py-1 rounded-xl text-xs font-bold ${mou.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                         {mou.status.toUpperCase()}
                       </span>
                     </div>

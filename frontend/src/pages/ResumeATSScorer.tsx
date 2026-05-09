@@ -255,7 +255,7 @@ const ScoreDashboard = ({ result }) => {
             <RadialGauge score={result.ats_score} size={180} />
             <motion.span
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
-              className={`inline-flex items-center gap-1.5 mt-4 px-4 py-1.5 rounded-full text-xs font-extrabold ${colors.badge}`}>
+              className={`inline-flex items-center gap-1.5 mt-4 px-4 py-1.5 rounded-xl text-xs font-extrabold ${colors.badge}`}>
               {result.ats_score >= 75 ? <CheckCircle size={14} weight="fill" /> : <WarningCircle size={14} weight="fill" />}
               {colors.label}
             </motion.span>

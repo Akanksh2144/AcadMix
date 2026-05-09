@@ -142,11 +142,11 @@ const PlacementHub = ({ navigate, user }: any) => {
                     <Icon size={28} weight="duotone" className={arena.iconColor} />
                   </div>
                   {arena.ready ? (
-                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r ${arena.color} text-white text-[10px] font-extrabold uppercase tracking-wider`}>
+                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r ${arena.color} text-white text-[10px] font-extrabold uppercase tracking-wider`}>
                       <Lightning size={10} weight="fill" /> Ready
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 text-[10px] font-extrabold uppercase tracking-wider">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 text-[10px] font-extrabold uppercase tracking-wider">
                       <Lock size={10} weight="bold" /> Coming Soon
                     </div>
                   )}

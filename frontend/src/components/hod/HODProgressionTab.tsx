@@ -47,7 +47,7 @@ const ProgressionEntryForm = ({ onSubmit }) => {
             key={type}
             type="button"
             onClick={() => { setActiveType(type); setFormData({}); }}
-            className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm transition-colors ${activeType === type ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeType === type ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
           >
             {labels[type]}
           </button>
@@ -62,12 +62,12 @@ const ProgressionEntryForm = ({ onSubmit }) => {
               required
               value={formData[field] || ''}
               onChange={e => handleInputChange(field, e.target.value)}
-              className="w-full text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md py-1.5 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-white transition-shadow"
+              className="w-full text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:text-white transition-all shadow-sm"
             />
           </div>
         ))}
         <div className="col-span-full pt-2 flex justify-end">
-          <button type="submit" className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+          <button type="submit" className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm">
             <Plus size={16} />
             <span>Save {labels[activeType]} Record</span>
           </button>
@@ -149,7 +149,7 @@ const HODProgressionTab = ({ departmentId }) => {
           <input 
             type="text" 
             placeholder="Search students..." 
-            className="w-full text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 outline-none dark:text-white"
+            className="w-full text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 outline-none dark:text-white transition-all focus:ring-2 focus:ring-blue-500/50"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -159,7 +159,7 @@ const HODProgressionTab = ({ departmentId }) => {
             <button
               key={s.id}
               onClick={() => loadProgression(s.id)}
-              className={`w-full text-left p-3 rounded-lg transition-colors ${selectedStudent === s.id ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-800 dark:text-gray-200'}`}
+              className={`w-full text-left p-3 rounded-xl transition-all ${selectedStudent === s.id ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200 shadow-sm' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-800 dark:text-gray-200'}`}
             >
               <div className="font-medium text-sm">{s.name}</div>
               <div className="text-xs text-gray-500">{s.roll_no || s.id}</div>
@@ -190,7 +190,7 @@ const HODProgressionTab = ({ departmentId }) => {
                   {records.map(rec => (
                     <motion.div key={rec.id} layout initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="bg-white dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm relative">
                       <div className="flex items-center justify-between mb-3 border-b border-gray-100 dark:border-gray-700 pb-2">
-                        <span className="inline-flex px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 text-xs font-semibold rounded-md uppercase tracking-wider">{labels[rec.progression_type]}</span>
+                        <span className="inline-flex px-3 py-1 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 text-[10px] font-bold rounded-lg uppercase tracking-wider">{labels[rec.progression_type]}</span>
                         <span className="text-xs text-gray-400">{new Date(rec.created_at).toLocaleDateString()}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-y-2 text-sm">

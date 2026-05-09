@@ -9,7 +9,7 @@ from database import get_db
 from app.core.security import get_current_user, require_role
 from app.schemas.users import FacultyProfileUpdate
 from app.schemas.academic import FacultyAssignment
-from app.schemas.administrative import ActivityPermissionCreate, OutOfCampusCreate, FreePeriodRequestCreate
+from app.schemas.administrative import ActivityPermissionCreate, ActivityEvidenceUpload, OutOfCampusCreate, FreePeriodRequestCreate
 from app.schemas.evaluation import FacultyQuestionPaper, FacultyStudyMaterial
 from app.services.faculty_service import FacultyService
 
@@ -40,10 +40,11 @@ async def update_faculty_profile(
 
 @router.get("/faculty/teachers")
 async def list_department_teachers(
+    department: str = None,
     user: dict = Depends(require_role("hod", "admin")),
     svc: FacultyService = Depends(get_faculty_service)
 ):
-    return await svc.list_department_teachers(user["college_id"])
+    return await svc.list_department_teachers(user["college_id"], department)
 
 
 @router.get("/faculty/assignments")
@@ -51,7 +52,8 @@ async def list_assignments(
     user: dict = Depends(require_role("hod", "admin", "teacher")),
     svc: FacultyService = Depends(get_faculty_service)
 ):
-    return await svc.list_assignments(user["college_id"], user["role"], user["id"])
+    department = user.get("scope", {}).get("department") or user.get("department")
+    return await svc.list_assignments(user["college_id"], user["role"], user["id"], department)
 
 
 @router.post("/faculty/assignments")
@@ -132,6 +134,20 @@ async def request_activity_permission(
 ):
     await svc.submit_activity_request(user["college_id"], user["id"], req.model_dump())
     return {"message": "Activity permission requested."}
+
+
+@router.post("/faculty/activities/{activity_id}/close")
+async def close_activity(
+    activity_id: str,
+    req: ActivityEvidenceUpload,
+    user: dict = Depends(require_role("teacher", "hod")),
+    svc: FacultyService = Depends(get_faculty_service)
+):
+    """
+    Point-of-Action Evidence Capture: Close an event and enforce evidence uploads.
+    """
+    await svc.close_activity_with_evidence(user["college_id"], user["id"], activity_id, req.evidence_urls)
+    return {"message": "Activity closed and evidence captured successfully."}
 
 
 @router.post("/faculty/out-of-campus")

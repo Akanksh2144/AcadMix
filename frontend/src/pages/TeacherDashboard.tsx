@@ -244,7 +244,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
                 <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-400 leading-tight mt-0.5">{user?.designation || 'Assistant Professor'}</p>
               </div>
             </button>
-            <button data-testid="logout-button" onClick={onLogout} className="p-2.5 rounded-full bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 transition-colors" aria-label="Sign out">
+            <button data-testid="logout-button" onClick={onLogout} className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 transition-colors" aria-label="Sign out">
               <SignOut size={20} weight="duotone" />
             </button>
           </div>
@@ -263,7 +263,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
         </motion.div>
 
         {/* Tabs */}
-        <div className="flex overflow-x-auto gap-1 p-1 bg-slate-100/80 dark:bg-white/[0.04] rounded-full mb-8 hide-scrollbar backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06]">
+        <div className="flex overflow-x-auto gap-1 p-1 bg-slate-100/80 dark:bg-white/[0.04] rounded-xl mb-8 hide-scrollbar backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06]">
             {[
               { id: 'overview', label: 'Overview' }, 
               { id: 'timetable', label: 'Timetable' },
@@ -281,7 +281,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
               <button 
                 key={tab.id} 
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex-1 justify-center min-w-max flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
+                className={`flex-1 justify-center min-w-max flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id 
                     ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm border border-emerald-200/60 dark:border-emerald-500/20"
                     : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5 border border-transparent"
@@ -331,8 +331,8 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
                 View all <ArrowRight size={12} weight="bold" />
               </button>
             </div>
-            <div className="space-y-1">
-              {recentActivity.length > 0 ? recentActivity.slice(0, 6).map((item, i) => (
+            <div className="space-y-1 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+              {recentActivity.length > 0 ? recentActivity.map((item, i) => (
                 <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors">
                   <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 bg-emerald-50 dark:bg-emerald-500/15">
                     <Exam size={14} weight="duotone" className="text-emerald-500 dark:text-emerald-400" />
@@ -392,7 +392,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
                     <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{q.title}</p>
                     <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 capitalize">{q.subject} · {q.status}</p>
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-xl ${
                     q.status === 'active' ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
                     q.status === 'scheduled' ? 'bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400' :
                     'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'

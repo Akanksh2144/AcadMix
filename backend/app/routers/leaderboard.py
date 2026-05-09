@@ -15,7 +15,7 @@ router = APIRouter()
 
 @router.get("/leaderboard")
 async def get_leaderboard(
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(10000, ge=1),
     offset: int = Query(0, ge=0),
     user: dict = Depends(get_current_user), 
     session: AsyncSession = Depends(get_db)):

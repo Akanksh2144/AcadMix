@@ -152,7 +152,7 @@ const AdvisoryContent = ({ roles }) => (
                 {r.scope_description && <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{r.scope_description}</p>}
               </div>
             </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold ${r.is_active ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300" : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"}`}>
+            <span className={`px-3 py-1 rounded-xl text-xs font-bold ${r.is_active ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300" : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"}`}>
               {r.is_active ? "Active" : "Ended"}
             </span>
           </div>
@@ -221,7 +221,7 @@ const ResearchContent = ({ research, onCreateResearch }) => {
                 <h4 className="font-bold text-slate-900 dark:text-white">{r.title}</h4>
                 {r.funding_agency && <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Funded by: {r.funding_agency}</p>}
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${STATUS_COLORS[r.status] || "bg-slate-100 text-slate-500"}`}>
+              <span className={`px-3 py-1 rounded-xl text-xs font-bold capitalize ${STATUS_COLORS[r.status] || "bg-slate-100 text-slate-500"}`}>
                 {r.status}
               </span>
             </div>
@@ -296,7 +296,7 @@ const ConsultancyContent = ({ consultancy, onCreateConsultancy }) => {
                 <h4 className="font-bold text-slate-900 dark:text-white">{c.client_organization}</h4>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{c.topic}</p>
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-bold ${c.is_paid ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300" : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"}`}>
+              <span className={`px-3 py-1 rounded-xl text-xs font-bold ${c.is_paid ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300" : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"}`}>
                 {c.is_paid ? `₹${(c.fee_amount || 0).toLocaleString()}` : "Pro Bono"}
               </span>
             </div>

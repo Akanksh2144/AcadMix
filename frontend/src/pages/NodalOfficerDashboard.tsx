@@ -8,6 +8,7 @@ import InsightsChat from '../components/insights/InsightsChat';
 import InsightsCanvas from '../components/insights/InsightsCanvas';
 import NAACMatrix from '../components/accreditation/NAACMatrix';
 import NBACoPoMatrix from '../components/accreditation/NBACoPoMatrix';
+import NBADashboard from '../components/accreditation/NBADashboard';
 import NEPTracker from '../components/accreditation/NEPTracker';
 import CampusMap from '../components/campus/CampusMap';
 
@@ -288,7 +289,7 @@ const NodalOfficerDashboard = ({ navigate, user, onLogout }) => {
           <div className="flex items-center gap-3">
             {/* Notification Bell */}
             <NotifBell />
-            <button onClick={toggleTheme} className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500">
+            <button onClick={toggleTheme} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-slate-500">
               {isDark ? <Sun size={20} weight="duotone" /> : <Moon size={20} weight="duotone" />}
             </button>
             <button className="hidden sm:flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-2xl px-4 py-2 border border-slate-100 dark:border-white/5">
@@ -300,7 +301,7 @@ const NodalOfficerDashboard = ({ navigate, user, onLogout }) => {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{user?.role}</p>
               </div>
             </button>
-            <button onClick={onLogout} className="p-2.5 rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
+            <button onClick={onLogout} className="p-2.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
               <SignOut size={20} weight="duotone" />
             </button>
           </div>
@@ -309,7 +310,7 @@ const NodalOfficerDashboard = ({ navigate, user, onLogout }) => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Navigation Tabs */}
-        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl mb-8 hide-scrollbar">
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-xl mb-8 hide-scrollbar">
           {tabs.map(t => {
             const Icon = t.icon;
             return (
@@ -499,7 +500,12 @@ const NodalOfficerDashboard = ({ navigate, user, onLogout }) => {
 
             {/* Sub-tab Content */}
             {complianceSubTab === 'naac' && <NAACMatrix viewMode="nodal" collegeId={activeCollegeId} />}
-            {complianceSubTab === 'nba' && <NBACoPoMatrix viewMode="nodal" />}
+            {complianceSubTab === 'nba' && (
+              <div className="space-y-8">
+                <NBADashboard collegeId={activeCollegeId} />
+                <NBACoPoMatrix viewMode="nodal" />
+              </div>
+            )}
             {complianceSubTab === 'nep' && <NEPTracker viewMode="nodal" collegeId={activeCollegeId} />}
           </motion.div>
         )}

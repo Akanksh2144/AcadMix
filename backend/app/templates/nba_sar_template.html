@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>NBA SAR - {{ college.name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 25mm 20mm 20mm 20mm;
+            @top-center {
+                content: "Self Assessment Report (Tier-II) of {{ college.name|upper }}";
+                font-family: sans-serif;
+                font-size: 8pt;
+                color: #666;
+            }
+            @bottom-right {
+                content: "Page " counter(page) "/" counter(pages) " | {{ generated_at }}";
+                font-family: sans-serif;
+                font-size: 8pt;
+                color: #666;
+            }
+        }
+        body {
+            font-family: "Helvetica", "Arial", sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        h1, h2, h3, h4 {
+            color: #111;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        .cover-page {
+            text-align: center;
+            padding-top: 80mm;
+        }
+        .cover-page h1 {
+            font-size: 24pt;
+            margin-bottom: 10mm;
+        }
+        .cover-page h2 {
+            font-size: 18pt;
+        }
+        .cover-page p {
+            font-size: 12pt;
+        }
+        .section-title {
+            background-color: #e0f0ff;
+            padding: 8px;
+            border-left: 5px solid #0056b3;
+            margin-top: 15mm;
+            page-break-after: avoid;
+        }
+        .subsection-title {
+            background-color: #f5f5f5;
+            padding: 5px;
+            border-left: 3px solid #666;
+            margin-top: 10mm;
+            page-break-after: avoid;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10mm;
+            page-break-inside: avoid;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ccc;
+            padding: 5px;
+            font-size: 9pt;
+            text-align: center;
+        }
+        .data-table th {
+            background-color: #f9f9f9;
+            font-weight: bold;
+        }
+        .narrative-block {
+            text-align: justify;
+            margin-bottom: 10mm;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Cover Page -->
+<div class="cover-page">
+    <h1>National Board of Accreditation (NBA)</h1>
+    <h2>Self Assessment Report (SAR)</h2>
+    <h3>UG Engineering Programs (Tier-II)</h3>
+    <br>
+    <h2>{{ college.name }}</h2>
+    <p>Department ID: {{ department_id }}</p>
+    <p>Academic Year: {{ academic_year }}</p>
+    <p>Generated On: {{ generated_at }}</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- Part A: Institutional Information -->
+<h2 class="section-title">PART A: Institutional Information</h2>
+<table class="data-table">
+    <tbody>
+        <tr>
+            <td style="text-align:left; font-weight:bold; width:30%;">Name of Institution</td>
+            <td style="text-align:left;">{{ college.name }}</td>
+        </tr>
+        <tr>
+            <td style="text-align:left; font-weight:bold;">Academic Year</td>
+            <td style="text-align:left;">{{ academic_year }}</td>
+        </tr>
+        <tr>
+            <td style="text-align:left; font-weight:bold;">Department</td>
+            <td style="text-align:left;">{{ department_id }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- Part B: Program Level Criteria -->
+<h2 class="section-title">PART B: Criteria Summary</h2>
+
+<h3 class="subsection-title">Criterion 1: Vision, Mission and Program Educational Objectives (50)</h3>
+<div class="narrative-block">
+    <p>Refer to explicit CO/PO mappings and institutional vision/mission.</p>
+</div>
+
+<h3 class="subsection-title">Criterion 2: Program Curriculum and Teaching-Learning Processes (100)</h3>
+<div class="narrative-block">
+    <p>Details regarding teaching-learning methodology and curriculum alignment with POs.</p>
+</div>
+
+<h3 class="subsection-title">Criterion 3: Course Outcomes and Program Outcomes (120)</h3>
+{% if courses and po_keys %}
+    {% include 'co_attainment_section.html' %}
+{% else %}
+    <p><em>CO-PO mapping and attainment data not available for this period.</em></p>
+{% endif %}
+
+<div class="page-break"></div>
+
+<h3 class="subsection-title">Criterion 4: Students' Performance (100)</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Metric</th>
+            <th>Value</th>
+            <th>Formula / Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Academic Performance Index (API)</td>
+            <td>{{ student_metrics.api }}</td>
+            <td>Mean CGPA * (Successful students / Appeared students)</td>
+        </tr>
+        <tr>
+            <td>Mean CGPA</td>
+            <td>{{ student_metrics.mean_cgpa }}</td>
+            <td>Calculated across all passing students</td>
+        </tr>
+        <tr>
+            <td>Success Rate (Without Backlog)</td>
+            <td>{{ student_metrics.success_without_backlog }}%</td>
+            <td>% of students clearing all courses in single attempt</td>
+        </tr>
+        <tr>
+            <td>Success Rate (Within Stipulated Period)</td>
+            <td>{{ student_metrics.success_within_period }}%</td>
+            <td>% of students clearing all courses by graduation</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3 class="subsection-title">Criterion 5: Faculty Information and Contributions (200)</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Metric</th>
+            <th>Value</th>
+            <th>Details / Formula</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Total Faculty Available (F)</td>
+            <td>{{ faculty_metrics.total_faculty }}</td>
+            <td>Based on active Faculty Profiles</td>
+        </tr>
+        <tr>
+            <td>PhD Count (X)</td>
+            <td>{{ faculty_metrics.phd_count }}</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>PG Count (Y)</td>
+            <td>{{ faculty_metrics.pg_count }}</td>
+            <td>MTech, ME, MSc, etc.</td>
+        </tr>
+        <tr>
+            <td><strong>Faculty Qualification Score</strong></td>
+            <td><strong>{{ faculty_metrics.qualification_score }}</strong></td>
+            <td>1.5 * ((10X + 4Y) / F)</td>
+        </tr>
+        <tr>
+            <td colspan="3" style="background-color: #f9f9f9; font-weight:bold;">Cadre Proportion (3:6:20)</td>
+        </tr>
+        <tr>
+            <td>Professors</td>
+            <td>{{ faculty_metrics.prof_count }}</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>Associate Professors</td>
+            <td>{{ faculty_metrics.assoc_count }}</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>Assistant Professors</td>
+            <td>{{ faculty_metrics.asst_count }}</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td><strong>Cadre Proportion Score</strong></td>
+            <td><strong>{{ faculty_metrics.cadre_proportion_score }}</strong></td>
+            <td>(available / required) * 15 marks</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3 class="subsection-title">Criterion 6: Facilities and Technical Support (80)</h3>
+<div class="narrative-block">
+    <p>Information on laboratories, equipment, and technical staff.</p>
+</div>
+
+<h3 class="subsection-title">Criterion 7: Continuous Improvement (50)</h3>
+<div class="narrative-block">
+    <p>Actions taken based on the results of evaluation of each of the POs & PSOs.</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- Part C: Institute Level Criteria -->
+<h2 class="section-title">PART C: Institute Level Criteria</h2>
+<h3 class="subsection-title">Criterion 8: First Year Academics (50)</h3>
+<div class="narrative-block">
+    <p>{{ part_c_data.get('NBA_PART_C_FIRST_YEAR', {}).get('text', 'No data provided.') }}</p>
+</div>
+
+<h3 class="subsection-title">Criterion 9: Student Support Systems (50)</h3>
+<div class="narrative-block">
+    <p>{{ part_c_data.get('NBA_PART_C_STUDENT_SUPPORT', {}).get('text', 'No data provided.') }}</p>
+</div>
+
+<h3 class="subsection-title">Criterion 10: Governance, Institutional Support and Financial Resources (120)</h3>
+<div class="narrative-block">
+    <p>{{ part_c_data.get('NBA_PART_C_FINANCE', {}).get('text', 'No data provided.') }}</p>
+</div>
+
+</body>
+</html>

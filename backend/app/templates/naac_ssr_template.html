@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>NAAC SSR - {{ college.name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 35mm 20mm 30mm 20mm;
+            @top-center {
+                content: "Self Study Report of {{ college.name|upper }}";
+                font-family: sans-serif;
+                font-size: 8pt;
+                color: #666;
+            }
+            @bottom-right {
+                content: "Page " counter(page) "/" counter(pages) " | {{ generated_at }}";
+                font-family: sans-serif;
+                font-size: 8pt;
+                color: #666;
+            }
+        }
+        body {
+            font-family: "Helvetica", "Arial", sans-serif;
+            font-size: 10pt;
+            line-height: 1.6;
+            color: #333;
+            padding-top: 10mm;
+        }
+        h1, h2, h3, h4 {
+            color: #111;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        .cover-page {
+            text-align: center;
+            padding-top: 80mm;
+        }
+        .cover-page h1 {
+            font-size: 24pt;
+            margin-bottom: 10mm;
+        }
+        .cover-page h2 {
+            font-size: 18pt;
+        }
+        .cover-page p {
+            font-size: 12pt;
+        }
+        .section-title {
+            background-color: #f0f0f0;
+            padding: 5px;
+            border-left: 5px solid #333;
+            margin-top: 15mm;
+            page-break-after: avoid;
+        }
+        .narrative-block {
+            text-align: justify;
+            margin-bottom: 10mm;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10mm;
+            page-break-inside: avoid;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ccc;
+            padding: 5px;
+            font-size: 9pt;
+            text-align: center;
+        }
+        .data-table th {
+            background-color: #f9f9f9;
+        }
+        
+        .metric-block {
+            margin-bottom: 15mm;
+            page-break-inside: avoid;
+        }
+        .metric-code {
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 2mm;
+            page-break-after: avoid;
+        }
+        .metric-response {
+            margin-bottom: 5mm;
+            text-align: justify;
+            white-space: pre-wrap;
+        }
+        .evidence-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border-top: 1px solid #eee;
+        }
+        .evidence-list li {
+            padding: 4px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 9pt;
+        }
+        
+        /* Landscape sections */
+        @page landscape-section { size: A4 landscape; }
+        .landscape-section {
+            page: landscape-section;
+            page-break-before: always;
+            page-break-after: always;
+        }
+        
+        /* NBA CO-PO Matrix specific */
+        table.co-po-matrix {
+            page-break-inside: avoid;
+            font-size: 8pt;
+            table-layout: fixed;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table.co-po-matrix th, table.co-po-matrix td {
+            border: 1px solid #aaa;
+            padding: 2px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+{% macro render_metric(code, name, response_text, response_value, yearly_data, evidence_list, metric_type="qnm") %}
+<div class="metric-block">
+    <div class="metric-code">{{ code }} {{ name }}</div>
+    
+    <div class="metric-response">
+        <strong>Response:</strong>
+        {% if response_text %}
+            <div>{{ response_text }}</div>
+        {% elif response_value is not none %}
+            <div>{{ response_value }}</div>
+        {% else %}
+            <div><em>Not provided</em></div>
+        {% endif %}
+    </div>
+    
+    {% if metric_type != "qlm" %}
+        {% if yearly_data %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    {% for item in yearly_data %}
+                    <th>{{ item.year }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    {% for item in yearly_data %}
+                    <td>{{ item.value if item.value is not none else "-" }}</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+        {% endif %}
+        
+        {% if evidence_list %}
+        <ul class="evidence-list">
+            <li style="font-weight: bold; background-color: #f9f9f9; border-top: 1px solid #ccc; padding-top: 6px; padding-bottom: 6px;">
+                <span style="display:inline-block; width: 70%;">File Description</span>
+                <span style="display:inline-block; width: 28%; text-align: right;">Document</span>
+            </li>
+            {% for ev in evidence_list %}
+            <li>
+                <span style="display:inline-block; width: 70%;">{{ ev.description }}</span>
+                <span style="display:inline-block; width: 28%; text-align: right;">
+                    <a href="{{ ev.presigned_url }}" target="_blank">View Document</a>
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    {% endif %}
+</div>
+{% endmacro %}
+
+<!-- Cover Page -->
+<div class="cover-page">
+    <h1>Self Study Report (SSR)</h1>
+    <h2>{{ college.name }}</h2>
+    <p>Cycle: {{ cycle | default('1') }}</p>
+    <p>Submitted Date: {{ generated_at }}</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- Executive Summary & SWOC -->
+<h2 class="section-title">1. Executive Summary</h2>
+<div class="narrative-block">
+    <h3>Introduction</h3>
+    <p>{{ executive_summary.intro | default('Institutional introduction not provided.') }}</p>
+    
+    <h3>Vision</h3>
+    <p>{{ executive_summary.vision | default('Vision statement not provided.') }}</p>
+    
+    <h3>Mission</h3>
+    <p>{{ executive_summary.mission | default('Mission statement not provided.') }}</p>
+</div>
+
+<div class="narrative-block">
+    <h3>SWOC Analysis</h3>
+    <h4>Institutional Strength</h4>
+    <p>{{ swoc.strength | default('Strength narrative not provided.') }}</p>
+    
+    <h4>Institutional Weakness</h4>
+    <p>{{ swoc.weakness | default('Weakness narrative not provided.') }}</p>
+    
+    <h4>Institutional Opportunity</h4>
+    <p>{{ swoc.opportunity | default('Opportunity narrative not provided.') }}</p>
+    
+    <h4>Institutional Challenge</h4>
+    <p>{{ swoc.challenge | default('Challenge narrative not provided.') }}</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- Institutional Profile -->
+<h2 class="section-title">2. Profile</h2>
+<p>Basic Information and Academic Programs.</p>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Programme Level</th>
+            <th>Name of Programme</th>
+            <th>Duration</th>
+            <th>Medium of Instruction</th>
+            <th>Sanctioned Strength</th>
+            <th>No. of Students Admitted</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for prog in programs_data %}
+        <tr>
+            <td>{{ prog.level }}</td>
+            <td>{{ prog.name }}</td>
+            <td>{{ prog.duration }}</td>
+            <td>{{ prog.medium }}</td>
+            <td>{{ prog.sanctioned }}</td>
+            <td>{{ prog.admitted }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">No program data provided.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th rowspan="2">Year</th>
+            <th colspan="4">Category-wise Admission</th>
+        </tr>
+        <tr>
+            <th>General</th>
+            <th>SC</th>
+            <th>ST</th>
+            <th>OBC</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cat_data in category_admission_data %}
+        <tr>
+            <td>{{ cat_data.year }}</td>
+            <td>{{ cat_data.general }}</td>
+            <td>{{ cat_data.sc }}</td>
+            <td>{{ cat_data.st }}</td>
+            <td>{{ cat_data.obc }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">No category data provided.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- NEP Preparedness -->
+<h2 class="section-title">NEP Preparedness</h2>
+{% for code, nep in nep_preparedness.items() %}
+<div class="narrative-block">
+    <h3>{{ loop.index }}. {{ nep.title }}</h3>
+    <p>{{ nep.text | default('Not provided.') }}</p>
+</div>
+{% endfor %}
+
+<div class="page-break"></div>
+
+<!-- QIF Section (Criterion 1 Example) -->
+<h2 class="section-title">Criterion 1 - Curricular Aspects</h2>
+
+{% for code, metric in qualitative_metrics.items() %}
+{{ render_metric(
+    code, 
+    metric.get("name", ""),
+    metric.get("text", ""),
+    none,
+    [],
+    [{"description": "Relevant Document", "presigned_url": "https://example.com/doc1"}]
+) }}
+{% endfor %}
+
+{% for code, metric in quantitative_metrics.items() %}
+{{ render_metric(
+    code,
+    metric.get("name", ""),
+    none,
+    metric.get("value", 0),
+    metric.get("yearly_data", []),
+    [{"description": "Data Template", "presigned_url": "https://example.com/doc2"}]
+) }}
+{% endfor %}
+
+<!-- NBA CO-PO Matrix Example (Landscape) -->
+<div class="landscape-section">
+    <h2 class="section-title">NBA CO-PO Matrix</h2>
+    <table class="co-po-matrix">
+        <thead>
+            <tr>
+                <th style="width: 10%;">CO</th>
+                <th>PO1</th><th>PO2</th><th>PO3</th><th>PO4</th><th>PO5</th><th>PO6</th><th>PO7</th><th>PO8</th><th>PO9</th><th>PO10</th><th>PO11</th><th>PO12</th>
+                <th>PSO1</th><th>PSO2</th><th>PSO3</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>CS101.1</td>
+                <td>3</td><td>2</td><td>1</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+                <td>2</td><td>-</td><td>-</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

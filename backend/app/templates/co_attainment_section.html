@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>NBA SAR - CO Attainment</title>
+    <style>
+        /* Landscape sections for NBA matrices */
+        @page landscape-section { size: A4 landscape; margin: 20mm; }
+        .landscape-section {
+            page: landscape-section;
+            page-break-before: always;
+            page-break-after: always;
+            font-family: "Helvetica", "Arial", sans-serif;
+        }
+        .section-title {
+            background-color: #f0f0f0;
+            padding: 5px;
+            border-left: 5px solid #333;
+            margin-top: 15mm;
+            page-break-after: avoid;
+        }
+        table.co-po-matrix {
+            page-break-inside: avoid;
+            font-size: 8pt;
+            table-layout: fixed;
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5mm;
+        }
+        table.co-po-matrix th, table.co-po-matrix td {
+            border: 1px solid #aaa;
+            padding: 4px;
+            text-align: center;
+        }
+        table.co-po-matrix th {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="landscape-section">
+    <h2 class="section-title">3.1. Establish the correlation between the courses and the Program Outcomes (NBA 3.1)</h2>
+    <p>Mapping of Course Outcomes (COs) to Program Outcomes (POs) and Program Specific Outcomes (PSOs).</p>
+    
+    {% for chunk_po_keys in po_keys|batch(16) %}
+    <table class="co-po-matrix" {% if not loop.last %}style="page-break-after: always;"{% endif %}>
+        <thead>
+            <tr>
+                <th style="width: 15%;">Course / CO</th>
+                {% for po in chunk_po_keys %}
+                <th>{{ po }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for course in courses %}
+            <tr>
+                <td colspan="{{ chunk_po_keys|length + 1 }}" style="text-align: left; font-weight: bold; background-color: #eee;">
+                    {{ course.code }} - {{ course.name }}
+                </td>
+            </tr>
+            {% for co in course.outcomes %}
+            <tr>
+                <td style="text-align: left; padding-left: 10mm;">{{ co.code }}</td>
+                {% for po in chunk_po_keys %}
+                <td>{{ co.po_map.get(po, '-') }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            <tr>
+                <td style="font-weight: bold; text-align: right;">Course Average</td>
+                {% for po in chunk_po_keys %}
+                <td>{{ course.avg_map.get(po, '-') }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endfor %}
+</div>
+
+<div class="landscape-section">
+    <h2 class="section-title">3.3.2. Record the attainment of Course Outcomes of all courses with respect to set attainment levels (NBA 3.3.2)</h2>
+    <p>Overall Direct and Indirect Attainment of POs and PSOs.</p>
+
+    {% for chunk_po_keys in po_keys|batch(16) %}
+    <table class="co-po-matrix" {% if not loop.last %}style="page-break-after: always;"{% endif %}>
+        <thead>
+            <tr>
+                <th style="width: 20%;">Evaluation Type</th>
+                {% for po in chunk_po_keys %}
+                <th>{{ po }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="font-weight: bold;">Direct Attainment</td>
+                {% for po in chunk_po_keys %}
+                <td>{{ direct_attainment.get(po, '-') }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Indirect Attainment</td>
+                {% for po in chunk_po_keys %}
+                <td>{{ indirect_attainment.get(po, '-') }}</td>
+                {% endfor %}
+            </tr>
+            <tr style="background-color: #f0f0f0; font-weight: bold;">
+                <td>Total Attainment ({{ direct_weight }} Direct + {{ indirect_weight }} Indirect)</td>
+                {% for po in chunk_po_keys %}
+                <td>{{ total_attainment.get(po, '-') }}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    {% endfor %}
+</div>
+
+</body>
+</html>

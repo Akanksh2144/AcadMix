@@ -458,7 +458,7 @@ const SkillGapTab = () => {
                         <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-extrabold text-white ${item.priority === 'critical' ? 'bg-red-500' : item.priority === 'important' ? 'bg-amber-500' : 'bg-blue-500'}`}>{i + 1}</div>
                         <span className="font-bold text-sm text-slate-800 dark:text-white">{item.skill}</span>
                       </div>
-                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${item.priority === 'critical' ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400' : item.priority === 'important' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400' : 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'}`}>
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-xl ${item.priority === 'critical' ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400' : item.priority === 'important' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400' : 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'}`}>
                         {item.priority} · {item.estimated_weeks}w
                       </span>
                     </div>
@@ -544,7 +544,7 @@ const HRRoundTab = () => {
                   <p className="font-bold text-sm text-slate-800 dark:text-white">{q.question}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[10px] font-bold uppercase text-slate-400">{(q.category || '').replace(/_/g, ' ')}</span>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${q.difficulty === 'hard' ? 'bg-red-100 dark:bg-red-500/20 text-red-600' : q.difficulty === 'medium' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600' : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600'}`}>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-xl ${q.difficulty === 'hard' ? 'bg-red-100 dark:bg-red-500/20 text-red-600' : q.difficulty === 'medium' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600' : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600'}`}>
                       {q.difficulty}
                     </span>
                   </div>
@@ -659,7 +659,7 @@ const DSATab = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="font-bold text-sm text-slate-800 dark:text-white truncate">{p.leetcode_number ? `#${p.leetcode_number}. ` : ''}{p.title}</p>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${diffColors[p.difficulty] || ''}`}>{p.difficulty}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-xl shrink-0 ${diffColors[p.difficulty] || ''}`}>{p.difficulty}</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                   <span className="font-bold">{(p.pattern || '').replace(/_/g, ' ')}</span>
@@ -748,7 +748,7 @@ const CareerPathTab = () => {
                     <h4 className="font-extrabold text-base text-slate-800 dark:text-white">{p.role}</h4>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs font-bold text-emerald-500">💰 {p.avg_salary_inr}</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${demandColors[p.demand] || ''}`}>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-xl ${demandColors[p.demand] || ''}`}>
                         {p.demand} demand
                       </span>
                     </div>

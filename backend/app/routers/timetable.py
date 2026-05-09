@@ -22,6 +22,12 @@ async def upsert_timetable_slots(req: BulkSlotsUpsert, user: dict = Depends(requ
     """Bulk upsert period slots (usually representing a weekly template)."""
     if not req.slots:
         return {"message": "No slots provided"}
+        
+    user_dept = user.get("scope", {}).get("department") or user.get("department")
+    if user["role"] == "hod" and user_dept:
+        for s in req.slots:
+            if s.department_id != user_dept:
+                raise HTTPException(status_code=403, detail="Cannot upsert timetable for other departments")
 
     updated_count = 0
     created_count = 0
@@ -95,6 +101,10 @@ async def get_department_timetable(
     session: AsyncSession = Depends(get_db)
 ):
     """Get the weekly timetable grid for a specific batch/section."""
+    user_dept = user.get("scope", {}).get("department") or user.get("department")
+    if user["role"] == "hod" and user_dept and department_id != user_dept:
+        raise HTTPException(status_code=403, detail="Cannot access timetable for other departments")
+        
     result = await session.execute(
         select(models.PeriodSlot).where(
             models.PeriodSlot.college_id == user["college_id"],
@@ -134,6 +144,10 @@ async def generate_timetable(
     user: dict = Depends(require_role("hod", "admin")),
     session: AsyncSession = Depends(get_db)
 ):
+    user_dept = user.get("scope", {}).get("department") or user.get("department")
+    if user["role"] == "hod" and user_dept and req.department_id != user_dept:
+        raise HTTPException(status_code=403, detail="Cannot generate timetable for other departments")
+        
     from app.models.core import College
     # 1. Fetch config
     res = await session.execute(select(College).where(College.id == user["college_id"]))

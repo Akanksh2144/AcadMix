@@ -206,6 +206,37 @@ async def get_nba_matrix(
         "matrix": matrix
     }
 
+# ── NBA Core Calculators ─────────────────────────────────────────────────────
+
+@router.get("/nba/success-rate/{college_id}")
+async def get_nba_success_rate(
+    college_id: str,
+    batch_year: str = Query(..., description="e.g., 2022-26"),
+    user: dict = Depends(require_role("nodal", "principal", "hod", "admin", "super_admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    """
+    Returns the NBA Criterion 4 Student Success Rate.
+    """
+    from app.services.report_engine import ReportEngineService
+    svc = ReportEngineService(session)
+    data = await svc.calculate_nba_success_rate(college_id, batch_year)
+    return data
+
+@router.get("/nba/faculty-cadre/{college_id}")
+async def get_nba_faculty_cadre(
+    college_id: str,
+    user: dict = Depends(require_role("nodal", "principal", "hod", "admin", "super_admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    """
+    Returns the NBA Criterion 5 Student-Faculty Ratio and Cadre Proportion.
+    """
+    from app.services.report_engine import ReportEngineService
+    svc = ReportEngineService(session)
+    data = await svc.calculate_nba_sfr_and_cadre(college_id)
+    return data
+
 # ── NEP Status Tracker ───────────────────────────────────────────────────────
 
 @router.get("/nep/status/{college_id}")
@@ -350,3 +381,88 @@ async def trigger_department_calculation(
         "calculated_po_records": po_records,
         "calculated_pso_records": pso_records
     }
+
+# ── NAAC Data Ingestion: Placement & Surveys ─────────────────────────────────
+
+from app.models.accreditation import SurveyTemplate, SurveyResponse, PlacementRecord, HigherEducationRecord
+from pydantic import BaseModel
+import datetime
+
+class SurveyCreateReq(BaseModel):
+    title: str
+    description: str = ""
+    survey_type: str
+    academic_year: str
+
+@router.post("/surveys")
+async def create_survey_template(
+    req: SurveyCreateReq,
+    user: dict = Depends(require_role("nodal", "principal", "admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    college_id = user.get("college_id", "AITS")
+    survey = SurveyTemplate(
+        college_id=college_id,
+        title=req.title,
+        description=req.description,
+        survey_type=req.survey_type,
+        academic_year=req.academic_year
+    )
+    session.add(survey)
+    await session.commit()
+    await session.refresh(survey)
+    return {"status": "success", "id": survey.id}
+
+@router.get("/surveys/{college_id}")
+async def list_surveys(
+    college_id: str,
+    survey_type: str = Query(None),
+    user: dict = Depends(require_role("nodal", "principal", "admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    query = select(SurveyTemplate).where(SurveyTemplate.college_id == college_id)
+    if survey_type:
+        query = query.where(SurveyTemplate.survey_type == survey_type)
+    surveys = (await session.scalars(query)).all()
+    return {"surveys": surveys}
+
+class PlacementCreateReq(BaseModel):
+    student_id: str
+    academic_year: str
+    company_name: str
+    package: float = 0.0
+
+@router.post("/placements")
+async def create_placement_record(
+    req: PlacementCreateReq,
+    user: dict = Depends(require_role("nodal", "principal", "hod", "admin", "tpo")),
+    session: AsyncSession = Depends(get_db)
+):
+    college_id = user.get("college_id", "AITS")
+    record = PlacementRecord(
+        college_id=college_id,
+        student_id=req.student_id,
+        academic_year=req.academic_year,
+        company_name=req.company_name,
+        package=req.package,
+        placed_on=datetime.date.today()
+    )
+    session.add(record)
+    await session.commit()
+    await session.refresh(record)
+    return {"status": "success", "id": record.id}
+
+@router.get("/placements/{college_id}")
+async def list_placements(
+    college_id: str,
+    academic_year: str = Query(...),
+    user: dict = Depends(require_role("nodal", "principal", "admin", "hod", "tpo")),
+    session: AsyncSession = Depends(get_db)
+):
+    records = (await session.scalars(
+        select(PlacementRecord).where(
+            PlacementRecord.college_id == college_id,
+            PlacementRecord.academic_year == academic_year
+        )
+    )).all()
+    return {"records": records}

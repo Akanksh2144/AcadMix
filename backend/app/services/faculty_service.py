@@ -64,21 +64,26 @@ class FacultyService:
         
         await self.db.commit()
 
-    async def list_department_teachers(self, college_id: str) -> List[Dict[str, Any]]:
-        stmt = select(models.User).where(
+    async def list_department_teachers(self, college_id: str, department: str = None) -> List[Dict[str, Any]]:
+        stmt = select(models.User).outerjoin(models.UserProfile).where(
             models.User.college_id == college_id,
-            models.User.role.in_(["teacher", "hod"])
+            models.User.role.in_(["teacher", "hod", "faculty"])
         )
+        if department:
+            stmt = stmt.where(models.UserProfile.department == department)
+            
         result = await self.db.execute(stmt)
         teachers = result.scalars().all()
         return [{"id": t.id, "name": t.name, "email": t.email, "role": t.role, **(t.profile_data or {})} for t in teachers]
 
     # ── Subject Definitions / Assignments ───────────────────────────────────
 
-    async def list_assignments(self, college_id: str, user_role: str, user_id: str) -> List[Dict[str, Any]]:
+    async def list_assignments(self, college_id: str, user_role: str, user_id: str, department: str = None) -> List[Dict[str, Any]]:
         stmt = select(models.FacultyAssignment).where(models.FacultyAssignment.college_id == college_id)
         if user_role == "teacher":
             stmt = stmt.where(models.FacultyAssignment.teacher_id == user_id)
+        elif user_role == "hod" and department:
+            stmt = stmt.where(models.FacultyAssignment.department == department)
             
         result = await self.db.execute(stmt)
         rows = result.scalars().all()
@@ -189,6 +194,53 @@ class FacultyService:
             hod_permission_decision="pending"
         )
         self.db.add(row)
+        await self.db.commit()
+
+    async def close_activity_with_evidence(self, college_id: str, faculty_id: str, activity_id: str, evidence_urls: Dict[str, str]) -> None:
+        """
+        Point-of-Action Evidence Capture: Enforces mandatory evidence upload to close an activity ticket
+        and auto-routes the files into the AccreditationEvidence ledger.
+        """
+        from app.models.accreditation import AccreditationEvidence
+        from app.core.utils import get_current_academic_year
+        from app.core.exceptions import InputValidationError
+
+        required_keys = {"geotagged_photo", "participant_list", "receipt"}
+        if not required_keys.issubset(evidence_urls.keys()):
+            raise InputValidationError(f"Missing required evidence. Must provide: {required_keys}")
+
+        res = await self.db.execute(select(models.ActivityPermission).where(
+            models.ActivityPermission.id == activity_id,
+            models.ActivityPermission.college_id == college_id,
+            models.ActivityPermission.faculty_id == faculty_id
+        ))
+        activity = res.scalars().first()
+        
+        if not activity:
+            raise ResourceNotFoundError("ActivityPermission", activity_id)
+
+        # Transition the phase to indicate event completion
+        activity.phase = "post_event"
+        
+        academic_year = await get_current_academic_year(self.db, college_id)
+        
+        import hashlib
+        
+        # Determine criterion mapping (e.g. seminars -> CRITERION_3)
+        criterion_mapping = "CRITERION_3" if activity.activity_type in ["seminar", "workshop"] else "CRITERION_7"
+
+        # Auto-route to AccreditationEvidence
+        for doc_type, url in evidence_urls.items():
+            ev = AccreditationEvidence(
+                college_id=college_id,
+                criterion_id=criterion_mapping,
+                file_name=f"{activity.activity_type}_{activity.id}_{doc_type}.pdf",
+                s3_key=url,
+                hash_checksum=hashlib.sha256(url.encode()).hexdigest(),
+                uploaded_by=faculty_id
+            )
+            self.db.add(ev)
+
         await self.db.commit()
 
     async def submit_out_of_campus(self, college_id: str, faculty_id: str, data: Dict[str, Any]) -> None:
