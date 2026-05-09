@@ -517,27 +517,29 @@ async def generate_accreditation_report(
         academic_year=req.academic_year,
         version=next_version,
         status="PENDING",
-        created_by=user.get("user_id")
+        created_by=user.get("id") or user.get("user_id")
     )
-    # we can also dynamically add department_id if NBA, but our model currently doesn't 
-    # strictly require it or we can add it dynamically to kwargs/json payload if we want, 
-    # but let's just set the instance dynamically if we need, or just rely on the job. 
-    # Assuming department_id is part of the job model (or we monkey patch it if it's NBA)
-    if req.report_type == "NBA" and req.department_id:
-        setattr(new_job, 'department_id', req.department_id)
+    # we can dynamically add department_id if NBA in the future, but our model currently doesn't 
+    # strictly require it.
         
     session.add(new_job)
     await session.commit()
     await session.refresh(new_job)
     
     # 4. Enqueue to ARQ
+    # 4. Enqueue to ARQ
     arq_redis = getattr(request.app.state, "arq_redis", None)
     if not arq_redis:
-        # Graceful fallback if ARQ isn't mounted during tests
-        new_job.status = "FAILED"
-        await session.commit()
-        raise HTTPException(status_code=500, detail="Background worker queue not initialized")
-        
+        try:
+            from arq import create_pool
+            from arq.connections import RedisSettings
+            from app.core.config import settings
+            request.app.state.arq_redis = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
+            arq_redis = request.app.state.arq_redis
+        except Exception as e:
+            new_job.status = "FAILED"
+            await session.commit()
+            raise HTTPException(status_code=500, detail=f"Failed to initialize background worker queue: {str(e)}")
     try:
         task_name = "generate_naac_ssr_task" if req.report_type == "NAAC" else "generate_nba_sar_task"
         arq_job = await arq_redis.enqueue_job(task_name, new_job.id)
@@ -576,7 +578,6 @@ async def get_report_status(
     return {
         "status": job.status,
         "job_id": job.id,
-        "report_url": job.report_url,
-        "error_log": job.error_log,
-        "completed_at": job.completed_at
+        "report_url": job.presigned_url,
+        "expires_at": job.expires_at
     }
