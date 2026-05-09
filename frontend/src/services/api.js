@@ -493,7 +493,8 @@ export const principalAPI = {
   placementPlaceholder: () => api.get('/principal/reports/placement'),
   tasksPlaceholder: () => api.get('/principal/tasks'),
   meetingsPlaceholder: () => api.get('/principal/meetings'),
-  annualReportExportUrl: (year) => api.defaults.baseURL + '/api/principal/reports/annual?academic_year=' + year,
+  annualReportExportUrl: (year) => api.defaults.baseURL + '/principal/reports/annual?academic_year=' + year,
+  annualReport: (year) => api.get('/principal/reports/annual?academic_year=' + year),
   calendarEvents: (data) => api.post('/principal/calendar-events', data)
 };
 

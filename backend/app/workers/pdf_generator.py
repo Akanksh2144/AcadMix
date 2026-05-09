@@ -36,6 +36,10 @@ def stream_s3_file_to_zip(zip_file, s3_key, arcname, missing_files_list):
     Streams a file from S3 directly into the zip archive in chunks.
     Handles 404/Connection errors by appending to missing_files_list.
     """
+    if not os.getenv("AWS_ACCESS_KEY_ID"):
+        missing_files_list.append(f"FETCH_ERROR: {s3_key} (AWS Credentials not configured)")
+        return
+        
     try:
         response = S3_CLIENT.get_object(Bucket=S3_BUCKET, Key=s3_key)
         
@@ -46,7 +50,7 @@ def stream_s3_file_to_zip(zip_file, s3_key, arcname, missing_files_list):
                 
     except ClientError as e:
         error_code = e.response['Error']['Code']
-        logger.warning(f"Failed to fetch {s3_key} from S3: {error_code}")
+        logger.error(f"S3 ClientError for {s3_key}: {error_code}")
         missing_files_list.append(f"S3_ERROR: {s3_key} ({error_code})")
     except Exception as e:
         logger.error(f"Unexpected error fetching {s3_key}: {str(e)}")
@@ -97,15 +101,29 @@ def _build_and_upload_zip(job, pdf_bytes, evidence_records, is_nba=False, csv_da
     else:
         output_s3_key = f"exports/{job.college_id}/NAAC_SSR_{job.academic_year}_v{job.version}.zip"
         
-    S3_CLIENT.upload_fileobj(zip_buffer, S3_BUCKET, output_s3_key)
-    
-    # 7. Generate 30-day Presigned URL
-    presigned_url = S3_CLIENT.generate_presigned_url(
-        'get_object',
-        Params={'Bucket': S3_BUCKET, 'Key': output_s3_key},
-        ExpiresIn=30 * 24 * 3600  # 30 days
-    )
-    return presigned_url
+    try:
+        zip_bytes = zip_buffer.getvalue()
+        S3_CLIENT.upload_fileobj(zip_buffer, S3_BUCKET, output_s3_key)
+        
+        # 7. Generate 30-day Presigned URL
+        presigned_url = S3_CLIENT.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': S3_BUCKET, 'Key': output_s3_key},
+            ExpiresIn=30 * 24 * 3600  # 30 days
+        )
+        return presigned_url
+    except Exception as e:
+        logger.warning(f"S3 upload failed: {e}. Falling back to local file save.")
+        # Local fallback for demo/development
+        public_dir = os.path.join("C:\\", "AcadMix", "frontend", "public", "exports")
+        os.makedirs(public_dir, exist_ok=True)
+        local_filename = f"NAAC_SSR_{job.academic_year}_v{job.version}.zip" if not is_nba else f"NBA_SAR_{job.academic_year}_v{job.version}.zip"
+        local_path = os.path.join(public_dir, local_filename)
+        
+        with open(local_path, "wb") as f:
+            f.write(zip_bytes)
+            
+        return f"/exports/{local_filename}"
 
 async def generate_naac_ssr_task(ctx, job_id: str):
     """

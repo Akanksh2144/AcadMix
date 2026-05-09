@@ -105,8 +105,8 @@ class ReportEngineService:
                 evidences = (await self.session.scalars(stmt_ev)).all()
                 for ev in evidences:
                     evidence_list.append({
-                        "description": getattr(ev, "document_name", f"Evidence for {code}"),
-                        "presigned_url": ev.document_url
+                        "description": getattr(ev, "file_name", f"Evidence for {code}"),
+                        "presigned_url": getattr(ev, "s3_key", f"https://acadmix-assets.s3.com/dummy_{code}.pdf")
                     })
                     
             qnm_data[code] = {

@@ -4,6 +4,10 @@ from sqlalchemy.future import select
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from app.core.security import require_role
 from database import get_db
 from app.models.accreditation import (
@@ -488,7 +492,7 @@ async def generate_accreditation_report(
     Creates an AccreditationReportJob in DB and pushes it to the ARQ Redis queue.
     Returns the job ID instantly for the frontend to poll status.
     """
-    college_id = user.get("college_id", "AITS")
+    college_id = getattr(request.state, "tenant_id", user.get("college_id", "AITS"))
     
     # 1. Check if a pending/processing job already exists for this cycle
     stmt = select(AccreditationReportJob).where(
@@ -519,14 +523,11 @@ async def generate_accreditation_report(
         status="PENDING",
         created_by=user.get("id") or user.get("user_id")
     )
-    # we can dynamically add department_id if NBA in the future, but our model currently doesn't 
-    # strictly require it.
-        
-    session.add(new_job)
-    await session.commit()
-    await session.refresh(new_job)
     
-    # 4. Enqueue to ARQ
+    session.add(new_job)
+    await session.flush()
+    job_id_str = str(new_job.id)
+    
     # 4. Enqueue to ARQ
     arq_redis = getattr(request.app.state, "arq_redis", None)
     if not arq_redis:
@@ -537,26 +538,46 @@ async def generate_accreditation_report(
             request.app.state.arq_redis = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
             arq_redis = request.app.state.arq_redis
         except Exception as e:
-            new_job.status = "FAILED"
-            await session.commit()
+            from sqlalchemy import update
+            await session.execute(update(AccreditationReportJob).where(AccreditationReportJob.id == job_id_str).values(status="FAILED"))
+            # Don't commit, get_db handles it
             raise HTTPException(status_code=500, detail=f"Failed to initialize background worker queue: {str(e)}")
+    
     try:
         task_name = "generate_naac_ssr_task" if req.report_type == "NAAC" else "generate_nba_sar_task"
-        arq_job = await arq_redis.enqueue_job(task_name, new_job.id)
-        new_job.arq_job_id = arq_job.job_id
-        await session.commit()
-    except Exception as e:
-        new_job.status = "FAILED"
-        await session.commit()
-        raise HTTPException(status_code=500, detail=f"Failed to enqueue task: {str(e)}")
+        logger.error(f"ATTEMPTING TO ENQUEUE TASK {task_name} for JOB {job_id_str}")
         
-    return {
-        "status": "success", 
-        "job_id": new_job.id, 
-        "version": next_version,
-        "message": "Report generation enqueued successfully."
-    }
-
+        # Force the job ID to be the same as DB job ID
+        # Defer by 2 seconds to ensure FastAPI commits the transaction before worker picks it up
+        arq_job = await arq_redis.enqueue_job(task_name, job_id_str, _job_id=job_id_str, _defer_by=2)
+        logger.error(f"ENQUEUED! arq_job={arq_job}")
+        
+        if arq_job:
+            from sqlalchemy import update
+            await session.execute(
+                update(AccreditationReportJob)
+                .where(AccreditationReportJob.id == job_id_str)
+                .values(arq_job_id=arq_job.job_id)
+            )
+            logger.error(f"UPDATED arq_job_id in session to {arq_job.job_id}")
+        else:
+            logger.error(f"ARQ ENQUEUE RETURNED NONE for {job_id_str}")
+            
+        return {
+            "status": "success",
+            "job_id": job_id_str,
+            "message": "Report generation queued successfully"
+        }
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        try:
+            from sqlalchemy import update
+            await session.execute(update(AccreditationReportJob).where(AccreditationReportJob.id == job_id_str).values(status="FAILED"))
+            await session.commit()
+        except:
+            pass
+        return {"status": "error", "message": tb}
 @router.get("/reports/status/{job_id}")
 async def get_report_status(
     job_id: str,

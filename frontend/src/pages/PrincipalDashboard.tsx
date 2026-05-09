@@ -6,7 +6,7 @@ import {
   CheckCircle,
   WarningOctagon,
   ChartBar,
-  Download,
+  FilePdf,
   SignOut,
   Bell,
   Sun,
@@ -22,7 +22,8 @@ import {
   Trash,
   Info
 } from "@phosphor-icons/react";
-import { principalAPI, authAPI, setAuthToken, insightsAPI, notificationsAPI } from "../services/api";
+import { Toaster, toast } from 'sonner';
+import { principalAPI, authAPI, setAuthToken, insightsAPI, notificationsAPI, accreditationAPI } from "../services/api";
 import InsightsCanvas from "../components/insights/InsightsCanvas";
 import InsightsChat from "../components/insights/InsightsChat";
 import { useTheme } from "../contexts/ThemeContext";
@@ -180,18 +181,56 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
     setLoading(false);
   };
 
-  const handleExportAnnual = () => {
-    const url = principalAPI.annualReportExportUrl(currentAcademicYear);
-    window.open(url, '_blank');
+  const handleExportAnnual = async () => {
+    try {
+      toast.loading('Queuing NAAC SSR Generation...', { id: 'naac_report' });
+      const res = await accreditationAPI.generateReport({
+        report_type: 'NAAC',
+        academic_year: currentAcademicYear,
+      });
+
+      toast.loading(`Job queued! Generating PDF...`, { id: 'naac_report' });
+
+      const jobId = res.data?.job_id || res.job_id;
+      if (!jobId) {
+         toast.success('Job queued successfully, but job tracking ID was not returned.', { id: 'naac_report' });
+         return;
+      }
+
+      const pollInterval = setInterval(async () => {
+         try {
+            const statusRes = await accreditationAPI.getReportStatus(jobId);
+            const status = statusRes.data?.status || statusRes.status;
+            const reportUrl = statusRes.data?.report_url || statusRes.report_url;
+
+            if (status === 'COMPLETED') {
+               clearInterval(pollInterval);
+               toast.success('Report generation complete! Downloading...', { id: 'naac_report' });
+               if (reportUrl) {
+                  window.open(reportUrl, '_blank');
+               }
+            } else if (status === 'FAILED') {
+               clearInterval(pollInterval);
+               toast.error('Report generation failed. Please check backend logs.', { id: 'naac_report' });
+            }
+         } catch (e) {
+           clearInterval(pollInterval);
+           toast.error('Connection lost while checking report status.', { id: 'naac_report' });
+         }
+      }, 3000);
+    } catch (err) {
+      toast.error("Failed to export report: " + (err.response?.data?.detail || err.message), { id: 'naac_report' });
+    }
   };
 
   const handleReviewLeave = async (id, action) => {
     const remarks = action === "reject" ? prompt("Enter rejection remarks:") || "Rejected by Principal" : "Approved by Principal";
     try {
       await principalAPI.approveLeave(id, { action, remarks });
-      fetchData(); // refresh leaves
+      fetchData();
+      toast.success(`Leave ${action}ed successfully.`);
     } catch (err) {
-      alert("Failed to review leave: " + (err.response?.data?.detail || err.message));
+      toast.error("Failed to review leave: " + (err.response?.data?.detail || err.message));
     }
   };
 
@@ -275,6 +314,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
+      <Toaster position="top-right" richColors />
       
       {/* Header Profile Trigger Component (Reusable) */}
       {showProfile && (
@@ -403,8 +443,8 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
             onClick={handleExportAnnual}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-lg shadow-indigo-500/30 transition-all active:scale-95"
           >
-            <Download size={18} weight="bold" />
-            Export Annual Report
+            <FilePdf size={18} weight="bold" />
+            Generate NAAC SSR (PDF)
           </button>
         </motion.div>
 
@@ -574,7 +614,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                                                <p className="font-bold">{act.event_title} <span className="uppercase text-[10px] ml-2 text-indigo-500 font-extrabold tracking-wider">{act.activity_type}</span></p>
                                                <p className="text-sm text-slate-500">By: {act.faculty_name} ({act.department}) • Post-event report accepted by HOD.</p>
                                            </div>
-                                           <button className="btn-primary py-1.5 px-4 text-xs" onClick={() => alert("Notation API to be implemented")}>Acknowledge</button>
+                                           <button className="btn-primary py-1.5 px-4 text-xs" onClick={() => toast.info("Notation API to be implemented")}>Acknowledge</button>
                                        </div>
                                    ))}
                                 </div>
@@ -704,7 +744,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                     <div className="soft-card p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100">Institutional Governance Settings</h3>
-                            <button className="btn-primary py-2 px-6" onClick={() => alert("Save functionality connected.")}>Save Changes</button>
+                            <button className="btn-primary py-2 px-6" onClick={() => toast.success("Save functionality connected.")}>Save Changes</button>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

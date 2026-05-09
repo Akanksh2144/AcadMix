@@ -457,7 +457,7 @@ class MarksService:
                 UserProfile.department == department
             )
 
-        result = await self.session.execute(stmt.order_by(models.MarkSubmission.created_at.desc()))
+        result = await self.session.execute(stmt.order_by(models.MarkSubmission.submitted_at.desc()))
         entries = result.all()
 
         return [{
