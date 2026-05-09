@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Users, UserFocus, GraduationCap, Warning, ArrowClockwise, 
-  CheckCircle, XCircle, TrendUp
+  CheckCircle, XCircle, TrendUp, FileText
 } from '@phosphor-icons/react';
+import { toast } from 'sonner';
 import { accreditationAPI, formatApiError } from '../../services/api';
 
 interface NBADashboardProps {
@@ -83,6 +84,13 @@ const NBADashboard: React.FC<NBADashboardProps> = ({ collegeId, batchYear = '202
             Real-time tracking of Criterion 4 & 5 compliance metrics.
           </p>
         </div>
+        <button 
+          onClick={() => toast.info('Report generation engine is queuing the NBA SAR...')}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all"
+        >
+          <FileText size={18} weight="bold" />
+          Generate NBA Report
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

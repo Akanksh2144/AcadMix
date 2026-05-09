@@ -4,7 +4,8 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   ResponsiveContainer, Tooltip,
 } from 'recharts';
-import { ShieldCheck, Upload, Lock, Warning, ArrowClockwise, Database } from '@phosphor-icons/react';
+import { ShieldCheck, Upload, Lock, Warning, ArrowClockwise, Database, FileText } from '@phosphor-icons/react';
+import { toast } from 'sonner';
 import { accreditationAPI, formatApiError } from '../../services/api';
 
 interface NAACCriterion {
@@ -157,10 +158,19 @@ const NAACMatrix: React.FC<NAACMatrixProps> = ({ viewMode, collegeId, academicYe
             {viewMode === 'principal' ? 'Year-over-Year Criterion Health' : 'Actionable Criterion Breakdown'}
           </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10">
-          <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">CGPA</span>
-          <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{overallScore}</span>
-          <span className="text-xs text-indigo-400">/4.0</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10">
+            <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">CGPA</span>
+            <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{overallScore}</span>
+            <span className="text-xs text-indigo-400">/4.0</span>
+          </div>
+          <button 
+            onClick={() => toast.info('Report generation engine is queuing the NAAC SSR...')}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all"
+          >
+            <FileText size={18} weight="bold" />
+            Generate NAAC Report
+          </button>
         </div>
       </div>
 
