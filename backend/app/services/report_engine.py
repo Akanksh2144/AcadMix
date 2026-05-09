@@ -77,6 +77,7 @@ class ReportEngineService:
         for code in metric_codes:
             metric_snapshots = [s for s in snapshots if s.metric_code == code]
             yearly_data = []
+            all_evidence_ids = set()
             for ay in academic_years:
                 snap = next((s for s in metric_snapshots if s.academic_year == ay), None)
                 if snap:
@@ -86,6 +87,9 @@ class ReportEngineService:
                         "evidence_ids": snap.evidence_ids or [],
                         "locked": snap.locked_at is not None
                     })
+                    if snap.evidence_ids:
+                        for eid in snap.evidence_ids:
+                            all_evidence_ids.add(eid)
                 else:
                     yearly_data.append({
                         "year": ay,
@@ -93,9 +97,22 @@ class ReportEngineService:
                         "evidence_ids": [],
                         "locked": False
                     })
+            
+            # Fetch actual evidence links for this metric
+            evidence_list = []
+            if all_evidence_ids:
+                stmt_ev = select(AccreditationEvidence).where(AccreditationEvidence.id.in_(list(all_evidence_ids)))
+                evidences = (await self.session.scalars(stmt_ev)).all()
+                for ev in evidences:
+                    evidence_list.append({
+                        "description": getattr(ev, "document_name", f"Evidence for {code}"),
+                        "presigned_url": ev.document_url
+                    })
                     
             qnm_data[code] = {
-                "yearly_data": yearly_data
+                "name": getattr(metric_snapshots[0], "metric_name", f"Metric {code}"),
+                "yearly_data": yearly_data,
+                "evidence": evidence_list
             }
 
         nep_data = await self.get_nep_preparedness_data(college_id, academic_year)
