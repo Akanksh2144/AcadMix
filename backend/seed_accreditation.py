@@ -27,7 +27,7 @@ async def seed_accreditation_data():
                 hash_checksum="dummy_checksum_12345",
                 uploaded_by=None
             )
-            db.add(ev)
+            await db.merge(ev)
             
         # 2. Seed Qualitative Narratives (SWOC etc)
         print("Seeding Narratives...")
@@ -38,6 +38,7 @@ async def seed_accreditation_data():
             ("swoc_challenge", "Institutional Challenge")
         ]
         
+        lorem_ipsum = "Our institution has consistently strived to maintain the highest standards of academic excellence. Over the past academic year, we have implemented several strategic initiatives aimed at fostering a holistic educational environment. Faculty development programs were conducted to integrate modern pedagogical tools, while student engagement was enhanced through interactive learning modules. Furthermore, our infrastructure has been upgraded to support advanced research and extracurricular activities. We remain committed to continuous improvement, identifying areas for growth, and building upon our core competencies to ensure that every student reaches their full potential."
         for ay in academic_years:
             for code, name in swoc_criteria:
                 narrative = NAACQualitativeNarrative(
@@ -46,10 +47,10 @@ async def seed_accreditation_data():
                     academic_year=ay,
                     criterion_code=code,
                     criterion_name=name,
-                    narrative_text=f"[{name}] This is an automated deep institutional narrative for the academic year {ay}. " * 15,
+                    narrative_text=f"[{name}] Assessment for {ay}:\n\n{lorem_ipsum}",
                     is_complete=True
                 )
-                db.add(narrative)
+                await db.merge(narrative)
 
         # 3. Seed Quantitative Snapshots
         print("Seeding Snapshots...")
@@ -79,7 +80,7 @@ async def seed_accreditation_data():
                     evidence_ids=ev_subset,
                     locked_at=datetime.utcnow()
                 )
-                db.add(snap)
+                await db.merge(snap)
 
         await db.commit()
         print("Seeding Complete!")

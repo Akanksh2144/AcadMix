@@ -9,3 +9,112 @@
 00:01:38:   2.64s \u2192 275eea5a-7dd9-4c02-9735-9e6365b8eb83:generate_naac_ssr_task('275eea5a-7dd9-4c02-9735-9e6365b8eb83')
 S3 upload failed: An error occurred (AuthorizationHeaderMalformed) when calling the PutObject operation: The authorization header is malformed; a non-empty Access Key (AKID) must be provided in the credential.. Falling back to local file save.
 00:01:45:   7.56s \u2190 275eea5a-7dd9-4c02-9735-9e6365b8eb83:generate_naac_ssr_task \u25cf {'status': 'completed', 'presigned_url': '/exports/NAAC_SSR_2023-2024_v10.zip'}
+00:02:00:   1.19s \u2192 cron:sweep_expired_bed_locks()
+00:02:01:   0.77s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:03:00:   1.19s \u2192 cron:sweep_expired_bed_locks()
+00:03:01:   0.93s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:03:41:   3.10s \u2192 0257547d-972d-4d1f-90ef-09d794050f27:generate_naac_ssr_task('0257547d-972d-4d1f-90ef-09d794050f27')
+S3 upload failed: An error occurred (AuthorizationHeaderMalformed) when calling the PutObject operation: The authorization header is malformed; a non-empty Access Key (AKID) must be provided in the credential.. Falling back to local file save.
+00:03:48:   7.12s \u2190 0257547d-972d-4d1f-90ef-09d794050f27:generate_naac_ssr_task \u25cf {'status': 'completed', 'presigned_url': '/exports/NAAC_SSR_2023-2024_v11.zip'}
+00:04:00:   1.16s \u2192 cron:sweep_expired_bed_locks()
+00:04:01:   0.77s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:05:00:   1.20s \u2192 cron:calculate_overdue_fines()
+00:05:00:   1.42s \u2192 cron:compute_leaderboard_ranks()
+00:05:01:   1.60s \u2192 cron:sweep_expired_bed_locks()
+00:05:01:   0.86s \u2190 cron:compute_leaderboard_ranks \u25cf 
+00:05:01:   1.11s \u2190 cron:calculate_overdue_fines \u25cf 
+00:05:01:   0.79s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:06:00:   1.62s \u2192 cron:sweep_expired_bed_locks()
+00:06:01:   0.82s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:07:00:   1.18s \u2192 cron:sweep_expired_bed_locks()
+00:07:01:   0.84s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:08:00:   1.21s \u2192 cron:sweep_expired_bed_locks()
+00:08:01:   0.99s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:09:00:   1.72s \u2192 cron:sweep_expired_bed_locks()
+00:09:01:   0.90s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:10:00:   1.17s \u2192 cron:compute_leaderboard_ranks()
+00:10:00:   1.37s \u2192 cron:sweep_expired_bed_locks()
+00:10:01:   1.01s \u2190 cron:compute_leaderboard_ranks \u25cf 
+00:10:01:   0.87s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:11:00:   1.23s \u2192 cron:sweep_expired_bed_locks()
+00:11:01:   1.22s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:12:01:   1.70s \u2192 cron:sweep_expired_bed_locks()
+00:12:02:   1.35s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:13:01:   1.76s \u2192 cron:sweep_expired_bed_locks()
+00:13:02:   1.07s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:14:00:   1.28s \u2192 cron:sweep_expired_bed_locks()
+00:14:02:   1.17s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:15:00:   1.08s \u2192 cron:check_gatepass_violations()
+00:15:01:   1.35s \u2192 cron:compute_leaderboard_ranks()
+00:15:01:   1.70s \u2192 cron:sweep_expired_bed_locks() delayed=1.30s
+00:15:01:   1.19s \u2190 cron:check_gatepass_violations \u25cf 
+00:15:02:   1.44s \u2190 cron:compute_leaderboard_ranks \u25cf 
+00:15:02:   1.22s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:16:00:   1.22s \u2192 cron:sweep_expired_bed_locks()
+00:16:02:   1.23s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:17:00:   1.26s \u2192 cron:sweep_expired_bed_locks()
+00:17:01:   1.12s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:18:00:   1.17s \u2192 cron:sweep_expired_bed_locks()
+00:18:02:   1.26s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:19:00:   1.31s \u2192 cron:sweep_expired_bed_locks()
+00:19:01:   0.98s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:20:00:   1.30s \u2192 cron:compute_leaderboard_ranks()
+00:20:00:   1.54s \u2192 cron:sweep_expired_bed_locks()
+00:20:01:   1.22s \u2190 cron:compute_leaderboard_ranks \u25cf 
+00:20:01:   1.03s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:21:00:   1.16s \u2192 cron:sweep_expired_bed_locks()
+00:21:01:   1.10s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:22:00:   1.23s \u2192 cron:sweep_expired_bed_locks()
+00:22:01:   1.03s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:23:00:   1.16s \u2192 cron:sweep_expired_bed_locks()
+00:23:01:   1.16s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:24:00:   1.19s \u2192 cron:sweep_expired_bed_locks()
+00:24:02:   1.09s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:25:00:   1.19s \u2192 cron:compute_leaderboard_ranks()
+00:25:00:   1.50s \u2192 cron:sweep_expired_bed_locks()
+00:25:01:   1.09s \u2190 cron:compute_leaderboard_ranks \u25cf 
+00:25:01:   0.84s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:26:00:   1.16s \u2192 cron:sweep_expired_bed_locks()
+00:26:01:   0.78s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:27:00:   1.21s \u2192 cron:sweep_expired_bed_locks()
+00:27:01:   0.98s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:28:00:   1.23s \u2192 cron:sweep_expired_bed_locks()
+00:28:01:   1.12s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:29:00:   1.18s \u2192 cron:sweep_expired_bed_locks()
+00:29:01:   1.03s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:30:00:   1.00s \u2192 cron:check_gatepass_violations()
+00:30:01:   1.37s \u2192 cron:compute_leaderboard_ranks()
+00:30:01:   1.34s \u2192 cron:expire_library_reservations() delayed=1.31s
+00:30:01:   1.99s \u2192 cron:sweep_expired_bed_locks() delayed=1.58s
+00:30:01:   1.13s \u2190 cron:check_gatepass_violations \u25cf 
+00:30:02:   1.34s \u2190 cron:compute_leaderboard_ranks \u25cf 
+00:30:02:   1.07s \u2190 cron:expire_library_reservations \u25cf 
+00:30:02:   0.99s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:31:00:   1.14s \u2192 cron:sweep_expired_bed_locks()
+00:31:01:   1.02s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:32:00:   1.22s \u2192 cron:sweep_expired_bed_locks()
+00:32:02:   1.26s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:33:00:   1.20s \u2192 cron:sweep_expired_bed_locks()
+00:33:02:   1.09s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:34:01:   1.77s \u2192 cron:sweep_expired_bed_locks()
+00:34:02:   1.08s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:35:00:   1.69s \u2192 cron:compute_leaderboard_ranks()
+00:35:01:   1.92s \u2192 cron:sweep_expired_bed_locks()
+00:35:01:   0.86s \u2190 cron:compute_leaderboard_ranks \u25cf 
+00:35:01:   0.75s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:36:00:   1.22s \u2192 cron:sweep_expired_bed_locks()
+00:36:01:   0.82s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:37:00:   1.21s \u2192 cron:sweep_expired_bed_locks()
+00:37:01:   0.88s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:38:00:   1.14s \u2192 cron:sweep_expired_bed_locks()
+00:38:01:   0.80s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:39:00:   1.54s \u2192 cron:sweep_expired_bed_locks()
+00:39:01:   0.80s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:40:00:   1.39s \u2192 cron:compute_leaderboard_ranks()
+00:40:00:   1.59s \u2192 cron:sweep_expired_bed_locks()
+00:40:01:   0.73s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:40:01:   0.95s \u2190 cron:compute_leaderboard_ranks \u25cf 
+00:40:50:   2.50s \u2192 53d5a8d2-fb04-4b6e-bf62-68b3392fb252:generate_naac_ssr_task('53d5a8d2-fb04-4b6e-bf62-68b3392fb252')
+S3 upload failed: An error occurred (AuthorizationHeaderMalformed) when calling the PutObject operation: The authorization header is malformed; a non-empty Access Key (AKID) must be provided in the credential.. Falling back to local file save.
+00:40:58:   7.53s \u2190 53d5a8d2-fb04-4b6e-bf62-68b3392fb252:generate_naac_ssr_task \u25cf {'status': 'completed', 'presigned_url': '/exports/NAAC_SSR_2023-2024_v12.zip'}
+00:41:00:   1.23s \u2192 cron:sweep_expired_bed_locks()

@@ -465,7 +465,7 @@
 <h2 class="section-title">5. Quality Indicator Framework (QIF)</h2>
 
 <h3 style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Qualitative Metrics (QlM)</h3>
-{% for code, metric in qualitative_metrics.items() %}
+{% for code, metric in qualitative_metrics.items() if not code.startswith('swoc_') %}
 {{ render_metric(
     code, 
     metric.get("name", "Qualitative Metric"),
