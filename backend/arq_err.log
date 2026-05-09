@@ -1,19 +1,11 @@
-WARNING:root:WeasyPrint failed to load. Native PDF generation will be mocked. Error: cannot load library 'libgobject-2.0-0': error 0x7e.  Additionally, ctypes.util.find_library() did not manage to locate a library called 'libgobject-2.0-0'
-23:31:18: Starting worker for 26 functions: process_ai_review_task, generate_interview_feedback_task, warm_results_cache_task, notify_results_task, process_gatepass_approval_request, process_vending_receipt, process_hardware_alert, process_proxy_request, broadcast_college_alert_task, send_fee_payment_receipt_task, process_library_hold_queue, generate_naac_ssr_task, generate_nba_sar_task, cron:sweep_expired_bed_locks, cron:check_gatepass_violations, cron:send_daily_attendance_digest, cron:send_weekly_ami_digest, cron:check_low_wallet_balances, cron:check_overdue_fees, cron:send_fee_due_reminders_cron, cron:send_bus_departure_alerts_cron, cron:transport_cleanup_stale_trips, cron:transport_morning_reminder, cron:calculate_overdue_fines, cron:expire_library_reservations, cron:compute_leaderboard_ranks
-INFO:arq.worker:Starting worker for 26 functions: process_ai_review_task, generate_interview_feedback_task, warm_results_cache_task, notify_results_task, process_gatepass_approval_request, process_vending_receipt, process_hardware_alert, process_proxy_request, broadcast_college_alert_task, send_fee_payment_receipt_task, process_library_hold_queue, generate_naac_ssr_task, generate_nba_sar_task, cron:sweep_expired_bed_locks, cron:check_gatepass_violations, cron:send_daily_attendance_digest, cron:send_weekly_ami_digest, cron:check_low_wallet_balances, cron:check_overdue_fees, cron:send_fee_due_reminders_cron, cron:send_bus_departure_alerts_cron, cron:transport_cleanup_stale_trips, cron:transport_morning_reminder, cron:calculate_overdue_fines, cron:expire_library_reservations, cron:compute_leaderboard_ranks
-23:31:18: redis_version=? mem_usage=? clients_connected=? db_keys=42
-INFO:arq.worker:redis_version=? mem_usage=? clients_connected=? db_keys=42
-23:31:18:  79.16s \u2192 cron:compute_leaderboard_ranks() delayed=78.76s
-INFO:arq.worker: 79.16s \u2192 cron:compute_leaderboard_ranks() delayed=78.76s
-23:31:19:  79.19s \u2192 cron:sweep_expired_bed_locks() delayed=79.03s
-INFO:arq.worker: 79.19s \u2192 cron:sweep_expired_bed_locks() delayed=79.03s
-23:31:20:   1.36s \u2190 cron:sweep_expired_bed_locks \u25cf 
-INFO:arq.worker:  1.36s \u2190 cron:sweep_expired_bed_locks \u25cf 
-23:31:20:   1.84s \u2190 cron:compute_leaderboard_ranks \u25cf 
-INFO:arq.worker:  1.84s \u2190 cron:compute_leaderboard_ranks \u25cf 
-23:31:43:   2.59s \u2192 e3a2e23c-3a49-452f-8538-67c9ffc1e396:generate_naac_ssr_task('e3a2e23c-3a49-452f-8538-67c9ffc1e396')
-INFO:arq.worker:  2.59s \u2192 e3a2e23c-3a49-452f-8538-67c9ffc1e396:generate_naac_ssr_task('e3a2e23c-3a49-452f-8538-67c9ffc1e396')
-WARNING:acadmix.workers.pdf_generator:Mocking PDF generation because WeasyPrint is unavailable.
-WARNING:acadmix.workers.pdf_generator:S3 upload failed: An error occurred (AuthorizationHeaderMalformed) when calling the PutObject operation: The authorization header is malformed; a non-empty Access Key (AKID) must be provided in the credential.. Falling back to local file save.
-23:31:48:   4.76s \u2190 e3a2e23c-3a49-452f-8538-67c9ffc1e396:generate_naac_ssr_task \u25cf {'status': 'completed', 'presigned_url': '/exports/NAAC_SSR_2023-2024_v2.zip'}
-INFO:arq.worker:  4.76s \u2190 e3a2e23c-3a49-452f-8538-67c9ffc1e396:generate_naac_ssr_task \u25cf {'status': 'completed', 'presigned_url': '/exports/NAAC_SSR_2023-2024_v2.zip'}
+00:01:10: Starting worker for 26 functions: process_ai_review_task, generate_interview_feedback_task, warm_results_cache_task, notify_results_task, process_gatepass_approval_request, process_vending_receipt, process_hardware_alert, process_proxy_request, broadcast_college_alert_task, send_fee_payment_receipt_task, process_library_hold_queue, generate_naac_ssr_task, generate_nba_sar_task, cron:sweep_expired_bed_locks, cron:check_gatepass_violations, cron:send_daily_attendance_digest, cron:send_weekly_ami_digest, cron:check_low_wallet_balances, cron:check_overdue_fees, cron:send_fee_due_reminders_cron, cron:send_bus_departure_alerts_cron, cron:transport_cleanup_stale_trips, cron:transport_morning_reminder, cron:calculate_overdue_fines, cron:expire_library_reservations, cron:compute_leaderboard_ranks
+00:01:10: redis_version=? mem_usage=? clients_connected=? db_keys=40
+00:01:10:  71.17s \u2192 cron:check_gatepass_violations() delayed=70.85s
+00:01:11:  71.39s \u2192 cron:expire_library_reservations() delayed=71.07s
+00:01:11:  71.14s \u2192 cron:sweep_expired_bed_locks() delayed=71.07s
+00:01:13:   1.94s \u2190 cron:expire_library_reservations \u25cf 
+00:01:13:   1.99s \u2190 cron:sweep_expired_bed_locks \u25cf 
+00:01:13:   2.27s \u2190 cron:check_gatepass_violations \u25cf 
+00:01:38:   2.64s \u2192 275eea5a-7dd9-4c02-9735-9e6365b8eb83:generate_naac_ssr_task('275eea5a-7dd9-4c02-9735-9e6365b8eb83')
+S3 upload failed: An error occurred (AuthorizationHeaderMalformed) when calling the PutObject operation: The authorization header is malformed; a non-empty Access Key (AKID) must be provided in the credential.. Falling back to local file save.
+00:01:45:   7.56s \u2190 275eea5a-7dd9-4c02-9735-9e6365b8eb83:generate_naac_ssr_task \u25cf {'status': 'completed', 'presigned_url': '/exports/NAAC_SSR_2023-2024_v10.zip'}

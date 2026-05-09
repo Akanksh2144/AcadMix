@@ -1,0 +1,9 @@
+INFO:     Started server process [56120]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+failed to send, dropping 1 traces to intake at https://trace.agent.us5.datadoghq.com/v0.4/traces: Error code: 404 Not Found, Response: {"errors":[{"status":"404","title":"Not Found","detail":"HTTP path is invalid"}]}
+[ws] Redis subscriber loop crashed: Timeout reading from clear-lobster-91797.upstash.io:6379
+ATTEMPTING TO ENQUEUE TASK generate_naac_ssr_task for JOB 275eea5a-7dd9-4c02-9735-9e6365b8eb83
+ENQUEUED! arq_job=<arq job 275eea5a-7dd9-4c02-9735-9e6365b8eb83>
+UPDATED arq_job_id in session to 275eea5a-7dd9-4c02-9735-9e6365b8eb83

@@ -7,12 +7,12 @@ from datetime import datetime, timedelta, timezone
 import boto3
 from botocore.exceptions import ClientError
 try:
-    from weasyprint import HTML
-    WEASYPRINT_AVAILABLE = True
+    from playwright.async_api import async_playwright
+    PLAYWRIGHT_AVAILABLE = True
 except Exception as e:
-    # Handle missing GTK/Pango libraries on Windows gracefully
-    logging.warning(f"WeasyPrint failed to load. Native PDF generation will be mocked. Error: {e}")
-    WEASYPRINT_AVAILABLE = False
+    # Handle missing libraries gracefully
+    logging.warning(f"Playwright failed to load. Native PDF generation will be mocked. Error: {e}")
+    PLAYWRIGHT_AVAILABLE = False
 from jinja2 import Environment, FileSystemLoader
 
 from sqlalchemy.future import select
@@ -57,14 +57,32 @@ def stream_s3_file_to_zip(zip_file, s3_key, arcname, missing_files_list):
         missing_files_list.append(f"FETCH_ERROR: {s3_key} ({str(e)})")
 
 
-def _generate_pdf_bytes(html_out: str) -> bytes:
-    """Blocking call to WeasyPrint (or mock if unavailable)"""
-    if WEASYPRINT_AVAILABLE:
-        return HTML(string=html_out).write_pdf()
-    else:
-        logger.warning("Mocking PDF generation because WeasyPrint is unavailable.")
-        # Return a minimal valid PDF byte string
-        return b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 53 >>\nstream\nBT\n/F1 24 Tf\n100 700 Td\n(Mock PDF - GTK Missing) Tj\nET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000288 00000 n \ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n390\n%%EOF"
+async def _generate_pdf_bytes_async(html_out: str) -> bytes:
+    """Async call to PDF generator (or mock if unavailable)"""
+    if PLAYWRIGHT_AVAILABLE:
+        try:
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                await page.set_content(html_out)
+                # Ensure all network requests (images/fonts) are loaded
+                await page.wait_for_load_state("networkidle")
+                
+                pdf_bytes = await page.pdf(
+                    format="A4", 
+                    margin={"top": "30mm", "right": "20mm", "bottom": "25mm", "left": "20mm"}, 
+                    display_header_footer=True, 
+                    print_background=True
+                )
+                await browser.close()
+                return pdf_bytes
+        except Exception as e:
+            import traceback
+            logger.error(f"PDF generation exception: {e}\n{traceback.format_exc()}")
+            
+    logger.warning("Mocking PDF generation because generator is unavailable or failed.")
+    # Return a minimal valid PDF byte string
+    return b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 53 >>\nstream\nBT\n/F1 24 Tf\n100 700 Td\n(Mock PDF - GTK Missing) Tj\nET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000288 00000 n \ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n390\n%%EOF"
 
 def _build_and_upload_zip(job, pdf_bytes, evidence_records, is_nba=False, csv_data=None):
     """Blocking call to build zip and upload to S3"""
@@ -156,8 +174,8 @@ async def generate_naac_ssr_task(ctx, job_id: str):
             template = env.get_template("naac_ssr_template.html")
             html_out = template.render(payload)
             
-            # 4. Generate PDF (Blocking)
-            pdf_bytes = await asyncio.to_thread(_generate_pdf_bytes, html_out)
+            # 4. Generate PDF (Async)
+            pdf_bytes = await _generate_pdf_bytes_async(html_out)
             
             # 5. Fetch Evidence Records
             ev_stmt = select(AccreditationEvidence).filter_by(
@@ -218,7 +236,7 @@ async def generate_nba_sar_task(ctx, job_id: str):
             html_out = template.render(payload)
             
             # 3. Generate PDF (Blocking)
-            pdf_bytes = await asyncio.to_thread(_generate_pdf_bytes, html_out)
+            pdf_bytes = await _generate_pdf_bytes_async(html_out)
             
             # 4. Generate Appendix CSV
             csv_data = await engine.get_nba_appendix_data(job.college_id, job.academic_year, dept_id)
