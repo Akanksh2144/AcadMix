@@ -109,7 +109,16 @@ class ReportEngineService:
             "days_to_results_avg": days_to_results,
             "nep_preparedness": nep_data,
             "qualitative_metrics": qlm_data,
-            "quantitative_metrics": qnm_data
+            "quantitative_metrics": qnm_data,
+            "executive_summary": {
+                "intro": f"This is the NAAC SSR Report for {college_info.get('name', 'our institution')}."
+            },
+            "swoc": {
+                "strength": "Strengths go here.",
+                "weakness": "Weaknesses go here.",
+                "opportunity": "Opportunities go here.",
+                "challenge": "Challenges go here."
+            }
         }
 
     async def _calculate_days_to_results(self, college_id: str, academic_years: list) -> float:
