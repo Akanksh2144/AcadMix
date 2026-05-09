@@ -77,18 +77,19 @@
             page: cover;
             page-break-after: always;
             width: 100%;
-            height: 100vh;
+            height: 230mm;
             background: linear-gradient(to bottom right, #ffffff, #f1f5f9);
-            position: relative;
             box-sizing: border-box;
             border: 12px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20mm;
         }
         .cover-content {
-            position: absolute;
-            top: 30%;
-            left: 15%;
-            right: 15%;
-            text-align: center;
+            width: 100%;
         }
         .cover-title {
             font-size: 38pt;
