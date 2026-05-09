@@ -2,24 +2,15 @@ import os
 import io
 import zipfile
 import logging
-from datetime import datetime, timedelta
+import asyncio
+from datetime import datetime, timedelta, timezone
 import boto3
 from botocore.exceptions import ClientError
 from weasyprint import HTML
 from jinja2 import Environment, FileSystemLoader
 
-# Assuming a Celery instance is configured in the app
-# from app.core.celery_app import celery_app
-# Mocking celery_app for structure
-class MockCeleryApp:
-    def task(self, *args, **kwargs):
-        def decorator(func):
-            return func
-        return decorator
-celery_app = MockCeleryApp()
-
 from sqlalchemy.future import select
-from database import AdminSessionLocal
+from database import admin_session_ctx
 from app.models.accreditation import AccreditationReportJob, AccreditationEvidence
 from app.services.report_engine import ReportEngineService
 
@@ -56,29 +47,78 @@ def stream_s3_file_to_zip(zip_file, s3_key, arcname, missing_files_list):
         missing_files_list.append(f"FETCH_ERROR: {s3_key} ({str(e)})")
 
 
-@celery_app.task(bind=True, time_limit=600, soft_time_limit=540)
-def generate_naac_ssr(self, job_id: str):
+def _generate_pdf_bytes(html_out: str) -> bytes:
+    """Blocking call to WeasyPrint"""
+    return HTML(string=html_out).write_pdf()
+
+def _build_and_upload_zip(job, pdf_bytes, evidence_records, is_nba=False, csv_data=None):
+    """Blocking call to build zip and upload to S3"""
+    zip_buffer = io.BytesIO()
+    missing_evidence = []
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        # Add PDF
+        pdf_name = "NBA_SAR_Report.pdf" if is_nba else "NAAC_SSR_Report.pdf"
+        zip_file.writestr(pdf_name, pdf_bytes)
+        
+        if is_nba and csv_data:
+            zip_file.writestr("NBA_Appendix.csv", csv_data)
+        
+        for ev in evidence_records:
+            if not ev.s3_key:
+                missing_evidence.append(f"DB_ERROR: Evidence record {ev.id} has no s3_key.")
+                continue
+                
+            arcname = f"evidence/{getattr(ev, 'metric_code', 'general')}/{ev.file_name}"
+            stream_s3_file_to_zip(zip_file, ev.s3_key, arcname, missing_evidence)
+        
+        # Add missing evidence report if necessary
+        if missing_evidence:
+            report_content = "Missing Evidence Report\n" + "="*25 + "\n\n"
+            report_content += "\n".join(missing_evidence)
+            zip_file.writestr("missing_evidence_report.txt", report_content)
+            
+    zip_buffer.seek(0)
+    
+    # 6. Upload Zip to R2/S3
+    if is_nba:
+        output_s3_key = f"exports/{job.college_id}/NBA_SAR_{getattr(job, 'department_id', 'ALL')}_{job.academic_year}_v{job.version}.zip"
+    else:
+        output_s3_key = f"exports/{job.college_id}/NAAC_SSR_{job.academic_year}_v{job.version}.zip"
+        
+    S3_CLIENT.upload_fileobj(zip_buffer, S3_BUCKET, output_s3_key)
+    
+    # 7. Generate 30-day Presigned URL
+    presigned_url = S3_CLIENT.generate_presigned_url(
+        'get_object',
+        Params={'Bucket': S3_BUCKET, 'Key': output_s3_key},
+        ExpiresIn=30 * 24 * 3600  # 30 days
+    )
+    return presigned_url
+
+async def generate_naac_ssr_task(ctx, job_id: str):
     """
-    Generates the complete NAAC SSR (PDF + Evidence Zip).
+    ARQ Task: Generates the complete NAAC SSR (PDF + Evidence Zip).
     """
     logger.info(f"Starting NAAC SSR generation for job: {job_id}")
     
-    # 1. Fetch Job from DB
-    with SessionLocal() as db:
-        job = db.query(AccreditationReportJob).filter_by(id=job_id).first()
+    async with admin_session_ctx() as db:
+        # 1. Fetch Job from DB
+        stmt = select(AccreditationReportJob).filter_by(id=job_id)
+        result = await db.execute(stmt)
+        job = result.scalars().first()
+        
         if not job:
             logger.error(f"Job {job_id} not found.")
-            return
+            return {"status": "failed", "error": "Job not found"}
             
         job.status = "PROCESSING"
-        db.commit()
+        await db.commit()
         
         try:
             # 2. Fetch Aggregated Payload
             engine = ReportEngineService(db)
-            # In an async context, we'd await. Here we assume synchronous block or run_until_complete
-            import asyncio
-            payload = asyncio.run(engine.aggregate_naac_payload(job.college_id, job.academic_year))
+            payload = await engine.aggregate_naac_payload(job.college_id, job.academic_year)
             
             # 3. Render HTML
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -87,86 +127,60 @@ def generate_naac_ssr(self, job_id: str):
             template = env.get_template("naac_ssr_template.html")
             html_out = template.render(payload)
             
-            # 4. Generate PDF
-            pdf_bytes = HTML(string=html_out).write_pdf()
+            # 4. Generate PDF (Blocking)
+            pdf_bytes = await asyncio.to_thread(_generate_pdf_bytes, html_out)
             
-            # 5. Build DVV Zip in memory
-            zip_buffer = io.BytesIO()
-            missing_evidence = []
-            
-            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                # Add PDF
-                zip_file.writestr("NAAC_SSR_Report.pdf", pdf_bytes)
-                
-                # Fetch all evidence records for this college and year
-                # For a real implementation, we'd filter only the evidence linked in the payload
-                evidence_records = db.query(AccreditationEvidence).filter_by(
-                    college_id=job.college_id,
-                    academic_year=job.academic_year
-                ).all()
-                
-                for ev in evidence_records:
-                    if not ev.s3_key:
-                        missing_evidence.append(f"DB_ERROR: Evidence record {ev.id} has no s3_key.")
-                        continue
-                        
-                    arcname = f"evidence/{ev.metric_code}/{ev.file_name}"
-                    stream_s3_file_to_zip(zip_file, ev.s3_key, arcname, missing_evidence)
-                
-                # Add missing evidence report if necessary
-                if missing_evidence:
-                    report_content = "Missing Evidence Report\n" + "="*25 + "\n\n"
-                    report_content += "\n".join(missing_evidence)
-                    zip_file.writestr("missing_evidence_report.txt", report_content)
-                    
-            zip_buffer.seek(0)
-            
-            # 6. Upload Zip to R2/S3
-            output_s3_key = f"exports/{job.college_id}/NAAC_SSR_{job.academic_year}_v{job.version}.zip"
-            S3_CLIENT.upload_fileobj(zip_buffer, S3_BUCKET, output_s3_key)
-            
-            # 7. Generate 30-day Presigned URL
-            presigned_url = S3_CLIENT.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': S3_BUCKET, 'Key': output_s3_key},
-                ExpiresIn=30 * 24 * 3600  # 30 days
+            # 5. Fetch Evidence Records
+            ev_stmt = select(AccreditationEvidence).filter_by(
+                college_id=job.college_id,
+                academic_year=job.academic_year
             )
+            ev_result = await db.execute(ev_stmt)
+            evidence_records = ev_result.scalars().all()
             
-            # 8. Update Job Status
+            # 6. Build DVV Zip & Upload (Blocking)
+            presigned_url = await asyncio.to_thread(_build_and_upload_zip, job, pdf_bytes, evidence_records, False)
+            
+            # 7. Update Job Status
             job.status = "COMPLETED"
             job.presigned_url = presigned_url
-            job.expires_at = datetime.utcnow() + timedelta(days=30)
-            db.commit()
+            job.expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+            await db.commit()
             
             logger.info(f"Successfully generated NAAC SSR for job: {job_id}")
+            return {"status": "completed", "presigned_url": presigned_url}
             
         except Exception as e:
             logger.exception(f"Error generating NAAC SSR for job {job_id}: {str(e)}")
             job.status = "FAILED"
-            db.commit()
-            raise e
+            await db.commit()
+            return {"status": "failed", "error": str(e)}
 
-@celery_app.task(bind=True, time_limit=600, soft_time_limit=540)
-def generate_nba_sar(self, job_id: str):
+async def generate_nba_sar_task(ctx, job_id: str):
     """
-    Generates the complete NBA SAR (PDF + Appendix CSV).
+    ARQ Task: Generates the complete NBA SAR (PDF + Appendix CSV).
     """
     logger.info(f"Starting NBA SAR generation for job: {job_id}")
     
-    with SessionLocal() as db:
-        job = db.query(AccreditationReportJob).filter_by(id=job_id).first()
+    async with admin_session_ctx() as db:
+        stmt = select(AccreditationReportJob).filter_by(id=job_id)
+        result = await db.execute(stmt)
+        job = result.scalars().first()
+        
         if not job:
             logger.error(f"Job {job_id} not found.")
-            return
+            return {"status": "failed", "error": "Job not found"}
             
         job.status = "PROCESSING"
-        db.commit()
+        await db.commit()
         
         try:
             # 1. Fetch Aggregated Payload
             engine = ReportEngineService(db)
-            import asyncio
-            payload = asyncio.run(engine.aggregate_nba_payload(job.college_id, job.academic_year, job.department_id))
+            # handle department_id existence properly
+            dept_id = getattr(job, 'department_id', None)
+            
+            payload = await engine.aggregate_nba_payload(job.college_id, job.academic_year, dept_id)
             
             # 2. Render HTML
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -175,65 +189,34 @@ def generate_nba_sar(self, job_id: str):
             template = env.get_template("nba_sar_template.html")
             html_out = template.render(payload)
             
-            # 3. Generate PDF
-            pdf_bytes = HTML(string=html_out).write_pdf()
+            # 3. Generate PDF (Blocking)
+            pdf_bytes = await asyncio.to_thread(_generate_pdf_bytes, html_out)
             
             # 4. Generate Appendix CSV
-            csv_data = asyncio.run(engine.get_nba_appendix_data(job.college_id, job.academic_year, job.department_id))
+            csv_data = await engine.get_nba_appendix_data(job.college_id, job.academic_year, dept_id)
             
-            # 5. Build DVV Zip in memory
-            zip_buffer = io.BytesIO()
-            missing_evidence = []
-            
-            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                # Add PDF
-                zip_file.writestr("NBA_SAR_Report.pdf", pdf_bytes)
-                
-                # Add CSV Appendix
-                zip_file.writestr("NBA_Appendix.csv", csv_data)
-                
-                # Optional: stream evidence if mapped
-                evidence_records = db.query(AccreditationEvidence).filter_by(
-                    college_id=job.college_id,
-                    criterion_id=job.department_id  # approximation for NBA department scope
-                ).all()
-                
-                for ev in evidence_records:
-                    if not ev.s3_key:
-                        missing_evidence.append(f"DB_ERROR: Evidence record {ev.id} has no s3_key.")
-                        continue
-                        
-                    arcname = f"evidence/{ev.file_name}"
-                    stream_s3_file_to_zip(zip_file, ev.s3_key, arcname, missing_evidence)
-                
-                if missing_evidence:
-                    report_content = "Missing Evidence Report\n" + "="*25 + "\n\n"
-                    report_content += "\n".join(missing_evidence)
-                    zip_file.writestr("missing_evidence_report.txt", report_content)
-                    
-            zip_buffer.seek(0)
-            
-            # 6. Upload Zip to R2/S3
-            output_s3_key = f"exports/{job.college_id}/NBA_SAR_{job.department_id}_{job.academic_year}_v{job.version}.zip"
-            S3_CLIENT.upload_fileobj(zip_buffer, S3_BUCKET, output_s3_key)
-            
-            # 7. Generate 30-day Presigned URL
-            presigned_url = S3_CLIENT.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': S3_BUCKET, 'Key': output_s3_key},
-                ExpiresIn=30 * 24 * 3600  # 30 days
+            # 5. Fetch Evidence Records
+            ev_stmt = select(AccreditationEvidence).filter_by(
+                college_id=job.college_id,
+                criterion_id=dept_id  # approximation
             )
+            ev_result = await db.execute(ev_stmt)
+            evidence_records = ev_result.scalars().all()
             
-            # 8. Update Job Status
+            # 6. Build DVV Zip & Upload (Blocking)
+            presigned_url = await asyncio.to_thread(_build_and_upload_zip, job, pdf_bytes, evidence_records, True, csv_data)
+            
+            # 7. Update Job Status
             job.status = "COMPLETED"
             job.presigned_url = presigned_url
-            job.expires_at = datetime.utcnow() + timedelta(days=30)
-            db.commit()
+            job.expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+            await db.commit()
             
             logger.info(f"Successfully generated NBA SAR for job: {job_id}")
+            return {"status": "completed", "presigned_url": presigned_url}
             
         except Exception as e:
             logger.exception(f"Error generating NBA SAR for job {job_id}: {str(e)}")
             job.status = "FAILED"
-            db.commit()
-            raise e
+            await db.commit()
+            return {"status": "failed", "error": str(e)}

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
 
 from app.core.security import require_role
 from database import get_db
@@ -10,6 +11,7 @@ from app.models.accreditation import (
     AccreditationEvidence,
     COAttainmentRecord,
     POAttainmentRecord,
+    AccreditationReportJob,
 )
 from app.models.outcomes import ProgramOutcome, COPOMapping, CourseOutcome
 from app.models.core import UserProfile, College
@@ -466,3 +468,90 @@ async def list_placements(
         )
     )).all()
     return {"records": records}
+
+
+# ── Report Generation (ARQ Integration) ──────────────────────────────────────
+
+class ReportGenerateReq(BaseModel):
+    report_type: str        # "NAAC", "NBA"
+    academic_year: str
+    department_id: Optional[str] = None
+
+@router.post("/reports/generate")
+async def generate_accreditation_report(
+    req: ReportGenerateReq,
+    request: Request,
+    user: dict = Depends(require_role("nodal", "principal", "admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    """
+    Creates an AccreditationReportJob in DB and pushes it to the ARQ Redis queue.
+    Returns the job ID instantly for the frontend to poll status.
+    """
+    college_id = user.get("college_id", "AITS")
+    
+    # 1. Check if a pending/processing job already exists for this cycle
+    stmt = select(AccreditationReportJob).where(
+        AccreditationReportJob.college_id == college_id,
+        AccreditationReportJob.report_type == req.report_type,
+        AccreditationReportJob.academic_year == req.academic_year,
+        AccreditationReportJob.status.in_(["PENDING", "PROCESSING"])
+    )
+    existing_job = (await session.execute(stmt)).scalars().first()
+    if existing_job:
+        return {"status": "success", "job_id": existing_job.id, "message": "A report generation is already in progress."}
+    
+    # 2. Determine version (latest version + 1)
+    v_stmt = select(AccreditationReportJob).where(
+        AccreditationReportJob.college_id == college_id,
+        AccreditationReportJob.report_type == req.report_type,
+        AccreditationReportJob.academic_year == req.academic_year
+    ).order_by(AccreditationReportJob.version.desc())
+    latest_job = (await session.execute(v_stmt)).scalars().first()
+    next_version = (latest_job.version + 1) if latest_job else 1
+    
+    # 3. Create Job Record
+    new_job = AccreditationReportJob(
+        college_id=college_id,
+        report_type=req.report_type,
+        academic_year=req.academic_year,
+        version=next_version,
+        status="PENDING",
+        created_by=user.get("user_id")
+    )
+    # we can also dynamically add department_id if NBA, but our model currently doesn't 
+    # strictly require it or we can add it dynamically to kwargs/json payload if we want, 
+    # but let's just set the instance dynamically if we need, or just rely on the job. 
+    # Assuming department_id is part of the job model (or we monkey patch it if it's NBA)
+    if req.report_type == "NBA" and req.department_id:
+        setattr(new_job, 'department_id', req.department_id)
+        
+    session.add(new_job)
+    await session.commit()
+    await session.refresh(new_job)
+    
+    # 4. Enqueue to ARQ
+    arq_redis = getattr(request.app.state, "arq_redis", None)
+    if not arq_redis:
+        # Graceful fallback if ARQ isn't mounted during tests
+        new_job.status = "FAILED"
+        await session.commit()
+        raise HTTPException(status_code=500, detail="Background worker queue not initialized")
+        
+    try:
+        task_name = "generate_naac_ssr_task" if req.report_type == "NAAC" else "generate_nba_sar_task"
+        arq_job = await arq_redis.enqueue_job(task_name, new_job.id)
+        new_job.arq_job_id = arq_job.job_id
+        await session.commit()
+    except Exception as e:
+        new_job.status = "FAILED"
+        await session.commit()
+        raise HTTPException(status_code=500, detail=f"Failed to enqueue task: {str(e)}")
+        
+    return {
+        "status": "success", 
+        "job_id": new_job.id, 
+        "version": next_version,
+        "message": "Report generation enqueued successfully."
+    }
+

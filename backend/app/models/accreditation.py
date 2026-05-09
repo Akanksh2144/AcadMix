@@ -323,7 +323,7 @@ class AttainmentConfig(Base, SoftDeleteMixin):
 
 class AccreditationReportJob(Base, SoftDeleteMixin):
     """
-    Tracks background report generation tasks (Celery) and provides versioning 
+    Tracks background report generation tasks (ARQ) and provides versioning 
     for exported reports across the academic cycle.
     """
     __tablename__ = "accreditation_report_jobs"
@@ -333,7 +333,7 @@ class AccreditationReportJob(Base, SoftDeleteMixin):
     academic_year  = Column(String, nullable=False)
     version        = Column(Integer, nullable=False, server_default=text('1'))
     status         = Column(String, nullable=False, server_default=text("'PENDING'")) # PENDING, PROCESSING, COMPLETED, FAILED
-    celery_task_id = Column(String, nullable=True)
+    arq_job_id     = Column(String, nullable=True)
     presigned_url  = Column(String, nullable=True)         # S3/R2 download URL
     expires_at     = Column(DateTime(timezone=True), nullable=True)
     created_by     = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)

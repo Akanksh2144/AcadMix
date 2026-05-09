@@ -820,6 +820,8 @@ async def notify_results_task(ctx, college_id: str, semester: int, student_ids: 
 # WORKER SETTINGS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+from app.workers.pdf_generator import generate_naac_ssr_task, generate_nba_sar_task
+
 class WorkerSettings:
     functions = [
         process_ai_review_task,
@@ -835,6 +837,9 @@ class WorkerSettings:
         send_fee_payment_receipt_task,
         # Library on-demand tasks
         process_library_hold_queue,
+        # Accreditation tasks
+        generate_naac_ssr_task,
+        generate_nba_sar_task,
     ]
     
     # Scheduled background jobs

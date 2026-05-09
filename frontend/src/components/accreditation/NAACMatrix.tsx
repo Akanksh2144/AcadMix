@@ -165,7 +165,18 @@ const NAACMatrix: React.FC<NAACMatrixProps> = ({ viewMode, collegeId, academicYe
             <span className="text-xs text-indigo-400">/4.0</span>
           </div>
           <button 
-            onClick={() => toast.info('Report generation engine is queuing the NAAC SSR...')}
+            onClick={async () => {
+              try {
+                toast.loading('Queuing NAAC SSR Generation...', { id: 'naac_report' });
+                const res = await accreditationAPI.generateReport({
+                  report_type: 'NAAC',
+                  academic_year: academicYear
+                });
+                toast.success(`Job queued successfully! (Version ${res.version})`, { id: 'naac_report' });
+              } catch (err: any) {
+                toast.error(`Failed to queue report: ${formatApiError(err)}`, { id: 'naac_report' });
+              }
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all"
           >
             <FileText size={18} weight="bold" />

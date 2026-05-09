@@ -85,7 +85,18 @@ const NBADashboard: React.FC<NBADashboardProps> = ({ collegeId, batchYear = '202
           </p>
         </div>
         <button 
-          onClick={() => toast.info('Report generation engine is queuing the NBA SAR...')}
+          onClick={async () => {
+            try {
+              toast.loading('Queuing NBA SAR Generation...', { id: 'nba_report' });
+              const res = await accreditationAPI.generateReport({
+                report_type: 'NBA',
+                academic_year: '2024-2025',
+              });
+              toast.success(`Job queued successfully! (Version ${res.version})`, { id: 'nba_report' });
+            } catch (err: any) {
+              toast.error(`Failed to queue report: ${formatApiError(err)}`, { id: 'nba_report' });
+            }
+          }}
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all"
         >
           <FileText size={18} weight="bold" />

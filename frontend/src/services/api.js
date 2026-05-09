@@ -838,5 +838,5 @@ export const accreditationAPI = {
   getNEPStatus: (collegeId) => api.get(`/accreditation/nep/status/${collegeId}`),
   calculateCourseAttainment: (courseId, academicYear) => api.post(`/accreditation/calculate/course/${courseId}`, null, { params: { academic_year: academicYear } }),
   calculateDepartmentAttainment: (departmentId, academicYear) => api.post(`/accreditation/calculate/department/${departmentId}`, null, { params: { academic_year: academicYear } }),
+  generateReport: (payload) => api.post('/accreditation/reports/generate', payload),
 };
-
