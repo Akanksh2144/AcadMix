@@ -555,3 +555,28 @@ async def generate_accreditation_report(
         "message": "Report generation enqueued successfully."
     }
 
+@router.get("/reports/status/{job_id}")
+async def get_report_status(
+    job_id: str,
+    user: dict = Depends(require_role("nodal", "principal", "admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    """
+    Returns the current status of an async report generation job.
+    """
+    stmt = select(AccreditationReportJob).where(
+        AccreditationReportJob.id == job_id,
+        AccreditationReportJob.college_id == user.get("college_id", "AITS")
+    )
+    job = (await session.execute(stmt)).scalars().first()
+    
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    return {
+        "status": job.status,
+        "job_id": job.id,
+        "report_url": job.report_url,
+        "error_log": job.error_log,
+        "completed_at": job.completed_at
+    }

@@ -839,4 +839,5 @@ export const accreditationAPI = {
   calculateCourseAttainment: (courseId, academicYear) => api.post(`/accreditation/calculate/course/${courseId}`, null, { params: { academic_year: academicYear } }),
   calculateDepartmentAttainment: (departmentId, academicYear) => api.post(`/accreditation/calculate/department/${departmentId}`, null, { params: { academic_year: academicYear } }),
   generateReport: (payload) => api.post('/accreditation/reports/generate', payload),
+  getReportStatus: (jobId) => api.get(`/accreditation/reports/status/${jobId}`),
 };

@@ -172,7 +172,35 @@ const NAACMatrix: React.FC<NAACMatrixProps> = ({ viewMode, collegeId, academicYe
                   report_type: 'NAAC',
                   academic_year: academicYear
                 });
-                toast.success(`Job queued successfully! (Version ${res.version})`, { id: 'naac_report' });
+                toast.loading(`Job queued! Generating PDF...`, { id: 'naac_report' });
+                
+                const jobId = res.data?.job_id || res.job_id;
+                if (!jobId) {
+                   toast.success('Job queued successfully, but job tracking ID was not returned.', { id: 'naac_report' });
+                   return;
+                }
+                
+                const pollInterval = setInterval(async () => {
+                  try {
+                    const statusRes = await accreditationAPI.getReportStatus(jobId);
+                    const status = statusRes.data?.status || statusRes.status;
+                    const reportUrl = statusRes.data?.report_url || statusRes.report_url;
+                    
+                    if (status === 'COMPLETED' || status === 'completed') {
+                       clearInterval(pollInterval);
+                       toast.success('Report generation complete! Downloading...', { id: 'naac_report' });
+                       if (reportUrl) {
+                          window.open(reportUrl, '_blank');
+                       }
+                    } else if (status === 'FAILED' || status === 'failed') {
+                       clearInterval(pollInterval);
+                       toast.error('Report generation failed. Please check backend logs.', { id: 'naac_report' });
+                    }
+                  } catch (e) {
+                     clearInterval(pollInterval);
+                     toast.error('Connection lost while checking report status.', { id: 'naac_report' });
+                  }
+                }, 3000);
               } catch (err: any) {
                 toast.error(`Failed to queue report: ${formatApiError(err)}`, { id: 'naac_report' });
               }
