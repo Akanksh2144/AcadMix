@@ -313,8 +313,8 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
   if (loading && !dashboard) return <DashboardSkeleton variant="admin" />;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] dark:from-slate-800 dark:via-slate-900 dark:to-[#0F172A] text-slate-800 dark:text-slate-200 transition-colors duration-300 font-sans selection:bg-indigo-500/30">
-      <Toaster position="top-right" theme={isDark ? "dark" : "light"} richColors />
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
+      <Toaster position="top-right" richColors />
       
       {/* Header Profile Trigger Component (Reusable) */}
       {showProfile && (
@@ -325,18 +325,18 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
         />
       )}
 
-      <header className="sticky top-0 z-40 bg-white/60 dark:bg-slate-900/40 backdrop-blur-2xl border-b border-slate-200 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <header className="glass-header z-40 relative">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.4)] border border-indigo-400/20 dark:border-white/20">
-              <Bank size={22} weight="fill" className="text-white" />
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+              <Bank size={22} weight="duotone" className="text-white" />
             </div>
             <div>
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white drop-shadow-sm dark:drop-shadow-md">
-                AcadMix <span className="font-light opacity-70">Insights</span>
+              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                AcadMix
               </h1>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-                Principal Executive
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                Principal Dashboard
               </p>
             </div>
           </div>
@@ -345,12 +345,12 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2.5 rounded-2xl bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 transition-all border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20 shadow-sm"
+                className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors relative"
                 aria-label="Notifications"
               >
-                <Bell size={20} weight={showNotifications ? "fill" : "regular"} />
+                <Bell size={20} weight={showNotifications ? "fill" : "duotone"} />
                 {unreadCount > 0 && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center shadow-[0_0_10px_rgba(244,63,94,0.5)] border border-rose-400">
+                  <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-rose-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </div>
                 )}
@@ -365,22 +365,24 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -8, scale: 0.96 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    className="fixed top-20 right-4 sm:right-8 z-[61] w-80 sm:w-96 bg-white/80 dark:bg-slate-800/80 backdrop-blur-3xl rounded-3xl shadow-[0_32px_64px_rgba(0,0,0,0.15)] dark:shadow-[0_32px_64px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-white/10 border-t-white/80 dark:border-t-white/20 overflow-hidden"
+                    className="fixed top-16 right-4 sm:right-8 z-[61] w-80 sm:w-96 bg-white dark:bg-[#1A202C] rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden"
                   >
-                    <div className="px-6 py-5 border-b border-slate-200 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-                      <h4 className="font-semibold text-slate-900 dark:text-white text-sm tracking-wide">Action Center</h4>
-                      <button onClick={handleMarkAllRead} className="text-[10px] uppercase tracking-wider font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">Mark Read</button>
+                    <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <h4 className="font-extrabold text-slate-800 dark:text-slate-100">Notifications</h4>
+                      <button onClick={handleMarkAllRead} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 transition-colors">Mark all as read</button>
                     </div>
-                    <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-white/5">
+                    <div className="max-h-80 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/50">
                       {notifications.length === 0 ? (
-                        <div className="px-5 py-12 text-center text-xs text-slate-500 uppercase tracking-widest">Inbox Zero</div>
+                        <div className="px-5 py-8 text-center text-sm text-slate-400">No notifications yet</div>
                       ) : notifications.map((item) => (
-                        <div key={item.id} className={`flex items-start gap-4 px-6 py-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${!item.is_read ? 'bg-indigo-50 dark:bg-indigo-500/5' : ''}`}>
-                          <div className={`w-2.5 h-2.5 mt-1.5 rounded-full flex-shrink-0 ${item.type === 'alert' ? 'bg-rose-500 shadow-[0_0_10px_#f43f5e]' : 'bg-indigo-500 shadow-[0_0_10px_#6366f1]'}`} />
+                        <div key={item.id} className={`flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${!item.is_read ? 'bg-indigo-50/30 dark:bg-indigo-500/5' : ''}`}>
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${item.type === 'alert' ? 'bg-rose-50 dark:bg-rose-500/15' : 'bg-indigo-50 dark:bg-indigo-500/15'}`}>
+                            <Info size={14} weight="duotone" className={item.type === 'alert' ? 'text-rose-500' : 'text-indigo-500'} />
+                          </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{item.title}</p>
-                            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">{item.message}</p>
-                            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mt-2 block">{formatTime(item.created_at)}</span>
+                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{item.title}</p>
+                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{item.message}</p>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1.5 block">{formatTime(item.created_at)}</span>
                           </div>
                         </div>
                       ))}
@@ -389,63 +391,65 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                 </>
               )}
             </AnimatePresence>
-            
-            {/* Theme Toggle */}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={toggleTheme}
-              className="p-2.5 rounded-2xl bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 transition-all border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20 shadow-sm"
+              className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
             >
               {isDark ? <Sun size={20} weight="duotone" /> : <Moon size={20} weight="duotone" />}
             </motion.button>
-
-            {/* User Profile Trigger */}
             <button
                onClick={() => setShowProfile(true)}
-               className="hidden sm:flex items-center gap-3 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20 transition-all rounded-full pl-2 pr-5 py-1.5 cursor-pointer shadow-sm"
+               className="hidden sm:flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors rounded-2xl px-4 py-2 cursor-pointer"
              >
-               <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-white/10 dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
-                 <Bank size={14} weight="fill" className="text-indigo-600 dark:text-indigo-400" />
+               <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                 <Bank size={14} weight="bold" className="text-indigo-600" />
                </div>
-               <div className="text-left">
-                 <p className="text-[13px] font-semibold text-slate-900 dark:text-white leading-tight drop-shadow-sm">{user?.name}</p>
-                 <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 leading-tight">{user?.designation || "Principal"}</p>
+               <div className="text-right">
+                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{user?.name}</p>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{user?.designation || "Principal"}</p>
                </div>
              </button>
-             
-             <button onClick={onLogout} className="p-2.5 rounded-2xl bg-white dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-500/20 text-rose-500 dark:text-rose-400 transition-all border border-slate-200 dark:border-white/5 hover:border-rose-300 dark:hover:border-rose-500/30 ml-1 shadow-sm" title="Sign Out">
-               <SignOut size={18} weight="duotone" />
+             <button
+                onClick={() => setShowProfile(true)}
+                className="sm:hidden p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-indigo-500 transition-colors"
+                aria-label="Profile Menu"
+             >
+                <Bank size={20} weight="duotone" />
+             </button>
+             <button onClick={onLogout} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 transition-colors" title="Sign Out">
+               <SignOut size={20} weight="duotone" />
              </button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-10 flex items-start justify-between flex-wrap gap-6"
+            className="mb-6 flex items-start justify-between flex-wrap gap-4"
         >
           <div>
-            <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-slate-900 dark:text-white mb-2 drop-shadow-md">
-              {getGreeting()}, <span className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">{user?.name || "Principal"}</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-1">
+              {getGreeting()}, <span className="gradient-text">{user?.name || "Principal"}</span>
             </h2>
-            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 flex items-center gap-2">
-              Institutional Governance <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></span> Academic Year {currentAcademicYear}
+            <p className="text-sm sm:text-base font-medium text-slate-500 dark:text-slate-400">
+              Institutional Governance Overview • Academic Year {currentAcademicYear}
             </p>
           </div>
           <button
             onClick={handleExportAnnual}
-            className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-[13px] font-bold shadow-[0_8px_20px_rgba(99,102,241,0.3)] border border-white/20 transition-all hover:scale-[1.02] active:scale-95 hover:shadow-[0_12px_25px_rgba(99,102,241,0.4)]"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-lg shadow-indigo-500/30 transition-all active:scale-95"
           >
-            <FilePdf size={20} weight="fill" />
-            Generate NAAC SSR
+            <FilePdf size={18} weight="bold" />
+            Generate NAAC SSR (PDF)
           </button>
         </motion.div>
 
-        {/* Pill-Shaped Glassmorphism Navigation */}
-        <div className="flex overflow-x-auto gap-2 p-2 bg-white/40 dark:bg-slate-800/40 backdrop-blur-xl rounded-full mb-12 hide-scrollbar border border-slate-200 dark:border-white/10 dark:border-t-white/20 shadow-md dark:shadow-lg">
+        {/* Unified Navigation */}
+        <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-xl mb-8 hide-scrollbar">
             {[
               { id: "overview", label: "Overview", icon: ChartBar },
               { id: "leaves", label: "HOD Leaves", icon: EnvelopeOpen },
@@ -456,14 +460,14 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px] font-semibold transition-all whitespace-nowrap ${
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 justify-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id
-                    ? "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-[0_4px_15px_rgba(99,102,241,0.4)] border border-indigo-400/30"
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/5 border border-transparent'
+                    ? "bg-slate-900 text-white shadow-md dark:bg-indigo-600"
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-white/5'
                 }`}
               >
-                <tab.icon size={18} weight={activeTab === tab.id ? "fill" : "duotone"} />
+                <tab.icon size={18} weight={activeTab === tab.id ? "fill" : "regular"} />
                 {tab.label}
               </button>
             ))}
@@ -494,20 +498,20 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                       whileHover={cardHover}
                       key={i}
                       onClick={stat.onClick}
-                      className={`bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 dark:border-t-white/20 rounded-3xl shadow-xl dark:shadow-2xl p-6 relative overflow-hidden group hover:bg-white/80 dark:hover:bg-slate-800/60 transition-all duration-300 ${stat.onClick ? "cursor-pointer" : ""}`}
+                      className={`soft-card p-6 ${stat.onClick ? "cursor-pointer hover:border-indigo-200 dark:hover:border-indigo-500/30" : ""}`}
                     >
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-400">
                           {stat.label}
                         </span>
-                        <div className={`p-2 rounded-2xl bg-white/5 border border-white/10 ${stat.color === 'indigo' ? 'text-indigo-400' : stat.color === 'emerald' ? 'text-emerald-400' : stat.color === 'amber' ? 'text-amber-400' : 'text-rose-400'}`}>
+                        <div className={`p-2 rounded-xl ${stat.color}`}>
                           <stat.icon size={20} weight="duotone" />
                         </div>
                       </div>
-                      <p className="text-3xl font-bold text-white mb-1 drop-shadow-md">
+                      <p className="text-3xl font-extrabold text-slate-900 dark:text-white mb-1">
                         {stat.value}
                       </p>
-                      <p className="text-xs font-medium text-slate-400">{stat.sub}</p>
+                      <p className="text-xs font-medium text-slate-500">{stat.sub}</p>
                     </motion.div>
                   ))}
                </motion.div>
@@ -515,31 +519,31 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
 
             {/* ─── Leaves Tab ─── */}
             {activeTab === "leaves" && (
-                <div className="bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 dark:border-t-white/20 rounded-3xl shadow-xl dark:shadow-2xl p-6 min-h-[400px]">
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">HOD Leave Inbox</h3>
+                <div className="soft-card p-6 min-h-[400px]">
+                  <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mb-6">HOD Leave Inbox</h3>
                   {pendingLeaves.length === 0 ? (
                       <div className="text-center py-16 opacity-50">
-                        <CheckCircle size={48} className="mx-auto mb-4 text-emerald-600 dark:text-emerald-400" weight="duotone"/>
-                        <p className="font-semibold text-slate-800 dark:text-white">All caught up!</p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">No pending HOD leaves require your attention.</p>
+                        <CheckCircle size={48} className="mx-auto mb-4" weight="duotone"/>
+                        <p className="font-semibold">All caught up!</p>
+                        <p className="text-sm">No pending HOD leaves require your attention.</p>
                       </div>
                   ) : (
                       <div className="space-y-4">
                         {pendingLeaves.map(leave => (
-                            <div key={leave.id} className="p-5 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 shadow-inner flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div key={leave.id} className="p-5 rounded-2xl bg-white dark:bg-[#1A202C] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div>
                                     <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                         {leave.applicant_name}
-                                        <span className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 uppercase text-[10px] font-bold tracking-wider">HOD • {leave.applicant_department}</span>
+                                        <span className="soft-badge bg-amber-50 text-amber-600 uppercase text-[10px]">HOD • {leave.applicant_department}</span>
                                     </h4>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-1 mt-1">
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
                                         <span className="font-semibold text-slate-800 dark:text-slate-200">{leave.leave_type}</span>: {new Date(leave.from_date).toLocaleDateString()} to {new Date(leave.to_date).toLocaleDateString()}
                                     </p>
                                     <p className="text-xs text-slate-500">Reason: {leave.reason}</p>
                                 </div>
                                 <div className="flex gap-2 min-w-[200px]">
-                                    <button onClick={() => handleReviewLeave(leave.id, "reject")} className="flex-1 bg-white dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-500/20 text-rose-500 dark:text-rose-400 border border-slate-200 dark:border-white/10 hover:border-rose-300 dark:hover:border-rose-500/30 py-2.5 rounded-2xl text-sm font-semibold transition-all shadow-sm">Reject</button>
-                                    <button onClick={() => handleReviewLeave(leave.id, "approve")} className="flex-1 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white dark:text-slate-900 hover:shadow-[0_4px_15px_rgba(16,185,129,0.4)] border border-emerald-400/30 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-md">Approve</button>
+                                    <button onClick={() => handleReviewLeave(leave.id, "reject")} className="flex-1 btn-danger py-2 rounded-xl text-sm">Reject</button>
+                                    <button onClick={() => handleReviewLeave(leave.id, "approve")} className="flex-1 btn-success py-2 rounded-xl text-sm">Approve</button>
                                 </div>
                             </div>
                         ))}
@@ -551,12 +555,12 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
             {/* ─── Compliance Tab ─── */}
             {activeTab === "compliance" && (
                 <div className="space-y-6">
-                    <div className="flex bg-white/40 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl p-1 mb-6 overflow-x-auto hide-scrollbar shadow-inner">
+                    <div className="flex bg-slate-100 dark:bg-white/5 rounded-xl p-1 mb-4 overflow-x-auto">
                         {['attendance', 'staff', 'grievances', 'activities'].map(tab => (
                             <button 
                                 key={tab} 
                                 onClick={() => setExpandedCompliance(tab)}
-                                className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider rounded-xl transition-all whitespace-nowrap px-4 ${expandedCompliance === tab ? 'bg-indigo-500 shadow-md text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/5'}`}
+                                className={`flex-1 py-2 text-sm font-bold uppercase rounded-xl transition-colors ${expandedCompliance === tab ? 'bg-white dark:bg-indigo-500/15 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
                             >
                                 {tab}
                             </button>
@@ -564,8 +568,8 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                     </div>
 
                     {expandedCompliance === "attendance" && (
-                        <div className="bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 dark:border-t-white/20 rounded-3xl shadow-xl dark:shadow-2xl p-6">
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Department Attendance Compliance</h3>
+                        <div className="soft-card p-6">
+                            <h3 className="text-lg font-extrabold mb-6">Department Attendance Compliance</h3>
                             <div className="h-[400px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     {/* Sort worst compliance to the top */}
@@ -574,17 +578,17 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                                         data={[...attendance].sort((a,b) => a.student_attendance.compliance_rate - b.student_attendance.compliance_rate)}
                                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                                     >
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"} />
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={isDark ? "#334155" : "#e2e8f0"} />
                                         <XAxis type="number" domain={[0, 100]} stroke={isDark ? "#94a3b8" : "#64748b"}/>
                                         <YAxis dataKey="department_id" type="category" width={80} stroke={isDark ? "#94a3b8" : "#64748b"} fontWeight="bold" />
                                         <Tooltip 
-                                            cursor={{fill: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)'}}
-                                            contentStyle={{borderRadius: '16px', border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)', background: isDark ? 'rgba(30,41,59,0.9)' : 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', color: isDark ? '#fff' : '#0f172a', boxShadow: '0 20px 40px -5px rgba(0,0,0,0.3)'}}
+                                            cursor={{fill: isDark ? '#1e293b' : '#f1f5f9'}}
+                                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
                                         />
-                                        <Bar dataKey="student_attendance.compliance_rate" name="Compliance Rate %" radius={[0, 8, 8, 0]}>
+                                        <Bar dataKey="student_attendance.compliance_rate" name="Compliance Rate %" radius={[0, 4, 4, 0]}>
                                             {
                                                 [...attendance].sort((a,b) => a.student_attendance.compliance_rate - b.student_attendance.compliance_rate).map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={entry.student_attendance.compliance_rate < 70 ? '#F43F5E' : '#10B981'} />
+                                                    <Cell key={`cell-${index}`} fill={entry.student_attendance.compliance_rate < 70 ? '#ef4444' : '#10b981'} />
                                                 ))
                                             }
                                         </Bar>
@@ -595,22 +599,22 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                     )}
 
                     {expandedCompliance === "activities" && (
-                        <div className="bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 dark:border-t-white/20 rounded-3xl shadow-xl dark:shadow-2xl p-6">
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                        <div className="soft-card p-6">
+                            <h3 className="text-lg font-extrabold mb-6 flex items-center gap-2">
                                 Escalated Activity Reports 
-                                <span className="px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30 text-xs font-bold">{activityReports.length}</span>
+                                <span className="soft-badge bg-rose-50 text-rose-600">{activityReports.length}</span>
                             </h3>
                             {activityReports.length === 0 ? (
-                                <p className="text-slate-500 dark:text-slate-400 py-4 italic">No escalated reports pending notation.</p>
+                                <p className="text-slate-500 py-4">No escalated reports pending notation.</p>
                             ) : (
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                    {activityReports.map(act => (
-                                       <div key={act.id} className="p-5 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-white/5 shadow-inner flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                       <div key={act.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center">
                                            <div>
-                                               <p className="font-bold text-slate-900 dark:text-white text-lg">{act.event_title} <span className="uppercase text-[10px] ml-2 text-indigo-600 dark:text-indigo-400 font-extrabold tracking-wider bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-500/20">{act.activity_type}</span></p>
-                                               <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">By: <span className="text-slate-800 dark:text-slate-300 font-medium">{act.faculty_name}</span> ({act.department}) • Post-event report accepted by HOD.</p>
+                                               <p className="font-bold">{act.event_title} <span className="uppercase text-[10px] ml-2 text-indigo-500 font-extrabold tracking-wider">{act.activity_type}</span></p>
+                                               <p className="text-sm text-slate-500">By: {act.faculty_name} ({act.department}) • Post-event report accepted by HOD.</p>
                                            </div>
-                                           <button className="bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 border border-slate-300 dark:border-white/10 py-2 px-5 text-sm font-semibold rounded-xl text-slate-800 dark:text-white transition-colors" onClick={() => toast.info("Notation API to be implemented")}>Acknowledge</button>
+                                           <button className="btn-primary py-1.5 px-4 text-xs" onClick={() => toast.info("Notation API to be implemented")}>Acknowledge</button>
                                        </div>
                                    ))}
                                 </div>
@@ -619,17 +623,17 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                     )}
 
                     {expandedCompliance === "staff" && (
-                        <div className="bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 dark:border-t-white/20 rounded-3xl shadow-xl dark:shadow-2xl p-6">
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Staff Profile Completeness</h3>
+                        <div className="soft-card p-6">
+                            <h3 className="text-lg font-extrabold mb-6">Staff Profile Completeness Thresholds</h3>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {staffProfiles.map(s => (
-                                    <div key={s.department_id} className="p-5 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-white/5 shadow-inner">
-                                        <p className="text-2xl font-black text-slate-900 dark:text-white">{s.department_id}</p>
-                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-4 uppercase tracking-wider">Total Faculty: {s.total_faculty}</p>
-                                        <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden border border-slate-300 dark:border-white/5">
-                                            <div className={`h-full rounded-full shadow-[0_0_10px_currentColor] ${s.completeness_percentage < 80 ? 'bg-amber-400 text-amber-400' : 'bg-emerald-400 text-emerald-400'}`} style={{ width: s.completeness_percentage + '%' }}></div>
+                                    <div key={s.department_id} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                                        <p className="text-xl font-black">{s.department_id}</p>
+                                        <p className="text-sm text-slate-500 mb-2">Total Faculty: {s.total_faculty}</p>
+                                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                            <div className={`h-2.5 rounded-full ${s.completeness_percentage < 80 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: s.completeness_percentage + '%' }}></div>
                                         </div>
-                                        <p className="text-[11px] font-bold text-right mt-2 text-slate-600 dark:text-slate-300">{s.completeness_percentage}% Complete</p>
+                                        <p className="text-xs font-bold text-right mt-1">{s.completeness_percentage}% Complete</p>
                                     </div>
                                 ))}
                             </div>
@@ -637,28 +641,27 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                     )}
 
                     {expandedCompliance === "grievances" && (
-                        <div className="bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 dark:border-t-white/20 rounded-3xl shadow-xl dark:shadow-2xl p-6">
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">Pending Grievances <span className="px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30 text-xs font-bold">{grievances.length}</span></h3>
+                        <div className="soft-card p-6">
+                            <h3 className="text-lg font-extrabold mb-6 flex items-center gap-2">Pending Grievances <span className="soft-badge bg-rose-50 text-rose-600">{grievances.length}</span></h3>
                             {grievances.length === 0 ? (
-                                <p className="text-slate-500 dark:text-slate-400 italic">No pending grievances.</p>
+                                <p className="text-slate-500">No pending grievances.</p>
                             ) : (
                                 <div className="space-y-4">
                                     {grievances.map(g => (
-                                        <div key={g.id} className="p-5 border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/5 rounded-2xl relative overflow-hidden group">
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-400 dark:bg-rose-500/50"></div>
-                                            <div className="flex justify-between items-start">
-                                               <h4 className="font-bold text-slate-900 dark:text-white text-lg">{g.subject}</h4>
-                                               <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10 px-2 py-1 rounded-md border border-rose-300 dark:border-rose-500/20">{g.category}</span>
+                                        <div key={g.id} className="p-4 border border-rose-100 dark:border-rose-900/30 bg-rose-50/30 dark:bg-rose-500/5 rounded-xl">
+                                            <div className="flex justify-between">
+                                               <h4 className="font-bold">{g.subject}</h4>
+                                               <span className="text-xs font-bold uppercase tracking-wider text-rose-500">{g.category}</span>
                                             </div>
-                                            <p className="text-sm mt-3 text-slate-700 dark:text-slate-300 leading-relaxed">{g.description}</p>
-                                            <p className="text-xs font-medium mt-4 text-slate-500">Submitted by: <span className="text-slate-700 dark:text-slate-400">{g.submitted_by_name}</span> ({g.submitted_by_role})</p>
-                                            <div className="mt-5">
-                                                <button className="text-xs font-semibold bg-white dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 border border-slate-300 dark:border-white/10 hover:border-indigo-300 dark:hover:border-indigo-500/30 text-indigo-600 dark:text-indigo-300 px-4 py-2 rounded-xl transition-colors shadow-sm" onClick={() => {
+                                            <p className="text-sm mt-2 text-slate-600 dark:text-slate-400">{g.description}</p>
+                                            <p className="text-xs font-bold mt-3 text-slate-400">By: {g.submitted_by_name} ({g.submitted_by_role})</p>
+                                            <div className="mt-4 flex gap-2">
+                                                <button className="text-xs border border-indigo-200 text-indigo-600 px-3 py-1 rounded bg-white hover:bg-indigo-50" onClick={() => {
                                                     const dept = prompt("Enter department to reassign to (e.g. CSE):");
                                                     if (dept) {
                                                         principalAPI.reassignGrievance(g.id, { department_id: dept }).then(() => fetchData()).catch(console.error);
                                                     }
-                                                }}>Reassign Ticket</button>
+                                                }}>Reassign</button>
                                             </div>
                                         </div>
                                     ))}
@@ -672,34 +675,34 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
             {/* ─── Academic Performance Tab ─── */}
             {activeTab === "academics" && (
                 <div className="space-y-6">
-                    <div className="bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 dark:border-t-white/20 rounded-3xl shadow-xl dark:shadow-2xl p-6">
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Pass/Fail Demographics (Sem {currentSemester})</h3>
+                    <div className="soft-card p-6">
+                        <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mb-6">Pass/Fail Demographics (Sem {currentSemester})</h3>
                         <div className="h-[400px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
                                     data={academicPerf}
                                     margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                                 >
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"} />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#334155" : "#e2e8f0"} />
                                     <XAxis dataKey="department_id" stroke={isDark ? "#94a3b8" : "#64748b"} fontWeight="bold"/>
                                     <YAxis stroke={isDark ? "#94a3b8" : "#64748b"} />
                                     <Tooltip 
-                                        cursor={{fill: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)'}}
-                                        contentStyle={{borderRadius: '16px', border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)', background: isDark ? 'rgba(30,41,59,0.9)' : 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', color: isDark ? '#fff' : '#0f172a', boxShadow: '0 20px 40px -5px rgba(0,0,0,0.3)'}}
+                                        cursor={{fill: 'transparent'}}
+                                        contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
                                     />
                                     <Legend wrapperStyle={{paddingTop: '20px'}}/>
-                                    <Bar dataKey="passed_students" name="Passed" fill="#10B981" radius={[8, 8, 0, 0]} />
-                                    <Bar dataKey="failed_students" name="Failed" fill="#F43F5E" radius={[8, 8, 0, 0]} />
+                                    <Bar dataKey="passed_students" name="Passed" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="failed_students" name="Failed" fill="#ef4444" radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
                     </div>
 
-                    <div className="bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 dark:border-t-white/20 rounded-3xl shadow-xl dark:shadow-2xl p-6">
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">CIA Publication Pipeline</h3>
-                        <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 shadow-inner">
-                           <table className="w-full text-sm text-left text-slate-700 dark:text-slate-300">
-                               <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 uppercase font-bold text-xs border-b border-slate-200 dark:border-white/10">
+                    <div className="soft-card p-6">
+                        <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mb-4">CIA Publication Pipeline</h3>
+                        <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+                           <table className="w-full text-sm text-left">
+                               <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 uppercase font-bold text-xs">
                                    <tr>
                                        <th className="px-6 py-4">Department</th>
                                        <th className="px-6 py-4">Subject Code</th>
@@ -707,25 +710,25 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
                                        <th className="px-6 py-4">Entry Volume</th>
                                    </tr>
                                </thead>
-                               <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+                               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50 bg-white dark:bg-[#1A202C]">
                                    {ciaStatus.map((row, i) => (
-                                       <tr key={i} className="hover:bg-slate-100/50 dark:hover:bg-white/5 transition-colors">
-                                            <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{row.department_id}</td>
-                                            <td className="px-6 py-4 font-mono text-indigo-600 dark:text-indigo-300">{row.subject_code}</td>
+                                       <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                                            <td className="px-6 py-4 font-bold">{row.department_id}</td>
+                                            <td className="px-6 py-4">{row.subject_code}</td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border
-                                                    ${row.status === 'published' ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30' :
-                                                      row.status === 'submitted' ? 'bg-amber-50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/30' :
-                                                      'bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-500/30'}`}>
+                                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase tracking-wide
+                                                    ${row.status === 'published' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
+                                                      row.status === 'submitted' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
+                                                      'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
                                                     {row.status}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{row.count} entries</td>
+                                            <td className="px-6 py-4 text-slate-500">{row.count} entries</td>
                                        </tr>
                                    ))}
                                    {ciaStatus.length === 0 && (
                                        <tr>
-                                           <td colSpan="4" className="px-6 py-8 text-center text-slate-500 italic">No CIA assignments tracked for the current academic year.</td>
+                                           <td colSpan="4" className="px-6 py-8 text-center text-slate-500">No CIA assignments tracked for the current academic year.</td>
                                        </tr>
                                    )}
                                </tbody>
@@ -738,50 +741,50 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
             {/* ─── Institutional Profile Tab ─── */}
             {activeTab === "institution" && (
                 <div className="space-y-6">
-                    <div className="bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 dark:border-t-white/20 rounded-3xl shadow-xl dark:shadow-2xl p-6">
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Institutional Governance Settings</h3>
-                            <button className="bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white shadow-[0_4px_15px_rgba(99,102,241,0.4)] border border-indigo-400/30 py-2.5 px-6 rounded-2xl text-sm font-bold transition-all" onClick={() => toast.success("Save functionality connected.")}>Save Changes</button>
+                    <div className="soft-card p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100">Institutional Governance Settings</h3>
+                            <button className="btn-primary py-2 px-6" onClick={() => toast.success("Save functionality connected.")}>Save Changes</button>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
-                                <h4 className="font-bold mb-3 flex items-center gap-2 text-slate-900 dark:text-white"><Buildings weight="duotone" className="text-indigo-600 dark:text-indigo-400"/> Infrastructure Map</h4>
+                                <h4 className="font-bold mb-3 flex items-center gap-2"><Buildings weight="duotone" className="text-indigo-500"/> Infrastructure Map</h4>
                                 <textarea 
-                                    className="w-full h-40 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 p-5 font-mono text-xs text-indigo-600 dark:text-indigo-200 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 shadow-inner leading-relaxed" 
+                                    className="w-full h-32 rounded-xl bg-slate-50 dark:bg-slate-800 border-none p-4 font-mono text-sm resize-none focus:ring-2 focus:ring-indigo-500" 
                                     readOnly 
                                     value={JSON.stringify(institutionProfile?.infrastructure || {}, null, 2)}
                                 />
-                                <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-3">Format: JSON Key-Value pairs.</p>
+                                <p className="text-xs text-slate-400 mt-2">Format: JSON Key-Value pairs.</p>
                             </div>
                             <div>
-                                <h4 className="font-bold mb-3 flex items-center gap-2 text-slate-900 dark:text-white"><CheckCircle weight="duotone" className="text-emerald-600 dark:text-emerald-400"/> Institutional Recognitions</h4>
+                                <h4 className="font-bold mb-3 flex items-center gap-2"><CheckCircle weight="duotone" className="text-emerald-500"/> Institutional Recognitions</h4>
                                 <textarea 
-                                    className="w-full h-40 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 p-5 font-mono text-xs text-emerald-600 dark:text-emerald-200 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 shadow-inner leading-relaxed" 
+                                    className="w-full h-32 rounded-xl bg-slate-50 dark:bg-slate-800 border-none p-4 font-mono text-sm resize-none focus:ring-2 focus:ring-emerald-500" 
                                     readOnly 
                                     value={JSON.stringify(institutionProfile?.recognitions || [], null, 2)}
                                 />
-                                 <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-3">NAAC, NBA, NIRF Accreditations Map.</p>
+                                 <p className="text-xs text-slate-400 mt-2">NAAC, NBA, NIRF Accreditations Map.</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Placeholder Views */}
-                        <div className="bg-white/40 dark:bg-slate-800/20 backdrop-blur-md border border-dashed border-slate-300 dark:border-white/20 rounded-3xl p-6 flex flex-col items-center justify-center text-center h-48">
-                             <NotePencil size={32} weight="duotone" className="text-slate-500 mb-4" />
-                             <h4 className="font-bold text-slate-900 dark:text-white mb-2">Administrative Tasks</h4>
-                             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Pipeline Blocked</p>
+                        <div className="soft-card p-6 border-dashed border-2 border-slate-200 dark:border-slate-800 bg-transparent flex flex-col items-center justify-center text-center">
+                             <NotePencil size={32} weight="duotone" className="text-slate-400 mb-3" />
+                             <h4 className="font-bold mb-1">Administrative Tasks</h4>
+                             <p className="text-xs text-slate-500">Pipeline Blocked.</p>
                         </div>
-                        <div className="bg-white/40 dark:bg-slate-800/20 backdrop-blur-md border border-dashed border-slate-300 dark:border-white/20 rounded-3xl p-6 flex flex-col items-center justify-center text-center h-48">
-                             <CalendarCheck size={32} weight="duotone" className="text-slate-500 mb-4" />
-                             <h4 className="font-bold text-slate-900 dark:text-white mb-2">Department Meetings</h4>
-                             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Pipeline Blocked</p>
+                        <div className="soft-card p-6 border-dashed border-2 border-slate-200 dark:border-slate-800 bg-transparent flex flex-col items-center justify-center text-center">
+                             <CalendarCheck size={32} weight="duotone" className="text-slate-400 mb-3" />
+                             <h4 className="font-bold mb-1">Department Meetings</h4>
+                             <p className="text-xs text-slate-500">Pipeline Blocked.</p>
                         </div>
-                        <div className="bg-white/40 dark:bg-slate-800/20 backdrop-blur-md border border-dashed border-slate-300 dark:border-white/20 rounded-3xl p-6 flex flex-col items-center justify-center text-center h-48">
-                             <ChartLineUp size={32} weight="duotone" className="text-slate-500 mb-4" />
-                             <h4 className="font-bold text-slate-900 dark:text-white mb-2">Placement Overview</h4>
-                             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Pipeline Blocked</p>
+                        <div className="soft-card p-6 border-dashed border-2 border-slate-200 dark:border-slate-800 bg-transparent flex flex-col items-center justify-center text-center">
+                             <ChartLineUp size={32} weight="duotone" className="text-slate-400 mb-3" />
+                             <h4 className="font-bold mb-1">Placement Overview</h4>
+                             <p className="text-xs text-slate-500">Pipeline Blocked.</p>
                         </div>
                     </div>
                 </div>
@@ -790,68 +793,66 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
             {/* ─── AI Insights Tab ─── */}
             {activeTab === "insights" && (
                 <div className="space-y-6">
-                    <div className="flex justify-between items-center mb-6">
-                       <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                           <Sparkle weight="fill" className="text-indigo-400" /> Conversational Insights
+                    <div className="flex justify-between items-center mb-4">
+                       <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                           <Sparkle weight="fill" className="text-indigo-500" /> Conversational Insights
                        </h3>
                        <button 
                            onClick={() => { setIsChatting(!isChatting); setActivePinData(null); }} 
-                           className="bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white shadow-[0_4px_15px_rgba(99,102,241,0.4)] border border-indigo-400/30 py-2.5 px-6 rounded-2xl text-sm font-bold transition-all"
+                           className="btn-primary py-2 px-4 shadow-sm text-sm"
                        >
                            {isChatting ? "View Pinned Dashboards" : "New Query"}
                        </button>
                     </div>
 
                     {isChatting ? (
-                        <div className="flex overflow-hidden rounded-3xl border border-white/10 shadow-2xl">
+                        <div className="flex overflow-hidden">
                              <InsightsChat user={user} activeCollegeId={null} onPinsChanged={refreshPins} />
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                           <div className="md:col-span-1 space-y-4">
-                               <h4 className="font-bold text-slate-400 uppercase tracking-widest text-[10px] mb-2">Pinned Dashboards</h4>
+                           <div className="md:col-span-1 space-y-3">
+                               <h4 className="font-bold text-slate-500 uppercase tracking-widest text-xs mb-3">Pinned Dashboards</h4>
                                {pins.length === 0 ? (
-                                   <div className="p-5 bg-slate-800/20 backdrop-blur-md border border-dashed border-white/10 rounded-2xl text-center shadow-inner">
-                                       <p className="text-sm font-semibold text-slate-400">No pinned insights yet.</p>
-                                       <p className="text-[10px] uppercase font-bold tracking-widest text-indigo-400 mt-3 hover:text-indigo-300 cursor-pointer transition-colors" onClick={() => setIsChatting(true)}>Try asking a question to see magic!</p>
+                                   <div className="p-4 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center">
+                                       <p className="text-sm text-slate-500">No pinned insights yet.</p>
+                                       <p className="text-xs text-slate-400 mt-2 hover:text-indigo-500 cursor-pointer" onClick={() => setIsChatting(true)}>Try asking a question to see magic!</p>
                                    </div>
                                ) : (
                                    pins.map(pin => (
                                        <div 
                                           key={pin.id} 
                                           onClick={() => executePin(pin)}
-                                          className="group p-5 bg-slate-900/50 backdrop-blur-md border border-white/5 shadow-inner rounded-2xl cursor-pointer hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all truncate"
+                                          className="group p-4 bg-white dark:bg-[#1A202C] border border-slate-100 dark:border-slate-800 rounded-xl cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all truncate"
                                        >
                                           <div className="flex justify-between items-start">
-                                              <p className="font-bold text-white text-sm truncate pr-2 leading-tight" title={pin.title}>{pin.title}</p>
+                                              <p className="font-bold text-sm truncate pr-2" title={pin.title}>{pin.title}</p>
                                               <button 
                                                   onClick={(e) => { e.stopPropagation(); deletePin(pin.id); }} 
-                                                  className="text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                  className="text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                               >
-                                                  <Trash size={16} weight="duotone" />
+                                                  <Trash size={16} />
                                               </button>
                                           </div>
-                                          <p className="text-[11px] font-medium text-slate-400 truncate mt-2 leading-relaxed" title={pin.nl_query}>"{pin.nl_query}"</p>
+                                          <p className="text-xs text-slate-500 truncate mt-1" title={pin.nl_query}>"{pin.nl_query}"</p>
                                        </div>
                                    ))
                                )}
                            </div>
                            
-                           <div className="md:col-span-3 bg-slate-800/40 backdrop-blur-xl border border-white/10 border-t-white/20 rounded-3xl shadow-2xl p-6 min-h-[400px] flex flex-col">
+                           <div className="md:col-span-3 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 min-h-[400px]">
                                {pinLoading ? (
-                                   <div className="h-full flex-1 flex flex-col items-center justify-center text-slate-400">
-                                       <div className="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-400 rounded-full animate-spin mb-5 shadow-[0_0_15px_rgba(99,102,241,0.5)]"></div>
-                                       <p className="font-semibold tracking-wide">Running query securely...</p>
+                                   <div className="h-full flex flex-col items-center justify-center text-slate-500">
+                                       <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                                       <p>Running query securely...</p>
                                    </div>
                                ) : activePinData ? (
-                                   <div className="flex-1 rounded-2xl overflow-hidden bg-slate-900/50 border border-white/5 p-4">
-                                       <InsightsCanvas result={activePinData} />
-                                   </div>
+                                   <InsightsCanvas result={activePinData} />
                                ) : (
-                                   <div className="h-full flex-1 flex flex-col items-center justify-center text-slate-500 dark:opacity-80">
-                                       <Sparkle size={56} weight="duotone" className="mb-5 text-indigo-300 dark:text-indigo-400/50 dark:drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
-                                       <p className="font-bold text-slate-800 dark:text-slate-300 text-lg mb-1">Select a pinned insight</p>
-                                       <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Data is queried in real-time instantly without AI overhead.</p>
+                                   <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-60">
+                                       <Sparkle size={48} weight="duotone" className="mb-4 text-indigo-400" />
+                                       <p className="font-bold">Select a pinned insight to view data</p>
+                                       <p className="text-sm">Data is queried in real-time instantly without AI overhead.</p>
                                    </div>
                                )}
                            </div>
