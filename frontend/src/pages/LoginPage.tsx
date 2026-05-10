@@ -143,7 +143,7 @@ const LoginPage = ({ onLogin }) => {
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
-              className={`${tenant.logo ? 'w-20 h-20' : 'w-16 h-16'} bg-white/20 backdrop-blur-sm ${tenant.logo ? 'rounded-full p-1' : 'rounded-2xl'} flex items-center justify-center mb-6`}
+              className={`${tenant.logo ? 'w-24 h-24 bg-white shadow-2xl rounded-full p-1.5' : 'w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl'} flex items-center justify-center mb-6`}
             >
               {tenant.logo ? (
                 <img src={tenant.logo} alt={`${tenant.tenantName} logo`} className="w-full h-full object-contain rounded-full" />
