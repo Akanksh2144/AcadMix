@@ -16,91 +16,70 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
 };
 
-const KnowledgeNetworkBackground = () => {
-  const nodes = [
-    { id: 1, x: 10, y: 20 }, { id: 2, x: 80, y: 15 }, { id: 3, x: 45, y: 40 },
-    { id: 4, x: 90, y: 60 }, { id: 5, x: 25, y: 75 }, { id: 6, x: 65, y: 85 },
-    { id: 7, x: 30, y: 95 }, { id: 8, x: 75, y: 35 }, { id: 9, x: 15, y: 50 },
-    { id: 10, x: 55, y: 10 }, { id: 11, x: 5, y: 80 }, { id: 12, x: 95, y: 25 },
-    { id: 13, x: 20, y: 35 }, { id: 14, x: 40, y: 20 }, { id: 15, x: 60, y: 25 },
-    { id: 16, x: 35, y: 60 }, { id: 17, x: 75, y: 65 }, { id: 18, x: 50, y: 55 },
-    { id: 19, x: 85, y: 80 }, { id: 20, x: 10, y: 90 }, { id: 21, x: 45, y: 80 },
-    { id: 22, x: 5, y: 40 }, { id: 23, x: 30, y: 10 }, { id: 24, x: 70, y: 5 },
-    { id: 25, x: 95, y: 45 }, { id: 26, x: 80, y: 50 }, { id: 27, x: 55, y: 95 },
-    { id: 28, x: 15, y: 65 }, { id: 29, x: 90, y: 95 }, { id: 30, x: 40, y: 100 }
-  ];
-  const connections = [
-    [1, 3], [1, 9], [3, 8], [2, 8], [8, 4], [3, 5], [9, 5], [5, 7], 
-    [6, 7], [4, 6], [10, 2], [10, 3], [9, 11], [11, 5], [2, 12], [12, 4],
-    [1, 13], [13, 14], [14, 3], [14, 10], [10, 15], [15, 2], [15, 8],
-    [3, 18], [18, 16], [16, 5], [16, 9], [18, 17], [17, 8], [17, 4],
-    [17, 6], [18, 6], [6, 19], [19, 4], [19, 12], [7, 21], [21, 18],
-    [21, 6], [21, 27], [27, 7], [27, 19], [11, 20], [20, 7], [9, 22],
-    [22, 1], [14, 23], [23, 1], [10, 24], [24, 2], [12, 25], [25, 4],
-    [25, 26], [26, 17], [26, 8], [5, 28], [28, 22], [19, 29], [29, 27],
-    [21, 30], [30, 7], [30, 27], [13, 3], [15, 3], [16, 13], [28, 16],
-    [2, 24], [10, 14], [3, 16], [17, 19], [12, 17], [20, 11], [22, 13]
-  ];
-
+const PlayfulBackground = () => {
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-slate-50">
-      {/* Network Layer 1 - Slow drift */}
-      <motion.div 
-        animate={{ x: ["-2%", "2%", "-2%"], y: ["-2%", "2%", "-2%"] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute inset-0"
-      >
-        <svg className="absolute w-full h-full opacity-60">
-          {connections.map(([n1, n2], i) => {
-            const node1 = nodes.find(n => n.id === n1);
-            const node2 = nodes.find(n => n.id === n2);
-            if (!node1 || !node2) return null;
-            return <line key={`line1-${i}`} x1={`${node1.x}%`} y1={`${node1.y}%`} x2={`${node2.x}%`} y2={`${node2.y}%`} stroke="#818cf8" strokeWidth="1" strokeOpacity="0.15" />
-          })}
-          {nodes.map(n => (
-            <circle key={`node1-${n.id}`} cx={`${n.x}%`} cy={`${n.y}%`} r="3" fill="#818cf8" fillOpacity="0.4" />
-          ))}
-          {/* Active pulsing nodes */}
-          <motion.circle animate={{ r: [3, 6, 3], fillOpacity: [0.4, 0.8, 0.4] }} transition={{ duration: 4, repeat: Infinity }} cx={`${nodes[2].x}%`} cy={`${nodes[2].y}%`} fill="#818cf8" />
-          <motion.circle animate={{ r: [3, 5, 3], fillOpacity: [0.4, 0.9, 0.4] }} transition={{ duration: 5, repeat: Infinity, delay: 2 }} cx={`${nodes[7].x}%`} cy={`${nodes[7].y}%`} fill="#c084fc" />
-          <motion.circle animate={{ r: [3, 7, 3], fillOpacity: [0.3, 0.9, 0.3] }} transition={{ duration: 3.5, repeat: Infinity, delay: 1 }} cx={`${nodes[15].x}%`} cy={`${nodes[15].y}%`} fill="#38bdf8" />
-          <motion.circle animate={{ r: [2, 5, 2], fillOpacity: [0.4, 1, 0.4] }} transition={{ duration: 4.5, repeat: Infinity, delay: 3 }} cx={`${nodes[22].x}%`} cy={`${nodes[22].y}%`} fill="#818cf8" />
-          <motion.circle animate={{ r: [3, 6, 3], fillOpacity: [0.3, 0.8, 0.3] }} transition={{ duration: 6, repeat: Infinity, delay: 0.5 }} cx={`${nodes[28].x}%`} cy={`${nodes[28].y}%`} fill="#c084fc" />
-        </svg>
-      </motion.div>
+    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-slate-50/50">
+      {/* Soft gradient wash */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/80" />
 
-      {/* Network Layer 2 - Scaled, offset, different color drift */}
-      <motion.div 
-        animate={{ x: ["2%", "-2%", "2%"], y: ["2%", "-2%", "2%"], scale: 1.5, rotate: 5 }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute inset-0 origin-center"
-      >
-        <svg className="absolute w-full h-full opacity-30">
-          {connections.map(([n1, n2], i) => {
-            const node1 = nodes.find(n => n.id === n1);
-            const node2 = nodes.find(n => n.id === n2);
-            if (!node1 || !node2) return null;
-            return <line key={`line2-${i}`} x1={`${node1.x}%`} y1={`${node1.y}%`} x2={`${node2.x}%`} y2={`${node2.y}%`} stroke="#c084fc" strokeWidth="1" strokeOpacity="0.2" />
-          })}
-          {nodes.map(n => (
-            <circle key={`node2-${n.id}`} cx={`${n.x}%`} cy={`${n.y}%`} r="4" fill="#c084fc" fillOpacity="0.3" />
-          ))}
-        </svg>
-      </motion.div>
+      {/* Floating Pill - Coral */}
+      <motion.div
+        animate={{ y: ["0%", "-20%", "0%"], rotate: [0, 15, 0], x: ["0%", "5%", "0%"] }}
+        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-[15%] left-[10%] w-32 h-12 rounded-full border-4 border-rose-200 bg-rose-100/50 backdrop-blur-sm"
+      />
 
-      {/* Soft overlay gradient to ensure text readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-50/80"></div>
+      {/* Floating Circle - Mint */}
+      <motion.div
+        animate={{ y: ["0%", "30%", "0%"], rotate: [0, -20, 0], scale: [1, 1.1, 1] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        className="absolute bottom-[20%] left-[15%] w-24 h-24 rounded-full bg-emerald-200/40 backdrop-blur-md"
+      />
+
+      {/* Floating Triangle - Lavender */}
+      <motion.svg
+        animate={{ y: ["0%", "-30%", "0%"], rotate: [0, 45, 0] }}
+        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute top-[25%] right-[15%] w-28 h-28 opacity-60 text-indigo-200"
+        viewBox="0 0 100 100" fill="currentColor"
+      >
+        <path d="M50 10 L90 80 L10 80 Z" strokeLinejoin="round" strokeWidth="6" stroke="currentColor" fill="currentColor" />
+      </motion.svg>
+
+      {/* Floating Ring - Sky Blue */}
+      <motion.div
+        animate={{ y: ["0%", "25%", "0%"], rotate: [0, -30, 0], x: ["0%", "-10%", "0%"] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+        className="absolute bottom-[15%] right-[20%] w-20 h-20 rounded-full border-8 border-sky-200/60 backdrop-blur-sm"
+      />
+
+      {/* Floating Squiggle - Amber */}
+      <motion.svg
+        animate={{ y: ["0%", "15%", "0%"], rotate: [0, 10, 0] }}
+        transition={{ duration: 16, repeat: Infinity, ease: "easeInOut", delay: 5 }}
+        className="absolute top-[45%] left-[5%] w-20 h-20 opacity-50 text-amber-300"
+        viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round"
+      >
+        <path d="M10,50 Q25,20 50,50 T90,50" />
+      </motion.svg>
+
+      {/* Another Pill - Fuchsia */}
+      <motion.div
+        animate={{ y: ["0%", "-20%", "0%"], rotate: [45, 20, 45] }}
+        transition={{ duration: 19, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+        className="absolute top-[55%] right-[8%] w-16 h-40 rounded-full bg-fuchsia-200/30 backdrop-blur-md"
+      />
       
-      {/* Animated Ambient Orbs for premium SaaS feel */}
+      {/* Massive ambient blurred orbs to keep it premium */}
       <motion.div 
-        animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-[-5%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-br from-indigo-400/10 to-purple-400/10 blur-[100px]"
+        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-yellow-100/40 to-rose-100/40 blur-[100px] mix-blend-multiply"
       />
       <motion.div 
-        animate={{ x: [0, -40, 0], y: [0, 50, 0] }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-[-10%] left-[-10%] w-[45vw] h-[45vw] rounded-full bg-gradient-to-tr from-cyan-400/10 to-blue-500/10 blur-[120px]"
+        animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
+        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        className="absolute bottom-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-tr from-cyan-100/40 to-indigo-100/40 blur-[100px] mix-blend-multiply"
       />
     </div>
   );
@@ -194,8 +173,8 @@ const LoginPage = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans">
-      {/* EdTech Knowledge Network Background */}
-      <KnowledgeNetworkBackground />
+      {/* Playful EdTech Background */}
+      <PlayfulBackground />
 
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.98 }}

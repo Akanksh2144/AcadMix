@@ -10,6 +10,7 @@ import NAACMatrix from '../components/accreditation/NAACMatrix';
 import NBACoPoMatrix from '../components/accreditation/NBACoPoMatrix';
 import NBADashboard from '../components/accreditation/NBADashboard';
 import NEPTracker from '../components/accreditation/NEPTracker';
+import NIRFMatrix from '../components/accreditation/NIRFMatrix';
 import CampusMap from '../components/campus/CampusMap';
 
 
@@ -483,6 +484,7 @@ const NodalOfficerDashboard = ({ navigate, user, onLogout }) => {
                 { id: 'naac', label: 'NAAC' },
                 { id: 'nba', label: 'NBA CO-PO' },
                 { id: 'nep', label: 'NEP 2020' },
+                { id: 'nirf', label: 'NIRF DCS' },
               ].map(st => (
                 <button
                   key={st.id}
@@ -507,6 +509,7 @@ const NodalOfficerDashboard = ({ navigate, user, onLogout }) => {
               </div>
             )}
             {complianceSubTab === 'nep' && <NEPTracker viewMode="nodal" collegeId={activeCollegeId} />}
+            {complianceSubTab === 'nirf' && <NIRFMatrix viewMode="nodal" collegeId={activeCollegeId} />}
           </motion.div>
         )}
 

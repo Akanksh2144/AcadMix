@@ -544,7 +544,16 @@ async def generate_accreditation_report(
             raise HTTPException(status_code=500, detail=f"Failed to initialize background worker queue: {str(e)}")
     
     try:
-        task_name = "generate_naac_ssr_task" if req.report_type == "NAAC" else "generate_nba_sar_task"
+        if req.report_type == "NAAC":
+            task_name = "generate_naac_ssr_task"
+        elif req.report_type == "NBA":
+            task_name = "generate_nba_sar_task"
+        elif req.report_type == "NIRF":
+            task_name = "generate_nirf_dcs_task"
+        elif req.report_type == "NEP":
+            task_name = "generate_nep_compliance_task"
+        else:
+            task_name = "generate_naac_ssr_task"
         logger.error(f"ATTEMPTING TO ENQUEUE TASK {task_name} for JOB {job_id_str}")
         
         # Force the job ID to be the same as DB job ID

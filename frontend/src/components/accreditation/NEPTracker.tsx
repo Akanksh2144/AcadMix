@@ -145,14 +145,64 @@ const NEPTracker: React.FC<NEPTrackerProps> = ({ viewMode, collegeId }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <Student size={24} weight="duotone" className="text-violet-500" />
-          NEP 2020 Compliance Tracker
-        </h2>
-        <p className="text-sm text-slate-500 mt-1">
-          {viewMode === 'principal' ? 'Institutional NEP adoption trends' : 'Student-level compliance gaps'}
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Student size={24} weight="duotone" className="text-violet-500" />
+            NEP 2020 Compliance Tracker
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">
+            {viewMode === 'principal' ? 'Institutional NEP adoption trends' : 'Student-level compliance gaps'}
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={async () => {
+              try {
+                toast.loading('Queuing NEP Compliance Report...', { id: 'nep_report' });
+                const res = await accreditationAPI.generateReport({
+                  report_type: 'NEP',
+                  academic_year: '2024-2025'
+                });
+                toast.loading(`Job queued! Generating Report...`, { id: 'nep_report' });
+                
+                const jobId = res.data?.job_id || res.job_id;
+                if (!jobId) {
+                   toast.success('Job queued successfully, but job tracking ID was not returned.', { id: 'nep_report' });
+                   return;
+                }
+                
+                const pollInterval = setInterval(async () => {
+                  try {
+                    const statusRes = await accreditationAPI.getReportStatus(jobId);
+                    const status = statusRes.data?.status || statusRes.status;
+                    const reportUrl = statusRes.data?.report_url || statusRes.report_url;
+                    
+                    if (status === 'COMPLETED' || status === 'completed') {
+                       clearInterval(pollInterval);
+                       toast.success('NEP Report generation complete! Downloading...', { id: 'nep_report' });
+                       if (reportUrl) {
+                          window.open(reportUrl, '_blank');
+                       }
+                    } else if (status === 'FAILED' || status === 'failed') {
+                       clearInterval(pollInterval);
+                       toast.error('Report generation failed. Please check backend logs.', { id: 'nep_report' });
+                    }
+                  } catch (e) {
+                     clearInterval(pollInterval);
+                     toast.error('Connection lost while checking report status.', { id: 'nep_report' });
+                  }
+                }, 3000);
+              } catch (err: any) {
+                toast.error(`Failed to queue report: ${formatApiError(err)}`, { id: 'nep_report' });
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-violet-500/30 transition-all"
+          >
+            <BookOpen size={18} weight="bold" />
+            Generate NEP Report
+          </button>
+        </div>
       </div>
 
       {/* Progress Rings */}

@@ -820,7 +820,12 @@ async def notify_results_task(ctx, college_id: str, semester: int, student_ids: 
 # WORKER SETTINGS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-from app.workers.pdf_generator import generate_naac_ssr_task, generate_nba_sar_task
+from app.workers.pdf_generator import (
+    generate_naac_ssr_task, 
+    generate_nba_sar_task,
+    generate_nirf_dcs_task,
+    generate_nep_compliance_task
+)
 
 class WorkerSettings:
     functions = [
@@ -840,6 +845,8 @@ class WorkerSettings:
         # Accreditation tasks
         generate_naac_ssr_task,
         generate_nba_sar_task,
+        generate_nirf_dcs_task,
+        generate_nep_compliance_task,
     ]
     
     # Scheduled background jobs
