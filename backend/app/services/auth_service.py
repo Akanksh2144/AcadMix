@@ -209,9 +209,13 @@ class AuthService:
             user_id = payload.get("sub")
             
             if redis_client and jti:
-                await redis_client.setex(f"revoked_refresh:{jti}", 604800, "revoked")
-                if user_id:
-                    await redis_client.delete(f"session:active:{user_id}:{jti}")
+                try:
+                    await redis_client.setex(f"revoked_refresh:{jti}", 604800, "revoked")
+                    if user_id:
+                        await redis_client.delete(f"session:active:{user_id}:{jti}")
+                except Exception as e:
+                    import logging
+                    logging.getLogger("acadmix.security").warning(f"Redis unavailable during logout for jti={jti}: {e}")
                 
             if user_id:
                 # Need college_id, fetch user
@@ -251,11 +255,17 @@ class AuthService:
             user_id = payload["sub"]
 
             if redis_client:
-                if await redis_client.exists(f"revoked_refresh:{jti}"):
-                    raise AuthenticationError("Refresh token revoked")
-                # Intercept logic for Sliding Session 
-                if not await redis_client.exists(f"session:active:{user_id}:{jti}"):
-                    raise AuthenticationError("Session expired due to inactivity")
+                try:
+                    if await redis_client.exists(f"revoked_refresh:{jti}"):
+                        raise AuthenticationError("Refresh token revoked")
+                    # Intercept logic for Sliding Session 
+                    if not await redis_client.exists(f"session:active:{user_id}:{jti}"):
+                        raise AuthenticationError("Session expired due to inactivity")
+                except AuthenticationError:
+                    raise
+                except Exception as e:
+                    import logging
+                    logging.getLogger("acadmix.security").warning(f"Redis unavailable during refresh for jti={jti}: {e}. Bypassing session check.")
 
             result = await self.db.execute(
                 select(models.User).where(models.User.id == user_id)
