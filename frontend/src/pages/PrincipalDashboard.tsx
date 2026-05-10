@@ -345,7 +345,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors relative"
+                className="w-10 h-10 flex items-center justify-center rounded-[14px] bg-white border border-slate-200 shadow-sm hover:bg-slate-50 dark:bg-[#1A202C] dark:border-slate-700 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-all relative"
                 aria-label="Notifications"
               >
                 <Bell size={20} weight={showNotifications ? "fill" : "duotone"} />
@@ -395,30 +395,30 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={toggleTheme}
-              className="p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+              className="w-10 h-10 flex items-center justify-center rounded-[14px] bg-white border border-slate-200 shadow-sm hover:bg-slate-50 dark:bg-[#1A202C] dark:border-slate-700 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-all"
             >
               {isDark ? <Sun size={20} weight="duotone" /> : <Moon size={20} weight="duotone" />}
             </motion.button>
             <button
-               onClick={() => setShowProfile(true)}
-               className="hidden sm:flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors rounded-2xl px-4 py-2 cursor-pointer"
+                onClick={() => setShowProfile(true)}
+                className="hidden sm:flex items-center gap-3 bg-slate-50/80 hover:bg-slate-100 dark:bg-[#1A202C] dark:border-slate-700 dark:hover:bg-slate-800 transition-all rounded-full px-4 py-2 cursor-pointer"
              >
-               <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
-                 <Bank size={14} weight="bold" className="text-indigo-600" />
+               <div className="w-9 h-9 rounded-full bg-indigo-100/80 dark:bg-indigo-500/20 flex items-center justify-center">
+                 <Bank size={18} weight="bold" className="text-indigo-600 dark:text-indigo-400" />
                </div>
-               <div className="text-right">
-                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{user?.name}</p>
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{user?.designation || "Principal"}</p>
+               <div className="text-left pr-2">
+                 <p className="text-[15px] font-extrabold text-slate-800 dark:text-slate-100 leading-tight tracking-tight">{user?.name}</p>
+                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{user?.designation || "Principal"}</p>
                </div>
              </button>
              <button
                 onClick={() => setShowProfile(true)}
-                className="sm:hidden p-2.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 text-indigo-500 transition-colors"
+                className="sm:hidden w-10 h-10 flex items-center justify-center rounded-[14px] bg-white border border-slate-200 shadow-sm hover:bg-slate-50 dark:bg-[#1A202C] dark:border-slate-700 text-indigo-500 transition-all"
                 aria-label="Profile Menu"
              >
                 <Bank size={20} weight="duotone" />
              </button>
-             <button onClick={onLogout} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 transition-colors" title="Sign Out">
+             <button onClick={onLogout} className="w-10 h-10 flex items-center justify-center rounded-[14px] bg-white border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 dark:bg-[#1A202C] dark:border-slate-700 dark:hover:bg-rose-500/10 text-rose-500 transition-all" title="Sign Out">
                <SignOut size={20} weight="duotone" />
              </button>
           </div>
