@@ -23,10 +23,6 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-html.dark body {
-  background-color: #0B0F19;
-  color: #CBD5E1;
-}
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Nunito', system-ui, sans-serif;
@@ -108,7 +104,15 @@ h1, h2, h3, h4, h5, h6 {
      INPUTS
      ══════════════════════════════════════════════ */
   .soft-input {
-    @apply bg-slate-50 border border-slate-200/60 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 focus:bg-white transition-all outline-none;
+    @apply bg-slate-50 border border-slate-200/60 rounded-xl px-4 py-3 focus:bg-white transition duration-200 outline-none;
+    box-shadow: 0 0 0 rgba(0,0,0,0);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .soft-input:focus, .soft-input:focus-visible {
+    border-color: #818cf8;
+    outline: none !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
   }
 
   /* ══════════════════════════════════════════════
@@ -394,9 +398,11 @@ html.dark .soft-input {
 html.dark .soft-input::placeholder {
   color: #64748b;
 }
-html.dark .soft-input:focus {
+html.dark .soft-input:focus, html.dark .soft-input:focus-visible {
   background-color: rgba(255,255,255,0.08);
-  border-color: rgba(99, 102, 241, 0.4);
+  border-color: #818cf8;
+  outline: none !important;
+  box-shadow: 0 4px 12px rgba(129, 140, 248, 0.15);
 }
 
 html.dark .glass-header {

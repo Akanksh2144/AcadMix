@@ -155,15 +155,6 @@ const PageHeader = ({ navigate, user, onLogout, title, subtitle, backTo, hideBac
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           {rightContent}
 
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2.5 rounded-full bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors"
-            aria-label="Toggle theme"
-          >
-            {isDark ? <Sun size={20} weight="duotone" /> : <Moon size={20} weight="duotone" />}
-          </button>
-
           {/* Notification Bell */}
           {!hideNotifications && (
             <div className="relative">

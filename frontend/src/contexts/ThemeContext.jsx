@@ -5,27 +5,15 @@ const ThemeContext = createContext();
 export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider = ({ children }) => {
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('acadmix_theme');
-    if (saved) return saved === 'dark';
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches || false;
-  });
-
+  // Permanently enforce Light Theme across the platform
   useEffect(() => {
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add('dark');
-      localStorage.setItem('acadmix_theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem('acadmix_theme', 'light');
-    }
-  }, [isDark]);
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('acadmix_theme', 'light');
+  }, []);
 
-  const toggle = () => setIsDark(prev => !prev);
-
+  // Provide inert values so the 30+ dashboard imports don't break
   return (
-    <ThemeContext.Provider value={{ isDark, toggle }}>
+    <ThemeContext.Provider value={{ isDark: false, toggle: () => {} }}>
       {children}
     </ThemeContext.Provider>
   );

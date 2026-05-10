@@ -177,28 +177,7 @@ const LoginPage = ({ onLogin }) => {
         </motion.div>
       </div>
 
-      {/* Right panel — Form */}
-      <div className="flex-1 flex items-center justify-center p-8 relative">
-        {/* Ambient background glow for dark mode */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none hidden dark:block">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px] mix-blend-screen"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px] mix-blend-screen translate-x-20 -translate-y-20"></div>
-        </div>
-
-        {/* Theme toggle */}
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={toggleTheme}
-          className="absolute top-6 right-6 p-2.5 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors z-10 border border-transparent dark:border-white/5"
-          aria-label="Toggle theme"
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={isDark ? 'dark' : 'light'} initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
-              {isDark ? <Sun size={20} weight="duotone" /> : <Moon size={20} weight="duotone" />}
-            </motion.div>
-          </AnimatePresence>
-        </motion.button>
+        <div className="flex-1 flex items-center justify-center p-8 relative">
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -206,20 +185,22 @@ const LoginPage = ({ onLogin }) => {
           transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.15 }}
           className="w-full max-w-md relative z-10"
         >
-          <div className="flex items-center justify-center mb-8 lg:hidden">
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className={`${tenant.logo ? 'w-20 h-20' : 'w-16 h-16'} ${tenant.logo ? 'bg-white dark:bg-slate-800 shadow-lg rounded-full p-1' : 'bg-indigo-500 rounded-2xl'} flex items-center justify-center`}
-            >
-              {tenant.logo ? (
-                <img src={tenant.logo} alt={`${tenant.tenantName} logo`} className="w-full h-full object-contain rounded-full" />
-              ) : (
-                <GraduationCap size={36} weight="duotone" className="text-white" />
-              )}
-            </motion.div>
-          </div>
+          {!tenant.tenantSlug && (
+            <div className="flex items-center justify-center mb-8 lg:hidden">
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                className={`${tenant.logo ? 'w-20 h-20' : 'w-16 h-16'} ${tenant.logo ? 'bg-white dark:bg-slate-800 shadow-lg rounded-full p-1' : 'bg-indigo-500 rounded-2xl'} flex items-center justify-center`}
+              >
+                {tenant.logo ? (
+                  <img src={tenant.logo} alt={`${tenant.tenantName} logo`} className="w-full h-full object-contain rounded-full" />
+                ) : (
+                  <GraduationCap size={36} weight="duotone" className="text-white" />
+                )}
+              </motion.div>
+            </div>
+          )}
 
           {/* ─── Collab Signature: AcadMix × College ─── */}
           {tenant.tenantSlug && (
@@ -227,7 +208,7 @@ const LoginPage = ({ onLogin }) => {
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.05 }}
-              className="flex flex-col items-center mb-6"
+              className="flex flex-col items-center mb-8 mt-2"
             >
               <div className="flex items-center gap-5">
                 {/* AcadMix Wordmark Logo */}
@@ -236,11 +217,12 @@ const LoginPage = ({ onLogin }) => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
                   title="AcadMix"
+                  className="bg-transparent dark:bg-white rounded-xl dark:p-2 dark:shadow-lg transition-all duration-300"
                 >
                   <img
                     src="/logos/acadmix-wordmark.png"
                     alt="AcadMix"
-                    className="h-14 sm:h-16 w-auto object-contain drop-shadow-sm dark:drop-shadow-[0_0_12px_rgba(255,255,255,0.4)] dark:brightness-150 transition-all duration-300"
+                    className="h-12 sm:h-14 w-auto object-contain drop-shadow-sm dark:drop-shadow-none transition-all duration-300"
                   />
                 </motion.div>
 
@@ -249,34 +231,33 @@ const LoginPage = ({ onLogin }) => {
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.35 }}
-                  className="text-3xl font-extralight text-slate-300 dark:text-slate-600 select-none"
+                  className="text-2xl sm:text-3xl font-extralight text-slate-400 dark:text-slate-500 select-none"
                 >
                   ×
                 </motion.span>
 
-                {/* College Logo — use emblem if available, fallback to initial badge */}
+                {/* College Logo */}
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
                   title={tenant.tenantName || tenant.tenantSlug?.toUpperCase()}
+                  className="bg-transparent dark:bg-white rounded-full dark:p-2 dark:shadow-lg transition-all duration-300"
                 >
-                  {/* Check for tenant-specific logo, fallback to gradient badge */}
                   <img
                     src={`/logos/${tenant.tenantSlug}-emblem.png`}
                     alt={tenant.tenantName || tenant.tenantSlug?.toUpperCase() || ''}
-                    className="h-16 sm:h-20 w-auto object-contain drop-shadow-sm dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all duration-300"
+                    className="h-14 sm:h-16 w-auto object-contain drop-shadow-sm dark:drop-shadow-none transition-all duration-300"
                     onError={(e) => {
-                      // Fallback: replace broken img with a gradient badge via parent swap
                       const target = e.currentTarget;
                       target.style.display = 'none';
                       const fallback = target.nextElementSibling as HTMLElement;
                       if (fallback) fallback.style.display = 'flex';
                     }}
                   />
-                  {/* Fallback initial badge (hidden by default, shown on img error) */}
+                  {/* Fallback initial badge */}
                   <div
-                    className="w-14 h-14 rounded-2xl items-center justify-center shadow-lg shadow-purple-500/20 dark:shadow-purple-500/10"
+                    className="w-14 h-14 rounded-full items-center justify-center shadow-lg shadow-purple-500/20 dark:shadow-none"
                     style={{ display: 'none', background: 'linear-gradient(135deg, #8b5cf6, #a855f7)' }}
                   >
                     <span className="text-white font-extrabold text-lg tracking-tight">
