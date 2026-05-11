@@ -9,6 +9,9 @@ import { toast } from 'sonner';
 import Editor from '@monaco-editor/react';
 import api from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
+import SimulationIDE from '../components/SimulationIDE';
+import SpiceChart from '../components/SpiceChart';
+import { Simulation as EEcircuitSimulation } from 'eecircuit-engine';
 
 const LANGUAGES = [
   { id: 'python', label: 'Python', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
@@ -40,7 +43,7 @@ const SIMULATOR_CATEGORIES = [
 const JUPYTERLITE_URL = 'https://jupyterlite.github.io/demo/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab%20Dark';
 const OCTAVE_URL = 'https://octave-online.net/';
 
-const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; noEmbed?: boolean; octaveUrl?: string }[]> = {
+const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; noEmbed?: boolean; octaveUrl?: string; isNativeWasm?: boolean; nativeLanguage?: 'spice' | 'verilog'; defaultCode?: string }[]> = {
   embedded: [
     { id: 'arduino-uno', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
     { id: 'arduino-mega', label: 'Arduino Mega', url: 'https://wokwi.com/projects/new/arduino-mega', openLabel: 'Open in Wokwi' },
@@ -56,6 +59,7 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
     { id: 'atmega328p', label: 'ATmega328P', url: 'https://wokwi.com/projects/new/atmega328p', openLabel: 'Open in Wokwi' },
   ],
   analog: [
+    { id: 'ae-native-spice', label: 'AcadMix SPICE (Native)', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: 'Basic RLC circuit \n.include modelcard.CMOS90\n\nr vdd 2 100.0\nl vdd 2 1\nc vdd 2 0.01\nm1 2 1 0 0 N90 W=100.0u L=0.09u\nvdd vdd 0 1.8\n\nvin 1 0 0 pulse (0 1.8 0 0.1 0.1 15 30)\n.tran 0.1 5\n\n.end' },
     { id: 'ae-blank', label: 'Blank Circuit', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcA2aAOMB2ALGXyEBOAbmAmwmwFMBaMMAKACcQUFDxCRsKBmEbqh7ce-YUJR1BkEJByYAHiGC4ALpzV8hOvYb37MBg5QCMvIbsPG6Zjlx5A', openLabel: 'Open in CircuitJS' },
     { id: 'ae-opamp', label: 'Op-Amp', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=opamp.txt', openLabel: 'Open in CircuitJS' },
     { id: 'ae-rc', label: 'RC Low-Pass Filter', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=filt-lopass.txt', openLabel: 'Open in CircuitJS' },
@@ -347,6 +351,40 @@ const CodePlayground = ({ navigate, user }) => {
   const [remoteImages, setRemoteImages] = useState([]);
   const [webrLoading, setWebrLoading] = useState(false);
   const webrRef = useRef(null);
+
+  // Native Simulation State
+  const [nativeOutput, setNativeOutput] = useState<string | React.ReactNode>(null);
+  const [isNativeSimulating, setIsNativeSimulating] = useState(false);
+
+  const handleNativeSimulate = async (simCode: string, lang: string) => {
+    setIsNativeSimulating(true);
+    setNativeOutput(null);
+    try {
+      if (lang === 'spice') {
+        const sim = new EEcircuitSimulation();
+        await sim.start();
+        sim.setNetList(simCode);
+        const result = await sim.runSim();
+        
+        // Very basic result parsing for demonstration
+        if (result && result.error) {
+           setNativeOutput(`Error: ${result.error}`);
+        } else if (result && result.data && Array.isArray(result.data)) {
+           setNativeOutput(<SpiceChart data={result.data} />);
+        } else if (result && result.stdout) {
+           setNativeOutput(result.stdout);
+        } else {
+           setNativeOutput(JSON.stringify(result, null, 2));
+        }
+      } else {
+        setNativeOutput(`Simulation for language ${lang} not implemented yet.`);
+      }
+    } catch (err: any) {
+      setNativeOutput(`Simulation failed: ${err.message}`);
+    } finally {
+      setIsNativeSimulating(false);
+    }
+  };
 
   // Close language dropdown on outside click
   useEffect(() => {
@@ -1540,7 +1578,7 @@ const CodePlayground = ({ navigate, user }) => {
               )}
             </div>
             {/* Navigation helper for CircuitJS-based simulators */}
-            {(['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems', 'fluid_mechanics', 'communication', 'dsp', 'measurements', 'renewable_energy', 'dynamics'].includes(simCategory)) && (
+            {((['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems', 'fluid_mechanics', 'communication', 'dsp', 'measurements', 'renewable_energy', 'dynamics'].includes(simCategory)) && !(_simActiveBoard as any)?.isNativeWasm) && (
               <div className={`flex items-center gap-4 text-xs font-medium px-4 py-2 rounded-xl mb-2 ${
                 SIM_ACCENT_CLASSES[_simCat.accent]?.pill || 'bg-slate-100 text-slate-600'
               }`}>
@@ -1572,7 +1610,17 @@ const CodePlayground = ({ navigate, user }) => {
             )}
             {/* Simulator iframe — or external-launch card for noEmbed boards */}
             <div className="soft-card overflow-hidden flex-1 min-h-0 rounded-2xl" style={{ overscrollBehavior: 'contain' }}>
-              {(_simActiveBoard as any)?.noEmbed ? (
+              {(_simActiveBoard as any)?.isNativeWasm ? (
+                <div className="w-full h-full p-2">
+                  <SimulationIDE 
+                    language={(_simActiveBoard as any)?.nativeLanguage} 
+                    defaultCode={(_simActiveBoard as any)?.defaultCode || ''}
+                    onSimulate={(code) => handleNativeSimulate(code, (_simActiveBoard as any)?.nativeLanguage)}
+                    isSimulating={isNativeSimulating}
+                    output={nativeOutput}
+                  />
+                </div>
+              ) : (_simActiveBoard as any)?.noEmbed ? (
                 <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/60 dark:to-slate-900/60 p-8">
                   <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-teal-500/25 flex items-center justify-center">
                     <Cpu size={36} weight="duotone" className="text-white" />

@@ -1,0 +1,96 @@
+import React, { useState } from 'react';
+import Editor from '@monaco-editor/react';
+import { Play, Download, TerminalWindow } from '@phosphor-icons/react';
+
+interface SimulationIDEProps {
+  language: 'verilog' | 'spice' | 'python';
+  defaultCode: string;
+  onSimulate: (code: string) => void;
+  isSimulating: boolean;
+  output?: string | React.ReactNode;
+}
+
+export default function SimulationIDE({
+  language,
+  defaultCode,
+  onSimulate,
+  isSimulating,
+  output
+}: SimulationIDEProps) {
+  const [code, setCode] = useState(defaultCode);
+
+  return (
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center gap-2">
+          <TerminalWindow size={20} className="text-gray-500" />
+          <span className="font-semibold text-gray-700 dark:text-gray-300">
+            Native {language.toUpperCase()} Simulator
+          </span>
+        </div>
+        
+        <button
+          onClick={() => onSimulate(code)}
+          disabled={isSimulating}
+          className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-blue-500/20"
+        >
+          <Play size={16} weight="fill" />
+          {isSimulating ? 'Simulating...' : 'Run Simulation'}
+        </button>
+      </div>
+
+      {/* Split Pane */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Editor Pane */}
+        <div className="w-1/2 border-r border-gray-200 dark:border-gray-800 h-full">
+          <Editor
+            height="100%"
+            language={language}
+            theme="vs-dark"
+            value={code}
+            onChange={(value) => setCode(value || '')}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
+              padding: { top: 16, bottom: 16 },
+              scrollBeyondLastLine: false,
+            }}
+          />
+        </div>
+
+        {/* Output/Visualization Pane */}
+        <div className="w-1/2 p-6 overflow-y-auto bg-gray-50 dark:bg-gray-900/50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+              Simulation Output
+            </h3>
+            {output && (
+              <button className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+                <Download size={18} />
+              </button>
+            )}
+          </div>
+          
+          <div className="w-full h-[calc(100%-2rem)] bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-inner">
+            {output ? (
+              typeof output === 'string' ? (
+                <pre className="font-mono text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                  {output}
+                </pre>
+              ) : (
+                output
+              )
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-500 flex-col gap-3">
+                <Play size={32} weight="duotone" className="opacity-50" />
+                <p>Run simulation to view waveforms and output</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
