@@ -78,6 +78,40 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
     { id: 'de-fulladd', label: 'Full Adder', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=fulladd.txt', openLabel: 'Open in CircuitJS' },
   ],
   vlsi: [
+    { 
+      id: 'vlsi-native', 
+      label: 'AcadMix Verilog (Native)', 
+      url: '', 
+      isNativeWasm: true, 
+      nativeLanguage: 'verilog',
+      defaultCode: `// Basic D Flip-Flop Testbench
+module dff(input d, clk, rst, output reg q);
+  always @(posedge clk or posedge rst) begin
+    if (rst) q <= 0;
+    else q <= d;
+  end
+endmodule
+
+module tb;
+  reg d, clk, rst;
+  wire q;
+  
+  dff u1(d, clk, rst, q);
+  
+  initial begin
+    $dumpfile("dump.vcd");
+    $dumpvars(0, tb);
+    
+    clk = 0; rst = 1; d = 0;
+    #10 rst = 0; d = 1;
+    #10 d = 0;
+    #10 d = 1;
+    #10 $finish;
+  end
+  
+  always #5 clk = ~clk;
+endmodule`
+    },
     { id: 'vlsi-makerchip', label: 'Makerchip IDE', url: 'https://makerchip.com/sandbox/', openLabel: 'Open in Makerchip' },
   ],
   pcb: [
@@ -371,6 +405,33 @@ const CodePlayground = ({ navigate, user }) => {
            setNativeOutput(`Error: ${result.error}`);
         } else if (result && result.data && Array.isArray(result.data)) {
            setNativeOutput(<SpiceChart data={result.data} />);
+        } else if (result && result.stdout) {
+           setNativeOutput(result.stdout);
+        } else {
+           setNativeOutput(JSON.stringify(result, null, 2));
+        }
+      } else if (lang === 'verilog') {
+        const response = await api.post('/api/v1/simulate/verilog', { code: simCode });
+        const result = response.data;
+        if (result && result.error) {
+           setNativeOutput(`Error:\n${result.stdout || ''}\n${result.error}`);
+        } else if (result && result.data && Array.isArray(result.data)) {
+           // We can reuse SpiceChart for now since the JSON format returned by the backend matches!
+           setNativeOutput(
+             <div className="flex flex-col h-full gap-4">
+               <div className="flex-1 min-h-[300px]">
+                 <SpiceChart data={result.data} />
+               </div>
+               {result.stdout && (
+                 <div className="h-1/3 border-t border-gray-200 dark:border-gray-700 pt-4">
+                   <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Compiler Output</h4>
+                   <pre className="font-mono text-xs text-gray-800 dark:text-gray-300 whitespace-pre-wrap overflow-y-auto h-[calc(100%-24px)]">
+                     {result.stdout}
+                   </pre>
+                 </div>
+               )}
+             </div>
+           );
         } else if (result && result.stdout) {
            setNativeOutput(result.stdout);
         } else {

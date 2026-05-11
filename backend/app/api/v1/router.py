@@ -11,9 +11,11 @@ from app.routers import (
     campus, flashcards, ai_study, validation
 )
 from app.api.v1.endpoints import syllabus as syllabus_endpoints
+from app.api.v1.endpoints import simulation as simulation_endpoints
 from app.routers import nodal_routes, superadmin
 
 api_router = APIRouter()
+api_router.include_router(simulation_endpoints.router, prefix="/simulate", tags=["simulation"])
 
 # Domain routes without extra prefix (mounted under /api globally).
 # Notice 'tasks' was duplicated in previous config, kept single here.

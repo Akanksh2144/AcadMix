@@ -59,7 +59,8 @@ export default function SpiceChart({ data }: SpiceChartProps) {
       borderWidth: 2,
       pointRadius: 0,
       pointHitRadius: 10,
-      tension: 0.1,
+      tension: series.type === 'digital' ? 0 : 0.1,
+      stepped: series.type === 'digital' ? true : false,
     })),
   };
 
