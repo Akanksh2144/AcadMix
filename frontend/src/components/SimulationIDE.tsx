@@ -67,8 +67,11 @@ export default function SimulationIDE({
               Simulation Output
             </h3>
             {output && (
-              <button className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
-                <Download size={18} />
+              <button 
+                title="Download Output"
+                className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all active:scale-95 shadow-sm hover:shadow"
+              >
+                <Download size={18} weight="duotone" />
               </button>
             )}
           </div>

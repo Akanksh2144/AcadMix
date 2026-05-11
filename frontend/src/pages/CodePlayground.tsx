@@ -51,12 +51,10 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
     { id: 'esp32', label: 'ESP32 (Core)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
     { id: 'esp32-c3', label: 'ESP32-C3 (RISC-V)', url: 'https://wokwi.com/projects/new/esp32-c3', openLabel: 'Open in Wokwi' },
     { id: 'esp32-s3', label: 'ESP32-S3 (Edge AI)', url: 'https://wokwi.com/projects/new/esp32-s3', openLabel: 'Open in Wokwi' },
-    { id: 'esp32-rust', label: 'Embedded Rust', url: 'https://wokwi.com/projects/new/rust-esp32', openLabel: 'Open in Wokwi' },
     { id: 'stm32', label: 'STM32', url: 'https://wokwi.com/projects/new/stm32', openLabel: 'Open in Wokwi' },
     { id: 'pi-pico', label: 'RPi Pico', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
     { id: 'micropython-esp32', label: 'MicroPython', url: 'https://wokwi.com/projects/new/micropython-esp32', openLabel: 'Open in Wokwi' },
     { id: 'attiny85', label: 'ATtiny85', url: 'https://wokwi.com/projects/new/attiny85', openLabel: 'Open in Wokwi' },
-    { id: 'atmega328p', label: 'ATmega328P', url: 'https://wokwi.com/projects/new/atmega328p', openLabel: 'Open in Wokwi' },
   ],
   analog: [
     { id: 'ae-native-spice', label: 'AcadMix SPICE (Native)', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: 'Basic RLC circuit \n.include modelcard.CMOS90\n\nr vdd 2 100.0\nl vdd 2 1\nc vdd 2 0.01\nm1 2 1 0 0 N90 W=100.0u L=0.09u\nvdd vdd 0 1.8\n\nvin 1 0 0 pulse (0 1.8 0 0.1 0.1 15 30)\n.tran 0.1 5\n\n.end' },
