@@ -20,7 +20,17 @@ export interface DSPNodeData {
   // Filter
   filterType?: 'lowpass' | 'highpass';
   cutoff?: number;      // normalised 0-1
-  // Scope — no extra config; it just renders what it receives
+  // Noise Generator
+  noiseType?: 'white' | 'gaussian';
+  // Delay
+  delaySamples?: number;
+  // Constant / DC Source
+  value?: number;
+  // Downsampler
+  factor?: number;
+  // Comparator
+  threshold?: number;
+  // Scope / FFT — no extra config; they render what they receive
 }
 
 export interface SimulationResult {
@@ -185,12 +195,48 @@ export function runSimulation(
         signals[id] = generateSignal(waveform, frequency, amplitude, dcOffset, N, dt);
         break;
       }
+      case 'noiseGenerator': {
+        const amp = node.data.amplitude ?? 0.5;
+        const isGaussian = node.data.noiseType === 'gaussian';
+        const out = new Float64Array(N);
+        for (let i = 0; i < N; i++) {
+          if (isGaussian) {
+            // Box-Muller transform for Gaussian noise
+            const u1 = Math.random();
+            const u2 = Math.random();
+            out[i] = amp * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+          } else {
+            out[i] = amp * (2 * Math.random() - 1);
+          }
+        }
+        signals[id] = out;
+        break;
+      }
+      case 'constant': {
+        const val = node.data.value ?? 1;
+        const out = new Float64Array(N);
+        for (let i = 0; i < N; i++) out[i] = val;
+        signals[id] = out;
+        break;
+      }
       case 'adder': {
         const out = new Float64Array(N);
         for (const inp of inputs) {
           for (let i = 0; i < N; i++) out[i] += inp[i];
         }
         signals[id] = out;
+        break;
+      }
+      case 'multiplier': {
+        if (inputs.length >= 2) {
+          const out = new Float64Array(N);
+          for (let i = 0; i < N; i++) out[i] = inputs[0][i] * inputs[1][i];
+          signals[id] = out;
+        } else if (inputs.length === 1) {
+          signals[id] = inputs[0].slice();
+        } else {
+          signals[id] = new Float64Array(N);
+        }
         break;
       }
       case 'gain': {
@@ -215,7 +261,55 @@ export function runSimulation(
         }
         break;
       }
-      case 'scope': {
+      case 'delay': {
+        if (inputs.length > 0) {
+          const d = node.data.delaySamples ?? 50;
+          const out = new Float64Array(N);
+          for (let i = 0; i < N; i++) {
+            const srcIdx = i - d;
+            out[i] = srcIdx >= 0 ? inputs[0][srcIdx] : 0;
+          }
+          signals[id] = out;
+        } else {
+          signals[id] = new Float64Array(N);
+        }
+        break;
+      }
+      case 'downsampler': {
+        if (inputs.length > 0) {
+          const f = node.data.factor ?? 2;
+          const out = new Float64Array(N);
+          for (let i = 0; i < N; i++) {
+            // Zero-order hold: keep the value from the last sampled point
+            const srcIdx = Math.floor(i / f) * f;
+            out[i] = srcIdx < N ? inputs[0][srcIdx] : 0;
+          }
+          signals[id] = out;
+        } else {
+          signals[id] = new Float64Array(N);
+        }
+        break;
+      }
+      case 'comparator': {
+        if (inputs.length > 0) {
+          const thresh = node.data.threshold ?? 0;
+          const out = new Float64Array(N);
+          for (let i = 0; i < N; i++) {
+            out[i] = inputs[0][i] > thresh ? 1 : 0;
+          }
+          signals[id] = out;
+        } else {
+          signals[id] = new Float64Array(N);
+        }
+        break;
+      }
+      case 'splitter': {
+        // Pass-through — the signal is available at this node ID for any outputs
+        signals[id] = inputs.length > 0 ? inputs[0].slice() : new Float64Array(N);
+        break;
+      }
+      case 'scope':
+      case 'fft': {
         // Pass-through — just copy the first input for visualisation
         signals[id] = inputs.length > 0 ? inputs[0] : new Float64Array(N);
         break;

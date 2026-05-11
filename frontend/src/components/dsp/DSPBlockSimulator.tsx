@@ -14,23 +14,39 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { Play, Plus, WaveSine, Funnel, ChartLineUp, SlidersHorizontal } from '@phosphor-icons/react';
+import { Play, Plus, WaveSine, Funnel, ChartLineUp, SlidersHorizontal, X, WaveSawtooth, Clock, ChartBar, Pulse, GitFork, ArrowsDownUp, Gauge } from '@phosphor-icons/react';
 
 import SignalGeneratorNode from './nodes/SignalGeneratorNode';
 import AdderNode from './nodes/AdderNode';
 import GainNode from './nodes/GainNode';
 import FilterNode from './nodes/FilterNode';
 import ScopeNode from './nodes/ScopeNode';
+import MultiplierNode from './nodes/MultiplierNode';
+import NoiseGeneratorNode from './nodes/NoiseGeneratorNode';
+import DelayNode from './nodes/DelayNode';
+import FFTNode from './nodes/FFTNode';
+import ConstantNode from './nodes/ConstantNode';
+import SplitterNode from './nodes/SplitterNode';
+import DownsamplerNode from './nodes/DownsamplerNode';
+import ComparatorNode from './nodes/ComparatorNode';
 import { runSimulation, type SimulationResult } from './engine';
 
 // ── Node type registry ───────────────────────────────────────────────────────
 
 const nodeTypes = {
   signalGenerator: SignalGeneratorNode,
+  noiseGenerator: NoiseGeneratorNode,
+  constant: ConstantNode,
   adder: AdderNode,
+  multiplier: MultiplierNode,
   gain: GainNode,
   filter: FilterNode,
+  delay: DelayNode,
+  downsampler: DownsamplerNode,
+  comparator: ComparatorNode,
+  splitter: SplitterNode,
   scope: ScopeNode,
+  fft: FFTNode,
 };
 
 // ── Initial demo graph ───────────────────────────────────────────────────────
@@ -77,13 +93,46 @@ const INITIAL_EDGES: Edge[] = [
 
 // ── Toolbar palette ──────────────────────────────────────────────────────────
 
-const PALETTE = [
-  { type: 'signalGenerator', label: 'Signal Gen', icon: WaveSine, defaults: { label: 'Signal', waveform: 'sine', frequency: 5, amplitude: 1, dcOffset: 0 } },
-  { type: 'adder', label: 'Adder', icon: Plus, defaults: { label: 'Adder' } },
-  { type: 'gain', label: 'Gain', icon: SlidersHorizontal, defaults: { label: 'Gain', gain: 1 } },
-  { type: 'filter', label: 'Filter', icon: Funnel, defaults: { label: 'Filter', filterType: 'lowpass', cutoff: 0.2 } },
-  { type: 'scope', label: 'Scope', icon: ChartLineUp, defaults: { label: 'Scope' } },
-] as const;
+const PALETTE_SECTIONS = [
+  {
+    title: 'Sources',
+    items: [
+      { type: 'signalGenerator', label: 'Signal Gen', icon: WaveSine, defaults: { label: 'Signal', waveform: 'sine', frequency: 5, amplitude: 1, dcOffset: 0 } },
+      { type: 'noiseGenerator', label: 'Noise Source', icon: WaveSawtooth, defaults: { label: 'Noise', noiseType: 'white', amplitude: 0.5 } },
+      { type: 'constant', label: 'DC Source', icon: Pulse, defaults: { label: 'DC', value: 1 } },
+    ],
+  },
+  {
+    title: 'Math',
+    items: [
+      { type: 'adder', label: 'Adder (Σ)', icon: Plus, defaults: { label: 'Adder' } },
+      { type: 'multiplier', label: 'Multiplier (×)', icon: X, defaults: { label: 'Multiply' } },
+      { type: 'gain', label: 'Gain / Amp', icon: SlidersHorizontal, defaults: { label: 'Gain', gain: 1 } },
+    ],
+  },
+  {
+    title: 'Processing',
+    items: [
+      { type: 'filter', label: 'Filter (FIR)', icon: Funnel, defaults: { label: 'Filter', filterType: 'lowpass', cutoff: 0.2 } },
+      { type: 'delay', label: 'Delay (z⁻¹)', icon: Clock, defaults: { label: 'Delay', delaySamples: 50 } },
+      { type: 'downsampler', label: 'Downsample (↓N)', icon: ArrowsDownUp, defaults: { label: 'Downsample', factor: 2 } },
+      { type: 'comparator', label: 'Comparator', icon: Gauge, defaults: { label: 'Comparator', threshold: 0 } },
+    ],
+  },
+  {
+    title: 'Routing',
+    items: [
+      { type: 'splitter', label: 'Splitter', icon: GitFork, defaults: { label: 'Split' } },
+    ],
+  },
+  {
+    title: 'Visualizers',
+    items: [
+      { type: 'scope', label: 'Oscilloscope', icon: ChartLineUp, defaults: { label: 'Scope' } },
+      { type: 'fft', label: 'FFT Spectrum', icon: ChartBar, defaults: { label: 'FFT' } },
+    ],
+  },
+];
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -117,8 +166,8 @@ export default function DSPBlockSimulator() {
       data: {
         ...n.data,
         onDataChange: handleNodeDataChange,
-        // Inject scope data if available
-        ...(n.type === 'scope' && simResult
+        // Inject scope / FFT data if available
+        ...((n.type === 'scope' || n.type === 'fft') && simResult
           ? { signalData: simResult.signals[n.id], timeData: simResult.time }
           : {}),
       },
@@ -197,20 +246,28 @@ export default function DSPBlockSimulator() {
 
             {/* Palette Dropdown */}
             {showPalette && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl shadow-black/20 z-50 overflow-hidden">
-                {PALETTE.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.type}
-                      onClick={() => addNode(item.type, { ...item.defaults })}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <Icon size={18} weight="duotone" />
-                      {item.label}
-                    </button>
-                  );
-                })}
+              <div className="absolute right-0 top-full mt-2 w-64 max-h-[420px] overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl shadow-black/20 z-50">
+                {PALETTE_SECTIONS.map((section, sIdx) => (
+                  <div key={section.title}>
+                    {sIdx > 0 && <div className="h-px bg-gray-100 dark:bg-gray-700 mx-3" />}
+                    <div className="px-4 pt-3 pb-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{section.title}</span>
+                    </div>
+                    {section.items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.type}
+                          onClick={() => addNode(item.type, { ...item.defaults })}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <Icon size={18} weight="duotone" />
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
