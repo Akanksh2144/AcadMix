@@ -480,7 +480,7 @@ endmodule`
     { id: 'vlsi-makerchip', label: 'Makerchip IDE', url: 'https://makerchip.com/sandbox/', openLabel: 'Open in Makerchip' },
   ],
   pcb: [
-    { id: 'pcb-flux', label: 'Flux.ai Editor', url: 'https://www.flux.ai/p', openLabel: 'Open Flux.ai', externalUrl: 'https://easyeda.com/editor', externalLabel: 'Open EasyEDA Editor' },
+    { id: 'pcb-flux', label: 'Flux.ai Editor', url: 'https://www.flux.ai/p', openLabel: 'Open Flux.ai', noEmbed: true, externalUrl: 'https://easyeda.com/editor', externalLabel: 'Open EasyEDA Editor' },
     { id: 'pcb-kicanvas', label: 'KiCanvas Viewer', url: 'https://kicanvas.org/', openLabel: 'Open KiCanvas' },
   ],
   communication: [
