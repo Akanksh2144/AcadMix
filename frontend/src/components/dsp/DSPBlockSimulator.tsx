@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { Play, Plus, WaveSine, Funnel, ChartLineUp, SlidersHorizontal, X, WaveSawtooth, Clock, ChartBar, Pulse, GitFork, ArrowsDownUp, Gauge } from '@phosphor-icons/react';
+import { Play, Plus, WaveSine, Funnel, ChartLineUp, SlidersHorizontal, X, WaveSawtooth, Clock, ChartBar, Pulse, GitFork, ArrowsDownUp, Gauge, Minus, ArrowsClockwise, Broadcast, Swap, SquaresFour, Lightning, Equalizer } from '@phosphor-icons/react';
 
 import SignalGeneratorNode from './nodes/SignalGeneratorNode';
 import AdderNode from './nodes/AdderNode';
@@ -29,24 +29,52 @@ import ConstantNode from './nodes/ConstantNode';
 import SplitterNode from './nodes/SplitterNode';
 import DownsamplerNode from './nodes/DownsamplerNode';
 import ComparatorNode from './nodes/ComparatorNode';
+import AbsValueNode from './nodes/AbsValueNode';
+import IntegratorNode from './nodes/IntegratorNode';
+import SubtractorNode from './nodes/SubtractorNode';
+import UpsamplerNode from './nodes/UpsamplerNode';
+import AMModulatorNode from './nodes/AMModulatorNode';
+import PhaseShifterNode from './nodes/PhaseShifterNode';
+import QuantizerNode from './nodes/QuantizerNode';
+import ChirpGeneratorNode from './nodes/ChirpGeneratorNode';
+import ImpulseGeneratorNode from './nodes/ImpulseGeneratorNode';
+import MovingAverageNode from './nodes/MovingAverageNode';
+import PowerMeterNode from './nodes/PowerMeterNode';
 import { runSimulation, type SimulationResult } from './engine';
 
 // ── Node type registry ───────────────────────────────────────────────────────
 
 const nodeTypes = {
+  // Sources
   signalGenerator: SignalGeneratorNode,
   noiseGenerator: NoiseGeneratorNode,
   constant: ConstantNode,
+  chirpGenerator: ChirpGeneratorNode,
+  impulseGenerator: ImpulseGeneratorNode,
+  // Math
   adder: AdderNode,
+  subtractor: SubtractorNode,
   multiplier: MultiplierNode,
   gain: GainNode,
+  absValue: AbsValueNode,
+  integrator: IntegratorNode,
+  // Processing
   filter: FilterNode,
+  movingAverage: MovingAverageNode,
   delay: DelayNode,
   downsampler: DownsamplerNode,
+  upsampler: UpsamplerNode,
   comparator: ComparatorNode,
+  quantizer: QuantizerNode,
+  // Communications
+  amModulator: AMModulatorNode,
+  phaseShifter: PhaseShifterNode,
+  // Routing
   splitter: SplitterNode,
+  // Visualizers
   scope: ScopeNode,
   fft: FFTNode,
+  powerMeter: PowerMeterNode,
 };
 
 // ── Initial demo graph ───────────────────────────────────────────────────────
@@ -100,23 +128,38 @@ const PALETTE_SECTIONS = [
       { type: 'signalGenerator', label: 'Signal Gen', icon: WaveSine, defaults: { label: 'Signal', waveform: 'sine', frequency: 5, amplitude: 1, dcOffset: 0 } },
       { type: 'noiseGenerator', label: 'Noise Source', icon: WaveSawtooth, defaults: { label: 'Noise', noiseType: 'white', amplitude: 0.5 } },
       { type: 'constant', label: 'DC Source', icon: Pulse, defaults: { label: 'DC', value: 1 } },
+      { type: 'chirpGenerator', label: 'Chirp / Sweep', icon: WaveSine, defaults: { label: 'Chirp', startFreq: 1, endFreq: 50, amplitude: 1 } },
+      { type: 'impulseGenerator', label: 'Impulse δ(n)', icon: Lightning, defaults: { label: 'Impulse', amplitude: 1, position: 0 } },
     ],
   },
   {
     title: 'Math',
     items: [
       { type: 'adder', label: 'Adder (Σ)', icon: Plus, defaults: { label: 'Adder' } },
+      { type: 'subtractor', label: 'Subtractor (−)', icon: Minus, defaults: { label: 'Subtract' } },
       { type: 'multiplier', label: 'Multiplier (×)', icon: X, defaults: { label: 'Multiply' } },
       { type: 'gain', label: 'Gain / Amp', icon: SlidersHorizontal, defaults: { label: 'Gain', gain: 1 } },
+      { type: 'absValue', label: 'Abs / Rectifier', icon: WaveSine, defaults: { label: '|x|' } },
+      { type: 'integrator', label: 'Integrator (∫)', icon: ArrowsClockwise, defaults: { label: 'Integrator' } },
     ],
   },
   {
     title: 'Processing',
     items: [
       { type: 'filter', label: 'Filter (FIR)', icon: Funnel, defaults: { label: 'Filter', filterType: 'lowpass', cutoff: 0.2 } },
+      { type: 'movingAverage', label: 'Moving Average', icon: Equalizer, defaults: { label: 'MA Filter', windowSize: 8 } },
       { type: 'delay', label: 'Delay (z⁻¹)', icon: Clock, defaults: { label: 'Delay', delaySamples: 50 } },
       { type: 'downsampler', label: 'Downsample (↓N)', icon: ArrowsDownUp, defaults: { label: 'Downsample', factor: 2 } },
+      { type: 'upsampler', label: 'Upsample (↑N)', icon: ArrowsDownUp, defaults: { label: 'Upsample', factor: 2 } },
+      { type: 'quantizer', label: 'Quantizer (ADC)', icon: SquaresFour, defaults: { label: 'Quantizer', bits: 4 } },
       { type: 'comparator', label: 'Comparator', icon: Gauge, defaults: { label: 'Comparator', threshold: 0 } },
+    ],
+  },
+  {
+    title: 'Communications',
+    items: [
+      { type: 'amModulator', label: 'AM Modulator', icon: Broadcast, defaults: { label: 'AM Mod', carrierFreq: 50, modulationIndex: 0.8 } },
+      { type: 'phaseShifter', label: 'Phase Shifter', icon: Swap, defaults: { label: 'Phase', phaseDeg: 90 } },
     ],
   },
   {
@@ -130,6 +173,7 @@ const PALETTE_SECTIONS = [
     items: [
       { type: 'scope', label: 'Oscilloscope', icon: ChartLineUp, defaults: { label: 'Scope' } },
       { type: 'fft', label: 'FFT Spectrum', icon: ChartBar, defaults: { label: 'FFT' } },
+      { type: 'powerMeter', label: 'Power Meter', icon: Gauge, defaults: { label: 'Power' } },
     ],
   },
 ];
@@ -166,8 +210,8 @@ export default function DSPBlockSimulator() {
       data: {
         ...n.data,
         onDataChange: handleNodeDataChange,
-        // Inject scope / FFT data if available
-        ...((n.type === 'scope' || n.type === 'fft') && simResult
+        // Inject scope / FFT / powerMeter data if available
+        ...((n.type === 'scope' || n.type === 'fft' || n.type === 'powerMeter') && simResult
           ? { signalData: simResult.signals[n.id], timeData: simResult.time }
           : {}),
       },

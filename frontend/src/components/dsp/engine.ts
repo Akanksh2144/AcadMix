@@ -26,11 +26,25 @@ export interface DSPNodeData {
   delaySamples?: number;
   // Constant / DC Source
   value?: number;
-  // Downsampler
+  // Downsampler / Upsampler
   factor?: number;
   // Comparator
   threshold?: number;
-  // Scope / FFT — no extra config; they render what they receive
+  // AM Modulator
+  carrierFreq?: number;
+  modulationIndex?: number;
+  // Phase Shifter
+  phaseDeg?: number;
+  // Quantizer
+  bits?: number;
+  // Chirp Generator
+  startFreq?: number;
+  endFreq?: number;
+  // Impulse Generator
+  position?: number;
+  // Moving Average
+  windowSize?: number;
+  // Scope / FFT / Power Meter — visualizers
 }
 
 export interface SimulationResult {
@@ -308,8 +322,167 @@ export function runSimulation(
         signals[id] = inputs.length > 0 ? inputs[0].slice() : new Float64Array(N);
         break;
       }
+      case 'chirpGenerator': {
+        const f0 = node.data.startFreq ?? 1;
+        const f1 = node.data.endFreq ?? 50;
+        const amp = node.data.amplitude ?? 1;
+        const out = new Float64Array(N);
+        for (let i = 0; i < N; i++) {
+          const t = i * dt;
+          // Linear chirp: instantaneous freq = f0 + (f1-f0)*t/T
+          const freq = f0 + (f1 - f0) * t / (N * dt);
+          const phase = 2 * Math.PI * (f0 * t + (f1 - f0) * t * t / (2 * N * dt));
+          out[i] = amp * Math.sin(phase);
+        }
+        signals[id] = out;
+        break;
+      }
+      case 'impulseGenerator': {
+        const amp = node.data.amplitude ?? 1;
+        const pos = node.data.position ?? 0;
+        const out = new Float64Array(N);
+        if (pos >= 0 && pos < N) out[pos] = amp;
+        signals[id] = out;
+        break;
+      }
+      case 'subtractor': {
+        // A - B: first input is A, second is B
+        const out = new Float64Array(N);
+        if (inputs.length >= 2) {
+          for (let i = 0; i < N; i++) out[i] = inputs[0][i] - inputs[1][i];
+        } else if (inputs.length === 1) {
+          for (let i = 0; i < N; i++) out[i] = inputs[0][i];
+        }
+        signals[id] = out;
+        break;
+      }
+      case 'absValue': {
+        if (inputs.length > 0) {
+          const out = new Float64Array(N);
+          for (let i = 0; i < N; i++) out[i] = Math.abs(inputs[0][i]);
+          signals[id] = out;
+        } else {
+          signals[id] = new Float64Array(N);
+        }
+        break;
+      }
+      case 'integrator': {
+        if (inputs.length > 0) {
+          const out = new Float64Array(N);
+          let acc = 0;
+          for (let i = 0; i < N; i++) {
+            acc += inputs[0][i] * dt;
+            out[i] = acc;
+          }
+          signals[id] = out;
+        } else {
+          signals[id] = new Float64Array(N);
+        }
+        break;
+      }
+      case 'upsampler': {
+        if (inputs.length > 0) {
+          const f = node.data.factor ?? 2;
+          const out = new Float64Array(N);
+          // Insert zeros between samples
+          for (let i = 0; i < N; i++) {
+            out[i] = (i % f === 0) ? inputs[0][Math.floor(i / f)] || 0 : 0;
+          }
+          signals[id] = out;
+        } else {
+          signals[id] = new Float64Array(N);
+        }
+        break;
+      }
+      case 'phaseShifter': {
+        if (inputs.length > 0) {
+          const phaseRad = ((node.data.phaseDeg ?? 90) * Math.PI) / 180;
+          const phaseSamples = Math.round((phaseRad / (2 * Math.PI)) * N);
+          const out = new Float64Array(N);
+          for (let i = 0; i < N; i++) {
+            const srcIdx = (i - phaseSamples + N) % N;
+            out[i] = inputs[0][srcIdx];
+          }
+          signals[id] = out;
+        } else {
+          signals[id] = new Float64Array(N);
+        }
+        break;
+      }
+      case 'amModulator': {
+        if (inputs.length > 0) {
+          const fc = node.data.carrierFreq ?? 50;
+          const m = node.data.modulationIndex ?? 0.8;
+          const out = new Float64Array(N);
+          for (let i = 0; i < N; i++) {
+            const t = i * dt;
+            const carrier = Math.cos(2 * Math.PI * fc * t);
+            // Standard AM: s(t) = [1 + m * x(t)] * cos(2πfct)
+            out[i] = (1 + m * inputs[0][i]) * carrier;
+          }
+          signals[id] = out;
+        } else {
+          signals[id] = new Float64Array(N);
+        }
+        break;
+      }
+      case 'quantizer': {
+        if (inputs.length > 0) {
+          const bits = node.data.bits ?? 4;
+          const levels = Math.pow(2, bits);
+          const out = new Float64Array(N);
+          // Find signal range for mid-riser quantization
+          let minVal = Infinity, maxVal = -Infinity;
+          for (let i = 0; i < N; i++) {
+            if (inputs[0][i] < minVal) minVal = inputs[0][i];
+            if (inputs[0][i] > maxVal) maxVal = inputs[0][i];
+          }
+          const range = maxVal - minVal || 1;
+          const step = range / levels;
+          for (let i = 0; i < N; i++) {
+            const normalised = (inputs[0][i] - minVal) / range;
+            const level = Math.floor(normalised * levels);
+            const clamped = Math.min(level, levels - 1);
+            out[i] = minVal + (clamped + 0.5) * step;
+          }
+          signals[id] = out;
+        } else {
+          signals[id] = new Float64Array(N);
+        }
+        break;
+      }
+      case 'movingAverage': {
+        if (inputs.length > 0) {
+          const w = node.data.windowSize ?? 8;
+          const out = new Float64Array(N);
+          let sum = 0;
+          for (let i = 0; i < N; i++) {
+            sum += inputs[0][i];
+            if (i >= w) sum -= inputs[0][i - w];
+            out[i] = sum / Math.min(i + 1, w);
+          }
+          signals[id] = out;
+        } else {
+          signals[id] = new Float64Array(N);
+        }
+        break;
+      }
+      case 'mixer': {
+        // Same as multiplier — kept as an alias for clarity in comms context
+        if (inputs.length >= 2) {
+          const out = new Float64Array(N);
+          for (let i = 0; i < N; i++) out[i] = inputs[0][i] * inputs[1][i];
+          signals[id] = out;
+        } else if (inputs.length === 1) {
+          signals[id] = inputs[0].slice();
+        } else {
+          signals[id] = new Float64Array(N);
+        }
+        break;
+      }
       case 'scope':
-      case 'fft': {
+      case 'fft':
+      case 'powerMeter': {
         // Pass-through — just copy the first input for visualisation
         signals[id] = inputs.length > 0 ? inputs[0] : new Float64Array(N);
         break;
