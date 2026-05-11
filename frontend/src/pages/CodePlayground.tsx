@@ -12,6 +12,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import SimulationIDE from '../components/SimulationIDE';
 import SpiceChart from '../components/SpiceChart';
 import { Simulation as EEcircuitSimulation } from 'eecircuit-engine';
+import DSPBlockSimulator from '../components/dsp/DSPBlockSimulator';
 
 const LANGUAGES = [
   { id: 'python', label: 'Python', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
@@ -43,7 +44,7 @@ const SIMULATOR_CATEGORIES = [
 const JUPYTERLITE_URL = 'https://jupyterlite.github.io/demo/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab%20Dark';
 const OCTAVE_URL = 'https://octave-online.net/';
 
-const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; noEmbed?: boolean; octaveUrl?: string; isNativeWasm?: boolean; nativeLanguage?: 'spice' | 'verilog'; defaultCode?: string }[]> = {
+const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; noEmbed?: boolean; octaveUrl?: string; isNativeWasm?: boolean; isNativeBlock?: boolean; nativeLanguage?: 'spice' | 'verilog'; defaultCode?: string }[]> = {
   embedded: [
     { id: 'arduino-uno', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
     { id: 'arduino-mega', label: 'Arduino Mega', url: 'https://wokwi.com/projects/new/arduino-mega', openLabel: 'Open in Wokwi' },
@@ -122,6 +123,7 @@ endmodule`
     { id: 'comm-python', label: 'Python (Comms)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   dsp: [
+    { id: 'dsp-native', label: 'AcadMix DSP (Native)', url: '', isNativeBlock: true },
     { id: 'dsp-python', label: 'Python (DSP)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'dsp-fft', label: 'FFT Visualizer', url: 'https://www.falstad.com/fourier/', openLabel: 'Open Fourier' },
     { id: 'dsp-filter', label: 'Filter Designer', url: 'https://www.falstad.com/dfilter/', openLabel: 'Open Filter Tool' },
@@ -1668,7 +1670,11 @@ const CodePlayground = ({ navigate, user }) => {
             )}
             {/* Simulator iframe — or external-launch card for noEmbed boards */}
             <div className="soft-card overflow-hidden flex-1 min-h-0 rounded-2xl" style={{ overscrollBehavior: 'contain' }}>
-              {(_simActiveBoard as any)?.isNativeWasm ? (
+              {(_simActiveBoard as any)?.isNativeBlock ? (
+                <div className="w-full h-full p-2">
+                  <DSPBlockSimulator />
+                </div>
+              ) : (_simActiveBoard as any)?.isNativeWasm ? (
                 <div className="w-full h-full p-2">
                   <SimulationIDE 
                     language={(_simActiveBoard as any)?.nativeLanguage} 
