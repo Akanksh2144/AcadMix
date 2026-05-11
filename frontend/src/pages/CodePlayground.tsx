@@ -1487,17 +1487,25 @@ const CodePlayground = ({ navigate, user }) => {
                 </div>
               </div>
               {/* Row 2: Category pills (full width) */}
-              <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1 gap-0.5 overflow-x-auto custom-scrollbar">
+              <div className="flex items-center bg-slate-100/80 dark:bg-slate-800/80 rounded-full p-1.5 gap-1 overflow-x-auto custom-scrollbar shadow-inner">
                 {_activeCats.map(cat => (
                   <button
                     key={cat.id}
                     onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
-                    className={`px-3.5 py-1.5 rounded-[10px] text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    className={`relative px-4 py-2 rounded-full text-[13px] font-bold whitespace-nowrap transition-all flex items-center gap-2 z-10 ${
                       simCategory === cat.id
-                        ? SIM_ACCENT_CLASSES[cat.accent]?.active || 'bg-teal-500 text-white'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        ? 'text-white'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                     }`}
                   >
+                    {simCategory === cat.id && (
+                      <motion.div
+                        layoutId="activeCategoryTab"
+                        className={`absolute inset-0 rounded-full -z-10 ${SIM_ACCENT_CLASSES[cat.accent]?.active.replace('text-white', '') || 'bg-teal-500 shadow-sm'}`}
+                        initial={false}
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
                     {cat.icon}
                     {cat.label}
                   </button>
@@ -1505,17 +1513,25 @@ const CodePlayground = ({ navigate, user }) => {
               </div>
               {/* Row 3: Sub-board/preset pills (if more than 1 option) */}
               {_simBoards.length > 1 && (
-                <div className="flex items-center bg-slate-50 dark:bg-slate-800/50 rounded-xl p-1 gap-0.5 overflow-x-auto custom-scrollbar">
+                <div className="flex items-center bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 rounded-full p-1.5 gap-1 mt-3 mb-1 overflow-x-auto custom-scrollbar shadow-sm">
                   {_simBoards.map(board => (
                     <button
                       key={board.id}
                       onClick={() => setWokwiBoard(board.id)}
-                      className={`px-3 py-1.5 rounded-[10px] text-xs font-bold whitespace-nowrap transition-all ${
+                      className={`relative px-4 py-1.5 rounded-full text-[12px] font-bold whitespace-nowrap transition-all z-10 ${
                         wokwiBoard === board.id
-                          ? _simAccent.active
-                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          ? 'text-white'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                       }`}
                     >
+                      {wokwiBoard === board.id && (
+                        <motion.div
+                          layoutId="activeBoardTab"
+                          className={`absolute inset-0 rounded-full -z-10 ${_simAccent.active.replace('text-white', '')}`}
+                          initial={false}
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
                       {board.label}
                     </button>
                   ))}

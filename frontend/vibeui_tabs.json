@@ -1,0 +1,27 @@
+[
+  {
+    "id": "43cbe58e-d375-4dfe-9dc5-ee9e2c9326d9",
+    "title": "050_elegant-tab-nexus",
+    "description": "This is a dark-themed tab navigation featuring a striking vibrant pink gradient for active states. It employs subtle animations, lift effects, and glow for a modern, interactive user experience."
+  },
+  {
+    "id": "e95cfecb-4da2-4c7e-9abf-784c095fd803",
+    "title": "031_radio-button-variant-2",
+    "description": "This design features a soft, three-dimensional neumorphic style for radio selectors, characterized by glowing 'orb' indicators and subtle interactive transitions. It creates a modern, tactile, and visually engaging user input experience."
+  },
+  {
+    "id": "74a463d3-a3a9-4970-9861-cb390b968e72",
+    "title": "019_premium-accordion-component",
+    "description": "This accordion component features a clean, modern aesthetic with a focus on subtle interactions. It utilizes soft green gradients, elegant shadows, and smooth transitions to provide a premium and engaging user experience."
+  },
+  {
+    "id": "48037667-790d-423d-8433-f901a74f0270",
+    "title": "020_premium-tag-chips",
+    "description": "This design features interactive, pill-shaped tag chips with a clean, modern aesthetic. It employs subtle gradients and shadows for depth, and provides clear visual feedback on hover for an enhanced user experience."
+  },
+  {
+    "id": "b28cbed1-02e5-4db1-a4cb-6e887372476a",
+    "title": "034_aurabox-checkbox-toggle",
+    "description": "This design features a highly interactive, skeuomorphic toggle button with deep shadows, glossy reflections, and a pulsing glow effect upon activation, providing rich visual feedback. Its dark-themed background and vibrant primary color give it a modern, tech-inspired aesthetic."
+  }
+]
