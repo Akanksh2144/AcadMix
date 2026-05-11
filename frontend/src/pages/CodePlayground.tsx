@@ -408,7 +408,7 @@ const CodePlayground = ({ navigate, user }) => {
            setNativeOutput(JSON.stringify(result, null, 2));
         }
       } else if (lang === 'verilog') {
-        const response = await api.post('/api/v1/simulate/verilog', { code: simCode });
+        const response = await api.post('/v1/simulate/verilog', { code: simCode });
         const result = response.data;
         if (result && result.error) {
            setNativeOutput(`Error:\n${result.stdout || ''}\n${result.error}`);
