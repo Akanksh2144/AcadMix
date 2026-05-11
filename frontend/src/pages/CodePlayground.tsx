@@ -480,8 +480,7 @@ endmodule`
     { id: 'vlsi-makerchip', label: 'Makerchip IDE', url: 'https://makerchip.com/sandbox/', openLabel: 'Open in Makerchip' },
   ],
   pcb: [
-    { id: 'pcb-easyeda', label: 'EasyEDA Editor', url: 'https://easyeda.com/editor', openLabel: 'Open EasyEDA' },
-    { id: 'pcb-upverter', label: 'Upverter', url: 'https://upverter.com/design/', openLabel: 'Open Upverter' },
+    { id: 'pcb-svg', label: 'SVG PCB Editor', url: 'https://leomcelroy.com/svg-pcb/', openLabel: 'Open SVG PCB' },
     { id: 'pcb-kicanvas', label: 'KiCanvas Viewer', url: 'https://kicanvas.org/', openLabel: 'Open KiCanvas' },
   ],
   communication: [
