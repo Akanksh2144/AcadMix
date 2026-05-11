@@ -13,6 +13,7 @@ import SimulationIDE from '../components/SimulationIDE';
 import SpiceChart from '../components/SpiceChart';
 import { Simulation as EEcircuitSimulation } from 'eecircuit-engine';
 import DSPBlockSimulator from '../components/dsp/DSPBlockSimulator';
+import SettlementCalculator from '../components/civil/SettlementCalculator';
 
 const LANGUAGES = [
   { id: 'python', label: 'Python', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
@@ -582,7 +583,7 @@ const CIVIL_SIMULATOR_CATEGORIES = [
   { id: 'concrete_steel', label: 'Concrete & Steel Design', icon: <Wall size={16} weight="duotone" />, accent: 'rose' },
 ];
 
-const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; octaveUrl?: string }[]> = {
+const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; octaveUrl?: string; isNativeBlock?: boolean }[]> = {
   structural: [
     { id: 'st-python', label: 'Python (Stiffness)', url: jupyterUrl(JUPYTER_CODES['st-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'st-beam', label: 'Beam Calculator', url: 'https://structurecalcs.com/beam', openLabel: 'Open Calculator' },
@@ -591,7 +592,7 @@ const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: s
   ],
   geotechnical: [
     { id: 'geo-python', label: 'Python (Soil)', url: jupyterUrl(JUPYTER_CODES['geo-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
-    { id: 'geo-settle', label: 'Settlement Calc', url: 'https://www.geocalcs.com/', openLabel: 'Open GeoCalcs' },
+    { id: 'geo-settle-native', label: 'Settlement Calc (Native)', url: '', isNativeBlock: true },
   ],
   fluid_mechanics: [
     { id: 'fm-python', label: 'Python (Flow)', url: jupyterUrl(JUPYTER_CODES['fm-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
@@ -2044,8 +2045,12 @@ const CodePlayground = ({ navigate, user }) => {
             {/* Simulator iframe — or external-launch card for noEmbed boards */}
             <div className="soft-card overflow-hidden flex-1 min-h-0 rounded-2xl" style={{ overscrollBehavior: 'contain' }}>
               {(_simActiveBoard as any)?.isNativeBlock ? (
-                <div className="w-full h-full p-2">
-                  <DSPBlockSimulator />
+                <div className="w-full h-full p-2 bg-[#0B0C10]">
+                  {(_simActiveBoard as any)?.id === 'geo-settle-native' ? (
+                    <SettlementCalculator />
+                  ) : (
+                    <DSPBlockSimulator />
+                  )}
                 </div>
               ) : (_simActiveBoard as any)?.isNativeWasm ? (
                 <div className="w-full h-full p-2">
