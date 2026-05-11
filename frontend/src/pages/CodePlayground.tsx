@@ -42,18 +42,18 @@ const OCTAVE_URL = 'https://octave-online.net/';
 
 const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; noEmbed?: boolean; octaveUrl?: string }[]> = {
   embedded: [
-    { id: 'arduino-uno', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
-    { id: 'arduino-mega', label: 'Arduino Mega', url: 'https://wokwi.com/projects/new/arduino-mega', openLabel: 'Open in Wokwi' },
-    { id: 'arduino-nano', label: 'Arduino Nano', url: 'https://wokwi.com/projects/new/arduino-nano', openLabel: 'Open in Wokwi' },
-    { id: 'esp32', label: 'ESP32 (Core)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
-    { id: 'esp32-c3', label: 'ESP32-C3 (RISC-V)', url: 'https://wokwi.com/projects/new/esp32-c3', openLabel: 'Open in Wokwi' },
-    { id: 'esp32-s3', label: 'ESP32-S3 (Edge AI)', url: 'https://wokwi.com/projects/new/esp32-s3', openLabel: 'Open in Wokwi' },
-    { id: 'esp32-rust', label: 'Embedded Rust', url: 'https://wokwi.com/projects/new/rust-esp32', openLabel: 'Open in Wokwi' },
-    { id: 'stm32', label: 'STM32', url: 'https://wokwi.com/projects/new/stm32', openLabel: 'Open in Wokwi' },
-    { id: 'pi-pico', label: 'RPi Pico', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
-    { id: 'micropython-esp32', label: 'MicroPython', url: 'https://wokwi.com/projects/new/micropython-esp32', openLabel: 'Open in Wokwi' },
-    { id: 'attiny85', label: 'ATtiny85', url: 'https://wokwi.com/projects/new/attiny85', openLabel: 'Open in Wokwi' },
-    { id: 'atmega328p', label: 'ATmega328P', url: 'https://wokwi.com/projects/new/atmega328p', openLabel: 'Open in Wokwi' },
+    { id: 'arduino-uno', label: 'Arduino Uno', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'arduino-mega', label: 'Arduino Mega', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'arduino-nano', label: 'Arduino Nano', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'esp32', label: 'ESP32 (Core)', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'esp32-c3', label: 'ESP32-C3 (RISC-V)', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'esp32-s3', label: 'ESP32-S3 (Edge AI)', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'esp32-rust', label: 'Embedded Rust', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'stm32', label: 'STM32', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'pi-pico', label: 'RPi Pico', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'micropython-esp32', label: 'MicroPython', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'attiny85', label: 'ATtiny85', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'atmega328p', label: 'ATmega328P', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
   ],
   analog: [
     { id: 'ae-blank', label: 'Blank Circuit', url: 'https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcA2aAOMB2ALGXyEBOAbmAmwmwFMBaMMAKACcQUFDxCRsKBmEbqh7ce-YUJR1BkEJByYAHiGC4ALpzV8hOvYb37MBg5QCMvIbsPG6Zjlx5A', openLabel: 'Open in CircuitJS' },
@@ -140,9 +140,9 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
   ],
   industrial_automation: [
     { id: 'ia-plcfiddle', label: 'PLC Fiddle (Ladder)', url: 'https://www.plcfiddle.com/', openLabel: 'Open PLC Fiddle' },
-    { id: 'ia-arduino-plc', label: 'Arduino (PLC Sim)', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
-    { id: 'ia-esp32-scada', label: 'ESP32 (SCADA Node)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
-    { id: 'ia-pico-vfd', label: 'RPi Pico (VFD Sim)', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
+    { id: 'ia-arduino-plc', label: 'Arduino (PLC Sim)', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'ia-esp32-scada', label: 'ESP32 (SCADA Node)', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'ia-pico-vfd', label: 'RPi Pico (VFD Sim)', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
   ],
   measurements: [
     { id: 'mi-wheatstone', label: 'Wheatstone Bridge', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=wheatstone.txt', openLabel: 'Open in CircuitJS' },
@@ -156,7 +156,7 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
     { id: 're-fullrect', label: 'Full-Wave Rectifier', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=fullrect.txt', openLabel: 'Open in CircuitJS' },
     { id: 're-voltdouble', label: 'Voltage Doubler', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=voltdouble.txt', openLabel: 'Open in CircuitJS' },
     { id: 're-python', label: 'Python (Modeling)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
-    { id: 're-esp32', label: 'ESP32 (IoT Monitor)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
+    { id: 're-esp32', label: 'ESP32 (IoT Monitor)', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
   ],
 };
 
@@ -245,9 +245,9 @@ const MECH_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: st
     { id: 'mfg-python', label: 'Python (CNC)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   mechatronics: [
-    { id: 'mt-arduino', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
-    { id: 'mt-esp32', label: 'ESP32', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
-    { id: 'mt-pico', label: 'RPi Pico', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
+    { id: 'mt-arduino', label: 'Arduino Uno', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'mt-esp32', label: 'ESP32', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
+    { id: 'mt-pico', label: 'RPi Pico', url: 'https://velxio.dev/editor', openLabel: 'Open in Velxio' },
     { id: 'mt-python', label: 'Python (Control)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   dynamics: [
