@@ -51,7 +51,6 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
     { id: 'esp32', label: 'ESP32 (Core)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
     { id: 'esp32-c3', label: 'ESP32-C3 (RISC-V)', url: 'https://wokwi.com/projects/new/esp32-c3', openLabel: 'Open in Wokwi' },
     { id: 'esp32-s3', label: 'ESP32-S3 (Edge AI)', url: 'https://wokwi.com/projects/new/esp32-s3', openLabel: 'Open in Wokwi' },
-    { id: 'stm32', label: 'STM32', url: 'https://wokwi.com/projects/new/stm32', openLabel: 'Open in Wokwi' },
     { id: 'pi-pico', label: 'RPi Pico', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
     { id: 'micropython-esp32', label: 'MicroPython', url: 'https://wokwi.com/projects/new/micropython-esp32', openLabel: 'Open in Wokwi' },
     { id: 'attiny85', label: 'ATtiny85', url: 'https://wokwi.com/projects/new/attiny85', openLabel: 'Open in Wokwi' },
