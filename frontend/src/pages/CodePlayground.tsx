@@ -481,6 +481,10 @@ endmodule`
   ],
   pcb: [
     { id: 'pcb-svg', label: 'SVG PCB Editor', url: 'https://leomcelroy.com/svg-pcb/', openLabel: 'Open SVG PCB' },
+    { id: 'pcb-altium', label: 'Altium 365 Viewer', url: 'https://www.altium.com/viewer/', openLabel: 'Open Altium Viewer' },
+    { id: 'pcb-easyeda', label: 'EasyEDA Viewer', url: 'https://easyeda.com/editor', openLabel: 'Open EasyEDA' },
+    { id: 'pcb-upverter', label: 'Upverter', url: 'https://upverter.com/design/', openLabel: 'Open Upverter' },
+    { id: 'pcb-circuitmaker', label: 'CircuitMaker', url: 'https://circuitmaker.com/', openLabel: 'Open CircuitMaker' },
     { id: 'pcb-kicanvas', label: 'KiCanvas Viewer', url: 'https://kicanvas.org/', openLabel: 'Open KiCanvas' },
   ],
   communication: [
