@@ -493,9 +493,12 @@ endmodule`
   ],
   dsp: [
     { id: 'dsp-native', label: 'AcadMix DSP (Native)', url: '', isNativeBlock: true },
+    { id: 'dsp-octave', label: 'GNU Octave', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'dsp-academo-fft', label: 'Spectrum Analyzer', url: 'https://academo.org/demos/spectrum-analyzer/', openLabel: 'Open Spectrum Analyzer' },
+    { id: 'dsp-academo-scope', label: 'Virtual Oscilloscope', url: 'https://academo.org/demos/virtual-oscilloscope/', openLabel: 'Open Oscilloscope' },
+    { id: 'dsp-fft', label: 'Falstad Fourier', url: 'https://www.falstad.com/fourier/', openLabel: 'Open Falstad' },
+    { id: 'dsp-filter', label: 'Filter Design', url: 'https://rf-tools.com/filters/', openLabel: 'Open RF Tools' },
     { id: 'dsp-python', label: 'Python (DSP)', url: jupyterUrl(JUPYTER_CODES['dsp-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
-    { id: 'dsp-fft', label: 'FFT Visualizer', url: 'https://www.falstad.com/fourier/', openLabel: 'Open Fourier' },
-    { id: 'dsp-filter', label: 'Filter Designer', url: 'https://www.falstad.com/dfilter/', openLabel: 'Open Filter Tool' },
   ],
 };
 
