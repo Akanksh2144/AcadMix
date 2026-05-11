@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube, Broadcast, Equalizer, SunHorizon, Gauge, Path, Tree, Wall, Wrench, Gear, Engine, Robot, ThermometerHot, Car } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 import Editor from '@monaco-editor/react';
