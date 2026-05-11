@@ -302,6 +302,7 @@ export const facultyPanelAPI = {
 export const outcomesAPI = {
   getMatrix: (courseId) => api.get(`/courses/${courseId}/outcomes`),
   saveMatrix: (courseId, payload) => api.post(`/courses/${courseId}/co-po-mapping`, payload),
+  generateAIOutcomes: (courseId) => api.post(`/courses/${courseId}/ai-generate-outcomes`),
 };
 
 export const assessmentsAPI = {

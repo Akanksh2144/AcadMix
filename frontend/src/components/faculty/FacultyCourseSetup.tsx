@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, ArrowLeft, Plus, Trash, Check, TreeStructure, WarningCircle, FloppyDisk } from '@phosphor-icons/react';
+import { ArrowRight, ArrowLeft, Plus, Trash, Check, TreeStructure, WarningCircle, FloppyDisk, MagicWand } from '@phosphor-icons/react';
+import { toast } from 'sonner';
 import { facultyPanelAPI, outcomesAPI } from '../../services/api';
 import AlertModal from '../AlertModal';
 
@@ -113,6 +114,46 @@ const FacultyCourseSetup = ({ onDirtyChange }) => {
       return;
     }
     setStep(2);
+  };
+
+  const handleAIGenerate = async () => {
+    try {
+      toast.loading('AI is analyzing the syllabus to generate COs and Mappings...', { id: 'ai_generate' });
+      const res = await outcomesAPI.generateAIOutcomes(selectedCourse.course_id);
+      const data = res.data || res;
+      
+      if (data.course_outcomes && data.course_outcomes.length > 0) {
+        // Map COs
+        const generatedCOs = data.course_outcomes.map(co => ({
+          _key: generateTempId(),
+          id: null,
+          code: co.code,
+          description: co.description,
+          bloom_level: co.bloom_level
+        }));
+        setLocalCOs(generatedCOs);
+
+        // Map strengths
+        const newMappings = {};
+        if (data.mappings) {
+           data.mappings.forEach(m => {
+              // Find the generated CO's _key using its code
+              const matchedCO = generatedCOs.find(c => c.code === m.co_code);
+              if (matchedCO) {
+                 newMappings[`${matchedCO._key}_${m.po_id}`] = m.strength;
+              }
+           });
+        }
+        setLocalMappings(newMappings);
+        setIsDirty(true);
+        toast.success('AI successfully generated outcomes and mappings! Please review them.', { id: 'ai_generate' });
+      } else {
+        toast.error('AI failed to generate outcomes.', { id: 'ai_generate' });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to auto-generate mapping. Please try again.', { id: 'ai_generate' });
+    }
   };
 
   const toggleMapping = (coKey, poId) => {
@@ -239,9 +280,14 @@ const FacultyCourseSetup = ({ onDirtyChange }) => {
                    <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-lg">Define Course Outcomes</h4>
                    <p className="text-sm text-slate-500 dark:text-slate-400">Establish the specific syllabus outcomes for this active course.</p>
                  </div>
-                 <button onClick={addCO} className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 hover:shadow-sm px-4 py-2 rounded-xl text-sm font-bold transition-all">
-                    <Plus size={16} weight="bold" /> Add CO
-                 </button>
+                 <div className="flex items-center gap-3">
+                   <button onClick={handleAIGenerate} className="flex items-center gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white shadow-lg shadow-violet-500/25 px-4 py-2 rounded-xl text-sm font-bold transition-all">
+                      <MagicWand size={16} weight="fill" /> Auto-Generate with AI
+                   </button>
+                   <button onClick={addCO} className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 hover:shadow-sm px-4 py-2 rounded-xl text-sm font-bold transition-all">
+                      <Plus size={16} weight="bold" /> Add CO
+                   </button>
+                 </div>
                </div>
 
                <div className="bg-white dark:bg-[#1A202C] border border-slate-100 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
