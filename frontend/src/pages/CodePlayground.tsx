@@ -41,8 +41,375 @@ const SIMULATOR_CATEGORIES = [
   { id: 'dsp', label: 'DSP / Signal Processing', icon: <Equalizer size={16} weight="duotone" />, accent: 'indigo' },
 ];
 
-const JUPYTERLITE_URL = 'https://jupyterlite.github.io/demo/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab%20Dark';
+const JUPYTERLITE_BASE = 'https://jupyterlite.github.io/demo/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab%20Dark';
 const OCTAVE_URL = 'https://octave-online.net/';
+const jupyterUrl = (code?: string) => code ? `${JUPYTERLITE_BASE}&code=${encodeURIComponent(code)}` : JUPYTERLITE_BASE;
+
+// ── Default code snippets for each JupyterLite board ─────────────────────────
+const JUPYTER_CODES: Record<string, string> = {
+  'comm-python': `import numpy as np
+# AM Modulation Demo
+fc, fm, m = 100, 5, 0.8  # carrier, message freq, mod index
+t = np.linspace(0, 1, 1000)
+carrier = np.cos(2*np.pi*fc*t)
+message = np.cos(2*np.pi*fm*t)
+am = (1 + m*message) * carrier
+print("AM Signal generated! Peak:", round(max(am),2))
+print("Carrier freq:", fc, "Hz | Message freq:", fm, "Hz")
+print("Modulation index:", m)`,
+
+  'dsp-python': `import numpy as np
+# FIR Low-Pass Filter Demo
+N = 256
+fs = 1000  # sampling rate
+t = np.arange(N) / fs
+# Signal: 5 Hz + 50 Hz noise
+x = np.sin(2*np.pi*5*t) + 0.5*np.sin(2*np.pi*50*t)
+# Simple moving average filter (window=15)
+h = np.ones(15)/15
+y = np.convolve(x, h, mode='same')
+print("Input signal: 5Hz + 50Hz noise")
+print("Filter: 15-tap moving average")
+print("Input RMS:", round(np.sqrt(np.mean(x**2)),4))
+print("Output RMS:", round(np.sqrt(np.mean(y**2)),4))
+print("Noise reduced by ~", round((1-np.std(y)/np.std(x))*100,1), "%")`,
+
+  'cs-python': `import numpy as np
+# Second-Order System Step Response
+wn = 10  # natural frequency (rad/s)
+zeta = 0.3  # damping ratio
+t = np.linspace(0, 2, 500)
+wd = wn * np.sqrt(1 - zeta**2)
+y = 1 - np.exp(-zeta*wn*t) * (np.cos(wd*t) + (zeta/np.sqrt(1-zeta**2))*np.sin(wd*t))
+print("2nd Order System: wn=", wn, "rad/s, zeta=", zeta)
+print("Damped freq:", round(wd,2), "rad/s")
+print("Peak overshoot:", round((max(y)-1)*100,1), "%")
+print("Settling time ~", round(4/(zeta*wn),2), "s")`,
+
+  'em-python': `import numpy as np
+# Transformer Efficiency Calculator
+V1, I1 = 230, 10  # primary voltage, current
+V2, I2 = 115, 18  # secondary voltage, current
+P_cu = 50   # copper losses (W)
+P_fe = 30   # iron/core losses (W)
+P_in = V1 * I1
+P_out = V2 * I2
+eff = (P_out / (P_out + P_cu + P_fe)) * 100
+print("=== Transformer Analysis ===")
+print(f"Turns ratio: {V1/V2:.2f}:1")
+print(f"Input power:  {P_in} W")
+print(f"Output power: {P_out} W")
+print(f"Cu loss: {P_cu}W | Fe loss: {P_fe}W")
+print(f"Efficiency: {eff:.1f}%")`,
+
+  'ps-python': `import numpy as np
+# Gauss-Seidel Load Flow (2-bus)
+V = np.array([1.0+0j, 1.0+0j])  # initial voltages
+Y = np.array([[10-20j, -10+20j], [-10+20j, 10-20j]])  # Y-bus
+P = np.array([0, -0.5])  # scheduled P
+Q = np.array([0, -0.3])  # scheduled Q
+print("=== Gauss-Seidel Load Flow ===")
+for itr in range(5):
+    S2 = P[1] + 1j*Q[1]
+    V[1] = (1/Y[1,1]) * (np.conj(S2)/np.conj(V[1]) - Y[1,0]*V[0])
+    print(f"Iter {itr+1}: V2 = {abs(V[1]):.4f} ∠{np.degrees(np.angle(V[1])):.2f}°")
+print(f"\\nFinal V2 = {abs(V[1]):.4f} p.u.")`,
+
+  'mi-python': `import numpy as np
+# Wheatstone Bridge Analysis
+R1, R2, R3, R4 = 100, 200, 150, 300  # ohms
+Vs = 10  # supply voltage
+Vth = Vs * (R3/(R3+R1) - R4/(R4+R2))
+Rth = (R1*R3)/(R1+R3) + (R2*R4)/(R2+R4)
+print("=== Wheatstone Bridge ===")
+print(f"R1={R1}, R2={R2}, R3={R3}, R4={R4} Ω")
+print(f"Supply: {Vs}V")
+print(f"Bridge voltage: {Vth:.4f} V")
+print(f"Thevenin resistance: {Rth:.2f} Ω")
+balanced = abs(R1*R4 - R2*R3) < 0.01
+print(f"Balanced: {'Yes ✓' if balanced else 'No ✗'}")`,
+
+  're-python': `import numpy as np
+# Solar PV I-V Curve (Single Diode Model)
+Isc, Voc = 8.5, 36.0  # short-circuit current, open-circuit voltage
+n, T = 1.2, 298  # ideality, temp (K)
+Vt = 0.02585 * T / 298
+V = np.linspace(0, Voc, 100)
+I = Isc * (1 - np.exp((V - Voc)/(n * 36 * Vt)))
+I = np.maximum(I, 0)
+P = V * I
+idx = np.argmax(P)
+print("=== Solar PV Analysis ===")
+print(f"Isc = {Isc}A | Voc = {Voc}V")
+print(f"MPP: {V[idx]:.1f}V, {I[idx]:.2f}A → {P[idx]:.1f}W")
+print(f"Fill Factor: {P[idx]/(Isc*Voc)*100:.1f}%")`,
+
+  'st-python': `import numpy as np
+# Simply Supported Beam - Deflection (Euler-Bernoulli)
+L = 5.0    # length (m)
+w = 10.0   # UDL (kN/m)
+E = 200e6  # Young's modulus (kPa)
+I = 8.33e-4  # moment of inertia (m^4)
+x = np.linspace(0, L, 50)
+delta = (w * x * (L**3 - 2*L*x**2 + x**3)) / (24*E*I)
+print("=== Beam Deflection (UDL) ===")
+print(f"Span: {L}m | Load: {w} kN/m")
+print(f"Max deflection: {max(delta)*1000:.3f} mm at x={L/2}m")
+print(f"Max BM: {w*L**2/8:.2f} kN·m")
+print(f"Reactions: RA = RB = {w*L/2:.1f} kN")`,
+
+  'geo-python': `import numpy as np
+# Terzaghi Bearing Capacity
+c = 20   # cohesion (kPa)
+phi = 30  # friction angle (deg)
+gamma = 18  # unit weight (kN/m³)
+Df = 1.5  # depth of foundation (m)
+B = 2.0   # width (m)
+# Terzaghi factors
+Nq = np.exp(np.pi*np.tan(np.radians(phi))) * np.tan(np.radians(45+phi/2))**2
+Nc = (Nq - 1) / np.tan(np.radians(phi))
+Ng = 2*(Nq + 1) * np.tan(np.radians(phi))
+qu = c*Nc + gamma*Df*Nq + 0.5*gamma*B*Ng
+print("=== Terzaghi Bearing Capacity ===")
+print(f"c={c}kPa, φ={phi}°, γ={gamma}kN/m³")
+print(f"Nc={Nc:.2f}, Nq={Nq:.2f}, Nγ={Ng:.2f}")
+print(f"Ultimate capacity: {qu:.1f} kPa")
+print(f"Safe capacity (FOS=3): {qu/3:.1f} kPa")`,
+
+  'fm-python': `import numpy as np
+# Pipe Flow - Darcy-Weisbach
+D = 0.15   # diameter (m)
+L = 100    # length (m)
+Q = 0.02   # flow rate (m³/s)
+nu = 1e-6  # kinematic viscosity
+g = 9.81
+A = np.pi * D**2 / 4
+V = Q / A
+Re = V * D / nu
+f = 0.316 / Re**0.25 if Re < 1e5 else 0.0032 + 0.221/Re**0.237
+hf = f * L * V**2 / (2 * g * D)
+print("=== Pipe Flow Analysis ===")
+print(f"Velocity: {V:.2f} m/s")
+print(f"Reynolds number: {Re:.0f}")
+print(f"Flow regime: {'Laminar' if Re<2300 else 'Turbulent'}")
+print(f"Friction factor: {f:.5f}")
+print(f"Head loss: {hf:.3f} m")`,
+
+  'cad-python': `import numpy as np
+# B-Spline Curve Evaluation
+def bspline_basis(i, k, t, knots):
+    if k == 1:
+        return 1.0 if knots[i] <= t < knots[i+1] else 0.0
+    d1 = knots[i+k-1] - knots[i]
+    d2 = knots[i+k] - knots[i+1]
+    c1 = ((t-knots[i])/d1)*bspline_basis(i,k-1,t,knots) if d1 else 0
+    c2 = ((knots[i+k]-t)/d2)*bspline_basis(i+1,k-1,t,knots) if d2 else 0
+    return c1 + c2
+ctrl = [(0,0),(1,3),(3,3),(4,0)]  # control points
+print("=== B-Spline Curve ===")
+print("Control points:", ctrl)
+print("Degree: 3 (cubic)")
+print("Evaluating curve at 5 points...")
+knots = [0,0,0,0,1,1,1,1]
+for u in [0.0, 0.25, 0.5, 0.75, 0.999]:
+    x = sum(bspline_basis(i,4,u,knots)*p[0] for i,p in enumerate(ctrl))
+    y = sum(bspline_basis(i,4,u,knots)*p[1] for i,p in enumerate(ctrl))
+    print(f"  u={u:.2f} → ({x:.2f}, {y:.2f})")`,
+
+  'tr-python': `import numpy as np
+# Traffic Flow - Greenshields Model
+vf = 80   # free-flow speed (km/h)
+kj = 150  # jam density (veh/km)
+k = np.linspace(1, kj, 50)
+v = vf * (1 - k/kj)
+q = k * v  # flow = density × speed
+idx = np.argmax(q)
+print("=== Greenshields Traffic Model ===")
+print(f"Free-flow speed: {vf} km/h")
+print(f"Jam density: {kj} veh/km")
+print(f"Max flow: {q[idx]:.0f} veh/h at k={k[idx]:.0f} veh/km")
+print(f"Speed at max flow: {v[idx]:.1f} km/h")
+print(f"Capacity: {vf*kj/4:.0f} veh/h")`,
+
+  'env-python': `import numpy as np
+# BOD Removal - Activated Sludge Process
+Q = 5000   # flow rate (m³/day)
+S0 = 250   # influent BOD (mg/L)
+Se = 20    # effluent BOD (mg/L)
+Y = 0.5    # yield coefficient
+kd = 0.06  # decay rate (1/day)
+theta_c = 10  # SRT (days)
+X = Y * (S0 - Se) * theta_c / (1 + kd*theta_c)
+print("=== Activated Sludge Design ===")
+print(f"Flow: {Q} m³/day | BOD: {S0}→{Se} mg/L")
+print(f"Removal: {(1-Se/S0)*100:.1f}%")
+print(f"MLSS concentration: {X:.0f} mg/L")
+print(f"Sludge production: {Q*Y*(S0-Se)/1000:.1f} kg/day")`,
+
+  'cs-python-civil': `import numpy as np
+# RC Beam Design (IS 456)
+fck, fy = 25, 500  # M25, Fe500
+b, d = 300, 450    # mm
+Mu = 150e6         # N·mm (150 kN·m)
+xu_max = 0.46 * d
+Mu_lim = 0.36*fck*b*xu_max*(d - 0.42*xu_max)
+print("=== RC Beam Design (IS 456) ===")
+print(f"M25/Fe500 | b={b}mm, d={d}mm")
+print(f"Mu = {Mu/1e6:.0f} kN·m")
+print(f"Mu,lim = {Mu_lim/1e6:.1f} kN·m")
+if Mu <= Mu_lim:
+    Ast = (0.5*fck*b*d/fy)*(1-np.sqrt(1-4.6*Mu/(fck*b*d**2)))
+    print(f"Singly reinforced: Ast = {Ast:.0f} mm²")
+else:
+    print("Doubly reinforced beam required")`,
+
+  'th-python': `import numpy as np
+# Otto Cycle Analysis
+r = 8       # compression ratio
+gamma = 1.4 # specific heat ratio
+T1 = 300    # initial temp (K)
+P1 = 100    # initial pressure (kPa)
+Qin = 1800  # heat added (kJ/kg)
+T2 = T1 * r**(gamma-1)
+T3 = T2 + Qin/0.718  # cv = 0.718 kJ/kg·K
+T4 = T3 / r**(gamma-1)
+eta = 1 - 1/r**(gamma-1)
+print("=== Otto Cycle Analysis ===")
+print(f"Compression ratio: {r}")
+print(f"T1={T1}K → T2={T2:.0f}K → T3={T3:.0f}K → T4={T4:.0f}K")
+print(f"Thermal efficiency: {eta*100:.1f}%")
+print(f"Work output: {Qin*eta:.0f} kJ/kg")`,
+
+  'fl-python': `import numpy as np
+# Bernoulli Equation - Venturi Meter
+D1, D2 = 0.1, 0.05  # diameters (m)
+rho = 998  # water density
+dP = 5000  # pressure difference (Pa)
+Cd = 0.98  # discharge coefficient
+A1 = np.pi*D1**2/4
+A2 = np.pi*D2**2/4
+Q = Cd * A1 * A2 * np.sqrt(2*dP/(rho*(A1**2-A2**2)))
+V1 = Q/A1
+V2 = Q/A2
+print("=== Venturi Meter ===")
+print(f"D1={D1*100}cm, D2={D2*100}cm")
+print(f"ΔP = {dP} Pa")
+print(f"Q = {Q*1000:.3f} L/s")
+print(f"V1 = {V1:.2f} m/s | V2 = {V2:.2f} m/s")`,
+
+  'som-python': `import numpy as np
+# Mohr's Circle Calculation
+sx, sy, txy = 80, -30, 40  # MPa
+center = (sx + sy) / 2
+R = np.sqrt(((sx-sy)/2)**2 + txy**2)
+s1 = center + R
+s2 = center - R
+tau_max = R
+theta_p = 0.5 * np.degrees(np.arctan2(2*txy, sx-sy))
+print("=== Mohr's Circle ===")
+print(f"σx={sx}, σy={sy}, τxy={txy} MPa")
+print(f"Center: {center:.1f} MPa | Radius: {R:.1f} MPa")
+print(f"σ1 = {s1:.1f} MPa | σ2 = {s2:.1f} MPa")
+print(f"τ_max = {tau_max:.1f} MPa")
+print(f"Principal angle: {theta_p:.1f}°")`,
+
+  'md-python': `import numpy as np
+# Shaft Design - Torsion
+T = 500    # torque (N·m)
+tau_allow = 40e6  # allowable shear stress (Pa)
+d = (16*T/(np.pi*tau_allow))**(1/3)
+print("=== Shaft Design ===")
+print(f"Torque: {T} N·m")
+print(f"Allowable τ: {tau_allow/1e6} MPa")
+print(f"Min diameter: {d*1000:.1f} mm")
+print(f"Rounded up: {np.ceil(d*1000/5)*5:.0f} mm")
+J = np.pi*d**4/32
+print(f"Polar moment: {J*1e12:.1f} mm⁴")`,
+
+  'mfg-python': `import numpy as np
+# CNC Machining Parameters
+D = 50     # tool diameter (mm)
+N = 1200   # spindle speed (RPM)
+fz = 0.1   # feed per tooth (mm)
+z = 4      # number of teeth
+Vc = np.pi * D * N / 1000
+Vf = fz * z * N
+print("=== CNC Milling Parameters ===")
+print(f"Tool: Ø{D}mm, {z} flutes")
+print(f"Spindle: {N} RPM")
+print(f"Cutting speed: {Vc:.0f} m/min")
+print(f"Feed rate: {Vf:.0f} mm/min")
+print(f"Feed/tooth: {fz} mm")`,
+
+  'mt-python': `import numpy as np
+# PID Controller Simulation
+Kp, Ki, Kd = 1.2, 0.5, 0.1
+dt = 0.01
+setpoint = 1.0
+y, integral, prev_err = 0.0, 0.0, 0.0
+print("=== PID Step Response ===")
+print(f"Kp={Kp}, Ki={Ki}, Kd={Kd}")
+for i in range(200):
+    err = setpoint - y
+    integral += err * dt
+    derivative = (err - prev_err) / dt
+    u = Kp*err + Ki*integral + Kd*derivative
+    y += u * dt * 2  # simple plant
+    prev_err = err
+    if i % 40 == 0:
+        print(f"  t={i*dt:.2f}s: y={y:.3f}, err={err:.3f}")
+print(f"Final: y={y:.4f} (target={setpoint})")`,
+
+  'dy-python': `import numpy as np
+# Spring-Mass-Damper Free Vibration
+m, c, k = 2, 5, 200  # kg, N·s/m, N/m
+wn = np.sqrt(k/m)
+zeta = c / (2*np.sqrt(k*m))
+wd = wn * np.sqrt(1-zeta**2)
+t = np.linspace(0, 2, 100)
+x = np.exp(-zeta*wn*t) * np.cos(wd*t)
+print("=== Free Vibration Analysis ===")
+print(f"m={m}kg, c={c}N·s/m, k={k}N/m")
+print(f"Natural freq: {wn:.2f} rad/s ({wn/(2*np.pi):.2f} Hz)")
+print(f"Damping ratio: {zeta:.3f} ({'Underdamped' if zeta<1 else 'Overdamped'})")
+print(f"Damped freq: {wd:.2f} rad/s")
+print(f"Log decrement: {2*np.pi*zeta/np.sqrt(1-zeta**2):.3f}")`,
+
+  'au-python': `import numpy as np
+# IC Engine Performance
+bp = 25    # brake power (kW)
+mf = 8     # fuel consumption (kg/hr)
+CV = 42000 # calorific value (kJ/kg)
+N = 3000   # RPM
+eta_mech = 0.82
+ip = bp / eta_mech
+fp = ip - bp
+sfc = mf / bp
+eta_th = (bp*3600) / (mf*CV) * 100
+T = (bp*1000*60) / (2*np.pi*N)
+print("=== IC Engine Performance ===")
+print(f"BP={bp}kW | IP={ip:.1f}kW | FP={fp:.1f}kW")
+print(f"Mech efficiency: {eta_mech*100:.0f}%")
+print(f"Thermal efficiency: {eta_th:.1f}%")
+print(f"SFC: {sfc:.3f} kg/kWh")
+print(f"Torque: {T:.1f} N·m @ {N} RPM")`,
+
+  'cad-python-3d': `import numpy as np
+# Parametric Gear Profile
+m, z = 2, 20  # module (mm), teeth
+r_pitch = m * z / 2
+r_base = r_pitch * np.cos(np.radians(20))
+r_addendum = r_pitch + m
+r_dedendum = r_pitch - 1.25*m
+print("=== Spur Gear Design ===")
+print(f"Module: {m}mm | Teeth: {z}")
+print(f"Pitch circle: Ø{2*r_pitch}mm")
+print(f"Base circle: Ø{2*r_base:.1f}mm")
+print(f"Addendum circle: Ø{2*r_addendum}mm")
+print(f"Dedendum circle: Ø{2*r_dedendum:.1f}mm")
+print(f"Tooth thickness: {np.pi*m/2:.2f}mm")`,
+};
+
 
 const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; noEmbed?: boolean; octaveUrl?: string; isNativeWasm?: boolean; isNativeBlock?: boolean; nativeLanguage?: 'spice' | 'verilog'; defaultCode?: string }[]> = {
   embedded: [
@@ -120,11 +487,11 @@ endmodule`
     { id: 'comm-am', label: 'AM Detector', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=amdetect.txt', openLabel: 'Open in CircuitJS' },
     { id: 'comm-vco', label: 'VCO (FM Basis)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=vco.txt', openLabel: 'Open in CircuitJS' },
     { id: 'comm-phaseshiftosc', label: 'Phase-Shift Oscillator', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=phaseshiftosc.txt', openLabel: 'Open in CircuitJS' },
-    { id: 'comm-python', label: 'Python (Comms)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'comm-python', label: 'Python (Comms)', url: jupyterUrl(JUPYTER_CODES['comm-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   dsp: [
     { id: 'dsp-native', label: 'AcadMix DSP (Native)', url: '', isNativeBlock: true },
-    { id: 'dsp-python', label: 'Python (DSP)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'dsp-python', label: 'Python (DSP)', url: jupyterUrl(JUPYTER_CODES['dsp-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'dsp-fft', label: 'FFT Visualizer', url: 'https://www.falstad.com/fourier/', openLabel: 'Open Fourier' },
     { id: 'dsp-filter', label: 'Filter Designer', url: 'https://www.falstad.com/dfilter/', openLabel: 'Open Filter Tool' },
   ],
@@ -152,7 +519,7 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
     { id: 'pe-schmitt', label: 'Schmitt Trigger', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=amp-schmitt.txt', openLabel: 'Open in CircuitJS' },
   ],
   control_systems: [
-    { id: 'cs-python', label: 'Python (Controls)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'cs-python', label: 'Python (Controls)', url: jupyterUrl(JUPYTER_CODES['cs-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'cs-opamp', label: 'Op-Amp', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=opamp.txt', openLabel: 'Open in CircuitJS' },
     { id: 'cs-integrator', label: 'Integrator', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=amp-integ.txt', openLabel: 'Open in CircuitJS' },
     { id: 'cs-differentiator', label: 'Differentiator', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=amp-dfdx.txt', openLabel: 'Open in CircuitJS' },
@@ -165,10 +532,10 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
     { id: 'em-inductive', label: 'Inductive Kickback', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=inductkick.txt', openLabel: 'Open in CircuitJS' },
     { id: 'em-powerfactor', label: 'Power Factor', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=powerfactor1.txt', openLabel: 'Open in CircuitJS' },
     { id: 'em-pfc', label: 'Power Factor Correction', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=powerfactor2.txt', openLabel: 'Open in CircuitJS' },
-    { id: 'em-python', label: 'Python (Machines)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'em-python', label: 'Python (Machines)', url: jupyterUrl(JUPYTER_CODES['em-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   power_systems: [
-    { id: 'ps-python', label: 'Python (Load Flow)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'ps-python', label: 'Python (Load Flow)', url: jupyterUrl(JUPYTER_CODES['ps-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'ps-phaseseq', label: 'Phase-Sequence Network', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=phaseseq.txt', openLabel: 'Open in CircuitJS' },
     { id: 'ps-longdist', label: 'Long Distance Transmission', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=longdist.txt', openLabel: 'Open in CircuitJS' },
     { id: 'ps-tl', label: 'Transmission Line', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=tl.txt', openLabel: 'Open in CircuitJS' },
@@ -186,13 +553,13 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
     { id: 'mi-voltdivide', label: 'Voltage Divider', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=voltdivide.txt', openLabel: 'Open in CircuitJS' },
     { id: 'mi-thevenin', label: 'Thevenin Theorem', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=thevenin.txt', openLabel: 'Open in CircuitJS' },
     { id: 'mi-norton', label: 'Norton Theorem', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=norton.txt', openLabel: 'Open in CircuitJS' },
-    { id: 'mi-python', label: 'Python (Analysis)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'mi-python', label: 'Python (Analysis)', url: jupyterUrl(JUPYTER_CODES['mi-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   renewable_energy: [
     { id: 're-diode', label: 'Solar Cell (Diode)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=diodevar.txt', openLabel: 'Open in CircuitJS' },
     { id: 're-fullrect', label: 'Full-Wave Rectifier', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=fullrect.txt', openLabel: 'Open in CircuitJS' },
     { id: 're-voltdouble', label: 'Voltage Doubler', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=voltdouble.txt', openLabel: 'Open in CircuitJS' },
-    { id: 're-python', label: 'Python (Modeling)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 're-python', label: 'Python (Modeling)', url: jupyterUrl(JUPYTER_CODES['re-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 're-esp32', label: 'ESP32 (IoT Monitor)', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
   ],
 };
@@ -211,17 +578,17 @@ const CIVIL_SIMULATOR_CATEGORIES = [
 
 const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; octaveUrl?: string }[]> = {
   structural: [
-    { id: 'st-python', label: 'Python (Stiffness)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'st-python', label: 'Python (Stiffness)', url: jupyterUrl(JUPYTER_CODES['st-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'st-beam', label: 'Beam Calculator', url: 'https://structurecalcs.com/beam', openLabel: 'Open Calculator' },
     { id: 'st-truss', label: 'Truss Solver', url: 'https://structurecalcs.com/truss', openLabel: 'Open Solver' },
     { id: 'st-frame', label: 'Frame Analysis', url: 'https://structurecalcs.com/beam', openLabel: 'Open Analyzer' },
   ],
   geotechnical: [
-    { id: 'geo-python', label: 'Python (Soil)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'geo-python', label: 'Python (Soil)', url: jupyterUrl(JUPYTER_CODES['geo-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'geo-settle', label: 'Settlement Calc', url: 'https://www.geocalcs.com/', openLabel: 'Open GeoCalcs' },
   ],
   fluid_mechanics: [
-    { id: 'fm-python', label: 'Python (Flow)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'fm-python', label: 'Python (Flow)', url: jupyterUrl(JUPYTER_CODES['fm-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'fm-rlc', label: 'RLC Circuit (Pipe Analogy)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=lrc.txt', openLabel: 'Open in CircuitJS' },
   ],
   surveying: [
@@ -229,18 +596,18 @@ const CIVIL_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: s
     { id: 'sv-qgis', label: 'QGIS Cloud', url: 'https://qgiscloud.com/', openLabel: 'Open QGIS Cloud' },
   ],
   cad_bim: [
-    { id: 'cad-python', label: 'Python (CAD Math)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'cad-python', label: 'Python (CAD Math)', url: jupyterUrl(JUPYTER_CODES['cad-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   transportation: [
-    { id: 'tr-python', label: 'Python (Traffic)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'tr-python', label: 'Python (Traffic)', url: jupyterUrl(JUPYTER_CODES['tr-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'tr-osm', label: 'OpenStreetMap (Roads)', url: 'https://www.openstreetmap.org/', openLabel: 'Open OSM' },
     { id: 'tr-sumo', label: 'SUMO Traffic Sim', url: 'https://sumo.dlr.de/docs/', openLabel: 'Open SUMO Docs', externalUrl: 'https://sumo.dlr.de/docs/Downloads.php', externalLabel: 'Download SUMO' },
   ],
   environmental: [
-    { id: 'env-python', label: 'Python (WTP/STP)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'env-python', label: 'Python (WTP/STP)', url: jupyterUrl(JUPYTER_CODES['env-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   concrete_steel: [
-    { id: 'cs-python', label: 'Python (IS 456)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'cs-python', label: 'Python (IS 456)', url: jupyterUrl(JUPYTER_CODES['cs-python-civil']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
 };
 
@@ -259,45 +626,45 @@ const MECH_SIMULATOR_CATEGORIES = [
 
 const MECH_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; octaveUrl?: string; noEmbed?: boolean }[]> = {
   thermodynamics: [
-    { id: 'th-python', label: 'Python (Thermo)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'th-python', label: 'Python (Thermo)', url: jupyterUrl(JUPYTER_CODES['th-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'th-rc-thermal', label: 'RC Thermal Analogy', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=lrc.txt', openLabel: 'Open in CircuitJS' },
   ],
   fluid_mech: [
-    { id: 'fl-python', label: 'Python (Fluids)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'fl-python', label: 'Python (Fluids)', url: jupyterUrl(JUPYTER_CODES['fl-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
     { id: 'fl-pipe-rlc', label: 'Pipe Flow (RLC Analogy)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=lrc.txt', openLabel: 'Open in CircuitJS' },
   ],
   som: [
     { id: 'som-mohr', label: "Mohr's Circle", url: 'https://mechanicalc.com/calculators/mohrs-circle/', openLabel: 'Open Mechanicalc' },
     { id: 'som-beam', label: 'Beam Calculator', url: 'https://structurecalcs.com/beam', openLabel: 'Open Calculator' },
     { id: 'som-truss', label: 'Truss Solver', url: 'https://structurecalcs.com/truss', openLabel: 'Open Solver' },
-    { id: 'som-python', label: 'Python (SOM)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'som-python', label: 'Python (SOM)', url: jupyterUrl(JUPYTER_CODES['som-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   machine_design: [
     { id: 'md-4bar', label: '4-Bar Linkage Sim', url: 'https://mevirtuoso.com/four-bar-linkage-simulator/', openLabel: 'Open ME Virtuoso' },
-    { id: 'md-python', label: 'Python (Mechanisms)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'md-python', label: 'Python (Mechanisms)', url: jupyterUrl(JUPYTER_CODES['md-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   manufacturing: [
     { id: 'mfg-ncviewer', label: 'G-code Viewer', url: 'https://ncviewer.com/', openLabel: 'Open NC Viewer' },
     { id: 'mfg-gcodews', label: 'G-code Analyzer', url: 'https://gcode.ws/', openLabel: 'Open gCode.ws' },
-    { id: 'mfg-python', label: 'Python (CNC)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'mfg-python', label: 'Python (CNC)', url: jupyterUrl(JUPYTER_CODES['mfg-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   mechatronics: [
     { id: 'mt-arduino', label: 'Arduino Uno', url: 'https://wokwi.com/projects/new/arduino-uno', openLabel: 'Open in Wokwi' },
     { id: 'mt-esp32', label: 'ESP32', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open in Wokwi' },
     { id: 'mt-pico', label: 'RPi Pico', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
-    { id: 'mt-python', label: 'Python (Control)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'mt-python', label: 'Python (Control)', url: jupyterUrl(JUPYTER_CODES['mt-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   dynamics: [
     { id: 'dy-spring-rlc', label: 'Spring-Mass (RLC)', url: 'https://www.falstad.com/circuit/circuitjs.html?startCircuit=lrc.txt', openLabel: 'Open in CircuitJS' },
-    { id: 'dy-python', label: 'Python (Vibrations)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'dy-python', label: 'Python (Vibrations)', url: jupyterUrl(JUPYTER_CODES['dy-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   automotive: [
-    { id: 'au-python', label: 'Python (Engines)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'au-python', label: 'Python (Engines)', url: jupyterUrl(JUPYTER_CODES['au-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   cad_3d: [
     { id: 'cad-openscad', label: 'OpenJSCAD (Parametric)', url: 'https://openjscad.xyz/', openLabel: 'Open JSCAD' },
     { id: 'cad-threejs', label: 'Three.js Editor', url: 'https://threejs.org/editor/', openLabel: 'Open 3D Editor' },
-    { id: 'cad-python', label: 'Python (CadQuery)', url: JUPYTERLITE_URL, openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+    { id: 'cad-python', label: 'Python (CadQuery)', url: jupyterUrl(JUPYTER_CODES['cad-python-3d']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
 };
 
