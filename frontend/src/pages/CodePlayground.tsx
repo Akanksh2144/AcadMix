@@ -481,7 +481,7 @@ endmodule`
   ],
   pcb: [
     { id: 'pcb-svg', label: 'SVG PCB Editor', url: 'https://leomcelroy.com/svg-pcb/', openLabel: 'Open SVG PCB' },
-    { id: 'pcb-tscircuit', label: 'tscircuit', url: 'https://snippets.tscircuit.com/', openLabel: 'Open tscircuit' },
+    { id: 'pcb-tscircuit', label: 'tscircuit', url: 'https://tscircuit.com/playground', openLabel: 'Open tscircuit' },
     { id: 'pcb-kicanvas', label: 'KiCanvas Viewer', url: 'https://kicanvas.org/', openLabel: 'Open KiCanvas' },
   ],
   communication: [
