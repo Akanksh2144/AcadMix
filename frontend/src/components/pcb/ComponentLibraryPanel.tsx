@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { MagnifyingGlass, CaretDown, CaretRight, Circuitry, Lightning, Cpu, Plugs, BatteryFull, Thermometer } from '@phosphor-icons/react';
+import { MagnifyingGlass, CaretDown, CaretRight, Circuitry, Lightning, Cpu, Plugs, BatteryFull, Thermometer, Chalkboard } from '@phosphor-icons/react';
 import { COMPONENT_CATALOG, CATEGORY_ORDER, CATEGORY_LABELS } from './componentCatalog';
 import type { ComponentCategory, ComponentType } from './types';
 
@@ -10,6 +10,7 @@ const CATEGORY_ICONS: Record<ComponentCategory, React.ReactNode> = {
   connector: <Plugs size={14} weight="duotone" />,
   power: <BatteryFull size={14} weight="duotone" />,
   sensor: <Thermometer size={14} weight="duotone" />,
+  board: <Chalkboard size={14} weight="duotone" />,
 };
 
 interface Props {
@@ -18,7 +19,7 @@ interface Props {
 
 export default function ComponentLibraryPanel({ onAddComponent }: Props) {
   const [search, setSearch] = useState('');
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({ passive: true, active: true, power: true });
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const filtered = useMemo(() => {
     if (!search.trim()) return COMPONENT_CATALOG;

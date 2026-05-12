@@ -12,6 +12,7 @@ import { getCatalogEntry } from './componentCatalog';
 interface Props {
   nodes: Node[];
   edges: Edge[];
+  nodeTypes: Record<string, React.ComponentType<any>>;
   onNodesChange: any;
   onEdgesChange: any;
   onConnect: (params: Connection) => void;
@@ -19,7 +20,7 @@ interface Props {
   onPaneClick: () => void;
 }
 
-export default function PCBCanvas({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, onPaneClick }: Props) {
+export default function PCBCanvas({ nodes, edges, nodeTypes, onNodesChange, onEdgesChange, onConnect, onNodeClick, onPaneClick }: Props) {
   return (
     <div className="flex-1 min-h-0 h-full">
       <ReactFlow
@@ -30,35 +31,24 @@ export default function PCBCanvas({ nodes, edges, onNodesChange, onEdgesChange, 
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
-        nodeTypes={pcbNodeTypes}
+        nodeTypes={nodeTypes}
         fitView
         deleteKeyCode="Delete"
         defaultEdgeOptions={{
           animated: false,
-          type: 'straight',
+          type: 'step',
           style: { stroke: '#ff0000', strokeWidth: 3, mixBlendMode: 'screen' },
         }}
         proOptions={{ hideAttribution: true }}
       >
-        <Controls
-          position="bottom-left"
-          className="!bg-white/80 dark:!bg-gray-800/80 !border !border-gray-200 dark:!border-gray-700 !rounded-xl !shadow-lg backdrop-blur-sm"
-        />
+        <Controls position="bottom-left" />
         <Background
           variant={BackgroundVariant.Lines}
           gap={16}
-          color="rgba(255, 255, 255, 0.1)"
-          style={{ backgroundColor: '#000000' }}
+          color="rgba(255, 255, 255, 0.05)"
+          style={{ backgroundColor: '#111827' }}
         />
-        <Panel position="bottom-right">
-          <div className="flex items-center gap-3 text-[10px] text-gray-500 font-mono bg-black/40 backdrop-blur-md rounded-xl px-4 py-2 border border-gray-700/30 shadow-sm">
-            <span><kbd className="px-1.5 py-0.5 rounded bg-white/10 text-[9px] font-bold shadow-sm">Scroll</kbd> Zoom</span>
-            <span className="w-px h-3 bg-gray-600" />
-            <span><kbd className="px-1.5 py-0.5 rounded bg-white/10 text-[9px] font-bold shadow-sm">Drag</kbd> Pan</span>
-            <span className="w-px h-3 bg-gray-600" />
-            <span><kbd className="px-1.5 py-0.5 rounded bg-white/10 text-[9px] font-bold shadow-sm">Del</kbd> Remove</span>
-          </div>
-        </Panel>
+
       </ReactFlow>
     </div>
   );

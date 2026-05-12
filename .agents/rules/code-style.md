@@ -9,4 +9,7 @@ Do not use generic window.alerts. Use neat and premium alert popups like we use 
 before changing anything any tech stack/AI models, ask for my permission first.
 always use active tab container shape same as the external container.
 Use pill shaped container for tab menu
-go through all previous conversations.
+always go through all previous conversations.
+use aits.localhost:3000/aits.acadmix.org for testing in browser subagent for AcadMix.prefer localhost
+always refer to login_credentials.md for user login credentials for aits.localhost:3000 or aits.acadmix.org
+do browser testing only when asked

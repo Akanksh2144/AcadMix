@@ -1,13 +1,17 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNodesState, useEdgesState, addEdge, type Connection, type Edge, type Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise } from '@phosphor-icons/react';
+import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack } from '@phosphor-icons/react';
 import ComponentLibraryPanel from './ComponentLibraryPanel';
 import PropertiesInspector from './PropertiesInspector';
 import PCBCanvas from './PCBCanvas';
+import { pcbNodeTypes, logicalNodeTypes } from './nodes';
+import LayerManagerPanel, { type PCBLayer } from './LayerManagerPanel';
 import type { ComponentType } from './types';
 import { getCatalogEntry } from './componentCatalog';
-import { runDRC, generateNetlistText, generateBOM, bomToCSV, downloadFile } from './pcbEngine';
+import { runDRC, generateNetlistText, generateBOM, bomToCSV, exportKiCadNetlist, downloadFile } from './pcbEngine';
+import { exportGerbers } from './gerberExporter';
+import PCB3DViewer from './PCB3DViewer';
 import { DEFAULT_DSL, parseDSL, serializeDSL } from './circuitDSL';
 
 let nodeCounter = 100;
@@ -20,6 +24,7 @@ function getNextRefDes(prefix: string): string {
 
 // Default starter circuit
 const STARTER_NODES: Node[] = [
+  { id: 'board-1', type: 'board', position: { x: 0, y: 0 }, data: { refDes: 'BRD1', componentType: 'board_custom', category: 'board', label: 'Custom Resizable Board', width: 800, height: 600 }, style: { width: 800, height: 600 }, draggable: true, selectable: true, zIndex: -1 },
   { id: 'comp-1', type: 'vcc', position: { x: 100, y: 60 }, data: { refDes: 'PWR1', componentType: 'vcc', category: 'power', label: 'VCC', properties: { value: '5V' }, pins: getCatalogEntry('vcc')!.pins } },
   { id: 'comp-2', type: 'resistor', position: { x: 300, y: 60 }, data: { refDes: 'R1', componentType: 'resistor', category: 'passive', label: 'Resistor', properties: { value: '330Ω', package: '0805' }, pins: getCatalogEntry('resistor')!.pins } },
   { id: 'comp-3', type: 'led', position: { x: 520, y: 60 }, data: { refDes: 'D1', componentType: 'led', category: 'passive', label: 'LED', properties: { value: 'Red', color: 'red', package: '0805' }, pins: getCatalogEntry('led')!.pins } },
@@ -27,19 +32,27 @@ const STARTER_NODES: Node[] = [
 ];
 
 const STARTER_EDGES: Edge[] = [
-  { id: 'e-1', source: 'comp-1', sourceHandle: '1', target: 'comp-2', targetHandle: '1', type: 'smoothstep', style: { stroke: '#d4a574', strokeWidth: 2 } },
-  { id: 'e-2', source: 'comp-2', sourceHandle: '2', target: 'comp-3', targetHandle: 'anode', type: 'smoothstep', style: { stroke: '#d4a574', strokeWidth: 2 } },
-  { id: 'e-3', source: 'comp-3', sourceHandle: 'cathode', target: 'comp-4', targetHandle: '1', type: 'smoothstep', style: { stroke: '#d4a574', strokeWidth: 2 } },
+  { id: 'e-1', source: 'comp-1', sourceHandle: '1', target: 'comp-2', targetHandle: '1', type: 'straight', data: { layer: 'TopLayer' }, style: { stroke: '#ff0000', strokeWidth: 3, mixBlendMode: 'screen' } },
+  { id: 'e-2', source: 'comp-2', sourceHandle: '2', target: 'comp-3', targetHandle: 'anode', type: 'straight', data: { layer: 'TopLayer' }, style: { stroke: '#ff0000', strokeWidth: 3, mixBlendMode: 'screen' } },
+  { id: 'e-3', source: 'comp-3', sourceHandle: 'cathode', target: 'comp-4', targetHandle: '1', type: 'straight', data: { layer: 'BottomLayer' }, style: { stroke: '#0000ff', strokeWidth: 3, mixBlendMode: 'screen' } },
 ];
 
 export default function PCBDesignStudio() {
-  const [mode, setMode] = useState<'visual' | 'code'>('visual');
+  const [mode, setMode] = useState<'schematic' | 'visual' | 'code' | '3d'>('schematic');
   const [nodes, setNodes, onNodesChange] = useNodesState(STARTER_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState(STARTER_EDGES);
+  
+  // Layer Management State
+  const [activeLayer, setActiveLayer] = useState<PCBLayer>('TopLayer');
+  const [layerVisibility, setLayerVisibility] = useState<Record<PCBLayer, boolean>>({
+    TopLayer: true, BottomLayer: true, TopSilkLayer: true, BoardOutline: true
+  });
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showLibrary, setShowLibrary] = useState(true);
   const [drcResults, setDrcResults] = useState<any[]>([]);
   const [showDRC, setShowDRC] = useState(false);
+  const [showLayersMenu, setShowLayersMenu] = useState(false);
   const [showNetlist, setShowNetlist] = useState(false);
   const [netlistText, setNetlistText] = useState('');
   const [codeText, setCodeText] = useState(DEFAULT_DSL);
@@ -59,8 +72,13 @@ export default function PCBDesignStudio() {
 
   const onConnect = useCallback((params: Connection) => {
     saveUndo();
-    setEdges(eds => addEdge({ ...params, type: 'smoothstep', style: { stroke: '#d4a574', strokeWidth: 2 } }, eds));
-  }, [setEdges, saveUndo]);
+    const color = activeLayer === 'TopLayer' ? '#ff0000' : '#0000ff';
+    setEdges(eds => addEdge({ ...params, type: 'step', data: { layer: activeLayer }, style: { stroke: color, strokeWidth: 3, mixBlendMode: 'screen' } }, eds));
+  }, [setEdges, saveUndo, activeLayer]);
+
+  const toggleVisibility = useCallback((layer: PCBLayer) => {
+    setLayerVisibility(prev => ({ ...prev, [layer]: !prev[layer] }));
+  }, []);
 
   // Build CircuitGraph from React Flow state for engine calls
   const buildGraph = useCallback(() => {
@@ -76,9 +94,12 @@ export default function PCBDesignStudio() {
     const id = `comp-${++nodeCounter}`;
     const refDes = getNextRefDes(catalog.refDesPrefix);
     const newNode: Node = {
-      id, type,
+      id,
+      type: catalog.category === 'board' ? 'board' : type,
       position: { x: 200 + Math.random() * 300, y: 100 + Math.random() * 200 },
       data: { refDes, componentType: type, category: catalog.category, label: catalog.label, properties: { ...catalog.defaultProperties }, pins: catalog.pins },
+      style: catalog.category === 'board' ? { width: catalog.defaultProperties.width || 800, height: catalog.defaultProperties.height || 600 } : undefined,
+      zIndex: catalog.category === 'board' ? -1 : 0
     };
     setNodes(nds => [...nds, newNode]);
   }, [setNodes, saveUndo]);
@@ -130,6 +151,16 @@ export default function PCBDesignStudio() {
     downloadFile(bomToCSV(bom), 'acadmix_bom.csv', 'text/csv');
   }, [buildGraph]);
 
+  const handleExportGerber = useCallback(() => {
+    const graph = buildGraph();
+    const gerbers = exportGerbers(graph);
+    // Download sequentially
+    downloadFile(gerbers.topCopper, 'CAM_Top.gbr', 'text/plain');
+    setTimeout(() => downloadFile(gerbers.bottomCopper, 'CAM_Bottom.gbr', 'text/plain'), 300);
+    setTimeout(() => downloadFile(gerbers.outline, 'CAM_Outline.gbr', 'text/plain'), 600);
+    setTimeout(() => downloadFile(gerbers.drill, 'CAM_Drill.drl', 'text/plain'), 900);
+  }, [buildGraph]);
+
   const handleUndo = useCallback(() => {
     if (undoStack.length === 0) return;
     const prev = undoStack[undoStack.length - 1];
@@ -174,7 +205,7 @@ export default function PCBDesignStudio() {
         const catalog = getCatalogEntry(c.type);
         return { id: c.id, type: c.type, position: c.position, data: { refDes: c.refDes, componentType: c.type, category: catalog?.category || 'passive', label: catalog?.label || c.type, properties: c.properties, pins: catalog?.pins || [] } };
       });
-      const newEdges: Edge[] = result.graph.wires.map(w => ({ id: w.id, source: w.fromComponent, sourceHandle: w.fromPin, target: w.toComponent, targetHandle: w.toPin, type: 'smoothstep', style: { stroke: '#d4a574', strokeWidth: 2 } }));
+      const newEdges: Edge[] = result.graph.wires.map(w => ({ id: w.id, source: w.fromComponent, sourceHandle: w.fromPin, target: w.toComponent, targetHandle: w.toPin, type: 'step', style: { stroke: '#d4a574', strokeWidth: 3 } }));
       setNodes(newNodes);
       setEdges(newEdges);
     }
@@ -200,8 +231,14 @@ export default function PCBDesignStudio() {
 
           {/* Mode toggle */}
           <div className="flex items-center bg-gray-800/80 rounded-full p-0.5 ml-2">
+            <button onClick={() => { setMode('schematic'); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === 'schematic' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg> Schematic
+            </button>
             <button onClick={() => { setMode('visual'); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === 'visual' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
-              <Circuitry size={12} weight="bold" /> Visual
+              <Circuitry size={12} weight="bold" /> 2D PCB
+            </button>
+            <button onClick={() => { setMode('3d'); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === '3d' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" /></svg> 3D View
             </button>
             <button onClick={() => { setMode('code'); syncVisualToCode(); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === 'code' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
               <Code size={12} weight="bold" /> Code
@@ -216,17 +253,31 @@ export default function PCBDesignStudio() {
           <button onClick={handleRunDRC} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 transition-colors"><ShieldCheck size={13} weight="bold" /> DRC</button>
           <button onClick={handleNetlist} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"><ListBullets size={13} weight="bold" /> Netlist</button>
           <button onClick={handleExportBOM} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"><Export size={13} weight="bold" /> BOM</button>
+          <button onClick={handleExportGerber} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition-colors"><Export size={13} weight="bold" /> Gerber</button>
         </div>
       </div>
 
       {/* ── Main Content ── */}
-      <div className="flex-1 min-h-0 flex">
-        {mode === 'visual' ? (
+      <div className="flex-1 min-h-0 flex relative z-10">
+        {mode === 'schematic' || mode === 'visual' ? (
           <>
-            {showLibrary && <div className="w-56 shrink-0"><ComponentLibraryPanel onAddComponent={handleAddComponent} /></div>}
-            <PCBCanvas nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeClick={(_, node) => setSelectedId(node.id)} onPaneClick={() => setSelectedId(null)} />
-            <div className="w-60 shrink-0"><PropertiesInspector selected={selectedForInspector} onPropertyChange={handlePropertyChange} onDelete={handleDelete} onDuplicate={handleDuplicate} onRotate={handleRotate} /></div>
+            {showLibrary && <div className="w-56 shrink-0 z-10"><ComponentLibraryPanel onAddComponent={handleAddComponent} /></div>}
+            <PCBCanvas 
+              nodeTypes={mode === 'schematic' ? logicalNodeTypes : pcbNodeTypes}
+              nodes={nodes.map(n => ({ ...n, hidden: n.type === 'board' ? !layerVisibility.BoardOutline : (mode === 'visual' && !layerVisibility.TopSilkLayer) }))} 
+              edges={edges.map(e => ({ ...e, hidden: mode === 'visual' && !layerVisibility[(e.data?.layer as PCBLayer) || 'TopLayer'], type: mode === 'schematic' ? 'default' : 'step' }))} 
+              onNodesChange={onNodesChange} 
+              onEdgesChange={onEdgesChange} 
+              onConnect={onConnect} 
+              onNodeClick={(_, node) => setSelectedId(node.id)} 
+              onPaneClick={() => setSelectedId(null)} 
+            />
+            <div className="w-60 shrink-0 z-10"><PropertiesInspector selected={selectedForInspector} onPropertyChange={handlePropertyChange} onDelete={handleDelete} onDuplicate={handleDuplicate} onRotate={handleRotate} /></div>
           </>
+        ) : mode === '3d' ? (
+          <div className="flex-1 min-h-0 relative">
+            <PCB3DViewer graph={buildGraph()} />
+          </div>
         ) : (
           <div className="flex-1 flex min-h-0">
             {/* Code Editor */}
@@ -255,7 +306,7 @@ export default function PCBDesignStudio() {
       </div>
 
       {/* ── Status Bar ── */}
-      <div className="flex items-center justify-between px-4 py-1.5 bg-gray-900/90 border-t border-gray-800/60 shrink-0">
+      <div className="flex items-center justify-between px-4 py-1.5 bg-gray-900/90 border-t border-gray-800/60 shrink-0 relative z-30">
         <div className="flex items-center gap-4 text-[10px] text-gray-500 font-mono">
           <span>● {nodes.length} components</span>
           <span>│ {edges.length} wires</span>
@@ -264,8 +315,39 @@ export default function PCBDesignStudio() {
               │ {drcErrorCount > 0 ? `✗ ${drcErrorCount} errors` : drcWarnCount > 0 ? `⚠ ${drcWarnCount} warnings` : '✓ DRC passed'}
             </span>
           )}
+          <span className="w-px h-3 bg-gray-700 mx-2" />
+          <div className="flex items-center gap-3">
+            <span><kbd className="px-1.5 py-0.5 rounded bg-gray-800 text-[9px] font-bold shadow-sm">Scroll</kbd> Zoom</span>
+            <span className="w-px h-3 bg-gray-700" />
+            <span><kbd className="px-1.5 py-0.5 rounded bg-gray-800 text-[9px] font-bold shadow-sm">Drag</kbd> Pan</span>
+            <span className="w-px h-3 bg-gray-700" />
+            <span><kbd className="px-1.5 py-0.5 rounded bg-gray-800 text-[9px] font-bold shadow-sm">Del</kbd> Remove</span>
+          </div>
         </div>
-        <span className="text-[9px] text-gray-600 font-mono">AcadMix PCB Studio v1.0</span>
+        
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <button 
+              onClick={() => setShowLayersMenu(!showLayersMenu)} 
+              className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-lg transition-colors ${showLayersMenu ? 'bg-gray-700 text-gray-200' : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700 hover:text-gray-200'}`}
+            >
+              <Stack size={13} weight="bold" /> Layers
+            </button>
+            {showLayersMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowLayersMenu(false)} />
+                <LayerManagerPanel 
+                  activeLayer={activeLayer} 
+                  setActiveLayer={setActiveLayer} 
+                  layerVisibility={layerVisibility} 
+                  toggleVisibility={toggleVisibility} 
+                  className="absolute bottom-full right-0 mb-2 z-50"
+                />
+              </>
+            )}
+          </div>
+          <span className="text-[9px] text-gray-600 font-mono">AcadMix PCB Studio v1.0</span>
+        </div>
       </div>
 
       {/* ── DRC Modal ── */}
