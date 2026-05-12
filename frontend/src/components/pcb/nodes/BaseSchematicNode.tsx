@@ -82,19 +82,19 @@ function computePinPlacements(pins: PinDef[], nodeWidth: number, nodeHeight: num
       switch (side) {
         case 'left':
           pos = Position.Left;
-          style = { top: `${offset}%`, left: -6 };
+          style = { top: `${offset}%`, left: 2 };
           break;
         case 'right':
           pos = Position.Right;
-          style = { top: `${offset}%`, right: -6 };
+          style = { top: `${offset}%`, right: 2 };
           break;
         case 'top':
           pos = Position.Top;
-          style = { left: `${offset}%`, top: -6 };
+          style = { left: `${offset}%`, top: 2 };
           break;
         case 'bottom':
           pos = Position.Bottom;
-          style = { left: `${offset}%`, bottom: -6 };
+          style = { left: `${offset}%`, bottom: 2 };
           break;
         default:
           pos = Position.Left;
@@ -145,28 +145,25 @@ function BaseSchematicNodeInner({
   icon,
   symbol,
   children,
-  minWidth = 80,
-  minHeight = 80,
   compact = false,
 }: BaseSchematicNodeProps) {
   const pins = data.pins || [];
-  const placements = computePinPlacements(pins, minWidth, minHeight);
+  const placements = computePinPlacements(pins, 0, 0);
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center p-1 group
-        ${data.selected ? 'ring-1 ring-yellow-400/50 rounded-lg bg-yellow-400/10' : ''}
+      className={`relative flex flex-col items-center justify-center group
+        ${data.selected ? 'ring-1 ring-yellow-400/50 bg-yellow-400/5' : ''}
         transition-all duration-200
       `}
-      style={{ minWidth, minHeight }}
     >
       {/* ── RefDes (Silkscreen text) ── */}
       <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] font-mono font-bold text-yellow-400 opacity-90 whitespace-nowrap drop-shadow-md">
         {data.refDes}
       </div>
 
-      {/* ── Symbol ── */}
-      <div className="text-yellow-400 drop-shadow-[0_0_2px_rgba(250,204,21,0.5)]">
+      {/* ── Symbol (Draws its own pads) ── */}
+      <div className="drop-shadow-[0_0_2px_rgba(250,204,21,0.2)]">
         {symbol}
       </div>
 
@@ -184,7 +181,7 @@ function BaseSchematicNodeInner({
         </div>
       )}
 
-      {/* ── Handles (Pads) ── */}
+      {/* ── Handles (Invisible routers) ── */}
       {placements.map((pin) => (
         <Handle
           key={pin.id}
@@ -192,11 +189,7 @@ function BaseSchematicNodeInner({
           type={pin.type}
           position={pin.position}
           style={pin.style}
-          className={
-            pin.position === Position.Left || pin.position === Position.Right
-              ? "!w-3 !h-5 !bg-[#dc2626] !border-none !rounded-sm hover:!bg-[#ef4444] transition-all"
-              : "!w-5 !h-3 !bg-[#dc2626] !border-none !rounded-sm hover:!bg-[#ef4444] transition-all"
-          }
+          className="!w-2 !h-2 opacity-0"
           title={`${pin.label} (${pin.id})`}
         />
       ))}
