@@ -25,17 +25,18 @@ export default function PCB3DViewer({ graph }: PCB3DViewerProps) {
   const offsetY = -h / 2;
 
   const components = useMemo(() => {
-    return graph.components.filter(c => c.id !== boardNode?.id && !['vcc', 'gnd'].includes(c.type)).map(c => {
+    return graph.components.filter(c => c.id !== boardNode?.id).map(c => {
       const catalog = getCatalogEntry(c.type);
-      // Rough approximation of component sizes based on category/type
-      let cw = 10 * SCALE;
-      let ch = 10 * SCALE;
-      let depth = 5 * SCALE;
+      // Scale components up so they match their relative size in the 2D view
+      let cw = 40 * SCALE;
+      let ch = 40 * SCALE;
+      let depth = 15 * SCALE;
       let color = '#333333';
 
-      if (catalog?.category === 'ic') { cw = 30 * SCALE; ch = 30 * SCALE; depth = 4 * SCALE; color = '#1a1a1a'; }
-      if (catalog?.category === 'passive') { cw = 6 * SCALE; ch = 4 * SCALE; depth = 2 * SCALE; color = '#d4d4d4'; }
-      if (catalog?.category === 'connector') { cw = 20 * SCALE; ch = 15 * SCALE; depth = 10 * SCALE; color = '#e5e7eb'; }
+      if (catalog?.category === 'ic') { cw = 80 * SCALE; ch = 60 * SCALE; depth = 12 * SCALE; color = '#1a1a1a'; }
+      if (catalog?.category === 'passive') { cw = 40 * SCALE; ch = 20 * SCALE; depth = 10 * SCALE; color = '#e2e8f0'; }
+      if (catalog?.category === 'connector') { cw = 60 * SCALE; ch = 40 * SCALE; depth = 25 * SCALE; color = '#d1d5db'; }
+      if (catalog?.category === 'power') { cw = 30 * SCALE; ch = 30 * SCALE; depth = 5 * SCALE; color = '#ef4444'; } // Make power pads visible
 
       // Map 2D coordinate to 3D. React Flow Y is down, 3D Z is depth. We put board on X-Z plane.
       // So RF X -> 3D X, RF Y -> 3D Z.
