@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNodesState, useEdgesState, addEdge, type Connection, type Edge, type Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack, ShareNetwork } from '@phosphor-icons/react';
+import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack, ShareNetwork, LockKey, LockKeyOpen, CornersOut, CornersIn } from '@phosphor-icons/react';
 import ComponentLibraryPanel from './ComponentLibraryPanel';
 import PropertiesInspector from './PropertiesInspector';
 import PCBCanvas from './PCBCanvas';
@@ -46,8 +46,11 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
   const [joinCodeInput, setJoinCodeInput] = useState('');
 
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   const [mode, setMode] = useState<'schematic' | 'visual' | 'code' | '3d'>('schematic');
+  const [lockCircuit, setLockCircuit] = useState(false);
+
   const { 
     nodes, edges, 
     onNodesChange, onEdgesChange, 
@@ -55,7 +58,7 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
     updateNodeProperty, deleteNode, 
     setGraph, connected, users, awareness,
     guestStatus, pendingGuests, joinWaitingRoom, acceptGuest, rejectGuest
-  } = useCollaboration(STARTER_NODES, STARTER_EDGES, roomId, user, isHost);
+  } = useCollaboration(STARTER_NODES, STARTER_EDGES, roomId, user, isHost, lockCircuit);
   
   // Layer Management State
   const [activeLayer, setActiveLayer] = useState<PCBLayer>('TopLayer');
@@ -221,7 +224,10 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
   const drcWarnCount = drcResults.filter(r => r.severity === 'warning').length;
 
   return (
-    <div className="w-full h-full flex flex-col bg-gray-950 rounded-3xl overflow-hidden shadow-2xl border border-gray-800/50 relative">
+    <div className={isFullScreen 
+      ? "fixed inset-0 z-[100] w-screen h-screen flex flex-col bg-gray-950" 
+      : "w-full h-full flex flex-col bg-gray-950 rounded-3xl overflow-hidden shadow-2xl border border-gray-800/50 relative"
+    }>
       
       {/* ── Waiting Room UI for Guest ── */}
       {!isHost && guestStatus === 'confirming' && (
@@ -403,6 +409,14 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
         </div>
 
         <div className="flex items-center gap-1.5">
+          <button 
+            onClick={() => setLockCircuit(!lockCircuit)} 
+            title={lockCircuit ? "Unlock Circuit components" : "Lock Circuit (Group move)"} 
+            className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 text-[10px] font-bold ${lockCircuit ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'}`}
+          >
+            {lockCircuit ? <LockKey size={14} weight="bold" /> : <LockKeyOpen size={14} weight="bold" />}
+          </button>
+          <div className="w-px h-5 bg-gray-700 mx-1" />
           <button onClick={handleUndo} title="Undo (Ctrl+Z)" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"><ArrowCounterClockwise size={14} weight="bold" /></button>
           <button onClick={handleRedo} title="Redo (Ctrl+Y)" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"><ArrowClockwise size={14} weight="bold" /></button>
           <div className="w-px h-5 bg-gray-700 mx-1" />
@@ -410,6 +424,14 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
           <button onClick={handleNetlist} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"><ListBullets size={13} weight="bold" /> Netlist</button>
           <button onClick={handleExportBOM} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"><Export size={13} weight="bold" /> BOM</button>
           <button onClick={handleExportGerber} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition-colors"><Export size={13} weight="bold" /> Gerber</button>
+          <div className="w-px h-5 bg-gray-700 mx-1" />
+          <button 
+            onClick={() => setIsFullScreen(!isFullScreen)} 
+            title={isFullScreen ? "Exit Full Screen" : "Full Screen"} 
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"
+          >
+            {isFullScreen ? <CornersIn size={14} weight="bold" /> : <CornersOut size={14} weight="bold" />}
+          </button>
         </div>
       </div>
 
