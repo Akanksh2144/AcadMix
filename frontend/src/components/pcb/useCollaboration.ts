@@ -6,7 +6,7 @@ import { Node, Edge, NodeChange, EdgeChange, applyNodeChanges, applyEdgeChanges,
 // In a real app, you'd use a robust signaling server.
 const SIGNALING_SERVERS = ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com'];
 
-export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roomId: string, user: any, isHost: boolean) {
+export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roomId: string, user: any, isHost: boolean, lockCircuit: boolean = false) {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [connected, setConnected] = useState(false);
@@ -174,22 +174,61 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nds) => {
-      const nextNodes = applyNodeChanges(changes, nds);
+      let nextNodes = applyNodeChanges(changes, nds);
+      
+      // If the circuit is locked together, distribute drag delta to all nodes
+      if (lockCircuit) {
+        // Find if there's a valid position change due to dragging
+        const dragChange = changes.find(c => c.type === 'position' && c.dragging && c.position) as import('@xyflow/react').NodePositionChange;
+        
+        if (dragChange && dragChange.position) {
+          const oldNode = nds.find(n => n.id === dragChange.id);
+          if (oldNode) {
+            const dx = dragChange.position.x - oldNode.position.x;
+            const dy = dragChange.position.y - oldNode.position.y;
+            
+            // Only apply delta if there's actual movement
+            if (dx !== 0 || dy !== 0) {
+              nextNodes = nextNodes.map(n => {
+                // The dragged node has already been moved by applyNodeChanges
+                if (n.id === dragChange.id) return n;
+                
+                return {
+                  ...n,
+                  position: {
+                    x: n.position.x + dx,
+                    y: n.position.y + dy
+                  }
+                };
+              });
+            }
+          }
+        }
+      }
       
       ydocRef.current.transact(() => {
         changes.forEach(change => {
           if (change.type === 'remove') yNodesRef.current.delete(change.id);
           else if (change.type === 'add') yNodesRef.current.set(change.item.id, change.item);
-          else if (change.type === 'position' || change.type === 'select' || change.type === 'dimensions') {
-            const updatedNode = nextNodes.find(n => n.id === change.id);
-            if (updatedNode) yNodesRef.current.set(updatedNode.id, updatedNode);
-          }
+          // Apply changes or broadcast our updated nextNodes if locked
         });
+        
+        if (lockCircuit) {
+          // If locked, we need to make sure ALL updated nodes are synced
+          nextNodes.forEach(n => yNodesRef.current.set(n.id, n));
+        } else {
+          changes.forEach(change => {
+            if (change.type === 'position' || change.type === 'select' || change.type === 'dimensions') {
+              const updatedNode = nextNodes.find(n => n.id === change.id);
+              if (updatedNode) yNodesRef.current.set(updatedNode.id, updatedNode);
+            }
+          });
+        }
       });
 
       return nextNodes;
     });
-  }, []);
+  }, [lockCircuit]);
 
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
     setEdges((eds) => {
@@ -226,7 +265,17 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
 
   const updateNodeProperty = useCallback((nodeId: string, field: string, value: any) => {
     setNodes(nds => {
-      const nextNodes = nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, properties: { ...(n.data as any).properties, [field]: value } } } : n);
+      const nextNodes = nds.map(n => {
+        if (n.id === nodeId) {
+          const updatedNode = { ...n, data: { ...n.data, properties: { ...(n.data as any).properties, [field]: value } } };
+          // If editing a dimension, push it back to style to resize the visual node
+          if (field === 'width' || field === 'height') {
+            updatedNode.style = { ...updatedNode.style, [field]: Number(value) };
+          }
+          return updatedNode;
+        }
+        return n;
+      });
       const updated = nextNodes.find(n => n.id === nodeId);
       if (updated) yNodesRef.current.set(updated.id, updated);
       return nextNodes;

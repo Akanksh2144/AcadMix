@@ -80,7 +80,23 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
   const selectedNode = useMemo(() => nodes.find(n => n.id === selectedId), [nodes, selectedId]);
   const selectedForInspector = useMemo(() => {
     if (!selectedNode) return null;
-    return { id: selectedNode.id, type: selectedNode.type as ComponentType, refDes: (selectedNode.data as any)?.refDes || '', properties: (selectedNode.data as any)?.properties || {} };
+    
+    // Copy existing properties
+    const properties = { ...((selectedNode.data as any)?.properties || {}) };
+    
+    // Inject dynamic dimensions for resizable components
+    const category = (selectedNode.data as any)?.category;
+    if (category === 'board' || selectedNode.type === 'copper_pour') {
+      properties.width = Math.round(selectedNode.width || selectedNode.measured?.width || (selectedNode.style?.width as number) || properties.width || 0);
+      properties.height = Math.round(selectedNode.height || selectedNode.measured?.height || (selectedNode.style?.height as number) || properties.height || 0);
+    }
+    
+    return { 
+      id: selectedNode.id, 
+      type: selectedNode.type as ComponentType, 
+      refDes: (selectedNode.data as any)?.refDes || '', 
+      properties 
+    };
   }, [selectedNode]);
 
   const saveUndo = useCallback(() => {

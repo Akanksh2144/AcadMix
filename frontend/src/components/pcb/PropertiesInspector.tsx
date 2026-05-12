@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash, Copy, ArrowClockwise } from '@phosphor-icons/react';
+import { Trash, Copy, ArrowClockwise, SlidersHorizontal, Info } from '@phosphor-icons/react';
 import type { ComponentType } from './types';
 import { getCatalogEntry } from './componentCatalog';
 
@@ -21,13 +21,19 @@ interface Props {
 export default function PropertiesInspector({ selected, onPropertyChange, onDelete, onDuplicate, onRotate }: Props) {
   if (!selected) {
     return (
-      <div className="flex flex-col h-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-l border-gray-200/60 dark:border-gray-700/40">
-        <div className="px-3 pt-3 pb-2 border-b border-gray-200/60 dark:border-gray-700/40">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Properties</h3>
+      <div className="flex flex-col h-full bg-[#0B0F19]/95 backdrop-blur-2xl border-l border-slate-800/60 shadow-2xl">
+        <div className="px-4 pt-4 pb-3 border-b border-slate-800/60 bg-gradient-to-b from-[#111827] to-transparent">
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-2">
+            <SlidersHorizontal size={14} className="text-emerald-400" />
+            Properties
+          </h3>
         </div>
-        <div className="flex-1 flex items-center justify-center p-4">
-          <p className="text-xs text-gray-400 dark:text-gray-600 text-center leading-relaxed">
-            Select a component to view and edit its properties
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-slate-800/50 flex items-center justify-center mb-4 shadow-inner border border-slate-700/50">
+            <Info size={24} className="text-slate-500" weight="duotone" />
+          </div>
+          <p className="text-xs text-slate-500 leading-relaxed font-mono">
+            Select a component to<br/>view and edit its properties
           </p>
         </div>
       </div>
@@ -39,65 +45,90 @@ export default function PropertiesInspector({ selected, onPropertyChange, onDele
   const editableFields = Object.entries(props).filter(([k]) => !['onDataChange', 'selected'].includes(k));
 
   return (
-    <div className="flex flex-col h-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-l border-gray-200/60 dark:border-gray-700/40">
+    <div className="flex flex-col h-full bg-[#0B0F19]/95 backdrop-blur-2xl border-l border-slate-800/60 shadow-2xl">
       {/* Header */}
-      <div className="px-3 pt-3 pb-2 border-b border-gray-200/60 dark:border-gray-700/40">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Properties</h3>
+      <div className="px-4 pt-4 pb-3 border-b border-slate-800/60 bg-gradient-to-b from-[#111827] to-transparent shrink-0">
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-2">
+          <SlidersHorizontal size={14} className="text-emerald-400" />
+          Properties
+        </h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-5">
         {/* Component type badge */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-500/20">
-            <span className="text-white text-[10px] font-bold">{selected.refDes.replace(/\d+/g, '')}</span>
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-slate-700/50 shadow-inner">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+            <span className="text-white text-xs font-bold tracking-wider">{selected.refDes.replace(/\d+/g, '')}</span>
           </div>
-          <div>
-            <div className="text-sm font-bold text-gray-800 dark:text-gray-200">{catalog?.label || selected.type}</div>
-            <div className="text-[10px] font-mono text-gray-400">{selected.refDes}</div>
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-slate-200 truncate">{catalog?.label || selected.type}</div>
+            <div className="text-[11px] font-mono text-emerald-400/80 mt-0.5">{selected.refDes}</div>
           </div>
         </div>
 
         {/* Editable fields */}
-        <div className="space-y-2">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Parameters</div>
-          {editableFields.map(([key, value]) => (
-            <div key={key}>
-              <label className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{key}</label>
-              <input
-                type="text"
-                value={String(value)}
-                onChange={e => onPropertyChange(selected.id, key, e.target.value)}
-                className="w-full mt-0.5 px-2.5 py-1.5 text-xs rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/40 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-emerald-500/40 focus:!outline-none transition-all"
-              />
-            </div>
-          ))}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="h-px flex-1 bg-slate-800" />
+            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Parameters</div>
+            <div className="h-px flex-1 bg-slate-800" />
+          </div>
+          
+          <div className="space-y-2.5">
+            {editableFields.length === 0 ? (
+              <div className="text-center py-2 text-[11px] text-slate-500 font-mono italic">No editable parameters</div>
+            ) : (
+              editableFields.map(([key, value]) => (
+                <div key={key} className="group">
+                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 group-focus-within:text-emerald-400 transition-colors">
+                    {key}
+                  </label>
+                  <input
+                    type="text"
+                    value={String(value)}
+                    onChange={e => onPropertyChange(selected.id, key, e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-mono rounded-lg bg-[#1E293B]/40 border border-slate-700/50 text-slate-200 placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 outline-none transition-all shadow-inner"
+                  />
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Pins */}
-        {catalog && (
-          <div className="space-y-1.5">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Pins</div>
-            {catalog.pins.map(pin => (
-              <div key={pin.id} className="flex items-center justify-between px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                <span className="text-[10px] font-mono text-gray-500">{pin.id}</span>
-                <span className="text-[10px] text-gray-400">{pin.label}</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500">{pin.side}</span>
-              </div>
-            ))}
+        {catalog && catalog.pins.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-slate-800" />
+              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Pins</div>
+              <div className="h-px flex-1 bg-slate-800" />
+            </div>
+            
+            <div className="space-y-1.5">
+              {catalog.pins.map(pin => (
+                <div key={pin.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-800/30 border border-slate-800/50 hover:bg-slate-800/50 transition-colors">
+                  <span className="text-[11px] font-mono text-emerald-400/80 font-bold">{pin.id}</span>
+                  <span className="text-[11px] text-slate-300 truncate mx-2">{pin.label}</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-400 shrink-0">
+                    {pin.side}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
       {/* Actions */}
-      <div className="p-3 border-t border-gray-200/60 dark:border-gray-700/40 flex gap-2">
-        <button onClick={() => onRotate(selected.id)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Rotate 90°">
-          <ArrowClockwise size={12} weight="bold" /> Rotate
+      <div className="p-3 border-t border-slate-800/60 bg-[#0B0F19] shrink-0 grid grid-cols-2 gap-2">
+        <button onClick={() => onRotate(selected.id)} className="flex items-center justify-center gap-1.5 px-3 py-2 text-[11px] font-bold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-all shadow-sm">
+          <ArrowClockwise size={14} weight="bold" /> Rotate
         </button>
-        <button onClick={() => onDuplicate(selected.id)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Duplicate">
-          <Copy size={12} weight="bold" /> Copy
+        <button onClick={() => onDuplicate(selected.id)} className="flex items-center justify-center gap-1.5 px-3 py-2 text-[11px] font-bold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-all shadow-sm">
+          <Copy size={14} weight="bold" /> Duplicate
         </button>
-        <button onClick={() => onDelete(selected.id)} className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors" title="Delete">
-          <Trash size={12} weight="bold" />
+        <button onClick={() => onDelete(selected.id)} className="col-span-2 flex items-center justify-center gap-1.5 px-3 py-2 text-[11px] font-bold rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all shadow-sm">
+          <Trash size={14} weight="bold" /> Delete Component
         </button>
       </div>
     </div>
