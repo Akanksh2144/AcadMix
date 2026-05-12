@@ -82,19 +82,19 @@ function computePinPlacements(pins: PinDef[], nodeWidth: number, nodeHeight: num
       switch (side) {
         case 'left':
           pos = Position.Left;
-          style = { top: `${offset}%`, left: 2 };
+          style = { top: `${offset}%`, left: -2 };
           break;
         case 'right':
           pos = Position.Right;
-          style = { top: `${offset}%`, right: 2 };
+          style = { top: `${offset}%`, right: -2 };
           break;
         case 'top':
           pos = Position.Top;
-          style = { left: `${offset}%`, top: 2 };
+          style = { left: `${offset}%`, top: -2 };
           break;
         case 'bottom':
           pos = Position.Bottom;
-          style = { left: `${offset}%`, bottom: 2 };
+          style = { left: `${offset}%`, bottom: -2 };
           break;
         default:
           pos = Position.Left;
@@ -181,7 +181,7 @@ function BaseSchematicNodeInner({
         </div>
       )}
 
-      {/* ── Handles (Invisible routers) ── */}
+      {/* ── Handles (Pads) ── */}
       {placements.map((pin) => (
         <Handle
           key={pin.id}
@@ -189,7 +189,11 @@ function BaseSchematicNodeInner({
           type={pin.type}
           position={pin.position}
           style={pin.style}
-          className="!w-2 !h-2 opacity-0"
+          className={
+            pin.position === Position.Left || pin.position === Position.Right
+              ? "!w-3 !h-5 !bg-[#ff0000] !border-none !rounded-[1px] opacity-90 mix-blend-screen"
+              : "!w-5 !h-3 !bg-[#ff0000] !border-none !rounded-[1px] opacity-90 mix-blend-screen"
+          }
           title={`${pin.label} (${pin.id})`}
         />
       ))}

@@ -35,8 +35,8 @@ export default function PCBCanvas({ nodes, edges, onNodesChange, onEdgesChange, 
         deleteKeyCode="Delete"
         defaultEdgeOptions={{
           animated: false,
-          type: 'step',
-          style: { stroke: '#dc2626', strokeWidth: 4 },
+          type: 'straight',
+          style: { stroke: '#ff0000', strokeWidth: 3, mixBlendMode: 'screen' },
         }}
         proOptions={{ hideAttribution: true }}
       >
@@ -46,9 +46,9 @@ export default function PCBCanvas({ nodes, edges, onNodesChange, onEdgesChange, 
         />
         <Background
           variant={BackgroundVariant.Lines}
-          gap={20}
-          color="rgba(255, 255, 255, 0.06)"
-          style={{ backgroundColor: '#111812' }}
+          gap={16}
+          color="rgba(255, 255, 255, 0.1)"
+          style={{ backgroundColor: '#000000' }}
         />
         <Panel position="bottom-right">
           <div className="flex items-center gap-3 text-[10px] text-gray-500 font-mono bg-black/40 backdrop-blur-md rounded-xl px-4 py-2 border border-gray-700/30 shadow-sm">
