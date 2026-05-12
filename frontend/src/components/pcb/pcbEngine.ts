@@ -223,6 +223,100 @@ export function generateNetlistText(graph: CircuitGraph): string {
   return lines.join('\n');
 }
 
+// ── SPICE Netlist Generator (for eecircuit-engine) ───────────────────────────
+
+export function generateSPICENetlist(graph: CircuitGraph): string {
+  const nets = generateNets(graph);
+  
+  // Find ground nets
+  const groundNets = new Set<string>();
+  for (const net of nets) {
+    for (const conn of net.connections) {
+      const comp = graph.components.find(c => (c.refDes || c.id) === conn.componentRefDes);
+      if (comp && comp.type === 'gnd') {
+        groundNets.add(net.name);
+      }
+    }
+  }
+
+  const getNodeMap = () => {
+    const map = new Map<string, string>();
+    let nodeIdx = 1;
+    for (const net of nets) {
+      if (groundNets.has(net.name)) {
+        map.set(net.name, '0');
+      } else {
+        map.set(net.name, String(nodeIdx++));
+      }
+    }
+    return map;
+  };
+  
+  const nodeMap = getNodeMap();
+
+  const lines: string[] = [
+    '* AcadMix PCB Studio — SPICE Netlist',
+    `* Generated: ${new Date().toISOString()}`,
+  ];
+
+  for (const c of graph.components) {
+    if (c.type === 'gnd' || c.type === 'board' || c.type === 'copper_pour' || c.type === 'testPoint') continue;
+
+    // Find nodes connected to pins 1 and 2 (or anode/cathode)
+    const getPinNode = (pinNames: string[]) => {
+      for (const pin of pinNames) {
+        for (const net of nets) {
+          if (net.connections.some(conn => conn.componentRefDes === (c.refDes || c.id) && conn.pin === pin)) {
+            return nodeMap.get(net.name) || '0';
+          }
+        }
+      }
+      return '0'; // Unconnected pin defaults to 0
+    };
+
+    const n1 = getPinNode(['1', 'anode', 'in', 'p', 'plus', '+']);
+    const n2 = getPinNode(['2', 'cathode', 'out', 'n', 'minus', '-']);
+    
+    let valStr = String(c.properties.value || '');
+    // clean up units (e.g. 10kΩ -> 10k)
+    valStr = valStr.replace(/[ΩΩFfHhVvAaWw]/g, '');
+    if (!valStr) valStr = '1k'; // default
+
+    if (c.type === 'resistor') {
+      lines.push(`${c.refDes.startsWith('R') ? c.refDes : 'R'+c.id} ${n1} ${n2} ${valStr}`);
+    } else if (c.type === 'capacitor') {
+      lines.push(`${c.refDes.startsWith('C') ? c.refDes : 'C'+c.id} ${n1} ${n2} ${valStr}`);
+    } else if (c.type === 'inductor') {
+      lines.push(`${c.refDes.startsWith('L') ? c.refDes : 'L'+c.id} ${n1} ${n2} ${valStr}`);
+    } else if (c.type === 'vcc' || c.type === 'dcSource' || c.type === 'battery') {
+      lines.push(`${c.refDes.startsWith('V') ? c.refDes : 'V'+c.id} ${n1} ${n2} DC ${valStr}`);
+    } else if (c.type === 'diode' || c.type === 'led') {
+      // D1 n1 n2 DMODEL
+      lines.push(`${c.refDes.startsWith('D') ? c.refDes : 'D'+c.id} ${n1} ${n2} 1N4148`);
+    } else if (c.type === 'npn') {
+      const nb = getPinNode(['b', 'base', '2']);
+      const nc = getPinNode(['c', 'collector', '3']);
+      const ne = getPinNode(['e', 'emitter', '1']);
+      lines.push(`${c.refDes.startsWith('Q') ? c.refDes : 'Q'+c.id} ${nc} ${nb} ${ne} 2N3904`);
+    } else if (c.type === 'pnp') {
+      const nb = getPinNode(['b', 'base', '2']);
+      const nc = getPinNode(['c', 'collector', '3']);
+      const ne = getPinNode(['e', 'emitter', '1']);
+      lines.push(`${c.refDes.startsWith('Q') ? c.refDes : 'Q'+c.id} ${nc} ${nb} ${ne} 2N3906`);
+    }
+  }
+
+  // Add standard diode models and default transient analysis
+  lines.push('');
+  lines.push('.model 1N4148 D(IS=1e-14 N=1 RS=0.1)');
+  lines.push('.model 2N3904 NPN(IS=1e-14 VAF=100 BF=300)');
+  lines.push('.model 2N3906 PNP(IS=1e-14 VAF=100 BF=200)');
+  lines.push('.tran 1ms 100ms');
+  lines.push('.end');
+
+  return lines.join('\n');
+}
+
 // ── BOM Generator ────────────────────────────────────────────────────────────
 
 export function generateBOM(graph: CircuitGraph): BOMEntry[] {
