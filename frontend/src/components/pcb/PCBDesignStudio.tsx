@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNodesState, useEdgesState, addEdge, type Connection, type Edge, type Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack, ShareNetwork, LockKey, LockKeyOpen, CornersOut, CornersIn } from '@phosphor-icons/react';
+import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack, ShareNetwork, LockKey, LockKeyOpen, CornersOut, CornersIn, Copy, Check } from '@phosphor-icons/react';
 import ComponentLibraryPanel from './ComponentLibraryPanel';
 import PropertiesInspector from './PropertiesInspector';
 import PCBCanvas from './PCBCanvas';
@@ -372,16 +372,17 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
             </div>
             
             <div className="w-px h-4 bg-gray-700 mx-2" />
-            <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Room: <span className="text-gray-300">{roomId}</span></span>
+            <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider whitespace-nowrap">Room: <span className="text-gray-300">{roomId}</span></span>
             <button 
               onClick={() => {
                 navigator.clipboard.writeText(roomId);
                 setCopiedLink(true);
                 setTimeout(() => setCopiedLink(false), 2000);
               }}
-              className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 transition-colors"
+              title={copiedLink ? 'Copied!' : 'Copy Room Code'}
+              className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 transition-colors shrink-0 ml-1"
             >
-              <ShareNetwork size={12} weight="bold" /> {copiedLink ? 'Copied Code!' : 'Copy Code'}
+              {copiedLink ? <Check size={14} weight="bold" /> : <Copy size={14} weight="bold" />}
             </button>
             <button 
               onClick={() => setShowJoinPrompt(true)}
