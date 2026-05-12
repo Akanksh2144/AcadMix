@@ -268,7 +268,10 @@ export default function PCBDesignStudio() {
             {showLibrary && <div className="w-56 shrink-0 z-10"><ComponentLibraryPanel onAddComponent={handleAddComponent} /></div>}
             <PCBCanvas 
               nodeTypes={mode === 'schematic' ? logicalNodeTypes : pcbNodeTypes}
-              nodes={nodes.map(n => ({ ...n, hidden: n.type === 'board' ? !layerVisibility.BoardOutline : (mode === 'visual' && !layerVisibility.TopSilkLayer) }))} 
+              nodes={nodes.map(n => {
+                const isBoard = n.type === 'board' || n.type?.startsWith('board_') || n.type === 'copper_pour';
+                return { ...n, hidden: isBoard ? !layerVisibility.BoardOutline : (mode === 'visual' && !layerVisibility.TopSilkLayer) };
+              })} 
               edges={edges.map(e => ({ ...e, hidden: mode === 'visual' && !layerVisibility[(e.data?.layer as PCBLayer) || 'TopLayer'], type: mode === 'schematic' ? 'default' : 'step' }))} 
               onNodesChange={onNodesChange} 
               onEdgesChange={onEdgesChange} 

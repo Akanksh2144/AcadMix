@@ -73,11 +73,23 @@ function createNodeComponent(type: string) {
 // Generate the final nodeTypes object for React Flow (Physical Layout)
 export const pcbNodeTypes: Record<string, React.ComponentType<any>> = {
   board: PCBBoardNode,
+  board_custom: PCBBoardNode,
+  board_100x100: PCBBoardNode,
+  board_50x50: PCBBoardNode,
+  board_uno: PCBBoardNode,
+  board_hat: PCBBoardNode,
+  copper_pour: PCBBoardNode,
 };
 
 // Generate the nodeTypes object for Schematic view
 export const logicalNodeTypes: Record<string, React.ComponentType<any>> = {
   board: () => null, // Hide physical boards in schematic view
+  board_custom: () => null,
+  board_100x100: () => null,
+  board_50x50: () => null,
+  board_uno: () => null,
+  board_hat: () => null,
+  copper_pour: () => null,
 };
 
 const LOGICAL_SYMBOL_MAP: Record<string, React.FC<any>> = {
