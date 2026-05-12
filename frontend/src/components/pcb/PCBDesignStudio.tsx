@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNodesState, useEdgesState, addEdge, type Connection, type Edge, type Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack } from '@phosphor-icons/react';
+import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack, ShareNetwork } from '@phosphor-icons/react';
 import ComponentLibraryPanel from './ComponentLibraryPanel';
 import PropertiesInspector from './PropertiesInspector';
 import PCBCanvas from './PCBCanvas';
@@ -39,6 +39,14 @@ const STARTER_EDGES: Edge[] = [
 ];
 
 export default function PCBDesignStudio() {
+  const [roomId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pcbRoom = params.get('pcbRoom');
+    if (pcbRoom) return pcbRoom;
+    return 'pcb-' + Math.random().toString(36).substring(2, 10);
+  });
+  const [copiedLink, setCopiedLink] = useState(false);
+
   const [mode, setMode] = useState<'schematic' | 'visual' | 'code' | '3d'>('schematic');
   const { 
     nodes, edges, 
@@ -46,7 +54,7 @@ export default function PCBDesignStudio() {
     onConnectEdges, addNode, 
     updateNodeProperty, deleteNode, 
     setGraph, connected, users, awareness 
-  } = useCollaboration(STARTER_NODES, STARTER_EDGES);
+  } = useCollaboration(STARTER_NODES, STARTER_EDGES, roomId);
   
   // Layer Management State
   const [activeLayer, setActiveLayer] = useState<PCBLayer>('TopLayer');
@@ -231,6 +239,20 @@ export default function PCBDesignStudio() {
                 </div>
               ))}
             </div>
+            
+            <div className="w-px h-4 bg-gray-700 mx-2" />
+            <button 
+              onClick={() => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('pcbRoom', roomId);
+                navigator.clipboard.writeText(url.toString());
+                setCopiedLink(true);
+                setTimeout(() => setCopiedLink(false), 2000);
+              }}
+              className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 transition-colors"
+            >
+              <ShareNetwork size={12} weight="bold" /> {copiedLink ? 'Copied!' : 'Share Room'}
+            </button>
           </div>
 
           {/* Mode toggle */}

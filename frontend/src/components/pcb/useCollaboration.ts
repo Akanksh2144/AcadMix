@@ -3,11 +3,10 @@ import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
 import { Node, Edge, NodeChange, EdgeChange, applyNodeChanges, applyEdgeChanges, Connection, addEdge } from '@xyflow/react';
 
-const ROOM_NAME = 'acadmix-pcb-room-1';
 // In a real app, you'd use a robust signaling server.
 const SIGNALING_SERVERS = ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com'];
 
-export function useCollaboration(initialNodes: Node[], initialEdges: Edge[]) {
+export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roomId: string) {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [connected, setConnected] = useState(false);
@@ -22,7 +21,7 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[]) {
   // Initialize Yjs and WebRTC
   useEffect(() => {
     const ydoc = ydocRef.current;
-    const provider = new WebrtcProvider(ROOM_NAME, ydoc, {
+    const provider = new WebrtcProvider(roomId, ydoc, {
       signaling: SIGNALING_SERVERS,
     });
     providerRef.current = provider;
