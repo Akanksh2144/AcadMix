@@ -87,20 +87,18 @@ export const VregSymbol: React.FC = () => (
 );
 
 // ── Connectors & Power (Vias / Test Points) ──────────────────────────────────
-const TestPoint = ({ label = 'TP' }) => (
+const TestPoint = () => (
   <svg viewBox="0 0 20 20" width={20} height={20} className="overflow-visible">
     {/* Yellow silkscreen ring */}
     <circle cx="10" cy="10" r="10" fill="none" stroke="#ffff00" strokeWidth="1" />
-    <text x="10" y="-2" textAnchor="middle" fontSize="10" fill="#ffff00" fontWeight="bold">{label}</text>
   </svg>
 );
-export const VCCSymbol: React.FC = () => <TestPoint label="+5V" />;
-export const GNDSymbol: React.FC = () => <TestPoint label="GND" />;
+export const VCCSymbol: React.FC = () => <TestPoint />;
+export const GNDSymbol: React.FC = () => <TestPoint />;
 
 export const BatterySymbol: React.FC = () => (
   <svg viewBox="0 0 40 40" width={40} height={40} className="overflow-visible">
     <circle cx="20" cy="20" r="20" fill="none" stroke="#ffff00" strokeWidth="1" />
-    <text x="20" y="24" textAnchor="middle" fontSize="10" fill="#ffff00" fontWeight="bold">BAT</text>
   </svg>
 );
 

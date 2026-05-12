@@ -158,7 +158,7 @@ function BaseSchematicNodeInner({
       `}
     >
       {/* ── RefDes (Silkscreen text) ── */}
-      <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] font-mono font-bold text-yellow-400 opacity-90 whitespace-nowrap drop-shadow-md">
+      <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-mono font-bold text-yellow-400 opacity-90 whitespace-nowrap drop-shadow-md">
         {data.refDes}
       </div>
 
@@ -169,7 +169,7 @@ function BaseSchematicNodeInner({
 
       {/* ── Value (Silkscreen text) ── */}
       {data.properties?.value && (
-        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-mono text-yellow-200 opacity-80 whitespace-nowrap drop-shadow-md">
+        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-mono text-yellow-200 opacity-80 whitespace-nowrap drop-shadow-md">
           {String(data.properties.value)}
         </div>
       )}
