@@ -393,16 +393,16 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
 
           {/* Mode toggle */}
           <div className="flex items-center bg-gray-800/80 rounded-full p-0.5 ml-2">
-            <button onClick={() => { setMode('schematic'); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === 'schematic' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
+            <button onClick={() => { setMode('schematic'); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all ${mode === 'schematic' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg> Schematic
             </button>
-            <button onClick={() => { setMode('visual'); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === 'visual' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
+            <button onClick={() => { setMode('visual'); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all ${mode === 'visual' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
               <Circuitry size={12} weight="bold" /> 2D PCB
             </button>
-            <button onClick={() => { setMode('3d'); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === '3d' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
+            <button onClick={() => { setMode('3d'); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all ${mode === '3d' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" /></svg> 3D View
             </button>
-            <button onClick={() => { setMode('code'); syncVisualToCode(); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === 'code' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
+            <button onClick={() => { setMode('code'); syncVisualToCode(); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all ${mode === 'code' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
               <Code size={12} weight="bold" /> Code
             </button>
           </div>
