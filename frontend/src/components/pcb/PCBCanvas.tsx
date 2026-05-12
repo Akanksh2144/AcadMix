@@ -32,7 +32,7 @@ export default function PCBCanvas({ nodes, edges, nodeTypes, onNodesChange, onEd
       if (target.closest('.react-flow__controls') || target.closest('.react-flow__panel')) {
         return;
       }
-      toast.info('Canvas is locked! Click the lock icon to interact.', {
+      toast.info('Canvas is locked', {
         id: 'canvas-locked-toast', // prevent spamming multiple toasts
       });
     }
@@ -40,7 +40,7 @@ export default function PCBCanvas({ nodes, edges, nodeTypes, onNodesChange, onEd
 
   const handleWheel = (e: React.WheelEvent) => {
     if (canvasLocked) {
-      toast.info('Canvas is locked! Click the lock icon to interact.', {
+      toast.info('Canvas is locked', {
         id: 'canvas-locked-toast',
       });
     }
