@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube, Broadcast, Equalizer, SunHorizon, Gauge, Path, Tree, Wall, Wrench, Gear, Engine, Robot, ThermometerHot, Car } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube, Broadcast, Equalizer, SunHorizon, Gauge, Path, Tree, Wall, Wrench, Gear, Engine, Robot, ThermometerHot, Car, CornersOut, CornersIn } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -745,6 +745,7 @@ const CodePlayground = ({ navigate, user }) => {
   const [wokwiBoard, setWokwiBoard] = useState('arduino-uno');
   const [simCategory, setSimCategory] = useState('embedded');
   const [useOctaveMode, setUseOctaveMode] = useState(false);
+  const [isLabFullScreen, setIsLabFullScreen] = useState(false);
 
   // ── ECE / EEE / Civil Lab computed values ──────────────────────────────────
   const _isEEELab = language === 'eeelab';
@@ -1898,7 +1899,7 @@ const CodePlayground = ({ navigate, user }) => {
         </div>
       ) : (language === 'ecelab' || language === 'eeelab' || language === 'civillab' || language === 'mechlab') ? (
         // ECE / EEE / Civil Lab — multi-simulator panel
-        <div className="flex-1 overflow-hidden flex flex-col" style={{ overscrollBehavior: 'contain' }}>
+        <div className={isLabFullScreen ? "fixed inset-0 z-[100] bg-[#0B0F19] w-screen h-screen flex flex-col" : "flex-1 overflow-hidden flex flex-col"} style={{ overscrollBehavior: 'contain' }}>
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
             {/* Category Tabs + Board Selector Toolbar */}
             <div className="soft-card p-3 shrink-0 mb-4 space-y-2">
@@ -1959,6 +1960,13 @@ const CodePlayground = ({ navigate, user }) => {
                   >
                     {useOctaveMode && (_simActiveBoard as any)?.octaveUrl ? 'Open Octave' : (_simActiveBoard?.openLabel || 'Open External')} ↗
                   </a>
+                  <button 
+                    onClick={() => setIsLabFullScreen(!isLabFullScreen)} 
+                    title={isLabFullScreen ? "Exit Full Screen" : "Full Screen"} 
+                    className="p-1.5 ml-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    {isLabFullScreen ? <CornersIn size={18} weight="bold" /> : <CornersOut size={18} weight="bold" />}
+                  </button>
                 </div>
               </div>
               {/* Row 2: Category pills (full width) */}
