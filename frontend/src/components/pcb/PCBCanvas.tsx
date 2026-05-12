@@ -36,7 +36,7 @@ export default function PCBCanvas({ nodes, edges, onNodesChange, onEdgesChange, 
         defaultEdgeOptions={{
           animated: false,
           type: 'step',
-          style: { stroke: '#E58B22', strokeWidth: 3 },
+          style: { stroke: '#dc2626', strokeWidth: 3 },
         }}
         proOptions={{ hideAttribution: true }}
       >

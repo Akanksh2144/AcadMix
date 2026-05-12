@@ -192,12 +192,11 @@ function BaseSchematicNodeInner({
           type={pin.type}
           position={pin.position}
           style={pin.style}
-          className={`
-            !w-2.5 !h-2.5 !bg-[#06301A]
-            !border-[2px] !border-[#E58B22]
-            !rounded-full
-            hover:!scale-150 hover:!bg-[#E58B22] transition-all
-          `}
+          className={
+            pin.position === Position.Left || pin.position === Position.Right
+              ? "!w-3 !h-5 !bg-[#dc2626] !border-none !rounded-sm hover:!bg-[#ef4444] transition-all"
+              : "!w-5 !h-3 !bg-[#dc2626] !border-none !rounded-sm hover:!bg-[#ef4444] transition-all"
+          }
           title={`${pin.label} (${pin.id})`}
         />
       ))}
