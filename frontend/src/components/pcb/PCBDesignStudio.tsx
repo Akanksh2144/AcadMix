@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNodesState, useEdgesState, addEdge, type Connection, type Edge, type Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack, ShareNetwork, LockKey, LockKeyOpen, CornersOut, CornersIn, Copy, Check, WaveSine } from '@phosphor-icons/react';
+import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack, ShareNetwork, LockKey, LockKeyOpen, CornersOut, CornersIn, Copy, Check, WaveSine, Users } from '@phosphor-icons/react';
 import ComponentLibraryPanel from './ComponentLibraryPanel';
 import PropertiesInspector from './PropertiesInspector';
 import PCBCanvas from './PCBCanvas';
@@ -429,9 +429,10 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
             </button>
             <button 
               onClick={() => setShowJoinPrompt(true)}
-              className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+              title="Join Room"
+              className="flex items-center justify-center w-6 h-6 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
             >
-              Join Room
+              <Users size={14} weight="bold" />
             </button>
           </div>
 
