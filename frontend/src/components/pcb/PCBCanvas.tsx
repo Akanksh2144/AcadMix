@@ -77,9 +77,19 @@ export default function PCBCanvas({ nodes, edges, nodeTypes, onNodesChange, onEd
         nodesConnectable={!canvasLocked}
         elementsSelectable={!canvasLocked}
       >
-        <Controls showInteractive={false} position="bottom-left">
-          <ControlButton onClick={() => setCanvasLocked(!canvasLocked)} title="Toggle Canvas Lock">
-            {canvasLocked ? <LockKey weight="fill" /> : <LockKeyOpen weight="fill" />}
+        <Controls 
+          showInteractive={false} 
+          position="bottom-left"
+          className="flex flex-row items-center gap-2 p-1.5 bg-slate-900/60 backdrop-blur-xl rounded-full border border-slate-700/50 shadow-2xl overflow-hidden !m-6"
+        >
+          <ControlButton 
+            onClick={() => setCanvasLocked(!canvasLocked)} 
+            title="Toggle Canvas Lock"
+            className={`!w-10 !h-10 !rounded-full !border-none !bg-transparent hover:!bg-slate-800/80 transition-colors flex items-center justify-center
+              ${canvasLocked ? '!text-rose-400 hover:!text-rose-300' : '!text-emerald-400 hover:!text-emerald-300'}
+            `}
+          >
+            {canvasLocked ? <LockKey size={20} weight="duotone" /> : <LockKeyOpen size={20} weight="duotone" />}
           </ControlButton>
         </Controls>
         <Background
