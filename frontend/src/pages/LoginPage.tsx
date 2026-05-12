@@ -285,26 +285,6 @@ const LoginPage = ({ onLogin }) => {
           {/* Subtle Top Gradient Bar */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 opacity-80"></div>
 
-          {isPreEnrollActive && (
-            <div className="flex justify-center mb-8">
-              <div className="bg-slate-50 p-1 rounded-full inline-flex ring-1 ring-slate-900/5">
-                <button
-                  type="button"
-                  onClick={() => setIsPreEnrollMode(false)}
-                  className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${!isPreEnrollMode ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                  Standard
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsPreEnrollMode(true)}
-                  className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${isPreEnrollMode ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                  Guest/Pre-Enroll
-                </button>
-              </div>
-            </div>
-          )}
 
           <AnimatePresence mode="wait">
             {error && (
@@ -412,6 +392,28 @@ const LoginPage = ({ onLogin }) => {
               )}
             </motion.div>
           </AnimatePresence>
+
+          {isPreEnrollActive && (
+            <div className="mt-6 text-center">
+              {!isPreEnrollMode ? (
+                <button 
+                  type="button" 
+                  onClick={() => setIsPreEnrollMode(true)}
+                  className="text-xs font-bold text-indigo-600 hover:text-indigo-500 transition-colors flex items-center justify-center gap-1 mx-auto"
+                >
+                  Looking for Hostel Booking? Proceed here <span className="text-lg leading-none">&rarr;</span>
+                </button>
+              ) : (
+                <button 
+                  type="button" 
+                  onClick={() => setIsPreEnrollMode(false)}
+                  className="text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors flex items-center justify-center gap-1 mx-auto"
+                >
+                  <span className="text-lg leading-none">&larr;</span> Back to Standard Login
+                </button>
+              )}
+            </div>
+          )}
 
           {showQuickLogin && (
             <div className="mt-8 pt-6 border-t border-slate-100">
