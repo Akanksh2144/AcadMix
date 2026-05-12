@@ -8,11 +8,14 @@ export interface PCBBoardNodeData {
 }
 
 function PCBBoardNodeInner({ data, selected }: NodeProps<PCBBoardNodeData>) {
+  const rotation = Number((data.properties as any)?.rotation || 0);
+
   return (
     <>
       <div
-        className="relative flex items-center justify-center shadow-2xl"
+        className="relative flex items-center justify-center shadow-2xl transition-all duration-200"
         style={{
+          transform: `rotate(${rotation}deg)`,
           width: '100%',
           height: '100%',
           backgroundColor: '#06301A', // Deep green PCB substrate

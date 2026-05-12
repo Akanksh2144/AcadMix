@@ -150,12 +150,15 @@ function BaseSchematicNodeInner({
   const pins = data.pins || [];
   const placements = computePinPlacements(pins, 0, 0);
 
+  const rotation = Number(data.properties?.rotation || 0);
+
   return (
     <div
       className={`relative flex flex-col items-center justify-center group
         ${data.selected ? 'ring-1 ring-yellow-400/50 bg-yellow-400/5' : ''}
         transition-all duration-200
       `}
+      style={{ transform: `rotate(${rotation}deg)` }}
     >
       {/* ── RefDes (Silkscreen text) ── */}
       <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-mono font-bold text-yellow-400 opacity-90 whitespace-nowrap drop-shadow-md">
