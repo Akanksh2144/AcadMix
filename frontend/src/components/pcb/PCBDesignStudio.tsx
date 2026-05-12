@@ -13,6 +13,7 @@ import { runDRC, generateNetlistText, generateBOM, bomToCSV, exportKiCadNetlist,
 import { exportGerbers } from './gerberExporter';
 import PCB3DViewer from './PCB3DViewer';
 import { DEFAULT_DSL, parseDSL, serializeDSL } from './circuitDSL';
+import { useCollaboration } from './useCollaboration';
 
 let nodeCounter = 100;
 const refDesCounters: Record<string, number> = {};
@@ -66,15 +67,14 @@ export default function PCBDesignStudio() {
   }, [selectedNode]);
 
   const saveUndo = useCallback(() => {
-    setUndoStack(prev => [...prev.slice(-30), { nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) }]);
-    setRedoStack([]);
-  }, [nodes, edges]);
+    // In a CRDT environment, standard local undo/redo requires a Yjs UndoManager.
+    // For this POC, we'll bypass local undo.
+  }, []);
 
   const onConnect = useCallback((params: Connection) => {
-    saveUndo();
     const color = activeLayer === 'TopLayer' ? '#ff0000' : '#0000ff';
-    setEdges(eds => addEdge({ ...params, type: 'step', data: { layer: activeLayer }, style: { stroke: color, strokeWidth: 3, mixBlendMode: 'screen' } }, eds));
-  }, [setEdges, saveUndo, activeLayer]);
+    onConnectEdges(params, mode === 'schematic' ? 'default' : 'step', activeLayer, color);
+  }, [onConnectEdges, activeLayer, mode]);
 
   const toggleVisibility = useCallback((layer: PCBLayer) => {
     setLayerVisibility(prev => ({ ...prev, [layer]: !prev[layer] }));
@@ -101,36 +101,34 @@ export default function PCBDesignStudio() {
       style: catalog.category === 'board' ? { width: catalog.defaultProperties.width || 800, height: catalog.defaultProperties.height || 600 } : undefined,
       zIndex: catalog.category === 'board' ? -1 : 0
     };
-    setNodes(nds => [...nds, newNode]);
-  }, [setNodes, saveUndo]);
+    addNode(newNode);
+  }, [addNode]);
 
   const handlePropertyChange = useCallback((nodeId: string, field: string, value: any) => {
-    saveUndo();
-    setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, properties: { ...(n.data as any).properties, [field]: value } } } : n));
-  }, [setNodes, saveUndo]);
+    updateNodeProperty(nodeId, field, value);
+  }, [updateNodeProperty]);
 
   const handleDelete = useCallback((nodeId: string) => {
-    saveUndo();
-    setNodes(nds => nds.filter(n => n.id !== nodeId));
-    setEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId));
+    deleteNode(nodeId);
     setSelectedId(null);
-  }, [setNodes, setEdges, saveUndo]);
+  }, [deleteNode]);
 
   const handleDuplicate = useCallback((nodeId: string) => {
-    saveUndo();
     const orig = nodes.find(n => n.id === nodeId);
     if (!orig) return;
     const catalog = getCatalogEntry((orig.data as any).componentType || orig.type as ComponentType);
     const id = `comp-${++nodeCounter}`;
     const refDes = getNextRefDes(catalog?.refDesPrefix || 'X');
     const dup: Node = { ...orig, id, position: { x: orig.position.x + 40, y: orig.position.y + 40 }, data: { ...orig.data, refDes } };
-    setNodes(nds => [...nds, dup]);
-  }, [nodes, setNodes, saveUndo]);
+    addNode(dup);
+    setSelectedId(id);
+  }, [nodes, addNode]);
 
   const handleRotate = useCallback((nodeId: string) => {
-    saveUndo();
-    setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, rotation: (((n.data as any).rotation || 0) + 90) % 360 } } : n));
-  }, [setNodes, saveUndo]);
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    updateNodeProperty(nodeId, 'rotation', (((node.data as any).rotation || 0) + 90) % 360);
+  }, [nodes, updateNodeProperty]);
 
   const handleRunDRC = useCallback(() => {
     const graph = buildGraph();
@@ -206,10 +204,9 @@ export default function PCBDesignStudio() {
         return { id: c.id, type: c.type, position: c.position, data: { refDes: c.refDes, componentType: c.type, category: catalog?.category || 'passive', label: catalog?.label || c.type, properties: c.properties, pins: catalog?.pins || [] } };
       });
       const newEdges: Edge[] = result.graph.wires.map(w => ({ id: w.id, source: w.fromComponent, sourceHandle: w.fromPin, target: w.toComponent, targetHandle: w.toPin, type: 'step', style: { stroke: '#d4a574', strokeWidth: 3 } }));
-      setNodes(newNodes);
-      setEdges(newEdges);
+      setGraph(newNodes, newEdges);
     }
-  }, [codeText, saveUndo, setNodes, setEdges]);
+  }, [codeText, setGraph]);
 
   const syncVisualToCode = useCallback(() => {
     const graph = buildGraph();
@@ -228,6 +225,18 @@ export default function PCBDesignStudio() {
             <Circuitry size={16} weight="bold" className="text-white" />
           </div>
           <span className="font-bold text-sm text-gray-200">AcadMix PCB Studio</span>
+
+          <div className="flex items-center gap-2 ml-4">
+            <div className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500'}`} title={connected ? 'Connected to Room' : 'Disconnected'} />
+            <span className="text-xs text-gray-400 font-medium">{users.length} Online</span>
+            <div className="flex -space-x-2 ml-2">
+              {users.map((u, i) => (
+                <div key={i} className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-gray-900" style={{ backgroundColor: u.color }} title={u.name}>
+                  {u.name.substring(0, 1).toUpperCase()}
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Mode toggle */}
           <div className="flex items-center bg-gray-800/80 rounded-full p-0.5 ml-2">
