@@ -426,7 +426,7 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
     { id: 'attiny85', label: 'ATtiny85', url: 'https://wokwi.com/projects/new/attiny85', openLabel: 'Open in Wokwi' },
   ],
   analog: [
-    { id: 'ae-native-spice', label: 'AcadMix SPICE (Native)', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: 'Basic RLC circuit \n.include modelcard.CMOS90\n\nr vdd 2 100.0\nl vdd 2 1\nc vdd 2 0.01\nm1 2 1 0 0 N90 W=100.0u L=0.09u\nvdd vdd 0 1.8\n\nvin 1 0 0 pulse (0 1.8 0 0.1 0.1 15 30)\n.tran 0.1 5\n\n.end' },
+    { id: 'ae-native-spice', label: 'AcadMix SPICE (Native)', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: 'Basic RLC circuit\\n\\nv1 1 0 pulse (0 5 1m 1m 1m 10m 20m)\\nr1 1 2 1k\\nl1 2 3 10m\\nc1 3 0 1u\\n\\n.tran 0.1m 50m\\n.end' },
     { id: 'ae-blank', label: 'Blank Circuit', url: 'https://lushprojects.com/circuitjs/circuitjs.html?ctz=CQAgjCAMB0l3BWcA2aAOMB2ALGXyEBOAbmAmwmwFMBaMMAKACcQUFDxCRsKBmEbqh7ce-YUJR1BkEJByYAHiGC4ALpzV8hOvYb37MBg5QCMvIbsPG6Zjlx5A', openLabel: 'Open in CircuitJS' },
     { id: 'ae-opamp', label: 'Op-Amp', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=opamp.txt', openLabel: 'Open in CircuitJS' },
     { id: 'ae-rc', label: 'RC Low-Pass Filter', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=filt-lopass.txt', openLabel: 'Open in CircuitJS' },
@@ -771,15 +771,23 @@ const CodePlayground = ({ navigate, user }) => {
     setNativeOutput(null);
     try {
       if (lang === 'spice') {
-        const sim = new EEcircuitSimulation();
-        await sim.start();
-        sim.setNetList(simCode);
-        const result = await sim.runSim();
+        const simPromise = async () => {
+          const sim = new EEcircuitSimulation();
+          await sim.start();
+          sim.setNetList(simCode);
+          return await sim.runSim();
+        };
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Simulation timed out after 15 seconds. Ensure your syntax is correct and does not include external files.')), 15000)
+        );
+
+        const result = await Promise.race([simPromise(), timeoutPromise]) as any;
         
         // Very basic result parsing for demonstration
         if (result && result.error) {
            setNativeOutput(`Error: ${result.error}`);
-        } else if (result && result.data && Array.isArray(result.data)) {
+        } else if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
            setNativeOutput(<SpiceChart data={result.data} />);
         } else if (result && result.stdout) {
            setNativeOutput(result.stdout);
