@@ -10,6 +10,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import IdleTimer from './components/auth/IdleTimer';
 import './App.css';
 import { authAPI, setAuthToken, clearAuthToken } from './services/api';
+import { Toaster } from 'sonner';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Lazy-loaded pages (code-split per route)
@@ -624,6 +625,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <Toaster position="top-right" richColors />
         <AppShell />
       </BrowserRouter>
     </QueryClientProvider>
