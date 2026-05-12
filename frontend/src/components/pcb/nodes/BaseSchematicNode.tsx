@@ -66,9 +66,23 @@ interface PinPlacement {
   style: React.CSSProperties;
 }
 
-function computePinPlacements(pins: PinDef[], nodeWidth: number, nodeHeight: number): PinPlacement[] {
+function computePinPlacements(pins: PinDef[], rotation: number): PinPlacement[] {
   const sidePins: Record<string, PinDef[]> = { left: [], right: [], top: [], bottom: [] };
-  pins.forEach(p => { sidePins[p.side] = sidePins[p.side] || []; sidePins[p.side].push(p); });
+  
+  // Map rotation to side shifts
+  const shiftSide = (side: string, rot: number) => {
+    const sides = ['top', 'right', 'bottom', 'left'];
+    const idx = sides.indexOf(side);
+    if (idx === -1) return side;
+    const shift = ((rot % 360) / 90) % 4;
+    return sides[(idx + shift + 4) % 4];
+  };
+
+  pins.forEach(p => { 
+    const rotatedSide = shiftSide(p.side, rotation);
+    sidePins[rotatedSide] = sidePins[rotatedSide] || []; 
+    sidePins[rotatedSide].push(p); 
+  });
 
   const result: PinPlacement[] = [];
 
@@ -148,9 +162,8 @@ function BaseSchematicNodeInner({
   compact = false,
 }: BaseSchematicNodeProps) {
   const pins = data.pins || [];
-  const placements = computePinPlacements(pins, 0, 0);
-
   const rotation = Number(data.properties?.rotation || 0);
+  const placements = computePinPlacements(pins, rotation);
 
   return (
     <div
@@ -158,7 +171,6 @@ function BaseSchematicNodeInner({
         ${data.selected ? 'ring-1 ring-yellow-400/50 bg-yellow-400/5' : ''}
         transition-all duration-200
       `}
-      style={{ transform: `rotate(${rotation}deg)` }}
     >
       {/* ── RefDes (Silkscreen text) ── */}
       <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-mono font-bold text-yellow-400 opacity-90 whitespace-nowrap drop-shadow-md">
@@ -166,7 +178,10 @@ function BaseSchematicNodeInner({
       </div>
 
       {/* ── Symbol (Draws its own pads) ── */}
-      <div className="drop-shadow-[0_0_2px_rgba(250,204,21,0.2)]">
+      <div 
+        className="flex items-center justify-center pointer-events-none drop-shadow-md"
+        style={{ transform: `rotate(${rotation}deg)` }}
+      >
         {symbol}
       </div>
 

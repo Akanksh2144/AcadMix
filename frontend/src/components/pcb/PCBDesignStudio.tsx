@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNodesState, useEdgesState, addEdge, type Connection, type Edge, type Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack, ShareNetwork, LockKey, LockKeyOpen, CornersOut, CornersIn, Copy, Check } from '@phosphor-icons/react';
+import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack, ShareNetwork, LockKey, LockKeyOpen, CornersOut, CornersIn, Copy, Check, WaveSine } from '@phosphor-icons/react';
 import ComponentLibraryPanel from './ComponentLibraryPanel';
 import PropertiesInspector from './PropertiesInspector';
 import PCBCanvas from './PCBCanvas';
@@ -9,9 +9,11 @@ import { pcbNodeTypes, logicalNodeTypes } from './nodes';
 import LayerManagerPanel, { type PCBLayer } from './LayerManagerPanel';
 import type { ComponentType } from './types';
 import { getCatalogEntry } from './componentCatalog';
-import { runDRC, generateNetlistText, generateBOM, bomToCSV, exportKiCadNetlist, downloadFile } from './pcbEngine';
+import { runDRC, generateNetlistText, generateBOM, bomToCSV, exportKiCadNetlist, downloadFile, generateSPICENetlist } from './pcbEngine';
 import { exportGerbers } from './gerberExporter';
 import PCB3DViewer from './PCB3DViewer';
+import { Simulation as EEcircuitSimulation } from 'eecircuit-engine';
+import SpiceChart from '../SpiceChart';
 import { DEFAULT_DSL, parseDSL, serializeDSL } from './circuitDSL';
 import { useCollaboration } from './useCollaboration';
 
@@ -72,6 +74,10 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
   const [showLayersMenu, setShowLayersMenu] = useState(false);
   const [showNetlist, setShowNetlist] = useState(false);
   const [netlistText, setNetlistText] = useState('');
+  
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simOutput, setSimOutput] = useState<any>(null);
+  const [showSimOutput, setShowSimOutput] = useState(false);
   const [codeText, setCodeText] = useState(DEFAULT_DSL);
   const [undoStack, setUndoStack] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
   const [redoStack, setRedoStack] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
@@ -179,6 +185,29 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
     const graph = buildGraph();
     setNetlistText(generateNetlistText(graph));
     setShowNetlist(true);
+  }, [buildGraph]);
+
+  const handleSimulate = useCallback(async () => {
+    const graph = buildGraph();
+    const spice = generateSPICENetlist(graph);
+    setIsSimulating(true);
+    setSimOutput(null);
+    setShowSimOutput(true);
+    
+    try {
+      const sim = new EEcircuitSimulation();
+      await sim.start();
+      sim.setNetList(spice);
+      const res = await Promise.race([
+        sim.runSim(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Simulation timeout (15s)')), 15000))
+      ]);
+      setSimOutput(res);
+    } catch (e: any) {
+      setSimOutput({ error: e.message || 'Simulation failed' });
+    } finally {
+      setIsSimulating(false);
+    }
   }, [buildGraph]);
 
   const handleExportBOM = useCallback(() => {
@@ -437,6 +466,7 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
           <div className="w-px h-5 bg-gray-700 mx-1" />
           <button onClick={handleRunDRC} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 transition-colors"><ShieldCheck size={13} weight="bold" /> DRC</button>
           <button onClick={handleNetlist} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"><ListBullets size={13} weight="bold" /> Netlist</button>
+          <button onClick={handleSimulate} disabled={isSimulating} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 transition-colors disabled:opacity-50"><WaveSine size={13} weight="bold" /> {isSimulating ? 'Simulating...' : 'Simulate'}</button>
           <button onClick={handleExportBOM} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"><Export size={13} weight="bold" /> BOM</button>
           <button onClick={handleExportGerber} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition-colors"><Export size={13} weight="bold" /> Gerber</button>
           <div className="w-px h-5 bg-gray-700 mx-1" />
@@ -578,6 +608,36 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
               </div>
             </div>
             <pre className="p-4 overflow-auto max-h-[420px] text-[11px] text-emerald-300 font-mono leading-relaxed">{netlistText}</pre>
+          </div>
+        </div>
+      )}
+
+      {/* ── Simulation Modal ── */}
+      {showSimOutput && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowSimOutput(false)}>
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-[800px] h-[500px] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800 shrink-0">
+              <span className="text-sm font-bold text-gray-200 flex items-center gap-2"><WaveSine size={16} className="text-indigo-400" /> Circuit Simulation (SPICE)</span>
+              <button onClick={() => setShowSimOutput(false)} className="text-gray-500 hover:text-gray-300 text-lg">&times;</button>
+            </div>
+            <div className="p-4 flex-1 overflow-y-auto bg-[#0B0C10]">
+              {isSimulating ? (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-indigo-400">
+                  <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs font-bold animate-pulse">Running SPICE Simulation...</p>
+                </div>
+              ) : simOutput?.error ? (
+                <div className="w-full h-full flex items-center justify-center text-red-400 text-xs font-mono p-6 bg-red-950/20 rounded-xl border border-red-900/50 text-center whitespace-pre-wrap">
+                  {simOutput.error}
+                </div>
+              ) : simOutput?.data ? (
+                <div className="w-full h-full min-h-[300px]">
+                  <SpiceChart data={simOutput.data} />
+                </div>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">No output</div>
+              )}
+            </div>
           </div>
         </div>
       )}
