@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows, Box, Line } from '@react-three/drei';
+import { CameraControls, Environment, ContactShadows, Box, Line } from '@react-three/drei';
 import type { CircuitGraph } from './types';
 import { getCatalogEntry } from './componentCatalog';
 
@@ -11,10 +11,6 @@ interface PCB3DViewerProps {
 export default function PCB3DViewer({ graph }: PCB3DViewerProps) {
   const controlsRef = useRef<any>(null);
 
-  const handleReset = () => {
-    controlsRef.current?.reset();
-  };
-
   // Find board dimensions
   const boardNode = graph.components.find(c => c.type === 'board_custom' || c.type.startsWith('board_'));
   const width = boardNode?.properties.width || 800;
@@ -24,6 +20,11 @@ export default function PCB3DViewer({ graph }: PCB3DViewerProps) {
   const SCALE = 0.05;
   const w = width * SCALE;
   const h = height * SCALE;
+
+  const handleReset = () => {
+    // position, target, enableTransition
+    controlsRef.current?.setLookAt(0, w, h, 0, 0, 0, true);
+  };
   const thickness = 1.6 * SCALE * 10; // Standard 1.6mm thickness, exaggerated slightly for visibility
 
   // Center offset
@@ -88,7 +89,7 @@ export default function PCB3DViewer({ graph }: PCB3DViewerProps) {
           {components}
         </group>
 
-        <OrbitControls ref={controlsRef} makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 2 + 0.1} />
+        <CameraControls ref={controlsRef} makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 2 + 0.1} />
         <ContactShadows position={[0, -thickness, 0]} opacity={0.5} scale={100} blur={2} far={10} />
       </Canvas>
       <div className="absolute top-4 left-4 flex flex-col gap-2">
