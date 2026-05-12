@@ -183,8 +183,21 @@ async def create_ws_ticket(user: dict = Depends(get_current_user)):
     await redis_client.setex(f"ws_ticket:{ticket_id}", 30, json.dumps(user))
     return {"ticket": ticket_id}
 
-async def _authenticate_ws(ticket: str) -> dict:
-    """Verify WebSocket ticket against Redis and exchange for payload."""
+async def _authenticate_ws(ticket: str = None, token: str = None) -> dict:
+    """Verify WebSocket ticket against Redis, or decode JWT token directly."""
+    if token:
+        try:
+            payload = jwt.decode(
+                token,
+                JWT_SECRET,
+                algorithms=[JWT_ALGORITHM],
+                options={"verify_exp": True},
+            )
+            return payload
+        except Exception as e:
+            logger.warning("[ws] Invalid JWT token: %s", e)
+            return None
+
     if not ticket:
         return None
     from app.core.security import redis_client
@@ -205,13 +218,13 @@ async def _authenticate_ws(ticket: str) -> dict:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.websocket("/ws/transport/{route_id}")
-async def transport_ws(websocket: WebSocket, route_id: str, ticket: str = Query(None)):
+async def transport_ws(websocket: WebSocket, route_id: str, ticket: str = Query(None), token: str = Query(None)):
     """Real-time bus location updates for a specific route.
     
     - Students/parents subscribe to receive live GPS updates
     - IoT webhook broadcasts location via `broadcast_transport_update()`
     """
-    payload = await _authenticate_ws(ticket)
+    payload = await _authenticate_ws(ticket=ticket, token=token)
     if not payload:
         await websocket.close(code=1008, reason="Authentication required")
         return
@@ -232,7 +245,7 @@ async def transport_ws(websocket: WebSocket, route_id: str, ticket: str = Query(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.websocket("/ws/quiz/{quiz_id}/monitor")
-async def quiz_monitor_ws(websocket: WebSocket, quiz_id: str, ticket: str = Query(None)):
+async def quiz_monitor_ws(websocket: WebSocket, quiz_id: str, ticket: str = Query(None), token: str = Query(None)):
     """Real-time quiz monitoring for teachers/HODs.
     
     Events broadcasted:
@@ -240,7 +253,7 @@ async def quiz_monitor_ws(websocket: WebSocket, quiz_id: str, ticket: str = Quer
     - student_submitted: when a student submits
     - student_switched_tab: proctoring violation
     """
-    payload = await _authenticate_ws(ticket)
+    payload = await _authenticate_ws(ticket=ticket, token=token)
     if not payload or payload.get("role") not in ("teacher", "hod", "admin", "principal"):
         await websocket.close(code=1008, reason="Insufficient permissions")
         return
@@ -261,9 +274,9 @@ async def quiz_monitor_ws(websocket: WebSocket, quiz_id: str, ticket: str = Quer
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.websocket("/ws/notifications")
-async def notifications_ws(websocket: WebSocket, ticket: str = Query(None)):
+async def notifications_ws(websocket: WebSocket, ticket: str = Query(None), token: str = Query(None)):
     """Per-user notification feed (announcements, fee reminders, etc.)."""
-    payload = await _authenticate_ws(ticket)
+    payload = await _authenticate_ws(ticket=ticket, token=token)
     if not payload:
         await websocket.close(code=1008, reason="Authentication required")
         return
