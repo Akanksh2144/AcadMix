@@ -2125,6 +2125,7 @@ const CodePlayground = ({ navigate, user }) => {
                   title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
                   className="w-full h-full border-0"
                   style={{ touchAction: 'none' }}
+                  sandbox="allow-scripts allow-same-origin allow-downloads allow-forms allow-popups"
                   allow="clipboard-read; clipboard-write; fullscreen"
                 />
               )}
