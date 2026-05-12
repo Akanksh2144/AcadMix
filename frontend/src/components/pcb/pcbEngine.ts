@@ -255,7 +255,7 @@ export function generateSPICENetlist(graph: CircuitGraph): string {
   const nodeMap = getNodeMap();
 
   const lines: string[] = [
-    '* AcadMix PCB Studio — SPICE Netlist',
+    '* AcadMix PCB Studio - SPICE Netlist',
     `* Generated: ${new Date().toISOString()}`,
   ];
 
