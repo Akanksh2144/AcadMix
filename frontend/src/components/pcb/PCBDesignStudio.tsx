@@ -38,13 +38,13 @@ const STARTER_EDGES: Edge[] = [
   { id: 'e-3', source: 'comp-3', sourceHandle: 'cathode', target: 'comp-4', targetHandle: '1', type: 'straight', data: { layer: 'BottomLayer' }, style: { stroke: '#0000ff', strokeWidth: 3, mixBlendMode: 'screen' } },
 ];
 
-export default function PCBDesignStudio() {
-  const [roomId] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    const pcbRoom = params.get('pcbRoom');
-    if (pcbRoom) return pcbRoom;
-    return 'pcb-' + Math.random().toString(36).substring(2, 10);
-  });
+export default function PCBDesignStudio({ user }: { user?: any }) {
+  const [roomId, setRoomId] = useState(() => 'PCB-' + Math.random().toString(36).substring(2, 8).toUpperCase());
+  const [isHost, setIsHost] = useState(true);
+  
+  const [showJoinPrompt, setShowJoinPrompt] = useState(false);
+  const [joinCodeInput, setJoinCodeInput] = useState('');
+
   const [copiedLink, setCopiedLink] = useState(false);
 
   const [mode, setMode] = useState<'schematic' | 'visual' | 'code' | '3d'>('schematic');
@@ -53,8 +53,9 @@ export default function PCBDesignStudio() {
     onNodesChange, onEdgesChange, 
     onConnectEdges, addNode, 
     updateNodeProperty, deleteNode, 
-    setGraph, connected, users, awareness 
-  } = useCollaboration(STARTER_NODES, STARTER_EDGES, roomId);
+    setGraph, connected, users, awareness,
+    guestStatus, pendingGuests, joinWaitingRoom, acceptGuest, rejectGuest
+  } = useCollaboration(STARTER_NODES, STARTER_EDGES, roomId, user, isHost);
   
   // Layer Management State
   const [activeLayer, setActiveLayer] = useState<PCBLayer>('TopLayer');
@@ -220,7 +221,131 @@ export default function PCBDesignStudio() {
   const drcWarnCount = drcResults.filter(r => r.severity === 'warning').length;
 
   return (
-    <div className="w-full h-full flex flex-col bg-gray-950 rounded-3xl overflow-hidden shadow-2xl border border-gray-800/50">
+    <div className="w-full h-full flex flex-col bg-gray-950 rounded-3xl overflow-hidden shadow-2xl border border-gray-800/50 relative">
+      
+      {/* ── Waiting Room UI for Guest ── */}
+      {!isHost && guestStatus === 'confirming' && (
+        <div className="absolute inset-0 z-50 bg-gray-950/80 backdrop-blur-md flex items-center justify-center">
+          <div className="bg-gray-900 border border-gray-800 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
+            <div className="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShieldCheck size={32} weight="duotone" className="text-indigo-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Join PCB Studio</h2>
+            <p className="text-gray-400 mb-6">
+              You are requesting to join a collaborative PCB design session. Your profile ({user?.name || 'Guest'}) will be shared with the host.
+            </p>
+            <div className="flex gap-4">
+              <button onClick={() => window.history.back()} className="flex-1 py-3 px-4 rounded-xl font-bold text-gray-300 bg-gray-800 hover:bg-gray-700 transition-colors">
+                Cancel
+              </button>
+              <button onClick={joinWaitingRoom} className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors">
+                Request to Join
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isHost && guestStatus === 'waiting' && (
+        <div className="absolute inset-0 z-50 bg-gray-950/80 backdrop-blur-md flex items-center justify-center">
+          <div className="bg-gray-900 border border-gray-800 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
+            <div className="w-16 h-16 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 className="text-2xl font-bold text-white mb-2">Waiting for Host...</h2>
+            <p className="text-gray-400">
+              Your request has been sent. Please wait while the host approves your join request.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!isHost && guestStatus === 'rejected' && (
+        <div className="absolute inset-0 z-50 bg-gray-950/80 backdrop-blur-md flex items-center justify-center">
+          <div className="bg-gray-900 border border-rose-800/50 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
+            <div className="w-16 h-16 bg-rose-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <WarningCircle size={32} weight="duotone" className="text-rose-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Request Denied</h2>
+            <p className="text-gray-400 mb-6">
+              The host declined your request to join this session.
+            </p>
+            <button onClick={() => {
+              setIsHost(true);
+              setRoomId('PCB-' + Math.random().toString(36).substring(2, 8).toUpperCase());
+            }} className="w-full py-3 px-4 rounded-xl font-bold text-white bg-gray-800 hover:bg-gray-700 transition-colors">
+              Return to My Studio
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Join Room Prompt ── */}
+      {showJoinPrompt && (
+        <div className="absolute inset-0 z-50 bg-gray-950/80 backdrop-blur-md flex items-center justify-center">
+          <div className="bg-gray-900 border border-gray-800 p-8 rounded-2xl shadow-2xl max-w-md w-full">
+            <h2 className="text-2xl font-bold text-white mb-2 text-center">Join Room</h2>
+            <p className="text-gray-400 mb-6 text-center text-sm">
+              Enter the Room Code shared by the host to join their collaborative session.
+            </p>
+            <input 
+              type="text" 
+              placeholder="e.g. PCB-X7A9B"
+              value={joinCodeInput}
+              onChange={e => setJoinCodeInput(e.target.value)}
+              className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white font-mono text-center text-lg mb-6 focus:outline-none focus:border-indigo-500"
+              autoFocus
+            />
+            <div className="flex gap-4">
+              <button onClick={() => {
+                setShowJoinPrompt(false);
+                setJoinCodeInput('');
+              }} className="flex-1 py-3 px-4 rounded-xl font-bold text-gray-300 bg-gray-800 hover:bg-gray-700 transition-colors">
+                Cancel
+              </button>
+              <button 
+                disabled={!joinCodeInput.trim()}
+                onClick={() => {
+                  if (joinCodeInput.trim()) {
+                    setRoomId(joinCodeInput.trim());
+                    setIsHost(false);
+                    setShowJoinPrompt(false);
+                  }
+                }} 
+                className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Join
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Pending Guests Toast for Host ── */}
+      {isHost && pendingGuests.length > 0 && (
+        <div className="absolute top-16 right-4 z-50 w-80 flex flex-col gap-2">
+          {pendingGuests.map((guest, idx) => (
+            <div key={idx} className="bg-gray-900 border border-gray-700 p-4 rounded-xl shadow-2xl animate-fade-in-up">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    {guest.name}
+                    <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-indigo-500/20 text-indigo-300">{guest.role}</span>
+                  </h4>
+                  <p className="text-xs text-gray-400 mt-1">{guest.collegeId}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => acceptGuest(guest.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">
+                  Admit
+                </button>
+                <button onClick={() => rejectGuest(guest.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors">
+                  Deny
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* ── Toolbar ── */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-gray-900/90 backdrop-blur-xl border-b border-gray-800/60 shrink-0">
         <div className="flex items-center gap-3">
@@ -241,17 +366,22 @@ export default function PCBDesignStudio() {
             </div>
             
             <div className="w-px h-4 bg-gray-700 mx-2" />
+            <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Room: <span className="text-gray-300">{roomId}</span></span>
             <button 
               onClick={() => {
-                const url = new URL(window.location.href);
-                url.searchParams.set('pcbRoom', roomId);
-                navigator.clipboard.writeText(url.toString());
+                navigator.clipboard.writeText(roomId);
                 setCopiedLink(true);
                 setTimeout(() => setCopiedLink(false), 2000);
               }}
               className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 transition-colors"
             >
-              <ShareNetwork size={12} weight="bold" /> {copiedLink ? 'Copied!' : 'Share Room'}
+              <ShareNetwork size={12} weight="bold" /> {copiedLink ? 'Copied Code!' : 'Copy Code'}
+            </button>
+            <button 
+              onClick={() => setShowJoinPrompt(true)}
+              className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+            >
+              Join Room
             </button>
           </div>
 

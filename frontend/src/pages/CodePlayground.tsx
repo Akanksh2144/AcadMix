@@ -2051,7 +2051,7 @@ const CodePlayground = ({ navigate, user }) => {
                   {(_simActiveBoard as any)?.id === 'geo-settle-native' ? (
                     <SettlementCalculator />
                   ) : (_simActiveBoard as any)?.id === 'pcb-native' ? (
-                    <PCBDesignStudio />
+                    <PCBDesignStudio user={user} />
                   ) : (
                     <DSPBlockSimulator />
                   )}

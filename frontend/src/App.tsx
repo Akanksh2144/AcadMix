@@ -173,7 +173,12 @@ function useCompatNavigate() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function ProtectedRoute({ children, user, allowedRoles }) {
-  if (!user) return <Navigate to="/login" replace />;
+  const location = useLocation();
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     const dashPath = ROLE_DASHBOARD[user.role] || '/login';
     return <Navigate to={dashPath} replace />;
@@ -536,7 +541,16 @@ function AppShell() {
       setAuthToken(userData.access_token);
       localStorage.setItem('auth_token', userData.access_token);
     }
-    routerNavigate(ROLE_DASHBOARD[userData.role] || '/student', { replace: true });
+    
+    // Redirect back to the requested page if deep-linked, otherwise go to dashboard
+    if (location.state?.from) {
+      // Add a slight delay to ensure states propagate if there are heavy renders
+      setTimeout(() => {
+        routerNavigate(location.state.from.pathname + location.state.from.search, { replace: true });
+      }, 100);
+    } else {
+      routerNavigate(ROLE_DASHBOARD[userData.role] || '/student', { replace: true });
+    }
   };
 
   const handleLogout = () => setShowLogoutModal(true);

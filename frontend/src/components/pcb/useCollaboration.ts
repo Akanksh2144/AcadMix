@@ -6,20 +6,29 @@ import { Node, Edge, NodeChange, EdgeChange, applyNodeChanges, applyEdgeChanges,
 // In a real app, you'd use a robust signaling server.
 const SIGNALING_SERVERS = ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com'];
 
-export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roomId: string) {
+export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roomId: string, user: any, isHost: boolean) {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [connected, setConnected] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
 
+  // Host state
+  const [pendingGuests, setPendingGuests] = useState<any[]>([]);
+  
+  // Guest state
+  const [guestStatus, setGuestStatus] = useState<'idle' | 'confirming' | 'waiting' | 'accepted' | 'rejected'>(isHost ? 'idle' : 'confirming');
+
   const ydocRef = useRef<Y.Doc>(new Y.Doc());
   const providerRef = useRef<WebrtcProvider | null>(null);
+  const waitingProviderRef = useRef<WebrtcProvider | null>(null);
   
   const yNodesRef = useRef<Y.Map<Node>>(ydocRef.current.getMap('nodes'));
   const yEdgesRef = useRef<Y.Map<Edge>>(ydocRef.current.getMap('edges'));
 
-  // Initialize Yjs and WebRTC
-  useEffect(() => {
+  // Connects to the main synchronous room
+  const connectMainRoom = useCallback(() => {
+    if (providerRef.current) return; // already connected
+
     const ydoc = ydocRef.current;
     const provider = new WebrtcProvider(roomId, ydoc, {
       signaling: SIGNALING_SERVERS,
@@ -31,9 +40,10 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
     });
 
     const awareness = provider.awareness;
-    // Set local user info
     awareness.setLocalStateField('user', {
-      name: `Engineer-${Math.floor(Math.random() * 1000)}`,
+      id: user?.id || `anon-${Math.random()}`,
+      name: user?.name || `Engineer-${Math.floor(Math.random() * 1000)}`,
+      role: user?.role || 'Guest',
       color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')
     });
 
@@ -41,21 +51,7 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
       const states = Array.from(awareness.getStates().values());
       setUsers(states.map(s => s.user).filter(Boolean));
     });
-
-    // Handle remote Node changes
-    yNodesRef.current.observe((event) => {
-      // If we are making local changes, we don't want to overwrite ourselves immediately if we can avoid it.
-      // But Yjs handles this nicely. We just sync the Map back to the React state.
-      // To optimize, we could only apply remote changes.
-      // For simplicity, we just rebuild the array from the map on every change.
-      setNodes(Array.from(yNodesRef.current.values()));
-    });
-
-    // Handle remote Edge changes
-    yEdgesRef.current.observe((event) => {
-      setEdges(Array.from(yEdgesRef.current.values()));
-    });
-
+    
     // Initialize map if empty (only the first peer does this)
     if (yNodesRef.current.size === 0) {
       initialNodes.forEach(n => yNodesRef.current.set(n.id, n));
@@ -63,13 +59,116 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
     if (yEdgesRef.current.size === 0) {
       initialEdges.forEach(e => yEdgesRef.current.set(e.id, e));
     }
+  }, [roomId, user, initialNodes, initialEdges]);
+
+  // Connects to the Waiting Room channel
+  const connectWaitingRoom = useCallback(() => {
+    if (waitingProviderRef.current) return;
+    
+    const waitingDoc = new Y.Doc();
+    const waitingProvider = new WebrtcProvider(`${roomId}-waiting`, waitingDoc, {
+      signaling: SIGNALING_SERVERS,
+    });
+    waitingProviderRef.current = waitingProvider;
+
+    const awareness = waitingProvider.awareness;
+    
+    if (isHost) {
+      awareness.setLocalStateField('type', 'host');
+      awareness.setLocalStateField('responses', {});
+      
+      awareness.on('change', () => {
+        const states = Array.from(awareness.getStates().values());
+        const guests = states.filter(s => s.type === 'request' && s.profile);
+        
+        // Filter out guests we have already responded to
+        const localResponses = awareness.getLocalState()?.responses || {};
+        const newGuests = guests.map(g => g.profile).filter(p => !localResponses[p.id]);
+        
+        setPendingGuests(newGuests);
+      });
+    } else {
+      // Guest behavior in waiting room
+      awareness.setLocalStateField('type', 'request');
+      awareness.setLocalStateField('profile', {
+        id: user?.id || `anon-${Math.floor(Math.random() * 1000)}`,
+        name: user?.name || 'Unknown User',
+        role: user?.role || 'Guest',
+        collegeId: user?.college_id || 'Unknown',
+      });
+      
+      awareness.on('change', () => {
+        const states = Array.from(awareness.getStates().values());
+        const hostState = states.find(s => s.type === 'host');
+        
+        if (hostState && hostState.responses) {
+          const myResponse = hostState.responses[user?.id];
+          if (myResponse === 'accepted') {
+            setGuestStatus('accepted');
+            waitingProvider.destroy();
+            waitingProviderRef.current = null;
+            connectMainRoom();
+          } else if (myResponse === 'rejected') {
+            setGuestStatus('rejected');
+            waitingProvider.destroy();
+            waitingProviderRef.current = null;
+          }
+        }
+      });
+    }
+  }, [roomId, isHost, user, connectMainRoom]);
+
+  // Initial connection logic
+  useEffect(() => {
+    if (isHost) {
+      // Host immediately connects to both
+      connectMainRoom();
+      connectWaitingRoom();
+    }
+    // Guests wait in 'confirming' state until joinWaitingRoom() is called manually
+    
+    // Remote node changes observer
+    const nodeObserver = () => setNodes(Array.from(yNodesRef.current.values()));
+    const edgeObserver = () => setEdges(Array.from(yEdgesRef.current.values()));
+    
+    yNodesRef.current.observe(nodeObserver);
+    yEdgesRef.current.observe(edgeObserver);
 
     return () => {
-      provider.destroy();
-      ydoc.destroy();
+      yNodesRef.current.unobserve(nodeObserver);
+      yEdgesRef.current.unobserve(edgeObserver);
+      if (providerRef.current) providerRef.current.destroy();
+      if (waitingProviderRef.current) waitingProviderRef.current.destroy();
+      ydocRef.current.destroy();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isHost, connectMainRoom, connectWaitingRoom]);
+
+  // Action for Guest to confirm they want to join
+  const joinWaitingRoom = useCallback(() => {
+    if (!isHost && guestStatus === 'confirming') {
+      setGuestStatus('waiting');
+      connectWaitingRoom();
+    }
+  }, [isHost, guestStatus, connectWaitingRoom]);
+
+  // Action for Host to accept a guest
+  const acceptGuest = useCallback((guestId: string) => {
+    if (!isHost || !waitingProviderRef.current) return;
+    const awareness = waitingProviderRef.current.awareness;
+    const currentResponses = awareness.getLocalState()?.responses || {};
+    awareness.setLocalStateField('responses', { ...currentResponses, [guestId]: 'accepted' });
+    setPendingGuests(prev => prev.filter(g => g.id !== guestId));
+  }, [isHost]);
+
+  // Action for Host to reject a guest
+  const rejectGuest = useCallback((guestId: string) => {
+    if (!isHost || !waitingProviderRef.current) return;
+    const awareness = waitingProviderRef.current.awareness;
+    const currentResponses = awareness.getLocalState()?.responses || {};
+    awareness.setLocalStateField('responses', { ...currentResponses, [guestId]: 'rejected' });
+    setPendingGuests(prev => prev.filter(g => g.id !== guestId));
+  }, [isHost]);
 
   // --- Handlers ---
 
@@ -77,19 +176,13 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
     setNodes((nds) => {
       const nextNodes = applyNodeChanges(changes, nds);
       
-      // Sync to Yjs Map
       ydocRef.current.transact(() => {
         changes.forEach(change => {
-          if (change.type === 'remove') {
-            yNodesRef.current.delete(change.id);
-          } else if (change.type === 'add') {
-            yNodesRef.current.set(change.item.id, change.item);
-          } else if (change.type === 'position' || change.type === 'select' || change.type === 'dimensions') {
-            // Find the updated node
+          if (change.type === 'remove') yNodesRef.current.delete(change.id);
+          else if (change.type === 'add') yNodesRef.current.set(change.item.id, change.item);
+          else if (change.type === 'position' || change.type === 'select' || change.type === 'dimensions') {
             const updatedNode = nextNodes.find(n => n.id === change.id);
-            if (updatedNode) {
-              yNodesRef.current.set(updatedNode.id, updatedNode);
-            }
+            if (updatedNode) yNodesRef.current.set(updatedNode.id, updatedNode);
           }
         });
       });
@@ -104,11 +197,9 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
       
       ydocRef.current.transact(() => {
         changes.forEach(change => {
-          if (change.type === 'remove') {
-            yEdgesRef.current.delete(change.id);
-          } else if (change.type === 'add') {
-            yEdgesRef.current.set(change.item.id, change.item);
-          } else if (change.type === 'select') {
+          if (change.type === 'remove') yEdgesRef.current.delete(change.id);
+          else if (change.type === 'add') yEdgesRef.current.set(change.item.id, change.item);
+          else if (change.type === 'select') {
              const updatedEdge = nextEdges.find(e => e.id === change.id);
              if (updatedEdge) yEdgesRef.current.set(updatedEdge.id, updatedEdge);
           }
@@ -128,13 +219,11 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
     });
   }, []);
 
-  // For adding custom nodes
   const addNode = useCallback((node: Node) => {
     setNodes(nds => [...nds, node]);
     yNodesRef.current.set(node.id, node);
   }, []);
 
-  // For property updates
   const updateNodeProperty = useCallback((nodeId: string, field: string, value: any) => {
     setNodes(nds => {
       const nextNodes = nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, properties: { ...(n.data as any).properties, [field]: value } } } : n);
@@ -150,42 +239,37 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
     
     ydocRef.current.transact(() => {
       yNodesRef.current.delete(nodeId);
-      // Delete associated edges
       Array.from(yEdgesRef.current.keys()).forEach(key => {
          const e = yEdgesRef.current.get(key);
-         if (e && (e.source === nodeId || e.target === nodeId)) {
-            yEdgesRef.current.delete(key);
-         }
+         if (e && (e.source === nodeId || e.target === nodeId)) yEdgesRef.current.delete(key);
       });
     });
   }, []);
 
-  // Set the canvas graph (from DSL code to visual)
   const setGraph = useCallback((newNodes: Node[], newEdges: Edge[]) => {
     setNodes(newNodes);
     setEdges(newEdges);
     ydocRef.current.transact(() => {
-      // Clear
       Array.from(yNodesRef.current.keys()).forEach(k => yNodesRef.current.delete(k));
       Array.from(yEdgesRef.current.keys()).forEach(k => yEdgesRef.current.delete(k));
-      // Set new
       newNodes.forEach(n => yNodesRef.current.set(n.id, n));
       newEdges.forEach(e => yEdgesRef.current.set(e.id, e));
     });
   }, []);
 
   return {
-    nodes,
-    edges,
-    onNodesChange,
-    onEdgesChange,
-    onConnectEdges,
-    addNode,
-    updateNodeProperty,
-    deleteNode,
-    setGraph,
-    connected,
-    users,
-    awareness: providerRef.current?.awareness
+    nodes, edges,
+    onNodesChange, onEdgesChange, onConnectEdges,
+    addNode, updateNodeProperty, deleteNode, setGraph,
+    connected, users,
+    awareness: providerRef.current?.awareness,
+    
+    // Waiting Room exports
+    isHost,
+    guestStatus,
+    pendingGuests,
+    joinWaitingRoom,
+    acceptGuest,
+    rejectGuest,
   };
 }
