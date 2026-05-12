@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Box, Line } from '@react-three/drei';
 import type { CircuitGraph } from './types';
@@ -9,6 +9,12 @@ interface PCB3DViewerProps {
 }
 
 export default function PCB3DViewer({ graph }: PCB3DViewerProps) {
+  const controlsRef = useRef<any>(null);
+
+  const handleReset = () => {
+    controlsRef.current?.reset();
+  };
+
   // Find board dimensions
   const boardNode = graph.components.find(c => c.type === 'board_custom' || c.type.startsWith('board_'));
   const width = boardNode?.properties.width || 800;
@@ -82,11 +88,19 @@ export default function PCB3DViewer({ graph }: PCB3DViewerProps) {
           {components}
         </group>
 
-        <OrbitControls makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 2 + 0.1} />
+        <OrbitControls ref={controlsRef} makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 2 + 0.1} />
         <ContactShadows position={[0, -thickness, 0]} opacity={0.5} scale={100} blur={2} far={10} />
       </Canvas>
-      <div className="absolute top-4 left-4 bg-gray-900/80 backdrop-blur text-white px-4 py-2 rounded-lg border border-gray-700 text-xs font-mono">
-        Left Click + Drag: Rotate | Scroll: Zoom | Right Click + Drag: Pan
+      <div className="absolute top-4 left-4 flex flex-col gap-2">
+        <div className="bg-gray-900/80 backdrop-blur text-white px-4 py-2 rounded-lg border border-gray-700 text-xs font-mono">
+          Left Click + Drag: Rotate | Scroll: Zoom | Right Click + Drag: Pan
+        </div>
+        <button 
+          onClick={handleReset}
+          className="self-start px-3 py-1.5 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/40 border border-emerald-600/50 rounded-lg text-xs font-bold transition-colors shadow-sm cursor-pointer z-10"
+        >
+          Reset View
+        </button>
       </div>
     </div>
   );
