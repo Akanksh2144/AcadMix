@@ -24,6 +24,12 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
   
   const yNodesRef = useRef<Y.Map<Node>>(ydocRef.current.getMap('nodes'));
   const yEdgesRef = useRef<Y.Map<Edge>>(ydocRef.current.getMap('edges'));
+  const yLayerVisibilityRef = useRef<Y.Map<boolean>>(ydocRef.current.getMap('layerVisibility'));
+  const yUndoManagerRef = useRef<Y.UndoManager | null>(null);
+
+  const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>({
+    TopLayer: true, BottomLayer: true, TopSilkLayer: true, BoardOutline: true
+  });
 
   // Connects to the main synchronous room
   const connectMainRoom = useCallback(() => {
@@ -58,6 +64,10 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
     }
     if (yEdgesRef.current.size === 0) {
       initialEdges.forEach(e => yEdgesRef.current.set(e.id, e));
+    }
+    if (yLayerVisibilityRef.current.size === 0) {
+      Object.entries({ TopLayer: true, BottomLayer: true, TopSilkLayer: true, BoardOutline: true })
+        .forEach(([k, v]) => yLayerVisibilityRef.current.set(k, v));
     }
   }, [roomId, user, initialNodes, initialEdges]);
 
@@ -130,13 +140,26 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
     // Remote node changes observer
     const nodeObserver = () => setNodes(Array.from(yNodesRef.current.values()));
     const edgeObserver = () => setEdges(Array.from(yEdgesRef.current.values()));
+    const layerObserver = () => {
+      const visibility: Record<string, boolean> = {};
+      yLayerVisibilityRef.current.forEach((value, key) => { visibility[key] = value; });
+      setLayerVisibility(visibility);
+    };
     
     yNodesRef.current.observe(nodeObserver);
     yEdgesRef.current.observe(edgeObserver);
+    yLayerVisibilityRef.current.observe(layerObserver);
+    
+    // Initialize UndoManager after the doc is ready
+    if (!yUndoManagerRef.current) {
+      yUndoManagerRef.current = new Y.UndoManager([yNodesRef.current, yEdgesRef.current]);
+    }
 
     return () => {
       yNodesRef.current.unobserve(nodeObserver);
       yEdgesRef.current.unobserve(edgeObserver);
+      yLayerVisibilityRef.current.unobserve(layerObserver);
+      if (yUndoManagerRef.current) yUndoManagerRef.current.destroy();
       if (providerRef.current) providerRef.current.destroy();
       if (waitingProviderRef.current) waitingProviderRef.current.destroy();
       ydocRef.current.destroy();
@@ -306,12 +329,33 @@ export function useCollaboration(initialNodes: Node[], initialEdges: Edge[], roo
     });
   }, []);
 
+  const toggleLayerVisibility = useCallback((layer: string) => {
+    const current = yLayerVisibilityRef.current.get(layer) ?? true;
+    yLayerVisibilityRef.current.set(layer, !current);
+  }, []);
+
+  const undo = useCallback(() => {
+    if (yUndoManagerRef.current) {
+      yUndoManagerRef.current.undo();
+    }
+  }, []);
+
+  const redo = useCallback(() => {
+    if (yUndoManagerRef.current) {
+      yUndoManagerRef.current.redo();
+    }
+  }, []);
+
   return {
     nodes, edges,
     onNodesChange, onEdgesChange, onConnectEdges,
     addNode, updateNodeProperty, deleteNode, setGraph,
     connected, users,
     awareness: providerRef.current?.awareness,
+    layerVisibility,
+    toggleLayerVisibility,
+    undo,
+    redo,
     
     // Waiting Room exports
     isHost,

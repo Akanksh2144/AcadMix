@@ -38,14 +38,14 @@ const PageHeader = ({ navigate, user, onLogout, title, subtitle, backTo, hideBac
       }).catch(() => {});
     };
     fetchNotifs();
-    const interval = setInterval(fetchNotifs, 30000);
+    const interval = setInterval(fetchNotifs, 300000); // Poll every 5 minutes as fallback to WebSocket
     return () => clearInterval(interval);
   }, [hideNotifications]);
 
   // WebSocket for instant notifications
   useEffect(() => {
     if (hideNotifications) return;
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     if (!token) return;
 
     const wsBase = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000').replace(/^http/, 'ws');

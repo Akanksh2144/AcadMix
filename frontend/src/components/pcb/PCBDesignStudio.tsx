@@ -57,14 +57,13 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
     onConnectEdges, addNode, 
     updateNodeProperty, deleteNode, 
     setGraph, connected, users, awareness,
+    layerVisibility, toggleLayerVisibility,
+    undo: handleUndo, redo: handleRedo,
     guestStatus, pendingGuests, joinWaitingRoom, acceptGuest, rejectGuest
   } = useCollaboration(STARTER_NODES, STARTER_EDGES, roomId, user, isHost, lockCircuit);
   
   // Layer Management State
   const [activeLayer, setActiveLayer] = useState<PCBLayer>('TopLayer');
-  const [layerVisibility, setLayerVisibility] = useState<Record<PCBLayer, boolean>>({
-    TopLayer: true, BottomLayer: true, TopSilkLayer: true, BoardOutline: true
-  });
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showLibrary, setShowLibrary] = useState(true);
@@ -108,10 +107,6 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
     const color = activeLayer === 'TopLayer' ? '#ff0000' : '#0000ff';
     onConnectEdges(params, mode === 'schematic' ? 'default' : 'step', activeLayer, color);
   }, [onConnectEdges, activeLayer, mode]);
-
-  const toggleVisibility = useCallback((layer: PCBLayer) => {
-    setLayerVisibility(prev => ({ ...prev, [layer]: !prev[layer] }));
-  }, []);
 
   // Build CircuitGraph from React Flow state for engine calls
   const buildGraph = useCallback(() => {
@@ -192,13 +187,6 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
     setTimeout(() => downloadFile(gerbers.drill, 'CAM_Drill.drl', 'text/plain'), 900);
   }, [buildGraph]);
 
-  const handleUndo = useCallback(() => {
-    // Requires Y.UndoManager in CRDT environment
-  }, []);
-
-  const handleRedo = useCallback(() => {
-    // Requires Y.UndoManager in CRDT environment
-  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -537,8 +525,8 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
                 <LayerManagerPanel 
                   activeLayer={activeLayer} 
                   setActiveLayer={setActiveLayer} 
-                  layerVisibility={layerVisibility} 
-                  toggleVisibility={toggleVisibility} 
+                  layerVisibility={layerVisibility as Record<PCBLayer, boolean>} 
+                  toggleVisibility={toggleLayerVisibility} 
                   className="absolute bottom-full right-0 mb-2 z-50"
                 />
               </>

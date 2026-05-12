@@ -106,13 +106,13 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
       }).catch(() => {});
     };
     fetchNotifs();
-    const interval = setInterval(fetchNotifs, 30000);
+    const interval = setInterval(fetchNotifs, 300000); // 5 minutes fallback
     return () => clearInterval(interval);
   }, []);
 
   // WebSocket for instant notifications
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     if (!token) return;
     const wsBase = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000').replace(/^http/, 'ws');
     let ws;

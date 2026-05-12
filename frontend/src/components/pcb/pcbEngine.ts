@@ -103,6 +103,32 @@ export function runDRC(graph: CircuitGraph): DRCResult[] {
     }
   }
 
+  // 6. Check board dimension constraints (out of bounds)
+  const board = components.find(c => c.type === 'board' || c.type?.startsWith('board_') || c.type === 'copper_pour');
+  if (board) {
+    const bWidth = Number(board.properties?.width) || 800;
+    const bHeight = Number(board.properties?.height) || 600;
+    const bX = board.position?.x || 0;
+    const bY = board.position?.y || 0;
+
+    for (const c of components) {
+      if (c.id === board.id) continue;
+      
+      const cx = c.position?.x || 0;
+      const cy = c.position?.y || 0;
+      
+      // Allow a small tolerance margin for component sizes
+      if (cx < bX - 10 || cy < bY - 10 || cx > bX + bWidth + 10 || cy > bY + bHeight + 10) {
+        results.push({
+          id: `drc-out-of-bounds-${c.id}`,
+          severity: 'error',
+          message: `${c.refDes} is placed outside the board boundaries.`,
+          componentIds: [c.id],
+        });
+      }
+    }
+  }
+
   if (results.length === 0) {
     results.push({ id: 'drc-pass', severity: 'info', message: 'All design rule checks passed. ✓' });
   }
