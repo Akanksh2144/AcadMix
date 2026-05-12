@@ -1899,7 +1899,7 @@ const CodePlayground = ({ navigate, user }) => {
         </div>
       ) : (language === 'ecelab' || language === 'eeelab' || language === 'civillab' || language === 'mechlab') ? (
         // ECE / EEE / Civil Lab — multi-simulator panel
-        <div className={isLabFullScreen ? "fixed inset-0 z-[100] bg-[#0B0F19] w-screen h-screen flex flex-col" : "flex-1 overflow-hidden flex flex-col"} style={{ overscrollBehavior: 'contain' }}>
+        <div className="flex-1 overflow-hidden flex flex-col" style={{ overscrollBehavior: 'contain' }}>
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
             {/* Category Tabs + Board Selector Toolbar */}
             <div className="soft-card p-3 shrink-0 mb-4 space-y-2">
@@ -2053,7 +2053,16 @@ const CodePlayground = ({ navigate, user }) => {
               </div>
             )}
             {/* Simulator iframe — or external-launch card for noEmbed boards */}
-            <div className="soft-card overflow-hidden flex-1 min-h-0 rounded-2xl" style={{ overscrollBehavior: 'contain' }}>
+            <div className={isLabFullScreen ? "fixed inset-0 z-[100] bg-[#0B0C10] w-screen h-screen flex flex-col" : "soft-card overflow-hidden flex-1 min-h-0 rounded-2xl relative"} style={{ overscrollBehavior: 'contain' }}>
+              {isLabFullScreen && (
+                <button
+                  onClick={() => setIsLabFullScreen(false)}
+                  className="absolute top-4 right-1/2 translate-x-1/2 z-[999] bg-slate-800/80 hover:bg-slate-700/80 backdrop-blur text-white px-4 py-2 rounded-full shadow-2xl transition-all flex items-center gap-2 group border border-slate-700/50 opacity-20 hover:opacity-100"
+                >
+                  <CornersIn size={16} weight="bold" className="group-hover:scale-110 transition-transform" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Exit Full Screen</span>
+                </button>
+              )}
               {(_simActiveBoard as any)?.isNativeBlock ? (
                 <div className="w-full h-full p-2 bg-[#0B0C10]">
                   {(_simActiveBoard as any)?.id === 'geo-settle-native' ? (
