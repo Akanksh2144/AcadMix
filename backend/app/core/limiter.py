@@ -78,7 +78,7 @@ limiter = Limiter(
 # Uses Redis INCR + EXPIRE for atomic, distributed counting.
 # ═══════════════════════════════════════════════════════════════════════════════
 
-_TENANT_RATE_LIMIT = int(os.getenv("TENANT_RATE_LIMIT", "1000"))  # requests per window
+_TENANT_RATE_LIMIT = int(os.getenv("TENANT_RATE_LIMIT", "10000"))  # requests per window
 _TENANT_RATE_WINDOW = int(os.getenv("TENANT_RATE_WINDOW", "60"))  # window in seconds
 
 # Paths exempt from tenant rate limiting (health checks, metrics, etc.)
