@@ -362,9 +362,9 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
 
           <div className="flex items-center gap-2 ml-4">
             <div className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500'}`} title={connected ? 'Connected to Room' : 'Disconnected'} />
-            <span className="text-xs text-gray-400 font-medium">{users.length} Online</span>
+            <span className="text-xs text-gray-400 font-medium">{Math.max(1, users.length)} Online</span>
             <div className="flex -space-x-2 ml-2">
-              {users.map((u, i) => (
+              {(users.length > 0 ? users : [{ name: user?.name || 'You', color: '#6366f1' }]).map((u, i) => (
                 <div key={i} className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-gray-900" style={{ backgroundColor: u.color }} title={u.name}>
                   {u.name.substring(0, 1).toUpperCase()}
                 </div>
