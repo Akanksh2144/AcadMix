@@ -1,9 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
 import {
-  ReactFlow, Controls, Background, BackgroundVariant, Panel,
+  ReactFlow, Controls, ControlButton, Background, BackgroundVariant, Panel,
   useNodesState, useEdgesState, addEdge,
   type Connection, type Edge, type Node,
 } from '@xyflow/react';
+import { LockKey, LockKeyOpen } from '@phosphor-icons/react';
 import '@xyflow/react/dist/style.css';
 import { pcbNodeTypes } from './nodes';
 import type { ComponentType } from './types';
@@ -21,6 +22,8 @@ interface Props {
 }
 
 export default function PCBCanvas({ nodes, edges, nodeTypes, onNodesChange, onEdgesChange, onConnect, onNodeClick, onPaneClick }: Props) {
+  const [canvasLocked, setCanvasLocked] = React.useState(false);
+
   return (
     <div className="flex-1 min-h-0 h-full">
       <ReactFlow
@@ -40,8 +43,19 @@ export default function PCBCanvas({ nodes, edges, nodeTypes, onNodesChange, onEd
           style: { stroke: '#ff0000', strokeWidth: 3, mixBlendMode: 'screen' },
         }}
         proOptions={{ hideAttribution: true }}
+        panOnDrag={!canvasLocked}
+        zoomOnScroll={!canvasLocked}
+        zoomOnPinch={!canvasLocked}
+        zoomOnDoubleClick={!canvasLocked}
+        nodesDraggable={!canvasLocked}
+        nodesConnectable={!canvasLocked}
+        elementsSelectable={!canvasLocked}
       >
-        <Controls position="bottom-left" />
+        <Controls showInteractive={false} position="bottom-left">
+          <ControlButton onClick={() => setCanvasLocked(!canvasLocked)} title="Toggle Canvas Lock">
+            {canvasLocked ? <LockKey weight="fill" /> : <LockKeyOpen weight="fill" />}
+          </ControlButton>
+        </Controls>
         <Background
           variant={BackgroundVariant.Lines}
           gap={16}
