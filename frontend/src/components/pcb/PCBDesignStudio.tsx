@@ -155,7 +155,8 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
   const handleRotate = useCallback((nodeId: string) => {
     const node = nodes.find(n => n.id === nodeId);
     if (!node) return;
-    updateNodeProperty(nodeId, 'rotation', (((node.data as any).rotation || 0) + 90) % 360);
+    const currentRot = Number((node.data as any).properties?.rotation || 0);
+    updateNodeProperty(nodeId, 'rotation', (currentRot + 90) % 360);
   }, [nodes, updateNodeProperty]);
 
   const handleRunDRC = useCallback(() => {
