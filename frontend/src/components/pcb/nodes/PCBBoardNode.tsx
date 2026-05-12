@@ -15,7 +15,6 @@ function PCBBoardNodeInner({ data, selected }: NodeProps<PCBBoardNodeData>) {
       <div
         className="relative flex items-center justify-center shadow-2xl transition-all duration-200"
         style={{
-          transform: `rotate(${rotation}deg)`,
           width: '100%',
           height: '100%',
           backgroundColor: '#06301A', // Deep green PCB substrate
@@ -31,7 +30,7 @@ function PCBBoardNodeInner({ data, selected }: NodeProps<PCBBoardNodeData>) {
       <div className="absolute bottom-4 right-4 w-6 h-6 rounded-full border-4 border-[#D4AF37] bg-[#111827] shadow-inner" />
 
       {/* Optional: Central watermark or faint logo */}
-      <div className="absolute opacity-10 pointer-events-none flex flex-col items-center select-none">
+      <div className="absolute opacity-10 pointer-events-none flex flex-col items-center select-none" style={{ transform: `rotate(${rotation}deg)` }}>
         <span className="text-6xl font-bold text-white tracking-widest font-mono">AcadMix</span>
         <span className="text-xl font-bold text-white tracking-widest font-mono mt-2">PCB STUDIO</span>
       </div>

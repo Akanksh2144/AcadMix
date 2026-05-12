@@ -156,6 +156,15 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
     const node = nodes.find(n => n.id === nodeId);
     if (!node) return;
     const currentRot = Number((node.data as any).properties?.rotation || 0);
+
+    // If it's a board, swap width and height to correctly rotate the bounding box
+    if (node.type === 'board') {
+      const w = Number((node.data as any).properties?.width || node.style?.width || 800);
+      const h = Number((node.data as any).properties?.height || node.style?.height || 600);
+      updateNodeProperty(nodeId, 'width', h);
+      updateNodeProperty(nodeId, 'height', w);
+    }
+
     updateNodeProperty(nodeId, 'rotation', (currentRot + 90) % 360);
   }, [nodes, updateNodeProperty]);
 
