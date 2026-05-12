@@ -14,6 +14,7 @@ import SpiceChart from '../components/SpiceChart';
 import { Simulation as EEcircuitSimulation } from 'eecircuit-engine';
 import DSPBlockSimulator from '../components/dsp/DSPBlockSimulator';
 import SettlementCalculator from '../components/civil/SettlementCalculator';
+import PCBDesignStudio from '../components/pcb/PCBDesignStudio';
 
 const LANGUAGES = [
   { id: 'python', label: 'Python', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
@@ -481,6 +482,7 @@ endmodule`
     { id: 'vlsi-makerchip', label: 'Makerchip IDE', url: 'https://makerchip.com/sandbox/', openLabel: 'Open in Makerchip' },
   ],
   pcb: [
+    { id: 'pcb-native', label: 'AcadMix PCB Studio (Native)', url: '', isNativeBlock: true },
     { id: 'pcb-svg', label: 'SVG PCB Editor', url: 'https://leomcelroy.com/svg-pcb/', openLabel: 'Open SVG PCB' },
     { id: 'pcb-tscircuit', label: 'tscircuit', url: 'https://tscircuit.com/playground', openLabel: 'Open tscircuit' },
     { id: 'pcb-kicanvas', label: 'KiCanvas Viewer', url: 'https://kicanvas.org/', openLabel: 'Open KiCanvas' },
@@ -2048,6 +2050,8 @@ const CodePlayground = ({ navigate, user }) => {
                 <div className="w-full h-full p-2 bg-[#0B0C10]">
                   {(_simActiveBoard as any)?.id === 'geo-settle-native' ? (
                     <SettlementCalculator />
+                  ) : (_simActiveBoard as any)?.id === 'pcb-native' ? (
+                    <PCBDesignStudio />
                   ) : (
                     <DSPBlockSimulator />
                   )}

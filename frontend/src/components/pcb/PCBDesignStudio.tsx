@@ -1,0 +1,308 @@
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useNodesState, useEdgesState, addEdge, type Connection, type Edge, type Node } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise } from '@phosphor-icons/react';
+import ComponentLibraryPanel from './ComponentLibraryPanel';
+import PropertiesInspector from './PropertiesInspector';
+import PCBCanvas from './PCBCanvas';
+import type { ComponentType } from './types';
+import { getCatalogEntry } from './componentCatalog';
+import { runDRC, generateNetlistText, generateBOM, bomToCSV, downloadFile } from './pcbEngine';
+import { DEFAULT_DSL, parseDSL, serializeDSL } from './circuitDSL';
+
+let nodeCounter = 100;
+const refDesCounters: Record<string, number> = {};
+
+function getNextRefDes(prefix: string): string {
+  refDesCounters[prefix] = (refDesCounters[prefix] || 0) + 1;
+  return `${prefix}${refDesCounters[prefix]}`;
+}
+
+// Default starter circuit
+const STARTER_NODES: Node[] = [
+  { id: 'comp-1', type: 'vcc', position: { x: 100, y: 60 }, data: { refDes: 'PWR1', componentType: 'vcc', category: 'power', label: 'VCC', properties: { value: '5V' }, pins: getCatalogEntry('vcc')!.pins } },
+  { id: 'comp-2', type: 'resistor', position: { x: 300, y: 60 }, data: { refDes: 'R1', componentType: 'resistor', category: 'passive', label: 'Resistor', properties: { value: '330Ω', package: '0805' }, pins: getCatalogEntry('resistor')!.pins } },
+  { id: 'comp-3', type: 'led', position: { x: 520, y: 60 }, data: { refDes: 'D1', componentType: 'led', category: 'passive', label: 'LED', properties: { value: 'Red', color: 'red', package: '0805' }, pins: getCatalogEntry('led')!.pins } },
+  { id: 'comp-4', type: 'gnd', position: { x: 720, y: 60 }, data: { refDes: 'GND1', componentType: 'gnd', category: 'power', label: 'GND', properties: { value: 'GND' }, pins: getCatalogEntry('gnd')!.pins } },
+];
+
+const STARTER_EDGES: Edge[] = [
+  { id: 'e-1', source: 'comp-1', sourceHandle: '1', target: 'comp-2', targetHandle: '1', type: 'smoothstep', style: { stroke: '#d4a574', strokeWidth: 2 } },
+  { id: 'e-2', source: 'comp-2', sourceHandle: '2', target: 'comp-3', targetHandle: 'anode', type: 'smoothstep', style: { stroke: '#d4a574', strokeWidth: 2 } },
+  { id: 'e-3', source: 'comp-3', sourceHandle: 'cathode', target: 'comp-4', targetHandle: '1', type: 'smoothstep', style: { stroke: '#d4a574', strokeWidth: 2 } },
+];
+
+export default function PCBDesignStudio() {
+  const [mode, setMode] = useState<'visual' | 'code'>('visual');
+  const [nodes, setNodes, onNodesChange] = useNodesState(STARTER_NODES);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(STARTER_EDGES);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showLibrary, setShowLibrary] = useState(true);
+  const [drcResults, setDrcResults] = useState<any[]>([]);
+  const [showDRC, setShowDRC] = useState(false);
+  const [showNetlist, setShowNetlist] = useState(false);
+  const [netlistText, setNetlistText] = useState('');
+  const [codeText, setCodeText] = useState(DEFAULT_DSL);
+  const [undoStack, setUndoStack] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
+  const [redoStack, setRedoStack] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
+
+  const selectedNode = useMemo(() => nodes.find(n => n.id === selectedId), [nodes, selectedId]);
+  const selectedForInspector = useMemo(() => {
+    if (!selectedNode) return null;
+    return { id: selectedNode.id, type: selectedNode.type as ComponentType, refDes: (selectedNode.data as any)?.refDes || '', properties: (selectedNode.data as any)?.properties || {} };
+  }, [selectedNode]);
+
+  const saveUndo = useCallback(() => {
+    setUndoStack(prev => [...prev.slice(-30), { nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) }]);
+    setRedoStack([]);
+  }, [nodes, edges]);
+
+  const onConnect = useCallback((params: Connection) => {
+    saveUndo();
+    setEdges(eds => addEdge({ ...params, type: 'smoothstep', style: { stroke: '#d4a574', strokeWidth: 2 } }, eds));
+  }, [setEdges, saveUndo]);
+
+  // Build CircuitGraph from React Flow state for engine calls
+  const buildGraph = useCallback(() => {
+    const components = nodes.map(n => ({ id: n.id, type: (n.data as any).componentType || n.type as ComponentType, refDes: (n.data as any).refDes || n.id, position: n.position, rotation: 0, properties: (n.data as any).properties || {} }));
+    const wires = edges.map(e => ({ id: e.id, fromComponent: e.source, fromPin: e.sourceHandle || '1', toComponent: e.target, toPin: e.targetHandle || '1' }));
+    return { components, wires, metadata: { name: 'AcadMix Circuit', author: 'Student', created: new Date().toISOString(), modified: new Date().toISOString(), version: 1 } };
+  }, [nodes, edges]);
+
+  const handleAddComponent = useCallback((type: ComponentType) => {
+    saveUndo();
+    const catalog = getCatalogEntry(type);
+    if (!catalog) return;
+    const id = `comp-${++nodeCounter}`;
+    const refDes = getNextRefDes(catalog.refDesPrefix);
+    const newNode: Node = {
+      id, type,
+      position: { x: 200 + Math.random() * 300, y: 100 + Math.random() * 200 },
+      data: { refDes, componentType: type, category: catalog.category, label: catalog.label, properties: { ...catalog.defaultProperties }, pins: catalog.pins },
+    };
+    setNodes(nds => [...nds, newNode]);
+  }, [setNodes, saveUndo]);
+
+  const handlePropertyChange = useCallback((nodeId: string, field: string, value: any) => {
+    saveUndo();
+    setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, properties: { ...(n.data as any).properties, [field]: value } } } : n));
+  }, [setNodes, saveUndo]);
+
+  const handleDelete = useCallback((nodeId: string) => {
+    saveUndo();
+    setNodes(nds => nds.filter(n => n.id !== nodeId));
+    setEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId));
+    setSelectedId(null);
+  }, [setNodes, setEdges, saveUndo]);
+
+  const handleDuplicate = useCallback((nodeId: string) => {
+    saveUndo();
+    const orig = nodes.find(n => n.id === nodeId);
+    if (!orig) return;
+    const catalog = getCatalogEntry((orig.data as any).componentType || orig.type as ComponentType);
+    const id = `comp-${++nodeCounter}`;
+    const refDes = getNextRefDes(catalog?.refDesPrefix || 'X');
+    const dup: Node = { ...orig, id, position: { x: orig.position.x + 40, y: orig.position.y + 40 }, data: { ...orig.data, refDes } };
+    setNodes(nds => [...nds, dup]);
+  }, [nodes, setNodes, saveUndo]);
+
+  const handleRotate = useCallback((nodeId: string) => {
+    saveUndo();
+    setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, rotation: (((n.data as any).rotation || 0) + 90) % 360 } } : n));
+  }, [setNodes, saveUndo]);
+
+  const handleRunDRC = useCallback(() => {
+    const graph = buildGraph();
+    const results = runDRC(graph);
+    setDrcResults(results);
+    setShowDRC(true);
+  }, [buildGraph]);
+
+  const handleNetlist = useCallback(() => {
+    const graph = buildGraph();
+    setNetlistText(generateNetlistText(graph));
+    setShowNetlist(true);
+  }, [buildGraph]);
+
+  const handleExportBOM = useCallback(() => {
+    const graph = buildGraph();
+    const bom = generateBOM(graph);
+    downloadFile(bomToCSV(bom), 'acadmix_bom.csv', 'text/csv');
+  }, [buildGraph]);
+
+  const handleUndo = useCallback(() => {
+    if (undoStack.length === 0) return;
+    const prev = undoStack[undoStack.length - 1];
+    setRedoStack(r => [...r, { nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) }]);
+    setUndoStack(u => u.slice(0, -1));
+    setNodes(prev.nodes);
+    setEdges(prev.edges);
+  }, [undoStack, nodes, edges, setNodes, setEdges]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.length === 0) return;
+    const next = redoStack[redoStack.length - 1];
+    setUndoStack(u => [...u, { nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) }]);
+    setRedoStack(r => r.slice(0, -1));
+    setNodes(next.nodes);
+    setEdges(next.edges);
+  }, [redoStack, nodes, edges, setNodes, setEdges]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'z') { e.preventDefault(); handleUndo(); }
+      if (e.ctrlKey && e.key === 'y') { e.preventDefault(); handleRedo(); }
+      if (e.key === 'F5') { e.preventDefault(); handleRunDRC(); }
+      if (e.ctrlKey && e.key === '1') { e.preventDefault(); setMode('visual'); }
+      if (e.ctrlKey && e.key === '2') { e.preventDefault(); setMode('code'); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [handleUndo, handleRedo, handleRunDRC]);
+
+  // Code mode sync
+  const handleCodeChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCodeText(e.target.value);
+  }, []);
+
+  const syncCodeToVisual = useCallback(() => {
+    const result = parseDSL(codeText);
+    if (result.graph && result.errors.length === 0) {
+      saveUndo();
+      const newNodes: Node[] = result.graph.components.map(c => {
+        const catalog = getCatalogEntry(c.type);
+        return { id: c.id, type: c.type, position: c.position, data: { refDes: c.refDes, componentType: c.type, category: catalog?.category || 'passive', label: catalog?.label || c.type, properties: c.properties, pins: catalog?.pins || [] } };
+      });
+      const newEdges: Edge[] = result.graph.wires.map(w => ({ id: w.id, source: w.fromComponent, sourceHandle: w.fromPin, target: w.toComponent, targetHandle: w.toPin, type: 'smoothstep', style: { stroke: '#d4a574', strokeWidth: 2 } }));
+      setNodes(newNodes);
+      setEdges(newEdges);
+    }
+  }, [codeText, saveUndo, setNodes, setEdges]);
+
+  const syncVisualToCode = useCallback(() => {
+    const graph = buildGraph();
+    setCodeText(serializeDSL(graph));
+  }, [buildGraph]);
+
+  const drcErrorCount = drcResults.filter(r => r.severity === 'error').length;
+  const drcWarnCount = drcResults.filter(r => r.severity === 'warning').length;
+
+  return (
+    <div className="w-full h-full flex flex-col bg-gray-950 rounded-3xl overflow-hidden shadow-2xl border border-gray-800/50">
+      {/* ── Toolbar ── */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-gray-900/90 backdrop-blur-xl border-b border-gray-800/60 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <Circuitry size={16} weight="bold" className="text-white" />
+          </div>
+          <span className="font-bold text-sm text-gray-200">AcadMix PCB Studio</span>
+
+          {/* Mode toggle */}
+          <div className="flex items-center bg-gray-800/80 rounded-full p-0.5 ml-2">
+            <button onClick={() => { setMode('visual'); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === 'visual' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
+              <Circuitry size={12} weight="bold" /> Visual
+            </button>
+            <button onClick={() => { setMode('code'); syncVisualToCode(); }} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === 'code' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
+              <Code size={12} weight="bold" /> Code
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button onClick={handleUndo} title="Undo (Ctrl+Z)" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"><ArrowCounterClockwise size={14} weight="bold" /></button>
+          <button onClick={handleRedo} title="Redo (Ctrl+Y)" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"><ArrowClockwise size={14} weight="bold" /></button>
+          <div className="w-px h-5 bg-gray-700 mx-1" />
+          <button onClick={handleRunDRC} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 transition-colors"><ShieldCheck size={13} weight="bold" /> DRC</button>
+          <button onClick={handleNetlist} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"><ListBullets size={13} weight="bold" /> Netlist</button>
+          <button onClick={handleExportBOM} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"><Export size={13} weight="bold" /> BOM</button>
+        </div>
+      </div>
+
+      {/* ── Main Content ── */}
+      <div className="flex-1 min-h-0 flex">
+        {mode === 'visual' ? (
+          <>
+            {showLibrary && <div className="w-56 shrink-0"><ComponentLibraryPanel onAddComponent={handleAddComponent} /></div>}
+            <PCBCanvas nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeClick={(_, node) => setSelectedId(node.id)} onPaneClick={() => setSelectedId(null)} />
+            <div className="w-60 shrink-0"><PropertiesInspector selected={selectedForInspector} onPropertyChange={handlePropertyChange} onDelete={handleDelete} onDuplicate={handleDuplicate} onRotate={handleRotate} /></div>
+          </>
+        ) : (
+          <div className="flex-1 flex min-h-0">
+            {/* Code Editor */}
+            <div className="flex-1 flex flex-col min-h-0 border-r border-gray-800/60">
+              <div className="flex items-center justify-between px-4 py-2 bg-gray-900/50 border-b border-gray-800/40">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Circuit DSL</span>
+                <button onClick={syncCodeToVisual} className="px-3 py-1 text-[10px] font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition-colors">Apply to Canvas</button>
+              </div>
+              <textarea
+                value={codeText}
+                onChange={handleCodeChange}
+                spellCheck={false}
+                className="flex-1 min-h-0 w-full p-4 bg-gray-950 text-emerald-300 font-mono text-xs leading-relaxed resize-none outline-none border-none selection:bg-emerald-800/40"
+                style={{ tabSize: 2 }}
+              />
+            </div>
+            {/* Preview */}
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="px-4 py-2 bg-gray-900/50 border-b border-gray-800/40">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Live Preview</span>
+              </div>
+              <PCBCanvas nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeClick={(_, node) => setSelectedId(node.id)} onPaneClick={() => setSelectedId(null)} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Status Bar ── */}
+      <div className="flex items-center justify-between px-4 py-1.5 bg-gray-900/90 border-t border-gray-800/60 shrink-0">
+        <div className="flex items-center gap-4 text-[10px] text-gray-500 font-mono">
+          <span>● {nodes.length} components</span>
+          <span>│ {edges.length} wires</span>
+          {drcResults.length > 0 && (
+            <span className={drcErrorCount > 0 ? 'text-red-400' : drcWarnCount > 0 ? 'text-amber-400' : 'text-emerald-400'}>
+              │ {drcErrorCount > 0 ? `✗ ${drcErrorCount} errors` : drcWarnCount > 0 ? `⚠ ${drcWarnCount} warnings` : '✓ DRC passed'}
+            </span>
+          )}
+        </div>
+        <span className="text-[9px] text-gray-600 font-mono">AcadMix PCB Studio v1.0</span>
+      </div>
+
+      {/* ── DRC Modal ── */}
+      {showDRC && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowDRC(false)}>
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-[480px] max-h-[400px] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800">
+              <span className="text-sm font-bold text-gray-200">Design Rule Check</span>
+              <button onClick={() => setShowDRC(false)} className="text-gray-500 hover:text-gray-300 text-lg">&times;</button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[320px] space-y-2">
+              {drcResults.map(r => (
+                <div key={r.id} className={`flex items-start gap-2 px-3 py-2 rounded-lg text-xs ${r.severity === 'error' ? 'bg-red-900/20 text-red-400' : r.severity === 'warning' ? 'bg-amber-900/20 text-amber-400' : 'bg-emerald-900/20 text-emerald-400'}`}>
+                  <span className="font-bold shrink-0">{r.severity === 'error' ? '✗' : r.severity === 'warning' ? '⚠' : '✓'}</span>
+                  <span>{r.message}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Netlist Modal ── */}
+      {showNetlist && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowNetlist(false)}>
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-[560px] max-h-[500px] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800">
+              <span className="text-sm font-bold text-gray-200">Netlist</span>
+              <div className="flex gap-2">
+                <button onClick={() => { navigator.clipboard.writeText(netlistText); }} className="px-3 py-1 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors">Copy</button>
+                <button onClick={() => setShowNetlist(false)} className="text-gray-500 hover:text-gray-300 text-lg">&times;</button>
+              </div>
+            </div>
+            <pre className="p-4 overflow-auto max-h-[420px] text-[11px] text-emerald-300 font-mono leading-relaxed">{netlistText}</pre>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
