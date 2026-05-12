@@ -9,6 +9,7 @@ import '@xyflow/react/dist/style.css';
 import { pcbNodeTypes } from './nodes';
 import type { ComponentType } from './types';
 import { getCatalogEntry } from './componentCatalog';
+import { toast } from 'sonner';
 
 interface Props {
   nodes: Node[];
@@ -24,8 +25,33 @@ interface Props {
 export default function PCBCanvas({ nodes, edges, nodeTypes, onNodesChange, onEdgesChange, onConnect, onNodeClick, onPaneClick }: Props) {
   const [canvasLocked, setCanvasLocked] = React.useState(false);
 
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (canvasLocked) {
+      const target = e.target as HTMLElement;
+      // Ignore clicks on controls or panels
+      if (target.closest('.react-flow__controls') || target.closest('.react-flow__panel')) {
+        return;
+      }
+      toast.info('Canvas is locked! Click the lock icon to interact.', {
+        id: 'canvas-locked-toast', // prevent spamming multiple toasts
+      });
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (canvasLocked) {
+      toast.info('Canvas is locked! Click the lock icon to interact.', {
+        id: 'canvas-locked-toast',
+      });
+    }
+  };
+
   return (
-    <div className="flex-1 min-h-0 h-full">
+    <div 
+      className="flex-1 min-h-0 h-full" 
+      onPointerDownCapture={handlePointerDown}
+      onWheelCapture={handleWheel}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
