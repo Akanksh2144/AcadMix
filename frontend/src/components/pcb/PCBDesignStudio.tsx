@@ -40,8 +40,13 @@ const STARTER_EDGES: Edge[] = [
 
 export default function PCBDesignStudio() {
   const [mode, setMode] = useState<'schematic' | 'visual' | 'code' | '3d'>('schematic');
-  const [nodes, setNodes, onNodesChange] = useNodesState(STARTER_NODES);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(STARTER_EDGES);
+  const { 
+    nodes, edges, 
+    onNodesChange, onEdgesChange, 
+    onConnectEdges, addNode, 
+    updateNodeProperty, deleteNode, 
+    setGraph, connected, users, awareness 
+  } = useCollaboration(STARTER_NODES, STARTER_EDGES);
   
   // Layer Management State
   const [activeLayer, setActiveLayer] = useState<PCBLayer>('TopLayer');
@@ -160,22 +165,12 @@ export default function PCBDesignStudio() {
   }, [buildGraph]);
 
   const handleUndo = useCallback(() => {
-    if (undoStack.length === 0) return;
-    const prev = undoStack[undoStack.length - 1];
-    setRedoStack(r => [...r, { nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) }]);
-    setUndoStack(u => u.slice(0, -1));
-    setNodes(prev.nodes);
-    setEdges(prev.edges);
-  }, [undoStack, nodes, edges, setNodes, setEdges]);
+    // Requires Y.UndoManager in CRDT environment
+  }, []);
 
   const handleRedo = useCallback(() => {
-    if (redoStack.length === 0) return;
-    const next = redoStack[redoStack.length - 1];
-    setUndoStack(u => [...u, { nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) }]);
-    setRedoStack(r => r.slice(0, -1));
-    setNodes(next.nodes);
-    setEdges(next.edges);
-  }, [redoStack, nodes, edges, setNodes, setEdges]);
+    // Requires Y.UndoManager in CRDT environment
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
