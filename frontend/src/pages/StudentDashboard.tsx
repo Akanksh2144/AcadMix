@@ -112,13 +112,13 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
 
   // WebSocket for instant notifications
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) return;
     const wsBase = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000').replace(/^http/, 'ws');
-    let ws;
-    let reconnectTimer;
+    let ws: any;
+    let reconnectTimer: any;
     const connect = () => {
       try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
         ws = new WebSocket(`${wsBase}/ws/notifications?token=${token}`);
         ws.onmessage = (event) => {
           try {

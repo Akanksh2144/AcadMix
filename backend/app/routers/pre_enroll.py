@@ -18,7 +18,7 @@ from app.core.limiter import limiter
 logger = logging.getLogger(__name__)
 
 # The prefix deliberately omits an authenticated guard since this is public pre-enrollment.
-router = APIRouter(prefix="/api/pre-enroll/hostel", tags=["Pre-Enrollment"])
+router = APIRouter(prefix="/pre-enroll", tags=["Pre-Enrollment"])
 
 PRE_ENROLL_JWT_SECRET = settings.PRE_ENROLL_JWT_SECRET
 JWT_ALGORITHM = settings.JWT_ALGORITHM
@@ -48,7 +48,7 @@ async def get_pre_enroll_status(session: AsyncSession = Depends(get_db)):
     # Hardcoded to true for now as requested by the architecture doc
     return {"is_open": True}
 
-@router.post("/request-otp")
+@router.post("/hostel/request-otp")
 @limiter.limit("5/15minute", key_func=pre_enroll_limit_key)
 async def request_otp(payload: RequestOTPPayload, request: Request, session: AsyncSession = Depends(get_db)):
     result = await session.execute(
@@ -74,7 +74,7 @@ async def request_otp(payload: RequestOTPPayload, request: Request, session: Asy
     await OTPService.send_otp(payload.mobile_number, otp, payload.college_id)
     return {"message": "OTP sent successfully"}
 
-@router.post("/verify-otp")
+@router.post("/hostel/verify-otp")
 @limiter.limit("5/15minute", key_func=pre_enroll_limit_key)
 async def verify_otp(payload: VerifyOTPPayload, request: Request, session: AsyncSession = Depends(get_db)):
     result = await session.execute(
@@ -127,7 +127,7 @@ from app.schemas.hostel import BedLockRequest, BedBookConfirm
 def get_hostel_service(session: AsyncSession = Depends(get_db)):
     return HostelService(session)
 
-@router.get("/available")
+@router.get("/hostel/available")
 async def get_available_hostels(
     user: dict = Depends(get_pre_enroll_user),
     svc: HostelService = Depends(get_hostel_service),
@@ -135,7 +135,7 @@ async def get_available_hostels(
     return {"data": await svc.get_available_hostels(user["college_id"])}
 
 
-@router.get("/buildings/{hostel_id}/floors")
+@router.get("/hostel/buildings/{hostel_id}/floors")
 async def get_hostel_floors(
     hostel_id: str,
     user: dict = Depends(get_pre_enroll_user),
@@ -144,7 +144,7 @@ async def get_hostel_floors(
     return {"data": await svc.get_rooms_by_floor(hostel_id, user["college_id"])}
 
 
-@router.get("/rooms/{room_id}/grid")
+@router.get("/hostel/rooms/{room_id}/grid")
 async def get_room_grid(
     room_id: str,
     user: dict = Depends(get_pre_enroll_user),
@@ -153,7 +153,7 @@ async def get_room_grid(
     return {"data": await svc.get_room_grid(room_id, user["college_id"])}
 
 
-@router.post("/beds/lock")
+@router.post("/hostel/beds/lock")
 async def lock_bed(
     payload: BedLockRequest,
     user: dict = Depends(get_pre_enroll_user),
@@ -163,7 +163,7 @@ async def lock_bed(
     return {"success": True, "data": result}
 
 
-@router.post("/beds/confirm")
+@router.post("/hostel/beds/confirm")
 async def confirm_booking(
     payload: BedBookConfirm,
     user: dict = Depends(get_pre_enroll_user),
@@ -174,7 +174,7 @@ async def confirm_booking(
     )
     return {"success": True, "data": result}
 
-@router.get("/my-allocation")
+@router.get("/hostel/my-allocation")
 async def get_my_allocation(
     user: dict = Depends(get_pre_enroll_user),
     session: AsyncSession = Depends(get_db)

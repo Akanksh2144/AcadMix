@@ -45,6 +45,17 @@ class CollegeBranding(BaseModel):
     favicon_url: Optional[str] = None
 
 
+class AcademicRules(BaseModel):
+    """Academic rules within College.settings."""
+    model_config = ConfigDict(extra="allow")
+
+    show_cgpa_with_backlogs: bool = False
+    max_active_backlogs_allowed: int = 5
+    minimum_attendance_pct: float = 75.0
+    grace_marks_enabled: bool = True
+
+
+
 class CollegeFeatures(BaseModel):
     """Feature flags within College.settings."""
     model_config = ConfigDict(extra="allow")
@@ -65,6 +76,7 @@ class CollegeSettings(BaseModel):
     plan: str = "starter"  # starter | professional | enterprise
     features: Optional[CollegeFeatures] = None
     branding: Optional[CollegeBranding] = None
+    academic_rules: Optional[AcademicRules] = None
     timezone: str = "Asia/Kolkata"
     academic_year_start_month: int = 6  # June
     attendance_threshold_pct: float = 75.0

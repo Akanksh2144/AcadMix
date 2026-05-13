@@ -45,11 +45,22 @@ class Department(Base, SoftDeleteMixin):
     hod_user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
 
+class Program(Base, SoftDeleteMixin):
+    __tablename__ = "programs"
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    department_id = Column(String, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String, nullable=False) # e.g. "B.Tech", "M.Tech", "MBA"
+    duration_years = Column(Integer, nullable=True)
+    head_user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+
 class Section(Base, SoftDeleteMixin):
     __tablename__ = "sections"
     id = Column(String, primary_key=True, index=True, default=generate_uuid)
     college_id = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
     department_id = Column(String, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False)
+    program_id = Column(String, ForeignKey("programs.id", ondelete="CASCADE"), nullable=True)
     name = Column(String, nullable=False)
     intake = Column(Integer, nullable=True)
 
@@ -122,6 +133,7 @@ class UserProfile(Base, SoftDeleteMixin):
     roll_number = Column(String, nullable=True, index=True)
     
     department = Column(String, nullable=True)
+    program_id = Column(String, ForeignKey("programs.id", ondelete="SET NULL"), nullable=True)
     section = Column(String, nullable=True)
     batch = Column(String, nullable=True)
     current_semester = Column(Integer, nullable=True)

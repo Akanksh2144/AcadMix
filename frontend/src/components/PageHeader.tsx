@@ -45,17 +45,18 @@ const PageHeader = ({ navigate, user, onLogout, title, subtitle, backTo, hideBac
   // WebSocket for instant notifications
   useEffect(() => {
     if (hideNotifications) return;
-    const token = localStorage.getItem('auth_token');
-    if (!token) return;
-
+    
     const wsBase = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000').replace(/^http/, 'ws');
-    let ws;
-    let reconnectTimer;
+    let ws: any;
+    let reconnectTimer: any;
 
     const connect = () => {
       try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
         ws = new WebSocket(`${wsBase}/ws/notifications?token=${token}`);
-        ws.onmessage = (event) => {
+        ws.onmessage = (event: any) => {
           try {
             const data = JSON.parse(event.data);
             if (data.type === 'notification') {
