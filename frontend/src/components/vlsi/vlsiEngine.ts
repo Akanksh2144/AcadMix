@@ -22,6 +22,7 @@ export function evaluateNode(
       break;
 
     case 'output_led':
+    case 'logic_analyzer':
       break;
 
     case 'gate_and':
@@ -80,6 +81,16 @@ export function evaluateNode(
       let q = state.q ?? 0;
       if (clk && !prevClk) q = d ? 1 : 0;
       newState.prevClk = clk;
+      newState.q = q;
+      outputs = { q: q as LogicState, qbar: (q === 1 ? 0 : 1) as LogicState };
+      break;
+    }
+
+    case 'latch_d': {
+      const en = inputs.en === 1;
+      const d = inputs.d === 1;
+      let q = state.q ?? 0;
+      if (en) q = d ? 1 : 0;
       newState.q = q;
       outputs = { q: q as LogicState, qbar: (q === 1 ? 0 : 1) as LogicState };
       break;
@@ -147,6 +158,49 @@ export function evaluateNode(
       break;
     }
 
+    case 'priority_enc_8x3': {
+      let index = -1;
+      for (let i = 7; i >= 0; i--) {
+        if (inputs[`in${i}`] === 1) {
+          index = i;
+          break;
+        }
+      }
+      if (index === -1) {
+        outputs = { a: 0, b: 0, c: 0, v: 0 };
+      } else {
+        outputs = {
+          a: toLogic((index & 1) !== 0),
+          b: toLogic((index & 2) !== 0),
+          c: toLogic((index & 4) !== 0),
+          v: 1
+        };
+      }
+      break;
+    }
+
+    case 'bcd_to_7seg': {
+      const a = inputs.a === 1;
+      const b = inputs.b === 1;
+      const c = inputs.c === 1;
+      const d = inputs.d === 1;
+      const n = (d ? 8 : 0) + (c ? 4 : 0) + (b ? 2 : 0) + (a ? 1 : 0);
+      const segments = [
+        0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F, 0x77, 0x7C, 0x39, 0x5E, 0x79, 0x71
+      ];
+      const seg = segments[n % 16];
+      outputs = {
+        sa: toLogic((seg & 0x01) !== 0),
+        sb: toLogic((seg & 0x02) !== 0),
+        sc: toLogic((seg & 0x04) !== 0),
+        sd: toLogic((seg & 0x08) !== 0),
+        se: toLogic((seg & 0x10) !== 0),
+        sf: toLogic((seg & 0x20) !== 0),
+        sg: toLogic((seg & 0x40) !== 0),
+      };
+      break;
+    }
+
     case 'half_adder': {
       const a = inputs.a === 1;
       const b = inputs.b === 1;
@@ -164,10 +218,44 @@ export function evaluateNode(
       break;
     }
 
-    case 'comparator_2bit': {
-      const a = inputs.a === 1;
-      const b = inputs.b === 1;
-      outputs = { gt: toLogic(a && !b), eq: toLogic(a === b), lt: toLogic(!a && b) };
+    case 'alu_4bit': {
+      const a = (inputs.a3 === 1 ? 8 : 0) + (inputs.a2 === 1 ? 4 : 0) + (inputs.a1 === 1 ? 2 : 0) + (inputs.a0 === 1 ? 1 : 0);
+      const b = (inputs.b3 === 1 ? 8 : 0) + (inputs.b2 === 1 ? 4 : 0) + (inputs.b1 === 1 ? 2 : 0) + (inputs.b0 === 1 ? 1 : 0);
+      const sel = (inputs.s2 === 1 ? 4 : 0) + (inputs.s1 === 1 ? 2 : 0) + (inputs.s0 === 1 ? 1 : 0);
+      let res = 0;
+      switch (sel) {
+        case 0: res = a + b; break; // Add
+        case 1: res = a - b; break; // Sub
+        case 2: res = a & b; break; // AND
+        case 3: res = a | b; break; // OR
+        case 4: res = a ^ b; break; // XOR
+        case 5: res = ~a & 0xF; break; // NOT A
+        case 6: res = a << 1; break; // SHL
+        case 7: res = a >> 1; break; // SHR
+      }
+      outputs = {
+        y0: toLogic((res & 1) !== 0),
+        y1: toLogic((res & 2) !== 0),
+        y2: toLogic((res & 4) !== 0),
+        y3: toLogic((res & 8) !== 0),
+        cf: toLogic((res & 0x10) !== 0 || res < 0),
+        zf: toLogic((res & 0xF) === 0)
+      };
+      break;
+    }
+
+    case 'multiplier_4bit': {
+      const a = (inputs.a3 === 1 ? 8 : 0) + (inputs.a2 === 1 ? 4 : 0) + (inputs.a1 === 1 ? 2 : 0) + (inputs.a0 === 1 ? 1 : 0);
+      const b = (inputs.b3 === 1 ? 8 : 0) + (inputs.b2 === 1 ? 4 : 0) + (inputs.b1 === 1 ? 2 : 0) + (inputs.b0 === 1 ? 1 : 0);
+      const res = a * b;
+      for (let i = 0; i < 8; i++) outputs[`y${i}`] = toLogic((res & (1 << i)) !== 0);
+      break;
+    }
+
+    case 'comparator_4bit': {
+      const a = (inputs.a3 === 1 ? 8 : 0) + (inputs.a2 === 1 ? 4 : 0) + (inputs.a1 === 1 ? 2 : 0) + (inputs.a0 === 1 ? 1 : 0);
+      const b = (inputs.b3 === 1 ? 8 : 0) + (inputs.b2 === 1 ? 4 : 0) + (inputs.b1 === 1 ? 2 : 0) + (inputs.b0 === 1 ? 1 : 0);
+      outputs = { gt: toLogic(a > b), eq: toLogic(a === b), lt: toLogic(a < b) };
       break;
     }
 
@@ -197,7 +285,69 @@ export function evaluateNode(
       if (clk && !prevClk) bits = [sin ? 1 : 0, ...bits.slice(0, 3)];
       newState.prevClk = clk;
       newState.bits = bits;
-      outputs = { q0: bits[0], q1: bits[1], q2: bits[2], q3: bits[3] };
+      outputs = { q0: bits[0] as LogicState, q1: bits[1] as LogicState, q2: bits[2] as LogicState, q3: bits[3] as LogicState };
+      break;
+    }
+
+    case 'univ_shift_reg': {
+      const clk = inputs.clk === 1;
+      const prevClk = state.prevClk === true;
+      const s = (inputs.s1 === 1 ? 2 : 0) + (inputs.s0 === 1 ? 1 : 0);
+      let bits = state.bits ?? [0, 0, 0, 0];
+      if (clk && !prevClk) {
+        if (s === 1) bits = [inputs.sr === 1 ? 1 : 0, ...bits.slice(0, 3)]; // Shift Right
+        else if (s === 2) bits = [...bits.slice(1), inputs.sl === 1 ? 1 : 0]; // Shift Left
+        else if (s === 3) bits = [inputs.d0 === 1 ? 1 : 0, inputs.d1 === 1 ? 1 : 0, inputs.d2 === 1 ? 1 : 0, inputs.d3 === 1 ? 1 : 0]; // Parallel Load
+      }
+      newState.prevClk = clk;
+      newState.bits = bits;
+      outputs = { q0: bits[0] as LogicState, q1: bits[1] as LogicState, q2: bits[2] as LogicState, q3: bits[3] as LogicState };
+      break;
+    }
+
+    case 'reg_8bit': {
+      const clk = inputs.clk === 1;
+      const prevClk = state.prevClk === true;
+      const en = inputs.en === 1;
+      let bits = state.bits ?? [0, 0, 0, 0, 0, 0, 0, 0];
+      if (clk && !prevClk && en) {
+        for (let i = 0; i < 8; i++) bits[i] = inputs[`d${i}`] === 1 ? 1 : 0;
+      }
+      newState.prevClk = clk;
+      newState.bits = bits;
+      for (let i = 0; i < 8; i++) outputs[`q${i}`] = bits[i] as LogicState;
+      break;
+    }
+
+    case 'ram_16x4': {
+      const addr = (inputs.a3 === 1 ? 8 : 0) + (inputs.a2 === 1 ? 4 : 0) + (inputs.a1 === 1 ? 2 : 0) + (inputs.a0 === 1 ? 1 : 0);
+      const we = inputs.we === 1;
+      let memory = state.memory ?? Array(16).fill(0);
+      if (we) {
+        const val = (inputs.di3 === 1 ? 8 : 0) + (inputs.di2 === 1 ? 4 : 0) + (inputs.di1 === 1 ? 2 : 0) + (inputs.di0 === 1 ? 1 : 0);
+        memory[addr] = val;
+      }
+      newState.memory = memory;
+      const outVal = memory[addr];
+      outputs = {
+        do0: toLogic((outVal & 1) !== 0),
+        do1: toLogic((outVal & 2) !== 0),
+        do2: toLogic((outVal & 4) !== 0),
+        do3: toLogic((outVal & 8) !== 0),
+      };
+      break;
+    }
+
+    case 'rom_16x4': {
+      const addr = (inputs.a3 === 1 ? 8 : 0) + (inputs.a2 === 1 ? 4 : 0) + (inputs.a1 === 1 ? 2 : 0) + (inputs.a0 === 1 ? 1 : 0);
+      const data = state.data ? state.data.split(',').map((x: string) => parseInt(x, 16)) : Array.from({length: 16}, (_, i) => i);
+      const outVal = data[addr] ?? 0;
+      outputs = {
+        q0: toLogic((outVal & 1) !== 0),
+        q1: toLogic((outVal & 2) !== 0),
+        q2: toLogic((outVal & 4) !== 0),
+        q3: toLogic((outVal & 8) !== 0),
+      };
       break;
     }
 
@@ -247,7 +397,7 @@ export function generateVerilog(graph: LogicGraph): string {
 
   const getWireForInput = (nodeId: string, handle: string): string => {
     const edge = graph.edges.find(e => e.target === nodeId && e.targetHandle === handle);
-    if (!edge) return "1'b0"; // Default to 0 if unconnected
+    if (!edge) return "1'b0"; 
     const sourceNode = graph.nodes.find(n => n.id === edge.source);
     if (sourceNode?.type === 'input_switch' || sourceNode?.type === 'clock') {
       return sourceNode.properties.label || sourceNode.refDes;
@@ -325,33 +475,25 @@ export function generateVerilog(graph: LogicGraph): string {
         instances.push(`  assign ${getWireForOutput(node.id, 'sum')} = ${getWireForInput(node.id, 'a')} ^ ${getWireForInput(node.id, 'b')} ^ ${getWireForInput(node.id, 'cin')};`);
         instances.push(`  assign ${getWireForOutput(node.id, 'cout')} = (${getWireForInput(node.id, 'a')} & ${getWireForInput(node.id, 'b')}) | (${getWireForInput(node.id, 'cin')} & (${getWireForInput(node.id, 'a')} ^ ${getWireForInput(node.id, 'b')}));`);
         break;
-      case 'comparator_2bit':
-        instances.push(`  assign ${getWireForOutput(node.id, 'gt')} = ${getWireForInput(node.id, 'a')} > ${getWireForInput(node.id, 'b')};`);
-        instances.push(`  assign ${getWireForOutput(node.id, 'eq')} = ${getWireForInput(node.id, 'a')} == ${getWireForInput(node.id, 'b')};`);
-        instances.push(`  assign ${getWireForOutput(node.id, 'lt')} = ${getWireForInput(node.id, 'a')} < ${getWireForInput(node.id, 'b')};`);
-        break;
-      case 'counter_4bit':
-        instances.push(`  // 4-bit Counter logic here...`);
-        break;
       case 'ff_d':
-        instances.push(`  dff ${node.refDes} (.clk(${getWireForInput(node.id, 'clk')}), .d(${getWireForInput(node.id, 'd')}), .q(${getWireForOutput(node.id, 'q')}), .qbar(${getWireForOutput(node.id, 'qbar')}));`);
+        instances.push(`  always @(posedge ${getWireForInput(node.id, 'clk')}) ${getWireForOutput(node.id, 'q')} <= ${getWireForInput(node.id, 'd')};`);
+        instances.push(`  assign ${getWireForOutput(node.id, 'qbar')} = ~${getWireForOutput(node.id, 'q')};`);
         break;
-      case 'ff_t':
-        instances.push(`  tff ${node.refDes} (.clk(${getWireForInput(node.id, 'clk')}), .t(${getWireForInput(node.id, 't')}), .q(${getWireForOutput(node.id, 'q')}), .qbar(${getWireForOutput(node.id, 'qbar')}));`);
+      case 'alu_4bit':
+        instances.push(`  // 4-bit ALU instantiation here...`);
         break;
-      case 'ff_jk':
-        instances.push(`  jkff ${node.refDes} (.clk(${getWireForInput(node.id, 'clk')}), .j(${getWireForInput(node.id, 'j')}), .k(${getWireForInput(node.id, 'k')}), .q(${getWireForOutput(node.id, 'q')}), .qbar(${getWireForOutput(node.id, 'qbar')}));`);
+      case 'ram_16x4':
+        instances.push(`  // RAM 16x4 instantiation here...`);
         break;
     }
   });
 
   let portList = [...inputs, ...outputs].join(', ');
-  let code = `module ${moduleName}(${portList});\n`;
+  let code = `module TopModule(${portList});\n`;
   if (inputs.length > 0) code += `  input ${inputs.join(', ')};\n`;
   if (outputs.length > 0) code += `  output ${outputs.join(', ')};\n`;
   
-  // Filter out wires that are directly connected to outputs
-  const internalWires = wires.filter(w => !outputs.includes(w));
+  const internalWires = wires.filter(w => !outputs.includes(w) && !inputs.includes(w));
   if (internalWires.length > 0) {
     code += `  wire ${internalWires.join(', ')};\n`;
   }
@@ -362,3 +504,4 @@ export function generateVerilog(graph: LogicGraph): string {
 
   return code;
 }
+

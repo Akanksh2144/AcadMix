@@ -1,6 +1,6 @@
 export type LogicState = 0 | 1 | 'Z' | 'X';
 
-export type ComponentCategory = 'io' | 'gates' | 'flipflops' | 'combinational';
+export type ComponentCategory = 'io' | 'gates' | 'flipflops' | 'combinational' | 'arithmetic' | 'sequential_adv' | 'display' | 'memory';
 
 export interface VLSIPin {
   id: string;

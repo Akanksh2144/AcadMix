@@ -122,17 +122,31 @@ const GateSVGs: Record<string, () => React.ReactElement> = {
 // ─── Arithmetic Blocks ────────────────────────────────────────────────────────
 function ArithmeticNode(props: any) {
   const type = props.data.componentType as string;
-  const label = type === 'half_adder' ? 'H-ADD' : type === 'full_adder' ? 'F-ADD' : 'CMP';
+  let label = 'ARITH';
+  let color = '#ec4899';
+  let bg = 'rgba(236,72,153,0.08)';
+
+  if (type === 'half_adder') label = 'H-ADD';
+  else if (type === 'full_adder') label = 'F-ADD';
+  else if (type === 'alu_4bit') { label = 'ALU'; color = '#3b82f6'; bg = 'rgba(59,130,246,0.08)'; }
+  else if (type === 'multiplier_4bit') { label = 'MUL'; color = '#8b5cf6'; bg = 'rgba(139,92,246,0.08)'; }
+  else if (type.includes('comparator')) label = 'CMP';
+
+  const width = type === 'alu_4bit' || type === 'multiplier_4bit' ? 100 : 64;
+  const height = type === 'alu_4bit' || type === 'multiplier_4bit' ? 120 : 72;
+
   return (
     <BaseLogicNode
       {...props}
       data={{
         ...props.data,
         svgShape: (
-          <svg width="64" height="72" viewBox="0 0 64 72" className="overflow-visible drop-shadow-lg">
-            <rect x="2" y="2" width="60" height="68" rx="4" fill="rgba(236,72,153,0.08)" stroke="#ec4899" strokeWidth="1.8"/>
-            <text x="32" y="32" textAnchor="middle" fontSize="10" fill="#ec4899" fontWeight="800" fontFamily="monospace">{label}</text>
-            <text x="32" y="46" textAnchor="middle" fontSize="8" fill="#f472b6" fontFamily="monospace">ARITH</text>
+          <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible drop-shadow-lg">
+            <rect x="2" y="2" width={width-4} height={height-4} rx="4" fill={bg} stroke={color} strokeWidth="1.8"/>
+            <text x={width/2} y={height/2 - 4} textAnchor="middle" fontSize="12" fill={color} fontWeight="900" fontFamily="monospace">{label}</text>
+            <text x={width/2} y={height/2 + 10} textAnchor="middle" fontSize="8" fill={color} opacity="0.7" fontFamily="monospace">
+              {type === 'alu_4bit' ? '4-BIT CORE' : 'ARITHMETIC'}
+            </text>
           </svg>
         ),
       }}
@@ -140,21 +154,23 @@ function ArithmeticNode(props: any) {
   );
 }
 
-// ─── Decoder/Mux 4x1/Demux Blocks ─────────────────────────────────────────────
-function MultiPinBlockNode(props: any) {
+// ─── Memory Elements ──────────────────────────────────────────────────────────
+function MemoryNode(props: any) {
   const type = props.data.componentType as string;
-  const label = type.includes('decoder') ? 'DEC' : type.includes('mux') ? 'MUX' : 'DMUX';
-  const sub = type.includes('3x8') ? '3:8' : '4:1';
+  const label = type === 'ram_16x4' ? 'RAM' : 'ROM';
+  const sub = '16x4';
   return (
     <BaseLogicNode
       {...props}
       data={{
         ...props.data,
         svgShape: (
-          <svg width="60" height="84" viewBox="0 0 60 84" className="overflow-visible drop-shadow-lg">
-            <rect x="2" y="2" width="56" height="80" rx="4" fill="rgba(245,158,11,0.08)" stroke="#f59e0b" strokeWidth="1.8"/>
-            <text x="30" y="36" textAnchor="middle" fontSize="11" fill="#f59e0b" fontWeight="800" fontFamily="monospace">{label}</text>
-            <text x="30" y="52" textAnchor="middle" fontSize="9" fill="#fbbf24" fontFamily="monospace">{sub}</text>
+          <svg width="80" height="100" viewBox="0 0 80 100" className="overflow-visible drop-shadow-lg">
+            <rect x="2" y="2" width="76" height="96" rx="4" fill="rgba(20,184,166,0.08)" stroke="#14b8a6" strokeWidth="1.8"/>
+            <text x="40" y="45" textAnchor="middle" fontSize="14" fill="#14b8a6" fontWeight="900" fontFamily="monospace">{label}</text>
+            <text x="40" y="60" textAnchor="middle" fontSize="10" fill="#2dd4bf" fontFamily="monospace">{sub}</text>
+            <line x1="10" y1="75" x2="70" y2="75" stroke="#14b8a6" strokeWidth="1" strokeDasharray="2,2" />
+            <text x="40" y="88" textAnchor="middle" fontSize="7" fill="#14b8a6" fontFamily="monospace">MEMORY CELL</text>
           </svg>
         ),
       }}
@@ -162,23 +178,60 @@ function MultiPinBlockNode(props: any) {
   );
 }
 
-// ─── 4-bit Counter/Shift Register ─────────────────────────────────────────────
+// ─── Advanced Sequential ──────────────────────────────────────────────────────
 function SequentialAdvNode(props: any) {
   const type = props.data.componentType as string;
-  const label = type.includes('counter') ? 'COUNT' : 'SHIFT';
+  let label = 'SEQ';
+  let sub = '4-BIT';
+  let color = '#06b6d4';
+  
+  if (type.includes('counter')) label = 'COUNT';
+  else if (type.includes('shift')) label = 'SHIFT';
+  else if (type === 'univ_shift_reg') { label = 'U-SR'; sub = 'UNIV'; }
+  else if (type === 'reg_8bit') { label = 'REG'; sub = '8-BIT'; color = '#22c55e'; }
+
+  const width = type === 'reg_8bit' ? 90 : 70;
+  const height = type === 'reg_8bit' || type === 'univ_shift_reg' ? 120 : 88;
+
   return (
     <BaseLogicNode
       {...props}
       data={{
         ...props.data,
         svgShape: (
-          <svg width="68" height="88" viewBox="0 0 68 88" className="overflow-visible drop-shadow-lg">
-            <rect x="2" y="2" width="64" height="84" rx="4" fill="rgba(6,182,212,0.08)" stroke="#06b6d4" strokeWidth="1.8"/>
-            <text x="34" y="38" textAnchor="middle" fontSize="10" fill="#06b6d4" fontWeight="800" fontFamily="monospace">{label}</text>
-            <text x="34" y="54" textAnchor="middle" fontSize="8" fill="#22d3ee" fontFamily="monospace">4-BIT</text>
-            {/* Clock triangle */}
-            <path d="M 2 70 L 10 75 L 2 80" fill="none" stroke="#06b6d4" strokeWidth="1.5"/>
+          <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible drop-shadow-lg">
+            <rect x="2" y="2" width={width-4} height={height-4} rx="4" fill={`${color}15`} stroke={color} strokeWidth="1.8"/>
+            <text x={width/2} y={height/2 - 4} textAnchor="middle" fontSize="11" fill={color} fontWeight="900" fontFamily="monospace">{label}</text>
+            <text x={width/2} y={height/2 + 10} textAnchor="middle" fontSize="8" fill={color} opacity="0.8" fontFamily="monospace">{sub}</text>
+            <path d={`M 2 ${height-20} L 10 ${height-15} L 2 ${height-10}`} fill="none" stroke={color} strokeWidth="1.5"/>
           </svg>
+        ),
+      }}
+    />
+  );
+}
+
+// ─── Logic Analyzer ───────────────────────────────────────────────────────────
+function LogicAnalyzerNode(props: any) {
+  return (
+    <BaseLogicNode
+      {...props}
+      data={{
+        ...props.data,
+        svgShape: (
+          <div className="bg-slate-950 p-2 rounded border border-slate-700 shadow-xl w-32">
+            <div className="text-[8px] text-cyan-500 font-bold mb-1 border-b border-slate-800 pb-0.5">LOGIC ANALYZER</div>
+            <div className="space-y-1">
+              {[0,1,2,3].map(i => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <div className="text-[7px] text-slate-500 w-4">CH{i}</div>
+                  <div className="flex-1 h-2 bg-slate-900 rounded-sm relative overflow-hidden">
+                     <div className={`h-full transition-all duration-75 ${props.data.logicInputs?.[`ch${i}`] === 1 ? 'bg-cyan-500 w-full' : 'bg-slate-800 w-0'}`} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         ),
       }}
     />
@@ -197,10 +250,9 @@ function Display7SegNode(props: any) {
       data={{
         ...props.data,
         svgShape: (
-          <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-700 shadow-2xl">
+          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 shadow-2xl ring-1 ring-slate-800">
             <svg width="40" height="60" viewBox="0 0 40 60">
-              {/* Segments: a, b, c, d, e, f, g */}
-              <path d="M 8 4 L 32 4" stroke={segments[0] ? color : '#1e293b'} strokeWidth="4" strokeLinecap="round" className="transition-all duration-200" />
+              <path d="M 8 4 L 32 4" stroke={segments[0] ? color : '#1e293b'} strokeWidth="4" strokeLinecap="round" />
               <path d="M 36 8 L 36 26" stroke={segments[1] ? color : '#1e293b'} strokeWidth="4" strokeLinecap="round" />
               <path d="M 36 34 L 36 52" stroke={segments[2] ? color : '#1e293b'} strokeWidth="4" strokeLinecap="round" />
               <path d="M 8 56 L 32 56" stroke={segments[3] ? color : '#1e293b'} strokeWidth="4" strokeLinecap="round" />
@@ -215,32 +267,61 @@ function Display7SegNode(props: any) {
   );
 }
 
-// ─── Flip-Flop box node ────────────────────────────────────────────────────────
-function FlipFlopNode(props: any) {
+// ─── Flip-Flop / Latch Node ───────────────────────────────────────────────────
+function StorageNode(props: any) {
   const type = props.data.componentType as string;
-  const label = type === 'ff_d' ? 'D' : type === 'ff_t' ? 'T' : 'JK';
+  const isLatch = type.includes('latch');
+  const label = type.includes('_d') ? 'D' : type.includes('_t') ? 'T' : 'JK';
+  const color = isLatch ? '#fb923c' : '#34d399';
   return (
     <BaseLogicNode
       {...props}
       data={{
         ...props.data,
         svgShape: (
-          <div className="flex flex-col items-center">
-            <svg width="60" height="68" viewBox="0 0 60 68" className="overflow-visible drop-shadow-lg">
-              <rect x="2" y="2" width="56" height="64" rx="7"
-                fill="rgba(16,185,129,0.08)" stroke="#34d399" strokeWidth="1.8"/>
-              <text x="30" y="24" textAnchor="middle" fontSize="13" fill="#34d399" fontWeight="800" fontFamily="monospace">{label}</text>
-              <text x="30" y="36" textAnchor="middle" fontSize="9" fill="#6ee7b7" fontFamily="monospace">FF</text>
-              <path d="M 2 50 L 10 55 L 2 60" fill="none" stroke="#34d399" strokeWidth="1.5"/>
-            </svg>
-          </div>
+          <svg width="60" height="68" viewBox="0 0 60 68" className="overflow-visible drop-shadow-lg">
+            <rect x="2" y="2" width="56" height="64" rx="7" fill={`${color}10`} stroke={color} strokeWidth="1.8"/>
+            <text x="30" y="24" textAnchor="middle" fontSize="13" fill={color} fontWeight="900" fontFamily="monospace">{label}</text>
+            <text x="30" y="38" textAnchor="middle" fontSize="8" fill={color} opacity="0.8" fontFamily="monospace">{isLatch ? 'LATCH' : 'FLIP-FLOP'}</text>
+            {!isLatch && <path d="M 2 50 L 10 55 L 2 60" fill="none" stroke={color} strokeWidth="1.5"/>}
+          </svg>
         ),
       }}
     />
   );
 }
 
-// ─── MUX node ─────────────────────────────────────────────────────────────────
+// ─── Decoder/Mux Blocks ───────────────────────────────────────────────────────
+function MultiPinBlockNode(props: any) {
+  const type = props.data.componentType as string;
+  let label = 'BLOCK';
+  let sub = '';
+  if (type.includes('decoder')) { label = 'DEC'; sub = '3:8'; }
+  else if (type.includes('mux_4x1')) { label = 'MUX'; sub = '4:1'; }
+  else if (type.includes('demux')) { label = 'DMUX'; sub = '1:4'; }
+  else if (type.includes('priority_enc')) { label = 'P-ENC'; sub = '8:3'; }
+  else if (type.includes('bcd_to_7seg')) { label = '7-SEG'; sub = '7447'; }
+
+  const height = label === 'P-ENC' || label === '7-SEG' ? 120 : 84;
+
+  return (
+    <BaseLogicNode
+      {...props}
+      data={{
+        ...props.data,
+        svgShape: (
+          <svg width="60" height={height} viewBox={`0 0 60 ${height}`} className="overflow-visible drop-shadow-lg">
+            <rect x="2" y="2" width="56" height={height-4} rx="4" fill="rgba(245,158,11,0.08)" stroke="#f59e0b" strokeWidth="1.8"/>
+            <text x="30" y="36" textAnchor="middle" fontSize="11" fill="#f59e0b" fontWeight="900" fontFamily="monospace">{label}</text>
+            <text x="30" y={height-32} textAnchor="middle" fontSize="8" fill="#fbbf24" fontFamily="monospace">{sub}</text>
+          </svg>
+        ),
+      }}
+    />
+  );
+}
+
+// ─── MUX 2:1 node ─────────────────────────────────────────────────────────────
 function MuxNode(props: any) {
   return (
     <BaseLogicNode
@@ -249,8 +330,7 @@ function MuxNode(props: any) {
         ...props.data,
         svgShape: (
           <svg width="52" height="64" viewBox="0 0 52 64" className="overflow-visible drop-shadow-lg">
-            <path d="M 2 6 L 50 14 L 50 50 L 2 58 Z"
-              fill="rgba(251,191,36,0.08)" stroke="#fbbf24" strokeWidth="1.8"/>
+            <path d="M 2 6 L 50 14 L 50 50 L 2 58 Z" fill="rgba(251,191,36,0.08)" stroke="#fbbf24" strokeWidth="1.8"/>
             <text x="26" y="34" textAnchor="middle" fontSize="10" fill="#fbbf24" fontWeight="800" fontFamily="monospace">MUX</text>
             <text x="26" y="46" textAnchor="middle" fontSize="8"  fill="#f59e0b" fontFamily="monospace">2:1</text>
           </svg>
@@ -390,11 +470,12 @@ function get7SegSegments(val: number): boolean[] {
   return map[val] || [false, false, false, false, false, false, false];
 }
 
-// ─── Node type registry ────────────────────────────────────────────────────────
+// ─── Node type registry ───────────────────────────────────────────────────────
 export const vlsiNodeTypes: Record<string, React.ComponentType<any>> = {
   input_switch: InputSwitchNode,
   output_led:   OutputLedNode,
   clock:        ClockNode,
+  logic_analyzer: LogicAnalyzerNode,
   gate_and:     GateNode,
   gate_and3:    GateNode,
   gate_or:      GateNode,
@@ -405,18 +486,28 @@ export const vlsiNodeTypes: Record<string, React.ComponentType<any>> = {
   gate_nor:     GateNode,
   gate_xor:     GateNode,
   gate_xnor:    GateNode,
-  ff_d:         FlipFlopNode,
-  ff_t:         FlipFlopNode,
-  ff_jk:        FlipFlopNode,
+  ff_d:         StorageNode,
+  ff_t:         StorageNode,
+  ff_jk:        StorageNode,
+  latch_d:      StorageNode,
   mux_2x1:      MuxNode,
   mux_4x1:      MultiPinBlockNode,
   demux_1x4:    MultiPinBlockNode,
   decoder_3x8:  MultiPinBlockNode,
+  priority_enc_8x3: MultiPinBlockNode,
+  bcd_to_7seg:  MultiPinBlockNode,
   half_adder:   ArithmeticNode,
   full_adder:   ArithmeticNode,
+  alu_4bit:     ArithmeticNode,
+  multiplier_4bit: ArithmeticNode,
   comparator_2bit: ArithmeticNode,
+  comparator_4bit: ArithmeticNode,
   counter_4bit: SequentialAdvNode,
   shift_reg_4bit: SequentialAdvNode,
+  univ_shift_reg: SequentialAdvNode,
+  reg_8bit:     SequentialAdvNode,
+  ram_16x4:     MemoryNode,
+  rom_16x4:     MemoryNode,
   display_7seg: Display7SegNode,
 };
 
@@ -426,3 +517,4 @@ COMPONENT_CATALOG.forEach(c => {
     vlsiNodeTypes[c.type] = BaseLogicNode;
   }
 });
+

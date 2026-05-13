@@ -1,6 +1,6 @@
 import type { VLSIComponent, ComponentCategory } from './types';
 
-export const CATEGORY_ORDER: ComponentCategory[] = ['io', 'gates', 'flipflops', 'combinational', 'arithmetic', 'sequential_adv', 'display'];
+export const CATEGORY_ORDER: ComponentCategory[] = ['io', 'gates', 'flipflops', 'combinational', 'arithmetic', 'sequential_adv', 'memory', 'display'];
 
 export const CATEGORY_LABELS: Record<ComponentCategory, string> = {
   io: 'Inputs & Outputs',
@@ -9,11 +9,12 @@ export const CATEGORY_LABELS: Record<ComponentCategory, string> = {
   combinational: 'Combinational Logic',
   arithmetic: 'Arithmetic Blocks',
   sequential_adv: 'Advanced Sequential',
+  memory: 'Memory Elements',
   display: 'Output Displays',
 };
 
 export const COMPONENT_CATALOG: VLSIComponent[] = [
-  // I/O
+  // ... (previous entries preserved via replacement block)
   {
     type: 'input_switch',
     category: 'io',
@@ -40,6 +41,19 @@ export const COMPONENT_CATALOG: VLSIComponent[] = [
     refDesPrefix: 'LED',
     pins: [{ id: 'in', label: 'In', type: 'input', side: 'left' }],
     defaultProperties: { label: 'Out', color: 'red' },
+  },
+  {
+    type: 'logic_analyzer',
+    category: 'io',
+    label: 'Logic Analyzer',
+    description: '4-channel timing diagram visualizer',
+    refDesPrefix: 'LA',
+    pins: [
+      { id: 'ch0', label: 'CH0', type: 'input', side: 'left' },
+      { id: 'ch1', label: 'CH1', type: 'input', side: 'left' },
+      { id: 'ch2', label: 'CH2', type: 'input', side: 'left' },
+      { id: 'ch3', label: 'CH3', type: 'input', side: 'left' },
+    ]
   },
   
   // Logic Gates
@@ -164,7 +178,7 @@ export const COMPONENT_CATALOG: VLSIComponent[] = [
     ]
   },
   
-  // Flip-Flops
+  // Flip-Flops & Latches
   {
     type: 'ff_d',
     category: 'flipflops',
@@ -174,6 +188,19 @@ export const COMPONENT_CATALOG: VLSIComponent[] = [
     pins: [
       { id: 'd', label: 'D', type: 'input', side: 'left' },
       { id: 'clk', label: '▶', type: 'input', side: 'left' },
+      { id: 'q', label: 'Q', type: 'output', side: 'right' },
+      { id: 'qbar', label: 'Q̅', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'latch_d',
+    category: 'flipflops',
+    label: 'D-Latch',
+    description: 'Transparent D-Latch (level-sensitive)',
+    refDesPrefix: 'L',
+    pins: [
+      { id: 'd', label: 'D', type: 'input', side: 'left' },
+      { id: 'en', label: 'E', type: 'input', side: 'left' },
       { id: 'q', label: 'Q', type: 'output', side: 'right' },
       { id: 'qbar', label: 'Q̅', type: 'output', side: 'right' }
     ]
@@ -272,6 +299,47 @@ export const COMPONENT_CATALOG: VLSIComponent[] = [
       { id: 'out7', label: 'Y7', type: 'output', side: 'right' }
     ]
   },
+  {
+    type: 'priority_enc_8x3',
+    category: 'combinational',
+    label: 'Priority Encoder 8:3',
+    description: 'Outputs binary index of highest active input',
+    refDesPrefix: 'ENC',
+    pins: [
+      { id: 'in0', label: 'D0', type: 'input', side: 'left' },
+      { id: 'in1', label: 'D1', type: 'input', side: 'left' },
+      { id: 'in2', label: 'D2', type: 'input', side: 'left' },
+      { id: 'in3', label: 'D3', type: 'input', side: 'left' },
+      { id: 'in4', label: 'D4', type: 'input', side: 'left' },
+      { id: 'in5', label: 'D5', type: 'input', side: 'left' },
+      { id: 'in6', label: 'D6', type: 'input', side: 'left' },
+      { id: 'in7', label: 'D7', type: 'input', side: 'left' },
+      { id: 'a', label: 'A', type: 'output', side: 'right' },
+      { id: 'b', label: 'B', type: 'output', side: 'right' },
+      { id: 'c', label: 'C', type: 'output', side: 'right' },
+      { id: 'v', label: 'V', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'bcd_to_7seg',
+    category: 'combinational',
+    label: 'BCD to 7-Seg Decoder',
+    description: '7447 style BCD to 7-segment decoder IC',
+    refDesPrefix: 'IC',
+    pins: [
+      { id: 'a', label: 'A', type: 'input', side: 'left' },
+      { id: 'b', label: 'B', type: 'input', side: 'left' },
+      { id: 'c', label: 'C', type: 'input', side: 'left' },
+      { id: 'd', label: 'D', type: 'input', side: 'left' },
+      { id: 'sa', label: 'a', type: 'output', side: 'right' },
+      { id: 'sb', label: 'b', type: 'output', side: 'right' },
+      { id: 'sc', label: 'c', type: 'output', side: 'right' },
+      { id: 'sd', label: 'd', type: 'output', side: 'right' },
+      { id: 'se', label: 'e', type: 'output', side: 'right' },
+      { id: 'sf', label: 'f', type: 'output', side: 'right' },
+      { id: 'sg', label: 'g', type: 'output', side: 'right' }
+    ]
+  },
 
   // Arithmetic
   {
@@ -302,14 +370,71 @@ export const COMPONENT_CATALOG: VLSIComponent[] = [
     ]
   },
   {
-    type: 'comparator_2bit',
+    type: 'alu_4bit',
     category: 'arithmetic',
-    label: '2-bit Comparator',
-    description: 'Compares two binary values',
+    label: '4-bit ALU',
+    description: 'Arithmetic Logic Unit (Add, Sub, AND, OR, XOR)',
+    refDesPrefix: 'ALU',
+    pins: [
+      { id: 'a0', label: 'A0', type: 'input', side: 'left' },
+      { id: 'a1', label: 'A1', type: 'input', side: 'left' },
+      { id: 'a2', label: 'A2', type: 'input', side: 'left' },
+      { id: 'a3', label: 'A3', type: 'input', side: 'left' },
+      { id: 'b0', label: 'B0', type: 'input', side: 'left' },
+      { id: 'b1', label: 'B1', type: 'input', side: 'left' },
+      { id: 'b2', label: 'B2', type: 'input', side: 'left' },
+      { id: 'b3', label: 'B3', type: 'input', side: 'left' },
+      { id: 's0', label: 'S0', type: 'input', side: 'bottom' },
+      { id: 's1', label: 'S1', type: 'input', side: 'bottom' },
+      { id: 's2', label: 'S2', type: 'input', side: 'bottom' },
+      { id: 'y0', label: 'Y0', type: 'output', side: 'right' },
+      { id: 'y1', label: 'Y1', type: 'output', side: 'right' },
+      { id: 'y2', label: 'Y2', type: 'output', side: 'right' },
+      { id: 'y3', label: 'Y3', type: 'output', side: 'right' },
+      { id: 'cf', label: 'CF', type: 'output', side: 'right' },
+      { id: 'zf', label: 'ZF', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'multiplier_4bit',
+    category: 'arithmetic',
+    label: '4-bit Multiplier',
+    description: 'Binary multiplier (4x4 to 8-bit)',
+    refDesPrefix: 'MUL',
+    pins: [
+      { id: 'a0', label: 'A0', type: 'input', side: 'left' },
+      { id: 'a1', label: 'A1', type: 'input', side: 'left' },
+      { id: 'a2', label: 'A2', type: 'input', side: 'left' },
+      { id: 'a3', label: 'A3', type: 'input', side: 'left' },
+      { id: 'b0', label: 'B0', type: 'input', side: 'left' },
+      { id: 'b1', label: 'B1', type: 'input', side: 'left' },
+      { id: 'b2', label: 'B2', type: 'input', side: 'left' },
+      { id: 'b3', label: 'B3', type: 'input', side: 'left' },
+      { id: 'y0', label: 'Y0', type: 'output', side: 'right' },
+      { id: 'y1', label: 'Y1', type: 'output', side: 'right' },
+      { id: 'y2', label: 'Y2', type: 'output', side: 'right' },
+      { id: 'y3', label: 'Y3', type: 'output', side: 'right' },
+      { id: 'y4', label: 'Y4', type: 'output', side: 'right' },
+      { id: 'y5', label: 'Y5', type: 'output', side: 'right' },
+      { id: 'y6', label: 'Y6', type: 'output', side: 'right' },
+      { id: 'y7', label: 'Y7', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'comparator_4bit',
+    category: 'arithmetic',
+    label: '4-bit Magnitude Comparator',
+    description: 'Compares two 4-bit binary values',
     refDesPrefix: 'CMP',
     pins: [
-      { id: 'a', label: 'A', type: 'input', side: 'left' },
-      { id: 'b', label: 'B', type: 'input', side: 'left' },
+      { id: 'a0', label: 'A0', type: 'input', side: 'left' },
+      { id: 'a1', label: 'A1', type: 'input', side: 'left' },
+      { id: 'a2', label: 'A2', type: 'input', side: 'left' },
+      { id: 'a3', label: 'A3', type: 'input', side: 'left' },
+      { id: 'b0', label: 'B0', type: 'input', side: 'left' },
+      { id: 'b1', label: 'B1', type: 'input', side: 'left' },
+      { id: 'b2', label: 'B2', type: 'input', side: 'left' },
+      { id: 'b3', label: 'B3', type: 'input', side: 'left' },
       { id: 'gt', label: 'A>B', type: 'output', side: 'right' },
       { id: 'eq', label: 'A=B', type: 'output', side: 'right' },
       { id: 'lt', label: 'A<B', type: 'output', side: 'right' }
@@ -346,6 +471,98 @@ export const COMPONENT_CATALOG: VLSIComponent[] = [
       { id: 'q2', label: 'Q2', type: 'output', side: 'right' },
       { id: 'q3', label: 'Q3', type: 'output', side: 'right' }
     ]
+  },
+  {
+    type: 'univ_shift_reg',
+    category: 'sequential_adv',
+    label: 'Universal Shift Register',
+    description: '4-bit Bidirectional USR with Parallel Load',
+    refDesPrefix: 'SHFT',
+    pins: [
+      { id: 'clk', label: '▶', type: 'input', side: 'left' },
+      { id: 's0', label: 'S0', type: 'input', side: 'bottom' },
+      { id: 's1', label: 'S1', type: 'input', side: 'bottom' },
+      { id: 'sl', label: 'SL', type: 'input', side: 'left' },
+      { id: 'sr', label: 'SR', type: 'input', side: 'left' },
+      { id: 'd0', label: 'D0', type: 'input', side: 'top' },
+      { id: 'd1', label: 'D1', type: 'input', side: 'top' },
+      { id: 'd2', label: 'D2', type: 'input', side: 'top' },
+      { id: 'd3', label: 'D3', type: 'input', side: 'top' },
+      { id: 'q0', label: 'Q0', type: 'output', side: 'right' },
+      { id: 'q1', label: 'Q1', type: 'output', side: 'right' },
+      { id: 'q2', label: 'Q2', type: 'output', side: 'right' },
+      { id: 'q3', label: 'Q3', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'reg_8bit',
+    category: 'sequential_adv',
+    label: '8-bit Register',
+    description: 'Parallel Load 8-bit Register with Enable',
+    refDesPrefix: 'REG',
+    pins: [
+      { id: 'clk', label: '▶', type: 'input', side: 'left' },
+      { id: 'en', label: 'EN', type: 'input', side: 'left' },
+      { id: 'd0', label: 'D0', type: 'input', side: 'top' },
+      { id: 'd1', label: 'D1', type: 'input', side: 'top' },
+      { id: 'd2', label: 'D2', type: 'input', side: 'top' },
+      { id: 'd3', label: 'D3', type: 'input', side: 'top' },
+      { id: 'd4', label: 'D4', type: 'input', side: 'top' },
+      { id: 'd5', label: 'D5', type: 'input', side: 'top' },
+      { id: 'd6', label: 'D6', type: 'input', side: 'top' },
+      { id: 'd7', label: 'D7', type: 'input', side: 'top' },
+      { id: 'q0', label: 'Q0', type: 'output', side: 'right' },
+      { id: 'q1', label: 'Q1', type: 'output', side: 'right' },
+      { id: 'q2', label: 'Q2', type: 'output', side: 'right' },
+      { id: 'q3', label: 'Q3', type: 'output', side: 'right' },
+      { id: 'q4', label: 'Q4', type: 'output', side: 'right' },
+      { id: 'q5', label: 'Q5', type: 'output', side: 'right' },
+      { id: 'q6', label: 'Q6', type: 'output', side: 'right' },
+      { id: 'q7', label: 'Q7', type: 'output', side: 'right' }
+    ]
+  },
+
+  // Memory
+  {
+    type: 'ram_16x4',
+    category: 'memory',
+    label: '16x4 RAM',
+    description: 'Random Access Memory (16 addresses x 4 bits)',
+    refDesPrefix: 'MEM',
+    pins: [
+      { id: 'a0', label: 'A0', type: 'input', side: 'left' },
+      { id: 'a1', label: 'A1', type: 'input', side: 'left' },
+      { id: 'a2', label: 'A2', type: 'input', side: 'left' },
+      { id: 'a3', label: 'A3', type: 'input', side: 'left' },
+      { id: 'di0', label: 'D0', type: 'input', side: 'top' },
+      { id: 'di1', label: 'D1', type: 'input', side: 'top' },
+      { id: 'di2', label: 'D2', type: 'input', side: 'top' },
+      { id: 'di3', label: 'D3', type: 'input', side: 'top' },
+      { id: 'we', label: 'WE', type: 'input', side: 'bottom' },
+      { id: 'do0', label: 'Q0', type: 'output', side: 'right' },
+      { id: 'do1', label: 'Q1', type: 'output', side: 'right' },
+      { id: 'do2', label: 'Q2', type: 'output', side: 'right' },
+      { id: 'do3', label: 'Q3', type: 'output', side: 'right' }
+    ],
+    defaultProperties: { memory: '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0' }
+  },
+  {
+    type: 'rom_16x4',
+    category: 'memory',
+    label: '16x4 ROM',
+    description: 'Read Only Memory (Pre-programmed 16x4)',
+    refDesPrefix: 'ROM',
+    pins: [
+      { id: 'a0', label: 'A0', type: 'input', side: 'left' },
+      { id: 'a1', label: 'A1', type: 'input', side: 'left' },
+      { id: 'a2', label: 'A2', type: 'input', side: 'left' },
+      { id: 'a3', label: 'A3', type: 'input', side: 'left' },
+      { id: 'q0', label: 'Q0', type: 'output', side: 'right' },
+      { id: 'q1', label: 'Q1', type: 'output', side: 'right' },
+      { id: 'q2', label: 'Q2', type: 'output', side: 'right' },
+      { id: 'q3', label: 'Q3', type: 'output', side: 'right' }
+    ],
+    defaultProperties: { data: '0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F' }
   },
 
   // Display
