@@ -774,6 +774,11 @@ const CodePlayground = ({ navigate, user }) => {
   const [nativeOutput, setNativeOutput] = useState<string | React.ReactNode>(null);
   const [isNativeSimulating, setIsNativeSimulating] = useState(false);
 
+  // Clear output when switching boards
+  useEffect(() => {
+    setNativeOutput(null);
+  }, [wokwiBoard, simCategory, language]);
+
   const handleNativeSimulate = async (simCode: string, lang: string) => {
     setIsNativeSimulating(true);
     setNativeOutput(null);
