@@ -363,8 +363,6 @@ export const COMPONENT_CATALOG: VLSIComponent[] = [
     ],
     defaultProperties: { color: 'red' }
   }
-];    ]
-  }
 ];
 
 export function getCatalogEntry(type: string): VLSIComponent | undefined {
