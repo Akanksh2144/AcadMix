@@ -15,6 +15,7 @@ interface BaseLogicNodeProps {
     properties?: Record<string, any>;
     icon?: React.ReactNode;
     svgShape?: React.ReactNode;
+    naked?: boolean; // When true: no card background — gate floats on canvas
     onPropertyChange?: (id: string, field: string, value: any) => void;
   };
   selected?: boolean;
@@ -40,14 +41,20 @@ function getHandlePosition(pin: VLSIPin, allPins: VLSIPin[]): Record<string, str
 }
 
 export default function BaseLogicNode({ id, data, selected }: BaseLogicNodeProps) {
+  const isNaked = data.naked === true;
+
   return (
     <div
-      className={`relative flex items-center justify-center p-3 rounded-xl transition-all duration-150 select-none
-        ${selected
-          ? 'ring-2 ring-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)] bg-slate-800'
-          : 'bg-slate-800/80 border border-slate-700/60 shadow-md hover:border-slate-600/60 hover:bg-slate-800'
+      className={`relative flex items-center justify-center transition-all duration-150 select-none
+        ${isNaked
+          ? selected
+            ? 'ring-2 ring-emerald-400/60 rounded-xl shadow-[0_0_16px_rgba(16,185,129,0.2)]'
+            : ''
+          : selected
+            ? 'rounded-xl ring-2 ring-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)] bg-slate-800 p-3'
+            : 'rounded-xl bg-slate-800/80 border border-slate-700/60 shadow-md hover:border-slate-600/60 hover:bg-slate-800 p-3'
         }`}
-      style={{ minWidth: 64, minHeight: 48 }}
+      style={{ minWidth: isNaked ? 0 : 64, minHeight: isNaked ? 0 : 48 }}
     >
       {/* Node Body */}
       <div className="flex flex-col items-center gap-0.5 z-10 pointer-events-none">

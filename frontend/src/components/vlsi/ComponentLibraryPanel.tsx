@@ -53,7 +53,7 @@ export default function ComponentLibraryPanel({ onAddComponent }: Props) {
         {CATEGORY_ORDER.map(cat => {
           const items = filtered.filter(c => c.category === cat);
           if (items.length === 0) return null;
-          const isOpen = expanded[cat] ?? true;
+          const isOpen = expanded[cat] ?? false;
 
           return (
             <div key={cat} className="mb-1">
