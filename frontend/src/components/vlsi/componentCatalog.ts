@@ -580,6 +580,158 @@ export const COMPONENT_CATALOG: VLSIComponent[] = [
     ],
     defaultProperties: { color: 'red' }
   }
+  },
+
+  // ─── Timing & Clock ────────────────────────────────────────────────────────
+  {
+    type: 'clk_div_2',
+    category: 'timing',
+    label: 'Clock Div /2',
+    description: 'Frequency divider by 2 using a flip-flop.',
+    refDesPrefix: 'DIV',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'out', label: 'OUT', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'clk_div_4',
+    category: 'timing',
+    label: 'Clock Div /4',
+    description: 'Frequency divider by 4.',
+    refDesPrefix: 'DIV',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'out', label: 'OUT', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'pulse_gen',
+    category: 'timing',
+    label: 'Pulse Gen',
+    description: 'Generates a single clock-cycle pulse on trigger.',
+    refDesPrefix: 'PGEN',
+    pins: [
+      { id: 'trig', label: 'TRIG', type: 'input', side: 'left' },
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'out', label: 'OUT', type: 'output', side: 'right' }
+    ]
+  },
+
+  // ─── Communication Controllers ──────────────────────────────────────────────
+  {
+    type: 'uart_tx_8bit',
+    category: 'interface',
+    label: 'UART TX',
+    description: '8-bit UART Transmitter core.',
+    refDesPrefix: 'UART',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'tx_en', label: 'EN', type: 'input', side: 'left' },
+      { id: 'd0', label: 'D0', type: 'input', side: 'bottom' },
+      { id: 'd1', label: 'D1', type: 'input', side: 'bottom' },
+      { id: 'd2', label: 'D2', type: 'input', side: 'bottom' },
+      { id: 'd3', label: 'D3', type: 'input', side: 'bottom' },
+      { id: 'd4', label: 'D4', type: 'input', side: 'bottom' },
+      { id: 'd5', label: 'D5', type: 'input', side: 'bottom' },
+      { id: 'd6', label: 'D6', type: 'input', side: 'bottom' },
+      { id: 'd7', label: 'D7', type: 'input', side: 'bottom' },
+      { id: 'txd', label: 'TXD', type: 'output', side: 'right' },
+      { id: 'busy', label: 'BUSY', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'spi_master',
+    category: 'interface',
+    label: 'SPI Master',
+    description: 'Simplified SPI Master controller.',
+    refDesPrefix: 'SPI',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'start', label: 'START', type: 'input', side: 'left' },
+      { id: 'miso', label: 'MISO', type: 'input', side: 'right' },
+      { id: 'sclk', label: 'SCLK', type: 'output', side: 'right' },
+      { id: 'mosi', label: 'MOSI', type: 'output', side: 'right' },
+      { id: 'ss', label: 'SS', type: 'output', side: 'right' }
+    ]
+  },
+
+  // ─── Advanced Arithmetic ────────────────────────────────────────────────────
+  {
+    type: 'cla_adder_4bit',
+    category: 'arithmetic',
+    label: '4-bit CLA Adder',
+    description: 'High-speed Carry Look-Ahead Adder.',
+    refDesPrefix: 'CLA',
+    pins: [
+      { id: 'a0', label: 'A0', type: 'input', side: 'left' },
+      { id: 'a1', label: 'A1', type: 'input', side: 'left' },
+      { id: 'a2', label: 'A2', type: 'input', side: 'left' },
+      { id: 'a3', label: 'A3', type: 'input', side: 'left' },
+      { id: 'b0', label: 'B0', type: 'input', side: 'left' },
+      { id: 'b1', label: 'B1', type: 'input', side: 'left' },
+      { id: 'b2', label: 'B2', type: 'input', side: 'left' },
+      { id: 'b3', label: 'B3', type: 'input', side: 'left' },
+      { id: 'cin', label: 'Ci', type: 'input', side: 'top' },
+      { id: 's0', label: 'S0', type: 'output', side: 'right' },
+      { id: 's1', label: 'S1', type: 'output', side: 'right' },
+      { id: 's2', label: 'S2', type: 'output', side: 'right' },
+      { id: 's3', label: 'S3', type: 'output', side: 'right' },
+      { id: 'cout', label: 'Co', type: 'output', side: 'top' }
+    ]
+  },
+  {
+    type: 'lfsr_8bit',
+    category: 'sequential_adv',
+    label: '8-bit LFSR',
+    description: 'Linear Feedback Shift Register for PRNG.',
+    refDesPrefix: 'PRNG',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'rst', label: 'RST', type: 'input', side: 'left' },
+      { id: 'q0', label: 'Q0', type: 'output', side: 'bottom' },
+      { id: 'q1', label: 'Q1', type: 'output', side: 'bottom' },
+      { id: 'q2', label: 'Q2', type: 'output', side: 'bottom' },
+      { id: 'q3', label: 'Q3', type: 'output', side: 'bottom' },
+      { id: 'q4', label: 'Q4', type: 'output', side: 'bottom' },
+      { id: 'q5', label: 'Q5', type: 'output', side: 'bottom' },
+      { id: 'q6', label: 'Q6', type: 'output', side: 'bottom' },
+      { id: 'q7', label: 'Q7', type: 'output', side: 'bottom' }
+    ]
+  },
+
+  // ─── Industrial Interface ───────────────────────────────────────────────────
+  {
+    type: 'pwm_gen',
+    category: 'interface',
+    label: 'PWM Gen',
+    description: '8-bit Pulse Width Modulator.',
+    refDesPrefix: 'PWM',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'd0', label: 'D0', type: 'input', side: 'bottom' },
+      { id: 'd1', label: 'D1', type: 'input', side: 'bottom' },
+      { id: 'd2', label: 'D2', type: 'input', side: 'bottom' },
+      { id: 'd3', label: 'D3', type: 'input', side: 'bottom' },
+      { id: 'd4', label: 'D4', type: 'input', side: 'bottom' },
+      { id: 'd5', label: 'D5', type: 'input', side: 'bottom' },
+      { id: 'd6', label: 'D6', type: 'input', side: 'bottom' },
+      { id: 'd7', label: 'D7', type: 'input', side: 'bottom' },
+      { id: 'pwm_out', label: 'PWM', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'debounce',
+    category: 'interface',
+    label: 'Debouncer',
+    description: 'Switch debouncing logic core.',
+    refDesPrefix: 'DBNC',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'in', label: 'IN', type: 'input', side: 'left' },
+      { id: 'out', label: 'OUT', type: 'output', side: 'right' }
+    ]
+  }
 ];
 
 export function getCatalogEntry(type: string): VLSIComponent | undefined {

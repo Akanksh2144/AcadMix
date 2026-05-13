@@ -448,6 +448,75 @@ function GateNode(props: any) {
   );
 }
 
+function TimingNode(props: any) {
+  const type = props.data.componentType as string;
+  const label = type.includes('clk_div') ? 'DIV' : 'PULSE';
+  const sub = type === 'clk_div_2' ? '/2' : type === 'clk_div_4' ? '/4' : 'GEN';
+  return (
+    <BaseLogicNode
+      {...props}
+      data={{
+        ...props.data,
+        svgShape: (
+          <svg width="60" height="72" viewBox="0 0 60 72" className="overflow-visible drop-shadow-lg">
+            <rect x="2" y="2" width="56" height="68" rx="4" fill="rgba(244,63,94,0.08)" stroke="#f43f5e" strokeWidth="1.8"/>
+            <text x="30" y="32" textAnchor="middle" fontSize="12" fill="#f43f5e" fontWeight="900" fontFamily="monospace">{label}</text>
+            <text x="30" y="48" textAnchor="middle" fontSize="10" fill="#fb7185" fontFamily="monospace">{sub}</text>
+            <path d="M 15 60 L 25 60 L 25 50 L 35 50 L 35 60 L 45 60" fill="none" stroke="#f43f5e" strokeWidth="1" />
+          </svg>
+        ),
+      }}
+    />
+  );
+}
+
+function CommunicationNode(props: any) {
+  const type = props.data.componentType as string;
+  const label = type.includes('uart') ? 'UART' : 'SPI';
+  const sub = type.includes('tx') ? 'TX' : type.includes('master') ? 'MSTR' : 'RX';
+  const color = '#8b5cf6';
+  return (
+    <BaseLogicNode
+      {...props}
+      data={{
+        ...props.data,
+        svgShape: (
+          <svg width="80" height="110" viewBox="0 0 80 110" className="overflow-visible drop-shadow-lg">
+            <rect x="2" y="2" width="76" height="106" rx="6" fill={`${color}10`} stroke={color} strokeWidth="1.8"/>
+            <text x="40" y="40" textAnchor="middle" fontSize="14" fill={color} fontWeight="900" fontFamily="monospace">{label}</text>
+            <text x="40" y="58" textAnchor="middle" fontSize="10" fill={color} opacity="0.8" fontFamily="monospace">{sub}</text>
+            <rect x="15" y="75" width="50" height="20" rx="2" fill="none" stroke={color} strokeWidth="1" strokeDasharray="2,2"/>
+            <text x="40" y="88" textAnchor="middle" fontSize="7" fill={color} fontFamily="monospace">PROTOCOL CORE</text>
+          </svg>
+        ),
+      }}
+    />
+  );
+}
+
+function InterfaceNode(props: any) {
+  const type = props.data.componentType as string;
+  const label = type === 'pwm_gen' ? 'PWM' : 'DBNC';
+  const sub = type === 'pwm_gen' ? '8-BIT' : 'CORE';
+  const color = '#0ea5e9';
+  return (
+    <BaseLogicNode
+      {...props}
+      data={{
+        ...props.data,
+        svgShape: (
+          <svg width="70" height="88" viewBox="0 0 70 88" className="overflow-visible drop-shadow-lg">
+            <rect x="2" y="2" width="66" height="84" rx="4" fill={`${color}10`} stroke={color} strokeWidth="1.8"/>
+            <text x="35" y="38" textAnchor="middle" fontSize="12" fill={color} fontWeight="900" fontFamily="monospace">{label}</text>
+            <text x="35" y="54" textAnchor="middle" fontSize="9" fill={color} opacity="0.8" fontFamily="monospace">{sub}</text>
+            <path d="M 15 70 Q 35 60 55 70" fill="none" stroke={color} strokeWidth="1" strokeDasharray="3,1" />
+          </svg>
+        ),
+      }}
+    />
+  );
+}
+
 function get7SegSegments(val: number): boolean[] {
   const map: Record<number, boolean[]> = {
     0: [true, true, true, true, true, true, false],
@@ -500,15 +569,24 @@ export const vlsiNodeTypes: Record<string, React.ComponentType<any>> = {
   full_adder:   ArithmeticNode,
   alu_4bit:     ArithmeticNode,
   multiplier_4bit: ArithmeticNode,
+  cla_adder_4bit: ArithmeticNode,
   comparator_2bit: ArithmeticNode,
   comparator_4bit: ArithmeticNode,
   counter_4bit: SequentialAdvNode,
   shift_reg_4bit: SequentialAdvNode,
   univ_shift_reg: SequentialAdvNode,
   reg_8bit:     SequentialAdvNode,
+  lfsr_8bit:    SequentialAdvNode,
   ram_16x4:     MemoryNode,
   rom_16x4:     MemoryNode,
   display_7seg: Display7SegNode,
+  clk_div_2:    TimingNode,
+  clk_div_4:    TimingNode,
+  pulse_gen:    TimingNode,
+  uart_tx_8bit: CommunicationNode,
+  spi_master:   CommunicationNode,
+  pwm_gen:      InterfaceNode,
+  debounce:     InterfaceNode,
 };
 
 // Fallback for any unlisted catalog entry

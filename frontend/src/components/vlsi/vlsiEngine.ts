@@ -351,6 +351,167 @@ export function evaluateNode(
       break;
     }
 
+    case 'clk_div_2': {
+      const clk = inputs.clk === 1;
+      const prevClk = state.prevClk === true;
+      let q = state.q ?? 0;
+      if (clk && !prevClk) q = q === 1 ? 0 : 1;
+      newState.prevClk = clk;
+      newState.q = q;
+      outputs = { out: q as LogicState };
+      break;
+    }
+
+    case 'clk_div_4': {
+      const clk = inputs.clk === 1;
+      const prevClk = state.prevClk === true;
+      let count = state.count ?? 0;
+      if (clk && !prevClk) count = (count + 1) % 4;
+      newState.prevClk = clk;
+      newState.count = count;
+      outputs = { out: toLogic(count >= 2) };
+      break;
+    }
+
+    case 'pulse_gen': {
+      const clk = inputs.clk === 1;
+      const prevClk = state.prevClk === true;
+      const trig = inputs.trig === 1;
+      const prevTrig = state.prevTrig === true;
+      let out = 0;
+      if (clk && !prevClk) {
+        if (trig && !prevTrig) out = 1;
+      }
+      newState.prevClk = clk;
+      newState.prevTrig = trig;
+      outputs = { out: out as LogicState };
+      break;
+    }
+
+    case 'uart_tx_8bit': {
+      const clk = inputs.clk === 1;
+      const prevClk = state.prevClk === true;
+      const en = inputs.tx_en === 1;
+      let busy = state.busy ?? 0;
+      let counter = state.counter ?? 0;
+      let bitIdx = state.bitIdx ?? 0;
+      let txd = state.txd ?? 1;
+
+      if (clk && !prevClk) {
+        if (!busy && en) {
+          busy = 1;
+          counter = 0;
+          bitIdx = 0;
+          txd = 0; // Start bit
+        } else if (busy) {
+          counter++;
+          if (counter >= 8) { // Simplified: 8 ticks per bit
+            counter = 0;
+            if (bitIdx < 8) {
+              txd = inputs[`d${bitIdx}`] === 1 ? 1 : 0;
+              bitIdx++;
+            } else if (bitIdx === 8) {
+              txd = 1; // Stop bit
+              bitIdx++;
+            } else {
+              busy = 0;
+              txd = 1;
+            }
+          }
+        }
+      }
+      newState.busy = busy;
+      newState.counter = counter;
+      newState.bitIdx = bitIdx;
+      newState.txd = txd;
+      newState.prevClk = clk;
+      outputs = { txd: txd as LogicState, busy: busy as LogicState };
+      break;
+    }
+
+    case 'spi_master': {
+      const clk = inputs.clk === 1;
+      const prevClk = state.prevClk === true;
+      const start = inputs.start === 1;
+      let busy = state.busy ?? 0;
+      let sclk = state.sclk ?? 0;
+      let counter = state.counter ?? 0;
+      if (clk && !prevClk) {
+        if (!busy && start) { busy = 1; counter = 0; sclk = 0; }
+        else if (busy) {
+          counter++;
+          if (counter % 2 === 0) sclk = sclk === 1 ? 0 : 1;
+          if (counter >= 16) busy = 0;
+        }
+      }
+      newState.busy = busy;
+      newState.sclk = sclk;
+      newState.counter = counter;
+      newState.prevClk = clk;
+      outputs = { sclk: sclk as LogicState, busy: busy as LogicState, mosi: 0, ss: toLogic(!busy) };
+      break;
+    }
+
+    case 'cla_adder_4bit': {
+      const a = (inputs.a3 === 1 ? 8 : 0) + (inputs.a2 === 1 ? 4 : 0) + (inputs.a1 === 1 ? 2 : 0) + (inputs.a0 === 1 ? 1 : 0);
+      const b = (inputs.b3 === 1 ? 8 : 0) + (inputs.b2 === 1 ? 4 : 0) + (inputs.b1 === 1 ? 2 : 0) + (inputs.b0 === 1 ? 1 : 0);
+      const cin = inputs.cin === 1 ? 1 : 0;
+      const res = a + b + cin;
+      for (let i = 0; i < 4; i++) outputs[`s${i}`] = toLogic((res & (1 << i)) !== 0);
+      outputs.cout = toLogic(res > 15);
+      break;
+    }
+
+    case 'lfsr_8bit': {
+      const clk = inputs.clk === 1;
+      const rst = inputs.rst === 1;
+      const prevClk = state.prevClk === true;
+      let q = state.q ?? 0x1;
+      if (rst) q = 0x1;
+      else if (clk && !prevClk) {
+        const feedback = ((q >> 7) ^ (q >> 5) ^ (q >> 4) ^ (q >> 3)) & 1;
+        q = ((q << 1) | feedback) & 0xFF;
+      }
+      newState.prevClk = clk;
+      newState.q = q;
+      for (let i = 0; i < 8; i++) outputs[`q${i}`] = toLogic((q & (1 << i)) !== 0);
+      break;
+    }
+
+    case 'pwm_gen': {
+      const clk = inputs.clk === 1;
+      const prevClk = state.prevClk === true;
+      const duty = (inputs.d7 === 1 ? 128 : 0) + (inputs.d6 === 1 ? 64 : 0) + (inputs.d5 === 1 ? 32 : 0) + (inputs.d4 === 1 ? 16 : 0) + 
+                   (inputs.d3 === 1 ? 8 : 0) + (inputs.d2 === 1 ? 4 : 0) + (inputs.d1 === 1 ? 2 : 0) + (inputs.d0 === 1 ? 1 : 0);
+      let count = state.count ?? 0;
+      if (clk && !prevClk) count = (count + 1) % 256;
+      newState.count = count;
+      newState.prevClk = clk;
+      outputs = { pwm_out: toLogic(count < duty) };
+      break;
+    }
+
+    case 'debounce': {
+      const clk = inputs.clk === 1;
+      const prevClk = state.prevClk === true;
+      const raw = inputs.in === 1;
+      let counter = state.counter ?? 0;
+      let out = state.out ?? 0;
+      if (clk && !prevClk) {
+        if (raw !== (out === 1)) {
+          counter++;
+          if (counter >= 4) { out = raw ? 1 : 0; counter = 0; }
+        } else {
+          counter = 0;
+        }
+      }
+      newState.counter = counter;
+      newState.out = out;
+      newState.prevClk = clk;
+      outputs = { out: out as LogicState };
+      break;
+    }
+
     case 'display_7seg': {
       const a = inputs.a === 1;
       const b = inputs.b === 1;
@@ -480,12 +641,26 @@ export function generateVerilog(graph: LogicGraph): string {
         instances.push(`  assign ${getWireForOutput(node.id, 'qbar')} = ~${getWireForOutput(node.id, 'q')};`);
         break;
       case 'alu_4bit':
-        instances.push(`  // 4-bit ALU instantiation here...`);
+        instances.push(`  // 4-bit ALU\n  wire [3:0] alu_a = {${getWireForInput(node.id, 'a3')}, ${getWireForInput(node.id, 'a2')}, ${getWireForInput(node.id, 'a1')}, ${getWireForInput(node.id, 'a0')}};\n  wire [3:0] alu_b = {${getWireForInput(node.id, 'b3')}, ${getWireForInput(node.id, 'b2')}, ${getWireForInput(node.id, 'b1')}, ${getWireForInput(node.id, 'b0')}};\n  wire [2:0] alu_sel = {${getWireForInput(node.id, 's2')}, ${getWireForInput(node.id, 's1')}, ${getWireForInput(node.id, 's0')}};\n  alu_core ${node.refDes} (.a(alu_a), .b(alu_b), .sel(alu_sel), .y({${getWireForOutput(node.id, 'y3')}, ${getWireForOutput(node.id, 'y2')}, ${getWireForOutput(node.id, 'y1')}, ${getWireForOutput(node.id, 'y0')}}), .cf(${getWireForOutput(node.id, 'cf')}), .zf(${getWireForOutput(node.id, 'zf')}));`);
+        break;
+      case 'multiplier_4bit':
+        instances.push(`  assign {${getWireForOutput(node.id, 'y7')}, ${getWireForOutput(node.id, 'y6')}, ${getWireForOutput(node.id, 'y5')}, ${getWireForOutput(node.id, 'y4')}, ${getWireForOutput(node.id, 'y3')}, ${getWireForOutput(node.id, 'y2')}, ${getWireForOutput(node.id, 'y1')}, ${getWireForOutput(node.id, 'y0')}} = {${getWireForInput(node.id, 'a3')}, ${getWireForInput(node.id, 'a2')}, ${getWireForInput(node.id, 'a1')}, ${getWireForInput(node.id, 'a0')}} * {${getWireForInput(node.id, 'b3')}, ${getWireForInput(node.id, 'b2')}, ${getWireForInput(node.id, 'b1')}, ${getWireForInput(node.id, 'b0')}};`);
         break;
       case 'ram_16x4':
-        instances.push(`  // RAM 16x4 instantiation here...`);
+        instances.push(`  // 16x4 RAM Module\n  ram_16x4 ${node.refDes} (.clk(clk), .addr({${getWireForInput(node.id, 'a3')}, ${getWireForInput(node.id, 'a2')}, ${getWireForInput(node.id, 'a1')}, ${getWireForInput(node.id, 'a0')}}), .we(${getWireForInput(node.id, 'we')}), .din({${getWireForInput(node.id, 'di3')}, ${getWireForInput(node.id, 'di2')}, ${getWireForInput(node.id, 'di1')}, ${getWireForInput(node.id, 'di0')}}), .dout({${getWireForOutput(node.id, 'do3')}, ${getWireForOutput(node.id, 'do2')}, ${getWireForOutput(node.id, 'do1')}, ${getWireForOutput(node.id, 'do0')}}));`);
         break;
-    }
+      case 'clk_div_2':
+        instances.push(`  always @(posedge ${getWireForInput(node.id, 'clk')}) ${getWireForOutput(node.id, 'out')} <= ~${getWireForOutput(node.id, 'out')};`);
+        break;
+      case 'uart_tx_8bit':
+        instances.push(`  uart_tx ${node.refDes} (.clk(${getWireForInput(node.id, 'clk')}), .tx_en(${getWireForInput(node.id, 'tx_en')}), .data({${getWireForInput(node.id, 'd7')}, ${getWireForInput(node.id, 'd6')}, ${getWireForInput(node.id, 'd5')}, ${getWireForInput(node.id, 'd4')}, ${getWireForInput(node.id, 'd3')}, ${getWireForInput(node.id, 'd2')}, ${getWireForInput(node.id, 'd1')}, ${getWireForInput(node.id, 'd0')}}), .txd(${getWireForOutput(node.id, 'txd')}), .busy(${getWireForOutput(node.id, 'busy')}));`);
+        break;
+      case 'pwm_gen':
+        instances.push(`  pwm_controller ${node.refDes} (.clk(${getWireForInput(node.id, 'clk')}), .duty({${getWireForInput(node.id, 'd7')}, ${getWireForInput(node.id, 'd6')}, ${getWireForInput(node.id, 'd5')}, ${getWireForInput(node.id, 'd4')}, ${getWireForInput(node.id, 'd3')}, ${getWireForInput(node.id, 'd2')}, ${getWireForInput(node.id, 'd1')}, ${getWireForInput(node.id, 'd0')}}), .pwm_out(${getWireForOutput(node.id, 'pwm_out')}));`);
+        break;
+      case 'cla_adder_4bit':
+        instances.push(`  cla_adder_4bit ${node.refDes} (.a({${getWireForInput(node.id, 'a3')}, ${getWireForInput(node.id, 'a2')}, ${getWireForInput(node.id, 'a1')}, ${getWireForInput(node.id, 'a0')}}), .b({${getWireForInput(node.id, 'b3')}, ${getWireForInput(node.id, 'b2')}, ${getWireForInput(node.id, 'b1')}, ${getWireForInput(node.id, 'b0')}}), .cin(${getWireForInput(node.id, 'cin')}), .sum({${getWireForOutput(node.id, 's3')}, ${getWireForOutput(node.id, 's2')}, ${getWireForOutput(node.id, 's1')}, ${getWireForOutput(node.id, 's0')}}), .cout(${getWireForOutput(node.id, 'cout')}));`);
+        break;
   });
 
   let portList = [...inputs, ...outputs].join(', ');
