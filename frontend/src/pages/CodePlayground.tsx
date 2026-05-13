@@ -2092,6 +2092,7 @@ const CodePlayground = ({ navigate, user }) => {
               ) : (_simActiveBoard as any)?.isNativeWasm ? (
                 <div className="w-full h-full p-2">
                   <SimulationIDE 
+                    key={(_simActiveBoard as any)?.id}
                     language={(_simActiveBoard as any)?.nativeLanguage} 
                     defaultCode={(_simActiveBoard as any)?.defaultCode || ''}
                     onSimulate={(code) => handleNativeSimulate(code, (_simActiveBoard as any)?.nativeLanguage)}
