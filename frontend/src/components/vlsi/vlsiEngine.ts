@@ -660,6 +660,21 @@ export function generateVerilog(graph: LogicGraph): string {
         break;
       case 'cla_adder_4bit':
         instances.push(`  cla_adder_4bit ${node.refDes} (.a({${getWireForInput(node.id, 'a3')}, ${getWireForInput(node.id, 'a2')}, ${getWireForInput(node.id, 'a1')}, ${getWireForInput(node.id, 'a0')}}), .b({${getWireForInput(node.id, 'b3')}, ${getWireForInput(node.id, 'b2')}, ${getWireForInput(node.id, 'b1')}, ${getWireForInput(node.id, 'b0')}}), .cin(${getWireForInput(node.id, 'cin')}), .sum({${getWireForOutput(node.id, 's3')}, ${getWireForOutput(node.id, 's2')}, ${getWireForOutput(node.id, 's1')}, ${getWireForOutput(node.id, 's0')}}), .cout(${getWireForOutput(node.id, 'cout')}));`);
+        break;
+      case 'full_subtractor':
+        instances.push(`  assign ${getWireForOutput(node.id, 'diff')} = ${getWireForInput(node.id, 'a')} ^ ${getWireForInput(node.id, 'b')} ^ ${getWireForInput(node.id, 'bin')};`);
+        instances.push(`  assign ${getWireForOutput(node.id, 'bout')} = (~${getWireForInput(node.id, 'a')} & ${getWireForInput(node.id, 'b')}) | (~(${getWireForInput(node.id, 'a')} ^ ${getWireForInput(node.id, 'b')}) & ${getWireForInput(node.id, 'bin')});`);
+        break;
+      case 'i2c_master':
+        instances.push(`  i2c_master ${node.refDes} (.clk(${getWireForInput(node.id, 'clk')}), .start(${getWireForInput(node.id, 'start')}), .sda_i(${getWireForInput(node.id, 'sda_i')}), .sda_o(${getWireForOutput(node.id, 'sda_o')}), .scl(${getWireForOutput(node.id, 'scl')}), .done(${getWireForOutput(node.id, 'done')}));`);
+        break;
+      case 'traffic_light_ctrl':
+        instances.push(`  traffic_light_fsm ${node.refDes} (.clk(${getWireForInput(node.id, 'clk')}), .sensor(${getWireForInput(node.id, 'sensor')}), .m_lights(${getWireForOutput(node.id, 'm_lights')}), .s_lights(${getWireForOutput(node.id, 's_lights')}));`);
+        break;
+      default:
+        // Generic fallback for simple components or placeholders
+        instances.push(`  // ${node.data.componentType} ${node.refDes} - Synthesis logic pending`);
+        break;
     }
   });
 

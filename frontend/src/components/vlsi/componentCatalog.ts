@@ -1,6 +1,9 @@
 import type { VLSIComponent, ComponentCategory } from './types';
 
-export const CATEGORY_ORDER: ComponentCategory[] = ['io', 'gates', 'flipflops', 'combinational', 'arithmetic', 'sequential_adv', 'memory', 'display'];
+export const CATEGORY_ORDER: ComponentCategory[] = [
+  'io', 'gates', 'flipflops', 'combinational', 'arithmetic', 'sequential_adv', 
+  'memory', 'display', 'timing', 'communication', 'interface'
+];
 
 export const CATEGORY_LABELS: Record<ComponentCategory, string> = {
   io: 'Inputs & Outputs',
@@ -11,6 +14,9 @@ export const CATEGORY_LABELS: Record<ComponentCategory, string> = {
   sequential_adv: 'Advanced Sequential',
   memory: 'Memory Elements',
   display: 'Output Displays',
+  timing: 'Timing & Clock',
+  communication: 'Communication',
+  interface: 'I/O Interface',
 };
 
 export const COMPONENT_CATALOG: VLSIComponent[] = [
@@ -579,7 +585,6 @@ export const COMPONENT_CATALOG: VLSIComponent[] = [
       { id: 'd', label: 'D', type: 'input', side: 'bottom' }
     ],
     defaultProperties: { color: 'red' }
-  }
   },
 
   // ─── Timing & Clock ────────────────────────────────────────────────────────
@@ -730,6 +735,225 @@ export const COMPONENT_CATALOG: VLSIComponent[] = [
       { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
       { id: 'in', label: 'IN', type: 'input', side: 'left' },
       { id: 'out', label: 'OUT', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'full_subtractor',
+    category: 'arithmetic',
+    label: 'Full Subtractor',
+    description: 'Binary subtractor with borrow-in.',
+    refDesPrefix: 'SUB',
+    pins: [
+      { id: 'a', label: 'A', type: 'input', side: 'left' },
+      { id: 'b', label: 'B', type: 'input', side: 'left' },
+      { id: 'bin', label: 'Bi', type: 'input', side: 'left' },
+      { id: 'diff', label: 'D', type: 'output', side: 'right' },
+      { id: 'bout', label: 'Bo', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'mag_comparator_8bit',
+    category: 'arithmetic',
+    label: '8-bit Comparator',
+    description: '8-bit magnitude comparator (A > B, A < B, A = B).',
+    refDesPrefix: 'CMP',
+    pins: [
+      { id: 'a', label: 'A[7:0]', type: 'input', side: 'left', bitWidth: 8 },
+      { id: 'b', label: 'B[7:0]', type: 'input', side: 'left', bitWidth: 8 },
+      { id: 'gt', label: 'A > B', type: 'output', side: 'right' },
+      { id: 'lt', label: 'A < B', type: 'output', side: 'right' },
+      { id: 'eq', label: 'A = B', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'bcd_adder',
+    category: 'arithmetic',
+    label: 'BCD Adder',
+    description: 'Adds two BCD digits with decimal correction.',
+    refDesPrefix: 'BCD',
+    pins: [
+      { id: 'a', label: 'A[3:0]', type: 'input', side: 'left', bitWidth: 4 },
+      { id: 'b', label: 'B[3:0]', type: 'input', side: 'left', bitWidth: 4 },
+      { id: 'cin', label: 'Ci', type: 'input', side: 'left' },
+      { id: 'sum', label: 'S[3:0]', type: 'output', side: 'right', bitWidth: 4 },
+      { id: 'cout', label: 'Co', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'johnson_counter_4bit',
+    category: 'sequential_adv',
+    label: 'Johnson Counter',
+    description: '4-bit switch-tail ring counter.',
+    refDesPrefix: 'JHN',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'rst', label: 'RST', type: 'input', side: 'left' },
+      { id: 'q0', label: 'Q0', type: 'output', side: 'right' },
+      { id: 'q1', label: 'Q1', type: 'output', side: 'right' },
+      { id: 'q2', label: 'Q2', type: 'output', side: 'right' },
+      { id: 'q3', label: 'Q3', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'ring_counter_4bit',
+    category: 'sequential_adv',
+    label: 'Ring Counter',
+    description: '4-bit simple ring counter.',
+    refDesPrefix: 'RNG',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'rst', label: 'RST', type: 'input', side: 'left' },
+      { id: 'q0', label: 'Q0', type: 'output', side: 'right' },
+      { id: 'q1', label: 'Q1', type: 'output', side: 'right' },
+      { id: 'q2', label: 'Q2', type: 'output', side: 'right' },
+      { id: 'q3', label: 'Q3', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'fifo_16x4',
+    category: 'memory',
+    label: 'FIFO Buffer',
+    description: '16x4 First-In First-Out memory buffer.',
+    refDesPrefix: 'FIFO',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'wr_en', label: 'WR', type: 'input', side: 'left' },
+      { id: 'rd_en', label: 'RD', type: 'input', side: 'left' },
+      { id: 'din', label: 'DIN[3:0]', type: 'input', side: 'bottom', bitWidth: 4 },
+      { id: 'dout', label: 'DOUT[3:0]', type: 'output', side: 'right', bitWidth: 4 },
+      { id: 'full', label: 'FULL', type: 'output', side: 'right' },
+      { id: 'empty', label: 'MT', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'i2c_master',
+    category: 'communication',
+    label: 'I2C Master',
+    description: 'I2C Bus Master Controller logic.',
+    refDesPrefix: 'I2CM',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'start', label: 'START', type: 'input', side: 'left' },
+      { id: 'sda_i', label: 'SDA_I', type: 'input', side: 'bottom' },
+      { id: 'sda_o', label: 'SDA_O', type: 'output', side: 'right' },
+      { id: 'scl', label: 'SCL', type: 'output', side: 'right' },
+      { id: 'done', label: 'DONE', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'i2c_slave',
+    category: 'communication',
+    label: 'I2C Slave',
+    description: 'I2C Bus Slave responding logic.',
+    refDesPrefix: 'I2CS',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'scl', label: 'SCL', type: 'input', side: 'left' },
+      { id: 'sda_i', label: 'SDA_I', type: 'input', side: 'bottom' },
+      { id: 'sda_o', label: 'SDA_O', type: 'output', side: 'right' },
+      { id: 'addr_match', label: 'MATCH', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'piso_8bit',
+    category: 'communication',
+    label: 'PISO (8-bit)',
+    description: 'Parallel-In Serial-Out shift register.',
+    refDesPrefix: 'PISO',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'load', label: 'LD', type: 'input', side: 'left' },
+      { id: 'din', label: 'DIN[7:0]', type: 'input', side: 'bottom', bitWidth: 8 },
+      { id: 'ser_out', label: 'SOUT', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'sipo_8bit',
+    category: 'communication',
+    label: 'SIPO (8-bit)',
+    description: 'Serial-In Parallel-Out shift register.',
+    refDesPrefix: 'SIPO',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'ser_in', label: 'SIN', type: 'input', side: 'left' },
+      { id: 'dout', label: 'DOUT[7:0]', type: 'output', side: 'right', bitWidth: 8 }
+    ]
+  },
+  {
+    type: 'keypad_encoder',
+    category: 'interface',
+    label: 'Keypad Enc',
+    description: '4x4 Matrix Keypad Encoder.',
+    refDesPrefix: 'KPD',
+    pins: [
+      { id: 'row', label: 'ROW[3:0]', type: 'input', side: 'left', bitWidth: 4 },
+      { id: 'col', label: 'COL[3:0]', type: 'output', side: 'bottom', bitWidth: 4 },
+      { id: 'val', label: 'VAL[3:0]', type: 'output', side: 'right', bitWidth: 4 },
+      { id: 'dv', label: 'DV', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'watchdog_timer',
+    category: 'timing',
+    label: 'Watchdog',
+    description: 'Watchdog timer with reset output.',
+    refDesPrefix: 'WDT',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'kick', label: 'KICK', type: 'input', side: 'left' },
+      { id: 'rst_out', label: 'RESET', type: 'output', side: 'right' }
+    ]
+  },
+  {
+    type: 'frequency_counter',
+    category: 'timing',
+    label: 'Freq Counter',
+    description: 'Logic-based frequency measurement core.',
+    refDesPrefix: 'FRQ',
+    pins: [
+      { id: 'sig_in', label: 'SIG', type: 'input', side: 'left' },
+      { id: 'ref_clk', label: 'REF', type: 'input', side: 'left' },
+      { id: 'count', label: 'CNT[15:0]', type: 'output', side: 'right', bitWidth: 16 }
+    ]
+  },
+  {
+    type: 'stepper_motor_logic',
+    category: 'interface',
+    label: 'Stepper Logic',
+    description: '4-phase stepper motor controller.',
+    refDesPrefix: 'STEP',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'en', label: 'EN', type: 'input', side: 'left' },
+      { id: 'dir', label: 'DIR', type: 'input', side: 'left' },
+      { id: 'ph', label: 'PH[3:0]', type: 'output', side: 'right', bitWidth: 4 }
+    ]
+  },
+  {
+    type: 'traffic_light_ctrl',
+    category: 'interface',
+    label: 'Traffic Ctrl',
+    description: 'FSM based traffic light controller.',
+    refDesPrefix: 'TLC',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'sensor', label: 'SNSR', type: 'input', side: 'left' },
+      { id: 'm_lights', label: 'MAIN[2:0]', type: 'output', side: 'right', bitWidth: 3 },
+      { id: 's_lights', label: 'SIDE[2:0]', type: 'output', side: 'right', bitWidth: 3 }
+    ]
+  },
+  {
+    type: 'vending_machine_logic',
+    category: 'interface',
+    label: 'Vending FSM',
+    description: 'Logic for coin collection and item release.',
+    refDesPrefix: 'VND',
+    pins: [
+      { id: 'clk', label: 'CLK', type: 'input', side: 'left' },
+      { id: 'coin_5', label: 'C5', type: 'input', side: 'left' },
+      { id: 'coin_10', label: 'C10', type: 'input', side: 'left' },
+      { id: 'release', label: 'REL', type: 'output', side: 'right' },
+      { id: 'change', label: 'CHG', type: 'output', side: 'right' }
     ]
   }
 ];
