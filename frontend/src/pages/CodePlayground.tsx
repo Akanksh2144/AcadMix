@@ -15,6 +15,7 @@ import { Simulation as EEcircuitSimulation } from 'eecircuit-engine';
 import DSPBlockSimulator from '../components/dsp/DSPBlockSimulator';
 import SettlementCalculator from '../components/civil/SettlementCalculator';
 import PCBDesignStudio from '../components/pcb/PCBDesignStudio';
+import VLSIDesignStudio from '../components/vlsi/VLSIDesignStudio';
 
 const LANGUAGES = [
   { id: 'python', label: 'Python', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
@@ -453,6 +454,12 @@ c1 3 0 1u
     { id: 'de-fulladd', label: 'Full Adder', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=fulladd.txt', openLabel: 'Open in CircuitJS' },
   ],
   vlsi: [
+    { 
+      id: 'vlsi-native-block', 
+      label: 'AcadMix Logic Studio (Native)', 
+      url: '', 
+      isNativeBlock: true 
+    },
     { 
       id: 'vlsi-native', 
       label: 'AcadMix Verilog (Native)', 
@@ -2090,6 +2097,8 @@ const CodePlayground = ({ navigate, user }) => {
                     <SettlementCalculator />
                   ) : (_simActiveBoard as any)?.id === 'pcb-native' ? (
                     <PCBDesignStudio user={user} />
+                  ) : (_simActiveBoard as any)?.id === 'vlsi-native-block' ? (
+                    <VLSIDesignStudio user={user} />
                   ) : (
                     <DSPBlockSimulator />
                   )}
