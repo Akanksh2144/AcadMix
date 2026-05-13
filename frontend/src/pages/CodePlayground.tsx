@@ -426,7 +426,15 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
     { id: 'attiny85', label: 'ATtiny85', url: 'https://wokwi.com/projects/new/attiny85', openLabel: 'Open in Wokwi' },
   ],
   analog: [
-    { id: 'ae-native-spice', label: 'AcadMix SPICE (Native)', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: 'Basic RLC circuit\\n\\nv1 1 0 pulse (0 5 1m 1m 1m 10m 20m)\\nr1 1 2 1k\\nl1 2 3 10m\\nc1 3 0 1u\\n\\n.tran 0.1m 50m\\n.end' },
+    { id: 'ae-native-spice', label: 'AcadMix SPICE (Native)', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: `* Basic RLC circuit
+
+v1 1 0 pulse (0 5 1m 1m 1m 10m 20m)
+r1 1 2 1k
+l1 2 3 10m
+c1 3 0 1u
+
+.tran 0.1m 50m
+.end` },
     { id: 'ae-blank', label: 'Blank Circuit', url: 'https://lushprojects.com/circuitjs/circuitjs.html?ctz=CQAgjCAMB0l3BWcA2aAOMB2ALGXyEBOAbmAmwmwFMBaMMAKACcQUFDxCRsKBmEbqh7ce-YUJR1BkEJByYAHiGC4ALpzV8hOvYb37MBg5QCMvIbsPG6Zjlx5A', openLabel: 'Open in CircuitJS' },
     { id: 'ae-opamp', label: 'Op-Amp', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=opamp.txt', openLabel: 'Open in CircuitJS' },
     { id: 'ae-rc', label: 'RC Low-Pass Filter', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=filt-lopass.txt', openLabel: 'Open in CircuitJS' },
