@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNodesState, useEdgesState, addEdge, type Connection, type Edge, type Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cpu, Play, Pause, StepForward, Code, Download, ArrowsClockwise } from '@phosphor-icons/react';
+import { Cpu, Play, Pause, SkipForward, Code, Download, ArrowsClockwise } from '@phosphor-icons/react';
 import ComponentLibraryPanel from './ComponentLibraryPanel';
 import PropertiesInspector from './PropertiesInspector';
 import VLSICanvas from './VLSICanvas';
@@ -223,7 +223,7 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
               disabled={isRunning}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-700/50 text-slate-300 hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <StepForward size={14} weight="fill" /> Step
+              <SkipForward size={14} weight="fill" /> Step
             </button>
             <div className="w-px h-4 bg-slate-700 mx-1"></div>
             <button 
