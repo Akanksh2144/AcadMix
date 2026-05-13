@@ -660,7 +660,7 @@ export function generateVerilog(graph: LogicGraph): string {
         break;
       case 'cla_adder_4bit':
         instances.push(`  cla_adder_4bit ${node.refDes} (.a({${getWireForInput(node.id, 'a3')}, ${getWireForInput(node.id, 'a2')}, ${getWireForInput(node.id, 'a1')}, ${getWireForInput(node.id, 'a0')}}), .b({${getWireForInput(node.id, 'b3')}, ${getWireForInput(node.id, 'b2')}, ${getWireForInput(node.id, 'b1')}, ${getWireForInput(node.id, 'b0')}}), .cin(${getWireForInput(node.id, 'cin')}), .sum({${getWireForOutput(node.id, 's3')}, ${getWireForOutput(node.id, 's2')}, ${getWireForOutput(node.id, 's1')}, ${getWireForOutput(node.id, 's0')}}), .cout(${getWireForOutput(node.id, 'cout')}));`);
-        break;
+    }
   });
 
   let portList = [...inputs, ...outputs].join(', ');
