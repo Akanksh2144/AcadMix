@@ -256,46 +256,46 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
             VLSI Logic Studio
           </h2>
 
-          <div className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center gap-1 bg-slate-900/60 p-0.5 rounded-full border border-slate-800/80">
             {/* Play / Pause */}
             <button
               onClick={() => setIsRunning(r => !r)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all whitespace-nowrap
                 ${isRunning
                   ? 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25'
-                  : 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25'
+                  : 'bg-emerald-600 text-white shadow-md'
                 }`}
             >
-              {isRunning ? <Pause size={13} weight="fill" /> : <Play size={13} weight="fill" />}
-              {isRunning ? 'Pause' : 'Play'}
+              {isRunning ? <Pause size={12} weight="fill" /> : <Play size={12} weight="fill" />}
+              {isRunning ? 'Stop' : 'Play'}
             </button>
 
             {/* Step */}
             <button
               onClick={runSimulationStep}
               disabled={isRunning}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-slate-700/40 text-slate-300 hover:bg-slate-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold text-slate-400 hover:text-slate-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
             >
-              <SkipForward size={13} weight="fill" /> Step
+              <SkipForward size={12} weight="fill" /> Step
             </button>
 
-            <div className="w-px h-4 bg-slate-700 mx-1" />
+            <div className="w-px h-3.5 bg-slate-700 mx-0.5" />
 
             {/* Gen Verilog */}
             <button
               onClick={handleGenerateCode}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-indigo-500/15 text-indigo-400 hover:bg-indigo-500/25 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap"
             >
-              <Code size={13} weight="bold" /> Verilog
+              <Code size={12} weight="bold" /> Verilog
             </button>
 
             {/* Clear */}
             <button
               onClick={handleClear}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-all"
+              className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
               title="Clear canvas"
             >
-              <Trash size={13} weight="bold" />
+              <Trash size={12} weight="bold" />
             </button>
           </div>
         </div>
