@@ -3,76 +3,101 @@ import { Handle, Position } from '@xyflow/react';
 import { VLSIPin } from '../types';
 
 interface BaseLogicNodeProps {
+  id?: string;
   data: {
-    label: string;
+    label?: string;
     refDes: string;
+    componentType?: string;
     pins: VLSIPin[];
-    state?: Record<string, any>; // Internal states
-    logicOutputs?: Record<string, any>; // Logic output states (0 or 1)
+    state?: Record<string, any>;
+    logicOutputs?: Record<string, any>;
     logicInputs?: Record<string, any>;
     properties?: Record<string, any>;
     icon?: React.ReactNode;
     svgShape?: React.ReactNode;
+    onPropertyChange?: (id: string, field: string, value: any) => void;
   };
   selected?: boolean;
 }
 
-export default function BaseLogicNode({ data, selected }: BaseLogicNodeProps) {
+function getHandlePosition(pin: VLSIPin, allPins: VLSIPin[]): Record<string, string> {
+  const sameSidePins = allPins.filter(p => p.side === pin.side);
+  const indexOnSide = sameSidePins.findIndex(p => p.id === pin.id);
+  const total = sameSidePins.length;
+  const pct = `${(100 / (total + 1)) * (indexOnSide + 1)}%`;
+
+  const style: Record<string, string> = {};
+  if (pin.side === 'left' || pin.side === 'right') {
+    style.top = pct;
+    style[pin.side] = '-6px';
+    style.transform = 'translateY(-50%)';
+  } else {
+    style.left = pct;
+    style[pin.side] = '-6px';
+    style.transform = 'translateX(-50%)';
+  }
+  return style;
+}
+
+export default function BaseLogicNode({ id, data, selected }: BaseLogicNodeProps) {
   return (
-    <div className={`relative min-w-[60px] min-h-[40px] flex items-center justify-center p-2 rounded-xl transition-all ${
-      selected ? 'ring-2 ring-emerald-500 bg-slate-800 shadow-lg shadow-emerald-500/20' : 'bg-slate-800/80 shadow border border-slate-700/50 hover:bg-slate-700'
-    }`}>
-      {/* Node Content */}
-      <div className="flex flex-col items-center gap-1 z-10">
-        {data.svgShape ? (
-          data.svgShape
-        ) : data.icon ? (
-          <div className="text-emerald-400">{data.icon}</div>
-        ) : (
-          <div className="text-xs font-bold text-slate-300 px-2">{data.label}</div>
+    <div
+      className={`relative flex items-center justify-center p-3 rounded-xl transition-all duration-150 select-none
+        ${selected
+          ? 'ring-2 ring-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)] bg-slate-800'
+          : 'bg-slate-800/80 border border-slate-700/60 shadow-md hover:border-slate-600/60 hover:bg-slate-800'
+        }`}
+      style={{ minWidth: 64, minHeight: 48 }}
+    >
+      {/* Node Body */}
+      <div className="flex flex-col items-center gap-0.5 z-10 pointer-events-none">
+        {data.svgShape ?? (
+          <div className="text-xs font-bold text-slate-300 px-2">{data.label || data.refDes}</div>
         )}
-        <div className="text-[9px] font-mono text-slate-500 mt-1">{data.properties?.label || data.refDes}</div>
       </div>
 
-      {/* Handles */}
-      {data.pins.map((pin, i) => {
-        let position = Position.Left;
-        let isRight = false;
-        if (pin.side === 'right') { position = Position.Right; isRight = true; }
-        else if (pin.side === 'top') position = Position.Top;
-        else if (pin.side === 'bottom') position = Position.Bottom;
+      {/* Handles with pin labels */}
+      {data.pins.map(pin => {
+        const rfPosition =
+          pin.side === 'right' ? Position.Right :
+          pin.side === 'top'   ? Position.Top   :
+          pin.side === 'bottom'? Position.Bottom :
+                                 Position.Left;
 
-        // Calculate logic state for this pin
-        let pinState = 'X';
-        if (pin.type === 'output' && data.logicOutputs) {
-           pinState = data.logicOutputs[pin.id] !== undefined ? data.logicOutputs[pin.id] : 'X';
-        } else if (pin.type === 'input' && data.logicInputs) {
-           pinState = data.logicInputs[pin.id] !== undefined ? data.logicInputs[pin.id] : 'X';
-        }
+        const logicVal =
+          pin.type === 'output'
+            ? data.logicOutputs?.[pin.id]
+            : data.logicInputs?.[pin.id];
 
-        const isHigh = pinState === 1 || pinState === true;
-        const isLow = pinState === 0 || pinState === false;
+        const isHigh = logicVal === 1;
+        const isLow  = logicVal === 0;
 
-        let handleColor = 'bg-slate-500 border-slate-700'; // Default undefined state
-        if (isHigh) handleColor = 'bg-emerald-500 border-emerald-700 shadow-[0_0_8px_rgba(16,185,129,0.5)]';
-        else if (isLow) handleColor = 'bg-rose-500 border-rose-700 shadow-[0_0_8px_rgba(244,63,94,0.5)]';
+        const dotClass = isHigh
+          ? 'bg-emerald-400 border-emerald-600 shadow-[0_0_6px_rgba(52,211,153,0.7)]'
+          : isLow
+            ? 'bg-rose-500 border-rose-700 shadow-[0_0_6px_rgba(244,63,94,0.6)]'
+            : 'bg-slate-500 border-slate-700';
+
+        const posStyle = getHandlePosition(pin, data.pins);
+        const isRight = pin.side === 'right';
 
         return (
-          <div key={pin.id} className="absolute" style={{
-            [pin.side === 'left' || pin.side === 'right' ? 'top' : 'left']: `${100 / (data.pins.filter(p => p.side === pin.side).length + 1) * (data.pins.filter(p => p.side === pin.side).indexOf(pin) + 1)}%`,
-            [pin.side]: '-4px',
-            transform: pin.side === 'left' ? 'translateY(-50%)' : pin.side === 'right' ? 'translateY(-50%)' : 'translateX(-50%)'
-          }}>
+          <div key={pin.id} className="absolute" style={posStyle}>
             <Handle
               type={pin.type === 'input' ? 'target' : 'source'}
-              position={position}
+              position={rfPosition}
               id={pin.id}
-              className={`!w-3 !h-3 !border-[2px] transition-colors ${handleColor}`}
+              className={`!w-3 !h-3 !border-2 transition-all duration-100 ${dotClass}`}
             />
-            {/* Pin Label */}
-            <div className={`absolute text-[8px] font-bold text-slate-400 font-mono whitespace-nowrap top-1/2 -translate-y-1/2 ${isRight ? 'right-4' : 'left-4'}`}>
-              {pin.label}
-            </div>
+            {/* Pin label — skip for nodes that show their own label */}
+            {pin.label && (
+              <span
+                className={`absolute top-1/2 -translate-y-1/2 text-[8px] font-bold font-mono text-slate-400 whitespace-nowrap pointer-events-none
+                  ${isRight ? 'right-4' : 'left-4'}`}
+              >
+                {pin.label}
+              </span>
+            )}
           </div>
         );
       })}

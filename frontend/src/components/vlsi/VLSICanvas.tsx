@@ -1,44 +1,29 @@
 import React, { useState } from 'react';
 import {
   ReactFlow, Controls, ControlButton, Background, BackgroundVariant,
-  type Connection, type Edge, type Node,
+  type Connection, type Edge, type Node, type OnNodesChange, type OnEdgesChange,
 } from '@xyflow/react';
 import { LockKey, LockKeyOpen } from '@phosphor-icons/react';
 import '@xyflow/react/dist/style.css';
 import { vlsiNodeTypes } from './nodes';
-import { toast } from 'sonner';
 
 interface Props {
   nodes: Node[];
   edges: Edge[];
-  onNodesChange: any;
-  onEdgesChange: any;
+  onNodesChange: OnNodesChange;
+  onEdgesChange: OnEdgesChange;
   onConnect: (params: Connection) => void;
   onNodeClick: (event: React.MouseEvent, node: Node) => void;
   onPaneClick: () => void;
 }
 
-export default function VLSICanvas({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, onPaneClick }: Props) {
-  const [canvasLocked, setCanvasLocked] = useState(false);
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (canvasLocked) {
-      const target = e.target as HTMLElement;
-      if (target.closest('.react-flow__controls') || target.closest('.react-flow__panel')) {
-        return;
-      }
-      toast.info('Canvas is locked', { id: 'canvas-locked-toast' });
-    }
-  };
-
-  const handleWheel = (e: React.WheelEvent) => {
-    if (canvasLocked) {
-      toast.info('Canvas is locked', { id: 'canvas-locked-toast' });
-    }
-  };
+export default function VLSICanvas({
+  nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, onPaneClick,
+}: Props) {
+  const [locked, setLocked] = useState(false);
 
   return (
-    <div className="flex-1 min-h-0 h-full" onPointerDownCapture={handlePointerDown} onWheelCapture={handleWheel}>
+    <div className="w-full h-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -49,41 +34,43 @@ export default function VLSICanvas({ nodes, edges, onNodesChange, onEdgesChange,
         onPaneClick={onPaneClick}
         nodeTypes={vlsiNodeTypes}
         fitView
+        fitViewOptions={{ padding: 0.25 }}
         deleteKeyCode="Delete"
         defaultEdgeOptions={{
+          type: 'smoothstep',
           animated: false,
-          type: 'step',
-          style: { stroke: '#475569', strokeWidth: 2 }, // Default slate wire color
+          style: { stroke: '#475569', strokeWidth: 2 },
         }}
         proOptions={{ hideAttribution: true }}
-        panOnDrag={!canvasLocked}
-        zoomOnScroll={!canvasLocked}
-        zoomOnPinch={!canvasLocked}
-        zoomOnDoubleClick={!canvasLocked}
-        nodesDraggable={!canvasLocked}
-        nodesConnectable={!canvasLocked}
-        elementsSelectable={!canvasLocked}
+        panOnDrag={!locked}
+        zoomOnScroll={!locked}
+        zoomOnPinch={!locked}
+        zoomOnDoubleClick={false}
+        nodesDraggable={!locked}
+        nodesConnectable={!locked}
+        elementsSelectable={true}
+        className="bg-[#0B0F19]"
       >
-        <Controls 
-          showInteractive={false} 
+        <Controls
+          showInteractive={false}
           position="bottom-left"
-          className="flex flex-row items-center gap-2 p-1.5 bg-slate-900/60 backdrop-blur-xl rounded-full border border-slate-700/50 shadow-2xl overflow-hidden !m-6"
+          className="!flex !flex-col !gap-1 !p-1.5 !bg-slate-900/70 !backdrop-blur-xl !rounded-2xl !border !border-slate-800 !shadow-2xl !overflow-hidden !m-4"
         >
-          <ControlButton 
-            onClick={() => setCanvasLocked(!canvasLocked)} 
-            title="Toggle Canvas Lock"
-            className={`!w-10 !h-10 !rounded-full !border-none !bg-transparent hover:!bg-slate-800/80 transition-colors flex items-center justify-center
-              ${canvasLocked ? '!text-rose-400 hover:!text-rose-300' : '!text-emerald-400 hover:!text-emerald-300'}
-            `}
+          <ControlButton
+            onClick={() => setLocked(l => !l)}
+            title={locked ? 'Unlock canvas' : 'Lock canvas'}
+            className={`!w-8 !h-8 !rounded-xl !border-none !bg-transparent flex items-center justify-center transition-colors
+              ${locked ? '!text-rose-400 hover:!bg-rose-500/10' : '!text-slate-400 hover:!text-emerald-400 hover:!bg-emerald-500/10'}`}
           >
-            {canvasLocked ? <LockKey size={20} weight="duotone" /> : <LockKeyOpen size={20} weight="duotone" />}
+            {locked ? <LockKey size={16} weight="duotone" /> : <LockKeyOpen size={16} weight="duotone" />}
           </ControlButton>
         </Controls>
+
         <Background
           variant={BackgroundVariant.Dots}
-          gap={16}
+          gap={18}
           size={1}
-          color="rgba(255, 255, 255, 0.1)"
+          color="rgba(148,163,184,0.12)"
           style={{ backgroundColor: '#0B0F19' }}
         />
       </ReactFlow>
