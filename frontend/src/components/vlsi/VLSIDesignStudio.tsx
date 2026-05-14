@@ -178,21 +178,43 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
   }, [setNodes]);
 
   const handleDeleteNode = useCallback((id: string) => {
-    setNodes(nds => nds.filter(n => n.id !== id));
-    setEdges(eds => eds.filter(e => e.source !== id && e.target !== id));
-    if (selectedId === id) setSelectedId(null);
-    toast.info('Node deleted', { duration: 1500 });
-  }, [setNodes, setEdges, selectedId]);
+    const yNodes = yDocRef.current.getMap('nodes');
+    const yEdges = yDocRef.current.getMap('edges');
+    
+    yDocRef.current.transact(() => {
+      yNodes.delete(id);
+      // Also delete connected edges from Yjs
+      yEdges.forEach((edge: any, edgeId) => {
+        if (edge.source === id || edge.target === id) {
+          yEdges.delete(edgeId);
+        }
+      });
+    });
 
-  // ─── Sync Yjs to Local State ───────────────────────────────────────────────
+    if (selectedId === id) setSelectedId(null);
+    toast.info('Component deleted', { duration: 1500 });
+  }, [selectedId]);
+
+  const onNodesDelete = useCallback((deletedNodes: Node[]) => {
+    const yNodes = yDocRef.current.getMap('nodes');
+    yDocRef.current.transact(() => {
+      deletedNodes.forEach(node => yNodes.delete(node.id));
+    });
+  }, []);
+
+  const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
+    const yEdges = yDocRef.current.getMap('edges');
+    yDocRef.current.transact(() => {
+      deletedEdges.forEach(edge => yEdges.delete(edge.id));
+    });
+  }, []);
+
+  // ─── Sync Yjs to Local State (THE SOURCE OF TRUTH) ────────────────────────
   useEffect(() => {
-    if (!isColabActive || !roomId) return;
     const yNodes = yDocRef.current.getMap('nodes');
     const yEdges = yDocRef.current.getMap('edges');
 
     const syncFromYjs = () => {
-      if (isSyncingRef.current) return;
-      isRemoteChange.current = true;
       const remoteNodes = Array.from(yNodes.values()).map((n: any) => ({
         ...n,
         data: {
@@ -201,10 +223,20 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
         }
       }));
       const remoteEdges = Array.from(yEdges.values()) as Edge[];
+      
       setNodes(remoteNodes as Node[]);
       setEdges(remoteEdges);
-      isRemoteChange.current = false;
     };
+
+    // Initialize Yjs if empty (seed it)
+    if (yNodes.size === 0 && nodes.length > 0) {
+      yDocRef.current.transact(() => {
+        nodes.forEach(n => yNodes.set(n.id, { ...n, data: { ...n.data, onPropertyChange: undefined } }));
+        edges.forEach(e => yEdges.set(e.id, e));
+      });
+    } else {
+      syncFromYjs();
+    }
 
     yNodes.observe(syncFromYjs);
     yEdges.observe(syncFromYjs);
@@ -212,37 +244,14 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
       yNodes.unobserve(syncFromYjs);
       yEdges.unobserve(syncFromYjs);
     };
-  }, [setNodes, setEdges]);
+  }, []); // Only on mount
 
-  // ─── Sync Local State to Yjs ───────────────────────────────────────────────
-  useEffect(() => {
-    if (isRemoteChange.current) return;
+  // ─── Sync Local Node Positions ONLY to Yjs (Performance) ──────────────────
+  // We handle ADD/DELETE specifically in their handlers to avoid loops
+  const onNodeDragStop = useCallback((_: any, node: Node) => {
     const yNodes = yDocRef.current.getMap('nodes');
-    const yEdges = yDocRef.current.getMap('edges');
-
-    isSyncingRef.current = true;
-    yDocRef.current.transact(() => {
-      // Add/Update
-      nodes.forEach(n => {
-        const existing = yNodes.get(n.id) as any;
-        if (!existing || JSON.stringify(existing.position) !== JSON.stringify(n.position)) {
-          yNodes.set(n.id, { ...n, data: { ...n.data, onPropertyChange: undefined } });
-        }
-      });
-      edges.forEach(e => {
-        if (!yEdges.has(e.id)) yEdges.set(e.id, e);
-      });
-
-      // Remove
-      yNodes.forEach((_, id) => {
-        if (!nodes.find(n => n.id === id)) yNodes.delete(id);
-      });
-      yEdges.forEach((_, id) => {
-        if (!edges.find(e => e.id === id)) yEdges.delete(id);
-      });
-    });
-    isSyncingRef.current = false;
-  }, [nodes, edges]);
+    yNodes.set(node.id, { ...node, data: { ...node.data, onPropertyChange: undefined } });
+  }, []);
 
   const runSimulationStep = useCallback(() => {
     setNodes(currentNodes => {
@@ -445,6 +454,8 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
               nodes={nodes} edges={edges}
               onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
               onConnect={onConnect} onNodeClick={onNodeClick} onPaneClick={onPaneClick}
+              onNodesDelete={onNodesDelete} onEdgesDelete={onEdgesDelete}
+              onNodeDragStop={onNodeDragStop}
             />
             {isRunning && (
               <div className="absolute top-4 left-4 flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-500/20 backdrop-blur pointer-events-none">

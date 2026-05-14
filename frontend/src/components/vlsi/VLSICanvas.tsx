@@ -15,10 +15,14 @@ interface Props {
   onConnect: (params: Connection) => void;
   onNodeClick: (event: React.MouseEvent, node: Node) => void;
   onPaneClick: () => void;
+  onNodesDelete: (nodes: Node[]) => void;
+  onEdgesDelete: (edges: Edge[]) => void;
+  onNodeDragStop: (event: any, node: Node) => void;
 }
 
 export default function VLSICanvas({
   nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, onPaneClick,
+  onNodesDelete, onEdgesDelete, onNodeDragStop
 }: Props) {
   const [locked, setLocked] = useState(false);
 
@@ -32,6 +36,9 @@ export default function VLSICanvas({
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
+        onNodesDelete={onNodesDelete}
+        onEdgesDelete={onEdgesDelete}
+        onNodeDragStop={onNodeDragStop}
         nodeTypes={vlsiNodeTypes}
         fitView
         fitViewOptions={{ padding: 0.25 }}
