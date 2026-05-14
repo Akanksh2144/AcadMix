@@ -39,16 +39,24 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
   const tooltipRef = React.useRef<HTMLDivElement>(null);
   const timeoutRef = React.useRef<number | null>(null);
   
+  const enterTimeoutRef = React.useRef<number | null>(null);
+  
   // Try to get a visual representation
   const NodeComp = vlsiNodeTypes[entry.type];
   const catalog = getCatalogEntry(entry.type);
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-    setIsHovered(true);
+    
+    // Set a 1-second delay before showing the tooltip
+    enterTimeoutRef.current = window.setTimeout(() => {
+      setIsHovered(true);
+    }, 1000);
   };
 
   const handleMouseLeave = () => {
+    if (enterTimeoutRef.current) window.clearTimeout(enterTimeoutRef.current);
+    
     timeoutRef.current = window.setTimeout(() => {
       setIsHovered(false);
       setTooltipStyle({ opacity: 0, visibility: 'hidden', top: 0, left: 0 });
