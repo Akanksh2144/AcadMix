@@ -3,11 +3,17 @@
 
 import type { CatalogEntry, ComponentCategory, ComponentType } from './types';
 
-function createPins(count: number, side: 'left' | 'right' | 'top' | 'bottom', startIndex: number = 1, prefix: string = '') {
+function createPins(
+  count: number, 
+  side: 'left' | 'right' | 'top' | 'bottom', 
+  startIndex: number = 1, 
+  prefix: string = '', 
+  type: 'input' | 'output' | 'bidirectional' | 'power' | 'ground' = 'bidirectional'
+) {
   return Array.from({ length: count }, (_, i) => ({
     id: `${prefix}${startIndex + i}`,
     label: `${prefix}${startIndex + i}`,
-    type: 'bidirectional' as const,
+    type,
     side,
   }));
 }
@@ -18,40 +24,40 @@ export const COMPONENT_CATALOG: CatalogEntry[] = [
   ...[10, 22, 33, 47, 100, 220, 330, 470, 680, 1000, 2200, 4700, 10000, 22000, 47000, 100000, 470000, 1000000].flatMap(v => {
     const valStr = v >= 1000000 ? `${v/1000000}M` : v >= 1000 ? `${v/1000}k` : `${v}`;
     return [
-      { type: `res_0402_${v}`, label: `Res ${valStr} 0402`, category: 'passive', description: `${valStr}Ω 0402 SMD Resistor`, refDesPrefix: 'R', defaultProperties: { value: `${valStr}Ω`, package: '0402' }, pins: createPins(2, 'horizontal' as any, 1) },
-      { type: `res_0603_${v}`, label: `Res ${valStr} 0603`, category: 'passive', description: `${valStr}Ω 0603 SMD Resistor`, refDesPrefix: 'R', defaultProperties: { value: `${valStr}Ω`, package: '0603' }, pins: createPins(2, 'horizontal' as any, 1) },
-      { type: `res_0805_${v}`, label: `Res ${valStr} 0805`, category: 'passive', description: `${valStr}Ω 0805 SMD Resistor`, refDesPrefix: 'R', defaultProperties: { value: `${valStr}Ω`, package: '0805' }, pins: createPins(2, 'horizontal' as any, 1) },
-      { type: `res_th_${v}`, label: `Res ${valStr} TH`, category: 'passive', description: `${valStr}Ω Through-hole Resistor`, refDesPrefix: 'R', defaultProperties: { value: `${valStr}Ω`, package: 'AXIAL-0.3' }, pins: createPins(2, 'horizontal' as any, 1) },
+      { type: `res_0402_${v}`, label: `Res ${valStr} 0402`, category: 'passive', description: `${valStr}Ω 0402 SMD Resistor`, refDesPrefix: 'R', defaultProperties: { value: `${valStr}Ω`, package: '0402' }, pins: createPins(2, 'left', 1) },
+      { type: `res_0603_${v}`, label: `Res ${valStr} 0603`, category: 'passive', description: `${valStr}Ω 0603 SMD Resistor`, refDesPrefix: 'R', defaultProperties: { value: `${valStr}Ω`, package: '0603' }, pins: createPins(2, 'left', 1) },
+      { type: `res_0805_${v}`, label: `Res ${valStr} 0805`, category: 'passive', description: `${valStr}Ω 0805 SMD Resistor`, refDesPrefix: 'R', defaultProperties: { value: `${valStr}Ω`, package: '0805' }, pins: createPins(2, 'left', 1) },
+      { type: `res_th_${v}`, label: `Res ${valStr} TH`, category: 'passive', description: `${valStr}Ω Through-hole Resistor`, refDesPrefix: 'R', defaultProperties: { value: `${valStr}Ω`, package: 'AXIAL-0.3' }, pins: createPins(2, 'left', 1) },
     ] as CatalogEntry[];
   }),
 
   // Capacitors: Ceramic (0402, 0603, 0805) and Electrolytic
   ...['10pF', '22pF', '47pF', '100pF', '220pF', '470pF', '1nF', '2.2nF', '4.7nF', '10nF', '22nF', '47nF', '100nF', '220nF', '470nF', '1uF', '2.2uF', '4.7uF', '10uF'].flatMap(v => {
     return [
-      { type: `cap_0402_${v.replace('.', '_')}`, label: `Cap ${v} 0402`, category: 'passive', description: `${v} 0402 SMD Capacitor`, refDesPrefix: 'C', defaultProperties: { value: v, package: '0402' }, pins: createPins(2, 'horizontal' as any, 1) },
-      { type: `cap_0603_${v.replace('.', '_')}`, label: `Cap ${v} 0603`, category: 'passive', description: `${v} 0603 SMD Capacitor`, refDesPrefix: 'C', defaultProperties: { value: v, package: '0603' }, pins: createPins(2, 'horizontal' as any, 1) },
-      { type: `cap_0805_${v.replace('.', '_')}`, label: `Cap ${v} 0805`, category: 'passive', description: `${v} 0805 SMD Capacitor`, refDesPrefix: 'C', defaultProperties: { value: v, package: '0805' }, pins: createPins(2, 'horizontal' as any, 1) },
+      { type: `cap_0402_${v.replace('.', '_')}`, label: `Cap ${v} 0402`, category: 'passive', description: `${v} 0402 SMD Capacitor`, refDesPrefix: 'C', defaultProperties: { value: v, package: '0402' }, pins: createPins(2, 'left', 1) },
+      { type: `cap_0603_${v.replace('.', '_')}`, label: `Cap ${v} 0603`, category: 'passive', description: `${v} 0603 SMD Capacitor`, refDesPrefix: 'C', defaultProperties: { value: v, package: '0603' }, pins: createPins(2, 'left', 1) },
+      { type: `cap_0805_${v.replace('.', '_')}`, label: `Cap ${v} 0805`, category: 'passive', description: `${v} 0805 SMD Capacitor`, refDesPrefix: 'C', defaultProperties: { value: v, package: '0805' }, pins: createPins(2, 'left', 1) },
     ] as CatalogEntry[];
   }),
   ...['1uF', '4.7uF', '10uF', '22uF', '47uF', '100uF', '220uF', '470uF', '1000uF'].map(v => (
-    { type: `cap_elec_${v.replace('.', '_')}`, label: `Cap ${v} Elec`, category: 'passive', description: `${v} Electrolytic Capacitor`, refDesPrefix: 'C', defaultProperties: { value: v, package: 'ELEC-CAN' }, pins: [{ id: '1', label: '+', type: 'passive', side: 'left' }, { id: '2', label: '-', type: 'passive', side: 'right' }] } as CatalogEntry
+    { type: `cap_elec_${v.replace('.', '_')}`, label: `Cap ${v} Elec`, category: 'passive', description: `${v} Electrolytic Capacitor`, refDesPrefix: 'C', defaultProperties: { value: v, package: 'ELEC-CAN' }, pins: [{ id: '1', label: '+', type: 'bidirectional', side: 'left' }, { id: '2', label: '-', type: 'bidirectional', side: 'right' }] } as CatalogEntry
   )),
 
   // Inductors
   ...['1uH', '2.2uH', '4.7uH', '10uH', '22uH', '47uH', '100uH', '220uH', '470uH', '1mH'].map(v => (
-    { type: `ind_0805_${v.replace('.', '_')}`, label: `Ind ${v} 0805`, category: 'passive', description: `${v} 0805 SMD Inductor`, refDesPrefix: 'L', defaultProperties: { value: v, package: '0805' }, pins: createPins(2, 'horizontal' as any, 1) } as CatalogEntry
+    { type: `ind_0805_${v.replace('.', '_')}`, label: `Ind ${v} 0805`, category: 'passive', description: `${v} 0805 SMD Inductor`, refDesPrefix: 'L', defaultProperties: { value: v, package: '0805' }, pins: createPins(2, 'left', 1) } as CatalogEntry
   )),
 
   // ── Active Semiconductors ──────────────────────────────────────────────────
-  { type: 'diode_1n4148', label: '1N4148', category: 'active', description: 'Signal Diode', refDesPrefix: 'D', defaultProperties: { value: '1N4148', package: 'SOD-123' }, pins: [{ id: 'a', label: 'A', type: 'passive', side: 'left' }, { id: 'k', label: 'K', type: 'passive', side: 'right' }] },
-  { type: 'diode_1n4007', label: '1N4007', category: 'active', description: 'Rectifier Diode', refDesPrefix: 'D', defaultProperties: { value: '1N4007', package: 'DO-41' }, pins: [{ id: 'a', label: 'A', type: 'passive', side: 'left' }, { id: 'k', label: 'K', type: 'passive', side: 'right' }] },
-  { type: 'led_red', label: 'LED Red', category: 'active', description: 'Red LED 0603', refDesPrefix: 'D', defaultProperties: { value: 'Red', package: '0603' }, pins: [{ id: 'a', label: 'A', type: 'passive', side: 'left' }, { id: 'k', label: 'K', type: 'passive', side: 'right' }] },
-  { type: 'led_green', label: 'LED Green', category: 'active', description: 'Green LED 0603', refDesPrefix: 'D', defaultProperties: { value: 'Green', package: '0603' }, pins: [{ id: 'a', label: 'A', type: 'passive', side: 'left' }, { id: 'k', label: 'K', type: 'passive', side: 'right' }] },
-  { type: 'led_blue', label: 'LED Blue', category: 'active', description: 'Blue LED 0603', refDesPrefix: 'D', defaultProperties: { value: 'Blue', package: '0603' }, pins: [{ id: 'a', label: 'A', type: 'passive', side: 'left' }, { id: 'k', label: 'K', type: 'passive', side: 'right' }] },
-  { type: 'bjt_2n2222', label: '2N2222 NPN', category: 'active', description: 'General Purpose NPN', refDesPrefix: 'Q', defaultProperties: { value: '2N2222', package: 'SOT-23' }, pins: [{ id: 'b', label: 'B', type: 'input', side: 'left' }, { id: 'c', label: 'C', type: 'passive', side: 'top' }, { id: 'e', label: 'E', type: 'passive', side: 'bottom' }] },
-  { type: 'bjt_2n2907', label: '2N2907 PNP', category: 'active', description: 'General Purpose PNP', refDesPrefix: 'Q', defaultProperties: { value: '2N2907', package: 'SOT-23' }, pins: [{ id: 'b', label: 'B', type: 'input', side: 'left' }, { id: 'c', label: 'C', type: 'passive', side: 'top' }, { id: 'e', label: 'E', type: 'passive', side: 'bottom' }] },
-  { type: 'mosfet_n_bss138', label: 'BSS138 N-CH', category: 'active', description: 'N-Channel Logic Level MOSFET', refDesPrefix: 'Q', defaultProperties: { value: 'BSS138', package: 'SOT-23' }, pins: [{ id: 'g', label: 'G', type: 'input', side: 'left' }, { id: 'd', label: 'D', type: 'passive', side: 'top' }, { id: 's', label: 'S', type: 'passive', side: 'bottom' }] },
-  { type: 'mosfet_p_bss84', label: 'BSS84 P-CH', category: 'active', description: 'P-Channel Logic Level MOSFET', refDesPrefix: 'Q', defaultProperties: { value: 'BSS84', package: 'SOT-23' }, pins: [{ id: 'g', label: 'G', type: 'input', side: 'left' }, { id: 'd', label: 'D', type: 'passive', side: 'top' }, { id: 's', label: 'S', type: 'passive', side: 'bottom' }] },
+  { type: 'diode_1n4148', label: '1N4148', category: 'active', description: 'Signal Diode', refDesPrefix: 'D', defaultProperties: { value: '1N4148', package: 'SOD-123' }, pins: [{ id: 'a', label: 'A', type: 'bidirectional', side: 'left' }, { id: 'k', label: 'K', type: 'bidirectional', side: 'right' }] },
+  { type: 'diode_1n4007', label: '1N4007', category: 'active', description: 'Rectifier Diode', refDesPrefix: 'D', defaultProperties: { value: '1N4007', package: 'DO-41' }, pins: [{ id: 'a', label: 'A', type: 'bidirectional', side: 'left' }, { id: 'k', label: 'K', type: 'bidirectional', side: 'right' }] },
+  { type: 'led_red', label: 'LED Red', category: 'active', description: 'Red LED 0603', refDesPrefix: 'D', defaultProperties: { value: 'Red', package: '0603' }, pins: [{ id: 'a', label: 'A', type: 'bidirectional', side: 'left' }, { id: 'k', label: 'K', type: 'bidirectional', side: 'right' }] },
+  { type: 'led_green', label: 'LED Green', category: 'active', description: 'Green LED 0603', refDesPrefix: 'D', defaultProperties: { value: 'Green', package: '0603' }, pins: [{ id: 'a', label: 'A', type: 'bidirectional', side: 'left' }, { id: 'k', label: 'K', type: 'bidirectional', side: 'right' }] },
+  { type: 'led_blue', label: 'LED Blue', category: 'active', description: 'Blue LED 0603', refDesPrefix: 'D', defaultProperties: { value: 'Blue', package: '0603' }, pins: [{ id: 'a', label: 'A', type: 'bidirectional', side: 'left' }, { id: 'k', label: 'K', type: 'bidirectional', side: 'right' }] },
+  { type: 'bjt_2n2222', label: '2N2222 NPN', category: 'active', description: 'General Purpose NPN', refDesPrefix: 'Q', defaultProperties: { value: '2N2222', package: 'SOT-23' }, pins: [{ id: 'b', label: 'B', type: 'input', side: 'left' }, { id: 'c', label: 'C', type: 'bidirectional', side: 'top' }, { id: 'e', label: 'E', type: 'bidirectional', side: 'bottom' }] },
+  { type: 'bjt_2n2907', label: '2N2907 PNP', category: 'active', description: 'General Purpose PNP', refDesPrefix: 'Q', defaultProperties: { value: '2N2907', package: 'SOT-23' }, pins: [{ id: 'b', label: 'B', type: 'input', side: 'left' }, { id: 'c', label: 'C', type: 'bidirectional', side: 'top' }, { id: 'e', label: 'E', type: 'bidirectional', side: 'bottom' }] },
+  { type: 'mosfet_n_bss138', label: 'BSS138 N-CH', category: 'active', description: 'N-Channel Logic Level MOSFET', refDesPrefix: 'Q', defaultProperties: { value: 'BSS138', package: 'SOT-23' }, pins: [{ id: 'g', label: 'G', type: 'input', side: 'left' }, { id: 'd', label: 'D', type: 'bidirectional', side: 'top' }, { id: 's', label: 'S', type: 'bidirectional', side: 'bottom' }] },
+  { type: 'mosfet_p_bss84', label: 'BSS84 P-CH', category: 'active', description: 'P-Channel Logic Level MOSFET', refDesPrefix: 'Q', defaultProperties: { value: 'BSS84', package: 'SOT-23' }, pins: [{ id: 'g', label: 'G', type: 'input', side: 'left' }, { id: 'd', label: 'D', type: 'bidirectional', side: 'top' }, { id: 's', label: 'S', type: 'bidirectional', side: 'bottom' }] },
 
   // ── ICs & Digital ──────────────────────────────────────────────────────────
   { type: 'mcu_esp32_wroom', label: 'ESP32-WROOM-32', category: 'ic', description: 'WiFi/BT SoC Module', refDesPrefix: 'U', defaultProperties: { value: 'ESP32' }, pins: [ ...createPins(19, 'left', 1), ...createPins(19, 'right', 20) ] },
