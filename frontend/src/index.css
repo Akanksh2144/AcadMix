@@ -607,3 +607,14 @@ html.dark .react-flow__controls-button {
   max-width: 14px !important;
   max-height: 14px !important;
 }
+
+/* React Flow Edge Selection Styling */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #6366f1 !important;
+  stroke-width: 4 !important;
+  filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.5)) !important;
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 3 !important;
+}

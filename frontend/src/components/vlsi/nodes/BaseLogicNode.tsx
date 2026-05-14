@@ -45,16 +45,16 @@ export default function BaseLogicNode({ id, data, selected }: BaseLogicNodeProps
 
   return (
     <div
-      className={`relative flex items-center justify-center transition-all duration-150 select-none
+      className={`relative flex items-center justify-center transition-all duration-200 select-none group
         ${isNaked
           ? selected
-            ? 'ring-2 ring-emerald-400/60 rounded-xl shadow-[0_0_16px_rgba(16,185,129,0.2)]'
-            : ''
+            ? 'ring-2 ring-indigo-500/50 rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.2)]'
+            : 'hover:ring-1 hover:ring-slate-700/50 rounded-xl'
           : selected
-            ? 'rounded-xl ring-2 ring-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)] bg-slate-800 p-3'
-            : 'rounded-xl bg-slate-800/80 border border-slate-700/60 shadow-md hover:border-slate-600/60 hover:bg-slate-800 p-3'
+            ? 'rounded-2xl ring-2 ring-indigo-500 shadow-[0_0_25px_rgba(99,102,241,0.2)] bg-[#151B2B] border border-indigo-500/30 p-4'
+            : 'rounded-2xl bg-slate-800/40 border border-slate-700/50 shadow-sm hover:border-slate-600 hover:bg-slate-800/60 p-4'
         }`}
-      style={{ minWidth: isNaked ? 0 : 64, minHeight: isNaked ? 0 : 48 }}
+      style={{ minWidth: isNaked ? 0 : 72, minHeight: isNaked ? 0 : 56 }}
     >
       {/* Node Body */}
       <div className="flex flex-col items-center gap-0.5 z-10 pointer-events-none">

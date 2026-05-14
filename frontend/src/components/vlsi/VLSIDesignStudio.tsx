@@ -68,6 +68,7 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
   const undoManagerRef = useRef<Y.UndoManager | null>(null);
   const providerRef = useRef<any>(null);
   const isRemoteChange = useRef(false);
+  const isSyncingRef = useRef(false);
 
   const simIntervalRef = useRef<number | null>(null);
   const simTimeRef = useRef<number>(0);
@@ -169,14 +170,12 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
     };
     setNodes(nds => {
       const next = nds.concat(newNode);
-      if (isColabActive) {
-        const yNodes = yDocRef.current.getMap('nodes');
-        yNodes.set(newNode.id, { ...newNode, data: { ...newNode.data, onPropertyChange: undefined } });
-      }
+      const yNodes = yDocRef.current.getMap('nodes');
+      yNodes.set(newNode.id, { ...newNode, data: { ...newNode.data, onPropertyChange: undefined } });
       return next;
     });
     toast.success(`Added ${catalog.label}`, { duration: 1500 });
-  }, [setNodes, isColabActive]);
+  }, [setNodes]);
 
   const handleDeleteNode = useCallback((id: string) => {
     setNodes(nds => nds.filter(n => n.id !== id));
@@ -192,6 +191,7 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
     const yEdges = yDocRef.current.getMap('edges');
 
     const syncFromYjs = () => {
+      if (isSyncingRef.current) return;
       isRemoteChange.current = true;
       const remoteNodes = Array.from(yNodes.values()).map((n: any) => ({
         ...n,
@@ -212,14 +212,15 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
       yNodes.unobserve(syncFromYjs);
       yEdges.unobserve(syncFromYjs);
     };
-  }, [isColabActive, roomId, setNodes, setEdges]);
+  }, [setNodes, setEdges]);
 
   // ─── Sync Local State to Yjs ───────────────────────────────────────────────
   useEffect(() => {
-    if (!isColabActive || isRemoteChange.current) return;
+    if (isRemoteChange.current) return;
     const yNodes = yDocRef.current.getMap('nodes');
     const yEdges = yDocRef.current.getMap('edges');
 
+    isSyncingRef.current = true;
     yDocRef.current.transact(() => {
       // Add/Update
       nodes.forEach(n => {
@@ -240,7 +241,8 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
         if (!edges.find(e => e.id === id)) yEdges.delete(id);
       });
     });
-  }, [nodes, edges, isColabActive]);
+    isSyncingRef.current = false;
+  }, [nodes, edges]);
 
   const runSimulationStep = useCallback(() => {
     setNodes(currentNodes => {
