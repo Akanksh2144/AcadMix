@@ -60,11 +60,35 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
 
       {/* Premium Hover Overview */}
       {isHovered && catalog && (
-        <div className="absolute left-full ml-4 top-0 z-[100] w-64 bg-[#0F172A] border border-slate-700/80 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl p-4 pointer-events-none animate-in fade-in slide-in-from-left-2 duration-200">
-           <div className="flex items-center justify-between mb-2">
-             <h4 className="text-xs font-bold text-emerald-400 tracking-tight">{catalog.label}</h4>
-             <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 rounded border border-emerald-500/20 font-bold uppercase">{catalog.category}</span>
+        <div className="absolute left-full ml-4 top-0 z-[100] w-72 bg-[#0F172A] border border-slate-700/80 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl p-0 overflow-hidden pointer-events-none animate-in fade-in slide-in-from-left-2 duration-200">
+           {/* Visual Header / Preview Area */}
+           <div className="h-32 bg-slate-900/50 flex items-center justify-center border-b border-slate-800/50 relative overflow-hidden group-hover/item:bg-slate-900/80 transition-colors">
+              <div className="absolute inset-0 opacity-10 pointer-events-none" 
+                   style={{backgroundImage: 'radial-gradient(circle at 1px 1px, #475569 1px, transparent 0)', backgroundSize: '12px 12px'}} />
+              
+              <div className="scale-110 drop-shadow-[0_0_15px_rgba(52,211,153,0.1)]">
+                {NodeComp ? (
+                  <NodeComp 
+                    data={{ 
+                      ...catalog, 
+                      refDes: catalog.refDesPrefix + '?', 
+                      pins: catalog.pins || [],
+                      logicInputs: {}, 
+                      logicOutputs: {},
+                      properties: catalog.defaultProperties || {}
+                    }} 
+                  />
+                ) : (
+                  <div className="text-[10px] text-slate-600 font-mono">NO PREVIEW</div>
+                )}
+              </div>
            </div>
+
+           <div className="p-4">
+             <div className="flex items-center justify-between mb-2">
+               <h4 className="text-xs font-bold text-emerald-400 tracking-tight">{catalog.label}</h4>
+               <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 rounded border border-emerald-500/20 font-bold uppercase">{catalog.category}</span>
+             </div>
            
            <p className="text-[10px] text-slate-400 leading-relaxed mb-3 italic">
              "{catalog.description}"

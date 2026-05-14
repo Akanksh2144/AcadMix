@@ -5,7 +5,7 @@ import { COMPONENT_CATALOG } from './componentCatalog';
 // ─── IEEE/ANSI Standard Gate SVG Bodies ───────────────────────────────────────
 // These float naked on the canvas — no card background
 
-const GateSVGs: Record<string, () => React.ReactElement> = {
+export const GateSVGs: Record<string, () => React.ReactElement> = {
   gate_and: () => (
     <svg width="64" height="48" viewBox="0 0 64 48" className="overflow-visible drop-shadow-md">
       {/* Body */}
@@ -120,7 +120,7 @@ const GateSVGs: Record<string, () => React.ReactElement> = {
 };
 
 // ─── Arithmetic Blocks ────────────────────────────────────────────────────────
-function ArithmeticNode(props: any) {
+export function ArithmeticNode(props: any) {
   const type = props.data.componentType as string;
   let label = 'ARITH';
   let color = '#ec4899';
@@ -155,7 +155,7 @@ function ArithmeticNode(props: any) {
 }
 
 // ─── Memory Elements ──────────────────────────────────────────────────────────
-function MemoryNode(props: any) {
+export function MemoryNode(props: any) {
   const type = props.data.componentType as string;
   const label = type === 'ram_16x4' ? 'RAM' : 'ROM';
   const sub = '16x4';
@@ -179,7 +179,7 @@ function MemoryNode(props: any) {
 }
 
 // ─── Advanced Sequential ──────────────────────────────────────────────────────
-function SequentialAdvNode(props: any) {
+export function SequentialAdvNode(props: any) {
   const type = props.data.componentType as string;
   let label = 'SEQ';
   let sub = '4-BIT';
@@ -212,7 +212,7 @@ function SequentialAdvNode(props: any) {
 }
 
 // ─── Logic Analyzer ───────────────────────────────────────────────────────────
-function LogicAnalyzerNode(props: any) {
+export function LogicAnalyzerNode(props: any) {
   return (
     <BaseLogicNode
       {...props}
@@ -239,7 +239,7 @@ function LogicAnalyzerNode(props: any) {
 }
 
 // ─── 7-Segment Display ────────────────────────────────────────────────────────
-function Display7SegNode(props: any) {
+export function Display7SegNode(props: any) {
   const val = props.data.logicState?.value ?? 0;
   const segments = get7SegSegments(val);
   const color = '#f87171'; // Red LED
@@ -268,7 +268,7 @@ function Display7SegNode(props: any) {
 }
 
 // ─── Flip-Flop / Latch Node ───────────────────────────────────────────────────
-function StorageNode(props: any) {
+export function StorageNode(props: any) {
   const type = props.data.componentType as string;
   const isLatch = type.includes('latch');
   const label = type.includes('_d') ? 'D' : type.includes('_t') ? 'T' : 'JK';
@@ -292,7 +292,7 @@ function StorageNode(props: any) {
 }
 
 // ─── Decoder/Mux Blocks ───────────────────────────────────────────────────────
-function MultiPinBlockNode(props: any) {
+export function MultiPinBlockNode(props: any) {
   const type = props.data.componentType as string;
   let label = 'BLOCK';
   let sub = '';
@@ -322,7 +322,7 @@ function MultiPinBlockNode(props: any) {
 }
 
 // ─── MUX 2:1 node ─────────────────────────────────────────────────────────────
-function MuxNode(props: any) {
+export function MuxNode(props: any) {
   return (
     <BaseLogicNode
       {...props}
@@ -341,7 +341,7 @@ function MuxNode(props: any) {
 }
 
 // ─── Input Switch (card-based, interactive) ────────────────────────────────────
-function InputSwitchNode(props: any) {
+export function InputSwitchNode(props: any) {
   const isHigh = props.data.logicOutputs?.out === 1;
   const handleClick = () => {
     props.data.onPropertyChange?.(props.id, 'state', isHigh ? 0 : 1);
@@ -374,7 +374,7 @@ function InputSwitchNode(props: any) {
 }
 
 // ─── Output LED (card-based) ──────────────────────────────────────────────────
-function OutputLedNode(props: any) {
+export function OutputLedNode(props: any) {
   const isHigh = props.data.logicInputs?.in === 1;
   const color  = props.data.properties?.color || 'red';
   const ledClass = isHigh
@@ -402,7 +402,7 @@ function OutputLedNode(props: any) {
 }
 
 // ─── Clock node (card-based) ──────────────────────────────────────────────────
-function ClockNode(props: any) {
+export function ClockNode(props: any) {
   const isHigh = props.data.logicOutputs?.out === 1;
   return (
     <BaseLogicNode
@@ -433,7 +433,7 @@ function ClockNode(props: any) {
 }
 
 // ─── Generic Gate Node (naked — no card bg) ───────────────────────────────────
-function GateNode(props: any) {
+export function GateNode(props: any) {
   const type  = props.data.componentType as string;
   const Shape = GateSVGs[type as keyof typeof GateSVGs];
   return (
@@ -448,7 +448,7 @@ function GateNode(props: any) {
   );
 }
 
-function TimingNode(props: any) {
+export function TimingNode(props: any) {
   const type = props.data.componentType as string;
   const label = type.includes('clk_div') ? 'DIV' : 'PULSE';
   const sub = type === 'clk_div_2' ? '/2' : type === 'clk_div_4' ? '/4' : 'GEN';
@@ -470,7 +470,7 @@ function TimingNode(props: any) {
   );
 }
 
-function CommunicationNode(props: any) {
+export function CommunicationNode(props: any) {
   const type = props.data.componentType as string;
   const label = type.includes('uart') ? 'UART' : 'SPI';
   const sub = type.includes('tx') ? 'TX' : type.includes('master') ? 'MSTR' : 'RX';
@@ -494,7 +494,7 @@ function CommunicationNode(props: any) {
   );
 }
 
-function InterfaceNode(props: any) {
+export function InterfaceNode(props: any) {
   const type = props.data.componentType as string;
   const label = type === 'pwm_gen' ? 'PWM' : 'DBNC';
   const sub = type === 'pwm_gen' ? '8-BIT' : 'CORE';
@@ -540,7 +540,7 @@ function get7SegSegments(val: number): boolean[] {
 }
 
 // ─── Generic Data-Driven Node ─────────────────────────────────────────────────
-function GenericCategoryNode(props: any) {
+export function GenericCategoryNode(props: any) {
   const type = props.data.componentType as string;
   const catalogEntry = COMPONENT_CATALOG.find(c => c.type === type);
   
