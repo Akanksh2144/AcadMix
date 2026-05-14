@@ -544,7 +544,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen }: {
             {!showWaveform && simulationHistory.length > 0 && (
               <button 
                 onClick={() => setShowWaveform(true)}
-                className="absolute bottom-4 left-4 bg-slate-900 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold font-mono shadow-xl hover:bg-slate-800 transition flex items-center gap-2"
+                className="absolute bottom-4 right-4 bg-slate-900 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold font-mono shadow-xl hover:bg-slate-800 transition flex items-center gap-2"
               >
                 <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h4l3-9 5 18 3-9h3" />
