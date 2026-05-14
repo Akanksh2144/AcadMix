@@ -539,6 +539,46 @@ function get7SegSegments(val: number): boolean[] {
   return map[val] || [false, false, false, false, false, false, false];
 }
 
+// ─── Generic Data-Driven Node ─────────────────────────────────────────────────
+function GenericCategoryNode(props: any) {
+  const type = props.data.componentType as string;
+  const catalogEntry = COMPONENT_CATALOG.find(c => c.type === type);
+  
+  const category = catalogEntry?.category || 'combinational';
+  const label = catalogEntry?.label || 'BLOCK';
+  
+  let color = '#8b5cf6'; // Default purple
+  if (category === 'arithmetic') color = '#ef4444';
+  else if (category === 'sequential_adv' || category === 'flipflops') color = '#3b82f6';
+  else if (category === 'memory') color = '#14b8a6';
+  else if (category === 'timing') color = '#f59e0b';
+  else if (category === 'communication') color = '#8b5cf6';
+  else if (category === 'interface') color = '#ec4899';
+  else if (category === 'processor') color = '#6366f1';
+  else if (category === 'dsp') color = '#f43f5e';
+  else if (category === 'testing') color = '#84cc16';
+  else if (category === 'display') color = '#06b6d4';
+  else if (category === 'annotation') color = '#94a3b8';
+
+  const width = Math.max(70, label.length * 8 + 20);
+  const height = Math.max(60, (catalogEntry?.pins?.length || 4) * 12 + 20);
+
+  return (
+    <BaseLogicNode
+      {...props}
+      data={{
+        ...props.data,
+        svgShape: (
+          <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible drop-shadow-lg">
+            <rect x="2" y="2" width={width-4} height={height-4} rx="4" fill={`${color}10`} stroke={color} strokeWidth="1.8"/>
+            <text x={width/2} y={height/2 + 4} textAnchor="middle" fontSize="10" fill={color} fontWeight="800" fontFamily="monospace">{label}</text>
+          </svg>
+        ),
+      }}
+    />
+  );
+}
+
 // ─── Node type registry ───────────────────────────────────────────────────────
 export const vlsiNodeTypes: Record<string, React.ComponentType<any>> = {
   input_switch: InputSwitchNode,
@@ -608,7 +648,7 @@ export const vlsiNodeTypes: Record<string, React.ComponentType<any>> = {
 // Fallback for any unlisted catalog entry
 COMPONENT_CATALOG.forEach(c => {
   if (!vlsiNodeTypes[c.type]) {
-    vlsiNodeTypes[c.type] = BaseLogicNode;
+    vlsiNodeTypes[c.type] = GenericCategoryNode;
   }
 });
 

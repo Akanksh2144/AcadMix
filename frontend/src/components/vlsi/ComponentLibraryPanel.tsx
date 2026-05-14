@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { MagnifyingGlass, CaretDown, CaretRight, Circuitry, Cpu, Plugs, Memory, Function, Calculator, Rows, Database, Monitor, Clock, Broadcast, ArrowsLeftRight } from '@phosphor-icons/react';
+import { MagnifyingGlass, CaretDown, CaretRight, Circuitry, Cpu, Plugs, Memory, Function, Calculator, Rows, Database, Monitor, Clock, Broadcast, ArrowsLeftRight, Waveform, Bug, TextT } from '@phosphor-icons/react';
 import { COMPONENT_CATALOG, CATEGORY_ORDER, CATEGORY_LABELS } from './componentCatalog';
 import type { ComponentCategory, VLSIComponent } from './types';
 
@@ -15,6 +15,10 @@ const CATEGORY_ICONS: Record<ComponentCategory, React.ReactNode> = {
   timing: <Clock size={14} weight="duotone" />,
   communication: <Broadcast size={14} weight="duotone" />,
   interface: <ArrowsLeftRight size={14} weight="duotone" />,
+  processor: <Cpu size={14} weight="duotone" />,
+  dsp: <Waveform size={14} weight="duotone" />,
+  testing: <Bug size={14} weight="duotone" />,
+  annotation: <TextT size={14} weight="duotone" />,
 };
 
 interface Props {

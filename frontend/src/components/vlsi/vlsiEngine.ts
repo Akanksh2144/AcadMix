@@ -1,4 +1,5 @@
 import { LogicGraph, LogicState } from './types';
+import { getCatalogEntry } from './componentCatalog';
 
 // Evaluate a single node based on inputs
 export function evaluateNode(
@@ -578,105 +579,38 @@ export function generateVerilog(graph: LogicGraph): string {
   };
 
   graph.nodes.forEach(node => {
-    switch (node.type) {
-      case 'gate_and':
-        instances.push(`  and ${node.refDes} (${getWireForOutput(node.id, 'out')}, ${getWireForInput(node.id, 'in1')}, ${getWireForInput(node.id, 'in2')});`);
-        break;
-      case 'gate_and3':
-        instances.push(`  and ${node.refDes} (${getWireForOutput(node.id, 'out')}, ${getWireForInput(node.id, 'in1')}, ${getWireForInput(node.id, 'in2')}, ${getWireForInput(node.id, 'in3')});`);
-        break;
-      case 'gate_or':
-        instances.push(`  or ${node.refDes} (${getWireForOutput(node.id, 'out')}, ${getWireForInput(node.id, 'in1')}, ${getWireForInput(node.id, 'in2')});`);
-        break;
-      case 'gate_or3':
-        instances.push(`  or ${node.refDes} (${getWireForOutput(node.id, 'out')}, ${getWireForInput(node.id, 'in1')}, ${getWireForInput(node.id, 'in2')}, ${getWireForInput(node.id, 'in3')});`);
-        break;
-      case 'gate_not':
-        instances.push(`  not ${node.refDes} (${getWireForOutput(node.id, 'out')}, ${getWireForInput(node.id, 'in')});`);
-        break;
-      case 'gate_buffer':
-        instances.push(`  buf ${node.refDes} (${getWireForOutput(node.id, 'out')}, ${getWireForInput(node.id, 'in')});`);
-        break;
-      case 'gate_nand':
-        instances.push(`  nand ${node.refDes} (${getWireForOutput(node.id, 'out')}, ${getWireForInput(node.id, 'in1')}, ${getWireForInput(node.id, 'in2')});`);
-        break;
-      case 'gate_nor':
-        instances.push(`  nor ${node.refDes} (${getWireForOutput(node.id, 'out')}, ${getWireForInput(node.id, 'in1')}, ${getWireForInput(node.id, 'in2')});`);
-        break;
-      case 'gate_xor':
-        instances.push(`  xor ${node.refDes} (${getWireForOutput(node.id, 'out')}, ${getWireForInput(node.id, 'in1')}, ${getWireForInput(node.id, 'in2')});`);
-        break;
-      case 'gate_xnor':
-        instances.push(`  xnor ${node.refDes} (${getWireForOutput(node.id, 'out')}, ${getWireForInput(node.id, 'in1')}, ${getWireForInput(node.id, 'in2')});`);
-        break;
-      case 'mux_2x1':
-        instances.push(`  assign ${getWireForOutput(node.id, 'out')} = ${getWireForInput(node.id, 'sel')} ? ${getWireForInput(node.id, 'in1')} : ${getWireForInput(node.id, 'in0')};`);
-        break;
-      case 'mux_4x1':
-        instances.push(`  assign ${getWireForOutput(node.id, 'out')} = {${getWireForInput(node.id, 's1')}, ${getWireForInput(node.id, 's0')}} == 2'd0 ? ${getWireForInput(node.id, 'in0')} : 
-                                   {${getWireForInput(node.id, 's1')}, ${getWireForInput(node.id, 's0')}} == 2'd1 ? ${getWireForInput(node.id, 'in1')} :
-                                   {${getWireForInput(node.id, 's1')}, ${getWireForInput(node.id, 's0')}} == 2'd2 ? ${getWireForInput(node.id, 'in2')} : ${getWireForInput(node.id, 'in3')};`);
-        break;
-      case 'demux_1x4':
-        instances.push(`  assign ${getWireForOutput(node.id, 'out0')} = ({${getWireForInput(node.id, 's1')}, ${getWireForInput(node.id, 's0')}} == 2'd0) ? ${getWireForInput(node.id, 'in')} : 1'b0;`);
-        instances.push(`  assign ${getWireForOutput(node.id, 'out1')} = ({${getWireForInput(node.id, 's1')}, ${getWireForInput(node.id, 's0')}} == 2'd1) ? ${getWireForInput(node.id, 'in')} : 1'b0;`);
-        instances.push(`  assign ${getWireForOutput(node.id, 'out2')} = ({${getWireForInput(node.id, 's1')}, ${getWireForInput(node.id, 's0')}} == 2'd2) ? ${getWireForInput(node.id, 'in')} : 1'b0;`);
-        instances.push(`  assign ${getWireForOutput(node.id, 'out3')} = ({${getWireForInput(node.id, 's1')}, ${getWireForInput(node.id, 's0')}} == 2'd3) ? ${getWireForInput(node.id, 'in')} : 1'b0;`);
-        break;
-      case 'decoder_3x8':
-        for (let i = 0; i < 8; i++) {
-          instances.push(`  assign ${getWireForOutput(node.id, `out${i}`)} = ({${getWireForInput(node.id, 'c')}, ${getWireForInput(node.id, 'b')}, ${getWireForInput(node.id, 'a')}} == 3'd${i});`);
-        }
-        break;
-      case 'half_adder':
-        instances.push(`  assign ${getWireForOutput(node.id, 'sum')} = ${getWireForInput(node.id, 'a')} ^ ${getWireForInput(node.id, 'b')};`);
-        instances.push(`  assign ${getWireForOutput(node.id, 'cout')} = ${getWireForInput(node.id, 'a')} & ${getWireForInput(node.id, 'b')};`);
-        break;
-      case 'full_adder':
-        instances.push(`  assign ${getWireForOutput(node.id, 'sum')} = ${getWireForInput(node.id, 'a')} ^ ${getWireForInput(node.id, 'b')} ^ ${getWireForInput(node.id, 'cin')};`);
-        instances.push(`  assign ${getWireForOutput(node.id, 'cout')} = (${getWireForInput(node.id, 'a')} & ${getWireForInput(node.id, 'b')}) | (${getWireForInput(node.id, 'cin')} & (${getWireForInput(node.id, 'a')} ^ ${getWireForInput(node.id, 'b')}));`);
-        break;
-      case 'ff_d':
-        instances.push(`  always @(posedge ${getWireForInput(node.id, 'clk')}) ${getWireForOutput(node.id, 'q')} <= ${getWireForInput(node.id, 'd')};`);
-        instances.push(`  assign ${getWireForOutput(node.id, 'qbar')} = ~${getWireForOutput(node.id, 'q')};`);
-        break;
-      case 'alu_4bit':
-        instances.push(`  // 4-bit ALU\n  wire [3:0] alu_a = {${getWireForInput(node.id, 'a3')}, ${getWireForInput(node.id, 'a2')}, ${getWireForInput(node.id, 'a1')}, ${getWireForInput(node.id, 'a0')}};\n  wire [3:0] alu_b = {${getWireForInput(node.id, 'b3')}, ${getWireForInput(node.id, 'b2')}, ${getWireForInput(node.id, 'b1')}, ${getWireForInput(node.id, 'b0')}};\n  wire [2:0] alu_sel = {${getWireForInput(node.id, 's2')}, ${getWireForInput(node.id, 's1')}, ${getWireForInput(node.id, 's0')}};\n  alu_core ${node.refDes} (.a(alu_a), .b(alu_b), .sel(alu_sel), .y({${getWireForOutput(node.id, 'y3')}, ${getWireForOutput(node.id, 'y2')}, ${getWireForOutput(node.id, 'y1')}, ${getWireForOutput(node.id, 'y0')}}), .cf(${getWireForOutput(node.id, 'cf')}), .zf(${getWireForOutput(node.id, 'zf')}));`);
-        break;
-      case 'multiplier_4bit':
-        instances.push(`  assign {${getWireForOutput(node.id, 'y7')}, ${getWireForOutput(node.id, 'y6')}, ${getWireForOutput(node.id, 'y5')}, ${getWireForOutput(node.id, 'y4')}, ${getWireForOutput(node.id, 'y3')}, ${getWireForOutput(node.id, 'y2')}, ${getWireForOutput(node.id, 'y1')}, ${getWireForOutput(node.id, 'y0')}} = {${getWireForInput(node.id, 'a3')}, ${getWireForInput(node.id, 'a2')}, ${getWireForInput(node.id, 'a1')}, ${getWireForInput(node.id, 'a0')}} * {${getWireForInput(node.id, 'b3')}, ${getWireForInput(node.id, 'b2')}, ${getWireForInput(node.id, 'b1')}, ${getWireForInput(node.id, 'b0')}};`);
-        break;
-      case 'ram_16x4':
-        instances.push(`  // 16x4 RAM Module\n  ram_16x4 ${node.refDes} (.clk(clk), .addr({${getWireForInput(node.id, 'a3')}, ${getWireForInput(node.id, 'a2')}, ${getWireForInput(node.id, 'a1')}, ${getWireForInput(node.id, 'a0')}}), .we(${getWireForInput(node.id, 'we')}), .din({${getWireForInput(node.id, 'di3')}, ${getWireForInput(node.id, 'di2')}, ${getWireForInput(node.id, 'di1')}, ${getWireForInput(node.id, 'di0')}}), .dout({${getWireForOutput(node.id, 'do3')}, ${getWireForOutput(node.id, 'do2')}, ${getWireForOutput(node.id, 'do1')}, ${getWireForOutput(node.id, 'do0')}}));`);
-        break;
-      case 'clk_div_2':
-        instances.push(`  always @(posedge ${getWireForInput(node.id, 'clk')}) ${getWireForOutput(node.id, 'out')} <= ~${getWireForOutput(node.id, 'out')};`);
-        break;
-      case 'uart_tx_8bit':
-        instances.push(`  uart_tx ${node.refDes} (.clk(${getWireForInput(node.id, 'clk')}), .tx_en(${getWireForInput(node.id, 'tx_en')}), .data({${getWireForInput(node.id, 'd7')}, ${getWireForInput(node.id, 'd6')}, ${getWireForInput(node.id, 'd5')}, ${getWireForInput(node.id, 'd4')}, ${getWireForInput(node.id, 'd3')}, ${getWireForInput(node.id, 'd2')}, ${getWireForInput(node.id, 'd1')}, ${getWireForInput(node.id, 'd0')}}), .txd(${getWireForOutput(node.id, 'txd')}), .busy(${getWireForOutput(node.id, 'busy')}));`);
-        break;
-      case 'pwm_gen':
-        instances.push(`  pwm_controller ${node.refDes} (.clk(${getWireForInput(node.id, 'clk')}), .duty({${getWireForInput(node.id, 'd7')}, ${getWireForInput(node.id, 'd6')}, ${getWireForInput(node.id, 'd5')}, ${getWireForInput(node.id, 'd4')}, ${getWireForInput(node.id, 'd3')}, ${getWireForInput(node.id, 'd2')}, ${getWireForInput(node.id, 'd1')}, ${getWireForInput(node.id, 'd0')}}), .pwm_out(${getWireForOutput(node.id, 'pwm_out')}));`);
-        break;
-      case 'cla_adder_4bit':
-        instances.push(`  cla_adder_4bit ${node.refDes} (.a({${getWireForInput(node.id, 'a3')}, ${getWireForInput(node.id, 'a2')}, ${getWireForInput(node.id, 'a1')}, ${getWireForInput(node.id, 'a0')}}), .b({${getWireForInput(node.id, 'b3')}, ${getWireForInput(node.id, 'b2')}, ${getWireForInput(node.id, 'b1')}, ${getWireForInput(node.id, 'b0')}}), .cin(${getWireForInput(node.id, 'cin')}), .sum({${getWireForOutput(node.id, 's3')}, ${getWireForOutput(node.id, 's2')}, ${getWireForOutput(node.id, 's1')}, ${getWireForOutput(node.id, 's0')}}), .cout(${getWireForOutput(node.id, 'cout')}));`);
-        break;
-      case 'full_subtractor':
-        instances.push(`  assign ${getWireForOutput(node.id, 'diff')} = ${getWireForInput(node.id, 'a')} ^ ${getWireForInput(node.id, 'b')} ^ ${getWireForInput(node.id, 'bin')};`);
-        instances.push(`  assign ${getWireForOutput(node.id, 'bout')} = (~${getWireForInput(node.id, 'a')} & ${getWireForInput(node.id, 'b')}) | (~(${getWireForInput(node.id, 'a')} ^ ${getWireForInput(node.id, 'b')}) & ${getWireForInput(node.id, 'bin')});`);
-        break;
-      case 'i2c_master':
-        instances.push(`  i2c_master ${node.refDes} (.clk(${getWireForInput(node.id, 'clk')}), .start(${getWireForInput(node.id, 'start')}), .sda_i(${getWireForInput(node.id, 'sda_i')}), .sda_o(${getWireForOutput(node.id, 'sda_o')}), .scl(${getWireForOutput(node.id, 'scl')}), .done(${getWireForOutput(node.id, 'done')}));`);
-        break;
-      case 'traffic_light_ctrl':
-        instances.push(`  traffic_light_fsm ${node.refDes} (.clk(${getWireForInput(node.id, 'clk')}), .sensor(${getWireForInput(node.id, 'sensor')}), .m_lights(${getWireForOutput(node.id, 'm_lights')}), .s_lights(${getWireForOutput(node.id, 's_lights')}));`);
-        break;
-      default:
-        // Generic fallback for simple components or placeholders
-        instances.push(`  // ${node.type} ${node.refDes} - Synthesis logic pending`);
-        break;
+    const catalogEntry = getCatalogEntry(node.type);
+
+    if (!catalogEntry || !catalogEntry.verilogTemplate) {
+      instances.push(`  // ${node.type} ${node.refDes} - Synthesis logic pending`);
+      return;
     }
+
+    let template = catalogEntry.verilogTemplate;
+
+    // Replace {{ref}}
+    template = template.replace(/\{\{ref\}\}/g, node.refDes);
+
+    // Replace {{in:id}}
+    template = template.replace(/\{\{in:([^}]+)\}\}/g, (_, pinId) => {
+      return getWireForInput(node.id, pinId);
+    });
+
+    // Replace {{out:id}}
+    template = template.replace(/\{\{out:([^}]+)\}\}/g, (_, pinId) => {
+      return getWireForOutput(node.id, pinId);
+    });
+
+    // Replace {{prop:id}}
+    template = template.replace(/\{\{prop:([^}]+)\}\}/g, (_, propId) => {
+      return node.properties[propId] !== undefined ? String(node.properties[propId]) : '0';
+    });
+
+    // Handle multiline templates properly by indenting each line
+    const indentedTemplate = template.split('\\n').map(line => `  ${line}`).join('\\n');
+    instances.push(indentedTemplate);
   });
+
 
   let portList = [...inputs, ...outputs].join(', ');
   let code = `module TopModule(${portList});\n`;
