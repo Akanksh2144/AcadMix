@@ -27,33 +27,76 @@ interface Props {
 }
 
 function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t: string) => void }) {
-  const [isHovered, setIsHovered] = React.useState(false);
-  const [tooltipPos, setTooltipPos] = React.useState({ top: 0, left: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({ 
+    opacity: 0, 
+    visibility: 'hidden',
+    top: 0,
+    left: 0
+  });
+  
   const itemRef = React.useRef<HTMLDivElement>(null);
+  const tooltipRef = React.useRef<HTMLDivElement>(null);
+  const timeoutRef = React.useRef<number | null>(null);
   
   // Try to get a visual representation
   const NodeComp = vlsiNodeTypes[entry.type];
   const catalog = getCatalogEntry(entry.type);
 
   const handleMouseEnter = () => {
-    if (itemRef.current) {
-      const rect = itemRef.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const estimatedHeight = 380; // Total height of the tooltip card
-      
-      let top = rect.top;
-      // If the tooltip would go off the bottom, shift it up
-      if (top + estimatedHeight > viewportHeight - 20) {
-        top = Math.max(20, viewportHeight - estimatedHeight - 20);
-      }
-      
-      setTooltipPos({ top, left: rect.right + 12 });
-    }
+    if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     setIsHovered(true);
   };
 
+  const handleMouseLeave = () => {
+    timeoutRef.current = window.setTimeout(() => {
+      setIsHovered(false);
+      setTooltipStyle({ opacity: 0, visibility: 'hidden', top: 0, left: 0 });
+    }, 150);
+  };
+
+  React.useLayoutEffect(() => {
+    if (isHovered && itemRef.current && tooltipRef.current) {
+      const itemRect = itemRef.current.getBoundingClientRect();
+      const tooltipRect = tooltipRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      
+      let top = itemRect.top;
+      let left = itemRect.right + 12;
+
+      // Adjust vertical if it goes off bottom
+      if (top + tooltipRect.height > viewportHeight - 20) {
+        top = Math.max(10, viewportHeight - tooltipRect.height - 10);
+      }
+      
+      // If still too tall for viewport, force top to 10 and rely on max-height scroll
+      if (tooltipRect.height > viewportHeight - 20) {
+        top = 10;
+      }
+
+      // Adjust horizontal if it goes off right
+      if (left + tooltipRect.width > viewportWidth - 20) {
+        left = Math.max(10, itemRect.left - tooltipRect.width - 12);
+      }
+
+      setTooltipStyle({
+        top: `${top}px`,
+        left: `${left}px`,
+        opacity: 1,
+        visibility: 'visible',
+        maxHeight: `${viewportHeight - 20}px`
+      });
+    }
+  }, [isHovered]);
+
   return (
-    <div className="relative group/item" ref={itemRef}>
+    <div 
+      className="relative group/item" 
+      ref={itemRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <div
         draggable
         onDragStart={(e) => {
@@ -61,8 +104,6 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
           e.dataTransfer.effectAllowed = 'move';
         }}
         onClick={() => onAddComponent(entry.type)}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={() => setIsHovered(false)}
         className="w-full flex items-center gap-3 px-3 py-2 text-left text-[11px] font-medium text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-300 rounded-lg transition-all relative overflow-hidden cursor-grab active:cursor-grabbing"
       >
         <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-emerald-400 opacity-0 group-hover/item:opacity-100 transition-opacity" />
@@ -77,14 +118,15 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
         <span className="truncate group-hover/item:translate-x-0.5 transition-transform">{entry.label}</span>
       </div>
 
-      {/* Premium Hover Overview - Using Fixed to avoid overflow clipping */}
+      {/* Premium Hover Overview - Using Fixed with Smart Positioning */}
       {isHovered && catalog && (
         <div 
-          className="fixed z-[9999] w-72 max-h-[calc(100vh-40px)] bg-[#0F172A] border border-slate-700/80 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] backdrop-blur-2xl p-0 overflow-y-auto custom-scrollbar pointer-events-none animate-in fade-in zoom-in-95 slide-in-from-left-2 duration-200"
-          style={{ top: tooltipPos.top, left: tooltipPos.left }}
+          ref={tooltipRef}
+          className="fixed z-[9999] w-72 bg-[#0F172A] border border-slate-700/80 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] backdrop-blur-2xl p-0 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 slide-in-from-left-2 duration-200 transition-all"
+          style={tooltipStyle}
         >
            {/* Visual Header / Preview Area */}
-           <div className="h-32 bg-slate-900/50 flex items-center justify-center border-b border-slate-800/50 relative overflow-hidden">
+           <div className="h-32 bg-slate-900/50 flex items-center justify-center border-b border-slate-800/50 relative overflow-hidden shrink-0">
               <div className="absolute inset-0 opacity-10 pointer-events-none" 
                    style={{backgroundImage: 'radial-gradient(circle at 1px 1px, #475569 1px, transparent 0)', backgroundSize: '12px 12px'}} />
               
