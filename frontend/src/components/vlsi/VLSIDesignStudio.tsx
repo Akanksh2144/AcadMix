@@ -4,7 +4,7 @@ import {
   type Connection, type Edge, type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, ArrowCounterClockwise, Users, Link } from '@phosphor-icons/react';
+import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import * as Y from 'yjs';
 import { WebRtcProvider } from 'y-webrtc';
@@ -45,9 +45,8 @@ const STARTER_EDGES: Edge[] = [
 ];
 
 export default function VLSIDesignStudio({ user }: { user?: any }) {
-  // We store onPropertyChange in a ref so we can reference it in starter nodes
+  // ─── States & Refs ──────────────────────────────────────────────────────────
   const onPropertyChangeRef = useRef<(id: string, f: string, v: any) => void>(() => {});
-
   const [nodes, setNodes, onNodesChange] = useNodesState(makeStarterNodes((...args) => onPropertyChangeRef.current(...args)));
   const [edges, setEdges, onEdgesChange] = useEdgesState(STARTER_EDGES);
 
@@ -60,7 +59,7 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
   const [showWaveform, setShowWaveform] = useState(false);
   const [isWaveformExpanded, setIsWaveformExpanded] = useState(false);
 
-  // ─── Collaboration State ────────────────────────────────────────────────────
+  // Collaboration State
   const [roomId, setRoomId] = useState<string | null>(null);
   const [isColabActive, setIsColabActive] = useState(false);
   const [colabUsers, setColabUsers] = useState(0);
@@ -72,7 +71,7 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
   const simTimeRef = useRef<number>(0);
   const selectedNode = nodes.find(n => n.id === selectedId);
 
-  // ─── onPropertyChange (stable ref) ─────────────────────────────────────────
+  // ─── Handlers ───────────────────────────────────────────────────────────────
   const handlePropertyChange = useCallback((id: string, field: string, value: string | number | boolean) => {
     setNodes(nds => nds.map(n => {
       if (n.id !== id) return n;
@@ -96,14 +95,35 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
     }));
   }, [setNodes]);
 
-  // Assign to ref so starter nodes (and new nodes) can call latest version
   useEffect(() => { onPropertyChangeRef.current = handlePropertyChange; }, [handlePropertyChange]);
 
-  // ─── Connect ────────────────────────────────────────────────────────────────
+  const toggleCollaboration = useCallback(() => {
+    if (isColabActive) {
+      providerRef.current?.destroy();
+      providerRef.current = null;
+      setIsColabActive(false);
+      setRoomId(null);
+      toast.success('Collaboration ended');
+    } else {
+      const id = `vlsi-${Math.random().toString(36).substring(2, 9)}`;
+      setRoomId(id);
+      
+      providerRef.current = new WebRtcProvider(id, yDocRef.current, {
+        signaling: ['wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
+      });
+
+      providerRef.current.on('peers', (params: any) => {
+        setColabUsers(params.webrtcConns.size + 1);
+      });
+
+      setIsColabActive(true);
+      toast.success(`Joined room: ${id}`);
+    }
+  }, [isColabActive]);
+
   const onConnect = useCallback((params: Connection) => {
     setEdges(eds => {
       const newEdges = addEdge({ ...params, type: 'smoothstep', style: { stroke: '#475569', strokeWidth: 2 } }, eds);
-      // Sync to Yjs if active
       if (isColabActive) {
         const yEdges = yDocRef.current.getMap('edges');
         const edgeId = `e-${params.source}-${params.target}-${params.sourceHandle}-${params.targetHandle}`;
@@ -113,14 +133,9 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
     });
   }, [setEdges, isColabActive]);
 
-  // ─── Node Click ─────────────────────────────────────────────────────────────
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    setSelectedId(node.id);
-  }, []);
-
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => setSelectedId(node.id), []);
   const onPaneClick = useCallback(() => setSelectedId(null), []);
 
-  // ─── Add Component ──────────────────────────────────────────────────────────
   const handleAddComponent = useCallback((type: string) => {
     const catalog = getCatalogEntry(type);
     if (!catalog) return;
@@ -151,7 +166,6 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
     toast.success(`Added ${catalog.label}`, { duration: 1500 });
   }, [setNodes, isColabActive]);
 
-  // ─── Delete Node ────────────────────────────────────────────────────────────
   const handleDeleteNode = useCallback((id: string) => {
     setNodes(nds => nds.filter(n => n.id !== id));
     setEdges(eds => eds.filter(e => e.source !== id && e.target !== id));
@@ -162,7 +176,6 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
   // ─── Sync Yjs to Local State ───────────────────────────────────────────────
   useEffect(() => {
     if (!isColabActive || !roomId) return;
-
     const yNodes = yDocRef.current.getMap('nodes');
     const yEdges = yDocRef.current.getMap('edges');
 
@@ -176,7 +189,6 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
         }
       }));
       const remoteEdges = Array.from(yEdges.values()) as Edge[];
-
       setNodes(remoteNodes as Node[]);
       setEdges(remoteEdges);
       isRemoteChange.current = false;
@@ -184,7 +196,6 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
 
     yNodes.observe(syncFromYjs);
     yEdges.observe(syncFromYjs);
-
     return () => {
       yNodes.unobserve(syncFromYjs);
       yEdges.unobserve(syncFromYjs);
@@ -194,7 +205,6 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
   // ─── Sync Local State to Yjs ───────────────────────────────────────────────
   useEffect(() => {
     if (!isColabActive || isRemoteChange.current) return;
-
     const yNodes = yDocRef.current.getMap('nodes');
     const yEdges = yDocRef.current.getMap('edges');
 
@@ -211,32 +221,6 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
     });
   }, [nodes, edges, isColabActive]);
 
-  // ─── Toggle Collaboration ──────────────────────────────────────────────────
-  const toggleCollaboration = useCallback(() => {
-    if (isColabActive) {
-      providerRef.current?.destroy();
-      providerRef.current = null;
-      setIsColabActive(false);
-      setRoomId(null);
-      toast.success('Collaboration ended');
-    } else {
-      const id = `vlsi-${Math.random().toString(36).substring(2, 9)}`;
-      setRoomId(id);
-      
-      providerRef.current = new WebRtcProvider(id, yDocRef.current, {
-        signaling: ['wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
-      });
-
-      providerRef.current.on('peers', (params: any) => {
-        setColabUsers(params.webrtcConns.size + 1);
-      });
-
-      setIsColabActive(true);
-      toast.success(`Joined room: ${id}`);
-    }
-  }, [isColabActive]);
-
-  // ─── Simulation Step ────────────────────────────────────────────────────────
   const runSimulationStep = useCallback(() => {
     setNodes(currentNodes => {
       // 1) Toggle clocks
@@ -272,38 +256,29 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
       // 3) Capture History for Waveform Viewer
       const currentSignals: Record<string, LogicState> = {};
       updated.forEach(n => {
-        // Use custom label if available, else refDes
         const signalName = (n.data.properties as any)?.label || n.data.refDes;
         if (signalName) {
           const outputs = n.data.logicOutputs as Record<string, LogicState> | undefined;
           const inputs = n.data.logicInputs as Record<string, LogicState> | undefined;
 
-          // If it has outputs, track the primary output
           if (outputs && Object.keys(outputs).length > 0) {
             const keys = Object.keys(outputs);
             if (keys.length === 1) {
               currentSignals[signalName] = outputs[keys[0]];
             } else {
-              keys.forEach(k => {
-                currentSignals[`${signalName}_${k}`] = outputs[k];
-              });
+              keys.forEach(k => { currentSignals[`${signalName}_${k}`] = outputs[k]; });
             }
-          } 
-          // If it's an output component (like LED) with no outputs but has an input, track the input
-          else if (inputs && Object.keys(inputs).length > 0) {
+          } else if (inputs && Object.keys(inputs).length > 0) {
             const keys = Object.keys(inputs);
             if (keys.length === 1) {
               currentSignals[signalName] = inputs[keys[0]];
             } else {
-              keys.forEach(k => {
-                currentSignals[`${signalName}_${k}`] = inputs[k];
-              });
+              keys.forEach(k => { currentSignals[`${signalName}_${k}`] = inputs[k]; });
             }
           }
         }
       });
 
-      // Async update of history
       setSimulationHistory(prev => {
         const next = [...prev, { timestamp: simTimeRef.current++, signals: currentSignals }];
         return next.length > 100 ? next.slice(next.length - 100) : next;
@@ -313,13 +288,11 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
       setEdges(currentEdges => currentEdges.map(e => {
         const src = updated.find(n => n.id === e.source);
         const val = src ? (src.data.logicOutputs as any)?.[e.sourceHandle!] : undefined;
-        const isHigh = val === 1;
-        const isLow = val === 0;
-        const color = isHigh ? '#10B981' : isLow ? '#F43F5E' : '#475569';
+        const color = val === 1 ? '#10B981' : val === 0 ? '#F43F5E' : '#475569';
         return {
           ...e,
-          animated: isHigh,
-          style: { ...e.style, stroke: color, strokeWidth: isHigh ? 2.5 : 2 },
+          animated: val === 1,
+          style: { ...e.style, stroke: color, strokeWidth: val === 1 ? 2.5 : 2 },
         };
       }));
 
@@ -327,7 +300,6 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
     });
   }, [edges, setNodes, setEdges]);
 
-  // ─── Playback interval ──────────────────────────────────────────────────────
   useEffect(() => {
     if (isRunning) {
       simIntervalRef.current = window.setInterval(runSimulationStep, 500);
@@ -337,60 +309,36 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
     return () => { if (simIntervalRef.current) clearInterval(simIntervalRef.current); };
   }, [isRunning, runSimulationStep]);
 
-  // ─── Verilog Generation ─────────────────────────────────────────────────────
-  const getGraphData = useCallback(() => {
-    return {
-      nodes: nodes.map(n => ({
-        id: n.id,
-        type: n.type ?? '',
-        properties: (n.data.properties as any) ?? {},
-        refDes: n.data.refDes as string,
-      })),
-      edges: edges.map(e => ({
-        id: e.id,
-        source: e.source,
-        sourceHandle: e.sourceHandle ?? '',
-        target: e.target,
-        targetHandle: e.targetHandle ?? '',
-      })),
-    };
-  }, [nodes, edges]);
+  const getGraphData = useCallback(() => ({
+    nodes: nodes.map(n => ({ id: n.id, type: n.type ?? '', properties: (n.data.properties as any) ?? {}, refDes: n.data.refDes as string })),
+    edges: edges.map(e => ({ id: e.id, source: e.source, sourceHandle: e.sourceHandle ?? '', target: e.target, targetHandle: e.targetHandle ?? '' })),
+  }), [nodes, edges]);
 
   const handleGenerateCode = useCallback(() => {
     try {
-      const code = generateVerilog(getGraphData());
-      setVerilogCode(code);
+      setVerilogCode(generateVerilog(getGraphData()));
       setShowCode(true);
     } catch (err) {
-      console.error('Verilog generation failed:', err);
-      toast.error('Failed to generate Verilog. Check circuit connections.');
+      toast.error('Failed to generate Verilog.');
     }
   }, [getGraphData]);
 
   const handleGenerateTestbench = useCallback(() => {
     try {
-      const code = generateTestbench(getGraphData(), 'TopModule');
-      setVerilogCode(code);
+      setVerilogCode(generateTestbench(getGraphData(), 'TopModule'));
       setShowCode(true);
       toast.success('Testbench generated!');
     } catch (err) {
-      console.error('Testbench generation failed:', err);
       toast.error('Failed to generate Testbench.');
     }
   }, [getGraphData]);
 
-  // ─── Clear Canvas ───────────────────────────────────────────────────────────
   const handleClear = useCallback(() => {
-    setNodes([]);
-    setEdges([]);
-    setSelectedId(null);
-    setIsRunning(false);
-    setSimulationHistory([]);
-    simTimeRef.current = 0;
+    setNodes([]); setEdges([]); setSelectedId(null); setIsRunning(false);
+    setSimulationHistory([]); simTimeRef.current = 0;
     toast.info('Canvas cleared');
   }, [setNodes, setEdges]);
 
-  // ─── Download Verilog ───────────────────────────────────────────────────────
   const handleDownload = useCallback(() => {
     const blob = new Blob([verilogCode], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -401,15 +349,13 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
 
   return (
     <div className="w-full h-full flex bg-[#0B0F19] text-slate-200 overflow-hidden">
-
-      {/* Left panel – component library */}
+      {/* Left panel */}
       <div className="w-60 shrink-0 h-full relative z-10 border-r border-slate-800/70">
         <ComponentLibraryPanel onAddComponent={handleAddComponent} />
       </div>
 
-      {/* Centre – canvas + toolbar */}
+      {/* Centre */}
       <div className="flex-1 flex flex-col relative h-full min-w-0">
-
         {/* Top toolbar */}
         <div className="h-12 bg-[#0F172A]/90 backdrop-blur-xl border-b border-slate-800 flex items-center justify-between px-4 shrink-0 z-10">
           <h2 className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-400 flex items-center gap-2 select-none">
@@ -417,69 +363,44 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
             VLSI Logic Studio
           </h2>
 
-          <div className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-full border border-slate-800/80 max-w-full overflow-x-auto no-scrollbar">
-            {/* Play / Pause */}
+          <div className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-full border border-slate-800/80 max-w-[60%] overflow-x-auto no-scrollbar">
             <button
               onClick={() => setIsRunning(r => !r)}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase transition-all whitespace-nowrap
-                ${isRunning
-                  ? 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25'
-                  : 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
-                }`}
+                ${isRunning ? 'bg-amber-500/15 text-amber-400' : 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'}`}
             >
               {isRunning ? <Pause size={10} weight="fill" /> : <Play size={10} weight="fill" />}
               {isRunning ? 'Stop' : 'Run'}
             </button>
 
-            {/* Step */}
             <button
               onClick={runSimulationStep}
               disabled={isRunning}
-              className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-slate-200 transition-all disabled:opacity-30 whitespace-nowrap"
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-slate-200 disabled:opacity-30"
             >
               <SkipForward size={10} weight="fill" /> Step
             </button>
 
             <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
 
-            {/* Room Collaboration */}
             <button
               onClick={toggleCollaboration}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase transition-all whitespace-nowrap relative
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase transition-all relative
                 ${isColabActive ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10'}`}
               title={isColabActive ? `In Room: ${roomId}` : 'Start Collaboration'}
             >
               <Users size={12} weight={isColabActive ? "fill" : "bold"} />
               {isColabActive ? `${colabUsers} Active` : 'Colab'}
-              {isColabActive && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-400 rounded-full animate-ping" />
-              )}
+              {isColabActive && <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-400 rounded-full animate-ping" />}
             </button>
 
             <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
 
-            {/* Gen Verilog */}
-            <button
-              onClick={handleGenerateCode}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap"
-            >
+            <button onClick={handleGenerateCode} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-slate-200">
               <Code size={12} weight="bold" /> HDL
             </button>
 
-            {/* Gen Testbench */}
-            <button
-              onClick={handleGenerateTestbench}
-              className="hidden lg:flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap"
-            >
-              <Download size={12} weight="bold" /> Bench
-            </button>
-
-            {/* Clear */}
-            <button
-              onClick={handleClear}
-              className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
-              title="Clear canvas"
-            >
+            <button onClick={handleClear} className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-rose-400">
               <Trash size={12} weight="bold" />
             </button>
           </div>
@@ -489,24 +410,16 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
         <div className="flex-1 relative bg-[#0B0F19] flex flex-col">
           <div className="flex-1 relative">
             <VLSICanvas
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onNodeClick={onNodeClick}
-              onPaneClick={onPaneClick}
+              nodes={nodes} edges={edges}
+              onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
+              onConnect={onConnect} onNodeClick={onNodeClick} onPaneClick={onPaneClick}
             />
-
-            {/* Running indicator */}
             {isRunning && (
               <div className="absolute top-4 left-4 flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-500/20 backdrop-blur pointer-events-none">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 SIMULATING
               </div>
             )}
-            
-            {/* Waveform Toggle Button */}
             {!showWaveform && simulationHistory.length > 0 && (
               <button 
                 onClick={() => setShowWaveform(true)}
@@ -515,37 +428,25 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
                 <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h4l3-9 5 18 3-9h3" />
                 </svg>
-                View Waveforms ({simulationHistory.length})
+                Waveforms ({simulationHistory.length})
               </button>
             )}
           </div>
 
-          {/* Waveform Viewer */}
           {showWaveform && !showCode && (
-            isWaveformExpanded ? (
-              <div className="absolute inset-0 z-50 bg-[#0B0F19] p-6">
-                <WaveformViewer 
-                  history={simulationHistory} 
-                  isExpanded={true}
-                  onExpandToggle={() => setIsWaveformExpanded(false)}
-                  onClose={() => setShowWaveform(false)}
-                />
-              </div>
-            ) : (
-              <div className="shrink-0 z-20 border-t border-slate-800" style={{ height: '260px' }}>
-                <WaveformViewer 
-                  history={simulationHistory} 
-                  isExpanded={false}
-                  onExpandToggle={() => setIsWaveformExpanded(true)}
-                  onClose={() => setShowWaveform(false)}
-                />
-              </div>
-            )
+            <div className={`shrink-0 z-20 border-t border-slate-800 ${isWaveformExpanded ? 'absolute inset-0' : ''}`} style={{ height: isWaveformExpanded ? '100%' : '260px' }}>
+              <WaveformViewer 
+                history={simulationHistory} 
+                isExpanded={isWaveformExpanded}
+                onExpandToggle={() => setIsWaveformExpanded(!isWaveformExpanded)}
+                onClose={() => setShowWaveform(false)}
+              />
+            </div>
           )}
         </div>
       </div>
 
-      {/* Right panel – properties */}
+      {/* Right panel */}
       <div className="w-60 shrink-0 h-full relative z-10 border-l border-slate-800/70">
         <PropertiesInspector
           selectedNode={selectedNode}
@@ -554,7 +455,7 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
         />
       </div>
 
-      {/* Verilog modal */}
+      {/* Modal */}
       {showCode && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-8">
           <div className="bg-[#0F172A] border border-slate-700 rounded-2xl w-full max-w-2xl flex flex-col shadow-2xl overflow-hidden">

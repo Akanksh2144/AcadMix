@@ -1,0 +1,7 @@
+content = open('c:/AcadMix/frontend/src/components/vlsi/VLSIDesignStudio.tsx', 'r', encoding='utf-8').read()
+print(f'Open Brace: {content.count("{")}')
+print(f'Close Brace: {content.count("}")}')
+print(f'Open Paren: {content.count("(")}')
+print(f'Close Paren: {content.count(")")}')
+print(f'Open Bracket: {content.count("[")}')
+print(f'Close Bracket: {content.count("]")}')
