@@ -115,6 +115,7 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
               <span className="text-[8px] text-slate-500">Prefix: <span className="text-slate-400">{catalog.refDesPrefix}</span></span>
               <span className="text-[8px] text-indigo-400/80 font-bold">DRAG TO ADD</span>
            </div>
+           </div>
         </div>
       )}
     </div>
