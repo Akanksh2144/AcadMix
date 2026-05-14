@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
-  useNodesState, useEdgesState, addEdge,
+  useNodesState, useEdgesState, addEdge, ReactFlowProvider,
   type Connection, type Edge, type Node, type XYPosition,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -46,7 +46,7 @@ const STARTER_EDGES: Edge[] = [
   { id: 'e3', source: 'and-1', sourceHandle: 'out', target: 'led-1', targetHandle: 'in',  type: 'smoothstep', style: { stroke: '#475569', strokeWidth: 2 } },
 ];
 
-export default function VLSIDesignStudio({ user }: { user?: any }) {
+function VLSIDesignStudioInternal({ user }: { user?: any }) {
   // ─── States & Refs ──────────────────────────────────────────────────────────
   const onPropertyChangeRef = useRef<(id: string, f: string, v: any) => void>(() => {});
   const [nodes, setNodes, onNodesChange] = useNodesState(makeStarterNodes((...args) => onPropertyChangeRef.current(...args)));
@@ -577,5 +577,13 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
         </div>
       )}
     </div>
+  );
+}
+
+export default function VLSIDesignStudio(props: { user?: any }) {
+  return (
+    <ReactFlowProvider>
+      <VLSIDesignStudioInternal {...props} />
+    </ReactFlowProvider>
   );
 }
