@@ -673,7 +673,7 @@ export function generateVerilog(graph: LogicGraph): string {
         break;
       default:
         // Generic fallback for simple components or placeholders
-        instances.push(`  // ${node.data.componentType} ${node.refDes} - Synthesis logic pending`);
+        instances.push(`  // ${node.type} ${node.refDes} - Synthesis logic pending`);
         break;
     }
   });

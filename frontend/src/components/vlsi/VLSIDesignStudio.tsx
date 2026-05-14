@@ -215,9 +215,14 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
         targetHandle: e.targetHandle ?? '',
       })),
     };
-    const code = generateVerilog(graph);
-    setVerilogCode(code);
-    setShowCode(true);
+    try {
+      const code = generateVerilog(graph);
+      setVerilogCode(code);
+      setShowCode(true);
+    } catch (err) {
+      console.error('Verilog generation failed:', err);
+      toast.error('Failed to generate Verilog. Check circuit connections.');
+    }
   }, [nodes, edges]);
 
   // ─── Clear Canvas ───────────────────────────────────────────────────────────
