@@ -629,3 +629,69 @@ export function generateVerilog(graph: LogicGraph): string {
   return code;
 }
 
+export function generateTestbench(graph: LogicGraph, moduleName: string = 'TopModule'): string {
+  const inputs: { name: string, isClock: boolean }[] = [];
+  const outputs: string[] = [];
+
+  graph.nodes.forEach(node => {
+    if (node.type === 'input_switch' || node.type === 'clock') {
+      const inName = node.properties.label || node.refDes;
+      inputs.push({ name: String(inName), isClock: node.type === 'clock' });
+    } else if (node.type === 'output_led') {
+      const outName = node.properties.label || node.refDes;
+      outputs.push(String(outName));
+    }
+  });
+
+  const portMap = [...inputs.map(i => `.${i.name}(${i.name})`), ...outputs.map(o => `.${o}(${o})`)].join(', ');
+
+  let code = `\`timescale 1ns / 1ps\n\nmodule tb_${moduleName};\n\n  // Inputs\n`;
+  inputs.forEach(i => { code += `  reg ${i.name};\n`; });
+  
+  code += `\n  // Outputs\n`;
+  outputs.forEach(o => { code += `  wire ${o};\n`; });
+
+  code += `
+  // Instantiate the Unit Under Test (UUT)
+  ${moduleName} uut (
+    ${portMap}
+  );
+
+  initial begin
+    // Setup waveform dump
+    $dumpfile("waveform.vcd");
+    $dumpvars(0, tb_${moduleName});
+    
+    // Initialize Inputs
+`;
+  inputs.forEach(i => { code += `    ${i.name} = 0;\n`; });
+
+  code += `
+    // Wait 100 ns for global reset to finish
+    #100;
+    
+    // Add stimulus here
+`;
+  
+  const dataInputs = inputs.filter(i => !i.isClock);
+  if (dataInputs.length > 0) {
+    code += `    // Example toggle:\n`;
+    code += `    #20 ${dataInputs.map(i => i.name).join(' = ~')} = ~${dataInputs[0].name};\n`;
+  }
+
+  code += `
+    #1000 $finish;
+  end
+`;
+
+  const clocks = inputs.filter(i => i.isClock);
+  if (clocks.length > 0) {
+    code += `\n  // Clock generation\n`;
+    clocks.forEach(c => {
+      code += `  always #5 ${c.name} = ~${c.name};\n`;
+    });
+  }
+
+  code += `\nendmodule\n`;
+  return code;
+}

@@ -4,14 +4,17 @@ import {
   type Connection, type Edge, type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, ArrowCounterClockwise } from '@phosphor-icons/react';
+import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, ArrowCounterClockwise, Users, Link } from '@phosphor-icons/react';
 import { toast } from 'sonner';
+import * as Y from 'yjs';
+import { WebRtcProvider } from 'y-webrtc';
 import ComponentLibraryPanel from './ComponentLibraryPanel';
 import PropertiesInspector from './PropertiesInspector';
 import VLSICanvas from './VLSICanvas';
 import { getCatalogEntry } from './componentCatalog';
-import { evaluateNode, generateVerilog } from './vlsiEngine';
-import type { LogicState } from './types';
+import { evaluateNode, generateVerilog, generateTestbench } from './vlsiEngine';
+import type { LogicState, TimingData } from './types';
+import WaveformViewer from './WaveformViewer';
 
 let nodeCounter = 10;
 
@@ -52,8 +55,21 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
   const [isRunning, setIsRunning] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [verilogCode, setVerilogCode] = useState('');
+  
+  const [simulationHistory, setSimulationHistory] = useState<TimingData[]>([]);
+  const [showWaveform, setShowWaveform] = useState(false);
+  const [isWaveformExpanded, setIsWaveformExpanded] = useState(false);
+
+  // ─── Collaboration State ────────────────────────────────────────────────────
+  const [roomId, setRoomId] = useState<string | null>(null);
+  const [isColabActive, setIsColabActive] = useState(false);
+  const [colabUsers, setColabUsers] = useState(0);
+  const yDocRef = useRef<Y.Doc>(new Y.Doc());
+  const providerRef = useRef<any>(null);
+  const isRemoteChange = useRef(false);
 
   const simIntervalRef = useRef<number | null>(null);
+  const simTimeRef = useRef<number>(0);
   const selectedNode = nodes.find(n => n.id === selectedId);
 
   // ─── onPropertyChange (stable ref) ─────────────────────────────────────────
@@ -85,8 +101,17 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
 
   // ─── Connect ────────────────────────────────────────────────────────────────
   const onConnect = useCallback((params: Connection) => {
-    setEdges(eds => addEdge({ ...params, type: 'smoothstep', style: { stroke: '#475569', strokeWidth: 2 } }, eds));
-  }, [setEdges]);
+    setEdges(eds => {
+      const newEdges = addEdge({ ...params, type: 'smoothstep', style: { stroke: '#475569', strokeWidth: 2 } }, eds);
+      // Sync to Yjs if active
+      if (isColabActive) {
+        const yEdges = yDocRef.current.getMap('edges');
+        const edgeId = `e-${params.source}-${params.target}-${params.sourceHandle}-${params.targetHandle}`;
+        yEdges.set(edgeId, { ...params, type: 'smoothstep', id: edgeId });
+      }
+      return newEdges;
+    });
+  }, [setEdges, isColabActive]);
 
   // ─── Node Click ─────────────────────────────────────────────────────────────
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
@@ -115,9 +140,16 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
         onPropertyChange: (...args: [string, string, any]) => onPropertyChangeRef.current(...args),
       },
     };
-    setNodes(nds => [...nds, newNode]);
+    setNodes(nds => {
+      const next = nds.concat(newNode);
+      if (isColabActive) {
+        const yNodes = yDocRef.current.getMap('nodes');
+        yNodes.set(newNode.id, { ...newNode, data: { ...newNode.data, onPropertyChange: undefined } });
+      }
+      return next;
+    });
     toast.success(`Added ${catalog.label}`, { duration: 1500 });
-  }, [setNodes]);
+  }, [setNodes, isColabActive]);
 
   // ─── Delete Node ────────────────────────────────────────────────────────────
   const handleDeleteNode = useCallback((id: string) => {
@@ -127,10 +159,87 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
     toast.info('Node deleted', { duration: 1500 });
   }, [setNodes, setEdges, selectedId]);
 
+  // ─── Sync Yjs to Local State ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!isColabActive || !roomId) return;
+
+    const yNodes = yDocRef.current.getMap('nodes');
+    const yEdges = yDocRef.current.getMap('edges');
+
+    const syncFromYjs = () => {
+      isRemoteChange.current = true;
+      const remoteNodes = Array.from(yNodes.values()).map((n: any) => ({
+        ...n,
+        data: {
+          ...n.data,
+          onPropertyChange: (...args: [string, string, any]) => onPropertyChangeRef.current(...args),
+        }
+      }));
+      const remoteEdges = Array.from(yEdges.values()) as Edge[];
+
+      setNodes(remoteNodes as Node[]);
+      setEdges(remoteEdges);
+      isRemoteChange.current = false;
+    };
+
+    yNodes.observe(syncFromYjs);
+    yEdges.observe(syncFromYjs);
+
+    return () => {
+      yNodes.unobserve(syncFromYjs);
+      yEdges.unobserve(syncFromYjs);
+    };
+  }, [isColabActive, roomId, setNodes, setEdges]);
+
+  // ─── Sync Local State to Yjs ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!isColabActive || isRemoteChange.current) return;
+
+    const yNodes = yDocRef.current.getMap('nodes');
+    const yEdges = yDocRef.current.getMap('edges');
+
+    yDocRef.current.transact(() => {
+      nodes.forEach(n => {
+        const existing = yNodes.get(n.id) as any;
+        if (!existing || JSON.stringify(existing.position) !== JSON.stringify(n.position)) {
+          yNodes.set(n.id, { ...n, data: { ...n.data, onPropertyChange: undefined } });
+        }
+      });
+      edges.forEach(e => {
+        if (!yEdges.has(e.id)) yEdges.set(e.id, e);
+      });
+    });
+  }, [nodes, edges, isColabActive]);
+
+  // ─── Toggle Collaboration ──────────────────────────────────────────────────
+  const toggleCollaboration = useCallback(() => {
+    if (isColabActive) {
+      providerRef.current?.destroy();
+      providerRef.current = null;
+      setIsColabActive(false);
+      setRoomId(null);
+      toast.success('Collaboration ended');
+    } else {
+      const id = `vlsi-${Math.random().toString(36).substring(2, 9)}`;
+      setRoomId(id);
+      
+      providerRef.current = new WebRtcProvider(id, yDocRef.current, {
+        signaling: ['wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
+      });
+
+      providerRef.current.on('peers', (params: any) => {
+        setColabUsers(params.webrtcConns.size + 1);
+      });
+
+      setIsColabActive(true);
+      toast.success(`Joined room: ${id}`);
+    }
+  }, [isColabActive]);
+
   // ─── Simulation Step ────────────────────────────────────────────────────────
   const runSimulationStep = useCallback(() => {
     setNodes(currentNodes => {
-      // 1) Toggle clocks on every step (when running)
+      // 1) Toggle clocks
       let updated = currentNodes.map(n => {
         if (n.type !== 'clock') return n;
         const prev = (n.data.state as any)?.clockState ?? 0;
@@ -141,11 +250,10 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
         };
       });
 
-      // 2) Iterative combinational settling (3 passes)
+      // 2) Iterative combinational settling (4 passes)
       for (let pass = 0; pass < 4; pass++) {
         updated = updated.map(n => {
           const nodeInputs: Record<string, LogicState> = {};
-          // Look up connected edges from the CURRENT edges snapshot
           edges.forEach(edge => {
             if (edge.target !== n.id) return;
             const src = updated.find(s => s.id === edge.source);
@@ -153,38 +261,69 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
             const val = (src.data.logicOutputs as any)?.[edge.sourceHandle!];
             nodeInputs[edge.targetHandle!] = val;
           });
-          const { outputs, newState } = evaluateNode(
-            n.type ?? '',
-            nodeInputs,
-            (n.data.state as any) ?? {},
-          );
+          const { outputs, newState } = evaluateNode(n.type ?? '', nodeInputs, (n.data.state as any) ?? {});
           return {
             ...n,
             data: { ...n.data, state: newState, logicOutputs: outputs, logicInputs: nodeInputs },
           };
         });
       }
-      return updated;
-    });
 
-    // 3) Colour wires based on updated output states
-    setEdges(currentEdges => {
-      // Need latest node states — read them synchronously via a functional update trick
-      let latestNodes: Node[] = [];
-      setNodes(nds => { latestNodes = nds; return nds; }); // read without mutate
+      // 3) Capture History for Waveform Viewer
+      const currentSignals: Record<string, LogicState> = {};
+      updated.forEach(n => {
+        // Use custom label if available, else refDes
+        const signalName = (n.data.properties as any)?.label || n.data.refDes;
+        if (signalName) {
+          const outputs = n.data.logicOutputs as Record<string, LogicState> | undefined;
+          const inputs = n.data.logicInputs as Record<string, LogicState> | undefined;
 
-      return currentEdges.map(e => {
-        const src = latestNodes.find(n => n.id === e.source);
+          // If it has outputs, track the primary output
+          if (outputs && Object.keys(outputs).length > 0) {
+            const keys = Object.keys(outputs);
+            if (keys.length === 1) {
+              currentSignals[signalName] = outputs[keys[0]];
+            } else {
+              keys.forEach(k => {
+                currentSignals[`${signalName}_${k}`] = outputs[k];
+              });
+            }
+          } 
+          // If it's an output component (like LED) with no outputs but has an input, track the input
+          else if (inputs && Object.keys(inputs).length > 0) {
+            const keys = Object.keys(inputs);
+            if (keys.length === 1) {
+              currentSignals[signalName] = inputs[keys[0]];
+            } else {
+              keys.forEach(k => {
+                currentSignals[`${signalName}_${k}`] = inputs[k];
+              });
+            }
+          }
+        }
+      });
+
+      // Async update of history
+      setSimulationHistory(prev => {
+        const next = [...prev, { timestamp: simTimeRef.current++, signals: currentSignals }];
+        return next.length > 100 ? next.slice(next.length - 100) : next;
+      });
+
+      // 4) Update Edges based on the new node states
+      setEdges(currentEdges => currentEdges.map(e => {
+        const src = updated.find(n => n.id === e.source);
         const val = src ? (src.data.logicOutputs as any)?.[e.sourceHandle!] : undefined;
         const isHigh = val === 1;
-        const isLow  = val === 0;
-        const color  = isHigh ? '#10B981' : isLow ? '#F43F5E' : '#475569';
+        const isLow = val === 0;
+        const color = isHigh ? '#10B981' : isLow ? '#F43F5E' : '#475569';
         return {
           ...e,
           animated: isHigh,
           style: { ...e.style, stroke: color, strokeWidth: isHigh ? 2.5 : 2 },
         };
-      });
+      }));
+
+      return updated;
     });
   }, [edges, setNodes, setEdges]);
 
@@ -199,8 +338,8 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
   }, [isRunning, runSimulationStep]);
 
   // ─── Verilog Generation ─────────────────────────────────────────────────────
-  const handleGenerateCode = useCallback(() => {
-    const graph = {
+  const getGraphData = useCallback(() => {
+    return {
       nodes: nodes.map(n => ({
         id: n.id,
         type: n.type ?? '',
@@ -215,15 +354,30 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
         targetHandle: e.targetHandle ?? '',
       })),
     };
+  }, [nodes, edges]);
+
+  const handleGenerateCode = useCallback(() => {
     try {
-      const code = generateVerilog(graph);
+      const code = generateVerilog(getGraphData());
       setVerilogCode(code);
       setShowCode(true);
     } catch (err) {
       console.error('Verilog generation failed:', err);
       toast.error('Failed to generate Verilog. Check circuit connections.');
     }
-  }, [nodes, edges]);
+  }, [getGraphData]);
+
+  const handleGenerateTestbench = useCallback(() => {
+    try {
+      const code = generateTestbench(getGraphData(), 'TopModule');
+      setVerilogCode(code);
+      setShowCode(true);
+      toast.success('Testbench generated!');
+    } catch (err) {
+      console.error('Testbench generation failed:', err);
+      toast.error('Failed to generate Testbench.');
+    }
+  }, [getGraphData]);
 
   // ─── Clear Canvas ───────────────────────────────────────────────────────────
   const handleClear = useCallback(() => {
@@ -231,6 +385,8 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
     setEdges([]);
     setSelectedId(null);
     setIsRunning(false);
+    setSimulationHistory([]);
+    simTimeRef.current = 0;
     toast.info('Canvas cleared');
   }, [setNodes, setEdges]);
 
@@ -261,37 +417,61 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
             VLSI Logic Studio
           </h2>
 
-          <div className="flex items-center gap-1 bg-slate-900/60 p-0.5 rounded-full border border-slate-800/80">
+          <div className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-full border border-slate-800/80 max-w-full overflow-x-auto no-scrollbar">
             {/* Play / Pause */}
             <button
               onClick={() => setIsRunning(r => !r)}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all whitespace-nowrap
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase transition-all whitespace-nowrap
                 ${isRunning
                   ? 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25'
-                  : 'bg-emerald-600 text-white shadow-md'
+                  : 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
                 }`}
             >
-              {isRunning ? <Pause size={12} weight="fill" /> : <Play size={12} weight="fill" />}
-              {isRunning ? 'Stop' : 'Play'}
+              {isRunning ? <Pause size={10} weight="fill" /> : <Play size={10} weight="fill" />}
+              {isRunning ? 'Stop' : 'Run'}
             </button>
 
             {/* Step */}
             <button
               onClick={runSimulationStep}
               disabled={isRunning}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold text-slate-400 hover:text-slate-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-slate-200 transition-all disabled:opacity-30 whitespace-nowrap"
             >
-              <SkipForward size={12} weight="fill" /> Step
+              <SkipForward size={10} weight="fill" /> Step
             </button>
 
-            <div className="w-px h-3.5 bg-slate-700 mx-0.5" />
+            <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
+
+            {/* Room Collaboration */}
+            <button
+              onClick={toggleCollaboration}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase transition-all whitespace-nowrap relative
+                ${isColabActive ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10'}`}
+              title={isColabActive ? `In Room: ${roomId}` : 'Start Collaboration'}
+            >
+              <Users size={12} weight={isColabActive ? "fill" : "bold"} />
+              {isColabActive ? `${colabUsers} Active` : 'Colab'}
+              {isColabActive && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-400 rounded-full animate-ping" />
+              )}
+            </button>
+
+            <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
 
             {/* Gen Verilog */}
             <button
               onClick={handleGenerateCode}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap"
             >
-              <Code size={12} weight="bold" /> Verilog
+              <Code size={12} weight="bold" /> HDL
+            </button>
+
+            {/* Gen Testbench */}
+            <button
+              onClick={handleGenerateTestbench}
+              className="hidden lg:flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap"
+            >
+              <Download size={12} weight="bold" /> Bench
             </button>
 
             {/* Clear */}
@@ -306,23 +486,61 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
         </div>
 
         {/* Canvas */}
-        <div className="flex-1 relative bg-[#0B0F19]">
-          <VLSICanvas
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onNodeClick={onNodeClick}
-            onPaneClick={onPaneClick}
-          />
+        <div className="flex-1 relative bg-[#0B0F19] flex flex-col">
+          <div className="flex-1 relative">
+            <VLSICanvas
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onNodeClick={onNodeClick}
+              onPaneClick={onPaneClick}
+            />
 
-          {/* Running indicator */}
-          {isRunning && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-emerald-400 text-[10px] font-bold backdrop-blur-sm shadow z-20 pointer-events-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Simulation Running
-            </div>
+            {/* Running indicator */}
+            {isRunning && (
+              <div className="absolute top-4 left-4 flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-500/20 backdrop-blur pointer-events-none">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                SIMULATING
+              </div>
+            )}
+            
+            {/* Waveform Toggle Button */}
+            {!showWaveform && simulationHistory.length > 0 && (
+              <button 
+                onClick={() => setShowWaveform(true)}
+                className="absolute bottom-4 left-4 bg-slate-900 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold font-mono shadow-xl hover:bg-slate-800 transition flex items-center gap-2"
+              >
+                <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h4l3-9 5 18 3-9h3" />
+                </svg>
+                View Waveforms ({simulationHistory.length})
+              </button>
+            )}
+          </div>
+
+          {/* Waveform Viewer */}
+          {showWaveform && !showCode && (
+            isWaveformExpanded ? (
+              <div className="absolute inset-0 z-50 bg-[#0B0F19] p-6">
+                <WaveformViewer 
+                  history={simulationHistory} 
+                  isExpanded={true}
+                  onExpandToggle={() => setIsWaveformExpanded(false)}
+                  onClose={() => setShowWaveform(false)}
+                />
+              </div>
+            ) : (
+              <div className="shrink-0 z-20 border-t border-slate-800" style={{ height: '260px' }}>
+                <WaveformViewer 
+                  history={simulationHistory} 
+                  isExpanded={false}
+                  onExpandToggle={() => setIsWaveformExpanded(true)}
+                  onClose={() => setShowWaveform(false)}
+                />
+              </div>
+            )
           )}
         </div>
       </div>

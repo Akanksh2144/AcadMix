@@ -1,5 +1,10 @@
 export type LogicState = 0 | 1 | 'Z' | 'X';
 
+export interface TimingData {
+  timestamp: number;
+  signals: Record<string, LogicState>;
+}
+
 export type ComponentCategory =
   | 'io'
   | 'gates'

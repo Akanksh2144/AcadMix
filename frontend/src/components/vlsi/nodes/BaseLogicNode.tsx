@@ -86,7 +86,11 @@ export default function BaseLogicNode({ id, data, selected }: BaseLogicNodeProps
             : 'bg-slate-500 border-slate-700';
 
         const posStyle = getHandlePosition(pin, data.pins);
-        const isRight = pin.side === 'right';
+        let labelPos = "";
+        if (pin.side === 'left') labelPos = "right-full mr-1.5 top-1/2 -translate-y-1/2";
+        else if (pin.side === 'right') labelPos = "left-full ml-1.5 top-1/2 -translate-y-1/2";
+        else if (pin.side === 'top') labelPos = "bottom-full mb-1.5 left-1/2 -translate-x-1/2";
+        else if (pin.side === 'bottom') labelPos = "top-full mt-1.5 left-1/2 -translate-x-1/2";
 
         return (
           <div key={pin.id} className="absolute" style={posStyle}>
@@ -99,8 +103,7 @@ export default function BaseLogicNode({ id, data, selected }: BaseLogicNodeProps
             {/* Pin label — skip for nodes that show their own label */}
             {pin.label && (
               <span
-                className={`absolute top-1/2 -translate-y-1/2 text-[8px] font-bold font-mono text-slate-400 whitespace-nowrap pointer-events-none
-                  ${isRight ? 'right-4' : 'left-4'}`}
+                className={`absolute text-[9px] font-bold font-mono text-slate-300 whitespace-nowrap pointer-events-none bg-slate-900 px-1 rounded-sm border border-slate-700/50 shadow-sm ${labelPos}`}
               >
                 {pin.label}
               </span>
