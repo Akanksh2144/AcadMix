@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { Play, Plus, WaveSine, Funnel, ChartLineUp, SlidersHorizontal, X, WaveSawtooth, Clock, ChartBar, Pulse, GitFork, ArrowsDownUp, Gauge, Minus, ArrowsClockwise, Broadcast, Swap, SquaresFour, Lightning, Equalizer } from '@phosphor-icons/react';
+import { Play, Plus, WaveSine, Funnel, ChartLineUp, SlidersHorizontal, X, WaveSawtooth, Clock, ChartBar, Pulse, GitFork, ArrowsDownUp, Gauge, Minus, ArrowsClockwise, Broadcast, Swap, SquaresFour, Lightning, Equalizer, CornersIn } from '@phosphor-icons/react';
 
 import SignalGeneratorNode from './nodes/SignalGeneratorNode';
 import AdderNode from './nodes/AdderNode';
@@ -182,7 +182,10 @@ const PALETTE_SECTIONS = [
 
 let nodeCounter = 100;
 
-export default function DSPBlockSimulator() {
+export default function DSPBlockSimulator({ isFullScreen, onExitFullScreen }: {
+  isFullScreen?: boolean;
+  onExitFullScreen?: () => void;
+}) {
   const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
   const [simResult, setSimResult] = useState<SimulationResult | null>(null);
@@ -269,6 +272,14 @@ export default function DSPBlockSimulator() {
       {/* Top Bar */}
       <div className="flex items-center justify-between px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800 shrink-0">
         <div className="flex items-center gap-3">
+          {isFullScreen && onExitFullScreen && (
+            <button 
+              onClick={onExitFullScreen}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20 font-bold text-[10px] uppercase tracking-widest"
+            >
+              <CornersIn size={14} weight="bold" /> Exit
+            </button>
+          )}
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-500/20">
             <WaveSine size={16} weight="bold" className="text-white" />
           </div>

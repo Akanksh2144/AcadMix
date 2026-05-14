@@ -2082,10 +2082,10 @@ const CodePlayground = ({ navigate, user }) => {
             )}
             {/* Simulator iframe — or external-launch card for noEmbed boards */}
             <div className={isLabFullScreen ? "fixed inset-0 z-[100] bg-[#0B0C10] w-screen h-screen flex flex-col" : "soft-card overflow-hidden flex-1 min-h-0 rounded-2xl relative"} style={{ overscrollBehavior: 'contain' }}>
-              {isLabFullScreen && (
+              {isLabFullScreen && !((_simActiveBoard as any)?.isNativeBlock || (_simActiveBoard as any)?.isNativeWasm) && (
                 <button
                   onClick={() => setIsLabFullScreen(false)}
-                  className="absolute bottom-10 right-1/2 translate-x-1/2 z-[999] bg-slate-900/90 hover:bg-slate-800 backdrop-blur-md text-white px-5 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all flex items-center gap-2 group border border-white/10 hover:border-indigo-500/50 opacity-40 hover:opacity-100 scale-95 hover:scale-100"
+                  className="absolute bottom-10 right-1/2 translate-x-1/2 z-[999] bg-slate-900/90 hover:bg-slate-800 backdrop-blur-md text-white px-5 py-2.5 rounded-full shadow-[0_8px_32_rgba(0,0,0,0.4)] transition-all flex items-center gap-2 group border border-white/10 hover:border-indigo-500/50 opacity-40 hover:opacity-100 scale-95 hover:scale-100"
                 >
                   <CornersIn size={18} weight="bold" className="group-hover:rotate-12 transition-transform" />
                   <span className="text-[11px] font-black uppercase tracking-[0.1em]">Exit Full Screen</span>
@@ -2096,11 +2096,22 @@ const CodePlayground = ({ navigate, user }) => {
                   {(_simActiveBoard as any)?.id === 'geo-settle-native' ? (
                     <SettlementCalculator />
                   ) : (_simActiveBoard as any)?.id === 'pcb-native' ? (
-                    <PCBDesignStudio user={user} />
+                    <PCBDesignStudio 
+                      user={user} 
+                      isFullScreen={isLabFullScreen} 
+                      onExitFullScreen={() => setIsLabFullScreen(false)} 
+                    />
                   ) : (_simActiveBoard as any)?.id === 'vlsi-native-block' ? (
-                    <VLSIDesignStudio user={user} />
+                    <VLSIDesignStudio 
+                      user={user} 
+                      isFullScreen={isLabFullScreen} 
+                      onExitFullScreen={() => setIsLabFullScreen(false)} 
+                    />
                   ) : (
-                    <DSPBlockSimulator />
+                    <DSPBlockSimulator 
+                      isFullScreen={isLabFullScreen} 
+                      onExitFullScreen={() => setIsLabFullScreen(false)} 
+                    />
                   )}
                 </div>
               ) : (_simActiveBoard as any)?.isNativeWasm ? (
@@ -2112,6 +2123,8 @@ const CodePlayground = ({ navigate, user }) => {
                     onSimulate={(code) => handleNativeSimulate(code, (_simActiveBoard as any)?.nativeLanguage)}
                     isSimulating={isNativeSimulating}
                     output={nativeOutput}
+                    isFullScreen={isLabFullScreen}
+                    onExitFullScreen={() => setIsLabFullScreen(false)}
                   />
                 </div>
               ) : (_simActiveBoard as any)?.noEmbed ? (

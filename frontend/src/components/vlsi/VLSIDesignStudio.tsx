@@ -4,7 +4,7 @@ import {
   type Connection, type Edge, type Node, type XYPosition,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise, Copy, SignIn } from '@phosphor-icons/react';
+import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise, Copy, SignIn, CornersIn } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
@@ -46,7 +46,11 @@ const STARTER_EDGES: Edge[] = [
   { id: 'e3', source: 'and-1', sourceHandle: 'out', target: 'led-1', targetHandle: 'in',  type: 'smoothstep', style: { stroke: '#475569', strokeWidth: 2 } },
 ];
 
-function VLSIDesignStudioInternal({ user }: { user?: any }) {
+function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen }: { 
+  user?: any; 
+  isFullScreen?: boolean; 
+  onExitFullScreen?: () => void 
+}) {
   // ─── States & Refs ──────────────────────────────────────────────────────────
   const onPropertyChangeRef = useRef<(id: string, f: string, v: any) => void>(() => {});
   const [nodes, setNodes, onNodesChange] = useNodesState(makeStarterNodes((...args) => onPropertyChangeRef.current(...args)));
@@ -431,10 +435,21 @@ function VLSIDesignStudioInternal({ user }: { user?: any }) {
       <div className="flex-1 flex flex-col relative h-full min-w-0">
         {/* Top toolbar */}
         <div className="h-12 bg-[#0F172A]/90 backdrop-blur-xl border-b border-slate-800 flex items-center justify-between px-4 shrink-0 z-10">
-          <h2 className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-400 flex items-center gap-2 select-none">
-            <Cpu size={16} className="text-indigo-400" weight="duotone" />
-            VLSI Logic Studio
-          </h2>
+          <div className="flex items-center gap-4">
+            {isFullScreen && onExitFullScreen && (
+              <button 
+                onClick={onExitFullScreen}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 text-slate-400 hover:bg-rose-500 hover:text-white transition-all border border-slate-700/50 font-bold text-[10px] uppercase tracking-widest group shadow-lg"
+              >
+                <CornersIn size={14} weight="bold" className="group-hover:scale-110 transition-transform" /> 
+                Exit
+              </button>
+            )}
+            <h2 className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-400 flex items-center gap-2 select-none">
+              <Cpu size={16} className="text-indigo-400" weight="duotone" />
+              VLSI Logic Studio
+            </h2>
+          </div>
 
           <div className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-full border border-slate-800/80 max-w-[60%] overflow-x-auto no-scrollbar">
             <button
@@ -598,7 +613,11 @@ function VLSIDesignStudioInternal({ user }: { user?: any }) {
   );
 }
 
-export default function VLSIDesignStudio(props: { user?: any }) {
+export default function VLSIDesignStudio(props: { 
+  user?: any;
+  isFullScreen?: boolean;
+  onExitFullScreen?: () => void;
+}) {
   return (
     <ReactFlowProvider>
       <VLSIDesignStudioInternal {...props} />

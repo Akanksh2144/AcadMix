@@ -40,7 +40,11 @@ const STARTER_EDGES: Edge[] = [
   { id: 'e-3', source: 'comp-3', sourceHandle: 'cathode', target: 'comp-4', targetHandle: '1', type: 'straight', data: { layer: 'BottomLayer' }, style: { stroke: '#0000ff', strokeWidth: 3, mixBlendMode: 'screen' } },
 ];
 
-export default function PCBDesignStudio({ user }: { user?: any }) {
+export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen, onExitFullScreen }: { 
+  user?: any;
+  isFullScreen?: boolean;
+  onExitFullScreen?: () => void;
+}) {
   const [roomId, setRoomId] = useState(() => 'PCB-' + Math.random().toString(36).substring(2, 8).toUpperCase());
   const [isHost, setIsHost] = useState(true);
   
@@ -49,6 +53,7 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
 
   const [copiedLink, setCopiedLink] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const effectiveFullScreen = externalFullScreen ?? isFullScreen;
 
   const [mode, setMode] = useState<'schematic' | 'visual' | 'code' | '3d'>('schematic');
   const [lockCircuit, setLockCircuit] = useState(false);
@@ -267,7 +272,7 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
   const drcWarnCount = drcResults.filter(r => r.severity === 'warning').length;
 
   return (
-    <div className={isFullScreen 
+    <div className={effectiveFullScreen 
       ? "fixed inset-0 z-[100] w-screen h-screen flex flex-col bg-gray-950" 
       : "w-full h-full flex flex-col bg-gray-950 rounded-3xl overflow-hidden shadow-2xl border border-gray-800/50 relative"
     }>
@@ -401,6 +406,14 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <Circuitry size={16} weight="bold" className="text-white" />
           </div>
+          {onExitFullScreen && effectiveFullScreen && (
+            <button 
+              onClick={onExitFullScreen}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20 font-bold text-[10px] uppercase tracking-widest"
+            >
+              <CornersIn size={14} weight="bold" /> Exit
+            </button>
+          )}
           <span className="font-bold text-sm text-gray-200">AcadMix PCB Studio</span>
 
           <div className="flex items-center gap-2 ml-4">
@@ -472,11 +485,11 @@ export default function PCBDesignStudio({ user }: { user?: any }) {
           <button onClick={handleExportGerber} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition-colors"><Export size={13} weight="bold" /> Gerber</button>
           <div className="w-px h-5 bg-gray-700 mx-1" />
           <button 
-            onClick={() => setIsFullScreen(!isFullScreen)} 
-            title={isFullScreen ? "Exit Full Screen" : "Full Screen"} 
+            onClick={() => onExitFullScreen ? onExitFullScreen() : setIsFullScreen(!isFullScreen)} 
+            title={effectiveFullScreen ? "Exit Full Screen" : "Full Screen"} 
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"
           >
-            {isFullScreen ? <CornersIn size={14} weight="bold" /> : <CornersOut size={14} weight="bold" />}
+            {effectiveFullScreen ? <CornersIn size={14} weight="bold" /> : <CornersOut size={14} weight="bold" />}
           </button>
         </div>
       </div>

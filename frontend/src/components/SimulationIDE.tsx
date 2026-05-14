@@ -8,6 +8,8 @@ interface SimulationIDEProps {
   onSimulate: (code: string) => void;
   isSimulating: boolean;
   output?: string | React.ReactNode;
+  isFullScreen?: boolean;
+  onExitFullScreen?: () => void;
 }
 
 export default function SimulationIDE({
@@ -15,7 +17,9 @@ export default function SimulationIDE({
   defaultCode,
   onSimulate,
   isSimulating,
-  output
+  output,
+  isFullScreen,
+  onExitFullScreen
 }: SimulationIDEProps) {
   const [code, setCode] = useState(defaultCode);
 
@@ -24,6 +28,14 @@ export default function SimulationIDE({
       {/* Top Bar */}
       <div className="flex items-center justify-between px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-2">
+          {isFullScreen && onExitFullScreen && (
+            <button 
+              onClick={onExitFullScreen}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20 font-bold text-[10px] uppercase tracking-widest mr-2"
+            >
+              Exit
+            </button>
+          )}
           <TerminalWindow size={20} className="text-gray-500" />
           <span className="font-semibold text-gray-700 dark:text-gray-300">
             Native {language.toUpperCase()} Simulator
