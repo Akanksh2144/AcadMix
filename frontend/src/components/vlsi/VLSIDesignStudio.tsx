@@ -4,7 +4,7 @@ import {
   type Connection, type Edge, type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users } from '@phosphor-icons/react';
+import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
@@ -65,12 +65,23 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
   const [isColabActive, setIsColabActive] = useState(false);
   const [colabUsers, setColabUsers] = useState(0);
   const yDocRef = useRef<Y.Doc>(new Y.Doc());
+  const undoManagerRef = useRef<Y.UndoManager | null>(null);
   const providerRef = useRef<any>(null);
   const isRemoteChange = useRef(false);
 
   const simIntervalRef = useRef<number | null>(null);
   const simTimeRef = useRef<number>(0);
   const selectedNode = nodes.find(n => n.id === selectedId);
+
+  // Initialize UndoManager
+  useEffect(() => {
+    const yNodes = yDocRef.current.getMap('nodes');
+    const yEdges = yDocRef.current.getMap('edges');
+    undoManagerRef.current = new Y.UndoManager([yNodes, yEdges]);
+  }, []);
+
+  const handleUndo = useCallback(() => undoManagerRef.current?.undo(), []);
+  const handleRedo = useCallback(() => undoManagerRef.current?.redo(), []);
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
   const handlePropertyChange = useCallback((id: string, field: string, value: string | number | boolean) => {
@@ -210,6 +221,7 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
     const yEdges = yDocRef.current.getMap('edges');
 
     yDocRef.current.transact(() => {
+      // Add/Update
       nodes.forEach(n => {
         const existing = yNodes.get(n.id) as any;
         if (!existing || JSON.stringify(existing.position) !== JSON.stringify(n.position)) {
@@ -218,6 +230,14 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
       });
       edges.forEach(e => {
         if (!yEdges.has(e.id)) yEdges.set(e.id, e);
+      });
+
+      // Remove
+      yNodes.forEach((_, id) => {
+        if (!nodes.find(n => n.id === id)) yNodes.delete(id);
+      });
+      yEdges.forEach((_, id) => {
+        if (!edges.find(e => e.id === id)) yEdges.delete(id);
       });
     });
   }, [nodes, edges, isColabActive]);
@@ -393,6 +413,15 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
               <Users size={12} weight={isColabActive ? "fill" : "bold"} />
               {isColabActive ? `${colabUsers} Active` : 'Colab'}
               {isColabActive && <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-400 rounded-full animate-ping" />}
+            </button>
+
+            <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
+
+            <button onClick={handleUndo} className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-indigo-400">
+              <ArrowCounterClockwise size={12} weight="bold" />
+            </button>
+            <button onClick={handleRedo} className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-indigo-400">
+              <ArrowClockwise size={12} weight="bold" />
             </button>
 
             <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
