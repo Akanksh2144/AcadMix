@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   useNodesState, useEdgesState, addEdge,
-  type Connection, type Edge, type Node,
+  type Connection, type Edge, type Node, type XYPosition,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise, Copy, SignIn } from '@phosphor-icons/react';
@@ -173,14 +173,14 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => setSelectedId(node.id), []);
   const onPaneClick = useCallback(() => setSelectedId(null), []);
 
-  const handleAddComponent = useCallback((type: string) => {
+  const handleAddComponent = useCallback((type: string, position?: XYPosition) => {
     const catalog = getCatalogEntry(type);
     if (!catalog) return;
     const id = `node-${Date.now()}-${++nodeCounter}`;
     const newNode: Node = {
       id,
       type: catalog.type,
-      position: { x: 250 + Math.random() * 60, y: 200 + Math.random() * 60 },
+      position: position || { x: 250 + Math.random() * 60, y: 200 + Math.random() * 60 },
       data: {
         componentType: catalog.type,
         refDes: `${catalog.refDesPrefix}${nodeCounter}`,
@@ -500,6 +500,7 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
               onConnect={onConnect} onNodeClick={onNodeClick} onPaneClick={onPaneClick}
               onNodesDelete={onNodesDelete} onEdgesDelete={onEdgesDelete}
               onNodeDragStop={onNodeDragStop}
+              onDrop={(type, pos) => handleAddComponent(type, pos)}
             />
             {isRunning && (
               <div className="absolute top-4 left-4 flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-500/20 backdrop-blur pointer-events-none">

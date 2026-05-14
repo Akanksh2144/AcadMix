@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  ReactFlow, Controls, ControlButton, Background, BackgroundVariant,
-  type Connection, type Edge, type Node, type OnNodesChange, type OnEdgesChange,
+  ReactFlow, Controls, ControlButton, Background, BackgroundVariant, useReactFlow,
+  type Connection, type Edge, type Node, type OnNodesChange, type OnEdgesChange, type XYPosition,
 } from '@xyflow/react';
 import { LockKey, LockKeyOpen } from '@phosphor-icons/react';
 import '@xyflow/react/dist/style.css';
@@ -18,13 +18,33 @@ interface Props {
   onNodesDelete: (nodes: Node[]) => void;
   onEdgesDelete: (edges: Edge[]) => void;
   onNodeDragStop: (event: any, node: Node) => void;
+  onDrop: (type: string, position: XYPosition) => void;
 }
 
 export default function VLSICanvas({
   nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, onPaneClick,
-  onNodesDelete, onEdgesDelete, onNodeDragStop
+  onNodesDelete, onEdgesDelete, onNodeDragStop, onDrop
 }: Props) {
   const [locked, setLocked] = useState(false);
+  const { screenToFlowPosition } = useReactFlow();
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    const type = event.dataTransfer.getData('application/reactflow');
+    if (!type) return;
+
+    const position = screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
+
+    onDrop(type, position);
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  };
 
   return (
     <div className="w-full h-full">
@@ -39,6 +59,8 @@ export default function VLSICanvas({
         onNodesDelete={onNodesDelete}
         onEdgesDelete={onEdgesDelete}
         onNodeDragStop={onNodeDragStop}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
         nodeTypes={vlsiNodeTypes}
         fitView
         fitViewOptions={{ padding: 0.25 }}

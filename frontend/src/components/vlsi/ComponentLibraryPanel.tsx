@@ -89,15 +89,20 @@ export default function ComponentLibraryPanel({ onAddComponent }: Props) {
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100 mb-2' : 'max-h-0 opacity-0'}`}>
                 <div className="py-1 px-2 space-y-1">
                   {items.map(entry => (
-                    <button
+                    <div
                       key={entry.type}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('application/reactflow', entry.type);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
                       onClick={() => onAddComponent(entry.type)}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-left text-[11px] font-medium text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-300 rounded-lg transition-all group relative overflow-hidden"
-                      title={entry.description}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-left text-[11px] font-medium text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-300 rounded-lg transition-all group relative overflow-hidden cursor-grab active:cursor-grabbing"
+                      title={`${entry.description} (Drag to add)`}
                     >
                       <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                       <span className="truncate group-hover:translate-x-0.5 transition-transform">{entry.label}</span>
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
