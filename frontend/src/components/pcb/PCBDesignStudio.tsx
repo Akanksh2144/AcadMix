@@ -443,7 +443,7 @@ export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen
             <button 
               onClick={() => setShowJoinPrompt(true)}
               title="Join Room"
-              className="flex items-center justify-center w-6 h-6 rounded-lg text-gray-400 hover:text-indigo-400 hover:bg-indigo-500/10 border border-gray-700/50 transition-all"
+              className="flex items-center justify-center w-6 h-6 rounded-lg text-gray-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all"
             >
               <Users size={14} weight="bold" />
             </button>
