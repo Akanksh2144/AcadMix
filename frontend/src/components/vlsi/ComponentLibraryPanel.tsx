@@ -48,10 +48,10 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
   const handleMouseEnter = () => {
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     
-    // Set a 1-second delay before showing the tooltip
+    // Set a 0.5-second delay before showing the tooltip
     enterTimeoutRef.current = window.setTimeout(() => {
       setIsHovered(true);
-    }, 1000);
+    }, 500);
   };
 
   const handleMouseLeave = () => {
