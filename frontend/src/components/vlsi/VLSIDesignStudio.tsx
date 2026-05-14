@@ -16,6 +16,7 @@ import { getCatalogEntry } from './componentCatalog';
 import { evaluateNode, generateVerilog, generateTestbench } from './vlsiEngine';
 import type { LogicState, TimingData } from './types';
 import WaveformViewer from './WaveformViewer';
+import PromptModal from '../PromptModal';
 
 let nodeCounter = 10;
 
@@ -59,6 +60,7 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
   const [simulationHistory, setSimulationHistory] = useState<TimingData[]>([]);
   const [showWaveform, setShowWaveform] = useState(false);
   const [isWaveformExpanded, setIsWaveformExpanded] = useState(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
   // Collaboration State
   const [roomId, setRoomId] = useState<string | null>(null);
@@ -139,7 +141,11 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
   }, [isColabActive]);
 
   const handleJoinRoom = useCallback(() => {
-    const id = window.prompt('Enter Room ID to join:');
+    setIsJoinModalOpen(true);
+  }, []);
+
+  const onConfirmJoin = useCallback((id: string) => {
+    setIsJoinModalOpen(false);
     if (id && id.trim()) {
       toggleCollaboration(id.trim());
     }
@@ -518,14 +524,24 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
             <div className={`shrink-0 z-20 border-t border-slate-800 ${isWaveformExpanded ? 'absolute inset-0' : ''}`} style={{ height: isWaveformExpanded ? '100%' : '260px' }}>
               <WaveformViewer 
                 history={simulationHistory} 
-                isExpanded={isWaveformExpanded}
-                onExpandToggle={() => setIsWaveformExpanded(!isWaveformExpanded)}
                 onClose={() => setShowWaveform(false)}
+                isExpanded={isWaveformExpanded}
+                onToggleExpand={() => setIsWaveformExpanded(!isWaveformExpanded)}
               />
             </div>
           )}
         </div>
       </div>
+
+      <PromptModal
+        open={isJoinModalOpen}
+        title="Join Collaborative Room"
+        message="Enter the Room ID shared by your partner to start working together in real-time."
+        placeholder="e.g. vlsi-x2y3z4"
+        confirmText="Join Room"
+        onConfirm={onConfirmJoin}
+        onCancel={() => setIsJoinModalOpen(false)}
+      />
 
       {/* Right panel */}
       <div className="w-60 shrink-0 h-full relative z-10 border-l border-slate-800/70">
