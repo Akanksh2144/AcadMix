@@ -8,10 +8,8 @@ import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users } from '@ph
 import { toast } from 'sonner';
 import * as Y from 'yjs';
 import * as YWebRtc from 'y-webrtc';
-const WebRtcProvider = (YWebRtc as any).WebRtcProvider || YWebRtc.default || YWebRtc;
-// Debug: checking if default export works better
-// import * as YWebRtc from 'y-webrtc';
-const WebRtcProvider = (YWebRtc as any).WebRtcProvider || YWebRtc.default || YWebRtc;
+const WebRtcProvider = (YWebRtc as any).WebRtcProvider || (YWebRtc as any).default || YWebRtc;
+
 import ComponentLibraryPanel from './ComponentLibraryPanel';
 import PropertiesInspector from './PropertiesInspector';
 import VLSICanvas from './VLSICanvas';
