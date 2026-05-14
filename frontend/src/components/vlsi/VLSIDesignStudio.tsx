@@ -159,14 +159,21 @@ function VLSIDesignStudioInternal({ user }: { user?: any }) {
   }, [roomId]);
 
   const onConnect = useCallback((params: Connection) => {
+    const edgeId = `e-${params.source}-${params.target}-${params.sourceHandle}-${params.targetHandle}-${Date.now()}`;
+    const newEdge: Edge = {
+      ...params,
+      id: edgeId,
+      type: 'smoothstep',
+      style: { stroke: '#475569', strokeWidth: 2 }
+    };
+
     setEdges(eds => {
-      const newEdges = addEdge({ ...params, type: 'smoothstep', style: { stroke: '#475569', strokeWidth: 2 } }, eds);
+      const next = addEdge(newEdge, eds);
       if (isColabActive) {
         const yEdges = yDocRef.current.getMap('edges');
-        const edgeId = `e-${params.source}-${params.target}-${params.sourceHandle}-${params.targetHandle}`;
-        yEdges.set(edgeId, { ...params, type: 'smoothstep', id: edgeId });
+        yEdges.set(edgeId, newEdge);
       }
-      return newEdges;
+      return next;
     });
   }, [setEdges, isColabActive]);
 
@@ -221,8 +228,18 @@ function VLSIDesignStudioInternal({ user }: { user?: any }) {
 
   const onNodesDelete = useCallback((deletedNodes: Node[]) => {
     const yNodes = yDocRef.current.getMap('nodes');
+    const yEdges = yDocRef.current.getMap('edges');
+    
     yDocRef.current.transact(() => {
-      deletedNodes.forEach(node => yNodes.delete(node.id));
+      deletedNodes.forEach(node => {
+        yNodes.delete(node.id);
+        // Also cleanup edges connected to this node in Yjs
+        yEdges.forEach((edge: any, edgeId) => {
+          if (edge.source === node.id || edge.target === node.id) {
+            yEdges.delete(edgeId);
+          }
+        });
+      });
     });
   }, []);
 
@@ -441,32 +458,33 @@ function VLSIDesignStudioInternal({ user }: { user?: any }) {
 
             <button
               onClick={() => toggleCollaboration()}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase transition-all relative
-                ${isColabActive ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10'}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase transition-all relative
+                ${isColabActive ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 border border-slate-700/50'}`}
               title={isColabActive ? `In Room: ${roomId} (Click to Stop)` : 'Start New Room'}
             >
-              <Users size={12} weight={isColabActive ? "fill" : "bold"} />
-              {isColabActive ? `${colabUsers} Active` : 'Host'}
-              {isColabActive && <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-400 rounded-full animate-ping" />}
+              <Users size={14} weight={isColabActive ? "fill" : "bold"} />
+              {isColabActive ? `${colabUsers} Active` : 'Host Lab'}
+              {isColabActive && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-indigo-400 rounded-full animate-ping" />}
             </button>
 
             {isColabActive && (
               <button
                 onClick={handleCopyRoomId}
-                className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-indigo-400"
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-800/80 text-indigo-400 hover:bg-indigo-500/20 transition-colors border border-indigo-500/20"
                 title="Copy Room ID"
               >
-                <Copy size={12} weight="bold" />
+                <Copy size={13} weight="bold" />
+                <span className="text-[9px] font-bold">Copy ID</span>
               </button>
             )}
 
             {!isColabActive && (
               <button
                 onClick={handleJoinRoom}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase bg-slate-800 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 border border-slate-700/50 transition-all"
                 title="Join Existing Room"
               >
-                <SignIn size={12} weight="bold" /> Join
+                <SignIn size={14} weight="bold" /> Join
               </button>
             )}
 
