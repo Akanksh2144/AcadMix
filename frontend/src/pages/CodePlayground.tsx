@@ -38,8 +38,8 @@ const SIMULATOR_CATEGORIES = [
   { id: 'embedded', label: 'Embedded Systems', icon: <Cpu size={16} weight="duotone" />, accent: 'teal' },
   { id: 'analog', label: 'Analog Electronics', icon: <WaveSine size={16} weight="duotone" />, accent: 'violet' },
   { id: 'digital', label: 'Digital Electronics', icon: <Circuitry size={16} weight="duotone" />, accent: 'sky' },
-  { id: 'vlsi', label: 'VLSI Design', icon: <Atom size={16} weight="duotone" />, accent: 'amber' },
-  { id: 'pcb', label: 'PCB Design', icon: <Blueprint size={16} weight="duotone" />, accent: 'emerald' },
+  { id: 'vlsi', label: 'Silicon Studio', icon: <Atom size={16} weight="duotone" />, accent: 'amber' },
+  { id: 'pcb', label: 'Copper Studio', icon: <Blueprint size={16} weight="duotone" />, accent: 'emerald' },
   { id: 'communication', label: 'Communication Systems', icon: <Broadcast size={16} weight="duotone" />, accent: 'rose' },
   { id: 'dsp', label: 'DSP / Signal Processing', icon: <Equalizer size={16} weight="duotone" />, accent: 'indigo' },
 ];
@@ -456,7 +456,7 @@ c1 3 0 1u
   vlsi: [
     { 
       id: 'vlsi-native-block', 
-      label: 'AcadMix Logic Studio (Native)', 
+      label: 'Silicon Studio (Native)', 
       url: '', 
       isNativeBlock: true 
     },
@@ -497,7 +497,7 @@ endmodule`
     { id: 'vlsi-makerchip', label: 'Makerchip IDE', url: 'https://makerchip.com/sandbox/', openLabel: 'Open in Makerchip' },
   ],
   pcb: [
-    { id: 'pcb-native', label: 'AcadMix PCB Studio (Native)', url: '', isNativeBlock: true },
+    { id: 'pcb-native', label: 'Copper Studio (Native)', url: '', isNativeBlock: true },
     { id: 'pcb-svg', label: 'SVG PCB Editor', url: 'https://leomcelroy.com/svg-pcb/', openLabel: 'Open SVG PCB' },
     { id: 'pcb-tscircuit', label: 'tscircuit', url: 'https://tscircuit.com/playground', openLabel: 'Open tscircuit' },
     { id: 'pcb-kicanvas', label: 'KiCanvas Viewer', url: 'https://kicanvas.org/', openLabel: 'Open KiCanvas' },

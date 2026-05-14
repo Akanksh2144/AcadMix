@@ -414,7 +414,7 @@ export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen
               <CornersIn size={14} weight="bold" /> Exit
             </button>
           )}
-          <span className="font-bold text-sm text-gray-200">AcadMix PCB Studio</span>
+          <span className="font-bold text-sm text-gray-200">Copper Studio</span>
 
           <div className="flex items-center gap-2 ml-4">
             <div className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500'}`} title={connected ? 'Connected to Room' : 'Disconnected'} />

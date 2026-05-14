@@ -447,7 +447,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen }: {
             )}
             <h2 className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-400 flex items-center gap-2 select-none">
               <Cpu size={16} className="text-indigo-400" weight="duotone" />
-              VLSI Logic Studio
+              Silicon Studio
             </h2>
           </div>
 
