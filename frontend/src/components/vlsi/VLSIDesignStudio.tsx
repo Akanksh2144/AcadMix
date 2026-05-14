@@ -4,7 +4,7 @@ import {
   type Connection, type Edge, type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, Activity } from '@phosphor-icons/react';
+import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ChartLineUp } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import * as Y from 'yjs';
@@ -450,7 +450,7 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
           
           <div className="flex items-center gap-4">
              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/40 border border-slate-700/50">
-               <Activity size={14} className={isRunning ? "text-emerald-400 animate-pulse" : "text-slate-500"} />
+               <ChartLineUp size={14} className={isRunning ? "text-emerald-400 animate-pulse" : "text-slate-500"} weight="bold" />
                <span className="text-[10px] font-bold text-slate-400">FPS: 60</span>
              </div>
           </div>
@@ -484,7 +484,7 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
                 onClick={() => setShowWaveform(true)}
                 className="absolute bottom-6 left-6 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 text-slate-300 px-4 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-wider shadow-2xl hover:bg-slate-800 transition-all flex items-center gap-3 active:scale-95 group"
               >
-                <Activity className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <ChartLineUp className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" weight="bold" />
                 Open Waveforms ({simulationHistory.length})
               </button>
             )}
