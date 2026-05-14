@@ -28,13 +28,23 @@ interface Props {
 
 function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t: string) => void }) {
   const [isHovered, setIsHovered] = React.useState(false);
+  const [tooltipPos, setTooltipPos] = React.useState({ top: 0, left: 0 });
+  const itemRef = React.useRef<HTMLDivElement>(null);
   
   // Try to get a visual representation
   const NodeComp = vlsiNodeTypes[entry.type];
   const catalog = getCatalogEntry(entry.type);
 
+  const handleMouseEnter = () => {
+    if (itemRef.current) {
+      const rect = itemRef.current.getBoundingClientRect();
+      setTooltipPos({ top: rect.top, left: rect.right + 12 });
+    }
+    setIsHovered(true);
+  };
+
   return (
-    <div className="relative group/item">
+    <div className="relative group/item" ref={itemRef}>
       <div
         draggable
         onDragStart={(e) => {
@@ -42,7 +52,7 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
           e.dataTransfer.effectAllowed = 'move';
         }}
         onClick={() => onAddComponent(entry.type)}
-        onMouseEnter={() => setIsHovered(true)}
+        onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setIsHovered(false)}
         className="w-full flex items-center gap-3 px-3 py-2 text-left text-[11px] font-medium text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-300 rounded-lg transition-all relative overflow-hidden cursor-grab active:cursor-grabbing"
       >
@@ -58,17 +68,21 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
         <span className="truncate group-hover/item:translate-x-0.5 transition-transform">{entry.label}</span>
       </div>
 
-      {/* Premium Hover Overview */}
+      {/* Premium Hover Overview - Using Fixed to avoid overflow clipping */}
       {isHovered && catalog && (
-        <div className="absolute left-full ml-4 top-0 z-[100] w-72 bg-[#0F172A] border border-slate-700/80 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl p-0 overflow-hidden pointer-events-none animate-in fade-in slide-in-from-left-2 duration-200">
+        <div 
+          className="fixed z-[9999] w-72 bg-[#0F172A] border border-slate-700/80 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] backdrop-blur-2xl p-0 overflow-hidden pointer-events-none animate-in fade-in zoom-in-95 slide-in-from-left-2 duration-200"
+          style={{ top: tooltipPos.top, left: tooltipPos.left }}
+        >
            {/* Visual Header / Preview Area */}
-           <div className="h-32 bg-slate-900/50 flex items-center justify-center border-b border-slate-800/50 relative overflow-hidden group-hover/item:bg-slate-900/80 transition-colors">
+           <div className="h-32 bg-slate-900/50 flex items-center justify-center border-b border-slate-800/50 relative overflow-hidden">
               <div className="absolute inset-0 opacity-10 pointer-events-none" 
                    style={{backgroundImage: 'radial-gradient(circle at 1px 1px, #475569 1px, transparent 0)', backgroundSize: '12px 12px'}} />
               
-              <div className="scale-110 drop-shadow-[0_0_15px_rgba(52,211,153,0.1)]">
+              <div className="scale-110 drop-shadow-[0_0_20px_rgba(52,211,153,0.15)]">
                 {NodeComp ? (
                   <NodeComp 
+                    preview={true}
                     data={{ 
                       ...catalog, 
                       refDes: catalog.refDesPrefix + '?', 
@@ -79,7 +93,7 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
                     }} 
                   />
                 ) : (
-                  <div className="text-[10px] text-slate-600 font-mono">NO PREVIEW</div>
+                  <div className="text-[10px] text-slate-600 font-mono italic">NO VISUAL PREVIEW</div>
                 )}
               </div>
            </div>
@@ -112,8 +126,8 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
            </div>
            
            <div className="mt-4 pt-3 border-t border-slate-800/50 flex items-center justify-between">
-              <span className="text-[8px] text-slate-500">Prefix: <span className="text-slate-400">{catalog.refDesPrefix}</span></span>
-              <span className="text-[8px] text-indigo-400/80 font-bold">DRAG TO ADD</span>
+              <span className="text-[8px] text-slate-500">Prefix: <span className="text-slate-400 font-mono">{catalog.refDesPrefix}</span></span>
+              <span className="text-[8px] text-indigo-400/80 font-black tracking-widest uppercase">Drag to Canvas</span>
            </div>
            </div>
         </div>
@@ -124,7 +138,10 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
 
 export default function ComponentLibraryPanel({ onAddComponent }: Props) {
   const [search, setSearch] = useState('');
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({
+    io: true,
+    gates: true
+  });
 
   const filtered = useMemo(() => {
     if (!search.trim()) return COMPONENT_CATALOG;
@@ -139,7 +156,7 @@ export default function ComponentLibraryPanel({ onAddComponent }: Props) {
   return (
     <div className="flex flex-col h-full bg-[#0B0F19]/95 backdrop-blur-2xl border-r border-slate-800/60 shadow-2xl">
       {/* Header */}
-      <div className="px-4 pt-4 pb-3 border-b border-slate-800/60 bg-gradient-to-b from-[#111827] to-transparent">
+      <div className="px-4 pt-4 pb-3 border-b border-slate-800/60 bg-gradient-to-b from-[#111827] to-transparent shrink-0">
         <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 mb-3 flex items-center gap-2">
           <Cpu size={14} className="text-emerald-400" />
           Logic Library
@@ -157,7 +174,7 @@ export default function ComponentLibraryPanel({ onAddComponent }: Props) {
       </div>
 
       {/* Categories */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar py-2">
+      <div className="flex-1 overflow-y-auto custom-scrollbar py-2">
         {CATEGORY_ORDER.map(cat => {
           const items = filtered.filter(c => c.category === cat);
           if (items.length === 0) return null;
@@ -183,7 +200,7 @@ export default function ComponentLibraryPanel({ onAddComponent }: Props) {
                 </span>
               </button>
               
-              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100 mb-2' : 'max-h-0 opacity-0'}`}>
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[800px] opacity-100 mb-2' : 'max-h-0 opacity-0'}`}>
                 <div className="py-1 px-2 space-y-1">
                   {items.map(entry => (
                     <LibraryItem 

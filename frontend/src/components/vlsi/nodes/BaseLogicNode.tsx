@@ -19,6 +19,7 @@ interface BaseLogicNodeProps {
     onPropertyChange?: (id: string, field: string, value: any) => void;
   };
   selected?: boolean;
+  preview?: boolean;
 }
 
 function getHandlePosition(pin: VLSIPin, allPins: VLSIPin[]): Record<string, string> {
@@ -40,7 +41,7 @@ function getHandlePosition(pin: VLSIPin, allPins: VLSIPin[]): Record<string, str
   return style;
 }
 
-export default function BaseLogicNode({ id, data, selected }: BaseLogicNodeProps) {
+export default function BaseLogicNode({ id, data, selected, preview }: BaseLogicNodeProps) {
   const isNaked = data.naked === true;
 
   return (
@@ -94,12 +95,16 @@ export default function BaseLogicNode({ id, data, selected }: BaseLogicNodeProps
 
         return (
           <div key={pin.id} className="absolute" style={posStyle}>
-            <Handle
-              type={pin.type === 'input' ? 'target' : 'source'}
-              position={rfPosition}
-              id={pin.id}
-              className={`!w-3 !h-3 !border-2 transition-all duration-100 ${dotClass}`}
-            />
+            {preview ? (
+              <div className={`w-3 h-3 border-2 rounded-full transition-all duration-100 ${dotClass}`} />
+            ) : (
+              <Handle
+                type={pin.type === 'input' ? 'target' : 'source'}
+                position={rfPosition}
+                id={pin.id}
+                className={`!w-3 !h-3 !border-2 transition-all duration-100 ${dotClass}`}
+              />
+            )}
             {/* Pin label — skip for nodes that show their own label */}
             {pin.label && (
               <span
