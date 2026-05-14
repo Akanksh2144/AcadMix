@@ -8,8 +8,7 @@ import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, Activity }
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import * as Y from 'yjs';
-import * as YWebRtc from 'y-webrtc';
-const WebRtcProvider = (YWebRtc as any).WebRtcProvider || (YWebRtc as any).default || YWebRtc;
+import { WebrtcProvider } from 'y-webrtc';
 
 import ComponentLibraryPanel from './ComponentLibraryPanel';
 import PropertiesInspector from './PropertiesInspector';
@@ -115,7 +114,7 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
       setRoomId(id);
       
       try {
-        const provider = new WebRtcProvider(id, yDocRef.current, {
+        const provider = new WebrtcProvider(id, yDocRef.current, {
           signaling: ['wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
         });
 
