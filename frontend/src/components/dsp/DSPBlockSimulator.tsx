@@ -293,7 +293,7 @@ export default function DSPBlockSimulator({ isFullScreen, onExitFullScreen }: {
           <div className="relative">
             <button
               onClick={() => setShowPalette(!showPalette)}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-semibold transition-all"
+              className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm font-semibold transition-all border border-gray-200 dark:border-gray-800/50"
             >
               <Plus size={16} weight="bold" />
               Add Block
