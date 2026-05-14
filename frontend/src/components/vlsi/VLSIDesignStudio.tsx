@@ -4,7 +4,7 @@ import {
   type Connection, type Edge, type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise } from '@phosphor-icons/react';
+import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise, Copy, SignIn } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
@@ -110,17 +110,21 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
 
   useEffect(() => { onPropertyChangeRef.current = handlePropertyChange; }, [handlePropertyChange]);
 
-  const toggleCollaboration = useCallback(() => {
-    if (isColabActive) {
+  const toggleCollaboration = useCallback((existingId?: string) => {
+    if (isColabActive && !existingId) {
       providerRef.current?.destroy();
       providerRef.current = null;
       setIsColabActive(false);
       setRoomId(null);
+      setColabUsers(0);
       toast.success('Collaboration ended');
     } else {
-      const id = `vlsi-${Math.random().toString(36).substring(2, 9)}`;
-      setRoomId(id);
+      const id = existingId || `vlsi-${Math.random().toString(36).substring(2, 9)}`;
       
+      // Cleanup previous if switching
+      if (providerRef.current) providerRef.current.destroy();
+
+      setRoomId(id);
       providerRef.current = new WebrtcProvider(id, yDocRef.current, {
         signaling: ['wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
       });
@@ -130,9 +134,23 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
       });
 
       setIsColabActive(true);
-      toast.success(`Joined room: ${id}`);
+      toast.success(existingId ? `Joined room: ${id}` : `Started room: ${id}`);
     }
   }, [isColabActive]);
+
+  const handleJoinRoom = useCallback(() => {
+    const id = window.prompt('Enter Room ID to join:');
+    if (id && id.trim()) {
+      toggleCollaboration(id.trim());
+    }
+  }, [toggleCollaboration]);
+
+  const handleCopyRoomId = useCallback(() => {
+    if (roomId) {
+      navigator.clipboard.writeText(roomId);
+      toast.success('Room ID copied to clipboard');
+    }
+  }, [roomId]);
 
   const onConnect = useCallback((params: Connection) => {
     setEdges(eds => {
@@ -416,15 +434,35 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
             <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
 
             <button
-              onClick={toggleCollaboration}
+              onClick={() => toggleCollaboration()}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase transition-all relative
                 ${isColabActive ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10'}`}
-              title={isColabActive ? `In Room: ${roomId}` : 'Start Collaboration'}
+              title={isColabActive ? `In Room: ${roomId} (Click to Stop)` : 'Start New Room'}
             >
               <Users size={12} weight={isColabActive ? "fill" : "bold"} />
-              {isColabActive ? `${colabUsers} Active` : 'Colab'}
+              {isColabActive ? `${colabUsers} Active` : 'Host'}
               {isColabActive && <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-400 rounded-full animate-ping" />}
             </button>
+
+            {isColabActive && (
+              <button
+                onClick={handleCopyRoomId}
+                className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-indigo-400"
+                title="Copy Room ID"
+              >
+                <Copy size={12} weight="bold" />
+              </button>
+            )}
+
+            {!isColabActive && (
+              <button
+                onClick={handleJoinRoom}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10"
+                title="Join Existing Room"
+              >
+                <SignIn size={12} weight="bold" /> Join
+              </button>
+            )}
 
             <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
 
