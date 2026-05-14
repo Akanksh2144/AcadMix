@@ -28,16 +28,16 @@ function getNextRefDes(prefix: string): string {
 // Default starter circuit
 const STARTER_NODES: Node[] = [
   { id: 'board-1', type: 'board', position: { x: 0, y: 0 }, data: { refDes: 'BRD1', componentType: 'board_custom', category: 'board', label: 'Custom Resizable Board', width: 800, height: 600 }, style: { width: 800, height: 600 }, draggable: true, selectable: true, zIndex: -1 },
-  { id: 'comp-1', type: 'vcc', position: { x: 100, y: 60 }, data: { refDes: 'PWR1', componentType: 'vcc', category: 'power', label: 'VCC', properties: { value: '5V' }, pins: getCatalogEntry('vcc')!.pins } },
-  { id: 'comp-2', type: 'resistor', position: { x: 300, y: 60 }, data: { refDes: 'R1', componentType: 'resistor', category: 'passive', label: 'Resistor', properties: { value: '330Ω', package: '0805' }, pins: getCatalogEntry('resistor')!.pins } },
-  { id: 'comp-3', type: 'led', position: { x: 520, y: 60 }, data: { refDes: 'D1', componentType: 'led', category: 'passive', label: 'LED', properties: { value: 'Red', color: 'red', package: '0805' }, pins: getCatalogEntry('led')!.pins } },
-  { id: 'comp-4', type: 'gnd', position: { x: 720, y: 60 }, data: { refDes: 'GND1', componentType: 'gnd', category: 'power', label: 'GND', properties: { value: 'GND' }, pins: getCatalogEntry('gnd')!.pins } },
+  { id: 'comp-1', type: 'vcc_node', position: { x: 100, y: 60 }, data: { refDes: 'PWR1', componentType: 'vcc_node', category: 'power', label: 'VCC Rail', properties: { value: '5V' }, pins: getCatalogEntry('vcc_node')!.pins } },
+  { id: 'comp-2', type: 'res_0805_330', position: { x: 300, y: 60 }, data: { refDes: 'R1', componentType: 'res_0805_330', category: 'passive', label: 'Resistor 330Ω 0805', properties: { value: '330Ω', package: '0805' }, pins: getCatalogEntry('res_0805_330')!.pins } },
+  { id: 'comp-3', type: 'led_red', position: { x: 520, y: 60 }, data: { refDes: 'D1', componentType: 'led_red', category: 'active', label: 'LED Red', properties: { value: 'Red', color: 'red', package: '0603' }, pins: getCatalogEntry('led_red')!.pins } },
+  { id: 'comp-4', type: 'gnd_node', position: { x: 720, y: 60 }, data: { refDes: 'GND1', componentType: 'gnd_node', category: 'power', label: 'GND Node', properties: { value: 'GND' }, pins: getCatalogEntry('gnd_node')!.pins } },
 ];
 
 const STARTER_EDGES: Edge[] = [
   { id: 'e-1', source: 'comp-1', sourceHandle: '1', target: 'comp-2', targetHandle: '1', type: 'straight', data: { layer: 'TopLayer' }, style: { stroke: '#ff0000', strokeWidth: 3, mixBlendMode: 'screen' } },
-  { id: 'e-2', source: 'comp-2', sourceHandle: '2', target: 'comp-3', targetHandle: 'anode', type: 'straight', data: { layer: 'TopLayer' }, style: { stroke: '#ff0000', strokeWidth: 3, mixBlendMode: 'screen' } },
-  { id: 'e-3', source: 'comp-3', sourceHandle: 'cathode', target: 'comp-4', targetHandle: '1', type: 'straight', data: { layer: 'BottomLayer' }, style: { stroke: '#0000ff', strokeWidth: 3, mixBlendMode: 'screen' } },
+  { id: 'e-2', source: 'comp-2', sourceHandle: '2', target: 'comp-3', targetHandle: 'a', type: 'straight', data: { layer: 'TopLayer' }, style: { stroke: '#ff0000', strokeWidth: 3, mixBlendMode: 'screen' } },
+  { id: 'e-3', source: 'comp-3', sourceHandle: 'k', target: 'comp-4', targetHandle: '1', type: 'straight', data: { layer: 'BottomLayer' }, style: { stroke: '#0000ff', strokeWidth: 3, mixBlendMode: 'screen' } },
 ];
 
 export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen, onExitFullScreen }: { 
