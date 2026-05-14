@@ -439,7 +439,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen }: {
             {isFullScreen && onExitFullScreen && (
               <button 
                 onClick={onExitFullScreen}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 text-slate-400 hover:bg-rose-500 hover:text-white transition-all border border-slate-700/50 font-bold text-[10px] uppercase tracking-widest group shadow-lg"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-all border border-slate-800 font-bold text-[10px] uppercase tracking-widest group shadow-lg"
               >
                 <CornersIn size={14} weight="bold" className="group-hover:scale-110 transition-transform" /> 
                 Exit
@@ -451,7 +451,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen }: {
             </h2>
           </div>
 
-          <div className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-full border border-slate-800/80 max-w-[60%] overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1 p-1 rounded-full border border-slate-800/80 max-w-[60%] overflow-x-auto no-scrollbar backdrop-blur-sm">
             <button
               onClick={() => setIsRunning(r => !r)}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase transition-all whitespace-nowrap
@@ -474,7 +474,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen }: {
             <button
               onClick={() => toggleCollaboration()}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase transition-all relative
-                ${isColabActive ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 border border-slate-700/50'}`}
+                ${isColabActive ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 border border-slate-800/50'}`}
               title={isColabActive ? `In Room: ${roomId} (Click to Stop)` : 'Start New Room'}
             >
               <Users size={14} weight={isColabActive ? "fill" : "bold"} />
@@ -485,7 +485,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen }: {
             {isColabActive && (
               <button
                 onClick={handleCopyRoomId}
-                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-800/80 text-indigo-400 hover:bg-indigo-500/20 transition-colors border border-indigo-500/20"
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-indigo-400 hover:bg-indigo-500/20 transition-colors border border-indigo-500/20"
                 title="Copy Room ID"
               >
                 <Copy size={13} weight="bold" />
@@ -496,7 +496,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen }: {
             {!isColabActive && (
               <button
                 onClick={handleJoinRoom}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase bg-slate-800 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 border border-slate-700/50 transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 border border-slate-800/50 transition-all"
                 title="Join Existing Room"
               >
                 <SignIn size={14} weight="bold" /> Join
