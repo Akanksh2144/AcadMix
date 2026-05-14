@@ -46,6 +46,9 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
   const catalog = getCatalogEntry(entry.type);
 
   const handleMouseEnter = () => {
+    // Only show hover overview on large screens / full screen
+    if (window.innerWidth < 1024) return;
+
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     
     // Set a 0.5-second delay before showing the tooltip
