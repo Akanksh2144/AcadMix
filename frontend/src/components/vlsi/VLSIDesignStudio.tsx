@@ -7,9 +7,11 @@ import '@xyflow/react/dist/style.css';
 import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import * as Y from 'yjs';
-import WebRtcProvider from 'y-webrtc';
+import * as YWebRtc from 'y-webrtc';
+const WebRtcProvider = (YWebRtc as any).WebRtcProvider || YWebRtc.default || YWebRtc;
 // Debug: checking if default export works better
-// import WebRtcProvider from 'y-webrtc';
+// import * as YWebRtc from 'y-webrtc';
+const WebRtcProvider = (YWebRtc as any).WebRtcProvider || YWebRtc.default || YWebRtc;
 import ComponentLibraryPanel from './ComponentLibraryPanel';
 import PropertiesInspector from './PropertiesInspector';
 import VLSICanvas from './VLSICanvas';
