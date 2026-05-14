@@ -4,8 +4,7 @@ import {
   type Connection, type Edge, type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ChartLineUp } from '@phosphor-icons/react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
@@ -101,34 +100,25 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
 
   const toggleCollaboration = useCallback(() => {
     if (isColabActive) {
-      if (providerRef.current) {
-        providerRef.current.destroy();
-        providerRef.current = null;
-      }
+      providerRef.current?.destroy();
+      providerRef.current = null;
       setIsColabActive(false);
       setRoomId(null);
-      setColabUsers(0);
       toast.success('Collaboration ended');
     } else {
       const id = `vlsi-${Math.random().toString(36).substring(2, 9)}`;
       setRoomId(id);
       
-      try {
-        const provider = new WebrtcProvider(id, yDocRef.current, {
-          signaling: ['wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
-        });
+      providerRef.current = new WebrtcProvider(id, yDocRef.current, {
+        signaling: ['wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
+      });
 
-        provider.on('peers', (params: any) => {
-          setColabUsers(params.webrtcConns.size + 1);
-        });
+      providerRef.current.on('peers', (params: any) => {
+        setColabUsers(params.webrtcConns.size + 1);
+      });
 
-        providerRef.current = provider;
-        setIsColabActive(true);
-        toast.success(`Collaboration Active: Room ${id}`);
-      } catch (err) {
-        console.error("WebRTC Error:", err);
-        toast.error("Failed to start collaboration room.");
-      }
+      setIsColabActive(true);
+      toast.success(`Joined room: ${id}`);
     }
   }, [isColabActive]);
 
@@ -368,91 +358,52 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
       {/* Centre */}
       <div className="flex-1 flex flex-col relative h-full min-w-0">
         {/* Top toolbar */}
-        <div className="h-14 bg-[#0F172A]/90 backdrop-blur-xl border-b border-slate-800 flex items-center justify-between px-6 shrink-0 z-10">
+        <div className="h-12 bg-[#0F172A]/90 backdrop-blur-xl border-b border-slate-800 flex items-center justify-between px-4 shrink-0 z-10">
           <h2 className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-400 flex items-center gap-2 select-none">
-            <Cpu size={18} className="text-indigo-400" weight="duotone" />
+            <Cpu size={16} className="text-indigo-400" weight="duotone" />
             VLSI Logic Studio
           </h2>
 
-          <div className="flex items-center bg-slate-900/80 p-1.5 rounded-full border border-slate-800/80 shadow-2xl backdrop-blur-md">
-            {/* Run Button Group */}
-            <div className="flex items-center gap-1 bg-slate-800/40 rounded-full p-1 border border-white/5 mr-2">
-              <button
-                onClick={() => setIsRunning(r => !r)}
-                className={`relative px-5 py-2 rounded-full text-[10px] font-black tracking-widest uppercase transition-all flex items-center gap-2 z-10 ${
-                  isRunning ? 'text-white' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {isRunning && (
-                  <motion.div
-                    layoutId="activePill"
-                    className="absolute inset-0 bg-emerald-600 rounded-full -z-10 shadow-lg shadow-emerald-600/30"
-                    initial={false}
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                {isRunning ? <Pause size={12} weight="fill" /> : <Play size={12} weight="fill" />}
-                {isRunning ? 'Stop' : 'Run'}
-              </button>
-              
-              <button
-                onClick={runSimulationStep}
-                disabled={isRunning}
-                className="px-4 py-2 rounded-full text-[10px] font-bold uppercase text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-20 flex items-center gap-2"
-              >
-                <SkipForward size={12} weight="fill" /> Step
-              </button>
-            </div>
+          <div className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-full border border-slate-800/80 max-w-[60%] overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setIsRunning(r => !r)}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase transition-all whitespace-nowrap
+                ${isRunning ? 'bg-amber-500/15 text-amber-400' : 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'}`}
+            >
+              {isRunning ? <Pause size={10} weight="fill" /> : <Play size={10} weight="fill" />}
+              {isRunning ? 'Stop' : 'Run'}
+            </button>
 
-            <div className="w-px h-4 bg-slate-700/50 mx-1" />
+            <button
+              onClick={runSimulationStep}
+              disabled={isRunning}
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-slate-200 disabled:opacity-30"
+            >
+              <SkipForward size={10} weight="fill" /> Step
+            </button>
 
-            {/* Colab Button Pill */}
-            <div className="flex items-center mx-2">
-              <button
-                onClick={toggleCollaboration}
-                className={`relative px-5 py-2 rounded-full text-[10px] font-black tracking-widest uppercase transition-all flex items-center gap-2 z-10 ${
-                  isColabActive ? 'text-white' : 'text-slate-400 hover:text-indigo-400'
-                }`}
-              >
-                {isColabActive && (
-                  <motion.div
-                    layoutId="activeColabPill"
-                    className="absolute inset-0 bg-indigo-600 rounded-full -z-10 shadow-lg shadow-indigo-600/30"
-                    initial={false}
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                <Users size={14} weight={isColabActive ? "fill" : "bold"} />
-                {isColabActive ? `${colabUsers} Active` : 'Colab'}
-                {isColabActive && (
-                   <motion.div 
-                     initial={{ scale: 0 }}
-                     animate={{ scale: 1 }}
-                     className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-indigo-400 rounded-full border-2 border-[#0F172A] z-20"
-                   />
-                )}
-              </button>
-            </div>
+            <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
 
-            <div className="w-px h-4 bg-slate-700/50 mx-1" />
+            <button
+              onClick={toggleCollaboration}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase transition-all relative
+                ${isColabActive ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10'}`}
+              title={isColabActive ? `In Room: ${roomId}` : 'Start Collaboration'}
+            >
+              <Users size={12} weight={isColabActive ? "fill" : "bold"} />
+              {isColabActive ? `${colabUsers} Active` : 'Colab'}
+              {isColabActive && <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-400 rounded-full animate-ping" />}
+            </button>
 
-            {/* Actions Group */}
-            <div className="flex items-center gap-2 ml-2 pr-1">
-              <button onClick={handleGenerateCode} className="px-3 py-2 rounded-full text-[10px] font-black tracking-widest uppercase text-slate-400 hover:text-white transition-colors flex items-center gap-2">
-                <Code size={14} weight="bold" /> HDL
-              </button>
-              
-              <button onClick={handleClear} className="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all">
-                <Trash size={14} weight="bold" />
-              </button>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-             <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/40 border border-slate-700/50">
-               <ChartLineUp size={14} className={isRunning ? "text-emerald-400 animate-pulse" : "text-slate-500"} weight="bold" />
-               <span className="text-[10px] font-bold text-slate-400">FPS: 60</span>
-             </div>
+            <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
+
+            <button onClick={handleGenerateCode} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-slate-200">
+              <Code size={12} weight="bold" /> HDL
+            </button>
+
+            <button onClick={handleClear} className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-rose-400">
+              <Trash size={12} weight="bold" />
+            </button>
           </div>
         </div>
 
@@ -464,51 +415,40 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
               onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
               onConnect={onConnect} onNodeClick={onNodeClick} onPaneClick={onPaneClick}
             />
-            
-            <AnimatePresence>
-              {isRunning && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-4 left-4 flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full text-[10px] font-bold border border-emerald-500/20 backdrop-blur-md pointer-events-none"
-                >
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  LIVE SIMULATION ACTIVE
-                </motion.div>
-              )}
-            </AnimatePresence>
-
+            {isRunning && (
+              <div className="absolute top-4 left-4 flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-500/20 backdrop-blur pointer-events-none">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                SIMULATING
+              </div>
+            )}
             {!showWaveform && simulationHistory.length > 0 && (
               <button 
                 onClick={() => setShowWaveform(true)}
-                className="absolute bottom-6 left-6 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 text-slate-300 px-4 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-wider shadow-2xl hover:bg-slate-800 transition-all flex items-center gap-3 active:scale-95 group"
+                className="absolute bottom-4 left-4 bg-slate-900 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold font-mono shadow-xl hover:bg-slate-800 transition flex items-center gap-2"
               >
-                <ChartLineUp className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" weight="bold" />
-                Open Waveforms ({simulationHistory.length})
+                <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h4l3-9 5 18 3-9h3" />
+                </svg>
+                Waveforms ({simulationHistory.length})
               </button>
             )}
           </div>
 
           {showWaveform && !showCode && (
-            <motion.div 
-              initial={{ height: 0 }}
-              animate={{ height: isWaveformExpanded ? '100%' : '280px' }}
-              className={`shrink-0 z-20 border-t border-slate-800/80 bg-[#0B0F19]/95 backdrop-blur-xl ${isWaveformExpanded ? 'absolute inset-0' : 'relative'}`}
-            >
+            <div className={`shrink-0 z-20 border-t border-slate-800 ${isWaveformExpanded ? 'absolute inset-0' : ''}`} style={{ height: isWaveformExpanded ? '100%' : '260px' }}>
               <WaveformViewer 
                 history={simulationHistory} 
                 isExpanded={isWaveformExpanded}
                 onExpandToggle={() => setIsWaveformExpanded(!isWaveformExpanded)}
                 onClose={() => setShowWaveform(false)}
               />
-            </motion.div>
+            </div>
           )}
         </div>
       </div>
 
       {/* Right panel */}
-      <div className="w-60 shrink-0 h-full relative z-10 border-l border-slate-800/70 bg-[#0F172A]/30 backdrop-blur-sm">
+      <div className="w-60 shrink-0 h-full relative z-10 border-l border-slate-800/70">
         <PropertiesInspector
           selectedNode={selectedNode}
           onPropertyChange={handlePropertyChange}
@@ -517,46 +457,28 @@ export default function VLSIDesignStudio({ user }: { user?: any }) {
       </div>
 
       {/* Modal */}
-      <AnimatePresence>
-        {showCode && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-8"
-          >
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#0F172A] border border-slate-700/50 rounded-3xl w-full max-w-3xl flex flex-col shadow-[0_0_50px_-12px_rgba(79,70,229,0.3)] overflow-hidden"
-            >
-              <div className="px-6 py-4 bg-slate-800/50 border-b border-slate-700/50 flex items-center justify-between">
-                <div className="flex flex-col">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-200 flex items-center gap-3">
-                    <Code size={18} className="text-indigo-400" weight="bold" /> 
-                    Verilog Output
-                  </h3>
-                  <span className="text-[10px] text-slate-500 font-bold mt-0.5">Synthesized from schematic logic</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={handleDownload} className="flex items-center gap-2 px-4 py-2 text-[11px] font-black uppercase tracking-wider text-slate-200 bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow-lg shadow-indigo-600/20">
-                    <Download size={14} weight="bold" /> Download .V
-                  </button>
-                  <button onClick={() => setShowCode(false)} className="w-8 h-8 flex items-center justify-center bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-full transition-colors">
-                    <Trash size={16} weight="bold" />
-                  </button>
-                </div>
+      {showCode && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-8">
+          <div className="bg-[#0F172A] border border-slate-700 rounded-2xl w-full max-w-2xl flex flex-col shadow-2xl overflow-hidden">
+            <div className="px-5 py-3 bg-slate-800/50 border-b border-slate-700/80 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <Code size={16} className="text-indigo-400" /> Generated Verilog HDL
+              </h3>
+              <div className="flex items-center gap-2">
+                <button onClick={handleDownload} className="flex items-center gap-1 px-2 py-1 text-[11px] text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-colors">
+                  <Download size={13} /> .v
+                </button>
+                <button onClick={() => setShowCode(false)} className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs rounded-lg font-bold transition-colors">
+                  Close
+                </button>
               </div>
-              <div className="p-8 overflow-y-auto max-h-[60vh] bg-[#05080F]/50 custom-scrollbar">
-                <pre className="font-mono text-[13px] text-emerald-400/90 leading-relaxed whitespace-pre-wrap selection:bg-indigo-500/30">
-                  {verilogCode}
-                </pre>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+            <div className="p-5 overflow-y-auto max-h-[65vh]">
+              <pre className="font-mono text-[12px] text-emerald-400 leading-relaxed whitespace-pre-wrap">{verilogCode}</pre>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
