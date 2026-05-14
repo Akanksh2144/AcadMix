@@ -38,7 +38,16 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
   const handleMouseEnter = () => {
     if (itemRef.current) {
       const rect = itemRef.current.getBoundingClientRect();
-      setTooltipPos({ top: rect.top, left: rect.right + 12 });
+      const viewportHeight = window.innerHeight;
+      const estimatedHeight = 380; // Total height of the tooltip card
+      
+      let top = rect.top;
+      // If the tooltip would go off the bottom, shift it up
+      if (top + estimatedHeight > viewportHeight - 20) {
+        top = Math.max(20, viewportHeight - estimatedHeight - 20);
+      }
+      
+      setTooltipPos({ top, left: rect.right + 12 });
     }
     setIsHovered(true);
   };
@@ -71,7 +80,7 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
       {/* Premium Hover Overview - Using Fixed to avoid overflow clipping */}
       {isHovered && catalog && (
         <div 
-          className="fixed z-[9999] w-72 bg-[#0F172A] border border-slate-700/80 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] backdrop-blur-2xl p-0 overflow-hidden pointer-events-none animate-in fade-in zoom-in-95 slide-in-from-left-2 duration-200"
+          className="fixed z-[9999] w-72 max-h-[calc(100vh-40px)] bg-[#0F172A] border border-slate-700/80 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] backdrop-blur-2xl p-0 overflow-y-auto custom-scrollbar pointer-events-none animate-in fade-in zoom-in-95 slide-in-from-left-2 duration-200"
           style={{ top: tooltipPos.top, left: tooltipPos.left }}
         >
            {/* Visual Header / Preview Area */}
