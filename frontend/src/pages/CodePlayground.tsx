@@ -2085,10 +2085,10 @@ const CodePlayground = ({ navigate, user }) => {
               {isLabFullScreen && (
                 <button
                   onClick={() => setIsLabFullScreen(false)}
-                  className="absolute top-4 right-1/2 translate-x-1/2 z-[999] bg-slate-800/80 hover:bg-slate-700/80 backdrop-blur text-white px-4 py-2 rounded-full shadow-2xl transition-all flex items-center gap-2 group border border-slate-700/50 opacity-20 hover:opacity-100"
+                  className="absolute bottom-10 right-1/2 translate-x-1/2 z-[999] bg-slate-900/90 hover:bg-slate-800 backdrop-blur-md text-white px-5 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all flex items-center gap-2 group border border-white/10 hover:border-indigo-500/50 opacity-40 hover:opacity-100 scale-95 hover:scale-100"
                 >
-                  <CornersIn size={16} weight="bold" className="group-hover:scale-110 transition-transform" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Exit Full Screen</span>
+                  <CornersIn size={18} weight="bold" className="group-hover:rotate-12 transition-transform" />
+                  <span className="text-[11px] font-black uppercase tracking-[0.1em]">Exit Full Screen</span>
                 </button>
               )}
               {(_simActiveBoard as any)?.isNativeBlock ? (
