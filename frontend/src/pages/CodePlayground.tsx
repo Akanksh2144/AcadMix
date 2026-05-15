@@ -640,7 +640,7 @@ endmodule`
     { id: 'inst-funcgen', label: 'Function Generator', url: '', isNativeBlock: true },
     { id: 'inst-funcgen-legacy', label: 'Function Gen (Legacy)', url: 'https://academo.org/demos/wave-interference-beat-frequency/?embedded=true', openLabel: 'Open Legacy' },
     { id: 'inst-spectrum', label: 'Spectrum Analyzer', url: 'https://academo.org/demos/spectrum-analyzer/?embedded=true', openLabel: 'Open Spectrum' },
-    { id: 'inst-filter', label: 'Filter Design', url: 'https://rf-tools.com/filters/', openLabel: 'Open Filter Design' },
+    { id: 'inst-filter', label: 'Filter Design', url: 'https://markimicrowave.com/technical-resources/tools/lc-filter-design-tool/', openLabel: 'Open Filter Design' },
     { id: 'inst-python', label: 'Python (Measurements)', url: jupyterUrl(JUPYTER_CODES['inst-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   power_electronics_ece: [
