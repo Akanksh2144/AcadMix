@@ -16,6 +16,9 @@ import DSPBlockSimulator from '../components/dsp/DSPBlockSimulator';
 import SettlementCalculator from '../components/civil/SettlementCalculator';
 import PCBDesignStudio from '../components/pcb/PCBDesignStudio';
 import VLSIDesignStudio from '../components/vlsi/VLSIDesignStudio';
+import EM1DSolver from '../components/em/EM1DSolver';
+import EM2DSolver from '../components/em/EM2DSolver';
+import EM3DVisualizer from '../components/em/EM3DVisualizer';
 
 const LANGUAGES = [
   { id: 'python', label: 'Python', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
@@ -48,7 +51,6 @@ const SIMULATOR_CATEGORIES = [
   { id: 'dsp', label: 'DSP / Signal Processing', icon: <Equalizer size={16} weight="duotone" />, accent: 'indigo' },
   { id: 'instrumentation', label: 'Instrumentation', icon: <Pulse size={16} weight="duotone" />, accent: 'cyan' },
   { id: 'power_electronics_ece', label: 'Power Electronics', icon: <Lightning size={16} weight="duotone" />, accent: 'yellow' },
-  { id: 'iot', label: 'IoT & Edge', icon: <WifiHigh size={16} weight="duotone" />, accent: 'green' },
 ];
 
 const JUPYTERLITE_BASE = 'https://jupyterlite.github.io/demo/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab%20Dark';
@@ -509,6 +511,8 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
     { id: 'pi-pico', label: 'RPi Pico', url: 'https://wokwi.com/projects/new/pi-pico', openLabel: 'Open in Wokwi' },
     { id: 'micropython-esp32', label: 'MicroPython', url: 'https://wokwi.com/projects/new/micropython-esp32', openLabel: 'Open in Wokwi' },
     { id: 'attiny85', label: 'ATtiny85', url: 'https://wokwi.com/projects/new/attiny85', openLabel: 'Open in Wokwi' },
+    { id: 'iot-pico', label: 'RPi Pico W', url: 'https://wokwi.com/projects/new/pi-pico-w', openLabel: 'Open Wokwi' },
+    { id: 'iot-python', label: 'Python (Edge)', url: jupyterUrl(JUPYTER_CODES['iot-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   analog: [
     { id: 'ae-native-spice', label: 'SPICE: RLC Circuit', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: `* Basic RLC circuit\n\nv1 1 0 pulse (0 5 1m 1m 1m 10m 20m)\nr1 1 2 1k\nl1 2 3 10m\nc1 3 0 1u\n\n.tran 0.1m 50m\n.end` },
@@ -621,9 +625,9 @@ endmodule`
     { id: 'ctrl-python', label: 'Python (Control)', url: jupyterUrl(JUPYTER_CODES['ctrl-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   em_theory: [
-    { id: 'em-1d', label: '1D EM Wave', url: 'https://www.falstad.com/emwave1/', openLabel: 'Open Falstad' },
-    { id: 'em-2d', label: '2D EM Wave', url: 'https://www.falstad.com/emwave2/', openLabel: 'Open Falstad' },
-    { id: 'em-3d', label: '3D Waveguide', url: 'https://www.falstad.com/embox/', openLabel: 'Open Falstad' },
+    { id: 'em-1d', label: '1D EM Wave', url: '', isNativeBlock: true },
+    { id: 'em-2d', label: '2D FDTD Solver', url: '', isNativeBlock: true },
+    { id: 'em-3d', label: '3D Wave Visualizer', url: '', isNativeBlock: true },
     { id: 'em-python', label: 'Python (Antennas)', url: jupyterUrl(JUPYTER_CODES['em-python-ece']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   network_analysis: [
@@ -647,11 +651,6 @@ endmodule`
     { id: 'pe-reg', label: 'Voltage Regulator', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=zener.txt', openLabel: 'Open CircuitJS' },
     { id: 'pe-python', label: 'Python (Power)', url: jupyterUrl(JUPYTER_CODES['pe-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
-  iot: [
-    { id: 'iot-esp32', label: 'ESP32 IoT', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open Wokwi' },
-    { id: 'iot-pico', label: 'RPi Pico W', url: 'https://wokwi.com/projects/new/pi-pico-w', openLabel: 'Open Wokwi' },
-    { id: 'iot-micropython', label: 'MicroPython IoT', url: 'https://wokwi.com/projects/new/micropython-esp32', openLabel: 'Open Wokwi' },
-    { id: 'iot-python', label: 'Python (Edge)', url: jupyterUrl(JUPYTER_CODES['iot-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
 };
 
@@ -2243,6 +2242,12 @@ const CodePlayground = ({ navigate, user }) => {
                       onExitFullScreen={() => setIsLabFullScreen(false)}
                       onRequestFullScreen={() => setIsLabFullScreen(true)} 
                     />
+                  ) : (_simActiveBoard as any)?.id === 'em-1d' ? (
+                    <EM1DSolver />
+                  ) : (_simActiveBoard as any)?.id === 'em-2d' ? (
+                    <EM2DSolver />
+                  ) : (_simActiveBoard as any)?.id === 'em-3d' ? (
+                    <EM3DVisualizer />
                   ) : (
                     <DSPBlockSimulator 
                       isFullScreen={isLabFullScreen} 
