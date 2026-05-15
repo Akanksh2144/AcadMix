@@ -4,7 +4,7 @@ import {
   type Connection, type Edge, type Node, type XYPosition,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise, Copy, SignIn, CornersOut } from '@phosphor-icons/react';
+import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise, Copy, SignIn, CornersOut, CornersIn } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
@@ -534,6 +534,16 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
 
             <button onClick={handleClear} className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-rose-400">
               <Trash size={12} weight="bold" />
+            </button>
+
+            <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
+
+            <button 
+              onClick={() => isFullScreen && onExitFullScreen ? onExitFullScreen() : onRequestFullScreen?.()}
+              title={isFullScreen ? "Exit Full Screen" : "Full Screen"}
+              className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-indigo-400 transition-colors"
+            >
+              {isFullScreen ? <CornersIn size={14} weight="bold" /> : <CornersOut size={14} weight="bold" />}
             </button>
           </div>
         </div>
