@@ -651,7 +651,6 @@ endmodule`
     { id: 'pe-reg', label: 'Voltage Regulator', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=zener.txt', openLabel: 'Open CircuitJS' },
     { id: 'pe-python', label: 'Python (Power)', url: jupyterUrl(JUPYTER_CODES['pe-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
-  ],
 };
 
 // ── EEE Lab Categories & Boards ─────────────────────────────────────────────
