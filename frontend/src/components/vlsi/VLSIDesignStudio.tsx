@@ -4,7 +4,7 @@ import {
   type Connection, type Edge, type Node, type XYPosition,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise, Copy, SignIn, CornersIn } from '@phosphor-icons/react';
+import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise, Copy, SignIn, CornersOut } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
@@ -46,10 +46,11 @@ const STARTER_EDGES: Edge[] = [
   { id: 'e3', source: 'and-1', sourceHandle: 'out', target: 'led-1', targetHandle: 'in',  type: 'smoothstep', style: { stroke: '#475569', strokeWidth: 2 } },
 ];
 
-function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen }: { 
+function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequestFullScreen }: { 
   user?: any; 
   isFullScreen?: boolean; 
-  onExitFullScreen?: () => void 
+  onExitFullScreen?: () => void;
+  onRequestFullScreen?: () => void;
 }) {
   // ─── States & Refs ──────────────────────────────────────────────────────────
   const onPropertyChangeRef = useRef<(id: string, f: string, v: any) => void>(() => {});
@@ -425,7 +426,29 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen }: {
   }, [verilogCode]);
 
   return (
-    <div className="w-full h-full flex bg-[#0B0F19] text-slate-200 overflow-hidden">
+    <div className="w-full h-full flex bg-[#0B0F19] text-slate-200 overflow-hidden relative">
+
+      {/* ── Fullscreen Prompt Overlay (when embedded) ── */}
+      {!isFullScreen && onRequestFullScreen && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center" style={{ background: 'rgba(5,7,12,0.55)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
+          <div className="flex flex-col items-center gap-4 text-center px-8">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+              <CornersOut size={28} weight="bold" className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">Silicon Studio</h3>
+              <p className="text-sm text-gray-400 max-w-xs">For the best VLSI design experience, open the editor in full screen.</p>
+            </div>
+            <button
+              onClick={onRequestFullScreen}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 transition-all shadow-lg shadow-indigo-600/20 text-sm"
+            >
+              <CornersOut size={18} weight="bold" />
+              View in Full Screen
+            </button>
+          </div>
+        </div>
+      )}
       {/* Left panel */}
       <div className="w-60 shrink-0 h-full relative z-10 border-r border-slate-800/70">
         <ComponentLibraryPanel onAddComponent={handleAddComponent} />
@@ -436,15 +459,6 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen }: {
         {/* Top toolbar */}
         <div className="h-12 bg-[#0F172A]/90 backdrop-blur-xl border-b border-slate-800 flex items-center justify-between px-4 shrink-0 z-10">
           <div className="flex items-center gap-4">
-            {isFullScreen && onExitFullScreen && (
-              <button 
-                onClick={onExitFullScreen}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-all font-bold text-[10px] uppercase tracking-widest group shadow-lg"
-              >
-                <CornersIn size={14} weight="bold" className="group-hover:scale-110 transition-transform" /> 
-                Exit
-              </button>
-            )}
             <h2 className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-400 flex items-center gap-2 select-none">
               <Cpu size={16} className="text-indigo-400" weight="duotone" />
               Silicon Studio
@@ -617,6 +631,7 @@ export default function VLSIDesignStudio(props: {
   user?: any;
   isFullScreen?: boolean;
   onExitFullScreen?: () => void;
+  onRequestFullScreen?: () => void;
 }) {
   return (
     <ReactFlowProvider>

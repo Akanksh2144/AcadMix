@@ -2106,7 +2106,8 @@ const CodePlayground = ({ navigate, user }) => {
                     <VLSIDesignStudio 
                       user={user} 
                       isFullScreen={isLabFullScreen} 
-                      onExitFullScreen={() => setIsLabFullScreen(false)} 
+                      onExitFullScreen={() => setIsLabFullScreen(false)}
+                      onRequestFullScreen={() => setIsLabFullScreen(true)} 
                     />
                   ) : (
                     <DSPBlockSimulator 
