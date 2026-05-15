@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Gear, Wrench, Stack, Path, ShareNetwork, Polygon, CornersOut,
   Cpu, ShieldCheck, Fingerprint, TreeStructure, ArrowsClockwise,
-  GridFour, Eye, Cube, Info, Puzzle, Export, FileArrowDown,
+  GridFour, Eye, Cube, Info, PuzzlePiece, Export, FileArrowDown,
   MapPin, ShoppingCart, CaretRight, X
 } from '@phosphor-icons/react';
 import { toast } from 'sonner';
@@ -224,7 +224,7 @@ export default function PCBLayoutMenu({
     {
       id: 'pcb-modules',
       label: 'PCB Modules',
-      icon: <Puzzle size={14} weight="duotone" />,
+      icon: <PuzzlePiece size={14} weight="duotone" />,
       action: () => comingSoon('PCB Modules'),
     },
     { id: 'sep-6', label: '', separator: true },
