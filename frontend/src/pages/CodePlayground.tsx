@@ -2099,7 +2099,8 @@ const CodePlayground = ({ navigate, user }) => {
                     <PCBDesignStudio 
                       user={user} 
                       isFullScreen={isLabFullScreen} 
-                      onExitFullScreen={() => setIsLabFullScreen(false)} 
+                      onExitFullScreen={() => setIsLabFullScreen(false)}
+                      onRequestFullScreen={() => setIsLabFullScreen(true)} 
                     />
                   ) : (_simActiveBoard as any)?.id === 'vlsi-native-block' ? (
                     <VLSIDesignStudio 

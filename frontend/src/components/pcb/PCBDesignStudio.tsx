@@ -42,10 +42,11 @@ const STARTER_EDGES: Edge[] = [
   { id: 'e-3', source: 'comp-3', sourceHandle: 'k', target: 'comp-4', targetHandle: '1', type: 'straight', data: { layer: 'BottomLayer' }, style: { stroke: '#0000ff', strokeWidth: 3, mixBlendMode: 'screen' } },
 ];
 
-export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen, onExitFullScreen }: { 
+export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen, onExitFullScreen, onRequestFullScreen }: { 
   user?: any;
   isFullScreen?: boolean;
   onExitFullScreen?: () => void;
+  onRequestFullScreen?: () => void;
 }) {
   const [roomId, setRoomId] = useState(() => 'PCB-' + Math.random().toString(36).substring(2, 8).toUpperCase());
   const [isHost, setIsHost] = useState(true);
@@ -300,6 +301,28 @@ export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen
       ? "fixed inset-0 z-[100] w-screen h-screen flex flex-col bg-gray-950" 
       : "w-full h-full flex flex-col bg-gray-950 rounded-3xl overflow-hidden shadow-2xl border border-gray-800/50 relative"
     }>
+
+      {/* ── Fullscreen Prompt Overlay (when embedded) ── */}
+      {!effectiveFullScreen && onRequestFullScreen && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center" style={{ background: 'rgba(5,7,12,0.55)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
+          <div className="flex flex-col items-center gap-4 text-center px-8">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+              <CornersOut size={28} weight="bold" className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">Copper Studio</h3>
+              <p className="text-sm text-gray-400 max-w-xs">For the best PCB design experience, open the editor in full screen.</p>
+            </div>
+            <button
+              onClick={onRequestFullScreen}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 transition-all shadow-lg shadow-emerald-600/20 text-sm"
+            >
+              <CornersOut size={18} weight="bold" />
+              View in Full Screen
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* ── Waiting Room UI for Guest ── */}
       {!isHost && guestStatus === 'confirming' && (
