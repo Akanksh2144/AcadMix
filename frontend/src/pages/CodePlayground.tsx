@@ -606,7 +606,7 @@ endmodule`
     { id: 'dsp-academo-scope', label: 'Virtual Oscilloscope', url: 'https://academo.org/demos/virtual-oscilloscope/?embedded=true', openLabel: 'Open Oscilloscope' },
     { id: 'dsp-musiclab', label: 'MusicLab Spectrogram', url: 'https://musiclab.chromeexperiments.com/Spectrogram/', openLabel: 'Open MusicLab' },
     { id: 'dsp-fft', label: 'Falstad Fourier', url: 'https://www.falstad.com/fourier/', openLabel: 'Open Falstad' },
-    { id: 'dsp-filter', label: 'Active Filter (LP)', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=amp-filter.txt', openLabel: 'Open CircuitJS' },
+    { id: 'dsp-filter', label: 'Low-Pass Filter (RC)', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=filt-lopass.txt', openLabel: 'Open CircuitJS' },
     { id: 'dsp-python', label: 'Python (DSP)', url: jupyterUrl(JUPYTER_CODES['dsp-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   microprocessors: [
@@ -640,7 +640,7 @@ endmodule`
     { id: 'inst-funcgen', label: 'Function Generator', url: '', isNativeBlock: true },
     { id: 'inst-funcgen-legacy', label: 'Function Gen (Legacy)', url: 'https://academo.org/demos/wave-interference-beat-frequency/?embedded=true', openLabel: 'Open Legacy' },
     { id: 'inst-spectrum', label: 'Spectrum Analyzer', url: 'https://academo.org/demos/spectrum-analyzer/?embedded=true', openLabel: 'Open Spectrum' },
-    { id: 'inst-filter', label: 'Active Filter (LP)', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=amp-filter.txt', openLabel: 'Open CircuitJS' },
+    { id: 'inst-filter', label: 'Low-Pass Filter (RC)', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=filt-lopass.txt', openLabel: 'Open CircuitJS' },
     { id: 'inst-python', label: 'Python (Measurements)', url: jupyterUrl(JUPYTER_CODES['inst-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   power_electronics_ece: [
