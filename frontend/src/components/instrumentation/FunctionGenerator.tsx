@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { WaveSine, SpeakerHigh, SpeakerSlash, Play, Pause, Activity } from '@phosphor-icons/react';
+import { WaveSine, SpeakerHigh, SpeakerSlash, Play, Pause, Pulse } from '@phosphor-icons/react';
 
 export default function FunctionGenerator() {
   const [f1, setF1] = useState(250);
@@ -154,7 +154,7 @@ export default function FunctionGenerator() {
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20">
-            <Activity size={24} weight="bold" className="text-white" />
+            <Pulse size={24} weight="bold" className="text-white" />
           </div>
           <div>
             <h2 className="text-xl font-black text-slate-100">Wave Interference & Beat Frequency</h2>
@@ -255,7 +255,7 @@ export default function FunctionGenerator() {
           
           <div className="bg-gradient-to-br from-indigo-500/10 to-purple-600/10 border border-indigo-500/20 rounded-2xl p-5 shadow-lg">
              <h4 className="text-xs font-black text-indigo-300 uppercase tracking-widest mb-2 flex items-center justify-center gap-1.5">
-               <Activity weight="bold" /> Beat Frequency
+               <Pulse weight="bold" /> Beat Frequency
              </h4>
              <p className="text-4xl font-black font-mono text-white text-center drop-shadow-md">
                {Math.abs(f1 - f2)} <span className="text-lg text-indigo-400">Hz</span>
