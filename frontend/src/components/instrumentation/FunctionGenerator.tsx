@@ -137,10 +137,11 @@ export default function FunctionGenerator() {
       };
 
       if (overlayWaves) {
-        const centerY = height / 2;
-        drawWave(f1, 'rgba(59,130,246,0.6)', centerY, 150); 
-        drawWave(f2, 'rgba(239,68,68,0.6)', centerY, 150); 
-        drawSuperposition(centerY, 300);
+        // Top half: f1 and f2 overlaid
+        drawWave(f1, 'rgba(59,130,246,0.6)', height * 0.33, 100); 
+        drawWave(f2, 'rgba(239,68,68,0.6)', height * 0.33, 100); 
+        // Bottom half: Superposition
+        drawSuperposition(height * 0.75, 200);
       } else {
         // Layout heights: 20%, 50%, 80%
         drawWave(f1, '#3b82f6', height * 0.20, 80); 
@@ -154,7 +155,7 @@ export default function FunctionGenerator() {
     animationRef.current = requestAnimationFrame(render);
 
     return () => cancelAnimationFrame(animationRef.current);
-  }, [f1, f2, isPlaying]);
+  }, [f1, f2, isPlaying, zoom, overlayWaves]);
 
   return (
     <div className="w-full h-full flex flex-col bg-[#0B0C10] text-white rounded-xl overflow-hidden p-4 gap-4 font-sans">
