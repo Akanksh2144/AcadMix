@@ -80,13 +80,37 @@ export default function FunctionGenerator() {
       const height = canvas.height;
       ctx.clearRect(0, 0, width, height);
 
-      // Grid
+      // Grid & Time Referencing
       ctx.strokeStyle = '#1e293b'; 
       ctx.lineWidth = 2;
       ctx.beginPath();
-      for (let i = 0; i < width; i += 100) { ctx.moveTo(i, 0); ctx.lineTo(i, height); }
-      for (let i = 0; i < height; i += 100) { ctx.moveTo(0, i); ctx.lineTo(width, i); }
+      
+      ctx.fillStyle = '#64748b'; // slate-500
+      ctx.font = '14px monospace';
+      ctx.textAlign = 'center';
+      
+      const TIME_WINDOW = zoom;
+      
+      for (let i = 0; i < width; i += 100) { 
+        ctx.moveTo(i, 0); 
+        ctx.lineTo(i, height); 
+        
+        // Time labels at bottom
+        if (i > 0 && i < width) {
+          const timeVal = (i / width) * TIME_WINDOW;
+          ctx.fillText(`${timeVal.toFixed(3)}s`, i, height - 15);
+        }
+      }
+      for (let i = 0; i < height; i += 100) { 
+        ctx.moveTo(0, i); 
+        ctx.lineTo(width, i); 
+      }
       ctx.stroke();
+
+      // Axis Title
+      ctx.fillStyle = '#94a3b8'; // slate-400
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText("Time in seconds", width / 2, height - 40);
 
       // Delta time for wave movement
       if (isPlaying) {
