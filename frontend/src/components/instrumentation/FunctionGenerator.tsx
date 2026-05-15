@@ -1,0 +1,273 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { WaveSine, SpeakerHigh, SpeakerSlash, Play, Pause, Activity } from '@phosphor-icons/react';
+
+export default function FunctionGenerator() {
+  const [f1, setF1] = useState(250);
+  const [f2, setF2] = useState(257);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+  
+  // Audio context refs
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const osc1Ref = useRef<OscillatorNode | null>(null);
+  const osc2Ref = useRef<OscillatorNode | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  
+  // Canvas ref
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number>(0);
+  const timeRef = useRef<number>(0);
+  const lastTimeRef = useRef<number>(performance.now());
+
+  // Initialize Audio
+  useEffect(() => {
+    if (isAudioEnabled && !audioCtxRef.current) {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      audioCtxRef.current = new AudioContext();
+      gainNodeRef.current = audioCtxRef.current.createGain();
+      gainNodeRef.current.connect(audioCtxRef.current.destination);
+      gainNodeRef.current.gain.value = 0; // Start muted until "Play"
+
+      osc1Ref.current = audioCtxRef.current.createOscillator();
+      osc2Ref.current = audioCtxRef.current.createOscillator();
+      
+      osc1Ref.current.connect(gainNodeRef.current);
+      osc2Ref.current.connect(gainNodeRef.current);
+      
+      osc1Ref.current.start();
+      osc2Ref.current.start();
+    }
+    
+    return () => {
+      if (audioCtxRef.current) {
+        osc1Ref.current?.stop();
+        osc2Ref.current?.stop();
+        audioCtxRef.current.close();
+        audioCtxRef.current = null;
+      }
+    };
+  }, [isAudioEnabled]);
+
+  // Update frequencies
+  useEffect(() => {
+    if (osc1Ref.current) osc1Ref.current.frequency.setValueAtTime(f1, audioCtxRef.current?.currentTime || 0);
+    if (osc2Ref.current) osc2Ref.current.frequency.setValueAtTime(f2, audioCtxRef.current?.currentTime || 0);
+  }, [f1, f2]);
+
+  // Toggle Play/Pause (Volume)
+  useEffect(() => {
+    if (gainNodeRef.current && audioCtxRef.current) {
+      // Smooth transition to avoid audio clicks
+      gainNodeRef.current.gain.setTargetAtTime(isPlaying ? 0.15 : 0, audioCtxRef.current.currentTime, 0.05);
+    }
+    
+    if (isPlaying) {
+      lastTimeRef.current = performance.now();
+    }
+  }, [isPlaying]);
+
+  // Render Canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const render = (now: number) => {
+      const width = canvas.width;
+      const height = canvas.height;
+      ctx.clearRect(0, 0, width, height);
+
+      // Grid
+      ctx.strokeStyle = '#1e293b'; 
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < width; i += 100) { ctx.moveTo(i, 0); ctx.lineTo(i, height); }
+      for (let i = 0; i < height; i += 100) { ctx.moveTo(0, i); ctx.lineTo(width, i); }
+      ctx.stroke();
+
+      // Delta time for wave movement
+      if (isPlaying) {
+        const dt = (now - lastTimeRef.current) / 1000; // seconds
+        timeRef.current += dt;
+      }
+      lastTimeRef.current = now;
+
+      // Draw mathematical waves
+      const drawWave = (freq: number, color: string, yOffset: number, amplitude: number) => {
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        
+        // Window width represents 0.05 seconds of time
+        const TIME_WINDOW = 0.05; 
+
+        for (let x = 0; x < width; x++) {
+          const localT = (x / width) * TIME_WINDOW;
+          const globalT = localT + timeRef.current;
+          
+          const y = yOffset - Math.sin(2 * Math.PI * freq * globalT) * amplitude;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      };
+
+      const drawSuperposition = (yOffset: number, amplitude: number) => {
+        ctx.beginPath();
+        ctx.strokeStyle = '#a855f7'; 
+        ctx.lineWidth = 5;
+        
+        const TIME_WINDOW = 0.05;
+
+        for (let x = 0; x < width; x++) {
+          const localT = (x / width) * TIME_WINDOW;
+          const globalT = localT + timeRef.current;
+          
+          const y1 = Math.sin(2 * Math.PI * f1 * globalT);
+          const y2 = Math.sin(2 * Math.PI * f2 * globalT);
+          const y = yOffset - (y1 + y2) * (amplitude / 2);
+          
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      };
+
+      // Layout heights: 20%, 50%, 80%
+      drawWave(f1, '#3b82f6', height * 0.20, 80); 
+      drawWave(f2, '#ef4444', height * 0.50, 80); 
+      drawSuperposition(height * 0.80, 160);
+
+      animationRef.current = requestAnimationFrame(render);
+    };
+    
+    animationRef.current = requestAnimationFrame(render);
+
+    return () => cancelAnimationFrame(animationRef.current);
+  }, [f1, f2, isPlaying]);
+
+  return (
+    <div className="w-full h-full flex flex-col bg-[#0B0C10] text-white rounded-xl overflow-hidden p-4 gap-4 font-sans">
+      
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20">
+            <Activity size={24} weight="bold" className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-slate-100">Wave Interference & Beat Frequency</h2>
+            <p className="text-xs font-medium text-slate-400">Native Dual-Channel Function Generator & Oscilloscope</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsAudioEnabled(!isAudioEnabled)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${isAudioEnabled ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'}`}
+          >
+            {isAudioEnabled ? <SpeakerHigh weight="fill" /> : <SpeakerSlash weight="fill" />}
+            {isAudioEnabled ? 'Audio Connected' : 'Audio Disconnected'}
+          </button>
+          
+          <button 
+            onClick={() => setIsPlaying(!isPlaying)}
+            className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-lg hover:scale-105 active:scale-95 ${isPlaying ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/25' : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/25'}`}
+          >
+            {isPlaying ? <Pause weight="fill" size={18} /> : <Play weight="fill" size={18} />}
+            {isPlaying ? 'PAUSE' : 'SIMULATE'}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex flex-1 gap-4 min-h-0">
+        
+        {/* Oscilloscope Canvas */}
+        <div className="flex-1 bg-slate-900 rounded-2xl border-2 border-slate-800 relative overflow-hidden shadow-inner">
+           <canvas 
+             ref={canvasRef} 
+             width={1600} 
+             height={1000} 
+             className="w-full h-full object-fill opacity-90 mix-blend-screen"
+           />
+           {/* Labels */}
+           <div className="absolute top-6 left-6 flex items-center gap-2 text-sm font-bold text-blue-400 bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-800 shadow-md">
+             <div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div> Channel 1 (f1)
+           </div>
+           <div className="absolute top-[38%] left-6 flex items-center gap-2 text-sm font-bold text-red-400 bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-800 shadow-md">
+             <div className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></div> Channel 2 (f2)
+           </div>
+           <div className="absolute bottom-12 left-6 flex items-center gap-2 text-sm font-bold text-purple-400 bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-800 shadow-md">
+             <div className="w-3 h-3 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]"></div> Superposition (Interference)
+           </div>
+        </div>
+
+        {/* Controls Sidebar */}
+        <div className="w-80 bg-slate-800/40 rounded-2xl border border-slate-700/50 p-6 flex flex-col gap-8 overflow-y-auto shadow-inner backdrop-blur-xl">
+          
+          <div className="space-y-4">
+            <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest flex items-center gap-2">
+              <WaveSine size={18} className="text-blue-400" /> Oscillator 1
+            </h3>
+            
+            <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
+              <div className="flex justify-between mb-3">
+                <span className="text-xs font-semibold text-slate-400">Frequency (f1)</span>
+                <span className="text-sm font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">{f1} Hz</span>
+              </div>
+              <input 
+                type="range" min="100" max="800" step="1" value={f1} onChange={(e) => setF1(Number(e.target.value))}
+                className="w-full accent-blue-500"
+              />
+              <div className="flex justify-between mt-1 px-1">
+                <span className="text-[10px] text-slate-500 font-mono">100Hz</span>
+                <span className="text-[10px] text-slate-500 font-mono">800Hz</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full h-px bg-slate-700/50"></div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest flex items-center gap-2">
+              <WaveSine size={18} className="text-red-400" /> Oscillator 2
+            </h3>
+            
+            <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
+              <div className="flex justify-between mb-3">
+                <span className="text-xs font-semibold text-slate-400">Frequency (f2)</span>
+                <span className="text-sm font-mono font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded">{f2} Hz</span>
+              </div>
+              <input 
+                type="range" min="100" max="800" step="1" value={f2} onChange={(e) => setF2(Number(e.target.value))}
+                className="w-full accent-red-500"
+              />
+              <div className="flex justify-between mt-1 px-1">
+                <span className="text-[10px] text-slate-500 font-mono">100Hz</span>
+                <span className="text-[10px] text-slate-500 font-mono">800Hz</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex-1"></div>
+          
+          <div className="bg-gradient-to-br from-indigo-500/10 to-purple-600/10 border border-indigo-500/20 rounded-2xl p-5 shadow-lg">
+             <h4 className="text-xs font-black text-indigo-300 uppercase tracking-widest mb-2 flex items-center justify-center gap-1.5">
+               <Activity weight="bold" /> Beat Frequency
+             </h4>
+             <p className="text-4xl font-black font-mono text-white text-center drop-shadow-md">
+               {Math.abs(f1 - f2)} <span className="text-lg text-indigo-400">Hz</span>
+             </p>
+             <p className="text-xs text-slate-400 text-center mt-3 leading-relaxed font-medium">
+               The interference pattern creates an audible "beat" pulsing exactly <strong className="text-slate-200">{Math.abs(f1 - f2)}</strong> times per second.
+             </p>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+}

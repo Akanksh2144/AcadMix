@@ -16,6 +16,7 @@ import DSPBlockSimulator from '../components/dsp/DSPBlockSimulator';
 import SettlementCalculator from '../components/civil/SettlementCalculator';
 import PCBDesignStudio from '../components/pcb/PCBDesignStudio';
 import VLSIDesignStudio from '../components/vlsi/VLSIDesignStudio';
+import FunctionGenerator from '../components/instrumentation/FunctionGenerator';
 
 const LANGUAGES = [
   { id: 'python', label: 'Python', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
@@ -628,7 +629,7 @@ endmodule`
     { id: 'em-python', label: 'Python (Antennas)', url: jupyterUrl(JUPYTER_CODES['em-python-ece']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   network_analysis: [
-    { id: 'net-vdiv', label: 'Voltage Divider', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=vdivider.txt', openLabel: 'Open CircuitJS' },
+    { id: 'net-vdiv', label: 'Voltage Divider', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=vdivide.txt', openLabel: 'Open CircuitJS' },
     { id: 'net-wheatstone', label: 'Wheatstone Bridge', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=wheatstone.txt', openLabel: 'Open CircuitJS' },
     { id: 'net-rlc', label: 'RLC Series', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=lrc.txt', openLabel: 'Open CircuitJS' },
     { id: 'net-thevenin', label: 'Thevenin Equivalent', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=thevenin.txt', openLabel: 'Open CircuitJS' },
@@ -636,7 +637,7 @@ endmodule`
   ],
   instrumentation: [
     { id: 'inst-scope', label: 'Virtual Oscilloscope', url: 'https://academo.org/demos/virtual-oscilloscope/?embedded=true', openLabel: 'Open Scope' },
-    { id: 'inst-funcgen', label: 'Function Generator', url: 'https://academo.org/demos/wave-interference-beat-frequency/?embedded=true', openLabel: 'Open Func Gen' },
+    { id: 'inst-funcgen', label: 'Function Generator', url: '', isNativeBlock: true },
     { id: 'inst-spectrum', label: 'Spectrum Analyzer', url: 'https://academo.org/demos/spectrum-analyzer/?embedded=true', openLabel: 'Open Spectrum' },
     { id: 'inst-filter', label: 'Filter Design', url: 'https://rf-tools.com/filters/', openLabel: 'Open Filter Design' },
     { id: 'inst-python', label: 'Python (Measurements)', url: jupyterUrl(JUPYTER_CODES['inst-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
@@ -2238,6 +2239,8 @@ const CodePlayground = ({ navigate, user }) => {
                       onExitFullScreen={() => setIsLabFullScreen(false)}
                       onRequestFullScreen={() => setIsLabFullScreen(true)} 
                     />
+                  ) : (_simActiveBoard as any)?.id === 'inst-funcgen' ? (
+                    <FunctionGenerator />
                   ) : (
                     <DSPBlockSimulator 
                       isFullScreen={isLabFullScreen} 
