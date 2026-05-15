@@ -453,14 +453,6 @@ export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <Circuitry size={16} weight="bold" className="text-white" />
           </div>
-          {onExitFullScreen && effectiveFullScreen && (
-            <button 
-              onClick={onExitFullScreen}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20 font-bold text-[10px] uppercase tracking-widest"
-            >
-              <CornersIn size={14} weight="bold" /> Exit
-            </button>
-          )}
           <span className="font-bold text-sm text-gray-200">Copper Studio</span>
 
           {/* ── PCB Layout Menu Trigger ── */}
