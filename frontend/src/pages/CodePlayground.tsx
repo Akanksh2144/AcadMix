@@ -606,7 +606,7 @@ endmodule`
     { id: 'dsp-academo-scope', label: 'Virtual Oscilloscope', url: 'https://academo.org/demos/virtual-oscilloscope/?embedded=true', openLabel: 'Open Oscilloscope' },
     { id: 'dsp-musiclab', label: 'MusicLab Spectrogram', url: 'https://musiclab.chromeexperiments.com/Spectrogram/', openLabel: 'Open MusicLab' },
     { id: 'dsp-fft', label: 'Falstad Fourier', url: 'https://www.falstad.com/fourier/', openLabel: 'Open Falstad' },
-    { id: 'dsp-filter', label: 'Filter Design', url: 'https://rf-tools.com/filters/', openLabel: 'Open RF Tools' },
+    { id: 'dsp-filter', label: 'Filter Design', url: 'https://markimicrowave.com/technical-resources/tools/lc-filter-design-tool/', openLabel: 'Open Filter Design' },
     { id: 'dsp-python', label: 'Python (DSP)', url: jupyterUrl(JUPYTER_CODES['dsp-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   microprocessors: [
@@ -705,7 +705,7 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
   ],
   measurements: [
     { id: 'mi-wheatstone', label: 'Wheatstone Bridge', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=wheatstone.txt', openLabel: 'Open in CircuitJS' },
-    { id: 'mi-voltdivide', label: 'Voltage Divider', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=voltdivide.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'mi-voltdivide', label: 'Voltage Divider', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=vdivide.txt', openLabel: 'Open in CircuitJS' },
     { id: 'mi-thevenin', label: 'Thevenin Theorem', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=thevenin.txt', openLabel: 'Open in CircuitJS' },
     { id: 'mi-norton', label: 'Norton Theorem', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=norton.txt', openLabel: 'Open in CircuitJS' },
     { id: 'mi-python', label: 'Python (Analysis)', url: jupyterUrl(JUPYTER_CODES['mi-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
