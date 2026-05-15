@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Gear, Wrench, Stack, Path, ShareNetwork, Polygon, CornersOut,
-  CpuCharge, ShieldCheck, Fingerprint, TreeStructure, ArrowsClockwise,
+  Cpu, ShieldCheck, Fingerprint, TreeStructure, ArrowsClockwise,
   GridFour, Eye, Cube, Info, Puzzle, Export, FileArrowDown,
   MapPin, ShoppingCart, CaretRight, X
 } from '@phosphor-icons/react';
@@ -198,7 +198,7 @@ export default function PCBLayoutMenu({
     {
       id: 'layout-no-schematic',
       label: 'Layout PCB Without Schematic',
-      icon: <CpuCharge size={14} weight="duotone" />,
+      icon: <Cpu size={14} weight="duotone" />,
       action: () => comingSoon('Layout Without Schematic'),
     },
     { id: 'sep-5', label: '', separator: true },
@@ -270,7 +270,7 @@ export default function PCBLayoutMenu({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 border-b border-gray-700/40">
           <div className="flex items-center gap-2">
-            <CpuCharge size={15} weight="duotone" className="text-emerald-400" />
+            <Cpu size={15} weight="duotone" className="text-emerald-400" />
             <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-emerald-400">PCB Layout</span>
           </div>
           <button
