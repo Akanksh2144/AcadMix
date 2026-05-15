@@ -456,92 +456,78 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
 
       {/* Centre */}
       <div className="flex-1 flex flex-col relative h-full min-w-0">
-        {/* Top toolbar */}
-        <div className="h-12 bg-[#0F172A]/90 backdrop-blur-xl border-b border-slate-800 flex items-center justify-between px-4 shrink-0 z-10">
-          <div className="flex items-center gap-4">
-            <h2 className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-400 flex items-center gap-2 select-none">
-              <Cpu size={16} className="text-indigo-400" weight="duotone" />
-              Silicon Studio
-            </h2>
+        {/* Top toolbar — matches PCB Copper Studio layout */}
+        <div className="flex items-center justify-between px-4 py-2.5 bg-gray-900/90 backdrop-blur-xl border-b border-gray-800/60 shrink-0 z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <Cpu size={16} weight="bold" className="text-white" />
+            </div>
+            <span className="font-bold text-sm text-gray-200">Silicon Studio</span>
+
+            {/* Simulation controls — pill container */}
+            <div className="flex items-center bg-transparent border border-gray-800/50 rounded-full p-0.5 ml-2 backdrop-blur-sm">
+              <button
+                onClick={() => setIsRunning(r => !r)}
+                className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all ${isRunning ? 'bg-amber-500 text-white shadow-md' : 'bg-emerald-600 text-white shadow-md'}`}
+              >
+                {isRunning ? <Pause size={12} weight="fill" /> : <Play size={12} weight="fill" />}
+                {isRunning ? 'Stop' : 'Run'}
+              </button>
+              <button
+                onClick={runSimulationStep}
+                disabled={isRunning}
+                className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all text-gray-400 hover:text-gray-300 disabled:opacity-30"
+              >
+                <SkipForward size={12} weight="fill" /> Step
+              </button>
+            </div>
+
+            {/* Collaboration — pill container */}
+            <div className="flex items-center bg-transparent border border-gray-800/50 rounded-full p-0.5 ml-1 backdrop-blur-sm">
+              <button
+                onClick={() => toggleCollaboration()}
+                className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all relative ${isColabActive ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}
+                title={isColabActive ? `In Room: ${roomId} (Click to Stop)` : 'Start New Room'}
+              >
+                <Users size={13} weight={isColabActive ? "fill" : "bold"} />
+                {isColabActive ? `${colabUsers} Active` : 'Host Lab'}
+                {isColabActive && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-indigo-400 rounded-full animate-ping" />}
+              </button>
+
+              {isColabActive && (
+                <button
+                  onClick={handleCopyRoomId}
+                  className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors whitespace-nowrap"
+                  title="Copy Room ID"
+                >
+                  <Copy size={13} weight="bold" /> Copy ID
+                </button>
+              )}
+
+              {!isColabActive && (
+                <button
+                  onClick={handleJoinRoom}
+                  className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all text-gray-400 hover:text-gray-300"
+                  title="Join Existing Room"
+                >
+                  <SignIn size={13} weight="bold" /> Join
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-1 p-1 rounded-full border border-slate-800/80 max-w-[60%] overflow-x-auto no-scrollbar backdrop-blur-sm">
-            <button
-              onClick={() => setIsRunning(r => !r)}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase transition-all whitespace-nowrap
-                ${isRunning ? 'bg-amber-500/15 text-amber-400' : 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'}`}
-            >
-              {isRunning ? <Pause size={10} weight="fill" /> : <Play size={10} weight="fill" />}
-              {isRunning ? 'Stop' : 'Run'}
-            </button>
-
-            <button
-              onClick={runSimulationStep}
-              disabled={isRunning}
-              className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-slate-200 disabled:opacity-30"
-            >
-              <SkipForward size={10} weight="fill" /> Step
-            </button>
-
-            <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
-
-            <button
-              onClick={() => toggleCollaboration()}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase transition-all relative
-                ${isColabActive ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10'}`}
-              title={isColabActive ? `In Room: ${roomId} (Click to Stop)` : 'Start New Room'}
-            >
-              <Users size={14} weight={isColabActive ? "fill" : "bold"} />
-              {isColabActive ? `${colabUsers} Active` : 'Host Lab'}
-              {isColabActive && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-indigo-400 rounded-full animate-ping" />}
-            </button>
-
-            {isColabActive && (
-              <button
-                onClick={handleCopyRoomId}
-                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-indigo-400 hover:bg-indigo-500/20 transition-colors border border-indigo-500/20"
-                title="Copy Room ID"
-              >
-                <Copy size={13} weight="bold" />
-                <span className="text-[9px] font-bold">Copy ID</span>
-              </button>
-            )}
-
-            {!isColabActive && (
-              <button
-                onClick={handleJoinRoom}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
-                title="Join Existing Room"
-              >
-                <SignIn size={14} weight="bold" /> Join
-              </button>
-            )}
-
-            <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
-
-            <button onClick={handleUndo} className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-indigo-400">
-              <ArrowCounterClockwise size={12} weight="bold" />
-            </button>
-            <button onClick={handleRedo} className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-indigo-400">
-              <ArrowClockwise size={12} weight="bold" />
-            </button>
-
-            <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
-
-            <button onClick={handleGenerateCode} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter uppercase text-slate-400 hover:text-slate-200">
-              <Code size={12} weight="bold" /> HDL
-            </button>
-
-            <button onClick={handleClear} className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-rose-400">
-              <Trash size={12} weight="bold" />
-            </button>
-
-            <div className="w-px h-3 bg-slate-700/50 mx-0.5" />
-
+          <div className="flex items-center gap-1.5">
+            <button onClick={handleUndo} title="Undo" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"><ArrowCounterClockwise size={14} weight="bold" /></button>
+            <button onClick={handleRedo} title="Redo" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"><ArrowClockwise size={14} weight="bold" /></button>
+            <div className="w-px h-5 bg-gray-700 mx-1" />
+            <button onClick={handleGenerateCode} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 transition-colors"><Code size={13} weight="bold" /> HDL</button>
+            <button onClick={handleGenerateTestbench} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"><Code size={13} weight="bold" /> Testbench</button>
+            <button onClick={handleClear} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"><Trash size={13} weight="bold" /> Clear</button>
+            <div className="w-px h-5 bg-gray-700 mx-1" />
             <button 
               onClick={() => isFullScreen && onExitFullScreen ? onExitFullScreen() : onRequestFullScreen?.()}
               title={isFullScreen ? "Exit Full Screen" : "Full Screen"}
-              className="flex items-center justify-center w-6 h-6 rounded-full text-slate-500 hover:text-indigo-400 transition-colors"
+              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"
             >
               {isFullScreen ? <CornersIn size={14} weight="bold" /> : <CornersOut size={14} weight="bold" />}
             </button>
