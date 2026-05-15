@@ -200,10 +200,7 @@ function LibraryItem({ entry, onAddComponent }: { entry: any, onAddComponent: (t
 
 export default function ComponentLibraryPanel({ onAddComponent }: Props) {
   const [search, setSearch] = useState('');
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    io: true,
-    gates: true
-  });
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const filtered = useMemo(() => {
     if (!search.trim()) return COMPONENT_CATALOG;
