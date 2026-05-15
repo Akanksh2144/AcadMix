@@ -2292,7 +2292,15 @@ const CodePlayground = ({ navigate, user }) => {
                   src={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || _simBoards[0]?.url || ''}
                   title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
                   className="w-full h-full border-0"
-                  style={{ touchAction: 'none' }}
+                  style={{ 
+                    touchAction: 'none',
+                    ...(_simActiveBoard?.url?.includes('falstad.com/em') ? {
+                      transform: 'scale(1.3)',
+                      transformOrigin: 'top left',
+                      width: '76.9%',
+                      height: '76.9%'
+                    } : {})
+                  }}
                   sandbox="allow-scripts allow-same-origin allow-downloads allow-forms allow-popups"
                   allow="clipboard-read; clipboard-write; fullscreen"
                 />
