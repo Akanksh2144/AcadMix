@@ -266,7 +266,7 @@ export default function PCBLayoutMenu({
 
   return (
     <div ref={menuRef} className="absolute top-full left-0 mt-1 z-[200]">
-      <div className="w-72 bg-[#1a1f2e]/98 backdrop-blur-2xl border border-gray-700/60 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden">
+      <div className="w-72 bg-[#141825] border border-gray-700/60 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 border-b border-gray-700/40">
           <div className="flex items-center gap-2">
