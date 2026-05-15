@@ -6,6 +6,8 @@ export default function FunctionGenerator() {
   const [f2, setF2] = useState(257);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+  const [zoom, setZoom] = useState(0.05);
+  const [overlayWaves, setOverlayWaves] = useState(false);
   
   // Audio context refs
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -89,7 +91,8 @@ export default function FunctionGenerator() {
       // Delta time for wave movement
       if (isPlaying) {
         const dt = (now - lastTimeRef.current) / 1000; // seconds
-        timeRef.current += dt;
+        // Slow down visual time progression so high frequency waves don't look chaotic
+        timeRef.current += dt * 0.02;
       }
       lastTimeRef.current = now;
 
@@ -99,8 +102,7 @@ export default function FunctionGenerator() {
         ctx.strokeStyle = color;
         ctx.lineWidth = 4;
         
-        // Window width represents 0.05 seconds of time
-        const TIME_WINDOW = 0.05; 
+        const TIME_WINDOW = zoom; 
 
         for (let x = 0; x < width; x++) {
           const localT = (x / width) * TIME_WINDOW;
@@ -118,7 +120,7 @@ export default function FunctionGenerator() {
         ctx.strokeStyle = '#a855f7'; 
         ctx.lineWidth = 5;
         
-        const TIME_WINDOW = 0.05;
+        const TIME_WINDOW = zoom;
 
         for (let x = 0; x < width; x++) {
           const localT = (x / width) * TIME_WINDOW;
@@ -134,10 +136,17 @@ export default function FunctionGenerator() {
         ctx.stroke();
       };
 
-      // Layout heights: 20%, 50%, 80%
-      drawWave(f1, '#3b82f6', height * 0.20, 80); 
-      drawWave(f2, '#ef4444', height * 0.50, 80); 
-      drawSuperposition(height * 0.80, 160);
+      if (overlayWaves) {
+        const centerY = height / 2;
+        drawWave(f1, 'rgba(59,130,246,0.6)', centerY, 150); 
+        drawWave(f2, 'rgba(239,68,68,0.6)', centerY, 150); 
+        drawSuperposition(centerY, 300);
+      } else {
+        // Layout heights: 20%, 50%, 80%
+        drawWave(f1, '#3b82f6', height * 0.20, 80); 
+        drawWave(f2, '#ef4444', height * 0.50, 80); 
+        drawSuperposition(height * 0.80, 160);
+      }
 
       animationRef.current = requestAnimationFrame(render);
     };
@@ -247,6 +256,40 @@ export default function FunctionGenerator() {
               <div className="flex justify-between mt-1 px-1">
                 <span className="text-[10px] text-slate-500 font-mono">100Hz</span>
                 <span className="text-[10px] text-slate-500 font-mono">800Hz</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="w-full h-px bg-slate-700/50"></div>
+          
+          <div className="space-y-4">
+            <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest flex items-center gap-2">
+              <Pulse size={18} className="text-emerald-400" /> Visualization
+            </h3>
+            
+            <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 space-y-4">
+              <div>
+                <div className="flex justify-between mb-3">
+                  <span className="text-xs font-semibold text-slate-400">Zoom (Time Window)</span>
+                  <span className="text-sm font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">{(zoom * 1000).toFixed(0)} ms</span>
+                </div>
+                <input 
+                  type="range" min="0.01" max="0.2" step="0.01" value={zoom} onChange={(e) => setZoom(Number(e.target.value))}
+                  className="w-full accent-emerald-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <input 
+                  type="checkbox" 
+                  id="overlay-toggle"
+                  checked={overlayWaves} 
+                  onChange={(e) => setOverlayWaves(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-600 text-emerald-500 focus:ring-emerald-500 bg-slate-800"
+                />
+                <label htmlFor="overlay-toggle" className="text-sm font-bold text-slate-300 cursor-pointer select-none">
+                  Overlay waves
+                </label>
               </div>
             </div>
           </div>
