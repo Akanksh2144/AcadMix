@@ -16,9 +16,6 @@ import DSPBlockSimulator from '../components/dsp/DSPBlockSimulator';
 import SettlementCalculator from '../components/civil/SettlementCalculator';
 import PCBDesignStudio from '../components/pcb/PCBDesignStudio';
 import VLSIDesignStudio from '../components/vlsi/VLSIDesignStudio';
-import EM1DSolver from '../components/em/EM1DSolver';
-import EM2DSolver from '../components/em/EM2DSolver';
-import EM3DVisualizer from '../components/em/EM3DVisualizer';
 
 const LANGUAGES = [
   { id: 'python', label: 'Python', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
@@ -625,9 +622,9 @@ endmodule`
     { id: 'ctrl-python', label: 'Python (Control)', url: jupyterUrl(JUPYTER_CODES['ctrl-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   em_theory: [
-    { id: 'em-1d', label: '1D EM Wave', url: '', isNativeBlock: true },
-    { id: 'em-2d', label: '2D FDTD Solver', url: '', isNativeBlock: true },
-    { id: 'em-3d', label: '3D Wave Visualizer', url: '', isNativeBlock: true },
+    { id: 'em-1d', label: '1D EM Wave', url: 'https://www.falstad.com/emwave1/', openLabel: 'Open Falstad' },
+    { id: 'em-2d', label: '2D EM Wave', url: 'https://www.falstad.com/emwave2/', openLabel: 'Open Falstad' },
+    { id: 'em-3d', label: '3D Waveguide', url: 'https://www.falstad.com/embox/', openLabel: 'Open Falstad' },
     { id: 'em-python', label: 'Python (Antennas)', url: jupyterUrl(JUPYTER_CODES['em-python-ece']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   network_analysis: [
@@ -2241,12 +2238,6 @@ const CodePlayground = ({ navigate, user }) => {
                       onExitFullScreen={() => setIsLabFullScreen(false)}
                       onRequestFullScreen={() => setIsLabFullScreen(true)} 
                     />
-                  ) : (_simActiveBoard as any)?.id === 'em-1d' ? (
-                    <EM1DSolver />
-                  ) : (_simActiveBoard as any)?.id === 'em-2d' ? (
-                    <EM2DSolver />
-                  ) : (_simActiveBoard as any)?.id === 'em-3d' ? (
-                    <EM3DVisualizer />
                   ) : (
                     <DSPBlockSimulator 
                       isFullScreen={isLabFullScreen} 
