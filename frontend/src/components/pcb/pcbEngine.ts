@@ -47,7 +47,7 @@ export function runDRC(graph: CircuitGraph): DRCResult[] {
     connectedIds.add(w.toComponent);
   }
   for (const c of components) {
-    if (!connectedIds.has(c.id) && c.type !== 'testPoint' && c.type !== 'jumper') {
+    if (!connectedIds.has(c.id) && c.type !== 'testPoint' && c.type !== 'jumper' && !c.type.startsWith('board_') && c.type !== 'board' && c.type !== 'copper_pour') {
       results.push({
         id: `drc-unconnected-${c.id}`,
         severity: 'warning',
@@ -58,10 +58,14 @@ export function runDRC(graph: CircuitGraph): DRCResult[] {
   }
 
   // 3. Check for missing power connections
-  const hasVCC = components.some(c => c.type === 'vcc' || c.type === 'dcSource' || c.type === 'battery');
-  const hasGND = components.some(c => c.type === 'gnd');
+  const isVCC = (t: string) => t === 'vcc' || t === 'vcc_node' || t === 'dcSource' || t === 'battery' || t === 'battery_cr2032' || t === 'battery_jst';
+  const isGND = (t: string) => t === 'gnd' || t === 'gnd_node';
+  const hasVCC = components.some(c => isVCC(c.type));
+  const hasGND = components.some(c => isGND(c.type));
   const hasActiveComponents = components.some(c =>
-    ['opamp', 'timer555', 'microcontroller', 'icChip', 'logicGate', 'flipFlop', 'shiftRegister', 'voltageRegulator'].includes(c.type)
+    c.type.startsWith('mcu_') || c.type.startsWith('logic_') || c.type.startsWith('opamp_') ||
+    ['opamp', 'timer555', 'microcontroller', 'icChip', 'logicGate', 'flipFlop', 'shiftRegister', 'voltageRegulator',
+     'logic_ne555', 'logic_74hc595', 'logic_74hc138'].includes(c.type)
   );
   if (hasActiveComponents && !hasVCC) {
     results.push({ id: 'drc-no-vcc', severity: 'warning', message: 'Active components present but no power source (VCC/Battery) found.' });
@@ -76,8 +80,8 @@ export function runDRC(graph: CircuitGraph): DRCResult[] {
     const toComp = components.find(c => c.id === w.toComponent);
     if (fromComp && toComp) {
       const isShort =
-        (fromComp.type === 'vcc' && toComp.type === 'gnd') ||
-        (fromComp.type === 'gnd' && toComp.type === 'vcc');
+        (isVCC(fromComp.type) && isGND(toComp.type)) ||
+        (isGND(fromComp.type) && isVCC(toComp.type));
       if (isShort) {
         results.push({
           id: `drc-short-${w.id}`,
@@ -91,9 +95,9 @@ export function runDRC(graph: CircuitGraph): DRCResult[] {
 
   // 5. Check for components with only one connection (might be floating)
   for (const c of components) {
-    if (['vcc', 'gnd', 'testPoint'].includes(c.type)) continue;
+    if (isVCC(c.type) || isGND(c.type) || c.type === 'testPoint' || c.type.startsWith('board_') || c.type === 'board' || c.type === 'copper_pour') continue;
     const wireCount = wires.filter(w => w.fromComponent === c.id || w.toComponent === c.id).length;
-    if (wireCount === 1 && !['vcc', 'gnd', 'testPoint', 'jumper'].includes(c.type)) {
+    if (wireCount === 1 && !isVCC(c.type) && !isGND(c.type) && c.type !== 'testPoint' && c.type !== 'jumper') {
       results.push({
         id: `drc-singlepin-${c.id}`,
         severity: 'warning',
@@ -233,7 +237,7 @@ export function generateSPICENetlist(graph: CircuitGraph): string {
   for (const net of nets) {
     for (const conn of net.connections) {
       const comp = graph.components.find(c => (c.refDes || c.id) === conn.componentRefDes);
-      if (comp && comp.type === 'gnd') {
+      if (comp && (comp.type === 'gnd' || comp.type === 'gnd_node')) {
         groundNets.add(net.name);
       }
     }
@@ -260,9 +264,8 @@ export function generateSPICENetlist(graph: CircuitGraph): string {
   ];
 
   for (const c of graph.components) {
-    if (c.type === 'gnd' || c.type === 'board' || c.type === 'copper_pour' || c.type === 'testPoint') continue;
+    if (c.type === 'gnd' || c.type === 'gnd_node' || c.type === 'board' || c.type === 'copper_pour' || c.type === 'testPoint' || c.type.startsWith('board_')) continue;
 
-    // Find nodes connected to pins 1 and 2 (or anode/cathode)
     const getPinNode = (pinNames: string[]) => {
       for (const pin of pinNames) {
         for (const net of nets) {
@@ -271,38 +274,46 @@ export function generateSPICENetlist(graph: CircuitGraph): string {
           }
         }
       }
-      return '0'; // Unconnected pin defaults to 0
+      return '0';
     };
 
-    const n1 = getPinNode(['1', 'anode', 'in', 'p', 'plus', '+']);
-    const n2 = getPinNode(['2', 'cathode', 'out', 'n', 'minus', '-']);
+    const n1 = getPinNode(['1', 'anode', 'a', 'in', 'p', 'plus', '+', 'pos', 'pwr']);
+    const n2 = getPinNode(['2', 'cathode', 'k', 'out', 'n', 'minus', '-', 'neg', 'gnd']);
     
     let valStr = String(c.properties.value || '');
-    // clean up units (e.g. 10kΩ -> 10k)
-    valStr = valStr.replace(/[ΩΩFfHhVvAaWw]/g, '');
-    if (!valStr) valStr = '1k'; // default
+    valStr = valStr.replace(/[ΩFfHhVvAaWw]/g, '');
+    if (!valStr) valStr = '1k';
 
-    if (c.type === 'resistor') {
+    if (c.type === 'resistor' || c.type.startsWith('res_')) {
       lines.push(`${c.refDes.startsWith('R') ? c.refDes : 'R'+c.id} ${n1} ${n2} ${valStr}`);
-    } else if (c.type === 'capacitor') {
+    } else if (c.type === 'capacitor' || c.type.startsWith('cap_')) {
       lines.push(`${c.refDes.startsWith('C') ? c.refDes : 'C'+c.id} ${n1} ${n2} ${valStr}`);
-    } else if (c.type === 'inductor') {
+    } else if (c.type === 'inductor' || c.type.startsWith('ind_')) {
       lines.push(`${c.refDes.startsWith('L') ? c.refDes : 'L'+c.id} ${n1} ${n2} ${valStr}`);
-    } else if (c.type === 'vcc' || c.type === 'dcSource' || c.type === 'battery') {
+    } else if (c.type === 'vcc' || c.type === 'vcc_node' || c.type === 'dcSource' || c.type === 'battery' || c.type === 'battery_cr2032' || c.type === 'battery_jst') {
       lines.push(`${c.refDes.startsWith('V') ? c.refDes : 'V'+c.id} ${n1} ${n2} DC ${valStr}`);
-    } else if (c.type === 'diode' || c.type === 'led') {
-      // D1 n1 n2 DMODEL
+    } else if (c.type === 'diode' || c.type === 'led' || c.type.startsWith('diode_') || c.type.startsWith('led_')) {
       lines.push(`${c.refDes.startsWith('D') ? c.refDes : 'D'+c.id} ${n1} ${n2} 1N4148`);
-    } else if (c.type === 'npn') {
+    } else if (c.type === 'npn' || c.type === 'bjt_2n2222') {
       const nb = getPinNode(['b', 'base', '2']);
       const nc = getPinNode(['c', 'collector', '3']);
       const ne = getPinNode(['e', 'emitter', '1']);
       lines.push(`${c.refDes.startsWith('Q') ? c.refDes : 'Q'+c.id} ${nc} ${nb} ${ne} 2N3904`);
-    } else if (c.type === 'pnp') {
+    } else if (c.type === 'pnp' || c.type === 'bjt_2n2907') {
       const nb = getPinNode(['b', 'base', '2']);
       const nc = getPinNode(['c', 'collector', '3']);
       const ne = getPinNode(['e', 'emitter', '1']);
       lines.push(`${c.refDes.startsWith('Q') ? c.refDes : 'Q'+c.id} ${nc} ${nb} ${ne} 2N3906`);
+    } else if (c.type.startsWith('mosfet_n_')) {
+      const ng = getPinNode(['g', 'gate']);
+      const nd = getPinNode(['d', 'drain']);
+      const ns = getPinNode(['s', 'source']);
+      lines.push(`${c.refDes.startsWith('M') ? c.refDes : 'M'+c.id} ${nd} ${ng} ${ns} ${ns} NMOS`);
+    } else if (c.type.startsWith('mosfet_p_')) {
+      const ng = getPinNode(['g', 'gate']);
+      const nd = getPinNode(['d', 'drain']);
+      const ns = getPinNode(['s', 'source']);
+      lines.push(`${c.refDes.startsWith('M') ? c.refDes : 'M'+c.id} ${nd} ${ng} ${ns} ${ns} PMOS`);
     }
   }
 
@@ -421,6 +432,91 @@ export function exportKiCadNetlist(graph: CircuitGraph): string {
 
   lines.push('  )', ')');
   return lines.join('\n');
+}
+
+// ── Pick and Place File Export ───────────────────────────────────────────────
+
+export interface PickPlaceEntry {
+  refDes: string;
+  value: string;
+  package: string;
+  posX: number;
+  posY: number;
+  rotation: number;
+  side: 'Top' | 'Bottom';
+}
+
+export function generatePickPlace(graph: CircuitGraph): PickPlaceEntry[] {
+  return graph.components
+    .filter(c => !c.type.startsWith('board_') && c.type !== 'board' && c.type !== 'copper_pour')
+    .map(c => ({
+      refDes: c.refDes,
+      value: String(c.properties.value || c.type),
+      package: String(c.properties.package || ''),
+      posX: Math.round(c.position.x * 0.254 * 100) / 100, // px to mm approx
+      posY: Math.round(c.position.y * 0.254 * 100) / 100,
+      rotation: c.rotation || 0,
+      side: 'Top' as const,
+    }));
+}
+
+export function pickPlaceToCSV(entries: PickPlaceEntry[]): string {
+  const header = 'Ref Des,Value,Package,PosX(mm),PosY(mm),Rotation,Side';
+  const rows = entries.map(e =>
+    `"${e.refDes}","${e.value}","${e.package}",${e.posX},${e.posY},${e.rotation},${e.side}`
+  );
+  return [header, ...rows].join('\n');
+}
+
+// ── PCB Information Report ──────────────────────────────────────────────────
+
+export interface PCBInfo {
+  boardWidth: number;
+  boardHeight: number;
+  componentCount: number;
+  netCount: number;
+  wireCount: number;
+  smdCount: number;
+  thCount: number;
+  categories: Record<string, number>;
+  created: string;
+  modified: string;
+}
+
+export function generatePCBInfo(graph: CircuitGraph): PCBInfo {
+  const board = graph.components.find(c => c.type === 'board_custom' || c.type.startsWith('board_'));
+  const nonBoardComps = graph.components.filter(c => !c.type.startsWith('board_') && c.type !== 'board' && c.type !== 'copper_pour');
+  const nets = generateNets(graph);
+
+  const categories: Record<string, number> = {};
+  let smdCount = 0;
+  let thCount = 0;
+
+  for (const c of nonBoardComps) {
+    const pkg = String(c.properties.package || '');
+    // Classify SMD vs TH
+    if (pkg.includes('AXIAL') || pkg.includes('DIP') || pkg.includes('TO-220') || pkg.includes('DO-41') || c.type.includes('_th_')) {
+      thCount++;
+    } else {
+      smdCount++;
+    }
+    // Count by category prefix
+    const catPrefix = c.type.split('_')[0] || 'other';
+    categories[catPrefix] = (categories[catPrefix] || 0) + 1;
+  }
+
+  return {
+    boardWidth: Number(board?.properties?.width) || 800,
+    boardHeight: Number(board?.properties?.height) || 600,
+    componentCount: nonBoardComps.length,
+    netCount: nets.length,
+    wireCount: graph.wires.length,
+    smdCount,
+    thCount,
+    categories,
+    created: graph.metadata.created,
+    modified: graph.metadata.modified,
+  };
 }
 
 // ── File Download Helper ─────────────────────────────────────────────────────

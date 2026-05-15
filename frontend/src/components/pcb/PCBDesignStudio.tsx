@@ -1,21 +1,23 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNodesState, useEdgesState, addEdge, type Connection, type Edge, type Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack, ShareNetwork, LockKey, LockKeyOpen, CornersOut, CornersIn, Copy, Check, WaveSine, Users } from '@phosphor-icons/react';
+import { Circuitry, Code, ShieldCheck, ListBullets, Export, FloppyDisk, ArrowCounterClockwise, ArrowClockwise, Stack, ShareNetwork, LockKey, LockKeyOpen, CornersOut, CornersIn, Copy, Check, WaveSine, Users, List } from '@phosphor-icons/react';
 import ComponentLibraryPanel from './ComponentLibraryPanel';
 import PropertiesInspector from './PropertiesInspector';
 import PCBCanvas from './PCBCanvas';
 import { pcbNodeTypes, logicalNodeTypes } from './nodes';
 import LayerManagerPanel, { type PCBLayer } from './LayerManagerPanel';
+import PCBLayoutMenu from './PCBLayoutMenu';
 import type { ComponentType } from './types';
 import { getCatalogEntry } from './componentCatalog';
-import { runDRC, generateNetlistText, generateBOM, bomToCSV, exportKiCadNetlist, downloadFile, generateSPICENetlist } from './pcbEngine';
+import { runDRC, generateNetlistText, generateBOM, bomToCSV, exportKiCadNetlist, downloadFile, generateSPICENetlist, generatePickPlace, pickPlaceToCSV, generatePCBInfo, type PCBInfo } from './pcbEngine';
 import { exportGerbers } from './gerberExporter';
 import PCB3DViewer from './PCB3DViewer';
 import { Simulation as EEcircuitSimulation } from 'eecircuit-engine';
 import SpiceChart from '../SpiceChart';
 import { DEFAULT_DSL, parseDSL, serializeDSL } from './circuitDSL';
 import { useCollaboration } from './useCollaboration';
+import { toast } from 'sonner';
 
 let nodeCounter = 100;
 const refDesCounters: Record<string, number> = {};
@@ -86,6 +88,9 @@ export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen
   const [codeText, setCodeText] = useState(DEFAULT_DSL);
   const [undoStack, setUndoStack] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
   const [redoStack, setRedoStack] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
+  const [showPCBLayoutMenu, setShowPCBLayoutMenu] = useState(false);
+  const [showPCBInfo, setShowPCBInfo] = useState(false);
+  const [pcbInfo, setPcbInfo] = useState<PCBInfo | null>(null);
 
   const selectedNode = useMemo(() => nodes.find(n => n.id === selectedId), [nodes, selectedId]);
   const selectedForInspector = useMemo(() => {
@@ -219,17 +224,36 @@ export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen
     const graph = buildGraph();
     const bom = generateBOM(graph);
     downloadFile(bomToCSV(bom), 'acadmix_bom.csv', 'text/csv');
+    toast.success('BOM exported successfully');
   }, [buildGraph]);
 
   const handleExportGerber = useCallback(() => {
     const graph = buildGraph();
     const gerbers = exportGerbers(graph);
-    // Download sequentially
     downloadFile(gerbers.topCopper, 'CAM_Top.gbr', 'text/plain');
     setTimeout(() => downloadFile(gerbers.bottomCopper, 'CAM_Bottom.gbr', 'text/plain'), 300);
     setTimeout(() => downloadFile(gerbers.outline, 'CAM_Outline.gbr', 'text/plain'), 600);
     setTimeout(() => downloadFile(gerbers.drill, 'CAM_Drill.drl', 'text/plain'), 900);
+    toast.success('Gerber fabrication files exported');
   }, [buildGraph]);
+
+  const handleExportPickPlace = useCallback(() => {
+    const graph = buildGraph();
+    const pp = generatePickPlace(graph);
+    downloadFile(pickPlaceToCSV(pp), 'acadmix_pick_place.csv', 'text/csv');
+    toast.success('Pick and Place file exported');
+  }, [buildGraph]);
+
+  const handleShowPCBInfo = useCallback(() => {
+    const graph = buildGraph();
+    const info = generatePCBInfo(graph);
+    setPcbInfo(info);
+    setShowPCBInfo(true);
+  }, [buildGraph]);
+
+  const handleCanvasSettings = useCallback(() => {
+    toast.info('Canvas Settings — Coming Soon', { description: 'Unit selection (mm/mil) and grid customization is on our roadmap.', duration: 3000 });
+  }, []);
 
 
   // Keyboard shortcuts
@@ -415,6 +439,35 @@ export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen
             </button>
           )}
           <span className="font-bold text-sm text-gray-200">Copper Studio</span>
+
+          {/* ── PCB Layout Menu Trigger ── */}
+          <div className="relative">
+            <button
+              onClick={() => setShowPCBLayoutMenu(!showPCBLayoutMenu)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${
+                showPCBLayoutMenu
+                  ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30'
+                  : 'bg-gray-800/60 text-gray-400 hover:bg-gray-700 hover:text-gray-200 border-gray-700/50'
+              }`}
+            >
+              <List size={13} weight="bold" />
+              PCB Layout
+            </button>
+            <PCBLayoutMenu
+              isOpen={showPCBLayoutMenu}
+              onToggle={() => setShowPCBLayoutMenu(!showPCBLayoutMenu)}
+              onClose={() => setShowPCBLayoutMenu(false)}
+              onRunDRC={handleRunDRC}
+              onShowNetlist={handleNetlist}
+              onExportBOM={handleExportBOM}
+              onExportGerber={handleExportGerber}
+              onShowLayers={() => setShowLayersMenu(!showLayersMenu)}
+              onShow3D={() => setMode('3d')}
+              onShowPCBInfo={handleShowPCBInfo}
+              onExportPickPlace={handleExportPickPlace}
+              onCanvasSettings={handleCanvasSettings}
+            />
+          </div>
 
           <div className="flex items-center gap-2 ml-4">
             <div className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500'}`} title={connected ? 'Connected to Room' : 'Disconnected'} />
@@ -651,6 +704,77 @@ export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">No output</div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PCB Information Modal ── */}
+      {showPCBInfo && pcbInfo && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowPCBInfo(false)}>
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-[520px] max-h-[550px] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800">
+              <span className="text-sm font-bold text-gray-200">PCB Information</span>
+              <button onClick={() => setShowPCBInfo(false)} className="text-gray-500 hover:text-gray-300 text-lg">&times;</button>
+            </div>
+            <div className="p-5 space-y-4 overflow-y-auto max-h-[480px]">
+              {/* Board Dimensions */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-700/50">
+                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Board Width</div>
+                  <div className="text-lg font-bold text-emerald-400 font-mono">{(pcbInfo.boardWidth * 0.254).toFixed(1)} mm</div>
+                </div>
+                <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-700/50">
+                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Board Height</div>
+                  <div className="text-lg font-bold text-emerald-400 font-mono">{(pcbInfo.boardHeight * 0.254).toFixed(1)} mm</div>
+                </div>
+              </div>
+
+              {/* Counts */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-700/50 text-center">
+                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Components</div>
+                  <div className="text-xl font-bold text-white font-mono">{pcbInfo.componentCount}</div>
+                </div>
+                <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-700/50 text-center">
+                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Nets</div>
+                  <div className="text-xl font-bold text-white font-mono">{pcbInfo.netCount}</div>
+                </div>
+                <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-700/50 text-center">
+                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Wires</div>
+                  <div className="text-xl font-bold text-white font-mono">{pcbInfo.wireCount}</div>
+                </div>
+              </div>
+
+              {/* SMD vs TH */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-900/20 rounded-xl p-3 border border-blue-800/30">
+                  <div className="text-[9px] uppercase tracking-wider text-blue-400 font-bold mb-1">SMD Components</div>
+                  <div className="text-lg font-bold text-blue-300 font-mono">{pcbInfo.smdCount}</div>
+                </div>
+                <div className="bg-amber-900/20 rounded-xl p-3 border border-amber-800/30">
+                  <div className="text-[9px] uppercase tracking-wider text-amber-400 font-bold mb-1">Through-Hole</div>
+                  <div className="text-lg font-bold text-amber-300 font-mono">{pcbInfo.thCount}</div>
+                </div>
+              </div>
+
+              {/* Component Breakdown */}
+              <div className="bg-gray-800/30 rounded-xl p-3 border border-gray-700/40">
+                <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-2">Component Breakdown</div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(pcbInfo.categories).sort((a, b) => b[1] - a[1]).map(([cat, count]) => (
+                    <span key={cat} className="text-[10px] font-mono font-bold bg-gray-700/50 text-gray-300 px-2 py-1 rounded-lg border border-gray-600/30">
+                      {cat}: {count}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Timestamps */}
+              <div className="text-[10px] text-gray-600 font-mono text-center space-y-0.5">
+                <div>Created: {new Date(pcbInfo.created).toLocaleString()}</div>
+                <div>Modified: {new Date(pcbInfo.modified).toLocaleString()}</div>
+              </div>
             </div>
           </div>
         </div>
