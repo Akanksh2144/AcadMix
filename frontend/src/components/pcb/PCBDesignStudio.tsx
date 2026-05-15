@@ -425,7 +425,7 @@ export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen
       )}
 
       {/* ── Toolbar ── */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-gray-900/90 backdrop-blur-xl border-b border-gray-800/60 shrink-0">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-gray-900/90 backdrop-blur-xl border-b border-gray-800/60 shrink-0 relative z-30">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <Circuitry size={16} weight="bold" className="text-white" />
@@ -548,7 +548,7 @@ export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen
       </div>
 
       {/* ── Main Content ── */}
-      <div className="flex-1 min-h-0 flex relative z-10">
+      <div className="flex-1 min-h-0 flex relative z-0">
         {mode === 'schematic' || mode === 'visual' ? (
           <>
             {showLibrary && <div className="w-56 shrink-0 z-10"><ComponentLibraryPanel onAddComponent={handleAddComponent} /></div>}
