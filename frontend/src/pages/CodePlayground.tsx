@@ -621,9 +621,9 @@ endmodule`
     { id: 'ctrl-python', label: 'Python (Control)', url: jupyterUrl(JUPYTER_CODES['ctrl-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   em_theory: [
-    { id: 'em-1d', label: '1D EM Wave', url: 'https://www.falstad.com/em1d/', openLabel: 'Open Falstad' },
-    { id: 'em-2d', label: '2D EM Wave', url: 'https://www.falstad.com/ripple/', openLabel: 'Open Ripple Tank' },
-    { id: 'em-3d', label: '3D Vector Fields', url: 'https://www.falstad.com/vector3d/', openLabel: 'Open Falstad' },
+    { id: 'em-1d', label: '1D EM Wave', url: 'https://www.falstad.com/emwave1/', openLabel: 'Open Falstad' },
+    { id: 'em-2d', label: '2D EM Wave', url: 'https://www.falstad.com/emwave2/', openLabel: 'Open Falstad' },
+    { id: 'em-3d', label: '3D Waveguide', url: 'https://www.falstad.com/embox/', openLabel: 'Open Falstad' },
     { id: 'em-python', label: 'Python (Antennas)', url: jupyterUrl(JUPYTER_CODES['em-python-ece']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   network_analysis: [
