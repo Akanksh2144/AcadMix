@@ -215,7 +215,7 @@ export default function FunctionGenerator() {
         </div>
 
         {/* Controls Sidebar */}
-        <div className="w-80 bg-slate-800/40 rounded-2xl border border-slate-700/50 p-6 flex flex-col gap-8 overflow-y-auto shadow-inner backdrop-blur-xl">
+        <div className="w-80 bg-slate-800/40 rounded-2xl border border-slate-700/50 p-6 flex flex-col gap-5 overflow-y-auto shadow-inner backdrop-blur-xl">
           
           <div className="space-y-4">
             <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest flex items-center gap-2">
@@ -238,8 +238,6 @@ export default function FunctionGenerator() {
             </div>
           </div>
 
-          <div className="w-full h-px bg-slate-700/50"></div>
-
           <div className="space-y-4">
             <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest flex items-center gap-2">
               <WaveSine size={18} className="text-red-400" /> Oscillator 2
@@ -260,8 +258,6 @@ export default function FunctionGenerator() {
               </div>
             </div>
           </div>
-          
-          <div className="w-full h-px bg-slate-700/50"></div>
           
           <div className="space-y-4">
             <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest flex items-center gap-2">
