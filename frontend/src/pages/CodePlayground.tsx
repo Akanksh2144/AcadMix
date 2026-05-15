@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube, Broadcast, Equalizer, SunHorizon, Gauge, Path, Tree, Wall, Wrench, Gear, Engine, Robot, ThermometerHot, Car, CornersOut, CornersIn } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube, Broadcast, Equalizer, SunHorizon, Gauge, Path, Tree, Wall, Wrench, Gear, Engine, Robot, ThermometerHot, Car, CornersOut, CornersIn, MagnetStraight, Pulse, WifiHigh, ShareNetwork } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -40,8 +40,15 @@ const SIMULATOR_CATEGORIES = [
   { id: 'digital', label: 'Digital Electronics', icon: <Circuitry size={16} weight="duotone" />, accent: 'sky' },
   { id: 'vlsi', label: 'VLSI Design', icon: <Atom size={16} weight="duotone" />, accent: 'amber' },
   { id: 'pcb', label: 'PCB Design', icon: <Blueprint size={16} weight="duotone" />, accent: 'emerald' },
+  { id: 'microprocessors', label: 'Microprocessors', icon: <Cpu size={16} weight="duotone" />, accent: 'purple' },
+  { id: 'control_systems_ece', label: 'Control Systems', icon: <ChartLineUp size={16} weight="duotone" />, accent: 'indigo' },
+  { id: 'em_theory', label: 'EM Theory', icon: <MagnetStraight size={16} weight="duotone" />, accent: 'red' },
+  { id: 'network_analysis', label: 'Network Analysis', icon: <ShareNetwork size={16} weight="duotone" />, accent: 'orange' },
   { id: 'communication', label: 'Communication Systems', icon: <Broadcast size={16} weight="duotone" />, accent: 'rose' },
   { id: 'dsp', label: 'DSP / Signal Processing', icon: <Equalizer size={16} weight="duotone" />, accent: 'indigo' },
+  { id: 'instrumentation', label: 'Instrumentation', icon: <Pulse size={16} weight="duotone" />, accent: 'cyan' },
+  { id: 'power_electronics_ece', label: 'Power Electronics', icon: <Lightning size={16} weight="duotone" />, accent: 'yellow' },
+  { id: 'iot', label: 'IoT & Edge', icon: <WifiHigh size={16} weight="duotone" />, accent: 'green' },
 ];
 
 const JUPYTERLITE_BASE = 'https://jupyterlite.github.io/demo/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab%20Dark';
@@ -76,6 +83,83 @@ print("Filter: 15-tap moving average")
 print("Input RMS:", round(np.sqrt(np.mean(x**2)),4))
 print("Output RMS:", round(np.sqrt(np.mean(y**2)),4))
 print("Noise reduced by ~", round((1-np.std(y)/np.std(x))*100,1), "%")`,
+
+  'mp-python': `import numpy as np
+# 8085 Assembly Simulator Demo (Python wrapper)
+registers = {'A': 0, 'B': 5, 'C': 10}
+def execute_add(reg1, reg2):
+    return registers[reg1] + registers[reg2]
+registers['A'] = execute_add('B', 'C')
+print("=== Microprocessor Emulation ===")
+print("Executing: MOV A, B \\n ADD C")
+print("Result in Accumulator (A):", registers['A'])`,
+
+  'ctrl-python': `import numpy as np
+import matplotlib.pyplot as plt
+# Root Locus and Bode plot data generation
+frequencies = np.logspace(-2, 2, 100)
+magnitude = 20 * np.log10(1 / np.sqrt(1 + (frequencies/10)**2))
+phase = -np.arctan(frequencies/10) * 180 / np.pi
+print("=== Control System Bode Plot ===")
+print("Transfer Function: H(s) = 10 / (s + 10)")
+print(f"DC Gain: {magnitude[0]:.2f} dB")
+print(f"Phase at 10 rad/s: {phase[50]:.1f} deg")`,
+
+  'em-python-ece': `import numpy as np
+# Antenna Radiation Pattern
+theta = np.linspace(0, 2*np.pi, 100)
+# Simple dipole pattern
+U = np.sin(theta)**2
+print("=== EM Theory: Dipole Antenna ===")
+print("Directivity calculation for infinitesimal dipole...")
+print(f"Max radiation at θ = 90°: {max(U):.2f}")
+print("Nulls at θ = 0° and 180°")`,
+
+  'net-python': `import numpy as np
+# KVL/KCL Matrix Solver
+# [R1+R2, -R2] [I1] = [V1]
+# [-R2, R2+R3] [I2]   [V2]
+R = np.array([[30, -10], [-10, 30]])
+V = np.array([12, 5])
+I = np.linalg.solve(R, V)
+print("=== Network Analysis ===")
+print("Mesh Currents:")
+print(f"I1 = {I[0]:.3f} A")
+print(f"I2 = {I[1]:.3f} A")`,
+
+  'inst-python': `import numpy as np
+# Signal Processing for Instrumentation
+# ADC quantization
+V_ref = 5.0
+bits = 10
+levels = 2**bits
+resolution = V_ref / levels
+print("=== Instrumentation ADC ===")
+print(f"10-bit ADC with 5V Reference")
+print(f"Number of levels: {levels}")
+print(f"Resolution (LSB): {resolution*1000:.2f} mV")`,
+
+  'pe-python': `import numpy as np
+# Full Wave Rectifier with Capacitor Filter
+V_peak = 12 * np.sqrt(2)
+f = 50
+R_load = 100
+C = 1000e-6
+V_ripple = V_peak / (2 * f * R_load * C)
+print("=== Power Electronics ===")
+print(f"Transformer Secondary: 12V RMS")
+print(f"Peak Voltage: {V_peak:.2f} V")
+print(f"Ripple Voltage: {V_ripple:.2f} V")
+print(f"DC Output ~ {V_peak - V_ripple/2:.2f} V")`,
+
+  'iot-python': `import numpy as np
+# Basic MQTT Payload Formatting
+sensor_data = {'temp': 24.5, 'humidity': 60}
+payload = f"'{{\"temperature\": {sensor_data['temp']}, \"humidity\": {sensor_data['humidity']}}}'"
+print("=== IoT Edge Processing ===")
+print("Publishing to topic: sensors/room1")
+print("Payload:", payload)
+print(f"Data size: {len(payload)} bytes")`,
 
   'cs-python': `import numpy as np
 # Second-Order System Step Response
@@ -427,15 +511,9 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
     { id: 'attiny85', label: 'ATtiny85', url: 'https://wokwi.com/projects/new/attiny85', openLabel: 'Open in Wokwi' },
   ],
   analog: [
-    { id: 'ae-native-spice', label: 'AcadMix SPICE (Native)', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: `* Basic RLC circuit
-
-v1 1 0 pulse (0 5 1m 1m 1m 10m 20m)
-r1 1 2 1k
-l1 2 3 10m
-c1 3 0 1u
-
-.tran 0.1m 50m
-.end` },
+    { id: 'ae-native-spice', label: 'SPICE: RLC Circuit', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: `* Basic RLC circuit\n\nv1 1 0 pulse (0 5 1m 1m 1m 10m 20m)\nr1 1 2 1k\nl1 2 3 10m\nc1 3 0 1u\n\n.tran 0.1m 50m\n.end` },
+    { id: 'ae-native-spice-bjt', label: 'SPICE: CE Amplifier', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: `* Common Emitter Amplifier\nVCC 1 0 15\nVIN 2 0 SIN(0 10m 1k)\nR1 1 3 47k\nR2 3 0 10k\nRC 1 4 4.7k\nRE 5 0 1k\nC1 2 3 10u\nC2 4 6 10u\nCE 5 0 100u\nQ1 4 3 5 2N3904\n.model 2N3904 NPN\n.tran 10u 5m\n.end` },
+    { id: 'ae-native-spice-rc', label: 'SPICE: RC Filter', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: `* Low Pass Filter\nVIN 1 0 PULSE(0 5 1m 1m 1m 10m 20m)\nR1 1 2 1k\nC1 2 0 1u\n.tran 0.1m 30m\n.end` },
     { id: 'ae-blank', label: 'Blank Circuit', url: 'https://lushprojects.com/circuitjs/circuitjs.html?ctz=CQAgjCAMB0l3BWcA2aAOMB2ALGXyEBOAbmAmwmwFMBaMMAKACcQUFDxCRsKBmEbqh7ce-YUJR1BkEJByYAHiGC4ALpzV8hOvYb37MBg5QCMvIbsPG6Zjlx5A', openLabel: 'Open in CircuitJS' },
     { id: 'ae-opamp', label: 'Op-Amp', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=opamp.txt', openLabel: 'Open in CircuitJS' },
     { id: 'ae-rc', label: 'RC Low-Pass Filter', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=filt-lopass.txt', openLabel: 'Open in CircuitJS' },
@@ -443,6 +521,9 @@ c1 3 0 1u
     { id: 'ae-mosfet', label: 'n-MOSFET', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=nmosfet.txt', openLabel: 'Open in CircuitJS' },
     { id: 'ae-diode', label: 'Diode', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=diodevar.txt', openLabel: 'Open in CircuitJS' },
     { id: 'ae-555', label: '555 Timer', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=555square.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'ae-colpitts', label: 'Colpitts Oscillator', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=colpitts.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'ae-hartley', label: 'Hartley Oscillator', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=hartley.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'ae-wien', label: 'Wien Bridge Osc', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=wienbridge.txt', openLabel: 'Open in CircuitJS' },
   ],
   digital: [
     { id: 'de-blank', label: 'Blank Circuit', url: 'https://lushprojects.com/circuitjs/circuitjs.html?ctz=CQAgjCAMB0l3BWcA2aAOMB2ALGXyEBOAbmAmwmwFMBaMMAKACcQUFDxCRsKBmEbqh7ce-YUJR1BkEJByYAHiGC4ALpzV8hOvYb37MBg5QCMvIbsPG6Zjlx5A', openLabel: 'Open in CircuitJS' },
@@ -452,6 +533,10 @@ c1 3 0 1u
     { id: 'de-counter', label: '4-Bit Counter', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=counter.txt', openLabel: 'Open in CircuitJS' },
     { id: 'de-decoder', label: '7-Seg Decoder', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=7segdecoder.txt', openLabel: 'Open in CircuitJS' },
     { id: 'de-fulladd', label: 'Full Adder', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=fulladd.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'de-mux', label: 'Multiplexer', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=mux.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'de-shiftreg', label: 'Shift Register', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=shiftreg.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'de-comp', label: 'Comparator', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=comparator.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'de-alu', label: '4-Bit ALU', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=alu.txt', openLabel: 'Open in CircuitJS' },
   ],
   vlsi: [
     { 
@@ -507,6 +592,9 @@ endmodule`
     { id: 'comm-am', label: 'AM Detector', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=amdetect.txt', openLabel: 'Open in CircuitJS' },
     { id: 'comm-vco', label: 'VCO (FM Basis)', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=vco.txt', openLabel: 'Open in CircuitJS' },
     { id: 'comm-phaseshiftosc', label: 'Phase-Shift Oscillator', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=phaseshiftosc.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'comm-fm', label: 'FM Generator', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=fm.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'comm-pll', label: 'Phase-Locked Loop', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=pll.txt', openLabel: 'Open in CircuitJS' },
+    { id: 'comm-ask', label: 'ASK Modulation', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=ask.txt', openLabel: 'Open in CircuitJS' },
     { id: 'comm-python', label: 'Python (Comms)', url: jupyterUrl(JUPYTER_CODES['comm-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   dsp: [
@@ -518,6 +606,52 @@ endmodule`
     { id: 'dsp-fft', label: 'Falstad Fourier', url: 'https://www.falstad.com/fourier/', openLabel: 'Open Falstad' },
     { id: 'dsp-filter', label: 'Filter Design', url: 'https://rf-tools.com/filters/', openLabel: 'Open RF Tools' },
     { id: 'dsp-python', label: 'Python (DSP)', url: jupyterUrl(JUPYTER_CODES['dsp-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+  ],
+  microprocessors: [
+    { id: 'mp-8085', label: '8085 Simulator', url: 'https://sim8085.com/', openLabel: 'Open 8085 Sim' },
+    { id: 'mp-arm', label: 'ARM Cortex-A9 (CPUlator)', url: 'https://cpulator.01xz.net/?sys=arm', openLabel: 'Open CPUlator' },
+    { id: 'mp-riscv', label: 'RISC-V (CPUlator)', url: 'https://cpulator.01xz.net/?sys=riscv', openLabel: 'Open CPUlator' },
+    { id: 'mp-mips', label: 'MIPS (CPUlator)', url: 'https://cpulator.01xz.net/?sys=mips', openLabel: 'Open CPUlator' },
+    { id: 'mp-python', label: 'Python (Assembly)', url: jupyterUrl(JUPYTER_CODES['mp-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+  ],
+  control_systems_ece: [
+    { id: 'ctrl-octave', label: 'GNU Octave', url: 'https://octave-online.net/', openLabel: 'Open Octave' },
+    { id: 'ctrl-feedback', label: 'Op-Amp Feedback', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=opampfeedback.txt', openLabel: 'Open CircuitJS' },
+    { id: 'ctrl-osc', label: 'Phase-Shift Osc', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=phaseshiftosc.txt', openLabel: 'Open CircuitJS' },
+    { id: 'ctrl-python', label: 'Python (Control)', url: jupyterUrl(JUPYTER_CODES['ctrl-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+  ],
+  em_theory: [
+    { id: 'em-1d', label: '1D EM Wave', url: 'https://www.falstad.com/em1d/', openLabel: 'Open Falstad' },
+    { id: 'em-2d', label: '2D EM Wave', url: 'https://www.falstad.com/ripple/', openLabel: 'Open Ripple Tank' },
+    { id: 'em-3d', label: '3D Vector Fields', url: 'https://www.falstad.com/vector3d/', openLabel: 'Open Falstad' },
+    { id: 'em-python', label: 'Python (Antennas)', url: jupyterUrl(JUPYTER_CODES['em-python-ece']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+  ],
+  network_analysis: [
+    { id: 'net-vdiv', label: 'Voltage Divider', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=vdivider.txt', openLabel: 'Open CircuitJS' },
+    { id: 'net-wheatstone', label: 'Wheatstone Bridge', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=wheatstone.txt', openLabel: 'Open CircuitJS' },
+    { id: 'net-rlc', label: 'RLC Series', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=lrc.txt', openLabel: 'Open CircuitJS' },
+    { id: 'net-thevenin', label: 'Thevenin Equivalent', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=thevenin.txt', openLabel: 'Open CircuitJS' },
+    { id: 'net-python', label: 'Python (Networks)', url: jupyterUrl(JUPYTER_CODES['net-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+  ],
+  instrumentation: [
+    { id: 'inst-scope', label: 'Virtual Oscilloscope', url: 'https://academo.org/demos/virtual-oscilloscope/?embedded=true', openLabel: 'Open Scope' },
+    { id: 'inst-funcgen', label: 'Function Generator', url: 'https://academo.org/demos/wave-interference-beat-frequency/?embedded=true', openLabel: 'Open Func Gen' },
+    { id: 'inst-spectrum', label: 'Spectrum Analyzer', url: 'https://academo.org/demos/spectrum-analyzer/?embedded=true', openLabel: 'Open Spectrum' },
+    { id: 'inst-filter', label: 'Filter Design', url: 'https://rf-tools.com/filters/', openLabel: 'Open Filter Design' },
+    { id: 'inst-python', label: 'Python (Measurements)', url: jupyterUrl(JUPYTER_CODES['inst-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+  ],
+  power_electronics_ece: [
+    { id: 'pe-half', label: 'Half-Wave Rectifier', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=rect-half.txt', openLabel: 'Open CircuitJS' },
+    { id: 'pe-full', label: 'Full-Wave Rectifier', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=rect-full.txt', openLabel: 'Open CircuitJS' },
+    { id: 'pe-bridge', label: 'Bridge Rectifier', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=rect-bridge.txt', openLabel: 'Open CircuitJS' },
+    { id: 'pe-reg', label: 'Voltage Regulator', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=zener.txt', openLabel: 'Open CircuitJS' },
+    { id: 'pe-python', label: 'Python (Power)', url: jupyterUrl(JUPYTER_CODES['pe-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
+  ],
+  iot: [
+    { id: 'iot-esp32', label: 'ESP32 IoT', url: 'https://wokwi.com/projects/new/esp32', openLabel: 'Open Wokwi' },
+    { id: 'iot-pico', label: 'RPi Pico W', url: 'https://wokwi.com/projects/new/pi-pico-w', openLabel: 'Open Wokwi' },
+    { id: 'iot-micropython', label: 'MicroPython IoT', url: 'https://wokwi.com/projects/new/micropython-esp32', openLabel: 'Open Wokwi' },
+    { id: 'iot-python', label: 'Python (Edge)', url: jupyterUrl(JUPYTER_CODES['iot-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
 };
 
@@ -2113,6 +2247,7 @@ const CodePlayground = ({ navigate, user }) => {
                     <DSPBlockSimulator 
                       isFullScreen={isLabFullScreen} 
                       onExitFullScreen={() => setIsLabFullScreen(false)} 
+                      onRequestFullScreen={() => setIsLabFullScreen(true)} 
                     />
                   )}
                 </div>

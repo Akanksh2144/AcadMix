@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { Play, Plus, WaveSine, Funnel, ChartLineUp, SlidersHorizontal, X, WaveSawtooth, Clock, ChartBar, Pulse, GitFork, ArrowsDownUp, Gauge, Minus, ArrowsClockwise, Broadcast, Swap, SquaresFour, Lightning, Equalizer, CornersIn } from '@phosphor-icons/react';
+import { Play, Plus, WaveSine, Funnel, ChartLineUp, SlidersHorizontal, X, WaveSawtooth, Clock, ChartBar, Pulse, GitFork, ArrowsDownUp, Gauge, Minus, ArrowsClockwise, Broadcast, Swap, SquaresFour, Lightning, Equalizer, CornersIn, CornersOut } from '@phosphor-icons/react';
 
 import SignalGeneratorNode from './nodes/SignalGeneratorNode';
 import AdderNode from './nodes/AdderNode';
@@ -182,9 +182,10 @@ const PALETTE_SECTIONS = [
 
 let nodeCounter = 100;
 
-export default function DSPBlockSimulator({ isFullScreen, onExitFullScreen }: {
+export default function DSPBlockSimulator({ isFullScreen, onExitFullScreen, onRequestFullScreen }: {
   isFullScreen?: boolean;
   onExitFullScreen?: () => void;
+  onRequestFullScreen?: () => void;
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
@@ -268,7 +269,31 @@ export default function DSPBlockSimulator({ isFullScreen, onExitFullScreen }: {
   }, [nodes, edges]);
 
   return (
-    <div className="w-full h-full flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm">
+    <div className="w-full h-full flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm relative">
+      {/* Short screen prompt overlay */}
+      {!isFullScreen && onRequestFullScreen && (
+        <div className="absolute inset-0 z-[100] backdrop-blur-sm bg-black/5 dark:bg-white/5 flex flex-col items-center justify-center pointer-events-auto">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center max-w-sm text-center border border-gray-200 dark:border-gray-700">
+            <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-6">
+              <CornersOut size={32} weight="duotone" className="text-blue-500" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+              View in Full Screen
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-8 text-sm">
+              The DSP simulator requires a full-screen workspace for optimal node wiring and visualization.
+            </p>
+            <button
+              onClick={onRequestFullScreen}
+              className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/30 active:scale-95 flex items-center justify-center gap-2"
+            >
+              <CornersOut size={20} weight="bold" />
+              Enter Full Screen
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top Bar */}
       <div className="flex items-center justify-between px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800 shrink-0">
         <div className="flex items-center gap-3">
