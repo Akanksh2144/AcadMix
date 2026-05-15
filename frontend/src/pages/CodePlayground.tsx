@@ -644,10 +644,10 @@ endmodule`
     { id: 'inst-python', label: 'Python (Measurements)', url: jupyterUrl(JUPYTER_CODES['inst-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
   power_electronics_ece: [
-    { id: 'pe-half', label: 'Half-Wave Rectifier', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=rect-half.txt', openLabel: 'Open CircuitJS' },
-    { id: 'pe-full', label: 'Full-Wave Rectifier', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=rect-full.txt', openLabel: 'Open CircuitJS' },
-    { id: 'pe-bridge', label: 'Bridge Rectifier', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=rect-bridge.txt', openLabel: 'Open CircuitJS' },
-    { id: 'pe-reg', label: 'Voltage Regulator', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=zener.txt', openLabel: 'Open CircuitJS' },
+    { id: 'pe-half', label: 'Half-Wave Rectifier', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=rectify.txt', openLabel: 'Open CircuitJS' },
+    { id: 'pe-full', label: 'Full-Wave Rectifier', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=fullrect.txt', openLabel: 'Open CircuitJS' },
+    { id: 'pe-bridge', label: 'Rectifier w/ Filter', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=fullrectf.txt', openLabel: 'Open CircuitJS' },
+    { id: 'pe-reg', label: 'Voltage Regulator (Zener)', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=zenerref.txt', openLabel: 'Open CircuitJS' },
     { id: 'pe-python', label: 'Python (Power)', url: jupyterUrl(JUPYTER_CODES['pe-python']), openLabel: 'Open Python', octaveUrl: OCTAVE_URL },
   ],
 };
