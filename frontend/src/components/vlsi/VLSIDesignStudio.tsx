@@ -574,6 +574,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
                     onClose={() => setMode('schematic')}
                     isExpanded={true}
                     onToggleExpand={() => {}}
+                    onClear={() => setSimulationHistory([])}
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-slate-500">

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { CornersOut, CornersIn, Download, X } from '@phosphor-icons/react';
+import { CornersOut, CornersIn, Download, X, Trash } from '@phosphor-icons/react';
 import type { TimingData } from './types';
 
 interface WaveformViewerProps {
@@ -7,9 +7,10 @@ interface WaveformViewerProps {
   isExpanded?: boolean;
   onExpandToggle?: () => void;
   onClose?: () => void;
+  onClear?: () => void;
 }
 
-export default function WaveformViewer({ history, isExpanded = false, onExpandToggle, onClose }: WaveformViewerProps) {
+export default function WaveformViewer({ history, isExpanded = false, onExpandToggle, onClose, onClear }: WaveformViewerProps) {
   // Extract all unique signal names from history
   const signals = useMemo(() => {
     const names = new Set<string>();
@@ -53,6 +54,15 @@ export default function WaveformViewer({ history, isExpanded = false, onExpandTo
               title={isExpanded ? 'Minimize' : 'Maximize'}
             >
               {isExpanded ? <CornersIn size={16} /> : <CornersOut size={16} />}
+            </button>
+          )}
+          {onClear && (
+            <button
+              onClick={onClear}
+              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
+              title="Clear Waveforms"
+            >
+              <Trash size={16} />
             </button>
           )}
           {onClose && (
