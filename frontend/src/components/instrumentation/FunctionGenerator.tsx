@@ -81,39 +81,61 @@ export default function FunctionGenerator() {
       ctx.clearRect(0, 0, width, height);
 
       // Grid & Time Referencing
+      const BOTTOM_MARGIN = 80;
+      const drawH = height - BOTTOM_MARGIN;
+      
       ctx.strokeStyle = '#1e293b'; 
       ctx.lineWidth = 2;
       ctx.beginPath();
-      
-      ctx.fillStyle = '#8ca3c7'; // Brighter for better visibility
-      ctx.font = 'bold 24px monospace';
-      ctx.textAlign = 'center';
       
       const TIME_WINDOW = zoom;
       
       for (let i = 0; i < width; i += 100) { 
         ctx.moveTo(i, 0); 
-        ctx.lineTo(i, height); 
-        
-        // Time labels at bottom
-        if (i > 0 && i < width && i % 200 === 0) {
-          const timeVal = (i / width) * TIME_WINDOW;
-          const label = TIME_WINDOW < 0.1 
-            ? `${(timeVal * 1000).toFixed(1)} ms` 
-            : `${timeVal.toFixed(3)} s`;
-          ctx.fillText(label, i, height - 25);
-        }
+        ctx.lineTo(i, drawH); 
       }
-      for (let i = 0; i < height; i += 100) { 
+      for (let i = 0; i < drawH; i += 100) { 
         ctx.moveTo(0, i); 
         ctx.lineTo(width, i); 
       }
       ctx.stroke();
 
+      // Time Axis Line
+      ctx.beginPath();
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 2;
+      ctx.moveTo(0, drawH);
+      ctx.lineTo(width, drawH);
+      ctx.stroke();
+
+      // Ticks and Labels
+      ctx.fillStyle = '#94a3b8'; // slate-400
+      ctx.font = '500 16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      
+      for (let i = 0; i <= width; i += 200) {
+        if (i === 0 || i === width) continue;
+        
+        // Draw tick mark
+        ctx.beginPath();
+        ctx.strokeStyle = '#475569';
+        ctx.moveTo(i, drawH);
+        ctx.lineTo(i, drawH + 8);
+        ctx.stroke();
+
+        const timeVal = (i / width) * TIME_WINDOW;
+        const label = TIME_WINDOW < 0.1 
+          ? `${(timeVal * 1000).toFixed(1)}` 
+          : `${timeVal.toFixed(3)}`;
+        ctx.fillText(label, i, drawH + 12);
+      }
+
       // Axis Title
       ctx.fillStyle = '#cbd5e1'; // slate-300
-      ctx.font = 'bold 32px sans-serif';
-      ctx.fillText(TIME_WINDOW < 0.1 ? "Time in milliseconds" : "Time in seconds", width / 2, height - 70);
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(TIME_WINDOW < 0.1 ? "Time in milliseconds" : "Time in seconds", width / 2, height - 10);
 
       // Delta time for wave movement
       if (isPlaying) {
@@ -165,15 +187,15 @@ export default function FunctionGenerator() {
 
       if (overlayWaves) {
         // Top half: f1 and f2 overlaid
-        drawWave(f1, 'rgba(59,130,246,0.6)', height * 0.33, 100); 
-        drawWave(f2, 'rgba(239,68,68,0.6)', height * 0.33, 100); 
+        drawWave(f1, 'rgba(59,130,246,0.6)', drawH * 0.33, 100); 
+        drawWave(f2, 'rgba(239,68,68,0.6)', drawH * 0.33, 100); 
         // Bottom half: Superposition
-        drawSuperposition(height * 0.75, 200);
+        drawSuperposition(drawH * 0.75, 200);
       } else {
-        // Layout heights: 20%, 50%, 80%
-        drawWave(f1, '#3b82f6', height * 0.20, 80); 
-        drawWave(f2, '#ef4444', height * 0.50, 80); 
-        drawSuperposition(height * 0.80, 160);
+        // Layout heights: 20%, 50%, 80% relative to drawH
+        drawWave(f1, '#3b82f6', drawH * 0.20, 80); 
+        drawWave(f2, '#ef4444', drawH * 0.50, 80); 
+        drawSuperposition(drawH * 0.80, 160);
       }
 
       animationRef.current = requestAnimationFrame(render);
@@ -230,13 +252,13 @@ export default function FunctionGenerator() {
              className="w-full h-full object-fill opacity-90 mix-blend-screen"
            />
            {/* Labels */}
-           <div className="absolute top-6 left-6 flex items-center gap-2 text-sm font-bold text-blue-400 bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-800 shadow-md">
+           <div className={`absolute left-6 transition-all duration-500 ${overlayWaves ? 'top-[22%]' : 'top-[8%]'} flex items-center gap-2 text-sm font-bold text-blue-400 bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-800 shadow-md`}>
              <div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div> Channel 1 (f1)
            </div>
-           <div className="absolute top-[38%] left-6 flex items-center gap-2 text-sm font-bold text-red-400 bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-800 shadow-md">
+           <div className={`absolute left-6 transition-all duration-500 ${overlayWaves ? 'top-[28%]' : 'top-[36%]'} flex items-center gap-2 text-sm font-bold text-red-400 bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-800 shadow-md`}>
              <div className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></div> Channel 2 (f2)
            </div>
-           <div className="absolute bottom-12 left-6 flex items-center gap-2 text-sm font-bold text-purple-400 bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-800 shadow-md">
+           <div className={`absolute left-6 transition-all duration-500 ${overlayWaves ? 'top-[54%]' : 'top-[58%]'} flex items-center gap-2 text-sm font-bold text-purple-400 bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-800 shadow-md`}>
              <div className="w-3 h-3 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]"></div> Superposition (Interference)
            </div>
         </div>
