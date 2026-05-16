@@ -4,7 +4,7 @@ import {
   type Connection, type Edge, type Node, type XYPosition,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise, Copy, SignIn, CornersOut, CornersIn, Activity } from '@phosphor-icons/react';
+import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise, Copy, SignIn, CornersOut, CornersIn, Pulse } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
@@ -469,7 +469,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
                 <Cpu size={13} weight="bold" /> Schematic
               </button>
               <button onClick={() => setMode('waveform')} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all ${mode === 'waveform' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
-                <Activity size={13} weight="bold" /> Waveforms {simulationHistory.length > 0 && `(${simulationHistory.length})`}
+                <Pulse size={13} weight="bold" /> Waveforms {simulationHistory.length > 0 && `(${simulationHistory.length})`}
               </button>
               <button onClick={() => setMode('code')} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all ${mode === 'code' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
                 <Code size={13} weight="bold" /> HDL Code
@@ -579,7 +579,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-slate-500">
-                    <Activity size={48} className="mb-4 opacity-20" />
+                    <Pulse size={48} className="mb-4 opacity-20" />
                     <p>No waveform data available.</p>
                     <p className="text-sm mt-2">Run a simulation first to capture logic states.</p>
                   </div>
