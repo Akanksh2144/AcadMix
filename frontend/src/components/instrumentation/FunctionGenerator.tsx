@@ -85,8 +85,8 @@ export default function FunctionGenerator() {
       ctx.lineWidth = 2;
       ctx.beginPath();
       
-      ctx.fillStyle = '#64748b'; // slate-500
-      ctx.font = '14px monospace';
+      ctx.fillStyle = '#8ca3c7'; // Brighter for better visibility
+      ctx.font = 'bold 24px monospace';
       ctx.textAlign = 'center';
       
       const TIME_WINDOW = zoom;
@@ -96,9 +96,12 @@ export default function FunctionGenerator() {
         ctx.lineTo(i, height); 
         
         // Time labels at bottom
-        if (i > 0 && i < width) {
+        if (i > 0 && i < width && i % 200 === 0) {
           const timeVal = (i / width) * TIME_WINDOW;
-          ctx.fillText(`${timeVal.toFixed(3)}s`, i, height - 15);
+          const label = TIME_WINDOW < 0.1 
+            ? `${(timeVal * 1000).toFixed(1)} ms` 
+            : `${timeVal.toFixed(3)} s`;
+          ctx.fillText(label, i, height - 25);
         }
       }
       for (let i = 0; i < height; i += 100) { 
@@ -108,9 +111,9 @@ export default function FunctionGenerator() {
       ctx.stroke();
 
       // Axis Title
-      ctx.fillStyle = '#94a3b8'; // slate-400
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillText("Time in seconds", width / 2, height - 40);
+      ctx.fillStyle = '#cbd5e1'; // slate-300
+      ctx.font = 'bold 32px sans-serif';
+      ctx.fillText(TIME_WINDOW < 0.1 ? "Time in milliseconds" : "Time in seconds", width / 2, height - 70);
 
       // Delta time for wave movement
       if (isPlaying) {
