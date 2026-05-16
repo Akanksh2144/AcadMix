@@ -532,8 +532,6 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
             <button onClick={handleUndo} title="Undo" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"><ArrowCounterClockwise size={14} weight="bold" /></button>
             <button onClick={handleRedo} title="Redo" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"><ArrowClockwise size={14} weight="bold" /></button>
             <div className="w-px h-5 bg-gray-700 mx-1" />
-            <button onClick={handleGenerateCode} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 transition-colors"><Code size={13} weight="bold" /> HDL</button>
-            <button onClick={handleGenerateTestbench} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"><Code size={13} weight="bold" /> Testbench</button>
             <button onClick={handleClear} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"><Trash size={13} weight="bold" /> Clear</button>
             <div className="w-px h-5 bg-gray-700 mx-1" />
             <button 
@@ -595,7 +593,13 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
                       <Code size={16} className="text-indigo-400" /> Generated Verilog HDL
                     </h3>
                     <div className="flex items-center gap-2">
-                      <button onClick={handleDownload} className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-bold text-slate-300 hover:text-white bg-indigo-500/20 hover:bg-indigo-500/40 border border-indigo-500/30 rounded-lg transition-colors">
+                      <button onClick={handleGenerateCode} className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-bold text-indigo-300 hover:text-white bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 rounded-lg transition-colors">
+                        <Code size={14} /> Generate HDL
+                      </button>
+                      <button onClick={handleGenerateTestbench} className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-bold text-emerald-300 hover:text-white bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/30 rounded-lg transition-colors">
+                        <Code size={14} /> Generate Testbench
+                      </button>
+                      <button onClick={handleDownload} className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-bold text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg transition-colors">
                         <Download size={14} /> Download .v
                       </button>
                     </div>
