@@ -4,7 +4,7 @@ import {
   type Connection, type Edge, type Node, type XYPosition,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise, Copy, SignIn, CornersOut, CornersIn } from '@phosphor-icons/react';
+import { Cpu, Play, Pause, SkipForward, Code, Download, Trash, Users, ArrowCounterClockwise, ArrowClockwise, Copy, SignIn, CornersOut, CornersIn, Activity } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
@@ -59,11 +59,10 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [showCode, setShowCode] = useState(false);
+  const [mode, setMode] = useState<'schematic' | 'waveform' | 'code'>('schematic');
   const [verilogCode, setVerilogCode] = useState('');
   
   const [simulationHistory, setSimulationHistory] = useState<TimingData[]>([]);
-  const [showWaveform, setShowWaveform] = useState(false);
   const [isWaveformExpanded, setIsWaveformExpanded] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
@@ -395,7 +394,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
   const handleGenerateCode = useCallback(() => {
     try {
       setVerilogCode(generateVerilog(getGraphData()));
-      setShowCode(true);
+      setMode('code');
     } catch (err) {
       toast.error('Failed to generate Verilog.');
     }
@@ -404,7 +403,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
   const handleGenerateTestbench = useCallback(() => {
     try {
       setVerilogCode(generateTestbench(getGraphData(), 'TopModule'));
-      setShowCode(true);
+      setMode('code');
       toast.success('Testbench generated!');
     } catch (err) {
       toast.error('Failed to generate Testbench.');
@@ -463,6 +462,19 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
               <Cpu size={16} weight="bold" className="text-white" />
             </div>
             <span className="font-bold text-sm text-gray-200">Silicon Studio</span>
+
+            {/* Mode toggle */}
+            <div className="flex items-center bg-transparent border border-gray-800/50 rounded-full p-0.5 ml-2 backdrop-blur-sm">
+              <button onClick={() => setMode('schematic')} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all ${mode === 'schematic' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
+                <Cpu size={13} weight="bold" /> Schematic
+              </button>
+              <button onClick={() => setMode('waveform')} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all ${mode === 'waveform' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
+                <Activity size={13} weight="bold" /> Waveforms {simulationHistory.length > 0 && `(${simulationHistory.length})`}
+              </button>
+              <button onClick={() => setMode('code')} className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap transition-all ${mode === 'code' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-300'}`}>
+                <Code size={13} weight="bold" /> HDL Code
+              </button>
+            </div>
 
             {/* Simulation controls — pill container */}
             <div className="flex items-center bg-transparent border border-gray-800/50 rounded-full p-0.5 ml-2 backdrop-blur-sm">
@@ -537,43 +549,74 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
         {/* Canvas */}
         <div className="flex-1 relative bg-[#0B0F19] flex flex-col">
           <div className="flex-1 relative">
-            <VLSICanvas
-              nodes={nodes} edges={edges}
-              onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
-              onConnect={onConnect} onNodeClick={onNodeClick} onPaneClick={onPaneClick}
-              onNodesDelete={onNodesDelete} onEdgesDelete={onEdgesDelete}
-              onNodeDragStop={onNodeDragStop}
-              onDrop={(type, pos) => handleAddComponent(type, pos)}
-            />
-            {isRunning && (
-              <div className="absolute top-4 left-4 flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-500/20 backdrop-blur pointer-events-none">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                SIMULATING
+            {mode === 'schematic' && (
+              <>
+                <VLSICanvas
+                  nodes={nodes} edges={edges}
+                  onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
+                  onConnect={onConnect} onNodeClick={onNodeClick} onPaneClick={onPaneClick}
+                  onNodesDelete={onNodesDelete} onEdgesDelete={onEdgesDelete}
+                  onNodeDragStop={onNodeDragStop}
+                  onDrop={(type, pos) => handleAddComponent(type, pos)}
+                />
+                {isRunning && (
+                  <div className="absolute top-4 left-4 flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-500/20 backdrop-blur pointer-events-none">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    SIMULATING
+                  </div>
+                )}
+              </>
+            )}
+
+            {mode === 'waveform' && (
+              <div className="absolute inset-0 bg-[#0B0F19]">
+                {simulationHistory.length > 0 ? (
+                  <WaveformViewer 
+                    history={simulationHistory} 
+                    onClose={() => setMode('schematic')}
+                    isExpanded={true}
+                    onToggleExpand={() => {}}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                    <Activity size={48} className="mb-4 opacity-20" />
+                    <p>No waveform data available.</p>
+                    <p className="text-sm mt-2">Run a simulation first to capture logic states.</p>
+                  </div>
+                )}
               </div>
             )}
-            {!showWaveform && simulationHistory.length > 0 && (
-              <button 
-                onClick={() => setShowWaveform(true)}
-                className="absolute bottom-4 right-4 bg-slate-900 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold font-mono shadow-xl hover:bg-slate-800 transition flex items-center gap-2"
-              >
-                <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h4l3-9 5 18 3-9h3" />
-                </svg>
-                Waveforms ({simulationHistory.length})
-              </button>
+
+            {mode === 'code' && (
+              <div className="absolute inset-0 bg-[#0F172A] p-6 overflow-auto">
+                <div className="max-w-4xl mx-auto flex flex-col h-full bg-[#0B0F19] rounded-2xl border border-slate-800 shadow-2xl overflow-hidden">
+                  <div className="px-5 py-3 bg-slate-800/50 border-b border-slate-700/80 flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                      <Code size={16} className="text-indigo-400" /> Generated Verilog HDL
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <button onClick={handleDownload} className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-bold text-slate-300 hover:text-white bg-indigo-500/20 hover:bg-indigo-500/40 border border-indigo-500/30 rounded-lg transition-colors">
+                        <Download size={14} /> Download .v
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-5 overflow-y-auto flex-1">
+                    {verilogCode ? (
+                      <pre className="font-mono text-[13px] text-emerald-400 leading-relaxed whitespace-pre-wrap">{verilogCode}</pre>
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-slate-500">
+                        <Code size={48} className="mb-4 opacity-20" />
+                        <p>No code generated yet.</p>
+                        <button onClick={handleGenerateCode} className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors">
+                          Generate HDL Now
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
-
-          {showWaveform && !showCode && (
-            <div className={`shrink-0 z-20 border-t border-slate-800 ${isWaveformExpanded ? 'absolute inset-0' : ''}`} style={{ height: isWaveformExpanded ? '100%' : '260px' }}>
-              <WaveformViewer 
-                history={simulationHistory} 
-                onClose={() => setShowWaveform(false)}
-                isExpanded={isWaveformExpanded}
-                onToggleExpand={() => setIsWaveformExpanded(!isWaveformExpanded)}
-              />
-            </div>
-          )}
         </div>
       </div>
 
@@ -596,29 +639,7 @@ function VLSIDesignStudioInternal({ user, isFullScreen, onExitFullScreen, onRequ
         />
       </div>
 
-      {/* Modal */}
-      {showCode && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-8">
-          <div className="bg-[#0F172A] border border-slate-700 rounded-2xl w-full max-w-2xl flex flex-col shadow-2xl overflow-hidden">
-            <div className="px-5 py-3 bg-slate-800/50 border-b border-slate-700/80 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                <Code size={16} className="text-indigo-400" /> Generated Verilog HDL
-              </h3>
-              <div className="flex items-center gap-2">
-                <button onClick={handleDownload} className="flex items-center gap-1 px-2 py-1 text-[11px] text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-colors">
-                  <Download size={13} /> .v
-                </button>
-                <button onClick={() => setShowCode(false)} className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs rounded-lg font-bold transition-colors">
-                  Close
-                </button>
-              </div>
-            </div>
-            <div className="p-5 overflow-y-auto max-h-[65vh]">
-              <pre className="font-mono text-[12px] text-emerald-400 leading-relaxed whitespace-pre-wrap">{verilogCode}</pre>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
