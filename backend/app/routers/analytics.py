@@ -95,6 +95,7 @@ async def class_results_analytics(
             "subject": a.subject_name,
             "subject_code": a.subject_code,
             "batch": str(a.batch),
+            "rawSection": a.section,
             "totalStudents": 0,  # populated in Fix 4
         })
 
@@ -123,7 +124,7 @@ async def class_results_analytics(
     }
     for cls in assigned_classes:
         cls["totalStudents"] = student_count_map.get(
-            f"{cls['department']}_{cls['batch']}_{cls['section']}", 0
+            f"{cls['department']}_{cls['batch']}_{cls['rawSection']}", 0
         )
 
     # ── 3. Quiz results keyed by class_key ────────────────────────────────
@@ -242,10 +243,16 @@ async def class_results_analytics(
 
 @router.get("/analytics/teacher/quiz-results/{quiz_id}")
 async def get_quiz_detailed_analytics(quiz_id: str, department: str = "", batch: str = "", section: str = "", user: dict = Depends(require_role("teacher", "hod", "exam_cell", "admin")), session: AsyncSession = Depends(get_db)):
-    stmt = select(models.User).where(
+    stmt = select(models.User).join(models.UserProfile, models.User.id == models.UserProfile.user_id).where(
         models.User.role == "student",
         models.User.college_id == user["college_id"]
     )
+    if department:
+        stmt = stmt.where(models.UserProfile.department == department)
+    if batch:
+        stmt = stmt.where(models.UserProfile.batch == batch)
+    if section:
+        stmt = stmt.where(models.UserProfile.section == section)
     result = await session.execute(stmt)
     students = result.scalars().all()
     attempts_r = await session.execute(
