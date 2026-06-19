@@ -132,8 +132,7 @@ async def get_available_hostels(
     user: dict = Depends(get_pre_enroll_user),
     svc: HostelService = Depends(get_hostel_service),
 ):
-    return {"data": await svc.get_available_hostels(user["college_id"])}
-
+    return {"data": await svc.get_available_hostels(user["college_id"], user.get("gender"))}
 
 @router.get("/hostel/buildings/{hostel_id}/floors")
 async def get_hostel_floors(

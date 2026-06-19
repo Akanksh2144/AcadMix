@@ -143,8 +143,7 @@ async def get_available_hostels(
     svc: HostelService = Depends(get_hostel_service),
 ):
     """Step 1: Available blocks filtered by gender."""
-    # Infer gender from profile or pass as param — for now, return all compatible
-    return {"data": await svc.get_available_hostels(user["college_id"])}
+    return {"data": await svc.get_available_hostels(user["college_id"], user.get("gender"))}
 
 
 @router.get("/hostel/buildings/{hostel_id}/floors")

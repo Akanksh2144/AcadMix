@@ -406,9 +406,9 @@ class HostelService:
         try:
             row = await self.db.execute(
                 text("""
-                    SELECT id, room_id, selection_fee, is_premium, bed_identifier
+                    SELECT id, room_id, selection_fee, is_premium, bed_identifier, status, locked_at, locked_by
                     FROM beds
-                    WHERE id = :bid AND status = 'AVAILABLE' AND college_id = :cid
+                    WHERE id = :bid AND status IN ('AVAILABLE', 'LOCKED') AND college_id = :cid
                       AND is_deleted = false
                     FOR UPDATE NOWAIT
                 """),
@@ -421,6 +421,15 @@ class HostelService:
 
         if not bed:
             raise DomainException("Bed is no longer available", status_code=409)
+
+        # Inline override of expired locks
+        if bed.status == "LOCKED":
+            now = datetime.now(timezone.utc)
+            locked_at = bed.locked_at
+            if locked_at and locked_at.tzinfo is None:
+                locked_at = locked_at.replace(tzinfo=timezone.utc)
+            if locked_at and (now - locked_at) < timedelta(minutes=10):
+                raise DomainException("This bed is currently being booked by another student. Please try a different bed.", status_code=409)
 
         # Check if student already has an active allocation this year
         current_year = str(datetime.now(timezone.utc).year)
@@ -474,6 +483,19 @@ class HostelService:
         )
         bed = bed_q.scalars().first()
         if not bed:
+            raise DomainException("No valid lock found. The lock may have expired.", status_code=409)
+
+        # Check lock expiration
+        now = datetime.now(timezone.utc)
+        locked_at = bed.locked_at
+        if locked_at and locked_at.tzinfo is None:
+            locked_at = locked_at.replace(tzinfo=timezone.utc)
+        
+        if not locked_at or (now - locked_at) > timedelta(minutes=10):
+            bed.status = "AVAILABLE"
+            bed.locked_at = None
+            bed.locked_by = None
+            await self.db.flush()
             raise DomainException("No valid lock found. The lock may have expired.", status_code=409)
 
         # Update bed status
@@ -709,6 +731,19 @@ class HostelService:
         """)
         result = await self.db.execute(stmt, {"college_id": college_id})
         updated_rows = result.fetchall()
+
+        # Also update user_id in admissions table for consistency
+        stmt_admissions = text("""
+            UPDATE admissions ad
+            SET user_id = u.id
+            FROM users u
+            WHERE ad.email = u.email
+              AND ad.user_id IS NULL
+              AND ad.college_id = :college_id
+              AND u.college_id = :college_id
+        """)
+        await self.db.execute(stmt_admissions, {"college_id": college_id})
+
         return {"reconciled_count": len(updated_rows)}
 
     # ═══════════════════════════════════════════════════════════════════════════
