@@ -162,7 +162,7 @@ async def live_quiz_monitor(quiz_id: str, user: dict = Depends(require_role("tea
             "rollNo": (student.profile_data or {}).get("college_id", a.student_id) if student else a.student_id,
             "status": "active" if a.status == "in_progress" else "submitted",
             "progress": progress, "totalQuestions": total_questions,
-            "violations": 0, "timeElapsed": max(0, time_elapsed),
+            "violations": a.telemetry_strikes, "timeElapsed": max(0, time_elapsed),
             "startTime": a.start_time.strftime("%I:%M %p"),
             "submitTime": submit_time_str
         })

@@ -18,6 +18,195 @@ import base64
 import json
 from app.routers import websocket as ws_router
 from app.services.llm_gateway import gateway
+from app.core.config import settings
+import httpx
+
+_http_client = httpx.AsyncClient(
+    limits=httpx.Limits(max_keepalive_connections=50, max_connections=100),
+    timeout=httpx.Timeout(30.0, connect=5.0)
+)
+
+def _build_python_sandbox(user_code: str, test_cases_list: list) -> str:
+    # Standardize the keys: make sure all test cases have input_data and expected_output
+    standardized = []
+    for tc in test_cases_list:
+        inp = tc.get("input_data") or tc.get("input") or ""
+        out = tc.get("expected_output") or tc.get("output") or ""
+        standardized.append({"input_data": str(inp), "expected_output": str(out)})
+        
+    escaped_tc = json.dumps(standardized)
+    return f"""
+import json
+from collections import deque
+
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+        
+    def __eq__(self, other):
+        if not isinstance(other, ListNode):
+            return False
+        return self.val == other.val and self.next == other.next
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+        
+    def __eq__(self, other):
+        if not isinstance(other, TreeNode):
+            return False
+        return self.val == other.val and self.left == other.left and self.right == other.right
+
+def build_linked_list(arr):
+    if not arr: return None
+    head = ListNode(arr[0])
+    curr = head
+    for val in arr[1:]:
+        curr.next = ListNode(val)
+        curr = curr.next
+    return head
+
+def build_tree(arr):
+    if not arr: return None
+    root = TreeNode(arr[0])
+    queue = deque([root])
+    i = 1
+    while queue and i < len(arr):
+        node = queue.popleft()
+        if i < len(arr) and arr[i] is not None:
+            node.left = TreeNode(arr[i])
+            queue.append(node.left)
+        i += 1
+        if i < len(arr) and arr[i] is not None:
+            node.right = TreeNode(arr[i])
+            queue.append(node.right)
+        i += 1
+    return root
+
+{user_code}
+
+test_cases = json.loads(r'''{escaped_tc}''')
+true = True
+false = False
+null = None
+
+from ast import literal_eval as lx_parse
+def safe_parse(raw_s):
+    s = raw_s.strip()
+    if s.startswith("build_tree("):
+        inner = s[s.find("(")+1:s.rfind(")")]
+        return build_tree(lx_parse(inner))
+    if s.startswith("build_linked_list("):
+        inner = s[s.find("(")+1:s.rfind(")")]
+        return build_linked_list(lx_parse(inner))
+    try:
+        return lx_parse(s)
+    except (ValueError, SyntaxError):
+        return raw_s
+
+all_passed = True
+try:
+    if test_cases:
+        has_solve = False
+        try:
+            _ = solve
+            has_solve = True
+        except NameError:
+            pass
+
+        import io
+        import contextlib
+        print("___ACADMIX_START_TESTS___")
+        for idx, tc in enumerate(test_cases):
+            f = io.StringIO()
+            with contextlib.redirect_stdout(f):
+                try:
+                    result = None
+                    if has_solve:
+                        raw_inp = tc['input_data']
+                        parsed = safe_parse(raw_inp)
+                        args = parsed if isinstance(parsed, tuple) and not raw_inp.strip().startswith("build_") else (parsed,)
+                        result = solve(*args)
+                except SystemExit:
+                    pass
+                except Exception as e:
+                    print(f"Execution Error: {{e}}")
+                    all_passed = False
+
+            output_str = f.getvalue()
+            actual_res = str(result) if result is not None else output_str.strip()
+            
+            expected = tc.get('expected_output')
+            if expected is not None:
+                passed = actual_res.strip().lower() == str(expected).strip().lower()
+                if not passed:
+                    all_passed = False
+                status_str = 'PASS' if passed else 'FAIL'
+                print(f"___ACADMIX_STATUS_{{status_str}}___")
+            
+            print(actual_res)
+            print("___ACADMIX_SEP___")
+except Exception as e:
+    all_passed = False
+
+if all_passed and test_cases:
+    print("___ACADMIX_OK___")
+print("___ACADMIX_END___")
+"""
+
+async def evaluate_coding_answer(user_code: str, question_content: dict, max_marks: float) -> tuple[bool, float]:
+    """Evaluates student's code using the code-runner sandbox.
+    Returns (is_correct, marks_awarded).
+    """
+    if not user_code or not user_code.strip():
+        return False, 0.0
+
+    language = question_content.get("language", "python").lower()
+    test_cases = question_content.get("test_cases") or question_content.get("testCases") or []
+
+    # If no code runner URL is set, fall back to simple 50% credit for non-empty code
+    if not settings.CODE_RUNNER_URL:
+        return False, round(max_marks * 0.5, 2)
+
+    if language == "python":
+        sandbox_code = _build_python_sandbox(user_code, test_cases)
+    else:
+        sandbox_code = user_code
+
+    try:
+        resp = await _http_client.post(
+            f"{settings.CODE_RUNNER_URL}/run",
+            json={"language": language, "code": sandbox_code, "test_input": ""},
+            timeout=30.0,
+            headers={"X-Internal-Token": settings.CODE_RUNNER_TOKEN}
+        )
+        if resp.status_code == 200:
+            res = resp.json()
+            exit_code = res.get("exit_code", -1)
+            output = res.get("output") or ""
+            
+            if exit_code == 0:
+                if language == "python" and test_cases:
+                    total_cases = len(test_cases)
+                    passed_cases = output.count("___ACADMIX_STATUS_PASS___")
+                    if total_cases > 0:
+                        marks_awarded = round(max_marks * (passed_cases / total_cases), 2)
+                        is_correct = passed_cases == total_cases
+                        return is_correct, marks_awarded
+                
+                # Default success fallback (all pass or non-python success)
+                return True, max_marks
+            else:
+                return False, 0.0
+    except Exception as e:
+        import logging
+        logging.getLogger("acadmix.evaluation").warning(f"Error executing code runner: {e}")
+        return False, round(max_marks * 0.5, 2)
+        
+    return False, 0.0
 
 router = APIRouter()
 
@@ -60,6 +249,7 @@ async def submit_answer(attempt_id: str, req: AnswerSubmit, request: Request, us
         ans_row.code_submitted = str(req.answer) if req.answer is not None else None
     else:
         ans_row = models.QuizAnswer(
+            college_id=user["college_id"],
             attempt_id=attempt_id,
             question_id=actual_question_id,
             code_submitted=str(req.answer) if req.answer is not None else None,
@@ -134,12 +324,17 @@ async def log_violation(attempt_id: str, req: ViolationReport = ViolationReport(
             logging.getLogger("acadmix.ws").warning(f"Image decode failed: {e}")
             
     violation = models.ProctoringViolation(
+        college_id=user["college_id"],
         attempt_id=attempt_id,
         violation_type=violation_type,
         suspicion_score=suspicion_score,
         evidence_url=evidence_url
     )
     session.add(violation)
+    
+    from sqlalchemy import func
+    attempt.telemetry_strikes = func.coalesce(models.QuizAttempt.telemetry_strikes, 0) + 1
+    
     await log_audit(session, user["id"], "proctoring_violation", "create", {"attempt_id": attempt_id, "type": violation_type})
     await session.commit()
     
@@ -192,6 +387,23 @@ async def submit_attempt(attempt_id: str, request: Request, user: dict = Depends
     answers_r = await session.execute(select(models.QuizAnswer).where(models.QuizAnswer.attempt_id == attempt_id))
     answers_map = {a.question_id: a for a in answers_r.scalars().all()}
 
+    # ── Gather and run coding evaluations concurrently ────────────────────
+    coding_tasks = []
+    coding_indices = []
+    
+    for i, q in enumerate(questions):
+        if q.type == "coding":
+            ans_row = answers_map.get(q.id)
+            student_answer = ans_row.code_submitted if ans_row else None
+            coding_tasks.append(
+                evaluate_coding_answer(student_answer, q.content or {}, q.marks)
+            )
+            coding_indices.append(i)
+            
+    import asyncio
+    coding_results = await asyncio.gather(*coding_tasks) if coding_tasks else []
+    coding_lookup = {idx: res for idx, res in zip(coding_indices, coding_results)}
+
     score = 0.0
     results = []
     total_marks = sum(q.marks for q in questions)
@@ -230,8 +442,7 @@ async def submit_attempt(attempt_id: str, request: Request, user: dict = Depends
             elif student_answer:
                 marks_awarded = round(q.marks * 0.5)
         elif q_type == "coding":
-            if student_answer and str(student_answer).strip():
-                marks_awarded = round(q.marks * 0.5)
+            is_correct, marks_awarded = coding_lookup.get(i, (False, 0.0))
 
         score += marks_awarded
 
