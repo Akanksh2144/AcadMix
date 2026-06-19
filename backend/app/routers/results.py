@@ -2,7 +2,7 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import and_, func, case, literal_column
+from sqlalchemy import and_, or_, func, case, literal_column
 from typing import List, Optional
 from collections import defaultdict
 
@@ -99,7 +99,10 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
         .outerjoin(
             models.Course,
             and_(
-                models.Course.id == models.SemesterGrade.course_id,
+                or_(
+                    models.Course.id == models.SemesterGrade.course_id,
+                    models.Course.subject_code == models.SemesterGrade.course_id,
+                ),
                 models.Course.college_id == student_college_id,
             )
         )
@@ -226,10 +229,25 @@ async def create_semester_result(req: SemesterResultCreate, user: dict = Depends
     student_college_id = student_row.scalar_one_or_none() or user["college_id"]
 
     for subj in req.subjects:
+        code = subj.get("code")
+        course_id = code
+        if code:
+            course_q = await session.execute(
+                select(models.Course.id).where(
+                    models.Course.subject_code == code,
+                    models.Course.college_id == student_college_id,
+                    models.Course.is_deleted == False
+                )
+            )
+            resolved_id = course_q.scalar_one_or_none()
+            if resolved_id:
+                course_id = resolved_id
+
         row = models.SemesterGrade(
+            college_id=student_college_id,
             student_id=req.student_id,
             semester=req.semester,
-            course_id=subj.get("code", subj.get("name", "UNKNOWN")),
+            course_id=course_id or subj.get("name", "UNKNOWN"),
             grade=subj.get("grade", "O"),
             credits_earned=int(subj.get("credits", 3)),
         )
