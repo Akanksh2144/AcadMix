@@ -60,6 +60,18 @@ const LabSessionCreate: React.FC<LabSessionCreateProps> = ({ navigate, user }) =
     fetchQuestions();
   }, [subject]);
 
+  // Auto-resolve semester when subject, batch, and section match an assignment
+  useEffect(() => {
+    if (subject && batch && section) {
+      const match = assignments.find(
+        (a: any) => a.subject_name === subject && a.batch === batch && a.section === section
+      );
+      if (match) {
+        setSemester(match.semester);
+      }
+    }
+  }, [subject, batch, section, assignments]);
+
   const handleCreateSession = async () => {
     if (!title.trim()) { toast.error('Please enter a session title'); return; }
     if (!subject) { toast.error('Please select a subject'); return; }
@@ -147,20 +159,6 @@ const LabSessionCreate: React.FC<LabSessionCreateProps> = ({ navigate, user }) =
     if (assignmentMode !== 'manual') return;
     setLoading(true);
     try {
-      // Find students matching batch and section
-      const res = await labAPI.getAssignments(sessionId!); // Wait, we can fetch students by querying assignments endpoint or previewing.
-      // Wait, let's see how our backend endpoint works: list_questions/students
-      // Let's load the assignment preview first which retrieves students by batch/sec!
-      // In the backend router:
-      // GET `/lab/sessions/{session_id}/assignments`
-      // It returns student names, roll numbers, and question titles.
-      // Wait, if no questions are assigned yet, getAssignments might return empty.
-      // Let's check: GET `/lab/sessions/{session_id}/assignments` returns the list.
-      // If we don't have assignments, how do we list students?
-      // Ah! We can call list students or use marksAPI.students(department, batch, section).
-      // Let's check `marksAPI.students(department, batch, section)` in `api.ts`. Yes!
-      // `students: (department, batch, section) => api.get('/marks/students', { params: { department, batch, section } })`
-      // This is perfect! We can fetch the list of students for manual assignment.
       const dept = user?.department || 'CSE';
       const studentRes = await facultyAPI.students(dept, batch, section);
       setStudents(studentRes.data || studentRes || []);
@@ -191,9 +189,15 @@ const LabSessionCreate: React.FC<LabSessionCreateProps> = ({ navigate, user }) =
     setLoading(false);
   };
 
-  const availableSubjects = [...new Set(assignments.map(a => a.subject_name))];
-  const batches = [...new Set(assignments.map(a => a.batch))];
-  const sections = [...new Set(assignments.map(a => a.section))];
+  const availableSubjects = [...new Set(assignments.map((a: any) => a.subject_name))];
+  const filteredBySubject = subject
+    ? assignments.filter((a: any) => a.subject_name === subject)
+    : assignments;
+  const batches = [...new Set(filteredBySubject.map((a: any) => a.batch))];
+  const filteredByBatch = batch
+    ? filteredBySubject.filter((a: any) => a.batch === batch)
+    : filteredBySubject;
+  const sections = [...new Set(filteredByBatch.map((a: any) => a.section))];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
@@ -254,7 +258,11 @@ const LabSessionCreate: React.FC<LabSessionCreateProps> = ({ navigate, user }) =
                   <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Subject</label>
                   <select
                     value={subject}
-                    onChange={e => setSubject(e.target.value)}
+                    onChange={e => {
+                      setSubject(e.target.value);
+                      setBatch('');
+                      setSection('');
+                    }}
                     className="soft-input w-full"
                   >
                     <option value="">Select Subject</option>
@@ -282,7 +290,10 @@ const LabSessionCreate: React.FC<LabSessionCreateProps> = ({ navigate, user }) =
                   <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Batch / Year</label>
                   <select
                     value={batch}
-                    onChange={e => setBatch(e.target.value)}
+                    onChange={e => {
+                      setBatch(e.target.value);
+                      setSection('');
+                    }}
                     className="soft-input w-full"
                   >
                     <option value="">Select Batch</option>

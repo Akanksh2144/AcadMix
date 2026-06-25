@@ -168,6 +168,23 @@ async def create_session(
     user: dict = Depends(require_role("teacher", "admin", "hod")),
     db: AsyncSession = Depends(get_db),
 ):
+    if user["role"] == "teacher":
+        stmt = select(models.FacultyAssignment).where(
+            models.FacultyAssignment.teacher_id == user["id"],
+            models.FacultyAssignment.college_id == user["college_id"],
+            models.FacultyAssignment.subject_name == req.subject,
+            models.FacultyAssignment.batch == req.batch,
+            models.FacultyAssignment.section == req.section,
+            models.FacultyAssignment.is_deleted == False,
+        )
+        res = await db.execute(stmt)
+        assignment = res.scalars().first()
+        if not assignment:
+            raise HTTPException(
+                status_code=400,
+                detail="You are not assigned to teach this subject to this batch/section."
+            )
+
     code = await _generate_session_code(db)
     lab_session = LabSession(
         college_id=user["college_id"],
