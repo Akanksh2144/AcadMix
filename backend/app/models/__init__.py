@@ -25,3 +25,4 @@ from app.models.accreditation import (
     FacultyProfile, FacultyAchievement,
     AccreditationEvidence, NAACAuditSnapshot,
 )
+from app.models.lab import LabQuestion, LabSession, LabStudentQuestion, LabSubmission

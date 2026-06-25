@@ -827,3 +827,30 @@ export const accreditationAPI = {
   getNirfPreview: (collegeId, academicYear) => api.get(`/accreditation/reports/nirf-preview/${collegeId}`, { params: { academic_year: academicYear } }),
 };
 
+// LAB EXAM SYSTEM API
+export const labAPI = {
+  // Faculty
+  createSession: (data) => api.post('/lab/sessions', data),
+  listSessions: (status) => api.get('/lab/sessions', { params: status ? { status } : {} }),
+  getSession: (id) => api.get(`/lab/sessions/${id}`),
+  deleteSession: (id) => api.delete(`/lab/sessions/${id}`),
+  listQuestions: (params) => api.get('/lab/questions', { params }),
+  createQuestion: (data) => api.post('/lab/questions', data),
+  updateQuestion: (id, data) => api.put(`/lab/questions/${id}`, data),
+  deleteQuestion: (id) => api.delete(`/lab/questions/${id}`),
+  assignRandom: (id, questionIds) => api.post(`/lab/sessions/${id}/assign/random`, { question_ids: questionIds }),
+  assignCyclic: (id, questionIds) => api.post(`/lab/sessions/${id}/assign/cyclic`, { question_ids: questionIds }),
+  assignManual: (id, assignments) => api.post(`/lab/sessions/${id}/assign/manual`, { assignments }),
+  getAssignments: (id) => api.get(`/lab/sessions/${id}/assignments`),
+  startSession: (id) => api.patch(`/lab/sessions/${id}/start`),
+  endSession: (id) => api.patch(`/lab/sessions/${id}/end`),
+  liveBoard: (id) => api.get(`/lab/sessions/${id}/board`),
+  report: (id) => api.get(`/lab/sessions/${id}/report`),
+  
+  // Student
+  joinSession: (sessionCode) => api.post('/lab/join', { session_code: sessionCode }),
+  myState: (id) => api.get(`/lab/sessions/${id}/my-state`),
+  submitCode: (id, questionId, code, language) => api.post(`/lab/sessions/${id}/submit`, { question_id: questionId, code, language }),
+};
+
+

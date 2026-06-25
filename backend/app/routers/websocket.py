@@ -9,6 +9,7 @@ Channels:
 Authentication: Pass JWT token as ?token= query parameter.
 Scaling: Uses Redis pub/sub for multi-process broadcasting.
 """
+
 import asyncio
 import json
 import logging
@@ -28,6 +29,7 @@ _REDIS_WS_CHANNEL = "acadmix:ws:broadcast"
 # ═══════════════════════════════════════════════════════════════════════════════
 # Connection Manager (with Redis pub/sub for multi-process scaling)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class ConnectionManager:
     """Manages WebSocket connections per channel with Redis pub/sub relay.
@@ -54,8 +56,7 @@ class ConnectionManager:
     async def connect(self, channel: str, ws: WebSocket):
         await ws.accept()
         self.active.setdefault(channel, []).append(ws)
-        logger.info("[ws] Client connected to channel: %s (total: %d)",
-                     channel, len(self.active[channel]))
+        logger.info("[ws] Client connected to channel: %s (total: %d)", channel, len(self.active[channel]))
 
     def disconnect(self, channel: str, ws: WebSocket):
         if channel in self.active:
@@ -75,6 +76,7 @@ class ConnectionManager:
 
         try:
             from app.core.security import redis_client
+
             if redis_client:
                 await redis_client.publish(_REDIS_WS_CHANNEL, message)
                 return
@@ -106,6 +108,7 @@ class ConnectionManager:
         """
         try:
             from app.core.security import redis_client
+
             if not redis_client:
                 logger.info("[ws] No Redis client — pub/sub disabled (single-worker mode)")
                 return
@@ -171,17 +174,20 @@ manager = ConnectionManager()
 from fastapi import Depends, HTTPException
 from app.core.security import get_current_user
 
+
 @router.post("/ws/ticket")
 async def create_ws_ticket(user: dict = Depends(get_current_user)):
     """Generate a short-lived ticket for secure WebSocket handshakes."""
     from app.core.security import redis_client
     import uuid
+
     if not redis_client:
         raise HTTPException(status_code=503, detail="Redis unavailable")
-        
+
     ticket_id = str(uuid.uuid4())
     await redis_client.setex(f"ws_ticket:{ticket_id}", 30, json.dumps(user))
     return {"ticket": ticket_id}
+
 
 async def _authenticate_ws(ticket: str = None, token: str = None) -> dict:
     """Verify WebSocket ticket against Redis, or decode JWT token directly."""
@@ -201,15 +207,16 @@ async def _authenticate_ws(ticket: str = None, token: str = None) -> dict:
     if not ticket:
         return None
     from app.core.security import redis_client
+
     if not redis_client:
         return None
-        
+
     key = f"ws_ticket:{ticket}"
     data = await redis_client.get(key)
     if not data:
         return None
-        
-    await redis_client.delete(key) # Discard after single use
+
+    await redis_client.delete(key)  # Discard after single use
     return json.loads(data)
 
 
@@ -217,10 +224,11 @@ async def _authenticate_ws(ticket: str = None, token: str = None) -> dict:
 # Transport — Live Bus Location
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.websocket("/ws/transport/{route_id}")
 async def transport_ws(websocket: WebSocket, route_id: str, ticket: str = Query(None), token: str = Query(None)):
     """Real-time bus location updates for a specific route.
-    
+
     - Students/parents subscribe to receive live GPS updates
     - IoT webhook broadcasts location via `broadcast_transport_update()`
     """
@@ -244,10 +252,11 @@ async def transport_ws(websocket: WebSocket, route_id: str, ticket: str = Query(
 # Quiz — Live Monitoring
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.websocket("/ws/quiz/{quiz_id}/monitor")
 async def quiz_monitor_ws(websocket: WebSocket, quiz_id: str, ticket: str = Query(None), token: str = Query(None)):
     """Real-time quiz monitoring for teachers/HODs.
-    
+
     Events broadcasted:
     - student_joined: when a student starts the quiz
     - student_submitted: when a student submits
@@ -273,6 +282,7 @@ async def quiz_monitor_ws(websocket: WebSocket, quiz_id: str, ticket: str = Quer
 # Notifications — User Feed
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.websocket("/ws/notifications")
 async def notifications_ws(websocket: WebSocket, ticket: str = Query(None), token: str = Query(None)):
     """Per-user notification feed (announcements, fee reminders, etc.)."""
@@ -294,15 +304,71 @@ async def notifications_ws(websocket: WebSocket, ticket: str = Query(None), toke
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# Lab Exam — Live Monitoring
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+@router.websocket("/ws/lab/{session_id}/monitor")
+async def lab_monitor_ws(websocket: WebSocket, session_id: str, ticket: str = Query(None), token: str = Query(None)):
+    """Real-time lab exam monitoring for faculty.
+
+    Events broadcasted:
+    - submission: student submitted code (passed/failed, attempt count)
+    - student_joined: student entered the exam
+    """
+    payload = await _authenticate_ws(ticket=ticket, token=token)
+    if not payload or payload.get("role") not in ("teacher", "hod", "admin", "principal"):
+        await websocket.close(code=1008, reason="Insufficient permissions")
+        return
+
+    channel = f"lab_monitor:{session_id}"
+    await manager.connect(channel, websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_text("pong")
+    except WebSocketDisconnect:
+        manager.disconnect(channel, websocket)
+
+
+@router.websocket("/ws/lab/{session_id}/student")
+async def lab_student_ws(websocket: WebSocket, session_id: str, ticket: str = Query(None), token: str = Query(None)):
+    """Student-side WebSocket for lab exam.
+
+    Receives:
+    - exam_ended: faculty ended the exam — lock the IDE
+    """
+    payload = await _authenticate_ws(ticket=ticket, token=token)
+    if not payload:
+        await websocket.close(code=1008, reason="Authentication required")
+        return
+
+    channel = f"lab_student:{session_id}"
+    await manager.connect(channel, websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_text("pong")
+    except WebSocketDisconnect:
+        manager.disconnect(channel, websocket)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Public API — for other services to broadcast events
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 async def broadcast_transport_update(route_id: str, location_data: dict):
     """Broadcast bus location update to all subscribers."""
-    await manager.broadcast(f"transport:{route_id}", {
-        "type": "location_update",
-        **location_data,
-    })
+    await manager.broadcast(
+        f"transport:{route_id}",
+        {
+            "type": "location_update",
+            **location_data,
+        },
+    )
 
 
 async def broadcast_quiz_event(quiz_id: str, event_data: dict):
@@ -310,12 +376,25 @@ async def broadcast_quiz_event(quiz_id: str, event_data: dict):
     await manager.broadcast(f"quiz_monitor:{quiz_id}", event_data)
 
 
+async def broadcast_lab_event(session_id: str, event_data: dict):
+    """Broadcast lab exam event (submission, student join) to monitoring faculty."""
+    await manager.broadcast(f"lab_monitor:{session_id}", event_data)
+
+
+async def broadcast_lab_end(session_id: str):
+    """Broadcast exam_ended to all students in a lab session."""
+    await manager.broadcast(f"lab_student:{session_id}", {"type": "exam_ended"})
+
+
 async def push_notification(user_id: str, notification: dict):
     """Push a notification to a specific user's WebSocket feed."""
-    await manager.broadcast(f"notifications:{user_id}", {
-        "type": "notification",
-        **notification,
-    })
+    await manager.broadcast(
+        f"notifications:{user_id}",
+        {
+            "type": "notification",
+            **notification,
+        },
+    )
 
 
 @router.get("/ws/stats")
@@ -323,8 +402,5 @@ async def ws_stats():
     """Admin: get WebSocket connection statistics."""
     return {
         "total_connections": manager.get_connection_count(),
-        "channels": {
-            channel: len(conns)
-            for channel, conns in manager.active.items()
-        },
+        "channels": {channel: len(conns) for channel, conns in manager.active.items()},
     }

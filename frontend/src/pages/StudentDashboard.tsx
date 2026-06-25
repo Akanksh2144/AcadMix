@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardHeader from '../components/DashboardHeader';
+import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Trophy, ChartLine, Fire, BookOpen, Calendar, Target, SignOut, Terminal, ArrowRight, GraduationCap, Play, Medal, Lightning, Warning, Bell, Exam, Briefcase, Sun, Moon, CalendarDots, Chalkboard, UserCircle, ListBullets, Microphone, House, FileText, Toolbox, Bus, MapPin, Cpu } from '@phosphor-icons/react';
-import { analyticsAPI, interviewAPI, resumeAPI, notificationsAPI } from '../services/api';
+import { Clock, Trophy, ChartLine, Fire, BookOpen, Calendar, Target, SignOut, Terminal, ArrowRight, GraduationCap, Play, Medal, Lightning, Warning, Bell, Exam, Briefcase, Sun, Moon, CalendarDots, Chalkboard, UserCircle, ListBullets, Microphone, House, FileText, Toolbox, Bus, MapPin, Cpu, Flask, CircleNotch } from '@phosphor-icons/react';
+import { analyticsAPI, interviewAPI, resumeAPI, notificationsAPI, labAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 
@@ -87,6 +88,47 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
   const isHostelVisible = useIsModuleVisible("hostel");
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('student_tab') || 'overview');
   useEffect(() => { sessionStorage.setItem('student_tab', activeTab); }, [activeTab]);
+  const [sessionCode, setSessionCode] = useState('');
+  const [joiningLab, setJoiningLab] = useState(false);
+  const [activeLabSession, setActiveLabSession] = useState<{ id: string; code: string; title: string } | null>(() => {
+    try {
+      const saved = localStorage.getItem(`active_lab_session_${user?.id}`);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const handleJoinLab = async () => {
+    if (!sessionCode.trim()) {
+      toast.error('Please enter a session code');
+      return;
+    }
+    setJoiningLab(true);
+    try {
+      const res = await labAPI.joinSession(sessionCode.toUpperCase());
+      const data = res.data || res;
+      
+      const newSession = {
+        id: data.session_id,
+        code: sessionCode.toUpperCase(),
+        title: data.title || 'Practical Exam'
+      };
+      
+      localStorage.setItem(`active_lab_session_${user?.id}`, JSON.stringify(newSession));
+      setActiveLabSession(newSession);
+      toast.success('Joined exam session successfully!');
+      
+      // Navigate to exam workspace
+      navigate(`lab/exam/${data.session_id}`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.detail || 'Failed to join lab session');
+    } finally {
+      setJoiningLab(false);
+    }
+  };
+
   const { data: dashboard = null, isLoading: loading } = useQuery({
     queryKey: ['student-dashboard'],
     queryFn: () => analyticsAPI.studentDashboard().then(r => r.data),
@@ -421,6 +463,71 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
             );
           })}
         </motion.div>
+
+        {/* ── Join Lab Exam ──────────────── */}
+        <div className="mb-6 sm:mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Card 1: Join via Code */}
+          <div className="soft-card p-5 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Flask size={22} weight="fill" className="text-indigo-500" />
+                <h3 className="font-extrabold text-slate-800 dark:text-white text-base">Join Practical Lab Exam</h3>
+              </div>
+              <p className="text-xs text-slate-400 font-semibold mb-4">
+                Enter the 6-character alphanumeric code shared by your instructor to launch the secure programming workspace.
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                placeholder="EXAM CODE (e.g. AB12XY)"
+                value={sessionCode}
+                onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
+                className="soft-input flex-grow text-center font-bold tracking-widest uppercase !py-2.5"
+                maxLength={6}
+              />
+              <button
+                onClick={handleJoinLab}
+                disabled={joiningLab || !sessionCode.trim()}
+                className="btn-primary !px-6 !py-2.5 text-sm flex items-center gap-1.5 font-bold disabled:opacity-60"
+              >
+                {joiningLab ? <CircleNotch size={16} className="animate-spin" /> : <Play size={16} weight="fill" />}
+                Join
+              </button>
+            </div>
+          </div>
+
+          {/* Card 2: Resume Active Session (if exists) */}
+          {activeLabSession ? (
+            <div className="soft-card p-5 flex flex-col justify-between border-l-4 border-emerald-500">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle size={22} weight="fill" className="text-emerald-500" />
+                  <h3 className="font-extrabold text-slate-800 dark:text-white text-base">Active Lab Session</h3>
+                </div>
+                <p className="text-xs text-slate-400 font-semibold mb-2">
+                  You have an active session for <span className="font-bold text-slate-700 dark:text-slate-200">{activeLabSession.title}</span>.
+                </p>
+                <div className="text-[11px] font-bold text-indigo-500">Code: {activeLabSession.code}</div>
+              </div>
+              
+              <button
+                onClick={() => navigate(`lab/exam/${activeLabSession.id}`)}
+                className="btn-primary !px-5 !py-2.5 text-sm flex items-center justify-center gap-2 font-bold !bg-gradient-to-r !from-emerald-500 !to-teal-600 mt-4"
+              >
+                Resume Workspace
+                <ArrowRight size={16} weight="bold" />
+              </button>
+            </div>
+          ) : (
+            <div className="soft-card p-5 flex flex-col justify-center items-center text-center border border-dashed border-slate-200 dark:border-slate-800">
+              <Flask size={32} className="text-slate-300 dark:text-slate-700 mb-2" />
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">No active exam workspace running</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Use the exam code shared by your teacher to join when started.</p>
+            </div>
+          )}
+        </div>
 
         {/* ── Continue Where You Left Off ──────────────── */}
         <AnimatePresence>

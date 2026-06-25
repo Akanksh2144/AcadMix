@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import DashboardHeader from '../components/DashboardHeader';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, NotePencil, ChartLine, Users, Eye, SignOut, Clipboard, Calendar, CalendarDots, PencilLine, Bell, GraduationCap, ArrowRight, Exam, Fire, Sun, Moon, Notebook, UserCircle, Sparkle, Trash, MapPin } from '@phosphor-icons/react';
-import { analyticsAPI, insightsAPI } from '../services/api';
+import { BookOpen, NotePencil, ChartLine, Users, Eye, SignOut, Clipboard, Calendar, CalendarDots, PencilLine, Bell, GraduationCap, ArrowRight, Exam, Fire, Sun, Moon, Notebook, UserCircle, Sparkle, Trash, MapPin, Flask, Play, StopCircle, Plus, CircleNotch } from '@phosphor-icons/react';
+import { analyticsAPI, insightsAPI, labAPI } from '../services/api';
+import AlertModal from '../components/AlertModal';
+import { toast } from 'sonner';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 import FacultyExpertSubmissions from '../components/faculty/FacultyExpertSubmissions';
@@ -77,6 +79,45 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
   const notifKey = `acadmix_notif_read_${user?.id || 'default'}`;
   const [notifRead, setNotifReadState] = useState(() => localStorage.getItem(notifKey) === 'true');
   const setNotifRead = (val) => { setNotifReadState(val); localStorage.setItem(notifKey, String(val)); };
+
+  // ─── Lab Exam State ─────────────────────────────────────────────
+  const [labSessions, setLabSessions] = useState<any[]>([]);
+  const [labsLoading, setLabsLoading] = useState(false);
+  const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'labs') {
+      setLabsLoading(true);
+      labAPI.listSessions().then(res => {
+        setLabSessions(res.data || res);
+      }).catch(err => {
+        console.error(err);
+        toast.error('Failed to load lab sessions');
+      }).finally(() => {
+        setLabsLoading(false);
+      });
+    }
+  }, [activeTab]);
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteSessionId(id);
+    setShowAlertModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteSessionId) return;
+    setShowAlertModal(false);
+    try {
+      await labAPI.deleteSession(deleteSessionId);
+      toast.success('Lab session draft deleted successfully');
+      setLabSessions(prev => prev.filter(s => s.id !== deleteSessionId));
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Failed to delete lab session');
+    } finally {
+      setDeleteSessionId(null);
+    }
+  };
 
   // ─── AI Insights State ─────────────────────────────────────────
   const [pins, setPins] = useState([]);
@@ -223,6 +264,7 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
               { id: 'attendance', label: 'Attendance' },
               { id: 'teaching', label: 'Teaching Work' },
               { id: 'cia', label: 'CIA Marks' },
+              { id: 'labs', label: 'Lab Exams' },
               { id: 'outcomes', label: 'Course Setup' },
               { id: 'materials', label: 'Materials' },
               { id: 'mentees', label: 'Mentees' },
@@ -540,6 +582,114 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
           </motion.div>
         )}
 
+        {activeTab === 'labs' && (
+          <motion.div data-testid="labs-content" variants={containerVariants} initial="hidden" animate="show" className="space-y-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <Flask weight="fill" className="text-indigo-500" /> Lab Exams Registry
+                </h3>
+                <p className="text-xs text-slate-400 font-semibold mt-1">Schedule and monitor student practical examinations</p>
+              </div>
+              <button
+                onClick={() => navigate('lab/create')}
+                className="btn-primary !px-5 !py-2.5 text-sm flex items-center gap-2 font-bold shadow-md shadow-indigo-500/20"
+              >
+                <Plus size={16} weight="bold" />
+                Schedule Exam
+              </button>
+            </div>
+
+            {labsLoading ? (
+              <div className="py-20 flex flex-col items-center justify-center">
+                <CircleNotch size={32} className="animate-spin text-indigo-500 mb-4" />
+                <p className="text-sm font-semibold text-slate-400">Loading lab sessions...</p>
+              </div>
+            ) : labSessions.length === 0 ? (
+              <div className="py-16 text-center soft-card border border-dashed border-slate-200 dark:border-slate-800">
+                <Flask size={40} className="text-slate-300 dark:text-slate-700 mx-auto mb-3" />
+                <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No lab exams scheduled yet</p>
+                <p className="text-xs text-slate-400 mt-1">Create your first coding lab exam using the button above.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {labSessions.map((session) => (
+                  <motion.div
+                    key={session.id}
+                    variants={itemVariants}
+                    whileHover={cardHover}
+                    className="soft-card p-5 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-wider">{session.subject}</span>
+                        <span className={`soft-badge text-[9px] uppercase tracking-wider font-extrabold ${
+                          session.status === 'active' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 animate-pulse' :
+                          session.status === 'ended' ? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' :
+                          'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'
+                        }`}>
+                          {session.status}
+                        </span>
+                      </div>
+                      
+                      <h4 className="font-extrabold text-slate-800 dark:text-white text-base leading-tight line-clamp-1">{session.title}</h4>
+                      
+                      <div className="mt-2 text-xs text-slate-400 font-semibold space-y-1">
+                        <p>Batch {session.batch} · Section {session.section}</p>
+                        <p>Semester {session.semester} · {session.questions_per_student} Question{session.questions_per_student !== 1 ? 's' : ''}</p>
+                      </div>
+
+                      {session.session_code && (
+                        <div className="mt-3.5 bg-slate-50 dark:bg-slate-900/60 p-2 rounded-xl border border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Join Code</span>
+                          <span className="text-sm font-black text-indigo-500 tracking-wider font-mono select-all">{session.session_code}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-5 pt-4 border-t border-slate-50 dark:border-white/[0.04] flex items-center justify-between gap-3">
+                      {session.status === 'draft' ? (
+                        <>
+                          <button
+                            onClick={() => handleDeleteClick(session.id)}
+                            className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl text-slate-400 hover:text-red-500 transition-colors"
+                            title="Delete session draft"
+                          >
+                            <Trash size={18} />
+                          </button>
+                          <button
+                            onClick={() => navigate(`lab/monitor/${session.id}`)}
+                            className="btn-secondary !py-1.5 !px-3.5 text-xs flex items-center gap-1 font-bold"
+                          >
+                            Manage
+                            <ArrowRight size={12} weight="bold" />
+                          </button>
+                        </>
+                      ) : session.status === 'active' ? (
+                        <button
+                          onClick={() => navigate(`lab/monitor/${session.id}`)}
+                          className="btn-primary w-full !py-2 text-xs flex items-center justify-center gap-1.5 font-bold shadow-md shadow-emerald-500/10 !bg-gradient-to-r !from-emerald-500 !to-teal-600 animate-pulse"
+                        >
+                          <Play size={14} weight="fill" />
+                          Live Monitor Board
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => navigate(`lab/monitor/${session.id}`)}
+                          className="btn-secondary w-full !py-2 text-xs flex items-center justify-center gap-1.5 font-bold"
+                        >
+                          <FileText size={14} weight="bold" />
+                          View Results Report
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {activeTab === 'campus' && (
           <motion.div data-testid="campus-content" variants={containerVariants} initial="hidden" animate="show">
             <motion.div variants={itemVariants}>
@@ -549,6 +699,17 @@ const TeacherDashboard = ({ navigate, user, onLogout }) => {
         )}
 
       </div>
+
+      <AlertModal
+        open={showAlertModal}
+        type="danger"
+        title="Delete Session Draft"
+        message="Are you sure you want to delete this draft lab exam session? This action is irreversible."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDelete}
+        onCancel={() => { setShowAlertModal(false); setDeleteSessionId(null); }}
+      />
     </div>
   );
 };

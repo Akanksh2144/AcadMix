@@ -71,6 +71,9 @@ const ReceiptVerificationPage = React.lazy(() => import('./pages/ReceiptVerifica
 const OrbShowcase = React.lazy(() => import('./pages/OrbShowcase'));
 const CadStudio = React.lazy(() => import('./pages/cad-studio/CadStudio'));
 const ReportDashboard = React.lazy(() => import('./pages/ReportDashboard'));
+const LabExam = React.lazy(() => import('./pages/LabExam'));
+const LabMonitor = React.lazy(() => import('./pages/LabMonitor'));
+const LabSessionCreate = React.lazy(() => import('./pages/LabSessionCreate'));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Route Configuration
@@ -133,6 +136,9 @@ const PAGE_TO_PATH = {
   'director-dashboard': '/director',
   'cad-studio': '/cad-studio',
   'accreditation': '/accreditation',
+  'lab-exam': '/lab/exam',
+  'lab-monitor': '/lab/monitor',
+  'lab-create': '/lab/create',
 };
 
 const ROLE_DASHBOARD = {
@@ -472,6 +478,23 @@ function AppRoutes({ user, onLogin, onLogout }) {
       <Route path="/accreditation" element={
         <ProtectedRoute user={user} allowedRoles={['nodal_officer', 'principal', 'admin', 'hod']}>
           <ReportDashboard user={user} />
+        </ProtectedRoute>
+      } />
+
+      {/* ── Lab Exam Routes ─────────────────────────────────────── */}
+      <Route path="/lab/exam/:sessionId" element={
+        <ProtectedRoute user={user} allowedRoles={['student']}>
+          <LabExam navigate={navigate} user={user} />
+        </ProtectedRoute>
+      } />
+      <Route path="/lab/monitor/:sessionId" element={
+        <ProtectedRoute user={user} allowedRoles={['teacher', 'hod', 'admin']}>
+          <LabMonitor navigate={navigate} user={user} />
+        </ProtectedRoute>
+      } />
+      <Route path="/lab/create" element={
+        <ProtectedRoute user={user} allowedRoles={['teacher', 'hod', 'admin']}>
+          <LabSessionCreate navigate={navigate} user={user} />
         </ProtectedRoute>
       } />
 
