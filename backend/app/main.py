@@ -688,4 +688,9 @@ from app.api.v1.router import api_router  # noqa: E402
 # Mount at /api/v1 (canonical) + /api (backwards-compatible alias)
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(api_router, prefix="/api")
+
+# Mount websocket router at root level to support raw frontend connections
+from app.routers import websocket
+app.include_router(websocket.router)
 # Touch for reload
+
