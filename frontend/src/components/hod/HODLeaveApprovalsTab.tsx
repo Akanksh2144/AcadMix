@@ -14,8 +14,8 @@ const HODLeaveApprovalsTab = () => {
     try {
       setLoading(true);
       const [facRes, studRes] = await Promise.all([
-        api.get('/api/hod/leave/pending').catch(e => ({ data: [] })),
-        api.get('/api/hod/leave/student-pending').catch(e => ({ data: [] }))
+        api.get('/hod/leave/pending').catch(e => ({ data: [] })),
+        api.get('/hod/leave/student-pending').catch(e => ({ data: [] }))
       ]);
       setFacultyLeaves(facRes.data || []);
       setStudentLeaves(studRes.data || []);
@@ -36,7 +36,7 @@ const HODLeaveApprovalsTab = () => {
         await hodLeaveAPI.reviewCancellation(leaveId, { action, remarks: `Processed by HOD` });
         toast.success(`Cancellation ${action}d`);
       } else {
-        await api.put(`/api/hod/leave/${leaveId}/review`, { action, remarks: `Processed by HOD` });
+        await api.put(`/hod/leave/${leaveId}/review`, { action, remarks: `Processed by HOD` });
         toast.success(`Leave ${action}d`);
       }
       fetchLeaves();

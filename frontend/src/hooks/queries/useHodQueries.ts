@@ -23,7 +23,7 @@ export function useHodDashboard() {
   return useQuery({
     queryKey: hodKeys.dashboard(),
     queryFn: async () => {
-      const { data } = await api.get('/api/dashboard/hod');
+      const { data } = await api.get('/dashboard/hod');
       return data;
     },
     // Background poll every minute to keep overview stats fresh
@@ -35,7 +35,7 @@ export function useHodAtRiskStudents(threshold: number = 5.0) {
   return useQuery({
     queryKey: hodKeys.atRisk(threshold),
     queryFn: async () => {
-      const { data } = await api.get('/api/hod/at-risk-students', { params: { threshold } });
+      const { data } = await api.get('/hod/at-risk-students', { params: { threshold } });
       return data;
     },
   });
@@ -45,7 +45,7 @@ export function useHodAttendanceDefaulters(departmentId: string | number, thresh
   return useQuery({
     queryKey: hodKeys.defaulters(departmentId, threshold),
     queryFn: async () => {
-      const { data } = await api.get('/api/hod/attendance/defaulters', { params: { department_id: departmentId, threshold } });
+      const { data } = await api.get('/hod/attendance/defaulters', { params: { department_id: departmentId, threshold } });
       return data.defaulters || [];
     },
     enabled: !!departmentId, // Only run if departmentId is known
@@ -56,7 +56,7 @@ export function useHodTeachers() {
   return useQuery({
     queryKey: hodKeys.teachers(),
     queryFn: async () => {
-      const { data } = await api.get('/api/faculty/teachers');
+      const { data } = await api.get('/faculty/teachers');
       return data;
     },
     staleTime: 5 * 60 * 1000, // Rarely changes
@@ -69,7 +69,7 @@ export function useHodPendingLeaves() {
     queryFn: async () => {
       // Re-using the principal pending leaves logic or specific HOD pending leaves endpoint. 
       // Based on legacy hod leave review api:
-      const { data } = await api.get('/api/principal/leave/pending'); // usually shared endpoint or specific to approver
+      const { data } = await api.get('/principal/leave/pending'); // usually shared endpoint or specific to approver
       return data;
     },
     refetchInterval: 30000, // Poll every 30 seconds for live leave workflows
@@ -81,8 +81,8 @@ export function useHodAssignments() {
     queryKey: hodKeys.classInCharges(),
     queryFn: async () => {
       const [cicReq, mentorsReq] = await Promise.all([
-        api.get('/api/hod/assignments/class-in-charge'),
-        api.get('/api/hod/assignments/mentors')
+        api.get('/hod/assignments/class-in-charge'),
+        api.get('/hod/assignments/mentors')
       ]);
       return {
         classInCharges: cicReq.data,
@@ -99,7 +99,7 @@ export function useHodReviewLeave() {
 
   return useMutation({
     mutationFn: async ({ leaveId, reviewData }: { leaveId: string | number, reviewData: any }) => {
-      const { data } = await api.put(`/api/hod/leave/${leaveId}/review`, reviewData);
+      const { data } = await api.put(`/hod/leave/${leaveId}/review`, reviewData);
       return data;
     },
     onSuccess: () => {
@@ -116,7 +116,7 @@ export function useCreateClassInCharge() {
   
   return useMutation({
     mutationFn: async (assignmentData: any) => {
-      const { data } = await api.post('/api/hod/assignments/class-in-charge', assignmentData);
+      const { data } = await api.post('/hod/assignments/class-in-charge', assignmentData);
       return data;
     },
     onSuccess: () => {

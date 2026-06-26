@@ -22,6 +22,7 @@ const StudentCIAMarks = () => {
         total_max: s.total_max ?? 0,
       }));
     },
+    staleTime: 5 * 60 * 1000,
   });
   const [expandedSubject, setExpandedSubject] = useState<number | null>(null);
 

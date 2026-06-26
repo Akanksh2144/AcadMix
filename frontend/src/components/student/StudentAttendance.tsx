@@ -33,10 +33,10 @@ const StudentAttendance = () => {
   const [year, setYear] = useState(now.getFullYear());
   const [hasInitializedMonth, setHasInitializedMonth] = useState(false);
 
-  // Cached consolidated attendance (subject-level summary)
   const { data: consolidated = [], isLoading: consLoading } = useQuery({
     queryKey: ['student-attendance-consolidated'],
     queryFn: () => attendanceAPI.getStudentConsolidated().then(r => r.data),
+    staleTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -55,10 +55,10 @@ const StudentAttendance = () => {
     }
   }, [consolidated, consLoading, hasInitializedMonth]);
 
-  // Cached per-month detail (keyed by month+year for automatic cache)
   const { data: detail = [], isFetching: calendarLoading } = useQuery({
     queryKey: ['student-attendance-detail', month, year],
     queryFn: () => studentAPI.attendanceDetail({ month: month + 1, year }).then(r => r.data),
+    staleTime: 5 * 60 * 1000,
   });
 
   const loading = consLoading;

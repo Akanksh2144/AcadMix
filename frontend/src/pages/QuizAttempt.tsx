@@ -326,7 +326,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
     setTimeout(() => setShowWarning(false), 4000);
     if (attempt?.id) {
       try {
-        await api.post(`/api/attempts/${attempt.id}/violation`, { violation_type: type });
+        await api.post(`/attempts/${attempt.id}/violation`, { violation_type: type });
       } catch {}
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -419,7 +419,7 @@ const QuizAttempt = ({ quizData, navigate, user }) => {
   const handleSnapshot = useCallback(async (dataUrl) => {
     if (!attempt?.id) return;
     try {
-      await api.post(`/api/attempts/${attempt.id}/violation`, {
+      await api.post(`/attempts/${attempt.id}/violation`, {
         violation_type: 'evidence_snapshot',
         evidence: dataUrl,
       });

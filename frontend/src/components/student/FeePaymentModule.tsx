@@ -1,5 +1,6 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { CreditCard, CheckCircle, WarningOctagon, Clock, ArrowRight, Receipt, DownloadSimple, CalendarBlank } from '@phosphor-icons/react';
 import { feesAPI } from '../../services/api';
@@ -99,39 +100,21 @@ const printReceipt = (txn) => {
 };
 
 const FeePaymentModule = ({ user }) => {
-  const [fees, setFees] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [historyLoading, setHistoryLoading] = useState(true);
+  const { data: fees = [], isLoading: loading, refetch: fetchDueFees } = useQuery({
+    queryKey: ['student-fees-due'],
+    queryFn: () => feesAPI.getDue().then(r => Array.isArray(r.data) ? r.data : []),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: history = [], isLoading: historyLoading, refetch: fetchHistory } = useQuery({
+    queryKey: ['student-fees-history'],
+    queryFn: () => feesAPI.getHistory().then(r => Array.isArray(r.data) ? r.data : []),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [processingId, setProcessingId] = useState(null);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [tab, setTab] = useState('due'); // 'due' | 'history'
-
-  useEffect(() => {
-    fetchDueFees();
-    fetchHistory();
-  }, []);
-
-  const fetchDueFees = async () => {
-    try {
-      const { data } = await feesAPI.getDue();
-      setFees(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
-      setMessage({ text: 'Failed to load fee details', type: 'error' });
-    }
-    setLoading(false);
-  };
-
-  const fetchHistory = async () => {
-    try {
-      const { data } = await feesAPI.getHistory();
-      setHistory(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('Failed to load payment history:', err);
-    }
-    setHistoryLoading(false);
-  };
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {

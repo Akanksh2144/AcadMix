@@ -18,7 +18,7 @@ const HODClassInChargeTab = ({ departmentId }) => {
     try {
       setLoading(true);
       const [secRes, facRes, assignRes] = await Promise.all([
-        api.get('/api/sections'), // Get sections logic from server
+        api.get('/sections'), // Get sections logic from server
         facultyAPI.teachers(departmentId),
         hodAssignmentsAPI.getClassInCharges()
       ]);

@@ -132,14 +132,17 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
   const { data: dashboard = null, isLoading: loading } = useQuery({
     queryKey: ['student-dashboard'],
     queryFn: () => analyticsAPI.studentDashboard().then(r => r.data),
+    staleTime: 5 * 60 * 1000,
   });
   const { data: interviewQuota = null } = useQuery({
     queryKey: ['student-interview-quota'],
     queryFn: () => interviewAPI.getQuota().then(r => r.data),
+    staleTime: 5 * 60 * 1000,
   });
   const { data: latestAtsScoreData = null } = useQuery({
     queryKey: ['student-latest-ats'],
     queryFn: () => resumeAPI.latest().then(r => r.data),
+    staleTime: 5 * 60 * 1000,
   });
   const latestAtsScore = latestAtsScoreData?.ats_score ?? null;
   const { isDark, toggle: toggleTheme } = useTheme();

@@ -39,6 +39,7 @@ const StudentTimetable = () => {
   const { data: slots = [], isLoading: loading } = useQuery({
     queryKey: ['student-timetable'],
     queryFn: () => timetableAPI.getStudentTimetable().then(r => r.data),
+    staleTime: 5 * 60 * 1000,
   });
 
   // Build subject -> color index map

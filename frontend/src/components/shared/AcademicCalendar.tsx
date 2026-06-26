@@ -53,7 +53,7 @@ const AcademicCalendar = ({ fetchCalendars }: { fetchCalendars?: () => Promise<a
     queryKey: ['academic-calendars'],
     queryFn: async () => {
       try {
-        const fetcher = fetchCalendars || (() => api.get('/api/academic-calendars'));
+        const fetcher = fetchCalendars || (() => api.get('/academic-calendars'));
         const { data } = await fetcher();
         const arr = Array.isArray(data) ? data : data?.data;
         if (arr && arr.length > 0) return arr;
@@ -62,19 +62,21 @@ const AcademicCalendar = ({ fetchCalendars }: { fetchCalendars?: () => Promise<a
         return DEMO_CALENDAR;
       }
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: placementDrives = [] } = useQuery({
     queryKey: ['student-placement-drives-calendar'],
     queryFn: async () => {
       try {
-        const res = await api.get('/api/student/placement-drives');
+        const res = await api.get('/student/placement-drives');
         const arr = Array.isArray(res.data) ? res.data : res.data?.data;
         return Array.isArray(arr) ? arr : [];
       } catch {
         return [];
       }
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   const loading = calLoading;

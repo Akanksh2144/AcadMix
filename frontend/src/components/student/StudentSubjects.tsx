@@ -21,6 +21,7 @@ const StudentSubjects = () => {
   const { data: subjects = [], isLoading: loading } = useQuery({
     queryKey: ['student-subjects'],
     queryFn: () => studentAPI.subjects().then(r => r.data),
+    staleTime: 5 * 60 * 1000,
   });
 
   const [materialsModal, setMaterialsModal] = React.useState({ open: false, courseId: null, subjectName: '' });
