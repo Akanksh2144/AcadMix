@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger("acadmix.dns")
 
 _original_getaddrinfo = socket.getaddrinfo
-_SUPABASE_SUFFIX = "supabase.co"
+_SUPABASE_SUFFIXES = (".supabase.co", ".supabase.com")
 _cache = {}
 
 
@@ -40,7 +40,7 @@ def _patched_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
     try:
         return _original_getaddrinfo(host, port, family, type, proto, flags)
     except socket.gaierror:
-        if isinstance(host, str) and host.endswith(_SUPABASE_SUFFIX):
+        if isinstance(host, str) and host.endswith(_SUPABASE_SUFFIXES):
             ip = _resolve_via_doh(host)
             if ip:
                 return _original_getaddrinfo(ip, port, socket.AF_INET, type, proto, flags)
@@ -51,4 +51,4 @@ def install():
     """Monkey-patch socket.getaddrinfo with our DoH fallback."""
     if socket.getaddrinfo is not _patched_getaddrinfo:
         socket.getaddrinfo = _patched_getaddrinfo
-        logger.info("DNS fallback patch installed for *%s hostnames", _SUPABASE_SUFFIX)
+        logger.info("DNS fallback patch installed for %s hostnames", ", ".join(_SUPABASE_SUFFIXES))

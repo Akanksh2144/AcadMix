@@ -8,6 +8,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import event, text
 
+from app.core import dns_patch
+dns_patch.install()
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONTEXT GUARD — prevents admin engine from being used inside tenant requests.
