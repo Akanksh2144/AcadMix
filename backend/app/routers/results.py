@@ -89,21 +89,29 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
     # ── 1. Fetch semester grades with subject name via LEFT JOIN courses ──
     # FIX: Join on Course.id (primary key) == SemesterGrade.course_id
     # NOT on Course.subject_code which was the old broken join
+    from sqlalchemy.orm import aliased
+    CourseIdMatch = aliased(models.Course, name="course_id_match")
+    CourseCodeMatch = aliased(models.Course, name="course_code_match")
+
     grade_query = (
         select(
             models.SemesterGrade,
-            models.Course.name.label("course_name"),
-            models.Course.subject_code.label("course_subject_code"),
-            models.Course.credits.label("course_credits"),
+            func.coalesce(CourseIdMatch.name, CourseCodeMatch.name).label("course_name"),
+            func.coalesce(CourseIdMatch.subject_code, CourseCodeMatch.subject_code).label("course_subject_code"),
+            func.coalesce(CourseIdMatch.credits, CourseCodeMatch.credits).label("course_credits"),
         )
         .outerjoin(
-            models.Course,
+            CourseIdMatch,
             and_(
-                or_(
-                    models.Course.id == models.SemesterGrade.course_id,
-                    models.Course.subject_code == models.SemesterGrade.course_id,
-                ),
-                models.Course.college_id == student_college_id,
+                CourseIdMatch.id == models.SemesterGrade.course_id,
+                CourseIdMatch.college_id == student_college_id,
+            )
+        )
+        .outerjoin(
+            CourseCodeMatch,
+            and_(
+                CourseCodeMatch.subject_code == models.SemesterGrade.course_id,
+                CourseCodeMatch.college_id == student_college_id,
             )
         )
         .where(
@@ -143,7 +151,7 @@ async def get_semester_results(student_id: str, user: dict = Depends(get_current
             func.count(models.AttendanceRecord.id).label("total"),
             func.sum(
                 case(
-                    (models.AttendanceRecord.status == "present", 1),
+                    (models.AttendanceRecord.status.in_(["present", "od"]), 1),
                     else_=0
                 )
             ).label("present"),

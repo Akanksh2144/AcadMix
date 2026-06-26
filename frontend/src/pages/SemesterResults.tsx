@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Download, TrendUp, TrendDown, X, ChartBar } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { resultsAPI } from '../services/api';
@@ -30,22 +31,24 @@ interface SemesterResultsProps {
 }
 
 const SemesterResults: React.FC<SemesterResultsProps> = ({ navigate, user }) => {
-  const [semesters, setSemesters] = useState<SemesterData[]>([]);
+  const { data: semesters = [], isLoading: loading } = useQuery({
+    queryKey: ['student-semester-results', user.id],
+    queryFn: () => resultsAPI.semester(user.id).then(r => r.data || []),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [selectedSem, setSelectedSem] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
   const [selectedSubject, setSelectedSubject] = useState<SubjectResult | null>(null);
 
   useEffect(() => {
-    const fetchResults = async () => {
-      try {
-        const { data } = await resultsAPI.semester(user.id);
-        setSemesters(data);
-        if (data.length > 0) setSelectedSem(data[data.length - 1].semester);
-      } catch {}
-      setLoading(false);
-    };
-    fetchResults();
-  }, [user]);
+    setSelectedSem(null);
+  }, [user.id]);
+
+  useEffect(() => {
+    if (semesters && semesters.length > 0 && selectedSem === null) {
+      setSelectedSem(semesters[semesters.length - 1].semester);
+    }
+  }, [semesters, selectedSem]);
 
   const currentSem = semesters.find(s => s.semester === selectedSem);
   const allSemNumbers = semesters.map(s => s.semester);
