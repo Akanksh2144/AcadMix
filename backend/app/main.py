@@ -639,6 +639,10 @@ app.add_middleware(
     max_age=3600,
 )
 
+from fastapi.middleware.gzip import GZipMiddleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+
 # ─── Request ID Correlation ───────────────────────────────────────────────────────
 from app.core.response import RequestIdMiddleware, ResponseEnvelopeMiddleware  # noqa: E402
 app.add_middleware(RequestIdMiddleware)

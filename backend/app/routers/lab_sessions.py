@@ -217,22 +217,34 @@ async def list_sessions(
     user: dict = Depends(require_role("teacher", "admin", "hod")),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(LabSession).where(
-        LabSession.college_id == user["college_id"],
-        LabSession.is_deleted == False,
+    # Subquery to aggregate assignment count per session
+    count_sub = (
+        select(
+            LabStudentQuestion.session_id,
+            func.count(LabStudentQuestion.id).label("cnt")
+        )
+        .group_by(LabStudentQuestion.session_id)
+        .subquery()
+    )
+
+    stmt = (
+        select(LabSession, func.coalesce(count_sub.c.cnt, 0).label("assignment_count"))
+        .outerjoin(count_sub, LabSession.id == count_sub.c.session_id)
+        .where(
+            LabSession.college_id == user["college_id"],
+            LabSession.is_deleted == False,
+        )
     )
     if user["role"] == "teacher":
         stmt = stmt.where(LabSession.faculty_id == user["id"])
     if status:
         stmt = stmt.where(LabSession.status == status)
+
     result = await db.execute(stmt.order_by(LabSession.created_at.desc()))
-    sessions = result.scalars().all()
+    rows = result.all()
 
     out = []
-    for s in sessions:
-        # Count assignments for each session
-        cnt_r = await db.execute(select(func.count(LabStudentQuestion.id)).where(LabStudentQuestion.session_id == s.id))
-        assignment_count = cnt_r.scalar() or 0
+    for s, assignment_count in rows:
         out.append(
             {
                 "id": s.id,

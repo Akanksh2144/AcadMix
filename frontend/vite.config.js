@@ -28,5 +28,16 @@ export default defineConfig({
   build: {
     outDir: 'build',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('three') || id.includes('@react-three')) return 'vendor-three';
+            if (id.includes('recharts') || id.includes('chart.js')) return 'vendor-charts';
+            if (id.includes('monaco-editor')) return 'vendor-monaco';
+          }
+        }
+      }
+    }
   },
 });

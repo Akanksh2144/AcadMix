@@ -3,14 +3,22 @@ import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Terminal, Copy, Clock, CheckCircle, Warning, X, ArrowLeft,
-  CircleNotch, LockSimple, ShieldAlert, Cpu
+  CircleNotch, LockSimple, ShieldWarning, Cpu
 } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { labAPI } from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useTheme } from '../contexts/ThemeContext';
 import { toast } from 'sonner';
-import Editor from '@monaco-editor/react';
+import Editor, { loader } from '@monaco-editor/react';
+
+// Configure Monaco Editor loader to use CDN
+loader.config({
+  paths: {
+    vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs'
+  }
+});
+
 
 const LabExam: React.FC<{ navigate: (path: string, state?: any) => void; user: any }> = ({ navigate, user }) => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -208,7 +216,7 @@ const LabExam: React.FC<{ navigate: (path: string, state?: any) => void; user: a
         {/* Locked/Force Ended Notice */}
         {examForceEnded && (
           <div className="bg-red-500 text-white px-6 py-3.5 flex items-center gap-3 shrink-0">
-            <ShieldAlert size={20} weight="fill" />
+            <ShieldWarning size={20} weight="fill" />
             <span className="font-bold text-sm">Exam session has ended. Submissions are now closed. Your code and progress have been saved.</span>
           </div>
         )}

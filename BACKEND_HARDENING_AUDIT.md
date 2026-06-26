@@ -1,3 +1,5 @@
+
+
 # AcadMix Backend Hardening Audit & Roadmap
 
 This document outlines the findings of the comprehensive backend audit, tracking what has been resolved and the roadmap for remaining hardening tasks as we prepare for the college-wide pilot.

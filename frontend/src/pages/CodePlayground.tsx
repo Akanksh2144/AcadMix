@@ -6,7 +6,14 @@ import PageHeader from '../components/PageHeader';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
-import Editor from '@monaco-editor/react';
+import Editor, { loader } from '@monaco-editor/react';
+
+// Configure Monaco Editor loader to use CDN
+loader.config({
+  paths: {
+    vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs'
+  }
+});
 import api from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import SimulationIDE from '../components/SimulationIDE';

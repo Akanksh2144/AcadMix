@@ -18,23 +18,23 @@
 │                    ┌────────▼───────────────────▼────────┐                     │
 │                    │         Backend (FastAPI)           │                     │
 │                    │            Port 8000                │                     │
-│                    │  ┌──────────────────────────────┐  │                     │
-│                    │  │   Tenant Middleware          │  │                     │
-│                    │  │   (X-Tenant header → RLS)    │  │                     │
-│                    │  └───────────┬──────────────────┘  │                     │
-│                    │              │                     │                     │
-│                    │  ┌───────────▼──────────────────┐  │                     │
-│                    │  │   Role-Specific Routers      │  │                     │
-│                    │  │   (~50 routers)              │  │                     │
-│                    │  │   - student_core.py          │  │                     │
-│                    │  │   - faculty_core.py          │  │                     │
-│                    │  │   - hod_core.py              │  │                     │
-│                    │  │   - principal.py             │  │                     │
-│                    │  │   - exam_cell_core.py        │  │                     │
-│                    │  │   - tpo.py                   │  │                     │
-│                    │  │   - admin_core.py            │  │                     │
-│                    │  │   - ... (40+ more)           │  │                     │
-│                    │  └───────────┬──────────────────┘  │                     │
+│                    │  ┌──────────────────────────────┐   │                     │
+│                    │  │   Tenant Middleware          │   │                     │
+│                    │  │   (X-Tenant header → RLS)    │   │                     │
+│                    │  └───────────┬──────────────────┘   │                     │
+│                    │              │                      │                     │
+│                    │  ┌───────────▼──────────────────┐   │                     │
+│                    │  │   Role-Specific Routers      │   │                     │
+│                    │  │   (~50 routers)              │   │                     │
+│                    │  │   - student_core.py          │   │                     │
+│                    │  │   - faculty_core.py          │   │                     │
+│                    │  │   - hod_core.py              │   │                     │
+│                    │  │   - principal.py             │   │                     │
+│                    │  │   - exam_cell_core.py        │   │                     │
+│                    │  │   - tpo.py                   │   │                     │
+│                    │  │   - admin_core.py            │   │                     │
+│                    │  │   - ... (40+ more)           │  │                      │
+│                    │  └───────────┬──────────────────┘  │                      │
 │                    │              │                     │                     │
 │                    │  ┌───────────▼──────────────────┐  │                     │
 │                    │  │   Services Layer             │  │                     │
