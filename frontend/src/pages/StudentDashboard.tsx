@@ -142,70 +142,8 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
     queryFn: () => resumeAPI.latest().then(r => r.data),
   });
   const latestAtsScore = latestAtsScoreData?.ats_score ?? null;
-  const [showNotifications, setShowNotifications] = useState(false);
   const { isDark, toggle: toggleTheme } = useTheme();
-  const [realNotifs, setRealNotifs] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const isEceStudent = ['ECE', 'ET', 'EEE', 'EIE', 'IOT'].includes(String(user?.department || '').toUpperCase());
-
-  // Fetch real notifications from API
-  useEffect(() => {
-    const fetchNotifs = () => {
-      notificationsAPI.getAll({ limit: 10 }).then(res => {
-        setRealNotifs(res.data.data || []);
-        setUnreadCount(res.data.unread_count || 0);
-      }).catch(() => {});
-    };
-    fetchNotifs();
-    const interval = setInterval(fetchNotifs, 300000); // 5 minutes fallback
-    return () => clearInterval(interval);
-  }, []);
-
-  // WebSocket for instant notifications
-  useEffect(() => {
-    const wsBase = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000').replace(/^http/, 'ws');
-    let ws: any;
-    let reconnectTimer: any;
-    const connect = () => {
-      try {
-        const token = localStorage.getItem('auth_token');
-        if (!token) return;
-        ws = new WebSocket(`${wsBase}/ws/notifications?token=${token}`);
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.type === 'notification') {
-              setRealNotifs(prev => [{
-                id: data.entity_id || Date.now().toString(),
-                title: data.title,
-                message: data.message,
-                type: data.type,
-                is_read: false,
-                created_at: new Date().toISOString(),
-              }, ...prev].slice(0, 10));
-              setUnreadCount(prev => prev + 1);
-            }
-          } catch (_) {}
-        };
-        ws.onclose = () => { reconnectTimer = setTimeout(connect, 5000); };
-        ws.onerror = () => { ws.close(); };
-      } catch (_) {}
-    };
-    connect();
-    return () => { clearTimeout(reconnectTimer); if (ws) { ws.onclose = null; ws.close(); } };
-  }, []);
-
-  const handleBellClick = () => {
-    setShowNotifications(!showNotifications);
-  };
-
-  const handleMarkAllRead = () => {
-    notificationsAPI.markAllRead().then(() => {
-      setUnreadCount(0);
-      setRealNotifs(prev => prev.map(n => ({ ...n, is_read: true })));
-      setShowNotifications(false);
-    }).catch(() => {});
-  };
 
   // Tab badge (dot) state — persisted per user in localStorage
   const badgeKey = useCallback((tab) => `acadmix_tab_seen_${tab}_${user?.id || 'default'}`, [user?.id]);
@@ -256,53 +194,7 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
-      {/* Notification overlay */}
-      <AnimatePresence>
-        {showNotifications && (
-          <>
-            <div className="fixed inset-0 z-[60]" onClick={() => setShowNotifications(false)}></div>
-            <motion.div
-              initial={{ opacity: 0, y: -8, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.96 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              className="fixed top-16 right-4 sm:right-8 z-[61] w-80 sm:w-96 bg-white dark:bg-[#1A202C] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden"
-            >
-              <div className="px-5 py-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
-                <h4 className="font-extrabold text-slate-800 dark:text-slate-100">Notifications</h4>
-                <button onClick={handleMarkAllRead} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 transition-colors">
-                  Mark all as read
-                </button>
-              </div>
-              <div className="max-h-80 overflow-y-auto divide-y divide-slate-50 dark:divide-white/5">
-                {realNotifs.length === 0 ? (
-                  <div className="p-8 text-center text-slate-500 text-sm">No new notifications.</div>
-                ) : (
-                  realNotifs.slice(0, 8).map((n, i) => (
-                    <div key={n.id || i} className={`flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${!n.is_read ? 'bg-indigo-50/30 dark:bg-indigo-500/5' : ''}`}>
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                        n.type === 'placement' ? 'bg-indigo-50 dark:bg-indigo-500/15' : 'bg-emerald-50 dark:bg-emerald-500/15'
-                      }`}>
-                        {n.type === 'placement' ? (
-                          <Briefcase size={14} weight="duotone" className="text-indigo-500" />
-                        ) : (
-                          <Bell size={14} weight="duotone" className="text-emerald-500" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-bold truncate ${!n.is_read ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>{n.title}</p>
-                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{n.message}</p>
-                        <p className="text-[10px] font-semibold text-slate-400 mt-1">{timeAgo(n.created_at)}</p>
-                      </div>
-                      {!n.is_read && <span className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 mt-2" />}
-                    </div>
-                  ))
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+
 
       {/* ── Header ──────────────────────────── */}
       <DashboardHeader 

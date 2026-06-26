@@ -98,36 +98,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
   const currentAcademicYear = "2023-2024";
   const currentSemester = 3;
 
-  // Real notifications
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    notificationsAPI.getAll({ limit: 10 }).then(res => {
-      setNotifications(res.data.data || []);
-      setUnreadCount(res.data.unread_count || 0);
-    }).catch(() => {});
-  }, []);
-
-  const handleMarkAllRead = () => {
-    notificationsAPI.markAllRead().then(() => {
-      setUnreadCount(0);
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-      setShowNotifications(false);
-    });
-  };
-
-  const formatTime = (iso) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    const now = new Date();
-    const diff = Math.floor((now - d) / 60000);
-    if (diff < 1) return 'Just now';
-    if (diff < 60) return `${diff}m ago`;
-    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-  };
 
   useEffect(() => {
     fetchData();
