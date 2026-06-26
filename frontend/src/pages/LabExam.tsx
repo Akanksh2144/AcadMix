@@ -12,10 +12,10 @@ import { useTheme } from '../contexts/ThemeContext';
 import { toast } from 'sonner';
 import Editor, { loader } from '@monaco-editor/react';
 
-// Configure Monaco Editor loader to use CDN
+// Configure Monaco Editor loader to use local assets
 loader.config({
   paths: {
-    vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs'
+    vs: '/monaco-editor/min/vs'
   }
 });
 
