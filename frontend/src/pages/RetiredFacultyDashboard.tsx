@@ -463,13 +463,7 @@ const RetiredFacultyDashboard = ({ navigate, user, onLogout }) => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
-      {showProfile && (
-        <UserProfileModal
-          onClose={() => setShowProfile(false)}
-          user={user}
-          onLogout={onLogout}
-        />
-      )}
+
 
       <DashboardHeader 
         user={user} 

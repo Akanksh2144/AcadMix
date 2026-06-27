@@ -315,14 +315,7 @@ const PrincipalDashboard = ({ navigate, user, onLogout }) => {
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
       <Toaster position="top-right" richColors />
       
-      {/* Header Profile Trigger Component (Reusable) */}
-      {showProfile && (
-        <UserProfileModal 
-           onClose={() => setShowProfile(false)} 
-           user={user} 
-           onLogout={onLogout} 
-        />
-      )}
+
 
       <DashboardHeader 
         user={user} 
