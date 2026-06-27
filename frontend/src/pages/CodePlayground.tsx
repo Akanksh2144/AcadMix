@@ -165,7 +165,7 @@ print(f"DC Output ~ {V_peak - V_ripple/2:.2f} V")`,
   'iot-python': `import numpy as np
 # Basic MQTT Payload Formatting
 sensor_data = {'temp': 24.5, 'humidity': 60}
-payload = f"'{{\"temperature\": {sensor_data['temp']}, \"humidity\": {sensor_data['humidity']}}}'"
+payload = f'{{"temperature": {sensor_data["temp"]}, "humidity": {sensor_data["humidity"]}}}'
 print("=== IoT Edge Processing ===")
 print("Publishing to topic: sensors/room1")
 print("Payload:", payload)
