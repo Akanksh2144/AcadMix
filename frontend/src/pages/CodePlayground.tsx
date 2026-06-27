@@ -1108,7 +1108,16 @@ const CodePlayground = ({ navigate, user }) => {
         const simPromise = async () => {
           const sim = new EEcircuitSimulation();
           await sim.start();
-          sim.setNetList(simCode);
+          
+          let processedCode = simCode;
+          if (!/^\s*\.options\b.*rshunt/im.test(simCode)) {
+            processedCode = simCode.replace(/^\s*\.end\b/im, '.options rshunt=1e12 gmin=1e-10 reltol=0.01\n.end');
+            if (processedCode === simCode) {
+              processedCode = simCode + '\n.options rshunt=1e12 gmin=1e-10 reltol=0.01';
+            }
+          }
+
+          sim.setNetList(processedCode);
           return await sim.runSim();
         };
 

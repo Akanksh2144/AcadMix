@@ -322,6 +322,7 @@ export function generateSPICENetlist(graph: CircuitGraph): string {
   lines.push('.model 1N4148 D(IS=1e-14 N=1 RS=0.1)');
   lines.push('.model 2N3904 NPN(IS=1e-14 VAF=100 BF=300)');
   lines.push('.model 2N3906 PNP(IS=1e-14 VAF=100 BF=200)');
+  lines.push('.options rshunt=1e12 gmin=1e-10 reltol=0.01');
   lines.push('.tran 1ms 100ms');
   lines.push('.end');
 
