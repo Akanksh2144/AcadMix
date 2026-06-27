@@ -2528,7 +2528,13 @@ const CodePlayground = ({ navigate, user }) => {
                       height: '76.9%'
                     } : {})
                   }}
-                  sandbox="allow-scripts allow-same-origin allow-downloads allow-forms allow-popups"
+                  sandbox={
+                    (_simActiveBoard?.url?.includes('jupyterlite') || 
+                     (_simActiveBoard as any)?.octaveUrl || 
+                     _simActiveBoard?.url?.includes('octave')) 
+                      ? undefined 
+                      : "allow-scripts allow-same-origin allow-downloads allow-forms allow-popups"
+                  }
                   allow="clipboard-read; clipboard-write; fullscreen"
                 />
               )}
