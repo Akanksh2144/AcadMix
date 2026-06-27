@@ -7,9 +7,10 @@ import { toast } from 'sonner';
 interface LabSessionCreateProps {
   navigate: (path: string, state?: any) => void;
   user: any;
+  onLogout?: () => void;
 }
 
-const LabSessionCreate: React.FC<LabSessionCreateProps> = ({ navigate, user }) => {
+const LabSessionCreate: React.FC<LabSessionCreateProps> = ({ navigate, user, onLogout }) => {
   const [step, setStep] = useState(1); // 1: Config, 2: Questions, 3: Assignment & Start
   
   // Config state
@@ -206,6 +207,7 @@ const LabSessionCreate: React.FC<LabSessionCreateProps> = ({ navigate, user }) =
         user={user}
         title="Schedule Lab Exam"
         subtitle="Step-by-step exam session wizard"
+        onLogout={onLogout}
       />
 
       <div className="max-w-4xl mx-auto px-4 py-8">

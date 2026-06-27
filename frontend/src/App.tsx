@@ -494,7 +494,7 @@ function AppRoutes({ user, onLogin, onLogout }) {
       } />
       <Route path="/lab/create" element={
         <ProtectedRoute user={user} allowedRoles={['teacher', 'hod', 'admin']}>
-          <LabSessionCreate navigate={navigate} user={user} />
+          <LabSessionCreate navigate={navigate} user={user} onLogout={onLogout} />
         </ProtectedRoute>
       } />
 
@@ -615,7 +615,7 @@ function AppShell() {
     sessionStorage.clear();
     localStorage.removeItem('auth_token');
     
-    try { await authAPI.logout(); } catch {}
+    authAPI.logout().catch(() => {});
     
     // 2. Wipe again to clear anything written by components during the await
     sessionStorage.clear();
