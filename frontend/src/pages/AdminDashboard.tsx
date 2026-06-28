@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import DashboardHeader from '../components/DashboardHeader';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Users, ChartBar, GraduationCap, SignOut, Database, Sun, Moon, Bell, Info, UserCircle, Sparkle, Trash, MapPin, Buildings } from '@phosphor-icons/react';
+import { BookOpen, Users, ChartBar, GraduationCap, SignOut, Database, Sun, Moon, Bell, Info, UserCircle, Sparkle, Trash, MapPin, Buildings, FileArrowUp } from '@phosphor-icons/react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { StudentResultsSearch } from '../components/StudentResultsSearch';
-import { analyticsAPI, insightsAPI } from '../services/api';
+import { analyticsAPI, insightsAPI, attendanceAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 import AdminExpertManagement from '../components/admin/AdminExpertManagement';
@@ -196,6 +196,29 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
   
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifRead, setNotifRead] = useState(false);
+
+  const handleRFIDUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const uploadPromise = attendanceAPI.uploadRfidMapping(formData);
+
+    toast.promise(uploadPromise, {
+      loading: 'Uploading and mapping RFID cards...',
+      success: (res) => {
+        return res.data?.message || 'RFID cards successfully linked';
+      },
+      error: (err) => {
+        return err.response?.data?.detail || 'Failed to upload RFID mapping. Ensure columns are "identifier" and "rfid_uid".';
+      }
+    });
+
+    e.target.value = '';
+  };
+
   const notifications = [
     { title: 'System Security Updated', desc: 'New schemas applied for isolated partitions.', time: 'Just now' },
     { title: 'New Registration Settings', desc: 'Sections schema applied via alembic.', time: '2 hours ago' }
@@ -554,6 +577,17 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
                   <option>2022</option>
                   <option>2021</option>
                 </select>
+
+                <label className="flex items-center gap-1.5 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] text-indigo-700 dark:text-slate-200 border border-indigo-200/50 dark:border-white/[0.06] rounded-xl text-xs font-bold cursor-pointer transition-all shadow-sm">
+                  <FileArrowUp size={16} />
+                  <span>Upload RFID Mapping</span>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleRFIDUpload}
+                    className="hidden"
+                  />
+                </label>
               </div>
               
               <div className="overflow-x-auto">

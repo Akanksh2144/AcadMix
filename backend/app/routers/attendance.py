@@ -140,7 +140,7 @@ async def upload_daily_attendance_csv(
 @router.post("/admin/attendance/upload-rfid-mapping")
 async def upload_rfid_mapping_csv(
     file: UploadFile = File(...),
-    user: dict = Depends(require_role("hod", "admin")),
+    user: dict = Depends(require_role("admin")),
     svc: AttendanceService = Depends(get_attendance_service)
 ):
     content_bytes = await file.read()

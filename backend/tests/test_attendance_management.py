@@ -260,9 +260,9 @@ class TestAttendanceManagementRouter:
 
         app.dependency_overrides.clear()
 
-    async def test_upload_rfid_mapping_csv(self, mock_db, auth_hod):
+    async def test_upload_rfid_mapping_csv(self, mock_db, auth_admin):
         app.dependency_overrides[get_db] = lambda: mock_db
-        app.dependency_overrides[get_current_user] = lambda: auth_hod
+        app.dependency_overrides[get_current_user] = lambda: auth_admin
 
         mock_profile = MagicMock()
         mock_profile.extra_data = {}
@@ -285,7 +285,7 @@ class TestAttendanceManagementRouter:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             with patch("app.core.security.get_current_user", new_callable=AsyncMock) as mock_get_user:
-                mock_get_user.return_value = auth_hod
+                mock_get_user.return_value = auth_admin
                 
                 resp = await client.post("/api/admin/attendance/upload-rfid-mapping", files=files)
                 assert resp.status_code == 200
