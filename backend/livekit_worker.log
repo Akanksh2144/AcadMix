@@ -1,0 +1,1191 @@
+    20:43:55.940 DEBUG    asyncio            Using proactor: IocpProactor  
+    20:43:55.947 DEV      livekit.agents     Watching                          
+                                             C:\AcadMix\backend\app\workers    
+    20:44:04.397 DEBUG    asyncio            Using proactor: IocpProactor  
+    20:44:04.406 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    20:44:04.410 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    20:44:04.412 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    20:44:04.415 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    20:44:04.418 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    20:44:04.424 INFO     livekit.agents     HTTP server listening on :50180  
+    20:44:04.749 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_L7pD6sLujPQK", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    20:47:06.572 INFO     livekit.agents     received job request  
+                                         {"job_id": "AJ_NH37anmQVivu", 
+"dispatch_id": "AD_wfzqEJpKCJts", "room": 
+"841cda5b-0126-44e5-a7b9-c7c6390216e0", "room_id": "RM_YKPM9P9T3x2t", 
+"agent_name": "", "resuming": false, "enable_recording": true}
+    20:47:06.624 DEBUG    livekit.agents     received assignment  
+                                         {"agent_name": "", "room_id": 
+"RM_YKPM9P9T3x2t", "room": "841cda5b-0126-44e5-a7b9-c7c6390216e0", "job_id": 
+"AJ_NH37anmQVivu", "dispatch_id": "AD_wfzqEJpKCJts", "enable_recording": true}
+    20:47:06.627 WARNING  livekit.agents     no warmed process available for   
+                                             job, waiting for one to be        
+                                             created                           
+                                         {"job_id": "AJ_NH37anmQVivu"}
+    20:47:06.634 INFO     livekit.agents     initializing job runner  
+                                         {"tid": 16996}
+    20:47:06.636 INFO     livekit.agents     job runner initialized  
+                                         {"tid": 16996, "elapsed_time": 0.0}
+    20:47:06.638 DEBUG    asyncio            Using proactor: IocpProactor  
+    20:47:09.813 DEBUG    livekit.agents     configuring session recording  
+    20:47:09.821 DEBUG    livekit.agents     input stream attached  
+                                         {"participant": null, "source": 
+"SOURCE_UNKNOWN", "accepted_sources": ["SOURCE_MICROPHONE"]}
+    20:47:09.825 DEBUG    livekit.agents     input stream detached  
+                                         {"participant": null, "source": 
+"SOURCE_UNKNOWN", "accepted_sources": ["SOURCE_MICROPHONE"]}
+    20:47:09.829 DEBUG    livekit.agents     input stream attached  
+                                         {"participant": null, "source": 
+"SOURCE_UNKNOWN", "accepted_sources": ["SOURCE_MICROPHONE"]}
+    20:47:09.834 INFO     livekit.agents     adaptive interruption detector    
+                                             initialized                       
+                                         {"base_url": 
+"https://agent-gateway.livekit.cloud/v1", "detection_interval": 0.1, 
+"audio_prefix_duration": 1.0, "max_audio_duration": 3, "min_frames": 2, 
+"threshold": 0.5, "inference_timeout": 0.7, "use_proxy": true}
+    20:47:09.848 DEBUG    livekit.agents     http_session(): creating a new    
+                                             httpclient ctx                    
+    20:47:09.856 DEBUG    livekit.agents     using audio io: `RoomIO` ->       
+                                             `RecorderIO` -> `AgentSession`    
+                               06:39:35.307 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 0s                    
+                                         {"retry_count": 1, "max_retry": 16, 
+"error": "Cannot write to closing transport"}
+    06:39:36.544 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_rh4NxPuJSdGV", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    13:00:49.551 INFO     livekit.agents     received job request  
+                                         {"job_id": "AJ_rLXXj6zm3umu", 
+"dispatch_id": "AD_LALz4vYKQFQQ", "room": 
+"b6fff3e6-9eb3-46cb-9251-fb7815f33ee0", "room_id": "RM_hKynicyV6GGa", 
+"agent_name": "", "resuming": false, "enable_recording": true}
+    13:00:49.640 DEBUG    livekit.agents     received assignment  
+                                         {"agent_name": "", "room_id": 
+"RM_hKynicyV6GGa", "room": "b6fff3e6-9eb3-46cb-9251-fb7815f33ee0", "job_id": 
+"AJ_rLXXj6zm3umu", "dispatch_id": "AD_LALz4vYKQFQQ", "enable_recording": true}
+    13:00:49.647 WARNING  livekit.agents     no warmed process available for   
+                                             job, waiting for one to be        
+                                             created                           
+                                         {"job_id": "AJ_rLXXj6zm3umu"}
+    13:00:49.677 INFO     livekit.agents     initializing job runner  
+                                         {"tid": 34028}
+    13:00:49.688 DEBUG    asyncio            Using proactor: IocpProactor  
+    13:00:49.689 INFO     livekit.agents     job runner initialized  
+                                         {"tid": 34028, "elapsed_time": 0.01}
+    13:00:53.238 ERROR    livekit.agents     unhandled exception while         
+                                             running the job task              
+Traceback (most recent call last):
+  File 
+"C:\AcadMix\backend\venv\Lib\site-packages\opentelemetry\util\_decorator.py", 
+line 71, in async_wrapper
+    return await func(*args, **kwargs)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File 
+"C:\AcadMix\backend\venv\Lib\site-packages\livekit\agents\ipc\job_proc_lazy_mai
+n.py", line 323, in _traceable_entrypoint
+    await self._job_entrypoint_fnc(job_ctx)
+  File "C:\AcadMix\backend\app\workers\livekit_agent.py", line 327, in 
+entrypoint
+AttributeError: 'MockInterview' object has no attribute 'company_name'
+
+    13:00:53.260 DEBUG    livekit.agents     shutting down job task  
+                                         {"reason": "job crashed", 
+"user_initiated": false}
+    13:00:53.263 DEBUG    livekit.agents     job exiting  
+                                         {"reason": "job crashed", "tid": 
+34028, "job_id": "AJ_rLXXj6zm3umu", "room_id": "RM_hKynicyV6GGa"}
+    13:00:53.331 DEBUG    livekit.agents     configuring session recording  
+    13:00:54.401 DEBUG    livekit.agents     http_session(): closing the       
+                                             httpclient ctx                    
+    13:00:54.406 DEBUG    livekit.agents     http_session(): creating a new    
+                                             httpclient ctx                    
+    13:09:15.625 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 0s                    
+                                         {"retry_count": 1, "max_retry": 16, 
+"error": "message='worker connection closed unexpectedly', status_code=1006, 
+retryable=True, body=msg.data=None msg.extra=None"}
+    13:09:26.544 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 2s                    
+                                         {"retry_count": 2, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:09:39.666 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 4s                    
+                                         {"retry_count": 3, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:09:43.653 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 6s                    
+                                         {"retry_count": 4, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:09:49.658 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 8s                    
+                                         {"retry_count": 5, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:09:57.655 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 6, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:10:07.656 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 7, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:10:28.808 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 8, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:10:38.821 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 9, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:10:59.941 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 10, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:11:09.936 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 11, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:11:19.946 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 12, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:11:29.950 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 13, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:11:40.535 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_wgsmiqCwLzyC", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    15:34:46.625 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 0s                    
+                                         {"retry_count": 1, "max_retry": 16, 
+"error": "message='worker connection closed unexpectedly', status_code=1006, 
+retryable=True, body=msg.data=None msg.extra=None"}
+    15:34:56.657 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 2s                    
+                                         {"retry_count": 2, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:35:09.795 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 4s                    
+                                         {"retry_count": 3, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:35:13.803 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 6s                    
+                                         {"retry_count": 4, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:35:19.814 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 8s                    
+                                         {"retry_count": 5, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:35:38.934 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 6, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:00.060 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 7, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:21.183 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 8, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:31.186 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 9, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:41.190 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 10, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:51.191 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 11, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:01.197 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 12, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:11.201 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 13, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:21.215 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 14, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:31.216 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 15, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:41.222 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 16, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:38:02.354 ERROR    livekit.agents     Error in _connection_task  
+Traceback (most recent call last):
+  File "C:\AcadMix\backend\venv\Lib\site-packages\livekit\agents\utils\log.py",
+line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\AcadMix\backend\venv\Lib\site-packages\livekit\agents\worker.py", 
+line 1095, in _connection_task
+    raise RuntimeError(
+RuntimeError: failed to connect to livekit after 16 attempts
+
+ult
+[getaddrinfo failed]"}
+    13:11:40.254 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_pHMc9R8wmbJR", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    15:34:45.509 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 0s                    
+                                         {"retry_count": 1, "max_retry": 16, 
+"error": "message='worker connection closed unexpectedly', status_code=1006, 
+retryable=True, body=msg.data=None msg.extra=None"}
+    15:34:56.657 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 2s                    
+                                         {"retry_count": 2, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:35:09.795 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 4s                    
+                                         {"retry_count": 3, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:35:13.805 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 6s                    
+                                         {"retry_count": 4, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:35:19.816 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 8s                    
+                                         {"retry_count": 5, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:35:38.934 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 6, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:00.060 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 7, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:21.183 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 8, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:31.196 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 9, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:41.205 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 10, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:51.203 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 11, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:01.197 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 12, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:11.212 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 13, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:21.220 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 14, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:31.217 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 15, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:41.219 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 16, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:38:02.353 ERROR    livekit.agents     Error in _connection_task  
+Traceback (most recent call last):
+  File "C:\AcadMix\backend\venv\Lib\site-packages\livekit\agents\utils\log.py",
+line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\AcadMix\backend\venv\Lib\site-packages\livekit\agents\worker.py", 
+line 1095, in _connection_task
+    raise RuntimeError(
+RuntimeError: failed to connect to livekit after 16 attempts
+
+
+    12:27:48.542 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    12:27:48.546 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    12:27:48.550 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    12:27:48.553 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    12:27:48.556 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    12:27:48.561 INFO     livekit.agents     HTTP server listening on :62550  
+    12:27:49.968 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_fzQ8i2mf6Z7U", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    12:50:08.263 DEBUG    asyncio            Using proactor: IocpProactor  
+    12:50:08.273 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    12:50:08.276 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    12:50:08.280 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    12:50:08.283 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    12:50:08.286 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    12:50:08.290 INFO     livekit.agents     HTTP server listening on :49677  
+    12:50:08.594 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_vPQ7PbqFKmfD", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    13:06:52.431 DEBUG    asyncio            Using proactor: IocpProactor  
+    13:06:52.440 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    13:06:52.444 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    13:06:52.446 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    13:06:52.450 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    13:06:52.452 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    13:06:52.456 INFO     livekit.agents     HTTP server listening on :56724  
+    13:06:52.928 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_EwujvyLyMbdH", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    13:09:17.378 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 0s                    
+                                         {"retry_count": 1, "max_retry": 16, 
+"error": "message='worker connection closed unexpectedly', status_code=1006, 
+retryable=True, body=msg.data=None msg.extra=None"}
+    13:09:26.542 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 2s                    
+                                         {"retry_count": 2, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:09:39.666 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 4s                    
+                                         {"retry_count": 3, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:09:43.662 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 6s                    
+                                         {"retry_count": 4, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:09:49.658 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 8s                    
+                                         {"retry_count": 5, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:09:57.676 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 6, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:10:07.687 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 7, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:10:28.808 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 8, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:10:38.821 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 9, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:10:59.941 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 10, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:11:09.965 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 11, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:11:19.971 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 12, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:11:29.964 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 13, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    13:11:40.257 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_tUa3mMP3seZn", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    13:24:41.092 INFO     livekit.agents     received job request  
+                                         {"job_id": "AJ_YsR9FTgw5iGr", 
+"dispatch_id": "AD_u2zuccyY7oJg", "room": 
+"3e5c3191-37ca-4161-a629-66a4a8e11e04", "room_id": "RM_LgPW4cvTiaxi", 
+"agent_name": "", "resuming": false, "enable_recording": true}
+    13:24:41.148 DEBUG    livekit.agents     received assignment  
+                                         {"agent_name": "", "room_id": 
+"RM_LgPW4cvTiaxi", "room": "3e5c3191-37ca-4161-a629-66a4a8e11e04", "job_id": 
+"AJ_YsR9FTgw5iGr", "dispatch_id": "AD_u2zuccyY7oJg", "enable_recording": true}
+    13:24:41.153 WARNING  livekit.agents     no warmed process available for   
+                                             job, waiting for one to be        
+                                             created                           
+                                         {"job_id": "AJ_YsR9FTgw5iGr"}
+    13:24:41.161 INFO     livekit.agents     initializing job runner  
+                                         {"tid": 40236}
+    13:24:41.165 DEBUG    asyncio            Using proactor: IocpProactor  
+    13:24:41.166 INFO     livekit.agents     job runner initialized  
+                                         {"tid": 40236, "elapsed_time": 0.0}
+    13:24:44.821 DEBUG    livekit.agents     configuring session recording  
+    13:24:44.835 DEBUG    livekit.agents     input stream attached  
+                                         {"participant": null, "source": 
+"SOURCE_UNKNOWN", "accepted_sources": ["SOURCE_MICROPHONE"]}
+    13:24:44.838 DEBUG    livekit.agents     input stream detached  
+                                         {"participant": null, "source": 
+"SOURCE_UNKNOWN", "accepted_sources": ["SOURCE_MICROPHONE"]}
+    13:24:44.842 DEBUG    livekit.agents     input stream attached  
+                                         {"participant": null, "source": 
+"SOURCE_UNKNOWN", "accepted_sources": ["SOURCE_MICROPHONE"]}
+    13:24:44.845 INFO     livekit.agents     adaptive interruption detector    
+                                             initialized                       
+                                         {"base_url": 
+"https://agent-gateway.livekit.cloud/v1", "detection_interval": 0.1, 
+"audio_prefix_duration": 1.0, "max_audio_duration": 3, "min_frames": 2, 
+"threshold": 0.5, "inference_timeout": 0.7, "use_proxy": true}
+    13:24:44.871 DEBUG    livekit.agents     http_session(): creating a new    
+                                             httpclient ctx                    
+    13:24:44.882 DEBUG    livekit.agents     using audio io: `RoomIO` ->       
+                                             `RecorderIO` -> `AgentSession`    
+                                             -> `RecorderIO` ->                
+                                             `TranscriptSynchronizer` ->       
+                                             `RoomIO`                          
+    13:24:44.888 DEBUG    livekit.agents     using transcript io:              
+                                             `AgentSession` ->                 
+                                             `TranscriptSynchronizer` ->       
+                                             `RoomIO`                          
+    13:24:45.299 DEBUG    livekit.….cartesia Established new Cartesia TTS      
+                                             WebSocket connection              
+                                           {"cartesia_request_id": 
+"000f4316-6f18-42e2-84c9-54344b2a081c"}
+    13:24:46.143 DEBUG    livekit.….deepgram Established new Deepgram STT      
+                                             WebSocket connection:             
+                                           {"headers": {"dg-project-id": 
+"e4095414-568a-4aa5-bfb1-e639161f913b", "dg-request-id": 
+"019ea113-b9b1-7150-b1af-7b01c151f107", "Date": "Sun, 07 Jun 2026 07:54:45 
+GMT"}}
+    13:24:46.695 DEBUG    livekit.agents     start reading stream  
+                                         {"participant": "STU-00003", "source":
+"SOURCE_MICROPHONE"}
+    13:24:46.943 INFO     acadmix.…kit_agent User state changed to:            
+                                             'speaking'                        
+    13:24:48.643 INFO     acadmix.…kit_agent User state changed to:            
+                                             'listening'                       
+    13:24:50.561 INFO     acadmix.…kit_agent speaking initial interview        
+                                             question                          
+    13:24:50.776 DEBUG    livekit.agents     aec warmup active, disabling      
+                                             interruptions for 3.00s           
+    13:24:53.784 DEBUG    livekit.agents     aec warmup expired, re-enabling   
+                                             interruptions                     
+    13:25:09.194 INFO     acadmix.…kit_agent User state changed to:            
+                                             'speaking'                        
+    13:25:10.020 DEBUG    livekit.agents     interruption detected  
+                                         {"total_duration": 0.7251967, 
+"prediction_duration": 0.030618419, "detection_delay": 0.8888616561889648, 
+"probability": 0.9483170509338379}
+    13:25:10.844 INFO     acadmix.…kit_agent User state changed to:            
+                                             'listening'                       
+    13:25:11.543 INFO     acadmix.…kit_agent User state changed to:            
+                                             'speaking'                        
+    13:25:13.045 INFO     acadmix.…kit_agent User state changed to:            
+                                             'listening'                       
+    13:25:15.244 INFO     acadmix.…kit_agent User state changed to:            
+                                             'speaking'                        
+    13:25:17.494 INFO     acadmix.…kit_agent User state changed to:            
+                                             'listening'                       
+    13:25:18.744 INFO     acadmix.…kit_agent User state changed to:            
+                                             'speaking'                        
+    13:25:20.594 INFO     acadmix.…kit_agent User state changed to:            
+                                             'listening'                       
+    13:25:28.843 INFO     acadmix.…kit_agent User state changed to:            
+                                             'speaking'                        
+    13:25:30.393 INFO     acadmix.…kit_agent User state changed to:            
+                                             'listening'                       
+    13:25:37.395 INFO     acadmix.…kit_agent User state changed to:            
+                                             'speaking'                        
+    13:25:40.943 INFO     acadmix.…kit_agent User state changed to:            
+                                             'listening'                       
+    13:25:55.942 INFO     acadmix.…kit_agent User state changed to: 'away'  
+    13:26:02.809 INFO     livekit.agents     closing agent session due to      
+                                             participant disconnect (disable   
+                                             via                               
+                                             `RoomInputOptions.close_on_disc…  
+                                         {"room": 
+"3e5c3191-37ca-4161-a629-66a4a8e11e04", "participant": "STU-00003", "reason": 
+"CLIENT_INITIATED"}
+    13:26:02.819 DEBUG    livekit.agents     stream closed  
+                                         {"participant": "STU-00003", "source":
+"SOURCE_MICROPHONE"}
+    13:26:02.831 DEBUG    livekit.agents     input stream detached  
+                                         {"participant": "STU-00003", "source":
+"SOURCE_UNKNOWN", "accepted_sources": ["SOURCE_MICROPHONE"]}
+    13:26:04.930 DEBUG    livekit.agents     session closed  
+                                         {"reason": "participant_disconnected",
+"error": null}
+    13:26:23.133 WARNING  livekit            livekit_api::signal_client:530:…  
+                                             - dropping pass-through signal —  
+                                             no stream available               
+    13:26:23.148 DEBUG    livekit.agents     uploading session report to       
+                                             LiveKit Cloud                     
+    13:26:25.537 DEBUG    livekit.agents     finished uploading  
+    13:26:25.541 DEBUG    livekit.agents     shutting down job task  
+                                         {"reason": "", "user_initiated": 
+false}
+    13:26:25.544 DEBUG    livekit.agents     job exiting  
+                                         {"reason": "", "tid": 40236, "job_id":
+"AJ_YsR9FTgw5iGr", "room_id": "RM_LgPW4cvTiaxi"}
+    13:26:26.059 DEBUG    livekit.agents     http_session(): closing the       
+                                             httpclient ctx                    
+    15:00:06.783 DEBUG    asyncio            Using proactor: IocpProactor  
+    15:00:06.793 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    15:00:06.798 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    15:00:06.801 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    15:00:06.803 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    15:00:06.806 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    15:00:06.810 INFO     livekit.agents     HTTP server listening on :57540  
+    15:00:07.194 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_FrpjAcdXnu3e", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    15:11:57.575 DEBUG    asyncio            Using proactor: IocpProactor  
+    15:11:57.583 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    15:11:57.587 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    15:11:57.589 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    15:11:57.592 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    15:11:57.594 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    15:11:57.597 INFO     livekit.agents     HTTP server listening on :51006  
+    15:11:58.160 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_mSyB3Ay3K3tK", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    15:12:08.423 DEBUG    asyncio            Using proactor: IocpProactor  
+    15:12:08.431 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    15:12:08.436 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    15:12:08.438 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    15:12:08.440 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    15:12:08.442 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    15:12:08.448 INFO     livekit.agents     HTTP server listening on :62606  
+    15:12:08.898 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_BHhuk8rEmZTg", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    15:25:51.727 DEBUG    asyncio            Using proactor: IocpProactor  
+    15:25:51.736 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    15:25:51.739 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    15:25:51.742 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    15:25:51.744 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    15:25:51.747 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    15:25:51.751 INFO     livekit.agents     HTTP server listening on :53777  
+    15:25:52.236 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_ugNLKNFechGu", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    15:26:00.114 DEBUG    asyncio            Using proactor: IocpProactor  
+    15:26:00.124 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    15:26:00.127 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    15:26:00.130 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    15:26:00.134 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    15:26:00.136 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    15:26:00.142 INFO     livekit.agents     HTTP server listening on :53793  
+    15:26:00.373 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_HuaaWVayyDm2", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    15:26:27.750 DEBUG    asyncio            Using proactor: IocpProactor  
+    15:26:27.761 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    15:26:27.765 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    15:26:27.770 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    15:26:27.772 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    15:26:27.776 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    15:26:27.780 INFO     livekit.agents     HTTP server listening on :60912  
+    15:26:28.188 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_WcfHZD9DNSPQ", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    15:26:39.814 DEBUG    asyncio            Using proactor: IocpProactor  
+    15:26:39.823 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    15:26:39.826 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    15:26:39.829 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    15:26:39.831 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    15:26:39.833 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    15:26:39.837 INFO     livekit.agents     HTTP server listening on :60925  
+    15:26:40.678 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_qBqtkUCm2iM4", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    15:34:46.132 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 0s                    
+                                         {"retry_count": 1, "max_retry": 16, 
+"error": "message='worker connection closed unexpectedly', status_code=1006, 
+retryable=True, body=msg.data=None msg.extra=None"}
+    15:34:56.657 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 2s                    
+                                         {"retry_count": 2, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:35:09.795 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 4s                    
+                                         {"retry_count": 3, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:35:13.805 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 6s                    
+                                         {"retry_count": 4, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:35:19.827 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 8s                    
+                                         {"retry_count": 5, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:35:38.934 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 6, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:00.060 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 7, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:21.183 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 8, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:31.203 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 9, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:41.214 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 10, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:36:51.239 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 11, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:01.250 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 12, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:11.266 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 13, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:21.273 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 14, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:31.305 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 15, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:37:41.328 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 16, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:38:02.353 ERROR    livekit.agents     Error in _connection_task  
+Traceback (most recent call last):
+  File "C:\AcadMix\backend\venv\Lib\site-packages\livekit\agents\utils\log.py",
+line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\AcadMix\backend\venv\Lib\site-packages\livekit\agents\worker.py", 
+line 1095, in _connection_task
+    raise RuntimeError(
+RuntimeError: failed to connect to livekit after 16 attempts
+
+    20:06:01.583 DEBUG    asyncio            Using proactor: IocpProactor  
+    20:06:01.603 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    20:06:01.607 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    20:06:01.612 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    20:06:01.618 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    20:06:01.622 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    20:06:01.627 INFO     livekit.agents     HTTP server listening on :58604  
+    20:06:03.038 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_nvWHdFhviLZj", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    20:08:34.050 DEBUG    asyncio            Using proactor: IocpProactor  
+    20:08:34.059 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    20:08:34.064 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    20:08:34.067 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    20:08:34.070 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    20:08:34.072 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    20:08:34.078 INFO     livekit.agents     HTTP server listening on :55346  
+    20:08:34.479 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_hnyExgZVKEpc", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    20:55:36.484 DEBUG    asyncio            Using proactor: IocpProactor  
+    20:55:36.503 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    20:55:36.509 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    20:55:36.514 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    20:55:36.520 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    20:55:36.524 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    20:55:36.531 INFO     livekit.agents     HTTP server listening on :54206  
+    20:55:37.370 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_rMWpiiGSxYnX", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    20:56:04.945 DEBUG    asyncio            Using proactor: IocpProactor  
+    20:56:04.966 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    20:56:04.973 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    20:56:04.979 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    20:56:04.986 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    20:56:04.992 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    20:56:05.001 INFO     livekit.agents     HTTP server listening on :54224  
+    20:56:05.449 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_7rgUD5pUwuMZ", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    20:59:12.609 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 0s                    
+                                         {"retry_count": 1, "max_retry": 16, 
+"error": "message='worker connection closed unexpectedly', status_code=1006, 
+retryable=True, body=msg.data=None msg.extra=None"}
+    20:59:49.448 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_uHarjxgxQrVt", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    21:00:23.660 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 0s                    
+                                         {"retry_count": 1, "max_retry": 16, 
+"error": "message='worker connection closed unexpectedly', status_code=1006, 
+retryable=True, body=msg.data=None msg.extra=None"}
+    21:00:34.828 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 2s                    
+                                         {"retry_count": 2, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    21:00:47.970 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 4s                    
+                                         {"retry_count": 3, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    21:00:51.999 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 6s                    
+                                         {"retry_count": 4, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    21:01:09.153 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 8s                    
+                                         {"retry_count": 5, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    21:01:28.297 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 6, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    21:02:21.900 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 7, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[The semaphore timeout period has expired]"}
+    21:02:43.056 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 8, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    21:03:36.730 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 9, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[The semaphore timeout period has expired]"}
+    21:03:57.883 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 10, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    21:04:52.125 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 11, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[The semaphore timeout period has expired]"}
+    21:05:02.154 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 12, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    21:05:12.182 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 13, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    21:05:22.198 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 14, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    21:05:32.222 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 15, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    21:05:42.254 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 16, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    21:05:52.276 ERROR    livekit.agents     Error in _connection_task  
+Traceback (most recent call last):
+  File "C:\AcadMix\backend\venv\Lib\site-packages\livekit\agents\utils\log.py",
+line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\AcadMix\backend\venv\Lib\site-packages\livekit\agents\worker.py", 
+line 1095, in _connection_task
+    raise RuntimeError(
+RuntimeError: failed to connect to livekit after 16 attempts
+
+    13:30:06.675 DEBUG    asyncio            Using proactor: IocpProactor  
+    13:30:06.690 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    13:30:06.693 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    13:30:06.697 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    13:30:06.699 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    13:30:06.702 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    13:30:06.707 INFO     livekit.agents     HTTP server listening on :57149  
+    13:30:07.069 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_hBZs876YbrzC", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    13:30:16.009 DEBUG    asyncio            Using proactor: IocpProactor  
+    13:30:16.019 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    13:30:16.022 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    13:30:16.024 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    13:30:16.027 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    13:30:16.032 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    13:30:16.036 INFO     livekit.agents     HTTP server listening on :57169  
+    13:30:16.274 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_96LYDumT29Qq", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    13:30:25.132 DEBUG    asyncio            Using proactor: IocpProactor  
+    13:30:25.141 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    13:30:25.144 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    13:30:25.147 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    13:30:25.149 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    13:30:25.152 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    13:30:25.156 INFO     livekit.agents     HTTP server listening on :56491  
+    13:30:26.314 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_ahiWTGiqxKLW", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    13:30:57.652 DEBUG    asyncio            Using proactor: IocpProactor  
+    13:30:57.661 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    13:30:57.664 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    13:30:57.669 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    13:30:57.672 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    13:30:57.675 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    13:30:57.679 INFO     livekit.agents     HTTP server listening on :62875  
+    13:30:58.007 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_v3WajrcmUvSP", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    14:46:25.633 DEBUG    asyncio            Using proactor: IocpProactor  
+    14:46:25.650 INFO     livekit.agents     starting worker  
+                                         {"version": "1.5.16", "rtc-version": 
+"1.1.8"}
+    14:46:25.658 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.cartesia",
+"version": "1.5.16"}
+    14:46:25.663 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.google", 
+"version": "1.5.16"}
+    14:46:25.669 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.deepgram",
+"version": "1.5.16"}
+    14:46:25.675 INFO     livekit.agents     plugin registered  
+                                         {"plugin": "livekit.plugins.silero", 
+"version": "1.5.16"}
+    14:46:25.682 INFO     livekit.agents     HTTP server listening on :60286  
+    14:46:26.049 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_VgbtGWJorahv", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}
+    15:38:46.842 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 0s                    
+                                         {"retry_count": 1, "max_retry": 16, 
+"error": "Cannot write to closing transport"}
+    15:38:47.204 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 2s                    
+                                         {"retry_count": 2, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:38:49.234 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 4s                    
+                                         {"retry_count": 3, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    15:38:53.252 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 6s                    
+                                         {"retry_count": 4, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    16:16:17.403 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 8s                    
+                                         {"retry_count": 5, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    19:32:57.018 WARNING  livekit.agents     failed to connect to livekit,     
+                                             retrying in 10s                   
+                                         {"retry_count": 6, "max_retry": 16, 
+"error": "Cannot connect to host acadmix-ag45obve.livekit.cloud:443 ssl:default
+[getaddrinfo failed]"}
+    19:33:08.669 INFO     livekit.agents     registered worker  
+                                         {"agent_name": "", "deployment": "", 
+"id": "AW_fnHupGcMykbu", "url": "wss://acadmix-ag45obve.livekit.cloud", 
+"region": "India West", "protocol": 17}

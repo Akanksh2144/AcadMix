@@ -80,3 +80,48 @@ async def override_student_attendance(
     svc: AttendanceService = Depends(get_attendance_service)
 ):
     return await svc.override_attendance(subject_code, student_id, req, user)
+
+
+@router.post("/attendance/daily/punch")
+async def record_daily_punch(
+    payload: server_schemas.DailyAttendancePunch,
+    user: dict = Depends(require_role("admin", "teacher", "hod")),
+    svc: AttendanceService = Depends(get_attendance_service)
+):
+    return await svc.record_daily_punch(user["college_id"], payload)
+
+
+@router.get("/attendance/daily/staff-summary")
+async def get_daily_staff_summary(
+    date: Optional[str] = None,
+    department: Optional[str] = None,
+    user: dict = Depends(require_role("hod", "admin")),
+    svc: AttendanceService = Depends(get_attendance_service)
+):
+    from datetime import date as date_cls
+    from datetime import datetime, timezone
+    date_val = date_cls.fromisoformat(date) if date else datetime.now(timezone.utc).date()
+    return await svc.get_daily_staff_summary(user["college_id"], department, date_val)
+
+
+@router.get("/attendance/daily/my-logs")
+async def get_my_daily_logs(
+    month: int,
+    year: int,
+    user: dict = Depends(require_role("student", "teacher", "hod", "admin")),
+    svc: AttendanceService = Depends(get_attendance_service)
+):
+    return await svc.get_my_daily_logs(user["id"], month, year)
+
+
+@router.post("/hod/attendance/send-defaulter-alerts")
+async def send_defaulter_alerts(
+    req: server_schemas.DefaulterAlertRequest,
+    user: dict = Depends(require_role("hod")),
+    svc: AttendanceService = Depends(get_attendance_service)
+):
+    dept_id = user.get("profile_data", {}).get("department_id", "")
+    if not dept_id:
+        dept_id = user.get("profile_data", {}).get("department", "")
+    return await svc.trigger_defaulter_alerts(user["college_id"], dept_id, req.threshold, user["id"])
+

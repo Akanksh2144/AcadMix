@@ -609,3 +609,25 @@ class NodalOfficerJurisdiction(Base, SoftDeleteMixin):
     __table_args__ = (
         UniqueConstraint("nodal_officer_id", "college_id", name="uq_nodal_college"),
     )
+
+
+class DailyAttendanceRecord(Base, SoftDeleteMixin):
+    """Daily check-in / check-out records for both staff and students (RFID, biometric, or manual)."""
+    __tablename__ = "daily_attendance_records"
+    id          = Column(String, primary_key=True, index=True, default=generate_uuid)
+    college_id  = Column(String, ForeignKey("colleges.id", ondelete="CASCADE"), nullable=False)
+    user_id     = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    date        = Column(Date, nullable=False)
+    check_in    = Column(DateTime(timezone=True), nullable=True)
+    check_out   = Column(DateTime(timezone=True), nullable=True)
+    status      = Column(String, nullable=False)      # present | absent | half_day | leave
+    source      = Column(String, nullable=False, server_default="manual")  # rfid | biometric | manual
+    remarks     = Column(String, nullable=True)
+    raw_logs    = Column(JSONB, nullable=True)         # list of all raw punch times for auditing: [{"time": "...", "device": "..."}]
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "date", name="uq_daily_attendance_user_date"),
+        Index("ix_daily_attendance_user_date", "user_id", "date"),
+        Index("ix_daily_attendance_college_date", "college_id", "date"),
+    )
+

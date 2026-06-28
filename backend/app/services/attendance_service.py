@@ -1,8 +1,8 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date as date_type
 from app.core.exceptions import ResourceNotFoundError, InputValidationError, AuthorizationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, func, text, delete
+from sqlalchemy import update, func, text, delete, or_, and_, extract
 from typing import List, Optional, Dict, Any
 
 from app import models
@@ -277,3 +277,258 @@ class AttendanceService:
                 "is_late": r.is_late_entry
             })
         return calendar
+
+    async def _resolve_user_id(self, college_id: str, identifier: str) -> Optional[str]:
+        # 1. Try directly matching user_id
+        u_stmt = select(models.User.id).where(
+            models.User.college_id == college_id,
+            models.User.id == identifier,
+            models.User.is_deleted == False
+        )
+        res = await self.session.execute(u_stmt)
+        uid = res.scalar()
+        if uid:
+            return uid
+
+        # 2. Try matching staff employee code
+        staff_stmt = select(models.StaffProfile.user_id).where(
+            models.StaffProfile.college_id == college_id,
+            models.StaffProfile.employee_code == identifier,
+            models.StaffProfile.is_deleted == False
+        )
+        res = await self.session.execute(staff_stmt)
+        uid = res.scalar()
+        if uid:
+            return uid
+
+        # 3. Try matching user profile extra_data rfid_uid or phone or rollNo
+        profile_stmt = select(models.UserProfile.user_id).where(
+            models.UserProfile.college_id == college_id,
+            or_(
+                models.UserProfile.phone == identifier,
+                models.UserProfile.extra_data["rfid_uid"].astext == identifier,
+                models.UserProfile.extra_data["rollNo"].astext == identifier
+            ),
+            models.UserProfile.is_deleted == False
+        )
+        res = await self.session.execute(profile_stmt)
+        uid = res.scalar()
+        return uid
+
+    async def record_daily_punch(self, college_id: str, payload) -> Dict[str, Any]:
+        user_id = await self._resolve_user_id(college_id, payload.identifier)
+        if not user_id:
+            raise ResourceNotFoundError("User", payload.identifier)
+
+        try:
+            punch_dt = datetime.fromisoformat(payload.timestamp.replace("Z", "+00:00"))
+        except ValueError:
+            try:
+                punch_dt = datetime.strptime(payload.timestamp, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                raise InputValidationError("Invalid timestamp format. Use ISO-8601 or YYYY-MM-DD HH:MM:SS")
+
+        punch_date = punch_dt.date()
+
+        # Check if record exists for this user on this date
+        stmt = select(models.DailyAttendanceRecord).where(
+            models.DailyAttendanceRecord.college_id == college_id,
+            models.DailyAttendanceRecord.user_id == user_id,
+            models.DailyAttendanceRecord.date == punch_date,
+            models.DailyAttendanceRecord.is_deleted == False
+        )
+        res = await self.session.execute(stmt)
+        record = res.scalars().first()
+
+        new_log = {"time": punch_dt.isoformat(), "device": payload.device_id, "source": payload.source}
+
+        if not record:
+            # First punch of the day is Check-in
+            record = models.DailyAttendanceRecord(
+                college_id=college_id,
+                user_id=user_id,
+                date=punch_date,
+                check_in=punch_dt,
+                status="present",
+                source=payload.source,
+                remarks=payload.remarks,
+                raw_logs=[new_log]
+            )
+            self.session.add(record)
+            msg = "Checked in successfully"
+        else:
+            # Subsequent punches update check_out
+            record.check_out = punch_dt
+            logs = list(record.raw_logs or [])
+            logs.append(new_log)
+            record.raw_logs = logs
+            record.source = payload.source
+            record.remarks = payload.remarks or record.remarks
+            msg = "Checked out successfully"
+
+        await log_audit(self.session, user_id, "daily_attendance", "record_punch", 
+                        {"date": str(punch_date), "time": punch_dt.isoformat(), "source": payload.source})
+
+        await self.session.commit()
+        return {
+            "message": msg,
+            "user_id": user_id,
+            "check_in": record.check_in.isoformat() if record.check_in else None,
+            "check_out": record.check_out.isoformat() if record.check_out else None
+        }
+
+    async def get_daily_staff_summary(self, college_id: str, department: Optional[str], date_val: date_type) -> List[Dict[str, Any]]:
+        from app.services.hr_payroll_service import STAFF_ROLES
+
+        # Let's filter users who have a staff profile or belong to STAFF_ROLES
+        q = select(models.User, models.StaffProfile).join(
+            models.StaffProfile, 
+            and_(models.StaffProfile.user_id == models.User.id, models.StaffProfile.college_id == college_id),
+            isouter=True
+        ).where(
+            models.User.college_id == college_id,
+            models.User.role.in_(STAFF_ROLES),
+            models.User.is_deleted == False
+        )
+
+        res = await self.session.execute(q)
+        rows = res.all()
+
+        staff_list = []
+        for user, profile in rows:
+            dept = (profile.department if profile else None) or (user.profile_data.get("department") if user.profile_data else None) or "Unknown"
+            if department and dept.lower() != department.lower():
+                continue
+
+            att_stmt = select(models.DailyAttendanceRecord).where(
+                models.DailyAttendanceRecord.college_id == college_id,
+                models.DailyAttendanceRecord.user_id == user.id,
+                models.DailyAttendanceRecord.date == date_val,
+                models.DailyAttendanceRecord.is_deleted == False
+            )
+            att_res = await self.session.execute(att_stmt)
+            att = att_res.scalars().first()
+
+            staff_list.append({
+                "user_id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "role": user.role,
+                "employee_code": profile.employee_code if profile else "",
+                "department": dept,
+                "designation": profile.designation if profile else "",
+                "check_in": att.check_in.isoformat() if (att and att.check_in) else None,
+                "check_out": att.check_out.isoformat() if (att and att.check_out) else None,
+                "status": att.status if att else "absent",
+                "source": att.source if att else None,
+                "remarks": att.remarks if att else None,
+                "raw_logs": att.raw_logs if att else []
+            })
+        return staff_list
+
+    async def get_my_daily_logs(self, user_id: str, month: int, year: int) -> List[Dict[str, Any]]:
+        stmt = select(models.DailyAttendanceRecord).where(
+            models.DailyAttendanceRecord.user_id == user_id,
+            extract("month", models.DailyAttendanceRecord.date) == month,
+            extract("year", models.DailyAttendanceRecord.date) == year,
+            models.DailyAttendanceRecord.is_deleted == False
+        ).order_by(models.DailyAttendanceRecord.date.asc())
+
+        res = await self.session.execute(stmt)
+        records = res.scalars().all()
+
+        return [{
+            "id": r.id,
+            "date": str(r.date),
+            "check_in": r.check_in.isoformat() if r.check_in else None,
+            "check_out": r.check_out.isoformat() if r.check_out else None,
+            "status": r.status,
+            "source": r.source,
+            "remarks": r.remarks,
+            "raw_logs": r.raw_logs
+        } for r in records]
+
+    async def trigger_defaulter_alerts(self, college_id: str, department_id: str, threshold: float, sender_id: str) -> Dict[str, Any]:
+        defaulters = await self.get_defaulters(college_id, department_id, threshold)
+        if not defaulters:
+            return {"message": "No defaulters found below the threshold.", "count": 0}
+
+        sent_count = 0
+        from app.services.omnichannel_workers import dispatch_whatsapp_message
+
+        for d in defaulters:
+            student_id = d["student_id"]
+            subject_code = d["subject_code"]
+            pct = d["percentage"]
+
+            # Fetch course name
+            course_stmt = select(models.Course.name).where(
+                models.Course.college_id == college_id,
+                models.Course.subject_code == subject_code,
+                models.Course.is_deleted == False
+            )
+            c_res = await self.session.execute(course_stmt)
+            subject_name = c_res.scalar() or subject_code
+
+            # Fetch parent_id via ParentStudentLink
+            link_stmt = select(models.ParentStudentLink.parent_id).where(
+                models.ParentStudentLink.student_id == student_id,
+                models.ParentStudentLink.college_id == college_id,
+                models.ParentStudentLink.is_deleted == False
+            ).order_by(models.ParentStudentLink.is_primary.desc())
+            link_res = await self.session.execute(link_stmt)
+            parent_id = link_res.scalar()
+
+            if not parent_id:
+                continue
+
+            parent_profile_stmt = select(models.UserProfile.phone).where(
+                models.UserProfile.user_id == parent_id,
+                models.UserProfile.is_deleted == False
+            )
+            profile_res = await self.session.execute(parent_profile_stmt)
+            phone = profile_res.scalar()
+
+            if not phone:
+                continue
+
+            # Get counts
+            counts_stmt = text("""
+                SELECT 
+                    COUNT(*) FILTER (WHERE status = 'present' OR status = 'od') AS present_count,
+                    COUNT(*) AS total_count
+                FROM attendance_records
+                WHERE student_id = :student_id AND subject_code = :subject_code AND is_deleted = false
+            """)
+            counts_res = await self.session.execute(counts_stmt, {"student_id": student_id, "subject_code": subject_code})
+            row = counts_res.first()
+            present = row.present_count if row else 0
+            total = row.total_count if row else 0
+
+            factor = threshold / 100.0
+            if factor >= 1.0:
+                needed = total - present
+            else:
+                numerator = (factor * total) - present
+                denominator = 1.0 - factor
+                needed = max(0, int(sum([numerator / denominator, 0.9999])))
+
+            body = (
+                f"🚨 *Low Attendance Alert*\n\n"
+                f"Dear Parent,\n"
+                f"Your ward *{d['name']}*'s attendance in *{subject_name}* ({subject_code}) is currently *{pct}%*.\n"
+                f"This is below the required minimum of *{threshold}%*.\n\n"
+                f"📊 Classes: {present} present out of {total} total.\n"
+                f"📅 Ward needs to attend the next *{needed}* consecutive classes of this subject to restore eligibility.\n\n"
+                f"Please ensure regular attendance."
+            )
+
+            await dispatch_whatsapp_message(phone, body)
+            sent_count += 1
+
+        await log_audit(self.session, sender_id, "attendance_alerts", "send_warnings", 
+                        {"department_id": department_id, "threshold": threshold, "count": sent_count})
+        
+        await self.session.commit()
+        return {"message": f"Successfully sent warning alerts to {sent_count} parents.", "count": sent_count}
+

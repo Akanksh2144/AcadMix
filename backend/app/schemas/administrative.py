@@ -192,3 +192,17 @@ class InstitutionProfileUpdate(BaseModel):
     mous: Optional[list] = None
     extension_activities: Optional[list] = None
     research_publications: Optional[list] = None
+
+
+class DailyAttendancePunch(BaseModel):
+    identifier: str  # Card UID, Bio ID, or Employee Code / Student Roll No
+    timestamp: str   # ISO-8601 or YYYY-MM-DD HH:MM:SS
+    source: str = "biometric"  # rfid, biometric, manual
+    device_id: Optional[str] = None
+    remarks: Optional[str] = None
+
+
+class DefaulterAlertRequest(BaseModel):
+    threshold: float = 75.0
+    academic_year: Optional[str] = None
+

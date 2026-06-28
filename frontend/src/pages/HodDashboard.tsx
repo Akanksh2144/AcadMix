@@ -45,6 +45,7 @@ import HODClassInChargeTab from "../components/hod/HODClassInChargeTab";
 import HODMentorTab from "../components/hod/HODMentorTab";
 import HODProgressionTab from "../components/hod/HODProgressionTab";
 import HODLeaveApprovalsTab from "../components/hod/HODLeaveApprovalsTab";
+import HODAttendanceTab from "../components/hod/HODAttendanceTab";
 import { useTheme } from "../contexts/ThemeContext";
 import DashboardSkeleton from "../components/DashboardSkeleton";
 import { mockSubjects } from "../lib/constants";
@@ -610,6 +611,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
               { id: "class-in-charge", label: "Class In-Charge" },
               { id: "progression", label: "Student Progression" },
               { id: "leave-approvals", label: "Leave Approvals" },
+              { id: "attendance", label: "Attendance" },
               { id: "insights", label: "AI Insights", icon: Sparkle },
             ].map((tab) => (
               <button
@@ -1644,6 +1646,12 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
         {activeTab === "leave-approvals" && (
           <div data-testid="leave-approvals-content">
             <HODLeaveApprovalsTab />
+          </div>
+        )}
+
+        {activeTab === "attendance" && (
+          <div data-testid="attendance-content">
+            <HODAttendanceTab />
           </div>
         )}
 

@@ -315,6 +315,10 @@ export const attendanceAPI = {
   mark: (data) => api.post('/faculty/attendance/mark', data),
   getStudentConsolidated: () => api.get('/student/attendance'),
   getHodDefaulters: (departmentId, threshold) => api.get('/hod/attendance/defaulters', { params: { department_id: departmentId, threshold } }),
+  recordDailyPunch: (data) => api.post('/attendance/daily/punch', data),
+  getDailyStaffSummary: (params) => api.get('/attendance/daily/staff-summary', { params }),
+  getMyDailyLogs: (params) => api.get('/attendance/daily/my-logs', { params }),
+  sendDefaulterAlerts: (data) => api.post('/hod/attendance/send-defaulter-alerts', data),
 };
 
 // Syllabus Tracker
