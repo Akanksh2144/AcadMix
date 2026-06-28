@@ -298,3 +298,153 @@ class TestAttendanceManagementRouter:
 
         app.dependency_overrides.clear()
 
+    async def test_update_and_get_attendance_policy(self, mock_db, auth_admin):
+        app.dependency_overrides[get_db] = lambda: mock_db
+        app.dependency_overrides[get_current_user] = lambda: auth_admin
+
+        mock_college = MagicMock()
+        mock_college.settings = {}
+
+        mock_col_res = MagicMock()
+        mock_col_res.scalar.return_value = mock_college
+
+        mock_db.execute.side_effect = [
+            mock_col_res
+        ]
+
+        payload = {
+            "shift_start": "09:00",
+            "grace_period_minutes": 15,
+            "half_day_minutes": 240
+        }
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            with patch("app.core.security.get_current_user", new_callable=AsyncMock) as mock_get_user:
+                mock_get_user.return_value = auth_admin
+                
+                resp = await client.post("/api/admin/attendance/policy", json=payload)
+                assert resp.status_code == 200
+                body = resp.json()
+                assert "data" in body
+                assert body["data"]["policy"]["shift_start"] == "09:00"
+
+        app.dependency_overrides.clear()
+
+    async def test_daily_attendance_shift_evaluation_late_and_half_day(self, mock_db, auth_admin):
+        app.dependency_overrides[get_db] = lambda: mock_db
+        app.dependency_overrides[get_current_user] = lambda: auth_admin
+        
+        mock_user_res = MagicMock()
+        mock_user_res.scalar.return_value = "usr-123"
+
+        mock_policy_res = MagicMock()
+        mock_policy_res.scalar.return_value = {
+            "attendance_policy": {
+                "shift_start": "09:00",
+                "grace_period_minutes": 15,
+                "half_day_minutes": 240
+            }
+        }
+
+        mock_record_res1 = MagicMock()
+        mock_record_res1.scalars.return_value.first.return_value = None
+
+        mock_user_res2 = MagicMock()
+        mock_user_res2.scalar.return_value = "usr-123"
+
+        mock_policy_res2 = MagicMock()
+        mock_policy_res2.scalar.return_value = {
+            "attendance_policy": {
+                "shift_start": "09:00",
+                "grace_period_minutes": 15,
+                "half_day_minutes": 240
+            }
+        }
+
+        from datetime import datetime
+        mock_record = models.DailyAttendanceRecord(
+            college_id="test-college",
+            user_id="usr-123",
+            date=datetime.strptime("2026-06-28", "%Y-%m-%d").date(),
+            check_in=datetime.strptime("2026-06-28 09:30:00", "%Y-%m-%d %H:%M:%S"),
+            status="present",
+            raw_logs=[]
+        )
+
+        mock_record_res2 = MagicMock()
+        mock_record_res2.scalars.return_value.first.return_value = mock_record
+
+        mock_db.execute.side_effect = [
+            mock_user_res,
+            mock_record_res1,
+            mock_policy_res,
+            mock_user_res2,
+            mock_record_res2,
+            mock_policy_res2
+        ]
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            with patch("app.core.security.get_current_user", new_callable=AsyncMock) as mock_get_user:
+                mock_get_user.return_value = auth_admin
+                
+                payload = {
+                    "identifier": "usr-123",
+                    "timestamp": "2026-06-28T09:30:00Z",
+                    "source": "rfid"
+                }
+                resp = await client.post("/api/attendance/daily/punch", json=payload)
+                assert resp.status_code == 200
+                
+                payload2 = {
+                    "identifier": "usr-123",
+                    "timestamp": "2026-06-28T11:30:00Z",
+                    "source": "rfid"
+                }
+                resp2 = await client.post("/api/attendance/daily/punch", json=payload2)
+                assert resp2.status_code == 200
+                assert mock_record.status == "half_day"
+
+        app.dependency_overrides.clear()
+
+    async def test_daily_attendance_leave_auto_sync(self, mock_db, auth_hod):
+        app.dependency_overrides[get_db] = lambda: mock_db
+        app.dependency_overrides[get_current_user] = lambda: auth_hod
+
+        mock_staff_rows = [
+            (
+                MockUser("tch-123", "Teacher One", "t1@test.edu", "teacher", "test-college"),
+                MockStaffProfile("tch-123", "EMP001", "Professor", "Computer Science")
+            )
+        ]
+        mock_staff_res = MagicMock()
+        mock_staff_res.all.return_value = mock_staff_rows
+
+        mock_att_res = MagicMock()
+        mock_att_res.scalars.return_value.first.return_value = None
+
+        mock_leave_res = MagicMock()
+        mock_leave_res.scalar.return_value = "CL"
+
+        mock_db.execute.side_effect = [
+            mock_staff_res,
+            mock_att_res,
+            mock_leave_res
+        ]
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            with patch("app.core.security.get_current_user", new_callable=AsyncMock) as mock_get_user:
+                mock_get_user.return_value = auth_hod
+                
+                resp = await client.get("/api/attendance/daily/staff-summary?date=2026-06-28&department=Computer%20Science")
+                assert resp.status_code == 200
+                data = resp.json()["data"]
+                assert len(data) == 1
+                assert data[0]["status"] == "leave"
+                assert "On Approved Leave (CL)" in data[0]["remarks"]
+
+        app.dependency_overrides.clear()
+
+

@@ -235,6 +235,49 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
     fetchDashboard();
   }, []);
 
+  // ─── Attendance Policy State ─────────────────────────────────────────
+  const [policySettings, setPolicySettings] = useState({
+    shift_start: '09:00',
+    grace_period_minutes: 15,
+    half_day_minutes: 240
+  });
+  const [policyLoading, setPolicyLoading] = useState(false);
+  const [savingPolicy, setSavingPolicy] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'attendance-policy') {
+      setPolicyLoading(true);
+      attendanceAPI.getAttendancePolicy()
+        .then(res => {
+          if (res.data) {
+            setPolicySettings({
+              shift_start: res.data.shift_start || '09:00',
+              grace_period_minutes: res.data.grace_period_minutes ?? 15,
+              half_day_minutes: res.data.half_day_minutes ?? 240
+            });
+          }
+        })
+        .catch(err => {
+          console.error('Failed to load attendance policy:', err);
+          toast.error('Failed to load attendance policy settings');
+        })
+        .finally(() => setPolicyLoading(false));
+    }
+  }, [activeTab]);
+
+  const handleSavePolicy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingPolicy(true);
+    try {
+      const res = await attendanceAPI.updateAttendancePolicy(policySettings);
+      toast.success(res.data?.message || 'Attendance policy updated successfully!');
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Failed to update attendance policy');
+    } finally {
+      setSavingPolicy(false);
+    }
+  };
+
   // ─── AI Insights State ─────────────────────────────────────────
   const [pins, setPins] = useState([]);
   const [activePinData, setActivePinData] = useState(null);
@@ -329,7 +372,8 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
               { id: 'cia-builder', label: 'CIA Engine' },
               { id: 'experts', label: 'Expert Management' },
               { id: 'insights', label: 'AI Insights' },
-              { id: 'timetable-settings', label: 'Timetable Settings' }
+              { id: 'timetable-settings', label: 'Timetable Settings' },
+              { id: 'attendance-policy', label: 'Attendance Policy' }
             ].map(tab => (
               <button 
                 key={tab.id} 
@@ -772,6 +816,76 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
           <motion.div data-testid="timetable-settings-content" variants={containerVariants} initial="hidden" animate="show">
             <motion.div variants={itemVariants}>
               <TimetableSettings />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === 'attendance-policy' && (
+          <motion.div data-testid="attendance-policy-content" variants={containerVariants} initial="hidden" animate="show">
+            <motion.h3 variants={itemVariants} className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Attendance Policy Configuration</motion.h3>
+            
+            <motion.div variants={itemVariants} className="max-w-2xl soft-card p-6">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-6">
+                Configure college-wide parameters for calculating daily gate scanner punch-ins and punch-outs.
+              </p>
+
+              {policyLoading ? (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                  <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-sm font-semibold">Loading active policy...</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSavePolicy} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Shift Start Time</label>
+                    <input 
+                      type="time" 
+                      value={policySettings.shift_start}
+                      onChange={(e) => setPolicySettings({ ...policySettings, shift_start: e.target.value })}
+                      className="soft-input w-full"
+                      required
+                    />
+                    <p className="text-xs font-semibold text-slate-400 mt-1">Expected daily gate reader punch-in start hour (e.g. 09:00).</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Late Grace Period (Minutes)</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      max="120"
+                      value={policySettings.grace_period_minutes}
+                      onChange={(e) => setPolicySettings({ ...policySettings, grace_period_minutes: parseInt(e.target.value) || 0 })}
+                      className="soft-input w-full"
+                      required
+                    />
+                    <p className="text-xs font-semibold text-slate-400 mt-1">Minutes allowed after shift start before check-in is flagged as Late.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Half-Day Threshold (Minutes)</label>
+                    <input 
+                      type="number" 
+                      min="60"
+                      max="720"
+                      value={policySettings.half_day_minutes}
+                      onChange={(e) => setPolicySettings({ ...policySettings, half_day_minutes: parseInt(e.target.value) || 0 })}
+                      className="soft-input w-full"
+                      required
+                    />
+                    <p className="text-xs font-semibold text-slate-400 mt-1">Minimum total worked duration between check-in and check-out to avoid Half-Day penalty.</p>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={savingPolicy}
+                    className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {savingPolicy && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+                    <span>Save Policy Settings</span>
+                  </button>
+                </form>
+              )}
             </motion.div>
           </motion.div>
         )}

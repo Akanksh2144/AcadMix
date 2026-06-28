@@ -148,4 +148,22 @@ async def upload_rfid_mapping_csv(
     return await svc.upload_rfid_mapping_csv(user["college_id"], content_str)
 
 
+@router.post("/admin/attendance/policy")
+async def update_attendance_policy(
+    req: server_schemas.AttendancePolicyUpdate,
+    user: dict = Depends(require_role("admin")),
+    svc: AttendanceService = Depends(get_attendance_service)
+):
+    return await svc.update_attendance_policy(user["college_id"], req)
+
+
+@router.get("/admin/attendance/policy")
+async def get_attendance_policy(
+    user: dict = Depends(require_role("admin", "hod")),
+    svc: AttendanceService = Depends(get_attendance_service)
+):
+    return await svc.get_attendance_policy(user["college_id"])
+
+
+
 

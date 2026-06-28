@@ -206,3 +206,10 @@ class DefaulterAlertRequest(BaseModel):
     threshold: float = 75.0
     academic_year: Optional[str] = None
 
+
+class AttendancePolicyUpdate(BaseModel):
+    shift_start: str = "09:00"
+    grace_period_minutes: int = 15
+    half_day_minutes: int = 240
+
+
