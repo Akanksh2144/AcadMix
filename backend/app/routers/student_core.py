@@ -4,6 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List, Optional
 from datetime import datetime, date, timedelta
+import uuid
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body, UploadFile, File, Form
+from app.core.audit import log_audit
+from app.core.storage import upload_file as storage_upload_file, download_file as storage_download_file, generate_storage_key
 
 from database import get_db
 from app.core.security import get_current_user
@@ -582,4 +586,415 @@ async def log_student_mood(
     await session.commit()
     
     return {"message": "Mood logged successfully", "id": checkin.id}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SIS Profile & Enterprise Safeguards
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.put("/student/profile")
+async def update_my_student_profile(
+    payload: dict = Body(...),
+    user: dict = Depends(require_role("student")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Student self-service update for contact and editable profile fields."""
+    stmt = select(models.UserProfile).where(models.UserProfile.user_id == user["id"])
+    res = await session.execute(stmt)
+    profile = res.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    old_data = {
+        "phone": profile.phone,
+        "blood_group": profile.blood_group,
+        "aadhaar_number": profile.aadhaar_number,
+        "address": profile.address,
+    }
+
+    # Editable personal contact fields
+    if "phone" in payload: profile.phone = payload["phone"]
+    if "blood_group" in payload: profile.blood_group = payload["blood_group"]
+    if "date_of_birth" in payload and payload["date_of_birth"]:
+        try:
+            profile.date_of_birth = datetime.fromisoformat(str(payload["date_of_birth"]).split("T")[0]).date()
+        except ValueError:
+            pass
+    if "gender" in payload: profile.gender = payload["gender"]
+    if "aadhaar_number" in payload: profile.aadhaar_number = payload["aadhaar_number"]
+    if "father_name" in payload: profile.father_name = payload["father_name"]
+    if "mother_name" in payload: profile.mother_name = payload["mother_name"]
+    if "address" in payload: profile.address = payload["address"]
+
+    # Extra data fields
+    extra = dict(profile.extra_data or {})
+    for k in ["city", "state", "pincode", "community", "religion", "caste", "mother_tongue"]:
+        if k in payload:
+            extra[k] = payload[k]
+    
+    # Increment version
+    extra["version"] = extra.get("version", 1) + 1
+    profile.extra_data = extra
+
+    await session.commit()
+    await session.refresh(profile)
+
+    # Audit logging if sensitive identification changes
+    if old_data["aadhaar_number"] != profile.aadhaar_number:
+        await log_audit(session, user["id"], "student_profile", "update_identification", {
+            "student_id": user["id"],
+            "old_aadhaar": old_data["aadhaar_number"],
+            "new_aadhaar": profile.aadhaar_number
+        })
+        await session.commit()
+
+    return {"message": "Profile updated successfully", "version": extra["version"]}
+
+
+@router.put("/students/{student_id}/profile")
+async def update_student_profile_admin(
+    student_id: str,
+    payload: dict = Body(...),
+    user: dict = Depends(require_role("hod", "admin", "principal")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Admin/HOD update for student academic records with optimistic locking & segregation of duties."""
+    # 1. RBAC Segregation of Duties
+    if user["id"] == student_id:
+        raise HTTPException(status_code=403, detail="Segregation of Duties violation: Staff cannot edit their own student profile.")
+
+    stmt = select(models.UserProfile).where(
+        models.UserProfile.user_id == student_id,
+        models.UserProfile.college_id == user["college_id"]
+    )
+    res = await session.execute(stmt)
+    profile = res.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    extra = dict(profile.extra_data or {})
+    current_version = extra.get("version", 1)
+
+    # 2. Optimistic Locking
+    expected_version = payload.get("expected_version")
+    if expected_version is not None and int(expected_version) != current_version:
+        raise HTTPException(status_code=409, detail="Concurrent edit detected. Profile was modified by another administrator.")
+
+    old_values = {
+        "enrollment_status": profile.enrollment_status,
+        "department": profile.department,
+        "batch": profile.batch,
+        "abc_id": profile.abc_id,
+    }
+
+    # Update official academic fields
+    if "roll_number" in payload: profile.roll_number = payload["roll_number"]
+    if "department" in payload: profile.department = payload["department"]
+    if "section" in payload: profile.section = payload["section"]
+    if "batch" in payload: profile.batch = payload["batch"]
+    if "current_semester" in payload and payload["current_semester"] is not None:
+        profile.current_semester = int(payload["current_semester"])
+    if "abc_id" in payload: profile.abc_id = payload["abc_id"]
+    if "enrollment_status" in payload: profile.enrollment_status = payload["enrollment_status"]
+
+    if "abc_id_status" in payload:
+        extra["abc_id_status"] = payload["abc_id_status"] # pending | verified
+
+    # Personal fields also editable by admin
+    if "phone" in payload: profile.phone = payload["phone"]
+    if "blood_group" in payload: profile.blood_group = payload["blood_group"]
+    if "address" in payload: profile.address = payload["address"]
+
+    for k in ["city", "state", "pincode", "community", "religion", "caste", "mother_tongue"]:
+        if k in payload:
+            extra[k] = payload[k]
+
+    extra["version"] = current_version + 1
+    profile.extra_data = extra
+
+    await session.commit()
+    await session.refresh(profile)
+
+    # 3. Mandatory Audit Logging for sensitive mutations
+    new_values = {
+        "enrollment_status": profile.enrollment_status,
+        "department": profile.department,
+        "batch": profile.batch,
+        "abc_id": profile.abc_id,
+    }
+    if old_values != new_values:
+        await log_audit(session, user["id"], "student_profile", "admin_update_academic", {
+            "student_id": student_id,
+            "old_values": old_values,
+            "new_values": new_values
+        })
+        await session.commit()
+
+    return {"message": "Student profile updated successfully", "version": extra["version"]}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Disciplinary Records API
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/students/{student_id}/disciplinary")
+async def get_disciplinary_records(
+    student_id: str,
+    user: dict = Depends(require_role("hod", "admin", "teacher", "principal", "student")),
+    session: AsyncSession = Depends(get_db)
+):
+    if user["role"] == "student" and user["id"] != student_id:
+        raise HTTPException(status_code=403, detail="Not authorized to view other student disciplinary records")
+
+    stmt = select(models.UserProfile).where(models.UserProfile.user_id == student_id)
+    res = await session.execute(stmt)
+    profile = res.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    extra = profile.extra_data or {}
+    return {"data": extra.get("disciplinary_records", [])}
+
+
+@router.post("/students/{student_id}/disciplinary")
+async def add_disciplinary_record(
+    student_id: str,
+    payload: dict = Body(...),
+    user: dict = Depends(require_role("hod", "admin", "principal")),
+    session: AsyncSession = Depends(get_db)
+):
+    if user["id"] == student_id:
+        raise HTTPException(status_code=403, detail="Segregation of Duties violation: Cannot log disciplinary incidents against yourself.")
+
+    stmt = select(models.UserProfile).where(models.UserProfile.user_id == student_id)
+    res = await session.execute(stmt)
+    profile = res.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    extra = dict(profile.extra_data or {})
+    records = list(extra.get("disciplinary_records", []))
+
+    incident = {
+        "id": str(uuid.uuid4()),
+        "incident_type": payload.get("incident_type", "General Infraction"),
+        "description": payload.get("description", ""),
+        "severity": payload.get("severity", "low"), # low | medium | high
+        "action_taken": payload.get("action_taken", "Warning issued"),
+        "incident_date": payload.get("incident_date", date.today().isoformat()),
+        "created_at": datetime.utcnow().isoformat(),
+        "logged_by_name": user.get("name", "Administrator"),
+    }
+    records.append(incident)
+    extra["disciplinary_records"] = records
+    profile.extra_data = extra
+
+    await log_audit(session, user["id"], "disciplinary", "add_incident", {
+        "student_id": student_id,
+        "incident_id": incident["id"],
+        "severity": incident["severity"]
+    })
+
+    await session.commit()
+    return {"message": "Disciplinary incident logged successfully", "data": incident}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Mentoring Logs API
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/students/{student_id}/mentoring-logs")
+async def get_mentoring_logs(
+    student_id: str,
+    user: dict = Depends(require_role("hod", "admin", "teacher", "principal", "student")),
+    session: AsyncSession = Depends(get_db)
+):
+    if user["role"] == "student" and user["id"] != student_id:
+        raise HTTPException(status_code=403, detail="Not authorized to view other student mentoring logs")
+
+    stmt = select(models.UserProfile).where(models.UserProfile.user_id == student_id)
+    res = await session.execute(stmt)
+    profile = res.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    extra = profile.extra_data or {}
+    return {"data": extra.get("mentoring_logs", [])}
+
+
+@router.post("/students/{student_id}/mentoring-logs")
+async def add_mentoring_log(
+    student_id: str,
+    payload: dict = Body(...),
+    user: dict = Depends(require_role("hod", "admin", "teacher", "principal")),
+    session: AsyncSession = Depends(get_db)
+):
+    stmt = select(models.UserProfile).where(models.UserProfile.user_id == student_id)
+    res = await session.execute(stmt)
+    profile = res.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    extra = dict(profile.extra_data or {})
+    logs = list(extra.get("mentoring_logs", []))
+
+    session_record = {
+        "id": str(uuid.uuid4()),
+        "session_date": payload.get("session_date", date.today().isoformat()),
+        "notes": payload.get("notes", ""),
+        "action_items": payload.get("action_items", ""),
+        "created_at": datetime.utcnow().isoformat(),
+        "logged_by_name": user.get("name", "Mentor"),
+    }
+    logs.append(session_record)
+    extra["mentoring_logs"] = logs
+    profile.extra_data = extra
+
+    await session.commit()
+    return {"message": "Mentoring session logged successfully", "data": session_record}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Document Verification API & Storage Lifecycle
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/students/{student_id}/documents")
+async def get_student_documents(
+    student_id: str,
+    user: dict = Depends(require_role("hod", "admin", "teacher", "principal", "student")),
+    session: AsyncSession = Depends(get_db)
+):
+    if user["role"] == "student" and user["id"] != student_id:
+        raise HTTPException(status_code=403, detail="Not authorized to view other student documents")
+
+    stmt = select(models.UserProfile).where(models.UserProfile.user_id == student_id)
+    res = await session.execute(stmt)
+    profile = res.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    extra = profile.extra_data or {}
+    return {"data": extra.get("documents", [])}
+
+
+@router.post("/students/{student_id}/documents/upload")
+async def upload_student_document(
+    student_id: str,
+    doc_type: str = Form("other"),
+    remarks: str = Form(""),
+    file: UploadFile = File(...),
+    user: dict = Depends(require_role("student", "hod", "admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    if user["role"] == "student" and user["id"] != student_id:
+        raise HTTPException(status_code=403, detail="Not authorized to upload documents for other students")
+
+    stmt = select(models.UserProfile).where(models.UserProfile.user_id == student_id)
+    res = await session.execute(stmt)
+    profile = res.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    file_bytes = await file.read()
+    key = generate_storage_key(user["college_id"], "sis_docs", file.filename)
+    public_url = storage_upload_file(file_bytes, key, file.content_type or "application/octet-stream", skip_validation=True)
+
+    extra = dict(profile.extra_data or {})
+    docs = list(extra.get("documents", []))
+
+    doc_record = {
+        "id": str(uuid.uuid4()),
+        "doc_type": doc_type, # marksheet | id_proof | admission_letter | other
+        "filename": file.filename,
+        "file_key": key,
+        "url": public_url,
+        "status": "pending", # pending | verified | rejected
+        "uploaded_at": datetime.utcnow().isoformat(),
+        "reviewed_by": None,
+        "remarks": remarks,
+    }
+    docs.append(doc_record)
+    extra["documents"] = docs
+    profile.extra_data = extra
+
+    await session.commit()
+    return {"message": "Document uploaded successfully", "data": doc_record}
+
+
+@router.put("/students/{student_id}/documents/{doc_id}/review")
+async def review_student_document(
+    student_id: str,
+    doc_id: str,
+    payload: dict = Body(...),
+    user: dict = Depends(require_role("hod", "admin", "principal")),
+    session: AsyncSession = Depends(get_db)
+):
+    stmt = select(models.UserProfile).where(models.UserProfile.user_id == student_id)
+    res = await session.execute(stmt)
+    profile = res.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    extra = dict(profile.extra_data or {})
+    docs = list(extra.get("documents", []))
+
+    found = False
+    status = payload.get("status", "verified") # verified | rejected
+    remarks = payload.get("remarks", "")
+
+    for doc in docs:
+        if doc.get("id") == doc_id:
+            doc["status"] = status
+            doc["remarks"] = remarks
+            doc["reviewed_by"] = user.get("name", "Admin")
+            found = True
+            break
+
+    if not found:
+        raise HTTPException(status_code=404, detail="Document record not found")
+
+    extra["documents"] = docs
+    profile.extra_data = extra
+
+    await log_audit(session, user["id"], "sis_document", f"review_{status}", {
+        "student_id": student_id,
+        "doc_id": doc_id,
+        "status": status,
+        "remarks": remarks
+    })
+
+    await session.commit()
+    return {"message": f"Document marked as {status}", "data": {"id": doc_id, "status": status}}
+
+
+@router.get("/students/{student_id}/documents/{doc_id}/download")
+async def download_student_document(
+    student_id: str,
+    doc_id: str,
+    user: dict = Depends(require_role("hod", "admin", "teacher", "principal", "student")),
+    session: AsyncSession = Depends(get_db)
+):
+    if user["role"] == "student" and user["id"] != student_id:
+        raise HTTPException(status_code=403, detail="Not authorized to download documents for other students")
+
+    stmt = select(models.UserProfile).where(models.UserProfile.user_id == student_id)
+    res = await session.execute(stmt)
+    profile = res.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    extra = profile.extra_data or {}
+    docs = extra.get("documents", [])
+    doc = next((d for d in docs if d.get("id") == doc_id), None)
+    if not doc or not doc.get("file_key"):
+        raise HTTPException(status_code=404, detail="Document file key not found")
+
+    file_bytes = storage_download_file(doc["file_key"])
+    if not file_bytes:
+        raise HTTPException(status_code=404, detail="File content missing from storage")
+
+    import io
+    return StreamingResponse(io.BytesIO(file_bytes), media_type="application/octet-stream", headers={
+        "Content-Disposition": f'attachment; filename="{doc.get("filename", "document")}"'
+    })
 

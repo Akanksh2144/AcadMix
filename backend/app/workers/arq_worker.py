@@ -905,6 +905,67 @@ from app.workers.pdf_generator import (
     generate_nep_compliance_task
 )
 
+async def cleanup_orphaned_sis_documents(ctx):
+    """
+    Runs daily. Scans UserProfile.extra_data['documents'] and R2 storage
+    to purge unverified or abandoned verification documents older than 7 days.
+    """
+    from database import admin_session_ctx
+    from sqlalchemy import select
+    from app.models.core import UserProfile
+    from app.core.storage import delete_file as storage_delete_file
+    from datetime import datetime, timedelta
+    import logging
+
+    logger = logging.getLogger("acadmix.sis.cleanup")
+    cutoff = datetime.utcnow() - timedelta(days=7)
+
+    try:
+        async with admin_session_ctx() as session:
+            res = await session.execute(select(UserProfile).where(UserProfile.extra_data.isnot(None)))
+            profiles = res.scalars().all()
+
+            purged_count = 0
+            for profile in profiles:
+                extra = dict(profile.extra_data or {})
+                docs = extra.get("documents", [])
+                if not docs:
+                    continue
+
+                retained_docs = []
+                modified = False
+                for doc in docs:
+                    status = doc.get("status", "pending")
+                    uploaded_at_str = doc.get("uploaded_at")
+                    is_stale = False
+                    if uploaded_at_str and status in ("pending", "rejected"):
+                        try:
+                            uploaded_dt = datetime.fromisoformat(str(uploaded_at_str).split("Z")[0].split("+")[0])
+                            if uploaded_dt < cutoff:
+                                is_stale = True
+                        except Exception:
+                            pass
+                    
+                    if is_stale and doc.get("file_key"):
+                        storage_delete_file(doc["file_key"])
+                        purged_count += 1
+                        modified = True
+                    else:
+                        retained_docs.append(doc)
+
+                if modified:
+                    extra["documents"] = retained_docs
+                    profile.extra_data = extra
+
+            if purged_count > 0:
+                await session.commit()
+                logger.info("[sis-cleanup] Successfully purged %d stale verification documents", purged_count)
+            else:
+                await session.commit()
+    except Exception as e:
+        logger.error("[sis-cleanup] Error cleaning up orphaned documents: %s", e)
+
+
 class WorkerSettings:
     functions = [
         process_ai_review_task,
@@ -927,10 +988,14 @@ class WorkerSettings:
         generate_nep_compliance_task,
         # Onboarding
         provision_tenant,
+        # SIS Lifecycle
+        cleanup_orphaned_sis_documents,
     ]
     
     # Scheduled background jobs
     cron_jobs = [
+        # SIS Lifecycle
+        cron(cleanup_orphaned_sis_documents, hour=3, minute=0),                # 3 AM daily
         # Hostel
         cron(sweep_expired_bed_locks, second=0),                               # every minute at :00
         cron(check_gatepass_violations, minute={0, 15, 30, 45}),               # every 15 min
