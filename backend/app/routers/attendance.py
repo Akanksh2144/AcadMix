@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
@@ -124,4 +124,16 @@ async def send_defaulter_alerts(
     if not dept_id:
         dept_id = user.get("profile_data", {}).get("department", "")
     return await svc.trigger_defaulter_alerts(user["college_id"], dept_id, req.threshold, user["id"])
+
+
+@router.post("/attendance/daily/upload-logs")
+async def upload_daily_attendance_csv(
+    file: UploadFile = File(...),
+    user: dict = Depends(require_role("hod", "admin")),
+    svc: AttendanceService = Depends(get_attendance_service)
+):
+    content_bytes = await file.read()
+    content_str = content_bytes.decode("utf-8")
+    return await svc.upload_daily_punch_csv(user["college_id"], content_str)
+
 

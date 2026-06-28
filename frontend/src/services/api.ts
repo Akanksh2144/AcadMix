@@ -319,6 +319,7 @@ export const attendanceAPI = {
   getDailyStaffSummary: (params) => api.get('/attendance/daily/staff-summary', { params }),
   getMyDailyLogs: (params) => api.get('/attendance/daily/my-logs', { params }),
   sendDefaulterAlerts: (data) => api.post('/hod/attendance/send-defaulter-alerts', data),
+  uploadLogs: (formData) => api.post('/attendance/daily/upload-logs', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };
 
 // Syllabus Tracker

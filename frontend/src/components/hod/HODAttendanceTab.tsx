@@ -92,6 +92,33 @@ const HODAttendanceTab = () => {
     }
   };
 
+  const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const uploadPromise = attendanceAPI.uploadLogs(formData);
+
+    toast.promise(uploadPromise, {
+      loading: 'Uploading and processing CSV biometric logs...',
+      success: (res) => {
+        if (activeSubTab === 'staff') {
+          fetchStaffSummary();
+        } else {
+          fetchDefaulters();
+        }
+        return res.data?.message || 'CSV logs successfully imported';
+      },
+      error: (err) => {
+        return err.response?.data?.detail || 'Failed to upload CSV logs. Ensure columns are "identifier" and "timestamp".';
+      }
+    });
+
+    e.target.value = '';
+  };
+
   const calculateNeededClasses = (present: number, total: number) => {
     const factor = threshold / 100.0;
     if (factor >= 1.0) return total - present;
@@ -257,6 +284,17 @@ const HODAttendanceTab = () => {
               >
                 <ArrowsClockwise size={18} />
               </button>
+
+              <label className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold cursor-pointer transition-all">
+                <FileArrowUp size={16} />
+                <span>Upload CSV Logs</span>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleCSVUpload}
+                  className="hidden"
+                />
+              </label>
             </div>
             
             <div className="text-xs text-slate-500">

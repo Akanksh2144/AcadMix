@@ -221,3 +221,42 @@ class TestAttendanceManagementRouter:
                     assert "Dear Mentor" in mock_dispatch.call_args_list[1][0][1]
 
         app.dependency_overrides.clear()
+
+    async def test_upload_daily_attendance_csv(self, mock_db, auth_hod):
+        app.dependency_overrides[get_db] = lambda: mock_db
+        app.dependency_overrides[get_current_user] = lambda: auth_hod
+
+        mock_user_res = MagicMock()
+        mock_user_res.scalar.return_value = "usr-789"
+
+        mock_record_res = MagicMock()
+        mock_record_res.scalars.return_value.first.return_value = None
+
+        mock_db.execute.side_effect = [
+            mock_user_res,
+            mock_record_res
+        ]
+
+        csv_content = (
+            "identifier,timestamp,source\n"
+            "usr-789,2026-06-28 09:15:00,csv_import\n"
+        )
+        files = {
+            "file": ("logs.csv", csv_content, "text/csv")
+        }
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            with patch("app.core.security.get_current_user", new_callable=AsyncMock) as mock_get_user:
+                mock_get_user.return_value = auth_hod
+                
+                resp = await client.post("/api/attendance/daily/upload-logs", files=files)
+                assert resp.status_code == 200
+                body = resp.json()
+                assert "data" in body
+                data = body["data"]
+                assert data["success_count"] == 1
+                assert data["error_count"] == 0
+
+        app.dependency_overrides.clear()
+

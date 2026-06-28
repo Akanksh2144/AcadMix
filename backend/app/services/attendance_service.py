@@ -561,3 +561,52 @@ class AttendanceService:
         await self.session.commit()
         return {"message": f"Successfully sent warning alerts to {sent_count} parents.", "count": sent_count}
 
+    async def upload_daily_punch_csv(self, college_id: str, file_content: str) -> Dict[str, Any]:
+        import csv
+        import io
+        from app.schemas.administrative import DailyAttendancePunch
+
+        reader = csv.DictReader(io.StringIO(file_content))
+        headers = reader.fieldnames or []
+        required = {"identifier", "timestamp"}
+        if not required.issubset(set(headers)):
+            raise InputValidationError("CSV must contain 'identifier' and 'timestamp' columns.")
+
+        success_count = 0
+        error_count = 0
+        errors = []
+
+        for row in reader:
+            identifier = row.get("identifier", "").strip()
+            timestamp = row.get("timestamp", "").strip()
+            source = row.get("source", "csv_upload").strip() or "csv_upload"
+            device_id = row.get("device_id", "").strip() or None
+            remarks = row.get("remarks", "").strip() or None
+
+            if not identifier or not timestamp:
+                error_count += 1
+                errors.append(f"Row {reader.line_num}: Missing identifier or timestamp.")
+                continue
+
+            try:
+                payload = DailyAttendancePunch(
+                    identifier=identifier,
+                    timestamp=timestamp,
+                    source=source,
+                    device_id=device_id,
+                    remarks=remarks
+                )
+                await self.record_daily_punch(college_id, payload)
+                success_count += 1
+            except Exception as e:
+                error_count += 1
+                errors.append(f"Row {reader.line_num} ({identifier}): {str(e)}")
+
+        return {
+            "message": f"Processed CSV: {success_count} logs successfully imported, {error_count} failed.",
+            "success_count": success_count,
+            "error_count": error_count,
+            "errors": errors[:50]
+        }
+
+
