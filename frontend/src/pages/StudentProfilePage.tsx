@@ -4,7 +4,7 @@ import {
   User, Phone, EnvelopeSimple, IdentificationCard, House, GraduationCap,
   Heart, Users, CurrencyCircleDollar, Drop, FileText, UploadSimple, Trash,
   Star, DownloadSimple, CheckCircle, Warning, CaretLeft, CloudArrowUp,
-  FilePdf, FileDoc, Shield, Briefcase
+  FilePdf, FileDoc, Shield, Briefcase, Clock
 } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import AlertModal from '../components/AlertModal';
@@ -48,6 +48,8 @@ const SECTIONS = [
   { key: 'address', label: 'Address', icon: House },
   { key: 'resume_profile', label: 'Resume Profile', icon: Briefcase },
   { key: 'resumes', label: 'Resume Vault', icon: FileText },
+  { key: 'checklist', label: 'Document Checklist', icon: CheckCircle },
+  { key: 'timeline', label: 'Academic Timeline', icon: Clock },
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -212,6 +214,8 @@ const StudentProfilePage = ({ navigate, user }: any) => {
   const currentInfoSection = infoSections[activeSection];
   const isResumeTab = activeSection === 'resumes';
   const isResumeProfileTab = activeSection === 'resume_profile';
+  const isChecklistTab = activeSection === 'checklist';
+  const isTimelineTab = activeSection === 'timeline';
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
@@ -241,39 +245,37 @@ const StudentProfilePage = ({ navigate, user }: any) => {
             </div>
           </motion.div>
 
-          {/* ── Layout: Sidebar + Content ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+          {/* Section Nav - Pill Shaped Container matching active container shape */}
+          <motion.div variants={itemVariants} className="w-full">
+            <div className="flex items-center gap-2 p-1.5 bg-slate-200/70 dark:bg-slate-800/80 rounded-full w-full overflow-x-auto scrollbar-none">
+              {SECTIONS.map(s => {
+                const Icon = s.icon;
+                const isActive = activeSection === s.key;
+                const isVault = s.key === 'resumes';
+                const vaultCount = resumes.length;
+                return (
+                  <button key={s.key} onClick={() => setActiveSection(s.key)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-extrabold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+                      isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <Icon size={16} weight={isActive ? 'fill' : 'bold'} />
+                    <span>{s.label}</span>
+                    {isVault && vaultCount > 0 && (
+                      <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                        isActive ? 'bg-white/20' : 'bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                      }`}>{vaultCount}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
 
-            {/* Section Nav */}
-            <motion.div variants={itemVariants} className="lg:col-span-1">
-              <div className="soft-card p-3 space-y-1 lg:sticky lg:top-24">
-                {SECTIONS.map(s => {
-                  const Icon = s.icon;
-                  const isActive = activeSection === s.key;
-                  const isVault = s.key === 'resumes';
-                  const vaultCount = resumes.length;
-                  return (
-                    <button key={s.key} onClick={() => setActiveSection(s.key)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-sm font-bold transition-all ${
-                        isActive ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
-                      }`}
-                    >
-                      <Icon size={16} weight="duotone" />
-                      <span className="flex-1 truncate">{s.label}</span>
-                      {isVault && vaultCount > 0 && (
-                        <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-xl ${
-                          isActive ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                        }`}>{vaultCount}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.div>
-
-            {/* Content Area */}
-            <motion.div variants={itemVariants} className="lg:col-span-3 space-y-4">
+          {/* Content Area */}
+          <div className="grid grid-cols-1 gap-5">
+            <motion.div variants={itemVariants} className="space-y-4">
 
               {/* ── Personal Info Sections ── */}
               {!isResumeTab && !isResumeProfileTab && currentInfoSection && (
@@ -484,6 +486,90 @@ const StudentProfilePage = ({ navigate, user }: any) => {
                     )}
                   </div>
                 </>
+              )}
+
+              {/* ── Document Checklist Tab ── */}
+              {isChecklistTab && (
+                <div className="soft-card p-5 sm:p-6 space-y-5">
+                  <div>
+                    <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">Mandatory Document Checklist</h3>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Track and upload academic and statutory certificates required by the institution.</p>
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      { name: '10th Standard Marksheet', req: 'Mandatory', status: 'Verified', date: '15 Jun 2026' },
+                      { name: '12th Standard Marksheet / Diploma', req: 'Mandatory', status: 'Verified', date: '15 Jun 2026' },
+                      { name: 'Aadhaar Card / Government Identity', req: 'Mandatory', status: 'Pending Review', date: '18 Jun 2026' },
+                      { name: 'Transfer Certificate (TC)', req: 'Mandatory', status: 'Upload Required', date: '—' },
+                      { name: 'Caste / Income Certificate', req: 'Optional', status: 'Upload Required', date: '—' }
+                    ].map((doc, idx) => (
+                      <div key={idx} className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                            doc.status === 'Verified' ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600' :
+                            doc.status === 'Pending Review' ? 'bg-amber-50 dark:bg-amber-500/15 text-amber-600' :
+                            'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                          }`}>
+                            <FileDoc size={20} weight="duotone" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">{doc.name}</h4>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-wider">{doc.req}</span>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-0.5">Last updated: {doc.date}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 self-end sm:self-center">
+                          <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider ${
+                            doc.status === 'Verified' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' :
+                            doc.status === 'Pending Review' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' :
+                            'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300'
+                          }`}>
+                            {doc.status}
+                          </span>
+                          {doc.status === 'Upload Required' && (
+                            <button
+                              onClick={() => setMessage({ type: 'success', text: `Upload portal opened for ${doc.name}.` })}
+                              className="px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm"
+                            >
+                              Upload File
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Academic Timeline Tab ── */}
+              {isTimelineTab && (
+                <div className="soft-card p-5 sm:p-6 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">Academic Lifecycle Timeline</h3>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Read-only audit log of institutional progression, term evaluations, and honors.</p>
+                  </div>
+                  <div className="relative pl-6 border-l-2 border-indigo-500/30 space-y-8 my-4">
+                    {[
+                      { title: 'Semester 4 Ongoing', date: 'Present', desc: 'Registered for 6 core subjects and 2 laboratory electives. Academic standing: Active.', active: true },
+                      { title: 'Semester 3 Completed', date: 'Dec 2025', desc: 'Achieved Term GPA of 8.95. Cleared all credits without backlogs.', active: false },
+                      { title: 'Document Verification Cleared', date: 'Aug 2025', desc: 'Admissions team verified original secondary school certificates and identity documents.', active: false },
+                      { title: 'Enrolled in B.Tech Computer Science', date: 'Jul 2024', desc: 'Formal admission completed under batch 2024-2028. Assigned Hall Ticket ID.', active: false }
+                    ].map((item, i) => (
+                      <div key={i} className="relative group">
+                        <div className={`absolute -left-[31px] top-1 w-4 h-4 rounded-full border-2 border-white dark:border-[#0B0F19] transition-transform group-hover:scale-125 ${
+                          item.active ? 'bg-indigo-600 ring-4 ring-indigo-500/20' : 'bg-slate-300 dark:bg-slate-700'
+                        }`} />
+                        <div className="flex items-center justify-between">
+                          <h4 className={`text-sm font-extrabold ${item.active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-slate-100'}`}>{item.title}</h4>
+                          <span className="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">{item.date}</span>
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Footer notice */}

@@ -864,4 +864,15 @@ export const labAPI = {
   submitCode: (id, questionId, code, language) => api.post(`/lab/sessions/${id}/submit`, { question_id: questionId, code, language }),
 };
 
+// STUDENT INFORMATION SYSTEM (SIS) API
+export const sisAPI = {
+  updateProfileAdmin: (studentId: string, data: any) => api.put(`/students/${studentId}/profile`, data),
+  getDisciplinary: (studentId: string) => api.get(`/students/${studentId}/disciplinary`),
+  addDisciplinary: (studentId: string, data: any) => api.post(`/students/${studentId}/disciplinary`, data),
+  getMentoring: (studentId: string) => api.get(`/students/${studentId}/mentoring`),
+  addMentoring: (studentId: string, data: any) => api.post(`/students/${studentId}/mentoring`, data),
+  reviewDocument: (studentId: string, docId: string, data: any) => api.put(`/students/${studentId}/documents/${docId}/review`, data),
+};
+
+
 

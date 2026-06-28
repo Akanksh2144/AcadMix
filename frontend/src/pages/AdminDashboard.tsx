@@ -19,6 +19,7 @@ import InsightsCanvas from '../components/insights/InsightsCanvas';
 import CampusLayoutDesigner from '../components/campus/CampusLayoutDesigner';
 import CampusMap from '../components/campus/CampusMap';
 import TimetableSettings from '../components/admin/TimetableSettings';
+import StudentSISWorkspace from '../components/sis/StudentSISWorkspace';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -188,6 +189,7 @@ const AdminCommandCenter = ({ navigate, setActiveTab }) => {
 };
 
 const AdminDashboard = ({ navigate, user, onLogout }) => {
+  const [selectedSisStudent, setSelectedSisStudent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('admin_tab') || 'command-center');
   useEffect(() => { sessionStorage.setItem('admin_tab', activeTab); }, [activeTab]);
   const [dashboardData, setDashboardData] = useState(null);
@@ -655,7 +657,7 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
                       { id: '22WJ8A6748', name: 'Sneha Singh', dept: 'ET', section: 'A', batch: '2024', avg: 79.3, status: 'Active' },
                       { id: '22WJ8A6749', name: 'Rahul Verma', dept: 'AIML', section: 'AIML-1', batch: '2024', avg: 91.0, status: 'Active' }
                     ].map((student) => (
-                      <tr key={student.id} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors">
+                      <tr key={student.id} onClick={() => setSelectedSisStudent(student)} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors cursor-pointer" title="Click to open 360° SIS Workspace">
                         <td className="py-3 px-4 font-bold text-indigo-600">{student.id}</td>
                         <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-100">{student.name}</td>
                         <td className="py-3 px-4 text-center font-medium text-slate-700 dark:text-slate-300">{student.dept}</td>
@@ -891,7 +893,10 @@ const AdminDashboard = ({ navigate, user, onLogout }) => {
         )}
 
         <AnimatePresence>
-      </AnimatePresence>
+          {selectedSisStudent && (
+            <StudentSISWorkspace student={selectedSisStudent} user={user} onClose={() => setSelectedSisStudent(null)} />
+          )}
+        </AnimatePresence>
     </div>
     </div>
   );

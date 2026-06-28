@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Users, MagnifyingGlass, GraduationCap } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { useMyAssignments, useStudentsForAssignment } from '../hooks/useMarks';
+import { AnimatePresence } from 'framer-motion';
+import StudentSISWorkspace from '../components/sis/StudentSISWorkspace';
 
 interface StudentManagementProps {
   navigate: (path: string) => void;
@@ -11,6 +13,7 @@ interface StudentManagementProps {
 const StudentManagement: React.FC<StudentManagementProps> = ({ navigate, user }) => {
   const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
   const [search, setSearch] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
   const { data: assignments = [], isLoading: assignmentsLoading } = useMyAssignments();
 
@@ -99,7 +102,7 @@ const StudentManagement: React.FC<StudentManagementProps> = ({ navigate, user })
             </thead>
             <tbody>
               {filtered.map((s, i) => (
-                <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors" data-testid={`student-row-${s.college_id}`}>
+                <tr key={s.id} onClick={() => setSelectedStudent(s)} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors cursor-pointer" data-testid={`student-row-${s.college_id}`} title="Click to open 360° SIS Workspace">
                   <td className="py-3 px-4 text-sm text-slate-400">{i + 1}</td>
                   <td className="py-3 px-4 font-bold text-indigo-600">{s.college_id}</td>
                   <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-100">{s.name}</td>
@@ -115,6 +118,12 @@ const StudentManagement: React.FC<StudentManagementProps> = ({ navigate, user })
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {selectedStudent && (
+          <StudentSISWorkspace student={selectedStudent} user={user} onClose={() => setSelectedStudent(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
