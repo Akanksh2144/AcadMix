@@ -133,7 +133,7 @@ export default function TimetableManager({ user }: Props) {
       try {
         const [deptRes, teacherRes, settingsRes] = await Promise.all([
           api.get('/hod/department-info'),
-          facultyAPI.teachers(),
+          facultyAPI.teachers(undefined),
           api.get('/admin/college/settings'),
         ]);
 
