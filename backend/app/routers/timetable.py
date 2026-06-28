@@ -130,6 +130,7 @@ class SubjectAllocation(BaseModel):
     faculty_id: str
     hours_per_week: int
     is_lab: bool
+    room: Optional[str] = None
 
 class GenerateTimetableRequest(BaseModel):
     department_id: str
@@ -177,13 +178,20 @@ async def generate_timetable(
     existing_slots = exist_res.scalars().all()
 
     faculty_map = {}
+    room_map = {}
     for s in existing_slots:
-        if not s.faculty_id: continue
-        if s.faculty_id not in faculty_map:
-            faculty_map[s.faculty_id] = {}
-        if s.day not in faculty_map[s.faculty_id]:
-            faculty_map[s.faculty_id][s.day] = set()
-        faculty_map[s.faculty_id][s.day].add(s.period_no)
+        if s.faculty_id:
+            if s.faculty_id not in faculty_map:
+                faculty_map[s.faculty_id] = {}
+            if s.day not in faculty_map[s.faculty_id]:
+                faculty_map[s.faculty_id][s.day] = set()
+            faculty_map[s.faculty_id][s.day].add(s.period_no)
+        if s.room:
+            if s.room not in room_map:
+                room_map[s.room] = {}
+            if s.day not in room_map[s.room]:
+                room_map[s.room][s.day] = set()
+            room_map[s.room][s.day].add(s.period_no)
 
     section_map = {day: set() for day in working_days}
 
@@ -200,6 +208,22 @@ async def generate_timetable(
     def is_faculty_free(fac_id, day, period):
         return period not in faculty_map.get(fac_id, {}).get(day, set())
 
+    # helper to check room free
+    def is_room_free(room, day, period):
+        if not room:
+            return True
+        return period not in room_map.get(room, {}).get(day, set())
+
+    # helper to book room
+    def book_room(room, day, period):
+        if not room:
+            return
+        if room not in room_map:
+            room_map[room] = {}
+        if day not in room_map[room]:
+            room_map[room][day] = set()
+        room_map[room][day].add(period)
+
     # 3. Schedule Labs
     labs = [a for a in req.allocations if a.is_lab]
     for lab in labs:
@@ -211,10 +235,10 @@ async def generate_timetable(
             for start_p in range(1, periods_per_day - lab_len + 2):
                 if crosses_break(start_p, lab_len): continue
                 
-                # check section & faculty free
+                # check section, faculty & room free
                 free = True
                 for p in range(start_p, start_p + lab_len):
-                    if p in section_map[day] or not is_faculty_free(lab.faculty_id, day, p):
+                    if p in section_map[day] or not is_faculty_free(lab.faculty_id, day, p) or not is_room_free(lab.room, day, p):
                         free = False
                         break
                 
@@ -224,6 +248,7 @@ async def generate_timetable(
                         if lab.faculty_id not in faculty_map: faculty_map[lab.faculty_id] = {}
                         if day not in faculty_map[lab.faculty_id]: faculty_map[lab.faculty_id][day] = set()
                         faculty_map[lab.faculty_id][day].add(p)
+                        book_room(lab.room, day, p)
                         
                         generated.append({
                             "department_id": req.department_id,
@@ -239,7 +264,7 @@ async def generate_timetable(
                     break
         
         if placed_blocks < blocks_needed:
-            raise HTTPException(400, f"Unresolvable Conflict: Cannot find free contiguous slots for Lab: {lab.subject_name} ({lab.faculty_id}). Adjust allocations or college config.")
+            raise HTTPException(400, f"Unresolvable Conflict: Cannot find free contiguous slots/room for Lab: {lab.subject_name} ({lab.faculty_id}). Adjust allocations or college config.")
 
     # 4. Schedule Theory
     theory = [a for a in req.allocations if not a.is_lab]
@@ -256,12 +281,13 @@ async def generate_timetable(
                 if placed: break
                 
                 for p in range(1, periods_per_day + 1):
-                    if p not in section_map[day] and is_faculty_free(th.faculty_id, day, p):
+                    if p not in section_map[day] and is_faculty_free(th.faculty_id, day, p) and is_room_free(th.room, day, p):
                         # Place!
                         section_map[day].add(p)
                         if th.faculty_id not in faculty_map: faculty_map[th.faculty_id] = {}
                         if day not in faculty_map[th.faculty_id]: faculty_map[th.faculty_id][day] = set()
                         faculty_map[th.faculty_id][day].add(p)
+                        book_room(th.room, day, p)
                         
                         generated.append({
                             "department_id": req.department_id,
@@ -277,7 +303,7 @@ async def generate_timetable(
                         placed = True
                         break
             if not placed:
-                raise HTTPException(400, f"Unresolvable Conflict: Cannot schedule {th.subject_name} for faculty {th.faculty_id}. The faculty is completely booked across the college.")
+                raise HTTPException(400, f"Unresolvable Conflict: Cannot schedule {th.subject_name} for faculty {th.faculty_id}/room {th.room or 'any'}. The resource is completely booked across the college.")
                 
     return {"slots": generated}
 
@@ -366,9 +392,33 @@ async def get_timetable_conflicts(
     user: dict = Depends(require_role("admin", "hod", "super_admin")),
     session: AsyncSession = Depends(get_db)
 ):
-    """Return faculty and section double-booking conflicts across all departments.
-    Queries PeriodSlot (the live data model), not the legacy Timetable table.
+    """Return all timetable conflicts across the college, including:
+    - Faculty Clash (double-booked teacher)
+    - Section Clash (double-booked class section)
+    - Room Clash (double-booked physical room/venue)
+    - Out of bounds periods/days (against active college settings)
+    - Lab break crossing (contiguous lab sessions intersecting configured breaks)
     """
+    from app.models.core import College
+
+    # 1. Fetch college settings config
+    college_res = await session.execute(
+        select(College).where(College.id == user["college_id"])
+    )
+    college = college_res.scalars().first()
+    college_settings = college.settings or {} if college else {}
+    timetable_config = college_settings.get("timetable_config", {
+        "periods_per_day": 8,
+        "working_days": ["MON", "TUE", "WED", "THU", "FRI"],
+        "lab_consecutive_periods": 3,
+        "breaks": [{"type": "lunch", "after_period": 4, "duration_mins": 60}]
+    })
+
+    periods_per_day = timetable_config.get("periods_per_day", 8)
+    working_days = timetable_config.get("working_days", ["MON", "TUE", "WED", "THU", "FRI"])
+    breaks = [b["after_period"] for b in timetable_config.get("breaks", []) if "after_period" in b]
+
+    # 2. Fetch all slots for this academic year
     result = await session.execute(
         select(models.PeriodSlot).where(
             models.PeriodSlot.college_id == user["college_id"],
@@ -378,7 +428,34 @@ async def get_timetable_conflicts(
     )
     slots = result.scalars().all()
 
-    # --- Faculty clash: same faculty, same day, same period_no → two different sections ---
+    conflicts = []
+
+    # 3. Period / Day Bounds checks
+    for s in slots:
+        if s.period_no > periods_per_day:
+            conflicts.append({
+                "type": "period_out_of_bounds",
+                "slot_id": s.id,
+                "department_id": s.department_id,
+                "batch": s.batch,
+                "section": s.section,
+                "day": s.day,
+                "period_no": s.period_no,
+                "max_periods": periods_per_day
+            })
+        if s.day not in working_days:
+            conflicts.append({
+                "type": "non_working_day",
+                "slot_id": s.id,
+                "department_id": s.department_id,
+                "batch": s.batch,
+                "section": s.section,
+                "day": s.day,
+                "period_no": s.period_no,
+                "working_days": working_days
+            })
+
+    # 4. Faculty Clash: same faculty, same day, same period_no → two different sections
     faculty_map: dict = {}
     for s in slots:
         if not s.faculty_id:
@@ -395,7 +472,17 @@ async def get_timetable_conflicts(
             "subject_name": s.subject_name,
         })
 
-    # --- Section clash: same section+batch+dept, same day, same period_no → two subjects ---
+    for (faculty_id, day, period_no), clashing in faculty_map.items():
+        if len(clashing) > 1:
+            conflicts.append({
+                "type": "faculty_clash",
+                "faculty_id": faculty_id,
+                "day": day,
+                "period_no": period_no,
+                "clashing_slots": clashing,
+            })
+
+    # 5. Section Clash: same section+batch+dept, same day, same period_no → two subjects
     section_map: dict = {}
     for s in slots:
         key = (s.department_id, s.batch, s.section, s.day, s.period_no)
@@ -408,17 +495,6 @@ async def get_timetable_conflicts(
             "faculty_id": s.faculty_id,
         })
 
-    conflicts = []
-    for (faculty_id, day, period_no), clashing in faculty_map.items():
-        if len(clashing) > 1:
-            conflicts.append({
-                "type": "faculty_clash",
-                "faculty_id": faculty_id,
-                "day": day,
-                "period_no": period_no,
-                "clashing_slots": clashing,
-            })
-
     for (dept_id, batch, section, day, period_no), clashing in section_map.items():
         if len(clashing) > 1:
             conflicts.append({
@@ -430,6 +506,60 @@ async def get_timetable_conflicts(
                 "period_no": period_no,
                 "clashing_slots": clashing,
             })
+
+    # 6. Room Clash: same room, same day, same period_no → two different sections
+    room_map: dict = {}
+    for s in slots:
+        if not s.room:
+            continue
+        key = (s.room, s.day, s.period_no)
+        if key not in room_map:
+            room_map[key] = []
+        room_map[key].append({
+            "slot_id": s.id,
+            "department_id": s.department_id,
+            "section": s.section,
+            "batch": s.batch,
+            "subject_code": s.subject_code,
+            "subject_name": s.subject_name,
+            "faculty_id": s.faculty_id
+        })
+
+    for (room, day, period_no), clashing in room_map.items():
+        if len(clashing) > 1:
+            conflicts.append({
+                "type": "room_clash",
+                "room": room,
+                "day": day,
+                "period_no": period_no,
+                "clashing_slots": clashing
+            })
+
+    # 7. Lab crosses break check
+    lab_groups = {}
+    for s in slots:
+        if s.slot_type == "lab" and s.subject_code:
+            key = (s.department_id, s.batch, s.section, s.day, s.subject_code)
+            if key not in lab_groups:
+                lab_groups[key] = []
+            lab_groups[key].append(s.period_no)
+
+    for (dept_id, batch, section, day, subj_code), periods in lab_groups.items():
+        if len(periods) > 1:
+            min_p = min(periods)
+            max_p = max(periods)
+            for b in breaks:
+                if min_p <= b < max_p:
+                    conflicts.append({
+                        "type": "lab_crosses_break",
+                        "department_id": dept_id,
+                        "batch": batch,
+                        "section": section,
+                        "day": day,
+                        "subject_code": subj_code,
+                        "periods": sorted(periods),
+                        "break_after_period": b
+                    })
 
     return {"conflict_count": len(conflicts), "conflicts": conflicts}
 
