@@ -320,6 +320,7 @@ export const attendanceAPI = {
   getMyDailyLogs: (params) => api.get('/attendance/daily/my-logs', { params }),
   sendDefaulterAlerts: (data) => api.post('/hod/attendance/send-defaulter-alerts', data),
   uploadLogs: (formData) => api.post('/attendance/daily/upload-logs', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  uploadRfidMapping: (formData) => api.post('/admin/attendance/upload-rfid-mapping', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };
 
 // Syllabus Tracker

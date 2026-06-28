@@ -260,3 +260,41 @@ class TestAttendanceManagementRouter:
 
         app.dependency_overrides.clear()
 
+    async def test_upload_rfid_mapping_csv(self, mock_db, auth_hod):
+        app.dependency_overrides[get_db] = lambda: mock_db
+        app.dependency_overrides[get_current_user] = lambda: auth_hod
+
+        mock_profile = MagicMock()
+        mock_profile.extra_data = {}
+
+        mock_profile_res = MagicMock()
+        mock_profile_res.scalar.return_value = mock_profile
+
+        mock_db.execute.side_effect = [
+            mock_profile_res
+        ]
+
+        csv_content = (
+            "roll_no,rfid_uid\n"
+            "ROLL001,CARD12345\n"
+        )
+        files = {
+            "file": ("mapping.csv", csv_content, "text/csv")
+        }
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            with patch("app.core.security.get_current_user", new_callable=AsyncMock) as mock_get_user:
+                mock_get_user.return_value = auth_hod
+                
+                resp = await client.post("/api/admin/attendance/upload-rfid-mapping", files=files)
+                assert resp.status_code == 200
+                body = resp.json()
+                assert "data" in body
+                data = body["data"]
+                assert data["success_count"] == 1
+                assert data["error_count"] == 0
+                assert mock_profile.extra_data["rfid_uid"] == "CARD12345"
+
+        app.dependency_overrides.clear()
+

@@ -92,27 +92,27 @@ const HODAttendanceTab = () => {
     }
   };
 
-  const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRFIDUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const formData = new FormData();
     formData.append('file', file);
 
-    const uploadPromise = attendanceAPI.uploadLogs(formData);
+    const uploadPromise = attendanceAPI.uploadRfidMapping(formData);
 
     toast.promise(uploadPromise, {
-      loading: 'Uploading and processing CSV biometric logs...',
+      loading: 'Uploading and mapping RFID cards...',
       success: (res) => {
         if (activeSubTab === 'staff') {
           fetchStaffSummary();
         } else {
           fetchDefaulters();
         }
-        return res.data?.message || 'CSV logs successfully imported';
+        return res.data?.message || 'RFID cards successfully linked';
       },
       error: (err) => {
-        return err.response?.data?.detail || 'Failed to upload CSV logs. Ensure columns are "identifier" and "timestamp".';
+        return err.response?.data?.detail || 'Failed to upload RFID mapping. Ensure columns are "identifier" and "rfid_uid".';
       }
     });
 
@@ -140,8 +140,21 @@ const HODAttendanceTab = () => {
           </p>
         </div>
 
-        {/* Sub-tabs menu inside the container */}
-        <div className="flex bg-slate-100 dark:bg-white/[0.04] p-1 rounded-xl border border-slate-200/50 dark:border-white/[0.06] w-fit">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Bulk RFID card association upload */}
+          <label className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-white/[0.06] rounded-xl text-xs font-bold cursor-pointer transition-all shadow-sm">
+            <FileArrowUp size={16} />
+            <span>Upload RFID Mapping</span>
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleRFIDUpload}
+              className="hidden"
+            />
+          </label>
+
+          {/* Sub-tabs menu inside the container */}
+          <div className="flex bg-slate-100 dark:bg-white/[0.04] p-1 rounded-xl border border-slate-200/50 dark:border-white/[0.06] w-fit">
           <button
             onClick={() => setActiveSubTab('defaulters')}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
@@ -164,6 +177,7 @@ const HODAttendanceTab = () => {
           </button>
         </div>
       </div>
+    </div>
 
       {activeSubTab === 'defaulters' ? (
         <div className="space-y-4">
@@ -284,17 +298,6 @@ const HODAttendanceTab = () => {
               >
                 <ArrowsClockwise size={18} />
               </button>
-
-              <label className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold cursor-pointer transition-all">
-                <FileArrowUp size={16} />
-                <span>Upload CSV Logs</span>
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={handleCSVUpload}
-                  className="hidden"
-                />
-              </label>
             </div>
             
             <div className="text-xs text-slate-500">

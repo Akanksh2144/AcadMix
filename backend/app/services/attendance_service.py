@@ -609,4 +609,92 @@ class AttendanceService:
             "errors": errors[:50]
         }
 
+    async def upload_rfid_mapping_csv(self, college_id: str, file_content: str) -> Dict[str, Any]:
+        import csv
+        import io
+        from sqlalchemy.orm.attributes import flag_modified
+
+        reader = csv.DictReader(io.StringIO(file_content))
+        headers = reader.fieldnames or []
+        
+        field_map = {}
+        for h in headers:
+            h_lower = h.lower().replace("_", "").replace(" ", "")
+            if h_lower in {"identifier", "rollno", "rollnumber", "employeecode", "roll_no", "employee_code"}:
+                field_map["identifier"] = h
+            elif h_lower in {"rfiduid", "rfid", "cardid", "carduid", "rfid_uid", "card_id"}:
+                field_map["rfid_uid"] = h
+
+        if "identifier" not in field_map or "rfid_uid" not in field_map:
+            raise InputValidationError(
+                f"CSV must contain an identifier column (e.g. roll_no, employee_code) and a card UID column (e.g. rfid_uid, card_id). Headers found: {headers}"
+            )
+
+        success_count = 0
+        error_count = 0
+        errors = []
+
+        for row in reader:
+            val_id = row[field_map["identifier"]].strip()
+            val_rfid = row[field_map["rfid_uid"]].strip()
+
+            if not val_id or not val_rfid:
+                error_count += 1
+                errors.append(f"Row {reader.line_num}: Missing identifier or RFID card UID.")
+                continue
+
+            try:
+                prof_stmt = select(models.UserProfile).where(
+                    models.UserProfile.college_id == college_id,
+                    or_(
+                        models.UserProfile.roll_number == val_id,
+                        models.UserProfile.extra_data["rollNo"].astext == val_id
+                    ),
+                    models.UserProfile.is_deleted == False
+                )
+                res = await self.session.execute(prof_stmt)
+                profile = res.scalar()
+
+                if not profile:
+                    staff_stmt = select(models.StaffProfile.user_id).where(
+                        models.StaffProfile.college_id == college_id,
+                        models.StaffProfile.employee_code == val_id,
+                        models.StaffProfile.is_deleted == False
+                    )
+                    res_staff = await self.session.execute(staff_stmt)
+                    staff_user_id = res_staff.scalar()
+                    if staff_user_id:
+                        prof_stmt2 = select(models.UserProfile).where(
+                            models.UserProfile.college_id == college_id,
+                            models.UserProfile.user_id == staff_user_id,
+                            models.UserProfile.is_deleted == False
+                        )
+                        res_prof2 = await self.session.execute(prof_stmt2)
+                        profile = res_prof2.scalar()
+
+                if not profile:
+                    error_count += 1
+                    errors.append(f"Row {reader.line_num} ({val_id}): Student or Staff profile not found.")
+                    continue
+
+                existing_extra = dict(profile.extra_data or {})
+                existing_extra["rfid_uid"] = val_rfid
+                profile.extra_data = existing_extra
+                flag_modified(profile, "extra_data")
+                
+                success_count += 1
+            except Exception as e:
+                error_count += 1
+                errors.append(f"Row {reader.line_num} ({val_id}): {str(e)}")
+
+        await self.session.commit()
+
+        return {
+            "message": f"Successfully mapped {success_count} RFID cards, {error_count} failed.",
+            "success_count": success_count,
+            "error_count": error_count,
+            "errors": errors[:50]
+        }
+
+
 

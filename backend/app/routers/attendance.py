@@ -137,3 +137,15 @@ async def upload_daily_attendance_csv(
     return await svc.upload_daily_punch_csv(user["college_id"], content_str)
 
 
+@router.post("/admin/attendance/upload-rfid-mapping")
+async def upload_rfid_mapping_csv(
+    file: UploadFile = File(...),
+    user: dict = Depends(require_role("hod", "admin")),
+    svc: AttendanceService = Depends(get_attendance_service)
+):
+    content_bytes = await file.read()
+    content_str = content_bytes.decode("utf-8")
+    return await svc.upload_rfid_mapping_csv(user["college_id"], content_str)
+
+
+
