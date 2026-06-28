@@ -526,6 +526,35 @@ class AttendanceService:
             await dispatch_whatsapp_message(phone, body)
             sent_count += 1
 
+            # Fetch mentor_id via MentorAssignment
+            mentor_stmt = select(models.MentorAssignment.faculty_id).where(
+                models.MentorAssignment.student_id == student_id,
+                models.MentorAssignment.college_id == college_id,
+                models.MentorAssignment.is_active == True,
+                models.MentorAssignment.is_deleted == False
+            )
+            mentor_res = await self.session.execute(mentor_stmt)
+            mentor_id = mentor_res.scalar()
+
+            if mentor_id:
+                mentor_profile_stmt = select(models.UserProfile.phone).where(
+                    models.UserProfile.user_id == mentor_id,
+                    models.UserProfile.is_deleted == False
+                )
+                m_profile_res = await self.session.execute(mentor_profile_stmt)
+                mentor_phone = m_profile_res.scalar()
+
+                if mentor_phone:
+                    mentor_body = (
+                        f"🚨 *Mentee Low Attendance Warning*\n\n"
+                        f"Dear Mentor,\n"
+                        f"Your mentee *{d['name']}* has low attendance in *{subject_name}* ({subject_code}) at *{pct}%*.\n\n"
+                        f"📊 Classes: {present} present / {total} total.\n"
+                        f"📅 Student needs to attend the next *{needed}* consecutive classes to restore eligibility.\n\n"
+                        f"Please counsel the student."
+                    )
+                    await dispatch_whatsapp_message(mentor_phone, mentor_body)
+
         await log_audit(self.session, sender_id, "attendance_alerts", "send_warnings", 
                         {"department_id": department_id, "threshold": threshold, "count": sent_count})
         

@@ -174,11 +174,21 @@ class TestAttendanceManagementRouter:
         mock_counts_res = MagicMock()
         mock_counts_res.first.return_value = MagicMock(present_count=5, total_count=10)
 
+        # 5. Mentor query
+        mock_mentor_res = MagicMock()
+        mock_mentor_res.scalar.return_value = "mentor-123"
+
+        # 6. Mentor phone query
+        mock_mentor_phone_res = MagicMock()
+        mock_mentor_phone_res.scalar.return_value = "918888888888"
+
         mock_db.execute.side_effect = [
             mock_course_res,
             mock_parent_res,
             mock_phone_res,
-            mock_counts_res
+            mock_counts_res,
+            mock_mentor_res,
+            mock_mentor_phone_res
         ]
 
         # Patch the get_defaulters method inside AttendanceService
@@ -200,7 +210,14 @@ class TestAttendanceManagementRouter:
                     body = resp.json()
                     assert "data" in body
                     assert body["data"]["count"] == 1
-                    mock_dispatch.assert_called_once()
-                    assert "Intro to CS" in mock_dispatch.call_args[0][1]
+                    assert mock_dispatch.call_count == 2
+                    
+                    # Verify first call is to parent
+                    assert mock_dispatch.call_args_list[0][0][0] == "919999999999"
+                    assert "Dear Parent" in mock_dispatch.call_args_list[0][0][1]
+                    
+                    # Verify second call is to mentor
+                    assert mock_dispatch.call_args_list[1][0][0] == "918888888888"
+                    assert "Dear Mentor" in mock_dispatch.call_args_list[1][0][1]
 
         app.dependency_overrides.clear()
