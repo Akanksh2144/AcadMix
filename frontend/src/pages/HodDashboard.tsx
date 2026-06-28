@@ -1597,7 +1597,7 @@ const HodDashboard = ({ navigate, user, onLogout }) => {
 
         {activeTab === "timetable" && (
           <div data-testid="timetable-content">
-            <TimetableManager user={user} mockSubjects={departmentSubjects} />
+            <TimetableManager user={user} />
           </div>
         )}
 

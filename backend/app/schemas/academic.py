@@ -80,10 +80,12 @@ class PeriodSlotCreate(BaseModel):
     subject_name: Optional[str] = None
     faculty_id: Optional[str] = None
     slot_type: str = "regular"
+    room: Optional[str] = None   # e.g. "Room 301", "Lab A"
 
 
 class BulkSlotsUpsert(BaseModel):
     slots: List[PeriodSlotCreate]  # up to an entire week of slots at once
+
 
 
 class ClassInChargeCreate(BaseModel):

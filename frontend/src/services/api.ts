@@ -285,6 +285,9 @@ export const timetableAPI = {
   getFacultyToday: () => api.get('/faculty/timetable/today'),
   getFacultyWeek: () => api.get('/faculty/timetable/today', { params: { week: true } }),
   getStudentTimetable: () => api.get('/student/timetable'),
+  getDeptInfo: () => api.get('/hod/department-info'),
+  getSubjects: (semester) => api.get('/hod/timetable/subjects', semester ? { params: { semester } } : {}),
+  getConflicts: (academicYear) => api.get('/admin/timetable/conflicts', { params: { academic_year: academicYear } }),
 };
 
 // Faculty Panel (DHTE spec Phase 6)

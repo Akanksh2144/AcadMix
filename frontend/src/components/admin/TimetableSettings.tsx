@@ -1,8 +1,8 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Trash, FloppyDisk } from '@phosphor-icons/react';
 import { api } from '../../services/api';
+import AlertModal from '../AlertModal';
 
 const DAYS_OF_WEEK = [
   { id: 'MON', label: 'Monday' },
@@ -14,10 +14,30 @@ const DAYS_OF_WEEK = [
   { id: 'SUN', label: 'Sunday' },
 ];
 
+interface BreakConfig {
+  type: string;
+  after_period: number;
+  duration_mins: number;
+}
+
+interface TimetableConfig {
+  periods_per_day: number;
+  working_days: string[];
+  lab_consecutive_periods: number;
+  breaks: BreakConfig[];
+}
+
+interface AlertState {
+  open: boolean;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'danger';
+}
+
 export default function TimetableSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<TimetableConfig>({
     periods_per_day: 8,
     working_days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
     lab_consecutive_periods: 3,
@@ -25,6 +45,11 @@ export default function TimetableSettings() {
       { type: 'lunch', after_period: 4, duration_mins: 60 }
     ]
   });
+  const [alertModal, setAlertModal] = useState<AlertState>({ open: false, title: '', message: '', type: 'info' });
+
+  const showAlert = (title: string, message: string, type: AlertState['type'] = 'info') =>
+    setAlertModal({ open: true, title, message, type });
+  const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }));
 
   useEffect(() => {
     fetchSettings();
@@ -55,16 +80,16 @@ export default function TimetableSettings() {
       await api.put('/admin/college/settings', {
         timetable_config: settings
       });
-      alert('Settings saved successfully!'); // Replace with custom alert later if needed
+      showAlert('Saved', 'Timetable settings saved successfully.', 'success');
     } catch (error) {
       console.error('Failed to save settings:', error);
-      alert('Failed to save settings.');
+      showAlert('Error', 'Failed to save timetable settings. Please try again.', 'danger');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDayToggle = (dayId) => {
+  const handleDayToggle = (dayId: string) => {
     setSettings(prev => ({
       ...prev,
       working_days: prev.working_days.includes(dayId)
@@ -80,16 +105,16 @@ export default function TimetableSettings() {
     }));
   };
 
-  const removeBreak = (index) => {
+  const removeBreak = (index: number) => {
     setSettings(prev => ({
       ...prev,
       breaks: prev.breaks.filter((_, i) => i !== index)
     }));
   };
 
-  const updateBreak = (index, field, value) => {
+  const updateBreak = (index: number, field: keyof BreakConfig, value: string | number) => {
     const updatedBreaks = [...settings.breaks];
-    updatedBreaks[index][field] = value;
+    updatedBreaks[index] = { ...updatedBreaks[index], [field]: value };
     setSettings({ ...settings, breaks: updatedBreaks });
   };
 
@@ -108,12 +133,12 @@ export default function TimetableSettings() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50">
           <label className="block text-sm font-medium text-slate-300 mb-2">Periods Per Day</label>
-          <input 
-            type="number" 
-            min="1" 
+          <input
+            type="number"
+            min="1"
             max="12"
             value={settings.periods_per_day}
-            onChange={(e) => setSettings({...settings, periods_per_day: parseInt(e.target.value) || 8})}
+            onChange={(e) => setSettings({ ...settings, periods_per_day: parseInt(e.target.value) || 8 })}
             className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500"
           />
           <p className="text-xs text-slate-500 mt-2">Total number of academic periods in a standard day (excluding breaks).</p>
@@ -121,12 +146,12 @@ export default function TimetableSettings() {
 
         <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50">
           <label className="block text-sm font-medium text-slate-300 mb-2">Consecutive Periods for Labs</label>
-          <input 
-            type="number" 
-            min="1" 
+          <input
+            type="number"
+            min="1"
             max="4"
             value={settings.lab_consecutive_periods}
-            onChange={(e) => setSettings({...settings, lab_consecutive_periods: parseInt(e.target.value) || 3})}
+            onChange={(e) => setSettings({ ...settings, lab_consecutive_periods: parseInt(e.target.value) || 3 })}
             className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500"
           />
           <p className="text-xs text-slate-500 mt-2">How many periods the generator should group together for practical sessions.</p>
@@ -157,7 +182,7 @@ export default function TimetableSettings() {
       <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50">
         <div className="flex justify-between items-center mb-6">
           <label className="block text-sm font-medium text-slate-300">Daily Breaks</label>
-          <button 
+          <button
             onClick={addBreak}
             className="flex items-center space-x-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20"
           >
@@ -174,7 +199,7 @@ export default function TimetableSettings() {
               <div key={idx} className="flex items-center space-x-4 bg-slate-900 p-4 rounded-lg border border-slate-700">
                 <div className="flex-1">
                   <label className="block text-xs text-slate-500 mb-1">Break Type</label>
-                  <select 
+                  <select
                     value={brk.type}
                     onChange={(e) => updateBreak(idx, 'type', e.target.value)}
                     className="w-full bg-slate-800 border border-slate-700 rounded text-sm text-white px-3 py-2 outline-none focus:border-indigo-500"
@@ -185,7 +210,7 @@ export default function TimetableSettings() {
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs text-slate-500 mb-1">Occurs After Period #</label>
-                  <input 
+                  <input
                     type="number"
                     min="1"
                     max={settings.periods_per_day}
@@ -196,7 +221,7 @@ export default function TimetableSettings() {
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs text-slate-500 mb-1">Duration (Mins)</label>
-                  <input 
+                  <input
                     type="number"
                     min="5"
                     value={brk.duration_mins}
@@ -204,7 +229,7 @@ export default function TimetableSettings() {
                     className="w-full bg-slate-800 border border-slate-700 rounded text-sm text-white px-3 py-2 outline-none focus:border-indigo-500"
                   />
                 </div>
-                <button 
+                <button
                   onClick={() => removeBreak(idx)}
                   className="mt-5 p-2 text-rose-400 hover:bg-rose-400/10 rounded transition-colors"
                 >
@@ -227,6 +252,15 @@ export default function TimetableSettings() {
           <span>{saving ? 'Saving...' : 'Save Settings'}</span>
         </button>
       </div>
+
+      <AlertModal
+        open={alertModal.open}
+        title={alertModal.title}
+        message={alertModal.message}
+        type={alertModal.type}
+        onConfirm={closeAlert}
+        onCancel={closeAlert}
+      />
     </div>
   );
 }

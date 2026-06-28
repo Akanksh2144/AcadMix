@@ -66,6 +66,7 @@ async def upsert_timetable_slots(req: BulkSlotsUpsert, user: dict = Depends(requ
             existing.subject_name = slot_data.subject_name
             existing.faculty_id = slot_data.faculty_id
             existing.slot_type = slot_data.slot_type
+            existing.room = slot_data.room
             updated_count += 1
         else:
             new_slot = models.PeriodSlot(
@@ -82,7 +83,8 @@ async def upsert_timetable_slots(req: BulkSlotsUpsert, user: dict = Depends(requ
                 subject_code=slot_data.subject_code,
                 subject_name=slot_data.subject_name,
                 faculty_id=slot_data.faculty_id,
-                slot_type=slot_data.slot_type
+                slot_type=slot_data.slot_type,
+                room=slot_data.room
             )
             session.add(new_slot)
             created_count += 1
@@ -118,7 +120,7 @@ async def get_department_timetable(
     return [{
         "id": s.id, "day": s.day, "period_no": s.period_no, "start_time": s.start_time, "end_time": s.end_time,
         "subject_code": s.subject_code, "subject_name": s.subject_name,
-        "faculty_id": s.faculty_id, "slot_type": s.slot_type
+        "faculty_id": s.faculty_id, "slot_type": s.slot_type, "room": s.room
     } for s in slots]
 
 
@@ -228,9 +230,10 @@ async def generate_timetable(
                             "batch": req.batch, "section": req.section,
                             "semester": req.semester, "academic_year": req.academic_year,
                             "day": day, "period_no": p,
-                            "start_time": "", "end_time": "", # Handled by UI template mapping
+                            "start_time": "", "end_time": "",  # Handled by UI template mapping
                             "subject_code": lab.subject_code, "subject_name": lab.subject_name,
-                            "faculty_id": lab.faculty_id, "slot_type": "lab"
+                            "faculty_id": lab.faculty_id, "slot_type": "lab",
+                            "room": getattr(lab, "room", None)
                         })
                     placed_blocks += 1
                     break
@@ -265,9 +268,10 @@ async def generate_timetable(
                             "batch": req.batch, "section": req.section,
                             "semester": req.semester, "academic_year": req.academic_year,
                             "day": day, "period_no": p,
-                            "start_time": "", "end_time": "", 
+                            "start_time": "", "end_time": "",
                             "subject_code": th.subject_code, "subject_name": th.subject_name,
-                            "faculty_id": th.faculty_id, "slot_type": "regular"
+                            "faculty_id": th.faculty_id, "slot_type": "regular",
+                            "room": getattr(th, "room", None)
                         })
                         daily_counts[day] += 1
                         placed = True
@@ -304,7 +308,7 @@ async def get_faculty_today_timetable(
     return [{
         "id": s.id, "day": s.day, "period_no": s.period_no, "start_time": s.start_time, "end_time": s.end_time,
         "batch": s.batch, "section": s.section, "department_id": s.department_id,
-        "subject_code": s.subject_code, "subject_name": s.subject_name, "slot_type": s.slot_type
+        "subject_code": s.subject_code, "subject_name": s.subject_name, "slot_type": s.slot_type, "room": s.room
     } for s in slots]
 
 
@@ -352,31 +356,151 @@ async def get_student_timetable(user: dict = Depends(require_role("student")), s
     return [{
         "id": s.id, "day": s.day, "period_no": s.period_no, "start_time": s.start_time, "end_time": s.end_time,
         "subject_code": s.subject_code, "subject_name": s.subject_name,
-        "faculty_id": s.faculty_id, "faculty_name": faculty_map.get(s.faculty_id, "Unknown"), "slot_type": s.slot_type
+        "faculty_id": s.faculty_id, "faculty_name": faculty_map.get(s.faculty_id, "Unknown"),
+        "slot_type": s.slot_type, "room": s.room
     } for s in slots]
 
 @router.get("/admin/timetable/conflicts")
-async def get_timetable_conflicts(academic_year: str, session: AsyncSession = Depends(get_db)):
-    # Simple conflict check returning duplicates based on day/period/faculty across all depts
-    stmt = select(models.Timetable).where(models.Timetable.academic_year == academic_year)
-    res = await session.execute(stmt)
-    slots = res.scalars().all()
-    
-    seen = {}
-    conflicts = []
+async def get_timetable_conflicts(
+    academic_year: str,
+    user: dict = Depends(require_role("admin", "hod", "super_admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Return faculty and section double-booking conflicts across all departments.
+    Queries PeriodSlot (the live data model), not the legacy Timetable table.
+    """
+    result = await session.execute(
+        select(models.PeriodSlot).where(
+            models.PeriodSlot.college_id == user["college_id"],
+            models.PeriodSlot.academic_year == academic_year,
+            models.PeriodSlot.is_deleted == False
+        )
+    )
+    slots = result.scalars().all()
+
+    # --- Faculty clash: same faculty, same day, same period_no → two different sections ---
+    faculty_map: dict = {}
     for s in slots:
-        key = (s.faculty_id, s.day, s.time_slot)
-        if key in seen:
+        if not s.faculty_id:
+            continue
+        key = (s.faculty_id, s.day, s.period_no)
+        if key not in faculty_map:
+            faculty_map[key] = []
+        faculty_map[key].append({
+            "slot_id": s.id,
+            "department_id": s.department_id,
+            "section": s.section,
+            "batch": s.batch,
+            "subject_code": s.subject_code,
+            "subject_name": s.subject_name,
+        })
+
+    # --- Section clash: same section+batch+dept, same day, same period_no → two subjects ---
+    section_map: dict = {}
+    for s in slots:
+        key = (s.department_id, s.batch, s.section, s.day, s.period_no)
+        if key not in section_map:
+            section_map[key] = []
+        section_map[key].append({
+            "slot_id": s.id,
+            "subject_code": s.subject_code,
+            "subject_name": s.subject_name,
+            "faculty_id": s.faculty_id,
+        })
+
+    conflicts = []
+    for (faculty_id, day, period_no), clashing in faculty_map.items():
+        if len(clashing) > 1:
             conflicts.append({
-                "faculty_id": s.faculty_id,
-                "day": s.day,
-                "period": s.time_slot,
-                "dept_1": seen[key],
-                "dept_2": s.department_id
+                "type": "faculty_clash",
+                "faculty_id": faculty_id,
+                "day": day,
+                "period_no": period_no,
+                "clashing_slots": clashing,
             })
-        else:
-            seen[key] = s.department_id
-    return conflicts
+
+    for (dept_id, batch, section, day, period_no), clashing in section_map.items():
+        if len(clashing) > 1:
+            conflicts.append({
+                "type": "section_clash",
+                "department_id": dept_id,
+                "batch": batch,
+                "section": section,
+                "day": day,
+                "period_no": period_no,
+                "clashing_slots": clashing,
+            })
+
+    return {"conflict_count": len(conflicts), "conflicts": conflicts}
+
+
+@router.get("/hod/department-info")
+async def get_hod_department_info(
+    user: dict = Depends(require_role("hod", "admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Return the UUID + code + name of the logged-in HOD's department.
+    Frontend needs the UUID for timetable API calls, but the JWT only carries the dept code.
+    """
+    dept_code = user.get("scope", {}).get("department") or user.get("department")
+    if not dept_code:
+        raise HTTPException(status_code=400, detail="Department not found in token")
+
+    result = await session.execute(
+        select(models.Department).where(
+            models.Department.college_id == user["college_id"],
+            (models.Department.code == dept_code) | (models.Department.name == dept_code)
+        )
+    )
+    dept = result.scalars().first()
+    if not dept:
+        raise HTTPException(status_code=404, detail=f"Department '{dept_code}' not found")
+
+    return {"id": dept.id, "code": dept.code, "name": dept.name}
+
+
+@router.get("/hod/timetable/subjects")
+async def get_hod_timetable_subjects(
+    semester: Optional[int] = None,
+    user: dict = Depends(require_role("hod", "admin")),
+    session: AsyncSession = Depends(get_db)
+):
+    """Return distinct subjects taught in this HOD's department, derived from FacultyAssignment.
+    Optionally filtered by semester. Used to populate the timetable generator wizard.
+    """
+    from sqlalchemy import distinct
+    dept_code = user.get("scope", {}).get("department") or user.get("department")
+
+    stmt = select(
+        models.FacultyAssignment.subject_code,
+        models.FacultyAssignment.subject_name,
+        models.FacultyAssignment.semester,
+        models.FacultyAssignment.is_lab,
+        models.FacultyAssignment.hours_per_week,
+    ).where(
+        models.FacultyAssignment.college_id == user["college_id"],
+        models.FacultyAssignment.department == dept_code,
+        models.FacultyAssignment.is_deleted == False
+    ).distinct(
+        models.FacultyAssignment.subject_code
+    ).order_by(
+        models.FacultyAssignment.semester,
+        models.FacultyAssignment.subject_name
+    )
+
+    if semester is not None:
+        stmt = stmt.where(models.FacultyAssignment.semester == semester)
+
+    result = await session.execute(stmt)
+    rows = result.all()
+
+    return [{
+        "code": r.subject_code,
+        "name": r.subject_name,
+        "semester": r.semester,
+        "is_lab": r.is_lab,
+        "hours_per_week": r.hours_per_week or (3 if not r.is_lab else 3),
+    } for r in rows]
 
 
 @router.put("/admin/timetable/{department_id}/approve")

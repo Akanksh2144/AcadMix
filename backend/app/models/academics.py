@@ -121,6 +121,7 @@ class PeriodSlot(Base, SoftDeleteMixin):
     subject_code  = Column(String, nullable=True)
     subject_name  = Column(String, nullable=True)
     faculty_id    = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    room          = Column(String, nullable=True)        # "Room 301", "Lab A"
     slot_type     = Column(String, nullable=False, server_default="regular")
     original_faculty_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)  # for substitute tracking
 
