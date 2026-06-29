@@ -32,6 +32,7 @@ from app.routers import (
     hod_core,
     faculty_core,
     admin_core,
+    admissions,
     attempts,
     results,
     analytics,
@@ -114,6 +115,7 @@ api_router.include_router(admin_core.router, tags=["admin_core"])
 api_router.include_router(faculty_core.router, tags=["faculty_core"])
 api_router.include_router(hod_core.router, tags=["hod_core"])
 api_router.include_router(student_core.router, tags=["student_core"])
+api_router.include_router(admissions.router, tags=["admissions"])
 api_router.include_router(exam_cell_core.router, tags=["exam_cell_core"])
 api_router.include_router(calendars.router, tags=["calendars"])
 api_router.include_router(assignments.router, tags=["assignments"])

@@ -49,7 +49,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const COMMAND_MODULES = [
-  { id: 'admissions', name: 'Admissions CRM', status: 'beta', accent: 'bg-cyan-50 text-cyan-600', route: null, work: 'Enquiries, applications, document checks' },
+  { id: 'admissions', name: 'Admissions CRM', status: 'beta', accent: 'bg-cyan-50 text-cyan-600', route: 'admin/admissions', work: 'Enquiries, applications, document checks' },
   { id: 'student_lifecycle', name: 'Student Lifecycle', status: 'production', accent: 'bg-indigo-50 text-indigo-600', route: 'user-management', work: 'Profiles, batches, sections, certificates' },
   { id: 'academics', name: 'Academics', status: 'production', accent: 'bg-emerald-50 text-emerald-600', route: null, work: 'Timetable, attendance, syllabus, outcomes' },
   { id: 'exams', name: 'Exams', status: 'production', accent: 'bg-violet-50 text-violet-600', route: null, work: 'CIA, hall tickets, marks, transcripts' },

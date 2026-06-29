@@ -32,6 +32,7 @@ const UserManagement = React.lazy(() => import('./pages/UserManagement'));
 const CodePlayground = React.lazy(() => import('./pages/CodePlayground')); // renamed to tsx, bust cache
 const MarksEntry = React.lazy(() => import('./pages/MarksEntry'));
 const StudentManagement = React.lazy(() => import('./pages/StudentManagement'));
+const AdmissionsManagement = React.lazy(() => import('./pages/AdmissionsManagement'));
 const ClassResults = React.lazy(() => import('./pages/ClassResults'));
 const AvailableQuizzes = React.lazy(() => import('./pages/AvailableQuizzes'));
 const Placements = React.lazy(() => import('./pages/Placements'));
@@ -423,6 +424,11 @@ function AppRoutes({ user, onLogin, onLogout }) {
       <Route path="/admin/students" element={
         <ProtectedRoute user={user} allowedRoles={['admin', 'hod']}>
           <StudentManagement navigate={navigate} user={user} />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/admissions" element={
+        <ProtectedRoute user={user} allowedRoles={['admin', 'hod']}>
+          <AdmissionsManagement />
         </ProtectedRoute>
       } />
 
