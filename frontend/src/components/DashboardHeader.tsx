@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Bank, Bell, Sun, Moon, SignOut, Info, Briefcase, UserCircle, CaretDown } from '@phosphor-icons/react';
+import { Bank, Bell, Sun, Moon, CloudSun, SignOut, Info, Briefcase, UserCircle, CaretDown } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Avatar from 'boring-avatars';
 import { useTheme } from '../contexts/ThemeContext';
@@ -171,7 +171,7 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleTheme}
-              className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-950/80 to-slate-900 border border-indigo-900/60 shadow-md text-indigo-400 hover:text-indigo-300 cursor-pointer transition-all"
+              className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-950/80 to-slate-900 border border-indigo-900/60 shadow-md text-white hover:text-slate-200 cursor-pointer transition-all"
               title="Switch to Light Mode"
             >
               <Moon size={20} weight="fill" />
@@ -184,7 +184,7 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
               className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/60 border border-amber-200/80 shadow-md text-amber-500 hover:text-amber-600 cursor-pointer transition-all"
               title="Switch to Dark Mode"
             >
-              <Sun size={20} weight="fill" />
+              <CloudSun size={22} weight="fill" />
             </motion.button>
           )}
 
