@@ -113,10 +113,14 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className={iconBaseClass}
+              className={
+                unreadCount > 0
+                  ? "w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 border border-indigo-400 text-white shadow-md shadow-indigo-500/25 hover:from-indigo-600 hover:to-indigo-700 cursor-pointer transition-all relative"
+                  : "w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/90 dark:from-white/[0.03] dark:to-white/[0.01] border border-slate-200/60 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:shadow-sm cursor-pointer transition-all"
+              }
               aria-label="Notifications"
             >
-              <Bell size={20} weight={showNotifications ? "fill" : "duotone"} />
+              <Bell size={20} weight={showNotifications || unreadCount > 0 ? "fill" : "duotone"} />
               {unreadCount > 0 && (
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center border-2 border-white dark:border-[#0B0F19]">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -162,14 +166,27 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
           </div>
 
           {/* Theme Toggle */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleTheme}
-            className={iconBaseClass}
-          >
-            {isDark ? <Sun size={20} weight="duotone" /> : <Moon size={20} weight="duotone" />}
-          </motion.button>
+          {isDark ? (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleTheme}
+              className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-950/80 to-slate-900 border border-indigo-900/60 shadow-md text-indigo-400 hover:text-indigo-300 cursor-pointer transition-all"
+              title="Switch to Light Mode"
+            >
+              <Moon size={20} weight="fill" />
+            </motion.button>
+          ) : (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleTheme}
+              className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/60 border border-amber-200/80 shadow-md text-amber-500 hover:text-amber-600 cursor-pointer transition-all"
+              title="Switch to Dark Mode"
+            >
+              <Sun size={20} weight="fill" />
+            </motion.button>
+          )}
 
           {/* User Profile Card */}
           <button
@@ -212,7 +229,7 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
           {/* Sign Out */}
           <button 
             onClick={onLogout} 
-            className={`${iconBaseClass} text-rose-500 hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600`}
+            className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white shadow-md shadow-rose-600/10 border border-rose-500/10 cursor-pointer transition-all"
             title="Sign Out"
           >
             <SignOut size={20} weight="duotone" />
