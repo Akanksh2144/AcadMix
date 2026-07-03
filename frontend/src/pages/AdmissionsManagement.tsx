@@ -60,7 +60,7 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
         branch: selectedBranch,
         quota: selectedQuota
       });
-      setCandidates(res.data.data);
+      setCandidates(res.data || []);
     } catch (err) {
       toast.error('Failed to load candidate list');
     }
@@ -74,7 +74,7 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
     }
     try {
       const res = await admissionsAPI.bulkImport(csvData);
-      toast.success(`Successfully imported ${res.data.data.imported} candidates!`);
+      toast.success(`Successfully imported ${res.data.imported} candidates!`);
       setImportModal(false);
       setCsvData('');
       loadCandidates();
@@ -86,7 +86,7 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
   const handleMeritList = async () => {
     try {
       const res = await admissionsAPI.generateMeritList('Phase 1');
-      toast.success(`Generated Merit List. ${res.data.data.length} candidates ranked.`);
+      toast.success(`Generated Merit List. ${res.data.length} candidates ranked.`);
       setMeritModal(false);
       loadCandidates();
     } catch {
@@ -97,7 +97,7 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
   const handleRunCounseling = async () => {
     try {
       const res = await admissionsAPI.runCounseling(capacities);
-      toast.success(`Counseling completed! Allocated ${res.data.data.allocated.length} seats.`);
+      toast.success(`Counseling completed! Allocated ${res.data.allocated.length} seats.`);
       setCounselingModal(false);
       loadCandidates();
     } catch {
@@ -119,7 +119,7 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
   const handleRollover = async (candidateId: string) => {
     try {
       const res = await admissionsAPI.rollover(candidateId);
-      toast.success(`Successfully rolled over! Reg No: ${res.data.data.register_number}`);
+      toast.success(`Successfully rolled over! Reg No: ${res.data.register_number}`);
       setSelectedCandidate(prev => prev ? { ...prev, status: 'enrolled' } : null);
       loadCandidates();
     } catch {
@@ -559,8 +559,8 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
                         toast.success('Risk recalculated!');
                         setSelectedCandidate(prev => ({ 
                           ...prev, 
-                          melt_risk_score: res.data.data.melt_risk_score,
-                          melt_risk_factors: res.data.data.melt_risk_factors
+                          melt_risk_score: res.data.melt_risk_score,
+                          melt_risk_factors: res.data.melt_risk_factors
                         }));
                         loadCandidates();
                       } catch {
