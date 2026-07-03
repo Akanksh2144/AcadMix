@@ -55,20 +55,26 @@ async def seed_quick_logins():
             {"role": "warden", "roll_number": "WARDEN001", "password": "warden123", "email": "warden001@gni.edu", "name": "Suresh Warden", "department": "Hostel"},
             {"role": "transport", "roll_number": "TRANSPORT001", "password": "transport123", "email": "transport001@gni.edu", "name": "Rajesh Driver", "department": "Transport"},
             {"role": "librarian", "roll_number": "LIBRARIAN001", "password": "librarian123", "email": "librarian001@gni.edu", "name": "Geeta Library", "department": "Library"},
-            {"role": "security", "roll_number": "SECURITY001", "password": "security123", "email": "security001@gni.edu", "name": "Ram Guard", "department": "Security"}
+            {"role": "security", "roll_number": "SECURITY001", "password": "security123", "email": "security001@gni.edu", "name": "Ram Guard", "department": "Security"},
+            {"role": "admissions_officer", "roll_number": "ADMISSIONS001", "password": "admissions123", "email": "admissions@gni.edu", "name": "Amit Verma", "department": "Admissions"},
+            {"role": "academic_admin", "roll_number": "ACADEMIC001", "password": "academic123", "email": "academic@gni.edu", "name": "Priya Sen", "department": "Admin"},
+            {"role": "mentor", "roll_number": "MENTOR001", "password": "mentor123", "email": "mentor@gni.edu", "name": "Suman Das", "department": "DS"},
+            {"role": "evaluator", "roll_number": "EVALUATOR001", "password": "evaluator123", "email": "evaluator@gni.edu", "name": "Rajesh Nair", "department": "DS"},
+            {"role": "moderator", "roll_number": "MODERATOR001", "password": "moderator123", "email": "moderator@gni.edu", "name": "Kirti Rao", "department": "DS"},
+            {"role": "system_auditor", "roll_number": "AUDITOR001", "password": "auditor123", "email": "auditor@gni.edu", "name": "Sanjay Gupta", "department": "Admin"}
         ]
 
-        # Cleanup existing users matching the seed emails first to allow safe re-runs
-        seed_emails = [d["email"] for d in roles_to_seed]
-        existing_users_q = await db.execute(select(User).where(User.email.in_(seed_emails)))
-        existing_users = existing_users_q.scalars().all()
-        if existing_users:
-            print(f"Cleaning up {len(existing_users)} existing user records matching quick login emails...")
-            for eu in existing_users:
-                # Profile is cascading deleted if ForeignKey constraint is set or delete manually
-                await db.execute(text("DELETE FROM user_profiles WHERE user_id = :uid"), {"uid": eu.id})
-                await db.delete(eu)
-            await db.flush()
+        # Cleanup block disabled to prevent FK constraint violations with active student records
+        # seed_emails = [d["email"] for d in roles_to_seed]
+        # existing_users_q = await db.execute(select(User).where(User.email.in_(seed_emails)))
+        # existing_users = existing_users_q.scalars().all()
+        # if existing_users:
+        #     print(f"Cleaning up {len(existing_users)} existing user records matching quick login emails...")
+        #     for eu in existing_users:
+        #         # Profile is cascading deleted if ForeignKey constraint is set or delete manually
+        #         await db.execute(text("DELETE FROM user_profiles WHERE user_id = :uid"), {"uid": eu.id})
+        #         await db.delete(eu)
+        #     await db.flush()
 
         count = 0
         for data in roles_to_seed:
