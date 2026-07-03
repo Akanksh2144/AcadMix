@@ -174,9 +174,9 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
           {/* User Profile Card */}
           <button
             onClick={onProfileClick}
-            className="hidden sm:flex items-center gap-3 bg-gradient-to-br from-slate-50/90 to-slate-100/75 hover:from-slate-100 hover:to-slate-200/80 dark:from-white/[0.03] dark:to-white/[0.01] dark:hover:from-white/[0.06] dark:hover:to-white/[0.02] transition-all rounded-2xl p-1 pr-5 cursor-pointer border border-slate-200 dark:border-slate-700/50 shadow-sm"
+            className="hidden sm:flex items-center gap-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 active:scale-[0.98] transition-all rounded-2xl p-1 pr-5 cursor-pointer border border-transparent shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/20"
           >
-            <div className="w-9 h-9 rounded-[10px] overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-slate-800 border border-slate-200/40 dark:border-white/5 flex-shrink-0">
+            <div className="w-9 h-9 rounded-[10px] overflow-hidden flex items-center justify-center bg-white/15 border border-white/20 flex-shrink-0">
               {user?.role === 'student' ? (
                 <Avatar 
                   size={36} 
@@ -185,20 +185,20 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
                   colors={['#6366f1', '#14b8a6', '#8b5cf6', '#06b6d4', '#34d399']} 
                 />
               ) : (
-                <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${getProfessionalGradient(user?.name)} text-white font-black text-xs tracking-wider uppercase`}>
+                <span className="text-white font-black text-xs tracking-wider uppercase">
                   {getInitials(user?.name)}
-                </div>
+                </span>
               )}
             </div>
             <div className="text-left">
-              <p className="text-[14px] font-black text-slate-800 dark:text-slate-100 leading-tight">
+              <p className="text-[14px] font-black text-white leading-tight">
                 {user?.name || "User"}
               </p>
-              <p className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">
+              <p className="text-[10px] font-extrabold text-indigo-100/90 dark:text-indigo-100/90 uppercase tracking-widest mt-0.5">
                 {user?.designation || user?.role?.replace('_', ' ') || "Role"}
               </p>
             </div>
-            <CaretDown size={14} weight="bold" className="text-slate-400 dark:text-slate-500 ml-1 flex-shrink-0" />
+            <CaretDown size={14} weight="bold" className="text-white/80 ml-1 flex-shrink-0" />
           </button>
           
           <button
