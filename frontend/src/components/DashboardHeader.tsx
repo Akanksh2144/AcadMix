@@ -5,6 +5,33 @@ import Avatar from 'boring-avatars';
 import { useTheme } from '../contexts/ThemeContext';
 import { notificationsAPI } from '../services/api';
 
+const getInitials = (name?: string) => {
+  if (!name) return 'U';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return parts[0][0].toUpperCase();
+};
+
+const getProfessionalGradient = (name?: string) => {
+  if (!name) return 'from-indigo-500 to-purple-600';
+  const gradients = [
+    'from-indigo-500 to-purple-600',
+    'from-blue-500 to-indigo-600',
+    'from-emerald-500 to-teal-600',
+    'from-violet-500 to-fuchsia-600',
+    'from-slate-600 to-slate-800',
+    'from-cyan-500 to-blue-600',
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % gradients.length;
+  return gradients[index];
+};
+
 /**
  * Reusable Dashboard Header matching the premium UI pattern.
  * Squircle buttons (rounded-2xl) and a fully pill-shaped profile container.
