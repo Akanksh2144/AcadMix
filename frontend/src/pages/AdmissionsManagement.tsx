@@ -191,8 +191,8 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
         </div>
 
         {/* Tab switcher matching external shape (pill shaped) */}
-        <div className="flex justify-between items-center bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/10 p-2 rounded-full">
-          <div className="flex gap-2 bg-slate-100 dark:bg-slate-800/40 p-1 rounded-full">
+        <div className="flex justify-between items-center w-full">
+          <div className="flex gap-2 bg-slate-100 dark:bg-slate-800/40 p-1 rounded-full border border-slate-200/50 dark:border-white/5 shadow-inner">
             {[
               { id: 'funnel', name: 'Admissions Funnel' },
               { id: 'tasks', name: 'Priority Call Queue' },
