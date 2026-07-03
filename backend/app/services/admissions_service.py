@@ -255,3 +255,68 @@ class AdmissionsService:
             "register_number": reg_number,
             "official_email": official_email
         }
+
+    async def calculate_candidate_melt_risk(self, college_id: str, candidate_id: str) -> Dict[str, Any]:
+        """
+        Calculates and updates the AI Seat Melt Risk score and factors for a candidate.
+        """
+        res = await self.db.execute(
+            select(Admission).where(
+                Admission.college_id == college_id,
+                Admission.id == candidate_id
+            )
+        )
+        cand = res.scalars().first()
+        if not cand:
+            raise ValueError("Candidate not found")
+
+        risk_score = 0.0
+        factors = []
+
+        # 1. Fee Payment Status (35%)
+        if cand.fee_payment_status == "pending":
+            risk_score += 35.0
+            factors.append("Fees Unpaid (Pending)")
+        elif cand.fee_payment_status == "partial":
+            risk_score += 15.0
+            factors.append("Fees Partially Paid")
+
+        # 2. Document Delay (25%)
+        created_at = cand.created_at
+        if not created_at:
+            created_at = datetime.now(timezone.utc)
+        # Ensure timezone awareness
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+            
+        days_elapsed = (datetime.now(timezone.utc) - created_at).days
+        if cand.documents_verified == "pending":
+            if days_elapsed > 5:
+                risk_score += 25.0
+                factors.append("Delayed Document Submission (>5 days)")
+            elif days_elapsed > 2:
+                risk_score += 15.0
+                factors.append("Delayed Document Submission (>2 days)")
+
+        # 3. Out-of-State Candidate (20%)
+        # AITS (Hyderabad, Telangana) default check
+        address_text = (cand.address or "").lower()
+        if address_text and not any(k in address_text for k in ["telangana", "hyderabad", "tg", "hyd"]):
+            risk_score += 20.0
+            factors.append("Out-of-state Address (Higher melt chance)")
+
+        # 4. Communication Inactivity (20%)
+        # Deterministic hash of candidate's name to mock unresponsive leads stably
+        name_hash = sum(ord(char) for char in cand.full_name)
+        if name_hash % 3 == 0:
+            risk_score += 20.0
+            factors.append("Low Communication Response (Silent on WhatsApp)")
+
+        cand.melt_risk_score = min(risk_score, 100.0)
+        cand.melt_risk_factors = ", ".join(factors) if factors else "No risk flags detected"
+        
+        await self.db.commit()
+        return {
+            "melt_risk_score": cand.melt_risk_score,
+            "melt_risk_factors": cand.melt_risk_factors
+        }

@@ -125,3 +125,43 @@ async def test_rollover_candidate(mock_db):
             assert cand.status == "enrolled"
             
     app.dependency_overrides.clear()
+
+async def test_calculate_candidate_melt_risk(mock_db):
+    from datetime import datetime, timezone, timedelta
+    # 5 days ago to trigger the doc delay risk partially
+    created_date = datetime.now(timezone.utc) - timedelta(days=6)
+    cand = Admission(
+        id="cand-1",
+        full_name="Rahul Sharma",
+        admission_number="A-001",
+        fee_payment_status="pending",
+        documents_verified="pending",
+        address="123 Street, Bangalore, Karnataka", # Out of state (Karnataka vs AITS Hyderabad)
+        created_at=created_date,
+        melt_risk_score=0.0
+    )
+    mock_db.execute.return_value = MagicMock(scalar_one_or_none=MagicMock(return_value=cand), scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=cand))))
+    
+    def override_db():
+        yield mock_db
+    app.dependency_overrides[get_db] = override_db
+    
+    auth_user = {"id": "admin-1", "college_id": "col-1", "role": "admin"}
+    
+    with patch("app.core.security.get_current_user", new_callable=AsyncMock) as mock_user:
+        mock_user.return_value = auth_user
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.post("/api/admissions/cand-1/recalculate-risk")
+            assert resp.status_code == 200
+            data = resp.json()["data"]
+            
+            # Expected scoring:
+            # 1. Unpaid fees (pending) -> +35
+            # 2. Doc delay (>5 days) -> +25
+            # 3. Out-of-state address (Bangalore) -> +20
+            # Total score should be 80% (or 100% depending on low comm response hash code)
+            assert data["melt_risk_score"] >= 80.0
+            assert "Fees Unpaid" in data["melt_risk_factors"]
+            assert "Out-of-state" in data["melt_risk_factors"]
+            
+    app.dependency_overrides.clear()

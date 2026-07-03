@@ -68,7 +68,9 @@ async def list_candidates(
             "merit_rank": c.merit_rank,
             "documents_verified": c.documents_verified,
             "fee_payment_status": c.fee_payment_status,
-            "locked_fee_amount": c.locked_fee_amount
+            "locked_fee_amount": c.locked_fee_amount,
+            "melt_risk_score": c.melt_risk_score,
+            "melt_risk_factors": c.melt_risk_factors
         } for c in candidates
     ])
 
@@ -165,3 +167,16 @@ async def get_analytics(
         "funnel": funnel,
         "total_leads": len(statuses)
     })
+
+@router.post("/{candidate_id}/recalculate-risk")
+async def recalculate_risk(
+    candidate_id: str,
+    user: dict = Depends(require_role("admin", "hod", "admissions_officer")),
+    session: AsyncSession = Depends(get_db)
+):
+    service = AdmissionsService(session)
+    try:
+        res = await service.calculate_candidate_melt_risk(user["college_id"], candidate_id)
+        return success(res)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

@@ -874,5 +874,16 @@ export const sisAPI = {
   reviewDocument: (studentId: string, docId: string, data: any) => api.put(`/students/${studentId}/documents/${docId}/review`, data),
 };
 
+// Admissions CRM & Counseling API
+export const admissionsAPI = {
+  list: (params?: any) => api.get('/admissions', { params }),
+  bulkImport: (csvData: string) => api.post('/admissions/bulk-import', { csv_data: csvData }),
+  generateMeritList: (phaseName: string) => api.post('/admissions/generate-merit-list', { phase_name: phaseName }),
+  runCounseling: (branchCapacities: any) => api.post('/admissions/run-counseling', { branch_capacities: branchCapacities }),
+  verifyDocuments: (candidateId: string, status: string) => api.put(`/admissions/${candidateId}/verify-documents`, { status }),
+  rollover: (candidateId: string) => api.post(`/admissions/${candidateId}/rollover`),
+  recalculateRisk: (candidateId: string) => api.post(`/admissions/${candidateId}/recalculate-risk`),
+};
+
 
 

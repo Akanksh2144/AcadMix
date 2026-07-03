@@ -42,6 +42,8 @@ class Admission(Base, SoftDeleteMixin):
     locked_fee_amount = Column(Float, default=0.0)
     fee_payment_status = Column(String, default="pending")  # pending, partial, paid
     documents_verified = Column(String, default="pending")  # pending, verified, rejected
+    melt_risk_score    = Column(Float, default=0.0)
+    melt_risk_factors  = Column(String, nullable=True)  # comma-separated reasons
     
     created_at        = Column(DateTime(timezone=True), server_default=func.now())
 

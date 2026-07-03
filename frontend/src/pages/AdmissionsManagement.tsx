@@ -8,43 +8,8 @@ import PageHeader from '../components/PageHeader';
 import AlertModal from '../components/AlertModal';
 import { toast } from 'sonner';
 
-// Simplified client wrapper representing admissions endpoints
-const admissionsAPI = {
-  list: async (filters: any) => {
-    // Simulated data representing actual backend schema
-    const mockCandidates = [
-      { id: 'cand-1', admission_number: 'AD-2026-001', full_name: 'Sneha Singh', mobile_number: '9876543210', email: 'sneha@gmail.com', gender: 'Female', branch: 'CSE', batch: '2026', quota: 'General', category: 'General', status: 'confirmed', exam_type: 'JEE', exam_roll_number: 'JEE9876', exam_score: 95.5, exam_percentile: 98.4, course_preferences: 'CSE,ECE,AIML', allocated_branch: 'CSE', merit_rank: 1, documents_verified: 'verified', fee_payment_status: 'paid', locked_fee_amount: 120000 },
-      { id: 'cand-2', admission_number: 'AD-2026-002', full_name: 'Rahul Verma', mobile_number: '9876543211', email: 'rahul@gmail.com', gender: 'Male', branch: 'ECE', batch: '2026', quota: 'Management', category: 'OBC', status: 'submitted', exam_type: 'EAMCET', exam_roll_number: 'EAM1234', exam_score: 85.0, exam_percentile: 91.2, course_preferences: 'CSE,ECE', allocated_branch: null, merit_rank: null, documents_verified: 'pending', fee_payment_status: 'pending', locked_fee_amount: 150000 },
-      { id: 'cand-3', admission_number: 'AD-2026-003', full_name: 'Pooja Reddy', mobile_number: '9876543212', email: 'pooja@gmail.com', gender: 'Female', branch: 'CSE', batch: '2026', quota: 'Govt', category: 'SC', status: 'seat_allocated', exam_type: 'JEE', exam_roll_number: 'JEE1234', exam_score: 91.0, exam_percentile: 96.1, course_preferences: 'CSE', allocated_branch: 'CSE', merit_rank: 2, documents_verified: 'pending', fee_payment_status: 'partial', locked_fee_amount: 90000 },
-      { id: 'cand-4', admission_number: 'AD-2026-004', full_name: 'Karan Malhotra', mobile_number: '9876543213', email: 'karan@gmail.com', gender: 'Male', branch: 'MECH', batch: '2026', quota: 'General', category: 'General', status: 'enquiry', exam_type: 'Merit', exam_roll_number: 'MER098', exam_score: 94.2, exam_percentile: 94.2, course_preferences: 'MECH,CIVIL', allocated_branch: null, merit_rank: null, documents_verified: 'pending', fee_payment_status: 'pending', locked_fee_amount: 110000 }
-    ];
-    return { data: { data: mockCandidates } };
-  },
-  bulkImport: async (csvData: string) => {
-    return { data: { data: { imported: 12, skipped: 0, errors: [] } } };
-  },
-  generateMeritList: async (phaseName: string) => {
-    return { data: { data: [
-      { id: 'cand-1', name: 'Sneha Singh', merit_rank: 1, percentile: 98.4, category: 'General' },
-      { id: 'cand-3', name: 'Pooja Reddy', merit_rank: 2, percentile: 96.1, category: 'SC' }
-    ] } };
-  },
-  runCounseling: async (branchCapacities: any) => {
-    return { data: { data: {
-      allocated: [
-        { candidate_id: 'cand-1', name: 'Sneha Singh', merit_rank: 1, allocated_branch: 'CSE' },
-        { candidate_id: 'cand-3', name: 'Pooja Reddy', merit_rank: 2, allocated_branch: 'CSE' }
-      ],
-      waitlisted: []
-    } } };
-  },
-  verifyDocuments: async (candidateId: string, status: string) => {
-    return { data: { data: { message: `Document status updated to ${status}` } } };
-  },
-  rollover: async (candidateId: string) => {
-    return { data: { data: { register_number: '26CSE42A1', official_email: 'sneha.singh@acadmix.org' } } };
-  }
-};
+import { admissionsAPI } from '../services/api';
+
 
 const STAGES = [
   { id: 'enquiry', name: 'Enquiries', color: 'border-slate-200 dark:border-white/10' },
@@ -437,6 +402,81 @@ const AdmissionsManagement: React.FC = () => {
                   <p>Quota: <span className="text-slate-900 dark:text-white">{selectedCandidate.quota}</span></p>
                   <p>Category: <span className="text-slate-900 dark:text-white">{selectedCandidate.category}</span></p>
                   <p>Gender: <span className="text-slate-900 dark:text-white">{selectedCandidate.gender}</span></p>
+                </div>
+              </div>
+
+              {/* AI Seat Melt Risk Index */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 space-y-4">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
+                    <Sparkle size={14} className="text-indigo-500 animate-pulse" /> AI Seat Melt Risk Index
+                  </h4>
+                  <button 
+                    onClick={async () => {
+                      try {
+                        const res = await admissionsAPI.recalculateRisk(selectedCandidate.id);
+                        toast.success('Risk recalculated!');
+                        setSelectedCandidate(prev => ({ 
+                          ...prev, 
+                          melt_risk_score: res.data.data.melt_risk_score,
+                          melt_risk_factors: res.data.data.melt_risk_factors
+                        }));
+                        loadCandidates();
+                      } catch {
+                        toast.error('Recalculation failed');
+                      }
+                    }}
+                    className="text-[10px] font-black text-indigo-600 hover:text-indigo-500 transition-colors uppercase"
+                  >
+                    Recalculate
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-slate-800 dark:text-white">
+                      {selectedCandidate.melt_risk_score != null ? Math.round(selectedCandidate.melt_risk_score) : 0}%
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">risk chance</span>
+                  </div>
+
+                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                    (selectedCandidate.melt_risk_score ?? 0) > 70 
+                      ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600' 
+                      : (selectedCandidate.melt_risk_score ?? 0) > 30 
+                      ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600' 
+                      : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600'
+                  }`}>
+                    {(selectedCandidate.melt_risk_score ?? 0) > 70 
+                      ? 'High Risk' 
+                      : (selectedCandidate.melt_risk_score ?? 0) > 30 
+                      ? 'Moderate Risk' 
+                      : 'Low Risk'}
+                  </span>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-500 ${
+                    (selectedCandidate.melt_risk_score ?? 0) > 70 
+                      ? 'bg-rose-500' 
+                      : (selectedCandidate.melt_risk_score ?? 0) > 30 
+                      ? 'bg-amber-500' 
+                      : 'bg-emerald-500'
+                  }`} style={{ width: `${selectedCandidate.melt_risk_score ?? 0}%` }} />
+                </div>
+
+                {/* Risk Factors List */}
+                <div className="text-[11px] space-y-1 text-slate-500 dark:text-slate-400">
+                  <p className="font-bold text-slate-400">Risk Factors detected:</p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {selectedCandidate.melt_risk_factors 
+                      ? selectedCandidate.melt_risk_factors.split(',').map((factor: string, idx: number) => (
+                          <li key={idx}>{factor.trim()}</li>
+                        ))
+                      : <li>No risk flags detected</li>
+                    }
+                  </ul>
                 </div>
               </div>
 
