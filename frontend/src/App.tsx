@@ -164,6 +164,11 @@ const ROLE_DASHBOARD = {
   finance_officer: '/finance',
   director: '/director',
   admissions_officer: '/admin/admissions',
+  evaluator: '/teacher',
+  moderator: '/teacher',
+  mentor: '/teacher',
+  academic_admin: '/admin',
+  system_auditor: '/accreditation',
 };
 
 
@@ -260,12 +265,12 @@ function AppRoutes({ user, onLogin, onLogout }) {
         </ProtectedRoute>
       } />
       <Route path="/teacher" element={
-        <ProtectedRoute user={user} allowedRoles={['teacher']}>
+        <ProtectedRoute user={user} allowedRoles={['teacher', 'evaluator', 'moderator', 'mentor']}>
           <TeacherDashboard navigate={navigate} user={user} onLogout={onLogout} />
         </ProtectedRoute>
       } />
       <Route path="/admin" element={
-        <ProtectedRoute user={user} allowedRoles={['admin']}>
+        <ProtectedRoute user={user} allowedRoles={['admin', 'academic_admin']}>
           <AdminDashboard navigate={navigate} user={user} onLogout={onLogout} />
         </ProtectedRoute>
       } />
@@ -483,7 +488,7 @@ function AppRoutes({ user, onLogin, onLogout }) {
         <ProtectedRoute user={user}><CadStudio /></ProtectedRoute>
       } />
       <Route path="/accreditation" element={
-        <ProtectedRoute user={user} allowedRoles={['nodal_officer', 'principal', 'admin', 'hod']}>
+        <ProtectedRoute user={user} allowedRoles={['nodal_officer', 'principal', 'admin', 'hod', 'system_auditor']}>
           <ReportDashboard user={user} />
         </ProtectedRoute>
       } />

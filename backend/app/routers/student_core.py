@@ -55,7 +55,7 @@ async def search_students(
 
 
 @router.get("/students/{student_id}/profile")
-async def student_profile(student_id: str, user: dict = Depends(require_role("hod", "admin", "exam_cell", "teacher")), session: AsyncSession = Depends(get_db)):
+async def student_profile(student_id: str, user: dict = Depends(require_role("hod", "admin", "exam_cell", "teacher", "academic_admin", "mentor")), session: AsyncSession = Depends(get_db)):
     student_r = await session.execute(select(models.User).where(
         models.User.id == student_id,
         models.User.college_id == user["college_id"]
@@ -655,7 +655,7 @@ async def update_my_student_profile(
 async def update_student_profile_admin(
     student_id: str,
     payload: dict = Body(...),
-    user: dict = Depends(require_role("hod", "admin", "principal")),
+    user: dict = Depends(require_role("hod", "admin", "principal", "academic_admin")),
     session: AsyncSession = Depends(get_db)
 ):
     """Admin/HOD update for student academic records with optimistic locking & segregation of duties."""
