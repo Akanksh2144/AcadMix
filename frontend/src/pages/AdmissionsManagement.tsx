@@ -19,7 +19,12 @@ const STAGES = [
   { id: 'enrolled', name: 'Enrolled SIS', color: 'border-indigo-500/30' }
 ];
 
-const AdmissionsManagement: React.FC = () => {
+interface AdmissionsManagementProps {
+  navigate?: (path: string) => void;
+  user?: any;
+}
+
+const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, user }) => {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'funnel' | 'tasks' | 'counseling' | 'analytics'>('funnel');
@@ -131,6 +136,7 @@ const AdmissionsManagement: React.FC = () => {
         title="Admissions & Enrollment CRM"
         subtitle="Manage prospective students, merit rankings, counseling, and enrollment."
         backTo="admin-dashboard"
+        hideBack={user?.role === 'admissions_officer'}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
