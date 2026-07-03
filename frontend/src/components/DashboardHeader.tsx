@@ -165,28 +165,60 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
             </AnimatePresence>
           </div>
 
-          {/* Theme Toggle */}
-          {isDark ? (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={toggleTheme}
-              className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-950/80 to-slate-900 border border-indigo-900/60 shadow-md text-white hover:text-slate-200 cursor-pointer transition-all"
-              title="Switch to Light Mode"
+          {/* Theme Toggle Switch */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={toggleTheme}
+            className={`relative w-20 h-11 rounded-full overflow-hidden transition-all duration-500 cursor-pointer shadow-inner border flex-shrink-0 ${
+              isDark 
+                ? "bg-slate-950 border-slate-800 shadow-slate-950/50" 
+                : "bg-gradient-to-r from-sky-400 to-sky-300 border-sky-200"
+            }`}
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {/* Light Mode Scene: Clouds */}
+            <div className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${isDark ? 'opacity-0' : 'opacity-100'}`}>
+              <svg className="absolute bottom-[-4px] right-[-2px] w-12 h-8 text-white/80" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
+              </svg>
+              <svg className="absolute bottom-[2px] right-[14px] w-9 h-6 text-white/50" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
+              </svg>
+            </div>
+
+            {/* Dark Mode Scene: Stars */}
+            <div className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${isDark ? 'opacity-100' : 'opacity-0'}`}>
+              <div className="absolute top-2.5 left-3 w-0.5 h-0.5 bg-white rounded-full animate-pulse"></div>
+              <div className="absolute top-6 left-6 w-0.5 h-0.5 bg-white/80 rounded-full"></div>
+              <div className="absolute top-3.5 left-9 w-1 h-1 bg-white/40 rounded-full"></div>
+              <svg className="absolute top-2 left-6 w-2 h-2 text-white animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" />
+              </svg>
+              <svg className="absolute top-6 left-2 w-1.5 h-1.5 text-white/70" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" />
+              </svg>
+            </div>
+
+            {/* Knob: Sun/Moon */}
+            <div 
+              className={`absolute top-[3px] left-[3px] w-8 h-8 rounded-full transition-transform duration-500 ease-in-out ${
+                isDark ? 'transform translate-x-[42px]' : 'transform translate-x-0'
+              }`}
             >
-              <Moon size={20} weight="fill" />
-            </motion.button>
-          ) : (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={toggleTheme}
-              className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/60 border border-amber-200/80 shadow-md text-amber-500 hover:text-amber-600 cursor-pointer transition-all"
-              title="Switch to Dark Mode"
-            >
-              <CloudSun size={22} weight="fill" />
-            </motion.button>
-          )}
+              {/* Sun Knob */}
+              <div className={`absolute inset-0 rounded-full transition-opacity duration-500 bg-gradient-to-br from-amber-300 to-yellow-500 shadow-[0_0_12px_rgba(245,158,11,0.6)] ${isDark ? 'opacity-0' : 'opacity-100'}`}>
+                <div className="absolute inset-1 rounded-full border border-yellow-200/30"></div>
+              </div>
+
+              {/* Moon Knob */}
+              <div className={`absolute inset-0 rounded-full transition-opacity duration-500 bg-gradient-to-br from-slate-100 to-slate-200 shadow-[0_0_10px_rgba(255,255,255,0.4)] ${isDark ? 'opacity-100' : 'opacity-0'}`}>
+                <div className="absolute top-1.5 left-2 w-1.5 h-1.5 rounded-full bg-slate-400/35"></div>
+                <div className="absolute bottom-2.5 left-3 w-1 h-1 rounded-full bg-slate-400/30"></div>
+                <div className="absolute top-3.5 right-2.5 w-2 h-2 rounded-full bg-slate-400/35 shadow-inner"></div>
+              </div>
+            </div>
+          </motion.button>
 
           {/* User Profile Card */}
           <button
