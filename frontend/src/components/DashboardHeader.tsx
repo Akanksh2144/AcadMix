@@ -191,7 +191,7 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
           {/* User Profile Card */}
           <button
             onClick={onProfileClick}
-            className="hidden sm:flex items-center gap-3 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 active:scale-[0.98] transition-all rounded-2xl p-1 pr-5 cursor-pointer shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/20"
+            className="hidden sm:flex items-center gap-3 h-11 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 active:scale-[0.98] transition-all rounded-2xl p-1 pr-5 cursor-pointer shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/20"
           >
             <div className="w-9 h-9 rounded-[10px] overflow-hidden flex items-center justify-center bg-white/15 border border-white/20 flex-shrink-0">
               {user?.role === 'student' ? (
