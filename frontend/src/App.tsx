@@ -163,6 +163,7 @@ const ROLE_DASHBOARD = {
   cashier: '/cashier',
   finance_officer: '/finance',
   director: '/director',
+  admissions_officer: '/admin/admissions',
 };
 
 
@@ -427,7 +428,7 @@ function AppRoutes({ user, onLogin, onLogout }) {
         </ProtectedRoute>
       } />
       <Route path="/admin/admissions" element={
-        <ProtectedRoute user={user} allowedRoles={['admin', 'hod']}>
+        <ProtectedRoute user={user} allowedRoles={['admin', 'hod', 'admissions_officer']}>
           <AdmissionsManagement />
         </ProtectedRoute>
       } />

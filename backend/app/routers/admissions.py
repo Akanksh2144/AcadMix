@@ -29,7 +29,7 @@ async def list_candidates(
     q: Optional[str] = None,
     stage: Optional[str] = None,
     branch: Optional[str] = None,
-    user: dict = Depends(require_role("admin", "hod", "principal")),
+    user: dict = Depends(require_role("admin", "hod", "principal", "admissions_officer")),
     session: AsyncSession = Depends(get_db)
 ):
     stmt = select(Admission).where(Admission.college_id == user["college_id"])
@@ -75,7 +75,7 @@ async def list_candidates(
 @router.post("/bulk-import")
 async def bulk_import_candidates(
     payload: BulkImportPayload,
-    user: dict = Depends(require_role("admin", "hod")),
+    user: dict = Depends(require_role("admin", "hod", "admissions_officer")),
     session: AsyncSession = Depends(get_db)
 ):
     service = AdmissionsService(session)
@@ -85,7 +85,7 @@ async def bulk_import_candidates(
 @router.post("/generate-merit-list")
 async def generate_merit_list(
     payload: GenerateMeritListPayload,
-    user: dict = Depends(require_role("admin", "hod")),
+    user: dict = Depends(require_role("admin", "hod", "admissions_officer")),
     session: AsyncSession = Depends(get_db)
 ):
     service = AdmissionsService(session)
@@ -95,7 +95,7 @@ async def generate_merit_list(
 @router.post("/run-counseling")
 async def run_counseling(
     payload: RunCounselingPayload,
-    user: dict = Depends(require_role("admin", "hod")),
+    user: dict = Depends(require_role("admin", "hod", "admissions_officer")),
     session: AsyncSession = Depends(get_db)
 ):
     service = AdmissionsService(session)
@@ -106,7 +106,7 @@ async def run_counseling(
 async def verify_documents(
     candidate_id: str,
     payload: VerifyDocsPayload,
-    user: dict = Depends(require_role("admin", "hod")),
+    user: dict = Depends(require_role("admin", "hod", "admissions_officer")),
     session: AsyncSession = Depends(get_db)
 ):
     res = await session.execute(
@@ -128,7 +128,7 @@ async def verify_documents(
 @router.post("/{candidate_id}/rollover")
 async def rollover_candidate(
     candidate_id: str,
-    user: dict = Depends(require_role("admin", "hod")),
+    user: dict = Depends(require_role("admin", "hod", "admissions_officer")),
     session: AsyncSession = Depends(get_db)
 ):
     service = AdmissionsService(session)
@@ -140,7 +140,7 @@ async def rollover_candidate(
 
 @router.get("/analytics")
 async def get_analytics(
-    user: dict = Depends(require_role("admin", "hod", "principal")),
+    user: dict = Depends(require_role("admin", "hod", "principal", "admissions_officer")),
     session: AsyncSession = Depends(get_db)
 ):
     # Total candidates counts by status
