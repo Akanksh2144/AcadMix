@@ -165,58 +165,40 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
             </AnimatePresence>
           </div>
 
-          {/* Theme Toggle Switch */}
+          {/* Theme Toggle Switch: Unique Sky/Space Squircle */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={toggleTheme}
-            className={`relative w-20 h-11 rounded-full overflow-hidden transition-all duration-500 cursor-pointer shadow-inner border flex-shrink-0 ${
+            className={`relative w-11 h-11 flex items-center justify-center rounded-2xl border transition-all duration-500 cursor-pointer shadow-md flex-shrink-0 overflow-hidden ${
               isDark 
-                ? "bg-slate-950 border-slate-800 shadow-slate-950/50" 
-                : "bg-gradient-to-r from-sky-400 to-sky-300 border-sky-200"
+                ? "bg-gradient-to-br from-slate-950 to-indigo-950 border-slate-800 shadow-slate-950/40" 
+                : "bg-gradient-to-br from-sky-400 via-sky-300 to-blue-400 border-sky-200 shadow-sky-200/30"
             }`}
             title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
-            {/* Light Mode Scene: Clouds */}
-            <div className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${isDark ? 'opacity-0' : 'opacity-100'}`}>
-              <svg className="absolute bottom-[-4px] right-[-2px] w-12 h-8 text-white/80" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
-              </svg>
-              <svg className="absolute bottom-[2px] right-[14px] w-9 h-6 text-white/50" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
-              </svg>
-            </div>
-
-            {/* Dark Mode Scene: Stars */}
-            <div className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${isDark ? 'opacity-100' : 'opacity-0'}`}>
-              <div className="absolute top-2.5 left-3 w-0.5 h-0.5 bg-white rounded-full animate-pulse"></div>
-              <div className="absolute top-6 left-6 w-0.5 h-0.5 bg-white/80 rounded-full"></div>
-              <div className="absolute top-3.5 left-9 w-1 h-1 bg-white/40 rounded-full"></div>
-              <svg className="absolute top-2 left-6 w-2 h-2 text-white animate-pulse" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" />
-              </svg>
-              <svg className="absolute top-6 left-2 w-1.5 h-1.5 text-white/70" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" />
-              </svg>
-            </div>
-
-            {/* Knob: Sun/Moon */}
-            <div 
-              className={`absolute top-[3px] left-[3px] w-8 h-8 rounded-full transition-transform duration-500 ease-in-out ${
-                isDark ? 'transform translate-x-[42px]' : 'transform translate-x-0'
-              }`}
-            >
-              {/* Sun Knob */}
-              <div className={`absolute inset-0 rounded-full transition-opacity duration-500 bg-gradient-to-br from-amber-300 to-yellow-500 shadow-[0_0_12px_rgba(245,158,11,0.6)] ${isDark ? 'opacity-0' : 'opacity-100'}`}>
+            {/* Light Mode Scene inside the Button */}
+            <div className={`absolute inset-0 transition-all duration-500 ${isDark ? 'opacity-0 scale-75 rotate-45' : 'opacity-100 scale-100 rotate-0'}`}>
+              {/* Golden Sun */}
+              <div className="w-5.5 h-5.5 rounded-full bg-gradient-to-br from-amber-300 to-yellow-500 absolute top-[7px] left-[7px] shadow-[0_0_10px_rgba(245,158,11,0.6)]">
                 <div className="absolute inset-1 rounded-full border border-yellow-200/30"></div>
               </div>
+              {/* Cloud overlapping */}
+              <svg className="absolute bottom-[2px] right-[2px] w-7.5 h-6.5 text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.1)]" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
+              </svg>
+            </div>
 
-              {/* Moon Knob */}
-              <div className={`absolute inset-0 rounded-full transition-opacity duration-500 bg-gradient-to-br from-slate-100 to-slate-200 shadow-[0_0_10px_rgba(255,255,255,0.4)] ${isDark ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="absolute top-1.5 left-2 w-1.5 h-1.5 rounded-full bg-slate-400/35"></div>
-                <div className="absolute bottom-2.5 left-3 w-1 h-1 rounded-full bg-slate-400/30"></div>
-                <div className="absolute top-3.5 right-2.5 w-2 h-2 rounded-full bg-slate-400/35 shadow-inner"></div>
-              </div>
+            {/* Dark Mode Scene inside the Button */}
+            <div className={`absolute inset-0 transition-all duration-500 ${isDark ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-75 -rotate-45'}`}>
+              {/* Pure White Crescent Moon */}
+              <svg className="w-5.5 h-5.5 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.4)] absolute top-2.5 left-2.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+              {/* Tiny Star Sparkle */}
+              <svg className="absolute top-[7px] right-[7px] w-3 h-3 text-white/95 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" />
+              </svg>
             </div>
           </motion.button>
 
