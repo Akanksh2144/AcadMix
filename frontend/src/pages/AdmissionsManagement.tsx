@@ -19,12 +19,15 @@ const STAGES = [
   { id: 'enrolled', name: 'Enrolled SIS', color: 'border-indigo-500/30' }
 ];
 
+import DashboardHeader from '../components/DashboardHeader';
+
 interface AdmissionsManagementProps {
   navigate?: (path: string) => void;
   user?: any;
+  onLogout?: () => void;
 }
 
-const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, user }) => {
+const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, user, onLogout }) => {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'funnel' | 'tasks' | 'counseling' | 'analytics'>('funnel');
@@ -132,12 +135,20 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300">
-      <PageHeader 
-        title="Admissions & Enrollment CRM"
-        subtitle="Manage prospective students, merit rankings, counseling, and enrollment."
-        backTo="admin-dashboard"
-        hideBack={user?.role === 'admissions_officer'}
-      />
+      {user?.role === 'admissions_officer' ? (
+        <DashboardHeader 
+          user={user}
+          title="Admissions & Enrollment CRM"
+          onLogout={onLogout}
+          onProfileClick={() => {}}
+        />
+      ) : (
+        <PageHeader 
+          title="Admissions & Enrollment CRM"
+          subtitle="Manage prospective students, merit rankings, counseling, and enrollment."
+          backTo="admin-dashboard"
+        />
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         

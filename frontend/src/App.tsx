@@ -434,7 +434,7 @@ function AppRoutes({ user, onLogin, onLogout }) {
       } />
       <Route path="/admin/admissions" element={
         <ProtectedRoute user={user} allowedRoles={['admin', 'hod', 'admissions_officer']}>
-          <AdmissionsManagement navigate={navigate} user={user} />
+          <AdmissionsManagement navigate={navigate} user={user} onLogout={onLogout} />
         </ProtectedRoute>
       } />
 
