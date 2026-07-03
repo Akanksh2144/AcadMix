@@ -22,7 +22,7 @@ const STAGES = [
 const AdmissionsManagement: React.FC = () => {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'funnel' | 'counseling' | 'analytics'>('funnel');
+  const [activeTab, setActiveTab] = useState<'funnel' | 'tasks' | 'counseling' | 'analytics'>('funnel');
   
   // Search / Filters
   const [search, setSearch] = useState('');
@@ -135,11 +135,61 @@ const AdmissionsManagement: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         
+        {/* KPI Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/10 p-5 rounded-3xl flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Total Leads Ingested</p>
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white mt-1">{candidates.length}</h3>
+            </div>
+            <div className="p-3 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+              <Users size={20} weight="bold" />
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/10 p-5 rounded-3xl flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Enrollment Conversion</p>
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white mt-1">
+                {candidates.length > 0 ? Math.round((candidates.filter(c => c.status === 'enrolled').length / candidates.length) * 100) : 0}%
+              </h3>
+            </div>
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+              <GraduationCap size={20} weight="bold" />
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/10 p-5 rounded-3xl flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">High Melt Risks</p>
+              <h3 className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">
+                {candidates.filter(c => (c.melt_risk_score ?? 0) > 70).length}
+              </h3>
+            </div>
+            <div className="p-3 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-2xl">
+              <Warning size={20} weight="bold" />
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/10 p-5 rounded-3xl flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Pending Document Reviews</p>
+              <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
+                {candidates.filter(c => c.documents_verified === 'pending').length}
+              </h3>
+            </div>
+            <div className="p-3 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl">
+              <Clock size={20} weight="bold" />
+            </div>
+          </div>
+        </div>
+
         {/* Tab switcher matching external shape (pill shaped) */}
         <div className="flex justify-between items-center bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/10 p-2 rounded-full">
           <div className="flex gap-2 bg-slate-100 dark:bg-slate-800/40 p-1 rounded-full">
             {[
               { id: 'funnel', name: 'Admissions Funnel' },
+              { id: 'tasks', name: 'Priority Call Queue' },
               { id: 'counseling', name: 'Counseling & Merit' },
               { id: 'analytics', name: 'Analytics' }
             ].map(tab => (
@@ -241,6 +291,80 @@ const AdmissionsManagement: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* CALL QUEUE VIEW */}
+        {activeTab === 'tasks' && (
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/10 p-6 rounded-3xl space-y-4">
+            <div>
+              <h3 className="font-extrabold text-slate-900 dark:text-white">Priority Follow-Up Queue</h3>
+              <p className="text-xs text-slate-400 mt-0.5">High-priority leads requiring immediate counselor outreach based on payment delays, document issues, or AI Melt Risk.</p>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-white/5">
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-white/[0.02] text-slate-400 uppercase font-black tracking-wider border-b border-slate-100 dark:border-white/5">
+                    <th className="px-4 py-3">Rank/Risk</th>
+                    <th className="px-4 py-3">Candidate Details</th>
+                    <th className="px-4 py-3">Primary Alert Factors</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 text-right">Outreach Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {candidates
+                    .filter(c => c.status !== 'enrolled')
+                    .sort((a, b) => (b.melt_risk_score ?? 0) - (a.melt_risk_score ?? 0))
+                    .map(c => {
+                      const risk = c.melt_risk_score ?? 0;
+                      return (
+                        <tr key={c.id} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.01] cursor-pointer" onClick={() => setSelectedCandidate(c)}>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-sm font-black ${
+                                risk > 70 ? 'text-rose-600' : risk > 30 ? 'text-amber-500' : 'text-emerald-500'
+                              }`}>{Math.round(risk)}%</span>
+                              <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full ${
+                                risk > 70 ? 'bg-rose-50 text-rose-600' : risk > 30 ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'
+                              }`}>Risk</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="font-extrabold text-slate-800 dark:text-white text-sm">{c.full_name}</div>
+                            <div className="text-[10px] text-slate-400">{c.email} • {c.mobile_number}</div>
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-slate-500 max-w-xs truncate">
+                            {c.melt_risk_factors || "No risk flags detected"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 uppercase">{c.status}</span>
+                          </td>
+                          <td className="px-4 py-3 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => {
+                                toast.success(`Calling ${c.full_name} at ${c.mobile_number}...`);
+                              }}
+                              className="px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 text-[10px] font-black hover:bg-slate-200 dark:hover:bg-white/10"
+                            >
+                              Call Lead
+                            </button>
+                            <button
+                              onClick={() => {
+                                toast.success(`[WhatsApp Nudge Sent] Reminded ${c.full_name} to confirm their seat.`);
+                              }}
+                              className="px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black hover:bg-indigo-100"
+                            >
+                              WhatsApp Nudge
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
