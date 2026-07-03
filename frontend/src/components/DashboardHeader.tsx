@@ -14,6 +14,7 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [imgFailed, setImgFailed] = useState(false);
 
   // Poll notifications
   useEffect(() => {
@@ -149,18 +150,19 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
             className="hidden sm:flex items-center gap-3 bg-slate-50/80 hover:bg-slate-100 dark:bg-[#1A202C] dark:border-slate-700 dark:hover:bg-slate-800 transition-all rounded-2xl p-1 pr-5 cursor-pointer border border-slate-200 dark:border-slate-700/50 shadow-sm"
           >
             <div className="w-9 h-9 rounded-[10px] overflow-hidden flex items-center justify-center flex-shrink-0 bg-slate-100 dark:bg-slate-800">
-              {user?.role === 'student' ? (
-                <Avatar 
-                  size={36} 
-                  name={sessionAvatarSeed} 
-                  variant="beam" 
-                  colors={['#6366f1', '#14b8a6', '#8b5cf6', '#06b6d4', '#34d399']} 
-                />
-              ) : (
+              {(user?.role !== 'student' && !imgFailed) ? (
                 <img 
                   src={`https://avatar.iran.liara.run/public/${user?.gender?.toLowerCase() === 'female' ? 'girl' : 'boy'}?username=${user?.name || 'Faculty'}`} 
                   alt="Avatar" 
                   className="w-full h-full object-cover"
+                  onError={() => setImgFailed(true)}
+                />
+              ) : (
+                <Avatar 
+                  size={36} 
+                  name={user?.role === 'student' ? sessionAvatarSeed : (user?.name || 'User')} 
+                  variant="beam" 
+                  colors={['#6366f1', '#14b8a6', '#8b5cf6', '#06b6d4', '#34d399']} 
                 />
               )}
             </div>
