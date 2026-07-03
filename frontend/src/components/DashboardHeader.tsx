@@ -180,11 +180,11 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
             {/* Light Mode Scene inside the Button */}
             <div className={`absolute inset-0 transition-all duration-500 ${isDark ? 'opacity-0 scale-75 rotate-45' : 'opacity-100 scale-100 rotate-0'}`}>
               {/* Golden Sun */}
-              <div className="w-5.5 h-5.5 rounded-full bg-gradient-to-br from-amber-300 to-yellow-500 absolute top-[7px] left-[7px] shadow-[0_0_10px_rgba(245,158,11,0.6)]">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-300 to-yellow-500 absolute top-[6px] left-[6px] shadow-[0_0_10px_rgba(245,158,11,0.6)]">
                 <div className="absolute inset-1 rounded-full border border-yellow-200/30"></div>
               </div>
               {/* Cloud overlapping */}
-              <svg className="absolute bottom-[2px] right-[2px] w-7.5 h-6.5 text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.1)]" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="absolute bottom-[4px] right-[4px] w-7 h-5 text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.1)]" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
               </svg>
             </div>
@@ -192,11 +192,11 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
             {/* Dark Mode Scene inside the Button */}
             <div className={`absolute inset-0 transition-all duration-500 ${isDark ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-75 -rotate-45'}`}>
               {/* Pure White Crescent Moon */}
-              <svg className="w-5.5 h-5.5 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.4)] absolute top-2.5 left-2.5" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="w-6 h-6 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.4)] absolute top-[10px] left-[10px]" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
               </svg>
               {/* Tiny Star Sparkle */}
-              <svg className="absolute top-[7px] right-[7px] w-3 h-3 text-white/95 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="absolute top-[6px] right-[6px] w-3 h-3 text-white/95 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" />
               </svg>
             </div>
