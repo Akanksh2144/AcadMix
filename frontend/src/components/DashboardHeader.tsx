@@ -179,55 +179,57 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
           >
             {/* Light Mode Scene inside the Button */}
             <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${isDark ? 'opacity-0 scale-75 rotate-45' : 'opacity-100 scale-100 rotate-0'}`}>
-              <svg className="w-9 h-9" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#FFF490" />
-                    <stop offset="100%" stopColor="#FF9800" />
+                    <stop offset="0%" stopColor="#FFE082" />
+                    <stop offset="100%" stopColor="#FF8F00" />
                   </linearGradient>
                   <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="#FFFFFF" />
-                    <stop offset="100%" stopColor="#E2E8F0" />
+                    <stop offset="100%" stopColor="#F1F5F9" />
                   </linearGradient>
-                  <filter id="sunGlow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                  <filter id="sunGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1" result="blur" />
                     <feComposite in="SourceGraphic" in2="blur" operator="over" />
                   </filter>
                 </defs>
                 
-                {/* Radiant Sun Rays & Glow */}
-                <g filter="url(#sunGlow)">
-                  <circle cx="12" cy="12" r="6" fill="url(#sunGrad)" />
-                  {/* Styled radiating rays */}
-                  <path d="M12 2v2M12 20v2M4 12h2M20 12h2M6.34 6.34l1.42 1.42M16.24 16.24l1.42 1.42M6.34 17.66l1.42-1.42M16.24 7.76l1.42-1.42" stroke="#FFA726" strokeWidth="1.2" strokeLinecap="round" opacity="0.85" />
-                </g>
-
-                {/* Cloud overlapping with gradient and shadow */}
-                <path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" fill="url(#cloudGrad)" transform="translate(6, 6) scale(0.65)" filter="drop-shadow(0px 2px 3px rgba(15, 23, 42, 0.15))" />
+                {/* Golden Sun with soft glow */}
+                <circle cx="9" cy="9" r="5" fill="url(#sunGrad)" filter="url(#sunGlow)" />
+                
+                {/* Elegant Cloud with soft gradient and drop-shadow */}
+                <path 
+                  d="M17.5 19A5.5 5.5 0 0 0 23 13.5A5.5 5.5 0 0 0 17.5 8h-.12A7 7 0 0 0 3.5 11.5A7 7 0 0 0 10.5 19H17.5Z" 
+                  fill="url(#cloudGrad)" 
+                  filter="drop-shadow(0px 2px 3px rgba(15, 23, 42, 0.12))"
+                  stroke="white"
+                  strokeWidth="0.5"
+                  transform="translate(4.5, 4.5) scale(0.75)"
+                />
               </svg>
             </div>
 
             {/* Dark Mode Scene inside the Button */}
             <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${isDark ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-75 -rotate-45'}`}>
-              <svg className="w-9 h-9" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="moonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#FFFFFF" />
-                    <stop offset="100%" stopColor="#CBD5E1" />
+                    <stop offset="100%" stopColor="#E2E8F0" />
                   </linearGradient>
-                  <filter id="moonGlow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feGaussianBlur stdDeviation="1.2" result="blur" />
+                  <filter id="moonGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="0.8" result="blur" />
                     <feComposite in="SourceGraphic" in2="blur" operator="over" />
                   </filter>
                 </defs>
                 
                 {/* Crescent Moon */}
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="url(#moonGrad)" filter="url(#moonGlow)" transform="translate(4, 4) scale(0.85)" />
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="url(#moonGrad)" filter="url(#moonGlow)" transform="translate(-1, 0)" />
                 
-                {/* Sparkle Stars */}
-                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" fill="#FFF" opacity="0.95" transform="translate(21, 5) scale(0.22)" className="animate-pulse" />
-                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" fill="#FFF" opacity="0.7" transform="translate(7, 19) scale(0.12)" />
-                <circle cx="23" cy="21" r="0.6" fill="#FFF" opacity="0.8" />
+                {/* Elegant Sparkle Stars */}
+                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" fill="#FFF" opacity="0.9" transform="translate(15, 2) scale(0.18)" className="animate-pulse" />
+                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" fill="#FFF" opacity="0.6" transform="translate(4, 14) scale(0.1)" />
               </svg>
             </div>
           </motion.button>
