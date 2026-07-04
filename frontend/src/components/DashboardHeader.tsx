@@ -207,7 +207,7 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
             onClick={onProfileClick}
             className="hidden sm:flex items-center gap-3 h-11 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 active:scale-[0.98] transition-all rounded-2xl p-1 pr-5 cursor-pointer shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/20"
           >
-            <div className="w-9 h-9 rounded-[10px] overflow-hidden flex items-center justify-center bg-white/15 border border-white/20 flex-shrink-0">
+            <div className="w-9 h-9 rounded-[10px] overflow-hidden flex items-center justify-center bg-white shadow-sm flex-shrink-0">
               {user?.role === 'student' ? (
                 <Avatar 
                   size={36} 
@@ -216,7 +216,7 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
                   colors={['#6366f1', '#14b8a6', '#8b5cf6', '#06b6d4', '#34d399']} 
                 />
               ) : (
-                <span className="text-white font-black text-xs tracking-wider uppercase">
+                <span className="text-indigo-600 font-black text-xs tracking-wider uppercase">
                   {getInitials(user?.name)}
                 </span>
               )}
