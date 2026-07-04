@@ -178,26 +178,56 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
             title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
             {/* Light Mode Scene inside the Button */}
-            <div className={`absolute inset-0 transition-all duration-500 ${isDark ? 'opacity-0 scale-75 rotate-45' : 'opacity-100 scale-100 rotate-0'}`}>
-              {/* Golden Sun */}
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-300 to-yellow-500 absolute top-[6px] left-[6px] shadow-[0_0_10px_rgba(245,158,11,0.6)]">
-                <div className="absolute inset-1 rounded-full border border-yellow-200/30"></div>
-              </div>
-              {/* Cloud overlapping */}
-              <svg className="absolute bottom-[4px] right-[4px] w-7 h-5 text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.1)]" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
+            <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${isDark ? 'opacity-0 scale-75 rotate-45' : 'opacity-100 scale-100 rotate-0'}`}>
+              <svg className="w-9 h-9" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FFF490" />
+                    <stop offset="100%" stopColor="#FF9800" />
+                  </linearGradient>
+                  <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#FFFFFF" />
+                    <stop offset="100%" stopColor="#E2E8F0" />
+                  </linearGradient>
+                  <filter id="sunGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+                
+                {/* Radiant Sun Rays & Glow */}
+                <g filter="url(#sunGlow)">
+                  <circle cx="12" cy="12" r="6" fill="url(#sunGrad)" />
+                  {/* Styled radiating rays */}
+                  <path d="M12 2v2M12 20v2M4 12h2M20 12h2M6.34 6.34l1.42 1.42M16.24 16.24l1.42 1.42M6.34 17.66l1.42-1.42M16.24 7.76l1.42-1.42" stroke="#FFA726" strokeWidth="1.2" strokeLinecap="round" opacity="0.85" />
+                </g>
+
+                {/* Cloud overlapping with gradient and shadow */}
+                <path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" fill="url(#cloudGrad)" transform="translate(6, 6) scale(0.65)" filter="drop-shadow(0px 2px 3px rgba(15, 23, 42, 0.15))" />
               </svg>
             </div>
 
             {/* Dark Mode Scene inside the Button */}
-            <div className={`absolute inset-0 transition-all duration-500 ${isDark ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-75 -rotate-45'}`}>
-              {/* Pure White Crescent Moon */}
-              <svg className="w-6 h-6 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.4)] absolute top-[10px] left-[10px]" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              </svg>
-              {/* Tiny Star Sparkle */}
-              <svg className="absolute top-[6px] right-[6px] w-3 h-3 text-white/95 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" />
+            <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${isDark ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-75 -rotate-45'}`}>
+              <svg className="w-9 h-9" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="moonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FFFFFF" />
+                    <stop offset="100%" stopColor="#CBD5E1" />
+                  </linearGradient>
+                  <filter id="moonGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="1.2" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+                
+                {/* Crescent Moon */}
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="url(#moonGrad)" filter="url(#moonGlow)" transform="translate(4, 4) scale(0.85)" />
+                
+                {/* Sparkle Stars */}
+                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" fill="#FFF" opacity="0.95" transform="translate(21, 5) scale(0.22)" className="animate-pulse" />
+                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" fill="#FFF" opacity="0.7" transform="translate(7, 19) scale(0.12)" />
+                <circle cx="23" cy="21" r="0.6" fill="#FFF" opacity="0.8" />
               </svg>
             </div>
           </motion.button>
