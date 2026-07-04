@@ -165,16 +165,12 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
             </AnimatePresence>
           </div>
 
-          {/* Theme Toggle Switch: Unique Sky/Space Squircle */}
+          {/* Theme Toggle Switch: Harmonized Glass Squircle */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={toggleTheme}
-            className={`relative w-11 h-11 flex items-center justify-center rounded-2xl border transition-all duration-500 cursor-pointer shadow-md flex-shrink-0 overflow-hidden ${
-              isDark 
-                ? "bg-gradient-to-br from-slate-950 to-indigo-950 border-slate-800 shadow-slate-950/40" 
-                : "bg-gradient-to-br from-sky-400 via-sky-300 to-blue-400 border-sky-200 shadow-sky-200/30"
-            }`}
+            className="relative w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/90 dark:from-white/[0.03] dark:to-white/[0.01] border border-slate-200/60 dark:border-white/10 shadow-sm hover:shadow hover:text-slate-700 dark:hover:text-slate-200 transition-all cursor-pointer flex-shrink-0 overflow-hidden"
             title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
             {/* Light Mode Scene inside the Button */}
