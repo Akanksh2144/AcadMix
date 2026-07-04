@@ -242,6 +242,7 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
                   name={sessionAvatarSeed} 
                   variant="beam" 
                   colors={['#6366f1', '#14b8a6', '#8b5cf6', '#06b6d4', '#34d399']} 
+                  square
                 />
               ) : (
                 <span className="text-indigo-600 font-black text-xs tracking-wider uppercase">
