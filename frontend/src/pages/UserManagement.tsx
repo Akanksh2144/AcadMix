@@ -5,6 +5,7 @@ import { departmentsAPI, sectionsAPI, rolesAPI } from '../services/api';
 import { Toaster, toast } from 'sonner';
 import { useUsersList, useCreateUser, useUpdateUser, useDeleteUser } from '../hooks/useUsers';
 import { useDepartments, useSections, useRoles } from '../hooks/useInstitution';
+import { Loader } from '../components/ui/loader';
 
 const PERMISSION_MODULES = [
   { id: 'students', label: 'Students', actions: ['view', 'create', 'edit', 'deactivate'] },
@@ -233,7 +234,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ navigate, user }) => {
 
         <div className="soft-card p-6">
           {loading ? (
-             <div className="flex items-center justify-center py-12"><Spinner className="animate-spin text-indigo-500" size={32} /></div>
+             <div className="flex items-center justify-center py-12"><Loader size="md" /></div>
           ) : (
             <table className="w-full">
               <thead>

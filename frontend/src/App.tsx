@@ -11,6 +11,7 @@ import IdleTimer from './components/auth/IdleTimer';
 import './App.css';
 import { authAPI, setAuthToken, clearAuthToken } from './services/api';
 import { Toaster } from 'sonner';
+import { LoadingScreen } from './components/ui/loader';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Lazy-loaded pages (code-split per route)
@@ -229,11 +230,7 @@ const queryClient = new QueryClient({
 // Loading Spinner
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const LoadingSpinner = () => (
-  <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-[#0B0F19]">
-    <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-  </div>
-);
+const LoadingSpinner = () => <LoadingScreen />;
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
