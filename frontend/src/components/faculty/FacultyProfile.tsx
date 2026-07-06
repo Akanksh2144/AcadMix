@@ -180,7 +180,7 @@ const FacultyProfile = () => {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Section Nav */}
         <motion.div variants={itemVariants} className="lg:col-span-1">
           <div className="soft-card p-3 space-y-1 lg:sticky lg:top-24">
@@ -190,7 +190,7 @@ const FacultyProfile = () => {
               const count = s.type === 'list' ? (editData[s.key] || []).length : null;
               return (
                 <button key={s.key} onClick={() => setActiveSection(s.key)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-sm font-bold transition-all ${
+                  className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-left text-sm font-bold transition-all ${
                     isActive ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' 
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
                   }`}

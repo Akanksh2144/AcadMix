@@ -245,37 +245,39 @@ const StudentProfilePage = ({ navigate, user }: any) => {
             </div>
           </motion.div>
 
-          {/* Section Nav - Pill Shaped Container matching active container shape */}
-          <motion.div variants={itemVariants} className="w-full">
-            <div className="flex items-center gap-2 p-1.5 bg-slate-200/70 dark:bg-slate-800/80 rounded-full w-full overflow-x-auto scrollbar-none">
-              {SECTIONS.map(s => {
-                const Icon = s.icon;
-                const isActive = activeSection === s.key;
-                const isVault = s.key === 'resumes';
-                const vaultCount = resumes.length;
-                return (
-                  <button key={s.key} onClick={() => setActiveSection(s.key)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-extrabold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
-                      isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <Icon size={16} weight={isActive ? 'fill' : 'bold'} />
-                    <span>{s.label}</span>
-                    {isVault && vaultCount > 0 && (
-                      <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
-                        isActive ? 'bg-white/20' : 'bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                      }`}>{vaultCount}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+            {/* Left Menu / Navigation */}
+            <motion.div variants={itemVariants} className="lg:col-span-1 w-full">
+              <div className="soft-card p-3 space-y-1 lg:sticky lg:top-24">
+                {SECTIONS.map(s => {
+                  const Icon = s.icon;
+                  const isActive = activeSection === s.key;
+                  const isVault = s.key === 'resumes';
+                  const vaultCount = resumes.length;
+                  return (
+                    <button key={s.key} onClick={() => setActiveSection(s.key)}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-left text-sm font-bold transition-all ${
+                        isActive ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Icon size={16} weight={isActive ? 'fill' : 'bold'} className="shrink-0" />
+                        <span className="truncate">{s.label}</span>
+                      </div>
+                      {isVault && vaultCount > 0 && (
+                        <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-2xl shrink-0 ${
+                          isActive ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                        }`}>{vaultCount}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
 
-          {/* Content Area */}
-          <div className="grid grid-cols-1 gap-5">
-            <motion.div variants={itemVariants} className="space-y-4">
+            {/* Right Content Area */}
+            <motion.div variants={itemVariants} className="lg:col-span-3 space-y-4 w-full">
 
               {/* ── Personal Info Sections ── */}
               {!isResumeTab && !isResumeProfileTab && currentInfoSection && (
