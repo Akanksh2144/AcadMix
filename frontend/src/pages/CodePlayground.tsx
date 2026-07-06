@@ -5,6 +5,7 @@ import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, Chec
 import PageHeader from '../components/PageHeader';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { useLocation } from 'react-router-dom';
 
 import Editor, { loader } from '@monaco-editor/react';
 
@@ -18,7 +19,7 @@ import api from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import SimulationIDE from '../components/SimulationIDE';
 import SpiceChart from '../components/SpiceChart';
-import { Simulation as EEcircuitSimulation } from 'eecircuit-engine';
+import { runSpiceSimulation } from '../utils/spiceRunner';
 import DSPBlockSimulator from '../components/dsp/DSPBlockSimulator';
 import SettlementCalculator from '../components/civil/SettlementCalculator';
 import CivilEngineeringStudio, { type CivilStudioTool } from '../components/civil/CivilEngineeringStudio';
@@ -565,7 +566,7 @@ const SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string;
   ],
   analog: [
     { id: 'ae-native-spice', label: 'SPICE: RLC Circuit', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: `* Basic RLC circuit\n\nv1 1 0 pulse (0 5 1m 1m 1m 10m 20m)\nr1 1 2 1k\nl1 2 3 10m\nc1 3 0 1u\n\n.tran 0.1m 50m\n.end` },
-    { id: 'ae-native-spice-bjt', label: 'SPICE: CE Amplifier', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: `* Common Emitter Amplifier\nVCC 1 0 15\nVIN 2 0 SIN(0 10m 1k)\nR1 1 3 47k\nR2 3 0 10k\nRC 1 4 4.7k\nRE 5 0 1k\nC1 2 3 10u\nC2 4 6 10u\nCE 5 0 100u\nQ1 4 3 5 2N3904\n.model 2N3904 NPN\n.tran 10u 5m\n.end` },
+    { id: 'ae-native-spice-bjt', label: 'SPICE: CE Amplifier', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: `* Common Emitter Amplifier\nVCC 1 0 15\nVIN 2 0 SIN(0 10m 1k)\nR1 1 3 47k\nR2 3 0 10k\nRC 1 4 4.7k\nRE 5 0 1k\nC1 2 3 10u\nC2 4 6 10u\nCE 5 0 100u\nRL 6 0 10k\nQ1 4 3 5 2N3904\n.model 2N3904 NPN(Is=6.734f Xti=3 Eg=1.11 Vaf=74.03 Bf=416.4 Ne=1.259 Ise=6.734f Ikf=66.78m Xtb=1.5 Br=.7371 Nc=2 Isc=0 Ikr=0 Rc=1 Cjc=3.638p Mjc=.3085 Vjc=.75 Fc=.5 Cje=4.493p Mje=.2593 Vje=.75 Tr=239.5n Tf=301.2p Itf=.4 Vtf=4 Xtf=2 Rb=10)\n.tran 10u 5m\n.end` },
     { id: 'ae-native-spice-rc', label: 'SPICE: RC Filter', url: '', isNativeWasm: true, nativeLanguage: 'spice', defaultCode: `* Low Pass Filter\nVIN 1 0 PULSE(0 5 1m 1m 1m 10m 20m)\nR1 1 2 1k\nC1 2 0 1u\n.tran 0.1m 30m\n.end` },
     { id: 'ae-blank', label: 'Blank Circuit', url: 'https://lushprojects.com/circuitjs/circuitjs.html?ctz=CQAgjCAMB0l3BWcA2aAOMB2ALGXyEBOAbmAmwmwFMBaMMAKACcQUFDxCRsKBmEbqh7ce-YUJR1BkEJByYAHiGC4ALpzV8hOvYb37MBg5QCMvIbsPG6Zjlx5A', openLabel: 'Open in CircuitJS' },
     { id: 'ae-opamp', label: 'Op-Amp', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=opamp.txt', openLabel: 'Open in CircuitJS' },
@@ -1058,9 +1059,14 @@ const CodePlayground = ({ navigate, user }) => {
     }
     return DEFAULT_TEMPLATES['python'];
   });
+  const location = useLocation();
+  const stateData = location.state || {};
+
   const [language, setLanguage] = useState(() => {
     const ch = _restoreChallenge();
-    return ch?.language || 'python';
+    if (ch?.language) return ch.language;
+    if (stateData.language) return stateData.language;
+    return 'python';
   });
   const [stdin, setStdin] = useState('');
   const [output, setOutput] = useState(null);
@@ -1070,10 +1076,28 @@ const CodePlayground = ({ navigate, user }) => {
   const [execTime, setExecTime] = useState(null);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const langMenuRef = useRef(null);
-  const [wokwiBoard, setWokwiBoard] = useState('arduino-uno');
-  const [simCategory, setSimCategory] = useState('embedded');
+  const [wokwiBoard, setWokwiBoard] = useState(() => {
+    if (stateData.wokwiBoard) return stateData.wokwiBoard;
+    return 'arduino-uno';
+  });
+  const [simCategory, setSimCategory] = useState(() => {
+    if (stateData.simCategory) return stateData.simCategory;
+    return 'embedded';
+  });
   const [useOctaveMode, setUseOctaveMode] = useState(false);
   const [isLabFullScreen, setIsLabFullScreen] = useState(false);
+
+  useEffect(() => {
+    if (stateData.language) {
+      setLanguage(stateData.language);
+    }
+    if (stateData.simCategory) {
+      setSimCategory(stateData.simCategory);
+    }
+    if (stateData.wokwiBoard) {
+      setWokwiBoard(stateData.wokwiBoard);
+    }
+  }, [stateData.language, stateData.simCategory, stateData.wokwiBoard]);
 
   // ── ECE / EEE / Civil Lab computed values ──────────────────────────────────
   const _isEEELab = language === 'eeelab';
@@ -1105,27 +1129,15 @@ const CodePlayground = ({ navigate, user }) => {
     setNativeOutput(null);
     try {
       if (lang === 'spice') {
-        const simPromise = async () => {
-          const sim = new EEcircuitSimulation();
-          await sim.start();
-          
-          let processedCode = simCode;
-          if (!/^\s*\.options\b.*rshunt/im.test(simCode)) {
-            processedCode = simCode.replace(/^\s*\.end\b/im, '.options rshunt=1e12 gmin=1e-10 reltol=0.01\n.end');
-            if (processedCode === simCode) {
-              processedCode = simCode + '\n.options rshunt=1e12 gmin=1e-10 reltol=0.01';
-            }
+        let processedCode = simCode;
+        if (!/^\s*\.options\b.*rshunt/im.test(simCode)) {
+          processedCode = simCode.replace(/^\s*\.end\b/im, '.options rshunt=1e12 gmin=1e-10 reltol=0.01\n.end');
+          if (processedCode === simCode) {
+            processedCode = simCode + '\n.options rshunt=1e12 gmin=1e-10 reltol=0.01';
           }
+        }
 
-          sim.setNetList(processedCode);
-          return await sim.runSim();
-        };
-
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Simulation timed out after 15 seconds. Ensure your syntax is correct and does not include external files.')), 15000)
-        );
-
-        const result = await Promise.race([simPromise(), timeoutPromise]) as any;
+        const result = await runSpiceSimulation(processedCode);
         
         // Very basic result parsing for demonstration
         if (result && result.error) {

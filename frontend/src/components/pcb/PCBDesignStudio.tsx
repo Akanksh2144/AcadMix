@@ -13,7 +13,7 @@ import { getCatalogEntry } from './componentCatalog';
 import { runDRC, generateNetlistText, generateBOM, bomToCSV, exportKiCadNetlist, downloadFile, generateSPICENetlist, generatePickPlace, pickPlaceToCSV, generatePCBInfo, type PCBInfo } from './pcbEngine';
 import { exportGerbers } from './gerberExporter';
 import PCB3DViewer from './PCB3DViewer';
-import { Simulation as EEcircuitSimulation } from 'eecircuit-engine';
+import { runSpiceSimulation } from '../../utils/spiceRunner';
 import SpiceChart from '../SpiceChart';
 import { DEFAULT_DSL, parseDSL, serializeDSL } from './circuitDSL';
 import { useCollaboration } from './useCollaboration';
@@ -206,13 +206,7 @@ export default function PCBDesignStudio({ user, isFullScreen: externalFullScreen
     setShowSimOutput(true);
     
     try {
-      const sim = new EEcircuitSimulation();
-      await sim.start();
-      sim.setNetList(spice);
-      const res = await Promise.race([
-        sim.runSim(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Simulation timeout (15s)')), 15000))
-      ]);
+      const res = await runSpiceSimulation(spice);
       setSimOutput(res);
     } catch (e: any) {
       setSimOutput({ error: e.message || 'Simulation failed' });

@@ -17,6 +17,7 @@ import StudentAcademicCalendar from '../components/student/StudentAcademicCalend
 import StudentSubjects from '../components/student/StudentSubjects';
 import FeePaymentModule from '../components/student/FeePaymentModule';
 import StudentTransport from '../components/student/StudentTransport';
+import StudentSoftwareTools from '../components/student/StudentSoftwareTools';
 import { useIsModuleVisible } from '../hooks/useCollegeModules';
 
 const getGreeting = () => {
@@ -146,7 +147,29 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
   });
   const latestAtsScore = latestAtsScoreData?.ats_score ?? null;
   const { isDark, toggle: toggleTheme } = useTheme();
-  const isEceStudent = ['ECE', 'ET', 'EEE', 'EIE', 'IOT'].includes(String(user?.department || '').toUpperCase());
+
+  const userDept = String(user?.department || 'CSE').toUpperCase();
+  const isCse = ['CSE', 'CS', 'CSM', 'CSD', 'IT', 'AIML', 'AIDS', 'DS'].includes(userDept);
+  const isEce = ['ECE', 'ET', 'EIE', 'IOT'].includes(userDept);
+  const isEee = ['EEE'].includes(userDept);
+  const isMech = ['MECH', 'ME'].includes(userDept);
+  const isCivil = ['CIVIL', 'CE'].includes(userDept);
+
+  const getBranchLabCard = () => {
+    if (isEce) {
+      return { id: 'hardware-arena', icon: Cpu, label: 'ECE Lab', sub: 'Circuit & VLSI simulators', iconBg: 'bg-emerald-50 dark:bg-emerald-500/10 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/20', iconText: 'text-emerald-500', testId: 'view-ece-lab-button' };
+    }
+    if (isEee) {
+      return { id: 'code-playground', state: { language: 'eeelab' }, icon: Lightning, label: 'EEE Lab', sub: 'Power & Control systems', iconBg: 'bg-yellow-50 dark:bg-yellow-500/10 group-hover:bg-yellow-100 dark:group-hover:bg-yellow-500/20', iconText: 'text-yellow-500', testId: 'view-eee-lab-button' };
+    }
+    if (isMech) {
+      return { id: 'cad-studio', icon: Cube, label: 'CAD Studio', sub: '2D/3D parametric modeling', iconBg: 'bg-rose-50 dark:bg-rose-500/10 group-hover:bg-rose-100 dark:group-hover:bg-rose-100/20', iconText: 'text-rose-500', testId: 'view-cad-studio-button' };
+    }
+    if (isCivil) {
+      return { id: 'code-playground', state: { language: 'civillab' }, icon: HardHat, label: 'Civil Lab', sub: 'Structural & geotechnical', iconBg: 'bg-orange-50 dark:bg-orange-500/10 group-hover:bg-orange-100 dark:group-hover:bg-orange-100/20', iconText: 'text-orange-500', testId: 'view-civil-lab-button' };
+    }
+    return { id: 'sql-practice', icon: Database, label: 'SQL Sandbox', sub: 'Interactive SQL practice', iconBg: 'bg-emerald-50 dark:bg-emerald-500/10 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/20', iconText: 'text-emerald-500', testId: 'view-sql-sandbox-button' };
+  };
 
   // Tab badge (dot) state — persisted per user in localStorage
   const badgeKey = useCallback((tab) => `acadmix_tab_seen_${tab}_${user?.id || 'default'}`, [user?.id]);
@@ -238,6 +261,7 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
         <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-xl mb-8 hide-scrollbar">
             {[
               { id: 'overview', label: 'Overview' }, 
+              { id: 'tools', label: 'Software Tools' },
               { id: 'quizzes', label: 'Quizzes' },
               { id: 'attendance', label: 'Attendance' },
               { id: 'cia-marks', label: 'CIA Marks' },
@@ -302,20 +326,20 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
         <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Academics & Tools</h3>
         <motion.div
           variants={containerVariants} initial="hidden" animate="show"
-          className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6"
+          className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 mb-6"
         >
           {[
-            isEceStudent ? { id: 'hardware-arena', icon: Cpu, label: 'ECE Lab', sub: 'Core placement tools', iconBg: 'bg-emerald-50 dark:bg-emerald-500/10 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/20', iconText: 'text-emerald-500', testId: 'view-ece-lab-button' } : null,
+            getBranchLabCard(),
             { id: 'quiz-results', icon: BookOpen, label: 'Quiz Results', sub: 'View all attempts', iconBg: 'bg-indigo-50 dark:bg-indigo-500/10 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20', iconText: 'text-indigo-500', testId: 'view-all-quizzes-button' },
-            { id: 'semester-results', icon: Calendar, label: 'Semester Results', sub: 'Check your grades', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-500/20', iconText: 'text-teal-500', testId: 'view-semester-results-button' },
+            { id: 'semester-results', icon: Calendar, label: 'Semester Results', sub: 'Check your grades', iconBg: 'bg-teal-50 dark:bg-teal-500/10 group-hover:bg-teal-100 dark:group-hover:bg-teal-100/20', iconText: 'text-teal-500', testId: 'view-semester-results-button' },
             { id: 'analytics', icon: ChartLine, label: 'Analytics', sub: 'Track performance', iconBg: 'bg-amber-50 dark:bg-amber-500/10 group-hover:bg-amber-100 dark:group-hover:bg-amber-500/20', iconText: 'text-amber-500', testId: 'view-analytics-button' },
             { id: 'code-playground', icon: Terminal, label: 'Code Playground', sub: 'Practice coding', iconBg: 'bg-purple-50 dark:bg-purple-500/10 group-hover:bg-purple-100 dark:group-hover:bg-purple-500/20', iconText: 'text-purple-500', testId: 'view-code-playground-button' },
-            { id: 'career-toolkit', icon: Toolbox, label: 'Career Toolkit', sub: '10 AI career tools', iconBg: 'bg-cyan-50 dark:bg-cyan-500/10 group-hover:bg-cyan-100 dark:group-hover:bg-cyan-500/20', iconText: 'text-cyan-500', testId: 'view-career-toolkit-button' },
+            { id: 'career-toolkit', icon: Toolbox, label: 'Career Toolkit', sub: '10 AI career tools', iconBg: 'bg-cyan-50 dark:bg-cyan-500/10 group-hover:bg-cyan-100 group-hover:bg-cyan-500/20', iconText: 'text-cyan-500', testId: 'view-career-toolkit-button' },
           ].filter(Boolean).map((item: any) => {
             const Icon = item.icon;
             return (
               <motion.button key={item.id} variants={itemVariants} whileHover={cardHover} whileTap={{ scale: 0.97 }}
-                data-testid={item.testId} onClick={() => navigate(item.id)}
+                data-testid={item.testId} onClick={() => navigate(item.id, item.state)}
                 className="soft-card-hover p-4 sm:p-5 text-left flex items-center gap-3 group"
               >
                 <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 ${item.iconBg}`}>
@@ -674,6 +698,8 @@ const StudentDashboard = ({ navigate, user, onLogout }: any) => {
             </motion.div>
           </motion.div>
         )}
+
+        {activeTab === 'tools' && <StudentSoftwareTools user={user} navigate={navigate} />}
 
         {activeTab === 'attendance' && <StudentAttendance />}
 
