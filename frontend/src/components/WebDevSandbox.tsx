@@ -52,8 +52,8 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
   const [cdnInput, setCdnInput] = useState({ css: '', js: '' });
   const [consoleFilter, setConsoleFilter] = useState<'all' | 'error' | 'warn' | 'info'>('all');
   
-  const [previewWidth, setPreviewWidth] = useState(550);
-  const [previewHeight, setPreviewHeight] = useState(380);
+  const [editorWidth, setEditorWidth] = useState(600);
+  const [editorHeight, setEditorHeight] = useState(300);
   const [isResizing, setIsResizing] = useState(false);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -214,14 +214,14 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
       const rect = workspaceRef.current.getBoundingClientRect();
       
       if (layout === 'vertical') {
-        const newWidth = rect.right - e.clientX;
+        const newWidth = e.clientX - rect.left;
         if (newWidth > 150 && newWidth < rect.width - 150) {
-          setPreviewWidth(newWidth);
+          setEditorWidth(newWidth);
         }
       } else {
-        const newHeight = rect.bottom - e.clientY;
+        const newHeight = e.clientY - rect.top;
         if (newHeight > 100 && newHeight < rect.height - 100) {
-          setPreviewHeight(newHeight);
+          setEditorHeight(newHeight);
         }
       }
     };
@@ -558,9 +558,15 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
           } ${isResizing ? (layout === 'vertical' ? 'cursor-col-resize select-none' : 'cursor-row-resize select-none') : ''}`}
         >
           {/* Center: Monaco Editor Panel */}
-          <div className={`flex-1 flex flex-col min-h-0 min-w-0 border-r transition-colors ${
-            sandboxTheme === 'dark' ? 'bg-slate-950 border-[#1F2937]/85' : 'bg-[#f3f4f6] border-slate-250/70'
-          }`}>
+          <div 
+            style={{
+              width: layout === 'vertical' ? `${editorWidth}px` : undefined,
+              height: layout === 'horizontal' ? `${editorHeight}px` : undefined
+            }}
+            className={`flex flex-col shrink-0 min-w-0 min-h-0 border-r transition-colors ${
+              sandboxTheme === 'dark' ? 'bg-slate-950 border-[#1F2937]/85' : 'bg-[#f3f4f6] border-slate-250/70'
+            }`}
+          >
           {/* File Tabs */}
           <div className={`flex items-center justify-between border-b shrink-0 px-2.5 transition-colors ${
             sandboxTheme === 'dark' ? 'border-[#1F2937]/85 bg-[#0B0F19]' : 'border-slate-250/70 bg-slate-100/70'
@@ -653,10 +659,10 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
         {/* Right Pane: Live Preview Frame & Console */}
         <div 
           style={{
-            width: isPreviewFullScreen ? '100vw' : (layout === 'vertical' ? `${previewWidth}px` : undefined),
-            height: isPreviewFullScreen ? '100vh' : (layout === 'horizontal' ? `${previewHeight}px` : undefined)
+            width: isPreviewFullScreen ? '100vw' : undefined,
+            height: isPreviewFullScreen ? '100vh' : undefined
           }}
-          className={`flex flex-col shrink-0 min-w-0 min-h-0 ${
+          className={`flex-1 flex flex-col min-w-0 min-h-0 ${
             isPreviewFullScreen 
               ? 'fixed inset-0 z-50 w-screen h-screen' 
               : (layout === 'vertical' 
