@@ -2362,7 +2362,7 @@ const CodePlayground = ({ navigate, user }) => {
                   {/* Segment 1: Lab Selection */}
                   <div className="relative" ref={langMenuRef}>
                     <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-105 dark:hover:bg-white/10 transition-colors text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-white/5">
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-105 dark:hover:bg-white/10 transition-colors text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-white/5">
                       {_isMechLab ? <Wrench size={14} weight="duotone" className="text-red-500" /> : _isCivilLab ? <HardHat size={14} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={14} weight="duotone" className="text-yellow-500" /> : <Cpu size={14} weight="duotone" className="text-teal-500" />}
                       <span>{_isMechLab ? 'Mech Lab' : _isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}</span>
                       <CaretDown size={10} weight="bold" className="text-slate-400" />
@@ -2385,7 +2385,7 @@ const CodePlayground = ({ navigate, user }) => {
                   {/* Segment 2: Category Selection */}
                   <div className="relative" ref={catMenuRef}>
                     <button onClick={() => setShowCatMenu(!showCatMenu)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-105 dark:hover:bg-white/10 transition-colors text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-white/5">
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-105 dark:hover:bg-white/10 transition-colors text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-white/5">
                       <span>{_simCat.icon}</span>
                       <span>{_simCat.label}</span>
                       <CaretDown size={10} weight="bold" className="text-slate-400" />
@@ -2422,7 +2422,7 @@ const CodePlayground = ({ navigate, user }) => {
                   {/* Segment 3: Board Selection */}
                   <div className="relative" ref={boardMenuRef}>
                     <button onClick={() => setShowBoardMenu(!showBoardMenu)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl transition-all font-extrabold border bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-200/50 dark:border-indigo-500/20 hover:bg-indigo-100/50 dark:hover:bg-indigo-500/20">
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-2xl transition-all font-extrabold border bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-200/50 dark:border-indigo-500/20 hover:bg-indigo-100/50 dark:hover:bg-indigo-500/20">
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 animate-pulse shrink-0" />
                       <span className="truncate max-w-[150px]">{_simActiveBoard?.label || 'Select Preset'}</span>
                       <CaretDown size={10} weight="bold" className="opacity-80" />
@@ -2488,7 +2488,7 @@ const CodePlayground = ({ navigate, user }) => {
                       href={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`px-4.5 py-2 text-white rounded-2xl text-xs font-extrabold shadow-sm transition-all flex items-center gap-2 whitespace-nowrap ${_simAccent.btn}`}
+                      className={`px-5 py-2.5 text-white rounded-2xl text-xs font-extrabold shadow-sm transition-all flex items-center gap-2 whitespace-nowrap ${_simAccent.btn}`}
                     >
                       {useOctaveMode && (_simActiveBoard as any)?.octaveUrl ? 'Open Octave' : (_simActiveBoard?.openLabel || 'Open External')} ↗
                     </a>
