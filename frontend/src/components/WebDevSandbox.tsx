@@ -215,12 +215,12 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
       
       if (layout === 'vertical') {
         const newWidth = e.clientX - rect.left;
-        if (newWidth > 150 && newWidth < rect.width - 150) {
+        if (newWidth > 250 && newWidth < rect.width - 250) {
           setEditorWidth(newWidth);
         }
       } else {
         const newHeight = e.clientY - rect.top;
-        if (newHeight > 100 && newHeight < rect.height - 100) {
+        if (newHeight > 180 && newHeight < rect.height - 180) {
           setEditorHeight(newHeight);
         }
       }
