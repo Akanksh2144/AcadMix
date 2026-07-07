@@ -56,6 +56,7 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
   const [editorWidth, setEditorWidth] = useState(600);
   const [editorHeight, setEditorHeight] = useState(300);
   const [isResizing, setIsResizing] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('saved');
   const workspaceRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const editorRef = useRef<any>(null);
@@ -162,11 +163,16 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
     return () => clearTimeout(handler);
   }, [htmlCode, cssCode, jsCode, externalCDNs]);
 
-  // Persist code & CDNs in localStorage
+  // Persist code to localStorage with Saving → Saved status feedback
   useEffect(() => {
-    localStorage.setItem('webdev_html', htmlCode);
-    localStorage.setItem('webdev_css', cssCode);
-    localStorage.setItem('webdev_js', jsCode);
+    setSaveStatus('saving');
+    const t = setTimeout(() => {
+      localStorage.setItem('webdev_html', htmlCode);
+      localStorage.setItem('webdev_css', cssCode);
+      localStorage.setItem('webdev_js', jsCode);
+      setSaveStatus('saved');
+    }, 600);
+    return () => clearTimeout(t);
   }, [htmlCode, cssCode, jsCode]);
 
   useEffect(() => {
@@ -651,9 +657,18 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
               ))}
             </div>
             
-            <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold shrink-0 pr-1.5">
-              <Sparkle size={10} className="text-teal-400 shrink-0 animate-pulse" />
-              <span>Autosaved</span>
+            <div className="flex items-center gap-1.5 text-[10px] font-bold shrink-0 pr-1.5">
+              {saveStatus === 'saving' ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse shrink-0" />
+                  <span className={sandboxTheme === 'dark' ? 'text-slate-500' : 'text-slate-400'}>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                  <span className={sandboxTheme === 'dark' ? 'text-emerald-500' : 'text-emerald-600'}>Saved</span>
+                </>
+              )}
             </div>
             <div className="flex items-center gap-1">
               <button
