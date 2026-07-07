@@ -546,7 +546,9 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
         {/* Workspace Panels Container (Editor + Preview) */}
         <div 
           ref={workspaceRef}
-          className={`flex-1 flex min-h-0 ${layout === 'vertical' ? 'flex-row' : 'flex-col'}`}
+          className={`flex-1 flex min-h-0 ${
+            layout === 'vertical' ? 'flex-row' : 'flex-col'
+          } ${isResizing ? (layout === 'vertical' ? 'cursor-col-resize select-none' : 'cursor-row-resize select-none') : ''}`}
         >
           {/* Center: Monaco Editor Panel */}
           <div className={`flex-1 flex flex-col min-h-0 border-r transition-colors ${
@@ -610,12 +612,15 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
         {layout === 'vertical' && !isPreviewFullScreen && (
           <div 
             onMouseDown={startResize}
-            className={`w-1.5 cursor-col-resize hover:bg-indigo-500 active:bg-indigo-600 transition-colors z-20 shrink-0 self-stretch relative ${
-              sandboxTheme === 'dark' ? 'bg-[#0B0F19] border-x border-slate-805/80' : 'bg-slate-50 border-x border-slate-200'
+            className={`w-2 cursor-col-resize hover:bg-indigo-500/20 active:bg-indigo-500/40 transition-colors z-20 shrink-0 self-stretch relative flex items-center justify-center ${
+              sandboxTheme === 'dark' ? 'bg-[#0B0F19] border-x border-slate-900' : 'bg-slate-50 border-x border-slate-200'
             }`}
             title="Drag horizontally to resize panels"
           >
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-6 rounded bg-slate-400/50" />
+            {/* Center line visual */}
+            <div className={`w-[1px] h-full ${sandboxTheme === 'dark' ? 'bg-slate-800' : 'bg-slate-200'}`} />
+            {/* Grab grip indicator */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-8 rounded bg-slate-400/30 hover:bg-indigo-500/60" />
           </div>
         )}
 
@@ -623,12 +628,15 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
         {layout === 'horizontal' && !isPreviewFullScreen && (
           <div 
             onMouseDown={startResize}
-            className={`h-1.5 cursor-row-resize hover:bg-indigo-500 active:bg-indigo-600 transition-colors z-20 shrink-0 w-full relative ${
-              sandboxTheme === 'dark' ? 'bg-[#0B0F19] border-y border-slate-805/80' : 'bg-slate-50 border-y border-slate-200'
+            className={`h-2 cursor-row-resize hover:bg-indigo-500/20 active:bg-indigo-500/40 transition-colors z-20 shrink-0 w-full relative flex flex-col items-center justify-center ${
+              sandboxTheme === 'dark' ? 'bg-[#0B0F19] border-y border-slate-900' : 'bg-slate-50 border-y border-slate-200'
             }`}
             title="Drag vertically to resize panels"
           >
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-0.5 w-6 rounded bg-slate-400/50" />
+            {/* Center line visual */}
+            <div className={`h-[1px] w-full ${sandboxTheme === 'dark' ? 'bg-slate-800' : 'bg-slate-200'}`} />
+            {/* Grab grip indicator */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-1.5 w-8 rounded bg-slate-400/30 hover:bg-indigo-500/60" />
           </div>
         )}
 
@@ -638,7 +646,7 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
             width: isPreviewFullScreen ? '100vw' : (layout === 'vertical' ? `${previewWidth}px` : undefined),
             height: isPreviewFullScreen ? '100vh' : (layout === 'horizontal' ? `${previewHeight}px` : undefined)
           }}
-          className={`flex flex-col shrink-0 transition-all duration-300 ${
+          className={`flex flex-col shrink-0 ${isResizing ? '' : 'transition-all duration-300'} ${
             isPreviewFullScreen 
               ? 'fixed inset-0 z-50 w-screen h-screen' 
               : (layout === 'vertical' 
