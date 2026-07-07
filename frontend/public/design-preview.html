@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AcadMix - ECE Lab Layout Redesign Sandbox</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              teal: '#0d9488',
+              purple: '#8b5cf6',
+              emerald: '#10b981',
+              darkBg: '#090d16',
+              cardBg: '#111827'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Phosphor Icons CDN -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .glass-card {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body class="bg-brand-darkBg text-slate-100 min-h-screen flex flex-col antialiased overflow-hidden">
+
+  <!-- TOP BAR: Option Switcher Control Center -->
+  <header class="h-20 border-b border-white/10 glass-card flex items-center justify-between px-6 z-40 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+        <i class="ph-duotone ph-cpu text-white text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-extrabold tracking-tight">ECE Lab Redesign Sandbox</h1>
+        <p class="text-xs text-slate-400 font-medium">Click options below to preview live layout variations</p>
+      </div>
+    </div>
+
+    <!-- Active option selectors (Pill shaped menu matching container shape) -->
+    <div class="flex bg-slate-800/80 p-1 rounded-full border border-white/5 shadow-inner">
+      <button onclick="switchLayout(1)" id="btn-opt-1" class="px-5 py-2 rounded-full text-xs font-extrabold transition-all duration-300 flex items-center gap-2 bg-indigo-600 text-white shadow-md">
+        <i class="ph-duotone ph-sidebar-simple text-sm"></i>
+        Option 1: Left Sidebar
+      </button>
+      <button onclick="switchLayout(2)" id="btn-opt-2" class="px-5 py-2 rounded-full text-xs font-extrabold transition-all duration-300 flex items-center gap-2 text-slate-400 hover:text-slate-200">
+        <i class="ph-duotone ph-square-half text-sm"></i>
+        Option 2: Unified Overlay
+      </button>
+      <button onclick="switchLayout(3)" id="btn-opt-3" class="px-5 py-2 rounded-full text-xs font-extrabold transition-all duration-300 flex items-center gap-2 text-slate-400 hover:text-slate-200">
+        <i class="ph-duotone ph-path text-sm"></i>
+        Option 3: Breadcrumbs
+      </button>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live Sandbox
+      </span>
+    </div>
+  </header>
+
+  <!-- MAIN SPLIT AREA -->
+  <main class="flex-1 flex overflow-hidden relative">
+
+    <!-- ==========================================
+         OPTION 1 LAYOUT: SLEEK WORKSPACE SIDEBAR
+         ========================================== -->
+    <div id="layout-option-1" class="flex-1 flex overflow-hidden">
+      <!-- Left sidebar categories -->
+      <aside class="w-64 border-r border-white/10 bg-slate-900/60 flex flex-col shrink-0">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+          <span class="text-xs font-extrabold uppercase tracking-widest text-slate-400">ECE Categories</span>
+          <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-bold">12 Areas</span>
+        </div>
+        <nav class="flex-1 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+          <button onclick="selectCategory1('embedded')" id="opt1-cat-embedded" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-bold transition-all bg-teal-500/15 border border-teal-500/25 text-teal-300 shadow-sm">
+            <i class="ph-duotone ph-cpu text-base"></i>
+            <span class="flex-1 truncate">Embedded Systems</span>
+          </button>
+          <button onclick="selectCategory1('analog')" id="opt1-cat-analog" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-bold transition-all text-slate-400 hover:text-slate-200 hover:bg-white/5">
+            <i class="ph-duotone ph-wave-sine text-base"></i>
+            <span class="flex-1 truncate">Analog Electronics</span>
+          </button>
+          <button onclick="selectCategory1('digital')" id="opt1-cat-digital" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-bold transition-all text-slate-400 hover:text-slate-200 hover:bg-white/5">
+            <i class="ph-duotone ph-circuitry text-base"></i>
+            <span class="flex-1 truncate">Digital Electronics</span>
+          </button>
+          <button onclick="selectCategory1('vlsi')" id="opt1-cat-vlsi" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-bold transition-all text-slate-400 hover:text-slate-200 hover:bg-white/5">
+            <i class="ph-duotone ph-atom text-base"></i>
+            <span class="flex-1 truncate">VLSI Design</span>
+          </button>
+          <button onclick="selectCategory1('pcb')" id="opt1-cat-pcb" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-bold transition-all text-slate-400 hover:text-slate-200 hover:bg-white/5">
+            <i class="ph-duotone ph-blueprint text-base"></i>
+            <span class="flex-1 truncate">PCB Design</span>
+          </button>
+          <button onclick="selectCategory1('mp')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-bold transition-all text-slate-400 hover:text-slate-200 hover:bg-white/5">
+            <i class="ph-duotone ph-cpu text-base"></i>
+            <span class="flex-1 truncate">Microprocessors</span>
+          </button>
+          <button onclick="selectCategory1('control')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-bold transition-all text-slate-400 hover:text-slate-200 hover:bg-white/5">
+            <i class="ph-duotone ph-chart-line-up text-base"></i>
+            <span class="flex-1 truncate">Control Systems</span>
+          </button>
+        </nav>
+      </aside>
+
+      <!-- Right workspace content -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top sub-category bar -->
+        <div class="h-14 border-b border-white/10 bg-slate-900/40 flex items-center justify-between px-6 shrink-0">
+          <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar pr-4">
+            <span class="text-xs text-slate-500 font-bold shrink-0 uppercase tracking-wider mr-2">Presets:</span>
+            <!-- Embedded items default -->
+            <div id="opt1-presets" class="flex gap-1.5">
+              <button class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-teal-500 text-white shadow-sm">Arduino Uno</button>
+              <button class="px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5">Arduino Mega</button>
+              <button class="px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5">Arduino Nano</button>
+              <button class="px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5">ESP32 (Core)</button>
+              <button class="px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5">RPi Pico</button>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <button class="px-4 py-1.5 bg-teal-500 hover:bg-teal-600 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm">
+              Open in Wokwi <i class="ph-bold ph-arrow-square-out text-xs"></i>
+            </button>
+          </div>
+        </div>
+        <!-- Simulated Workspace -->
+        <div class="flex-1 p-6 overflow-hidden">
+          <div class="h-full flex gap-6">
+            <div class="flex-1 glass-card rounded-2xl p-4 flex flex-col">
+              <div class="h-8 border-b border-white/5 flex items-center justify-between mb-3 shrink-0">
+                <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5"><i class="ph-bold ph-code"></i> sketch.ino</span>
+              </div>
+              <div class="flex-1 font-mono text-xs text-slate-400 bg-slate-950/60 p-4 rounded-xl overflow-y-auto select-none">
+                <span class="text-blue-400">void</span> <span class="text-emerald-400">setup</span>() {<br>
+                &nbsp;&nbsp;<span class="text-slate-500">// Initialize digital pin LED_BUILTIN as output.</span><br>
+                &nbsp;&nbsp;<span class="text-purple-400">pinMode</span>(LED_BUILTIN, OUTPUT);<br>
+                }<br><br>
+                <span class="text-blue-400">void</span> <span class="text-emerald-400">loop</span>() {<br>
+                &nbsp;&nbsp;<span class="text-purple-400">digitalWrite</span>(LED_BUILTIN, HIGH);<br>
+                &nbsp;&nbsp;<span class="text-purple-400">delay</span>(<span class="text-amber-400">1000</span>);<br>
+                &nbsp;&nbsp;<span class="text-purple-400">digitalWrite</span>(LED_BUILTIN, LOW);<br>
+                &nbsp;&nbsp;<span class="text-purple-400">delay</span>(<span class="text-amber-400">1000</span>);<br>
+                }
+              </div>
+            </div>
+            <div class="w-1/3 glass-card rounded-2xl p-4 flex flex-col">
+              <div class="h-8 border-b border-white/5 flex items-center justify-between mb-3 shrink-0">
+                <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5"><i class="ph-bold ph-chart-line"></i> Virtual Output</span>
+              </div>
+              <div class="flex-1 flex flex-col justify-center items-center text-center p-6 border border-dashed border-white/10 rounded-xl bg-slate-900/30">
+                <i class="ph-duotone ph-circuitry text-4xl text-teal-400 animate-pulse mb-3"></i>
+                <h4 class="text-sm font-extrabold">Arduino Simulator Active</h4>
+                <p class="text-xs text-slate-500 mt-1">Virtual breadboard and schematic mapping is loaded inside Wokwi Canvas</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ==========================================
+         OPTION 2 LAYOUT: UNIFIED OVERLAY CONTROL CENTER
+         ========================================== -->
+    <div id="layout-option-2" class="flex-1 flex flex-col overflow-hidden hidden">
+      <!-- Unified Header (just a breadcrumb switcher) -->
+      <div class="h-14 border-b border-white/10 bg-slate-900/40 flex items-center justify-between px-6 shrink-0 z-10">
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-bold uppercase tracking-widest text-slate-500">ECE Lab Workspace</span>
+          <span class="text-slate-600 font-bold">/</span>
+          <div class="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-3 py-1 rounded-lg text-xs font-extrabold">
+            <i class="ph-duotone ph-cpu text-sm"></i>
+            Embedded Systems: Arduino Uno
+          </div>
+          <button onclick="toggleOverlay(true)" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all text-slate-200">
+            <i class="ph-bold ph-squares-four text-sm"></i>
+            Switch Workspace Module
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="px-4 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm">
+            Open in Wokwi <i class="ph-bold ph-arrow-square-out text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Simulated Workspace (Takes full screen width/height!) -->
+      <div class="flex-1 p-6 overflow-hidden relative">
+        <div class="h-full flex gap-6">
+          <div class="flex-1 glass-card rounded-2xl p-4 flex flex-col">
+            <div class="h-8 border-b border-white/5 flex items-center justify-between mb-3 shrink-0">
+              <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5"><i class="ph-bold ph-code"></i> sketch.ino</span>
+            </div>
+            <div class="flex-1 font-mono text-xs text-slate-400 bg-slate-950/60 p-4 rounded-xl overflow-y-auto select-none">
+              <span class="text-blue-400">void</span> <span class="text-emerald-400">setup</span>() {<br>
+              &nbsp;&nbsp;<span class="text-slate-500">// Initialize digital pin LED_BUILTIN as output.</span><br>
+              &nbsp;&nbsp;<span class="text-purple-400">pinMode</span>(LED_BUILTIN, OUTPUT);<br>
+              }<br><br>
+              <span class="text-blue-400">void</span> <span class="text-emerald-400">loop</span>() {<br>
+              &nbsp;&nbsp;<span class="text-purple-400">digitalWrite</span>(LED_BUILTIN, HIGH);<br>
+              &nbsp;&nbsp;<span class="text-purple-400">delay</span>(<span class="text-amber-400">1000</span>);<br>
+              &nbsp;&nbsp;<span class="text-purple-400">digitalWrite</span>(LED_BUILTIN, LOW);<br>
+              &nbsp;&nbsp;<span class="text-purple-400">delay</span>(<span class="text-amber-400">1000</span>);<br>
+              }
+            </div>
+          </div>
+          <div class="w-1/3 glass-card rounded-2xl p-4 flex flex-col">
+            <div class="h-8 border-b border-white/5 flex items-center justify-between mb-3 shrink-0">
+              <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5"><i class="ph-bold ph-chart-line"></i> Virtual Output</span>
+            </div>
+            <div class="flex-1 flex flex-col justify-center items-center text-center p-6 border border-dashed border-white/10 rounded-xl bg-slate-900/30">
+              <i class="ph-duotone ph-cpu text-4xl text-indigo-400 animate-pulse mb-3"></i>
+              <h4 class="text-sm font-extrabold font-sans">100% Screen Height Available</h4>
+              <p class="text-xs text-slate-500 mt-1">No double scrollbar menus. Complete coding view is prioritized.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- OVERLAY PANEL: Switcher Modal (hidden by default) -->
+        <div id="option2-overlay" class="absolute inset-0 bg-brand-darkBg/90 backdrop-blur-md flex items-center justify-center p-8 z-30 transition-all duration-300">
+          <div class="w-full max-w-4xl bg-slate-900 border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between mb-5 shrink-0">
+              <div>
+                <h3 class="text-lg font-extrabold">Switch Laboratory Workspace Module</h3>
+                <p class="text-xs text-slate-400">Choose a category and template to launch immediately</p>
+              </div>
+              <button onclick="toggleOverlay(false)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200">
+                <i class="ph-bold ph-x text-lg"></i>
+              </button>
+            </div>
+            <!-- Grid columns -->
+            <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 overflow-y-auto custom-scrollbar pr-2 mb-4">
+              <!-- Column 1: Categories -->
+              <div class="space-y-1.5">
+                <h4 class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">1. Select Subject Area</h4>
+                <button onclick="selectCategory2('embedded')" id="opt2-cat-embedded" class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left text-xs font-extrabold transition-all bg-indigo-600 text-white">
+                  <i class="ph-duotone ph-cpu text-base"></i> Embedded Systems
+                </button>
+                <button onclick="selectCategory2('analog')" id="opt2-cat-analog" class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left text-xs font-extrabold transition-all text-slate-400 hover:text-slate-200 hover:bg-white/5">
+                  <i class="ph-duotone ph-wave-sine text-base"></i> Analog Electronics
+                </button>
+                <button onclick="selectCategory2('digital')" id="opt2-cat-digital" class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left text-xs font-extrabold transition-all text-slate-400 hover:text-slate-200 hover:bg-white/5">
+                  <i class="ph-duotone ph-circuitry text-base"></i> Digital Electronics
+                </button>
+                <button onclick="selectCategory2('vlsi')" id="opt2-cat-vlsi" class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left text-xs font-extrabold transition-all text-slate-400 hover:text-slate-200 hover:bg-white/5">
+                  <i class="ph-duotone ph-atom text-base"></i> VLSI Design
+                </button>
+              </div>
+              <!-- Column 2: Presets/Boards -->
+              <div class="col-span-2 space-y-3">
+                <h4 class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">2. Select Experiment/Board Template</h4>
+                <div id="opt2-templates" class="grid grid-cols-2 gap-3">
+                  <!-- Defaults for Embedded -->
+                  <button onclick="applySelection2('Embedded Systems', 'Arduino Uno')" class="p-4 bg-slate-800/40 border border-white/5 rounded-2xl text-left hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all group">
+                    <h5 class="text-xs font-extrabold group-hover:text-indigo-400">Arduino Uno</h5>
+                    <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">Microcontroller platform setup for IoT and robotics.</p>
+                  </button>
+                  <button onclick="applySelection2('Embedded Systems', 'Arduino Mega')" class="p-4 bg-slate-800/40 border border-white/5 rounded-2xl text-left hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all group">
+                    <h5 class="text-xs font-extrabold group-hover:text-indigo-400">Arduino Mega</h5>
+                    <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">Expanded micro-controller board with 54 digital IOs.</p>
+                  </button>
+                  <button onclick="applySelection2('Embedded Systems', 'ESP32')" class="p-4 bg-slate-800/40 border border-white/5 rounded-2xl text-left hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all group">
+                    <h5 class="text-xs font-extrabold group-hover:text-indigo-400">ESP32 (Core)</h5>
+                    <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">Dual-core chip with built-in Wi-Fi & Bluetooth.</p>
+                  </button>
+                  <button onclick="applySelection2('Embedded Systems', 'RPi Pico')" class="p-4 bg-slate-800/40 border border-white/5 rounded-2xl text-left hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all group">
+                    <h5 class="text-xs font-extrabold group-hover:text-indigo-400">RPi Pico</h5>
+                    <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">High-performance RP2040 microcontroller board.</p>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ==========================================
+         OPTION 3 LAYOUT: SEGMENTED BREADCRUMBS
+         ========================================== -->
+    <div id="layout-option-3" class="flex-1 flex flex-col overflow-hidden hidden">
+      <!-- Breadcrumb Header -->
+      <div class="h-14 border-b border-white/10 bg-slate-900/40 flex items-center justify-between px-6 shrink-0 select-none">
+        
+        <!-- Segmented Selector Dropdowns -->
+        <div class="flex items-center gap-1.5 font-bold text-sm">
+          <span class="text-slate-500 uppercase tracking-widest text-xs font-extrabold">ECE Lab</span>
+          <i class="ph-bold ph-caret-right text-xs text-slate-600 mt-0.5"></i>
+          
+          <!-- Category Selector Dropdown -->
+          <div class="relative">
+            <button onclick="toggleDropdown3('cat-dropdown')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-extrabold transition-all border border-white/5 text-slate-200">
+              <span id="opt3-active-cat">Embedded Systems</span> <i class="ph-bold ph-caret-down text-[10px] text-slate-400"></i>
+            </button>
+            <div id="opt3-cat-dropdown" class="absolute top-full left-0 mt-2 bg-slate-900 border border-white/10 rounded-xl shadow-xl p-1 z-30 hidden min-w-[180px]">
+              <button onclick="selectCategory3('Embedded Systems')" class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-indigo-400 bg-indigo-500/10">Embedded Systems</button>
+              <button onclick="selectCategory3('Analog Electronics')" class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5">Analog Electronics</button>
+              <button onclick="selectCategory3('Digital Electronics')" class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5">Digital Electronics</button>
+              <button onclick="selectCategory3('VLSI Design')" class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5">VLSI Design</button>
+            </div>
+          </div>
+
+          <i class="ph-bold ph-caret-right text-xs text-slate-600 mt-0.5"></i>
+
+          <!-- Preset/Board Selector Dropdown -->
+          <div class="relative">
+            <button onclick="toggleDropdown3('board-dropdown')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-extrabold transition-all border border-white/5 text-teal-400 border-teal-500/20">
+              <span id="opt3-active-board">Arduino Uno</span> <i class="ph-bold ph-caret-down text-[10px] text-teal-500"></i>
+            </button>
+            <div id="opt3-board-dropdown" class="absolute top-full left-0 mt-2 bg-slate-900 border border-white/10 rounded-xl shadow-xl p-1 z-30 hidden min-w-[150px]">
+              <!-- default defaults -->
+              <div id="opt3-board-options">
+                <button onclick="selectBoard3('Arduino Uno')" class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-teal-400 bg-teal-500/10">Arduino Uno</button>
+                <button onclick="selectBoard3('Arduino Mega')" class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5">Arduino Mega</button>
+                <button onclick="selectBoard3('Arduino Nano')" class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5">Arduino Nano</button>
+                <button onclick="selectBoard3('ESP32')" class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5">ESP32 (Core)</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button class="px-4 py-1.5 bg-slate-800 border border-white/10 hover:bg-slate-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm">
+            Open in Wokwi <i class="ph-bold ph-arrow-square-out text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Simulated Workspace -->
+      <div class="flex-1 p-6 overflow-hidden">
+        <div class="h-full flex gap-6">
+          <div class="flex-1 glass-card rounded-2xl p-4 flex flex-col">
+            <div class="h-8 border-b border-white/5 flex items-center justify-between mb-3 shrink-0">
+              <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5"><i class="ph-bold ph-code"></i> sketch.ino</span>
+            </div>
+            <div class="flex-1 font-mono text-xs text-slate-400 bg-slate-950/60 p-4 rounded-xl overflow-y-auto select-none">
+              <span class="text-blue-400">void</span> <span class="text-emerald-400">setup</span>() {<br>
+              &nbsp;&nbsp;<span class="text-slate-500">// Initialize digital pin LED_BUILTIN as output.</span><br>
+              &nbsp;&nbsp;<span class="text-purple-400">pinMode</span>(LED_BUILTIN, OUTPUT);<br>
+              }<br><br>
+              <span class="text-blue-400">void</span> <span class="text-emerald-400">loop</span>() {<br>
+              &nbsp;&nbsp;<span class="text-purple-400">digitalWrite</span>(LED_BUILTIN, HIGH);<br>
+              &nbsp;&nbsp;<span class="text-purple-400">delay</span>(<span class="text-amber-400">1000</span>);<br>
+              &nbsp;&nbsp;<span class="text-purple-400">digitalWrite</span>(LED_BUILTIN, LOW);<br>
+              &nbsp;&nbsp;<span class="text-purple-400">delay</span>(<span class="text-amber-400">1000</span>);<br>
+              }
+            </div>
+          </div>
+          <div class="w-1/3 glass-card rounded-2xl p-4 flex flex-col">
+            <div class="h-8 border-b border-white/5 flex items-center justify-between mb-3 shrink-0">
+              <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5"><i class="ph-bold ph-chart-line"></i> Virtual Output</span>
+            </div>
+            <div class="flex-1 flex flex-col justify-center items-center text-center p-6 border border-dashed border-white/10 rounded-xl bg-slate-900/30">
+              <i class="ph-duotone ph-path text-4xl text-emerald-400 animate-pulse mb-3"></i>
+              <h4 class="text-sm font-extrabold font-sans">Hierarchical Breadcrumbs</h4>
+              <p class="text-xs text-slate-500 mt-1">Saves all vertical space, displaying only folder-path dropdown triggers.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- JS LOGIC TO CONTROL PREVIEWS -->
+  <script>
+    // PRESETS FOR EACH CATEGORY
+    const PRESETS = {
+      embedded: ['Arduino Uno', 'Arduino Mega', 'Arduino Nano', 'ESP32 (Core)', 'RPi Pico'],
+      analog: ['SPICE: CE Amplifier', 'SPICE: RLC Circuit', 'Op-Amp', '555 Timer'],
+      digital: ['XOR Gate', 'SR Flip-Flop', '4-Bit Counter', '4-Bit ALU'],
+      vlsi: ['VLSI Logic Studio', 'Half Adder', 'D Flip-Flop']
+    };
+
+    // Current Option State
+    let currentOption = 1;
+
+    function switchLayout(optId) {
+      currentOption = optId;
+      
+      // Hide all layout containers
+      document.getElementById('layout-option-1').classList.add('hidden');
+      document.getElementById('layout-option-2').classList.add('hidden');
+      document.getElementById('layout-option-3').classList.add('hidden');
+      
+      // Show selected layout container
+      document.getElementById(`layout-option-${optId}`).classList.remove('hidden');
+
+      // Update control button styles
+      for(let i = 1; i <= 3; i++) {
+        const btn = document.getElementById(`btn-opt-${i}`);
+        if (i === optId) {
+          btn.className = "px-5 py-2 rounded-full text-xs font-extrabold transition-all duration-300 flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+        } else {
+          btn.className = "px-5 py-2 rounded-full text-xs font-extrabold transition-all duration-300 flex items-center gap-2 text-slate-400 hover:text-slate-200";
+        }
+      }
+    }
+
+    // ──────────────── OPTION 1 LOGIC ────────────────
+    function selectCategory1(catKey) {
+      // Update sidebar buttons styling
+      const keys = ['embedded', 'analog', 'digital', 'vlsi', 'pcb'];
+      keys.forEach(k => {
+        const btn = document.getElementById(`opt1-cat-${k}`);
+        if(btn) {
+          if (k === catKey) {
+            btn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-bold transition-all bg-teal-500/15 border border-teal-500/25 text-teal-300 shadow-sm";
+          } else {
+            btn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-bold transition-all text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent";
+          }
+        }
+      });
+
+      // Update subcategories preset buttons dynamically
+      const presetsContainer = document.getElementById('opt1-presets');
+      const list = PRESETS[catKey] || PRESETS.embedded;
+      presetsContainer.innerHTML = list.map((p, idx) => `
+        <button class="px-3.5 py-1.5 rounded-full text-xs font-bold ${idx === 0 ? 'bg-teal-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}">
+          ${p}
+        </button>
+      `).join('');
+    }
+
+    // ──────────────── OPTION 2 LOGIC ────────────────
+    function toggleOverlay(show) {
+      const modal = document.getElementById('option2-overlay');
+      if (show) {
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function selectCategory2(catKey) {
+      // Update active category button styling
+      const keys = ['embedded', 'analog', 'digital', 'vlsi'];
+      keys.forEach(k => {
+        const btn = document.getElementById(`opt2-cat-${k}`);
+        if(btn) {
+          if (k === catKey) {
+            btn.className = "w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left text-xs font-extrabold transition-all bg-indigo-600 text-white";
+          } else {
+            btn.className = "w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left text-xs font-extrabold transition-all text-slate-400 hover:text-slate-200 hover:bg-white/5";
+          }
+        }
+      });
+
+      // Update active presets list dynamically
+      const container = document.getElementById('opt2-templates');
+      const list = PRESETS[catKey] || PRESETS.embedded;
+      const catNames = { embedded: 'Embedded Systems', analog: 'Analog Electronics', digital: 'Digital Electronics', vlsi: 'VLSI Design' };
+      container.innerHTML = list.map(p => `
+        <button onclick="applySelection2('${catNames[catKey]}', '${p}')" class="p-4 bg-slate-800/40 border border-white/5 rounded-2xl text-left hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all group">
+          <h5 class="text-xs font-extrabold group-hover:text-indigo-400">${p}</h5>
+          <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">Launch sandbox simulator workspace templates instantly.</p>
+        </button>
+      `).join('');
+    }
+
+    function applySelection2(catName, boardName) {
+      // Hide modal and update breadcrumb trigger button text
+      toggleOverlay(false);
+      const activeText = document.querySelector('#layout-option-2 button[onclick="toggleOverlay(true)"]');
+      activeText.innerHTML = `<i class="ph-bold ph-squares-four text-sm"></i> Switch Workspace Module`;
+      
+      // Update label in header
+      const label = document.querySelector('#layout-option-2 div.text-indigo-400');
+      label.innerHTML = `<i class="ph-duotone ph-cpu text-sm"></i> ${catName}: ${boardName}`;
+    }
+
+    // ──────────────── OPTION 3 LOGIC ────────────────
+    function toggleDropdown3(dropdownId) {
+      const drop = document.getElementById(`opt3-${dropdownId}`);
+      const isHidden = drop.classList.contains('hidden');
+      
+      // Close other dropdowns first
+      document.getElementById('opt3-cat-dropdown').classList.add('hidden');
+      document.getElementById('opt3-board-dropdown').classList.add('hidden');
+
+      if (isHidden) {
+        drop.classList.remove('hidden');
+      } else {
+        drop.classList.add('hidden');
+      }
+    }
+
+    function selectCategory3(catName) {
+      document.getElementById('opt3-active-cat').innerText = catName;
+      document.getElementById('opt3-cat-dropdown').classList.add('hidden');
+      
+      // Resolve category key
+      let key = 'embedded';
+      if (catName.includes('Analog')) key = 'analog';
+      else if (catName.includes('Digital')) key = 'digital';
+      else if (catName.includes('VLSI')) key = 'vlsi';
+
+      // Update preset dropdown options
+      const boardContainer = document.getElementById('opt3-board-options');
+      const list = PRESETS[key] || PRESETS.embedded;
+      document.getElementById('opt3-active-board').innerText = list[0];
+
+      boardContainer.innerHTML = list.map((board, idx) => `
+        <button onclick="selectBoard3('${board}')" class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold ${idx === 0 ? 'text-teal-400 bg-teal-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}">
+          ${board}
+        </button>
+      `).join('');
+    }
+
+    function selectBoard3(boardName) {
+      document.getElementById('opt3-active-board').innerText = boardName;
+      document.getElementById('opt3-board-dropdown').classList.add('hidden');
+    }
+
+    // Close dropdowns on outside click
+    window.addEventListener('click', function(e) {
+      if (!e.target.closest('#layout-option-3')) return;
+      if (!e.target.closest('.relative')) {
+        document.getElementById('opt3-cat-dropdown').classList.add('hidden');
+        document.getElementById('opt3-board-dropdown').classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
