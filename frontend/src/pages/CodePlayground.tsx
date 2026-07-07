@@ -2349,16 +2349,16 @@ const CodePlayground = ({ navigate, user }) => {
               {/* 1. Left Sidebar: Categories List (Desktop Only) */}
               <aside className="hidden lg:flex flex-col w-72 shrink-0 lg:sticky lg:top-24 max-h-[calc(100vh-140px)] min-h-0">
                 <div className="soft-card flex flex-col h-full bg-white/80 dark:bg-[#111827]/70 border border-slate-200/50 dark:border-white/5 shadow-sm overflow-hidden min-h-0">
-                  {/* Sidebar Header */}
-                  <div className="p-4 bg-slate-50/50 dark:bg-slate-900/30 border-b border-slate-200/50 dark:border-white/5 flex items-center justify-between shrink-0">
+                  {/* Sidebar Header (Aligned with Row 1 of the ECE box at 56px height) */}
+                  <div className="h-[56px] px-4 bg-slate-50/50 dark:bg-slate-900/30 border-b border-slate-200/50 dark:border-white/5 flex items-center justify-between shrink-0">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Categories</span>
                     <span className="text-[10px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
                       {_activeCats.length} Areas
                     </span>
                   </div>
                   
-                  {/* Scrollable Categories List */}
-                  <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1.5 min-h-0">
+                  {/* Scrollable Categories List (Padded by 14px at top to align with Row 2 preset sub-tabs) */}
+                  <div className="flex-1 overflow-y-auto custom-scrollbar px-3 pt-[14px] pb-3 space-y-1.5 min-h-0">
                     {_activeCats.map(cat => {
                       const isActive = simCategory === cat.id;
                       const style = getCategoryStyles(cat.accent);
