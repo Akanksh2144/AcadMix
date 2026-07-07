@@ -1153,7 +1153,11 @@ const CodePlayground = ({ navigate, user }) => {
   const [running, setRunning] = useState(false);
   const [execTime, setExecTime] = useState(null);
   const [showLangMenu, setShowLangMenu] = useState(false);
-  const langMenuRef = useRef(null);
+  const langMenuRef = useRef<HTMLDivElement>(null);
+  const [showCatMenu, setShowCatMenu] = useState(false);
+  const [showBoardMenu, setShowBoardMenu] = useState(false);
+  const catMenuRef = useRef<HTMLDivElement>(null);
+  const boardMenuRef = useRef<HTMLDivElement>(null);
   const [wokwiBoard, setWokwiBoard] = useState(() => {
     if (stateData.wokwiBoard) return stateData.wokwiBoard;
     return 'arduino-uno';
@@ -1264,16 +1268,22 @@ const CodePlayground = ({ navigate, user }) => {
     }
   };
 
-  // Close language dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (langMenuRef.current && !langMenuRef.current.contains(e.target)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) {
         setShowLangMenu(false);
       }
+      if (catMenuRef.current && !catMenuRef.current.contains(e.target as Node)) {
+        setShowCatMenu(false);
+      }
+      if (boardMenuRef.current && !boardMenuRef.current.contains(e.target as Node)) {
+        setShowBoardMenu(false);
+      }
     };
-    if (showLangMenu) document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showLangMenu]);
+  }, []);
   
   const [showChallengesModal, setShowChallengesModal] = useState(false);
   const [showInsightsModal, setShowInsightsModal] = useState(false);
