@@ -2347,33 +2347,37 @@ const CodePlayground = ({ navigate, user }) => {
             <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 relative" style={{ overscrollBehavior: 'contain' }}>
               
               {/* 1. Left Sidebar: Categories List (Desktop Only) */}
-              <aside className="hidden lg:flex flex-col w-72 shrink-0 space-y-3 lg:sticky lg:top-24 max-h-[calc(100vh-140px)] overflow-y-auto custom-scrollbar p-0.5">
-                <div className="soft-card p-4 bg-white/60 dark:bg-slate-900/60 border border-slate-200/50 dark:border-white/5 flex items-center justify-between">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Categories</span>
-                  <span className="text-[10px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
-                    {_activeCats.length} Areas
-                  </span>
-                </div>
-                
-                <div className="soft-card p-2.5 space-y-1.5 bg-white/80 dark:bg-[#111827]/70 border border-slate-200/50 dark:border-white/5 shadow-sm">
-                  {_activeCats.map(cat => {
-                    const isActive = simCategory === cat.id;
-                    const style = getCategoryStyles(cat.accent);
-                    return (
-                      <button
-                        key={cat.id}
-                        onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
-                        className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-left text-sm font-bold transition-all border border-transparent ${
-                          isActive
-                            ? `${style.bgActive} ${style.textActive} ${style.borderActive} shadow-sm`
-                            : `text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 ${style.textHover}`
-                        }`}
-                      >
-                        <span className="shrink-0">{cat.icon}</span>
-                        <span className="flex-1 truncate">{cat.label}</span>
-                      </button>
-                    );
-                  })}
+              <aside className="hidden lg:flex flex-col w-72 shrink-0 lg:sticky lg:top-24 max-h-[calc(100vh-140px)] min-h-0">
+                <div className="soft-card flex flex-col h-full bg-white/80 dark:bg-[#111827]/70 border border-slate-200/50 dark:border-white/5 shadow-sm overflow-hidden min-h-0">
+                  {/* Sidebar Header */}
+                  <div className="p-4 bg-slate-50/50 dark:bg-slate-900/30 border-b border-slate-200/50 dark:border-white/5 flex items-center justify-between shrink-0">
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Categories</span>
+                    <span className="text-[10px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
+                      {_activeCats.length} Areas
+                    </span>
+                  </div>
+                  
+                  {/* Scrollable Categories List */}
+                  <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1.5 min-h-0">
+                    {_activeCats.map(cat => {
+                      const isActive = simCategory === cat.id;
+                      const style = getCategoryStyles(cat.accent);
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
+                          className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-left text-sm font-bold transition-all border border-transparent ${
+                            isActive
+                              ? `${style.bgActive} ${style.textActive} ${style.borderActive} shadow-sm`
+                              : `text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 ${style.textHover}`
+                          }`}
+                        >
+                          <span className="shrink-0">{cat.icon}</span>
+                          <span className="flex-1 truncate">{cat.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </aside>
               
@@ -2501,14 +2505,14 @@ const CodePlayground = ({ navigate, user }) => {
 
                   {/* Preset Sub-tab pills */}
                   {_simBoards.length > 1 && (
-                    <div className="flex items-center bg-slate-50/50 dark:bg-slate-800/30 border border-slate-200/30 dark:border-white/5 rounded-2xl p-1.5 gap-1 overflow-x-auto hide-scrollbar shadow-inner">
+                    <div className="flex items-center bg-slate-50/50 dark:bg-slate-800/30 border border-slate-200/30 dark:border-white/5 rounded-full p-1.5 gap-1 overflow-x-auto hide-scrollbar shadow-inner">
                       {_simBoards.map(board => {
                         const isActive = wokwiBoard === board.id;
                         return (
                           <button
                             key={board.id}
                             onClick={() => setWokwiBoard(board.id)}
-                            className={`relative px-4.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all z-10 ${
+                            className={`relative px-4.5 py-2 rounded-full text-xs font-extrabold whitespace-nowrap transition-all z-10 ${
                               isActive
                                 ? 'text-white shadow-sm'
                                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -2517,7 +2521,7 @@ const CodePlayground = ({ navigate, user }) => {
                             {isActive && (
                               <motion.div
                                 layoutId="activeBoardTab"
-                                className={`absolute inset-0 rounded-xl -z-10 ${_simAccent.active.replace('text-white', '')}`}
+                                className={`absolute inset-0 rounded-full -z-10 ${_simAccent.active.replace('text-white', '')}`}
                                 initial={false}
                                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                               />
