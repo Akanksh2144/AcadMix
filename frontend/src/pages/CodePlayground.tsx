@@ -18,6 +18,7 @@ loader.config({
 import api from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import SimulationIDE from '../components/SimulationIDE';
+import WebDevSandbox from '../components/WebDevSandbox';
 import SpiceChart from '../components/SpiceChart';
 import { runSpiceSimulation } from '../utils/spiceRunner';
 import DSPBlockSimulator from '../components/dsp/DSPBlockSimulator';
@@ -40,6 +41,7 @@ const LANGUAGES = [
   { id: 'bash', label: 'Bash', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg" alt="Bash" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'go', label: 'Go', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/go/go-original.svg" alt="Go" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
   { id: 'csharp', label: 'C#', icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" alt="C#" className="w-5 h-5 shrink-0 drop-shadow-sm" /> },
+  { id: 'webdev', label: 'Web Dev Sandbox', icon: <Globe size={20} weight="duotone" className="text-teal-500 shrink-0 drop-shadow-sm" /> },
   { id: 'ecelab', label: 'ECE Lab', icon: <Cpu size={20} weight="duotone" className="text-teal-500 shrink-0 drop-shadow-sm" /> },
   { id: 'eeelab', label: 'EEE Lab', icon: <Lightning size={20} weight="duotone" className="text-yellow-500 shrink-0 drop-shadow-sm" /> },
   { id: 'civillab', label: 'Civil Lab', icon: <HardHat size={20} weight="duotone" className="text-orange-500 shrink-0 drop-shadow-sm" /> },
@@ -1227,7 +1229,8 @@ const DEFAULT_TEMPLATES = {
   matlab: '% Write your MATLAB / Octave code here\n\nx = linspace(0, 2*pi, 100);\ny = sin(x);\ndisp("Hello, World from MATLAB/Octave!");\n',
   bash: '#!/bin/bash\n\n# Write your shell script here\necho "Hello, World from Bash!"\n',
   go: 'package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello, World!")\n}\n',
-  csharp: 'using System;\n\nclass Solution {\n    static void Main(string[] args) {\n        Console.WriteLine("Hello, World!");\n    }\n}\n'
+  csharp: 'using System;\n\nclass Solution {\n    static void Main(string[] args) {\n        Console.WriteLine("Hello, World!");\n    }\n}\n',
+  webdev: ''
 };
 
 const CodePlayground = ({ navigate, user }) => {
@@ -2475,6 +2478,8 @@ const CodePlayground = ({ navigate, user }) => {
             </div>
           </div>
         </div>
+      ) : language === 'webdev' ? (
+        <WebDevSandbox isDark={isDark} />
       ) : (language === 'ecelab' || language === 'eeelab' || language === 'civillab' || language === 'mechlab' || language === 'csdlab') ? (
         // ECE / EEE / Civil Lab / CSD Lab — multi-simulator panel
         <div className={`flex-1 flex flex-col ${_isNativeSurface && !isLabFullScreen ? 'overflow-y-auto custom-scrollbar' : 'overflow-hidden'}`} style={{ overscrollBehavior: 'contain' }}>
