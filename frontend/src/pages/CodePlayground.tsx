@@ -818,114 +818,125 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
 
 // ── CSD Lab Categories & Boards ─────────────────────────────────────────────
 const CSD_SIMULATOR_CATEGORIES = [
-  { id: 'engg_chemistry', label: 'Engg. Chemistry', icon: <Atom size={16} weight="duotone" />, accent: 'teal' },
-  { id: 'python', label: 'Python', icon: <Terminal size={16} weight="duotone" />, accent: 'indigo' },
-  { id: 'beee_lab', label: 'BEEE Lab', icon: <Lightning size={16} weight="duotone" />, accent: 'yellow' },
-  { id: 'caeg', label: 'CAEG', icon: <Blueprint size={16} weight="duotone" />, accent: 'orange' },
-  { id: 'elcs', label: 'ELCS', icon: <Broadcast size={16} weight="duotone" />, accent: 'rose' },
-  { id: 'c_lab', label: 'C Lab', icon: <Cpu size={16} weight="duotone" />, accent: 'sky' },
-  { id: 'applied_physics', label: 'Applied Physics', icon: <WaveSine size={16} weight="duotone" />, accent: 'red' },
-  { id: 'it_workshop', label: 'IT Workshop', icon: <Wrench size={16} weight="duotone" />, accent: 'slate' },
-  { id: 'java_oops', label: 'Java OOPS', icon: <Cube size={16} weight="duotone" />, accent: 'amber' },
-  { id: 'data_structures', label: 'Data Structures through C', icon: <Tree size={16} weight="duotone" />, accent: 'emerald' },
-  { id: 'r_programming', label: 'R Programming', icon: <ChartBar size={16} weight="duotone" />, accent: 'blue' },
-  { id: 'powerbi_tableau', label: 'PowerBI and Tableau', icon: <ChartLineUp size={16} weight="duotone" />, accent: 'yellow' },
-  { id: 'full_stack', label: 'Full Stack Development', icon: <Globe size={16} weight="duotone" />, accent: 'teal' },
-  { id: 'dbms', label: 'DBMS', icon: <Database size={16} weight="duotone" />, accent: 'purple' },
-  { id: 'computer_networks', label: 'Computer Networks', icon: <ShareNetwork size={16} weight="duotone" />, accent: 'blue' },
-  { id: 'advanced_comms', label: 'Advanced Communications Lab', icon: <Pulse size={16} weight="duotone" />, accent: 'rose' },
-  { id: 'etl_kafka', label: 'ETL Kafka', icon: <Gauge size={16} weight="duotone" />, accent: 'violet' },
-  { id: 'ml_lab', label: 'ML Lab', icon: <Robot size={16} weight="duotone" />, accent: 'indigo' },
-  { id: 'software_testing', label: 'Software Testing Methodologies Lab', icon: <CheckSquareOffset size={16} weight="duotone" />, accent: 'emerald' },
-  { id: 'big_data', label: 'Big Data Analytics Lab', icon: <Gauge size={16} weight="duotone" />, accent: 'amber' },
-  { id: 'predictive_analytics', label: 'Predictive Analytics Lab', icon: <ChartLineUp size={16} weight="duotone" />, accent: 'sky' },
-  { id: 'web_social_media', label: 'Web and Social Media Analytics', icon: <ShareNetwork size={16} weight="duotone" />, accent: 'rose' },
+  { id: 'c_lab',               label: 'C Lab',                         icon: <Cpu size={16} weight="duotone" />,              accent: 'sky'     },
+  { id: 'python',              label: 'Python Lab',                    icon: <Terminal size={16} weight="duotone" />,         accent: 'indigo'  },
+  { id: 'caeg',                label: 'CAEG',                          icon: <Blueprint size={16} weight="duotone" />,        accent: 'orange'  },
+  { id: 'it_workshop',         label: 'IT Workshop',                   icon: <Wrench size={16} weight="duotone" />,           accent: 'slate'   },
+  { id: 'java_oops',           label: 'Java OOPS',                     icon: <Cube size={16} weight="duotone" />,             accent: 'amber'   },
+  { id: 'data_structures',     label: 'Data Structures through C',     icon: <Tree size={16} weight="duotone" />,             accent: 'emerald' },
+  { id: 'r_programming',       label: 'R Programming',                 icon: <ChartBar size={16} weight="duotone" />,         accent: 'blue'    },
+  { id: 'powerbi_tableau',     label: 'PowerBI & Tableau',             icon: <ChartLineUp size={16} weight="duotone" />,      accent: 'yellow'  },
+  { id: 'full_stack',          label: 'Full Stack Development',        icon: <Globe size={16} weight="duotone" />,            accent: 'teal'    },
+  { id: 'dbms',                label: 'DBMS',                          icon: <Database size={16} weight="duotone" />,         accent: 'purple'  },
+  { id: 'computer_networks',   label: 'Computer Networks',             icon: <ShareNetwork size={16} weight="duotone" />,     accent: 'blue'    },
+  { id: 'etl_kafka',           label: 'ETL & Kafka',                   icon: <Gauge size={16} weight="duotone" />,            accent: 'violet'  },
+  { id: 'ml_lab',              label: 'ML Lab',                        icon: <Robot size={16} weight="duotone" />,            accent: 'indigo'  },
+  { id: 'software_testing',    label: 'Software Testing',              icon: <CheckSquareOffset size={16} weight="duotone" />, accent: 'emerald' },
+  { id: 'big_data',            label: 'Big Data Analytics',            icon: <Database size={16} weight="duotone" />,         accent: 'amber'   },
+  { id: 'predictive_analytics',label: 'Predictive Analytics',         icon: <ChartLineUp size={16} weight="duotone" />,      accent: 'sky'     },
+  { id: 'web_social_media',    label: 'Web & Social Media Analytics',  icon: <ShareNetwork size={16} weight="duotone" />,     accent: 'rose'    },
 ];
 
 const CSD_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; noEmbed?: boolean; octaveUrl?: string; isNativeBlock?: boolean; isNativeWasm?: boolean; nativeLanguage?: string }[]> = {
-  engg_chemistry: [
-    { id: 'chem-table', label: 'Interactive Periodic Table', url: 'https://ptable.com/?embed=1', openLabel: 'Open Periodic Table' },
-    { id: 'chem-molview', label: 'MolView Molecular Visualizer', url: 'https://molview.org/', openLabel: 'Open MolView' },
-    { id: 'chem-phet-acids', label: 'PhET Acid-Base Solutions', url: 'https://phet.colorado.edu/sims/html/acid-base-solutions/latest/acid-base-solutions_all.html', openLabel: 'Open PhET Simulator' },
-  ],
-  python: [
-    { id: 'py-wasm', label: 'AcadMix Python IDE (Wasm)', url: '', isNativeWasm: true, nativeLanguage: 'python' },
-    { id: 'py-jupyter', label: 'Python JupyterLite Notebook', url: jupyterUrl('print("Welcome to Python Programming Lab!")\\n# Write your code here'), openLabel: 'Open Jupyter Notebook' },
-  ],
-  beee_lab: [
-    { id: 'beee-circuitjs', label: 'BEEE Circuit Simulator', url: 'https://lushprojects.com/circuitjs/circuitjs.html', openLabel: 'Open CircuitJS' },
-    { id: 'beee-ohms-law', label: "PhET Ohm's Law Simulation", url: 'https://phet.colorado.edu/sims/html/ohms-law/latest/ohms-law_all.html', openLabel: 'Open PhET Simulator' },
-    { id: 'beee-voltage-divider', label: 'Voltage Divider Network', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=voltdivide.txt', openLabel: 'Open CircuitJS' },
-  ],
-  caeg: [
-    { id: 'caeg-cad-studio', label: 'AcadMix Premium CAD Studio', url: '/cad-studio', openLabel: 'Launch CAD Studio', noEmbed: true },
-    { id: 'caeg-3d-editor', label: 'Three.js 3D Editor', url: 'https://threejs.org/editor/', openLabel: 'Open 3D Editor' },
-  ],
-  elcs: [
-    { id: 'elcs-speech', label: 'Voice Pitch & Modulation mock', url: 'https://musiclab.chromeexperiments.com/Voice-Spin/', openLabel: 'Open voice experiment' },
-    { id: 'elcs-pronunciation', label: 'Oxford Pronunciation Dictionary', url: 'https://www.dictionary.com/', openLabel: 'Open Pronunciation Dictionary' },
-  ],
+  // ── C Lab ────────────────────────────────────────────────────────────────
   c_lab: [
-    { id: 'c-wasm', label: 'AcadMix C IDE (Wasm)', url: '', isNativeWasm: true, nativeLanguage: 'c' },
+    { id: 'c-wasm',     label: 'AcadMix C IDE',               url: '', isNativeWasm: true, nativeLanguage: 'c' },
+    { id: 'c-visualgo', label: 'Algorithm Visualizer',         url: 'https://visualgo.net/en', openLabel: 'Open VisuAlgo' },
   ],
-  applied_physics: [
-    { id: 'phys-wave-interf', label: 'PhET Wave Interference', url: 'https://phet.colorado.edu/sims/html/wave-interference/latest/wave-interference_all.html', openLabel: 'Open PhET Simulator' },
-    { id: 'phys-bending-light', label: 'PhET Bending Light (Optics)', url: 'https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_all.html', openLabel: 'Open PhET Simulator' },
+  // ── Python Lab ───────────────────────────────────────────────────────────
+  python: [
+    { id: 'py-wasm',    label: 'AcadMix Python IDE',           url: '', isNativeWasm: true, nativeLanguage: 'python' },
+    { id: 'py-jupyter', label: 'JupyterLite Notebook',         url: jupyterUrl('# JNTUH Python Lab\nprint("Python Lab Ready")'), openLabel: 'Open JupyterLite' },
   ],
+  // ── CAEG (AutoCAD — 2D drawing, projections, solids) ─────────────────────
+  caeg: [
+    { id: 'caeg-autocad',  label: 'AutoCAD Web App',           url: 'https://web.autocad.com/', openLabel: 'Launch AutoCAD Web', noEmbed: true },
+    { id: 'caeg-3d',       label: 'Three.js 3D Geometry Editor', url: 'https://threejs.org/editor/', openLabel: 'Open 3D Editor' },
+    { id: 'caeg-geogebra', label: 'GeoGebra 3D Graphing',      url: 'https://www.geogebra.org/3d?lang=en', openLabel: 'Open GeoGebra 3D' },
+  ],
+  // ── IT Workshop (OS, Office tools, LAN) ──────────────────────────────────
   it_workshop: [
-    { id: 'it-terminal', label: 'JSLinux Shell Environment', url: 'https://bellard.org/jslinux/vm.html?cpu=x86&url=alpine-x86.cfg&mem=192', openLabel: 'Launch Linux VM' },
-    { id: 'it-pcpartpicker', label: 'Virtual PC Builder & Assembly', url: 'https://pcpartpicker.com/list/', openLabel: 'Open PC Builder' },
+    { id: 'it-linux',  label: 'JSLinux Shell (Alpine Linux)', url: 'https://bellard.org/jslinux/vm.html?cpu=x86&url=alpine-x86.cfg&mem=192', openLabel: 'Launch Linux VM' },
+    { id: 'it-office', label: 'OnlyOffice Web Suite',         url: 'https://personal.onlyoffice.com/', openLabel: 'Open Office Suite', noEmbed: true },
+    { id: 'it-subnet', label: 'TCP/IP & Subnet Calculator',   url: 'https://www.subnet-calculator.com/', openLabel: 'Open Subnet Calculator' },
   ],
+  // ── Java OOPS (OOP, Exceptions, Collections, Threads, JDBC, GUI) ─────────
   java_oops: [
-    { id: 'java-wasm', label: 'AcadMix Java IDE (Wasm)', url: '', isNativeWasm: true, nativeLanguage: 'java' },
+    { id: 'java-wasm', label: 'AcadMix Java IDE',              url: '', isNativeWasm: true, nativeLanguage: 'java' },
+    { id: 'java-uml',  label: 'UML Class Diagram (draw.io)',   url: 'https://embed.diagrams.net/?ui=sketch&proto=json', openLabel: 'Open draw.io UML' },
   ],
+  // ── Data Structures through C ─────────────────────────────────────────────
   data_structures: [
-    { id: 'ds-visualgo', label: 'VisuAlgo DS Visualizer', url: 'https://visualgo.net/en', openLabel: 'Open VisuAlgo' },
-    { id: 'ds-c-sandbox', label: 'Data Structures Sandbox (C)', url: '', isNativeWasm: true, nativeLanguage: 'c' },
+    { id: 'ds-c-wasm',   label: 'C IDE — DS Sandbox',          url: '', isNativeWasm: true, nativeLanguage: 'c' },
+    { id: 'ds-visualgo', label: 'VisuAlgo — Linked List / Tree / Graph', url: 'https://visualgo.net/en/list', openLabel: 'Open VisuAlgo' },
+    { id: 'ds-sort',     label: 'Sorting Algorithms Visualizer', url: 'https://visualgo.net/en/sorting', openLabel: 'Open VisuAlgo Sorting' },
   ],
+  // ── R Programming ─────────────────────────────────────────────────────────
   r_programming: [
-    { id: 'r-webr', label: 'WebR Interactive Console', url: '', isNativeWasm: true, nativeLanguage: 'r' },
+    { id: 'r-webr',    label: 'WebR Interactive Console',      url: '', isNativeWasm: true, nativeLanguage: 'r' },
+    { id: 'r-jupyter', label: 'R Notebook (JupyterLite)',      url: jupyterUrl('# R Programming Lab\ncat("R Lab Ready")'), openLabel: 'Open R Notebook' },
   ],
+  // ── PowerBI & Tableau ────────────────────────────────────────────────────
   powerbi_tableau: [
-    { id: 'pbi-looker', label: 'Looker Studio BI Dashboard', url: 'https://lookerstudio.google.com/embed/reporting/0B5ykTpih5jR_NDc2OTRkYTUtZmU5OC00NWFmLTk5M2EtYmIyYmZlZTRlMmUx/page/1M', openLabel: 'Open Dashboard' },
-    { id: 'pbi-python', label: 'Pandas Data Visualization Sandbox', url: jupyterUrl('import pandas as pd\\ndf = pd.DataFrame({"Category": ["A", "B", "C"], "Sales": [100, 150, 200]})\\nprint(df)'), openLabel: 'Open Notebook' },
+    { id: 'pbi-tableau', label: 'Tableau Public (Web)',         url: 'https://public.tableau.com/app/discover', openLabel: 'Open Tableau Public', noEmbed: true },
+    { id: 'pbi-pandas',  label: 'Pandas + Matplotlib Notebook', url: jupyterUrl('import pandas as pd\ndata = {"Category":["A","B","C"],"Sales":[100,150,200]}\ndf = pd.DataFrame(data)\nprint(df)\nprint("Sum:", df["Sales"].sum())'), openLabel: 'Open Notebook' },
+    { id: 'pbi-looker',  label: 'Looker Studio',                url: 'https://lookerstudio.google.com/', openLabel: 'Open Looker Studio', noEmbed: true },
   ],
+  // ── Full Stack Development (Node.js, Express, MongoDB, Angular, React) ───
   full_stack: [
-    { id: 'fs-sandbox', label: 'React / HTML Frontend Sandbox', url: 'https://codesandbox.io/embed/new', openLabel: 'Open CodeSandbox' },
-    { id: 'fs-sqlite', label: 'SQLite Database terminal', url: 'https://sqlite.org/fiddle/', openLabel: 'Open SQLite Console' },
+    { id: 'fs-codesandbox', label: 'React / Node.js Sandbox', url: 'https://codesandbox.io/embed/new?template=react', openLabel: 'Open CodeSandbox' },
+    { id: 'fs-stackblitz',  label: 'Angular IDE (StackBlitz)', url: 'https://stackblitz.com/edit/angular-starter?embed=1&file=src/app/app.component.ts', openLabel: 'Open StackBlitz' },
+    { id: 'fs-sqlite',      label: 'SQLite Web Console',       url: 'https://sqlite.org/fiddle/', openLabel: 'Open SQLite Console' },
   ],
+  // ── DBMS (DDL/DML, joins, normalization, PL/SQL, triggers) ───────────────
   dbms: [
-    { id: 'dbms-sql-practice', label: 'AcadMix SQL Practice Hub', url: '/sql-practice', openLabel: 'Launch SQL Practice', noEmbed: true },
-    { id: 'dbms-sqlite', label: 'SQLite Web Fiddle', url: 'https://sqlite.org/fiddle/', openLabel: 'Open SQLite Console' },
+    { id: 'dbms-sql',  label: 'AcadMix SQL Practice Hub',      url: '/sql-practice', openLabel: 'Launch SQL Practice', noEmbed: true },
+    { id: 'dbms-sqlite', label: 'SQLite Web Fiddle',           url: 'https://sqlite.org/fiddle/', openLabel: 'Open SQLite Console' },
+    { id: 'dbms-er',   label: 'ER Diagram Tool (draw.io)',     url: 'https://embed.diagrams.net/?ui=sketch&proto=json', openLabel: 'Open draw.io ER' },
   ],
+  // ── Computer Networks (socket progs, Wireshark, Dijkstra, NS2) ───────────
   computer_networks: [
-    { id: 'cn-subnet', label: 'Interactive IP Subnet Calculator', url: 'https://www.subnet-calculator.com/', openLabel: 'Open Subnet Calculator' },
-    { id: 'cn-visualizer', label: 'Graph Traversal (DFS/BFS) Simulator', url: 'https://visualgo.net/en/dfsbfs', openLabel: 'Open VisuAlgo' },
+    { id: 'cn-python',   label: 'Python Socket Programming IDE', url: '', isNativeWasm: true, nativeLanguage: 'python' },
+    { id: 'cn-subnet',   label: 'IP Subnet Calculator',         url: 'https://www.subnet-calculator.com/', openLabel: 'Open Subnet Calculator' },
+    { id: 'cn-visualgo', label: 'Dijkstra / Graph (VisuAlgo)',  url: 'https://visualgo.net/en/dfsbfs', openLabel: 'Open VisuAlgo Graph' },
   ],
-  advanced_comms: [
-    { id: 'ac-dsp-native', label: 'DSP Block Simulator', url: '', isNativeBlock: true },
-    { id: 'ac-oscilloscope', label: 'Virtual Oscilloscope', url: 'https://academo.org/demos/virtual-oscilloscope/?embedded=true', openLabel: 'Open Scope' },
-  ],
+  // ── ETL & Kafka (Kafka producer/consumer, connectors, pipeline) ───────────
   etl_kafka: [
-    { id: 'kafka-mock', label: 'Kafka Event Producer/Consumer Console', url: jupyterUrl('print("=== Kafka ETL Stream Simulator ===")\\n# Mocking event stream\\nimport time\\nfor i in range(5):\\n    print(f"Published event: {i} | timestamp: {time.time()}")'), openLabel: 'Open Notebook' },
+    { id: 'kafka-python', label: 'Kafka Producer/Consumer Mock (Python)', url: jupyterUrl('# JNTUH ETL & Kafka Lab\ntopics = {}\ndef produce(topic, msg):\n    topics.setdefault(topic, []).append(msg)\n    print(f"[PRODUCER] topic={topic} msg={msg}")\ndef consume(topic):\n    for m in topics.get(topic, []):\n        print(f"[CONSUMER] topic={topic} msg={m}")\nproduce("orders", "order_1")\nproduce("orders", "order_2")\nconsume("orders")'), openLabel: 'Open Notebook' },
+    { id: 'kafka-etl',   label: 'ETL Pipeline Simulation',               url: jupyterUrl('# ETL: Extract Transform Load\ndata = [{"id":1,"name":"Alice","score":"85"},{"id":2,"name":"Bob","score":"92"}]\ntransformed = [{"id":d["id"],"name":d["name"].upper(),"score":int(d["score"])} for d in data]\nprint("Transformed:")\nfor r in transformed: print(r)'), openLabel: 'Open Notebook' },
   ],
+  // ── ML Lab (sklearn — regression, decision trees, KNN, K-Means) ──────────
   ml_lab: [
-    { id: 'ml-tf-playground', label: 'TensorFlow Neural Network Playground', url: 'https://playground.tensorflow.org/', openLabel: 'Open TF Playground' },
-    { id: 'ml-jupyter', label: 'Python Machine Learning Sandbox', url: jupyterUrl('import sklearn\\nprint("scikit-learn loaded successfully!")'), openLabel: 'Open Notebook' },
+    { id: 'ml-tensorflow', label: 'TensorFlow Neural Network Playground', url: 'https://playground.tensorflow.org/', openLabel: 'Open TF Playground' },
+    { id: 'ml-sklearn',    label: 'scikit-learn Notebook',                url: jupyterUrl('# JNTUH ML Lab — Linear Regression\nimport numpy as np\nX = [1,2,3,4,5]; y = [2.1,4.0,6.2,7.9,10.1]\ncoef = [round(c,3) for c in list(reversed(list(map(float,str(type(X)).split()[:0]))))]\nm = (len(X)*sum(a*b for a,b in zip(X,y))-sum(X)*sum(y))/(len(X)*sum(a**2 for a in X)-sum(X)**2)\nb = (sum(y)-m*sum(X))/len(X)\nprint(f"Slope={m:.3f}  Intercept={b:.3f}")'), openLabel: 'Open Notebook' },
+    { id: 'ml-python',     label: 'Python ML Sandbox (Wasm)',             url: '', isNativeWasm: true, nativeLanguage: 'python' },
   ],
+  // ── Software Testing (QTP/UFT, Selenium, equivalence partitioning) ────────
   software_testing: [
-    { id: 'test-pytest', label: 'Python Unit Testing Sandbox', url: jupyterUrl('def test_example():\\n    assert 1 + 1 == 2\\nprint("Running test_example...")'), openLabel: 'Open Notebook' },
+    { id: 'test-selenium', label: 'Selenium IDE',                          url: 'https://www.selenium.dev/selenium-ide/', openLabel: 'Open Selenium IDE', noEmbed: true },
+    { id: 'test-python',   label: 'Python Testing Sandbox (pytest/unittest)', url: jupyterUrl('# JNTUH Software Testing Lab\ndef is_valid_age(age): return 0 <= age <= 150\ntest_cases = [-1, 0, 75, 150, 151]\nfor tc in test_cases:\n    result = "PASS" if is_valid_age(tc) == (0 <= tc <= 150) else "FAIL"\n    print(f"Input: {tc:4d} | {result}")'), openLabel: 'Open Notebook' },
+    { id: 'test-flow',     label: 'Test Case Flow Designer (draw.io)',     url: 'https://embed.diagrams.net/?ui=sketch&proto=json', openLabel: 'Open draw.io' },
   ],
+  // ── Big Data Analytics (Hadoop/HDFS/MapReduce, HBase, Pig, MongoDB) ───────
   big_data: [
-    { id: 'bd-spark', label: 'PySpark Big Data Analytics', url: jupyterUrl('print("Hadoop/Spark Mock Environment initialized")'), openLabel: 'Open Notebook' },
+    { id: 'bd-mapreduce', label: 'MapReduce Word Count (Python)',          url: jupyterUrl('# JNTUH Big Data — MapReduce Word Count\nfrom collections import Counter\ndoc = "big data analytics hadoop spark big data hadoop"\nwords = doc.split()\ncounts = Counter(words)\nprint("Word Frequencies:")\nfor w, c in sorted(counts.items()): print(f"  {w}: {c}")'), openLabel: 'Open Notebook' },
+    { id: 'bd-hdfs',      label: 'HDFS File Operations Mock',              url: jupyterUrl('# HDFS Simulation\nhdfs = {}\ndef hdfs_put(p,d): hdfs[p]=d; print(f"PUT {p} OK")\ndef hdfs_get(p): print(f"GET {p} -> {hdfs.get(p)}")\ndef hdfs_ls(): print("ls:", list(hdfs.keys()))\nhdfs_put("/user/student/data.txt","Hello Hadoop")\nhdfs_ls()\nhdfs_get("/user/student/data.txt")'), openLabel: 'Open Notebook' },
+    { id: 'bd-python',    label: 'Python Big Data Sandbox (Wasm)',          url: '', isNativeWasm: true, nativeLanguage: 'python' },
   ],
+  // ── Predictive Analytics (EDA, Regression, ARIMA, K-Means, PCA) ──────────
   predictive_analytics: [
-    { id: 'pa-forecast', label: 'Python Predictive Modeling Sandbox', url: jupyterUrl('import numpy as np\\n# Simple linear regression forecasting\\nx = np.arange(10)\\ny = 2*x + 1\\nprint("Model coefficients: slope=2, intercept=1")'), openLabel: 'Open Notebook' },
+    { id: 'pa-regression', label: 'Regression & EDA Notebook',             url: jupyterUrl('# JNTUH Predictive Analytics Lab\nimport numpy as np\nX = list(range(1,11)); y = [3.5*x+2 for x in X]\nm = (10*sum(a*b for a,b in zip(X,y))-sum(X)*sum(y))/(10*sum(a**2 for a in X)-sum(X)**2)\nb = (sum(y)-m*sum(X))/10\nprint(f"Slope={m:.3f}  Intercept={b:.3f}")'), openLabel: 'Open Notebook' },
+    { id: 'pa-clustering', label: 'K-Means Clustering Visualizer',         url: 'https://www.naftaliharris.com/blog/visualizing-k-means-clustering/', openLabel: 'Open K-Means Visualizer' },
+    { id: 'pa-python',     label: 'Python Predictive Modeling IDE',         url: '', isNativeWasm: true, nativeLanguage: 'python' },
   ],
+  // ── Web & Social Media Analytics (NLTK, sentiment, Google Analytics) ──────
   web_social_media: [
-    { id: 'web-sentiment', label: 'Text Sentiment Analysis Mock', url: jupyterUrl('text = "AcadMix is awesome!"\\nprint("Analyzing sentiment...")\\nprint("Score: +0.95 (Positive)")'), openLabel: 'Open Notebook' },
+    { id: 'web-nltk',    label: 'Text Preprocessing & Sentiment Notebook', url: jupyterUrl('# JNTUH Web Analytics Lab — Text Preprocessing\nimport re\nstopwords = {"is","the","a","an","and","or","in","of","to"}\ndef preprocess(text):\n    tokens = re.findall(r"\\b\\w+\\b", text.lower())\n    return [t for t in tokens if t not in stopwords]\nreviews = ["The product is amazing","Terrible quality and bad service"]\nfor r in reviews: print(preprocess(r))'), openLabel: 'Open Notebook' },
+    { id: 'web-analytics', label: 'Google Analytics Demo',                 url: 'https://analytics.google.com/analytics/web/', openLabel: 'Open Google Analytics', noEmbed: true },
+    { id: 'web-python',    label: 'Python Word Frequency IDE',              url: '', isNativeWasm: true, nativeLanguage: 'python' },
   ],
 };
+
 
 // ── Civil Lab Categories & Boards ───────────────────────────────────────────
 const CIVIL_SIMULATOR_CATEGORIES = [
@@ -1646,8 +1657,8 @@ const CodePlayground = ({ navigate, user }) => {
       setSimCategory('thermodynamics');
       setWokwiBoard(MECH_SIMULATOR_BOARDS['thermodynamics']?.[0]?.id || '');
     } else if (langId === 'csdlab') {
-      setSimCategory('engg_chemistry');
-      setWokwiBoard(CSD_SIMULATOR_BOARDS['engg_chemistry']?.[0]?.id || 'chem-table');
+      setSimCategory('c_lab');
+      setWokwiBoard(CSD_SIMULATOR_BOARDS['c_lab']?.[0]?.id || 'c-wasm');
     }
     const saved = sessionStorage.getItem(getCodeStorageKey(activeChallenge, langId));
     if (saved !== null) {
