@@ -1041,6 +1041,14 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
           </div>
         </div>
       )}
+
+      {isResizing && (
+        <div 
+          className={`fixed inset-0 z-[9999] select-none bg-transparent ${
+            layout === 'vertical' ? 'cursor-col-resize' : 'cursor-row-resize'
+          }`} 
+        />
+      )}
     </div>
   );
 };
