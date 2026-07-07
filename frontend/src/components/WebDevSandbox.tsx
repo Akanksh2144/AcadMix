@@ -647,7 +647,7 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
             width: isPreviewFullScreen ? '100vw' : (layout === 'vertical' ? `${previewWidth}px` : undefined),
             height: isPreviewFullScreen ? '100vh' : (layout === 'horizontal' ? `${previewHeight}px` : undefined)
           }}
-          className={`flex flex-col shrink-0 min-w-0 min-h-0 ${isResizing ? '' : 'transition-all duration-300'} ${
+          className={`flex flex-col shrink-0 min-w-0 min-h-0 ${
             isPreviewFullScreen 
               ? 'fixed inset-0 z-50 w-screen h-screen' 
               : (layout === 'vertical' 
