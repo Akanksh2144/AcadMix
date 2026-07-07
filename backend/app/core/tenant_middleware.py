@@ -33,7 +33,7 @@ NEGATIVE_CACHE_TTL = 60  # 1 minute for "not found" slugs
 
 # Max retries for transient DB failures
 _DB_RESOLVE_MAX_RETRIES = 2
-_DB_RESOLVE_RETRY_DELAY = 2.0  # seconds (initial TCP to Supabase takes 10-15s)
+_DB_RESOLVE_RETRY_DELAY = 5.0  # seconds — Supabase TCP handshake takes 10-15s; give it time
 
 # Slugs that bypass tenant resolution (public endpoints)
 PUBLIC_PATHS = {"/api/health", "/api/health/db", "/api/auth/login", "/api/auth/register", "/docs", "/openapi.json"}
@@ -97,7 +97,11 @@ async def _resolve_tenant_from_db(slug: str) -> dict | None:
     Includes retry logic for transient connection failures (TimeoutError,
     socket.gaierror) to handle intermittent Supabase pooler issues.
     """
-    from database import AdminSessionLocal
+    # Use the pooled tenant engine — reuses existing TCP connections.
+    # AdminSessionLocal uses NullPool which opens a fresh TCP to Supabase on
+    # every call, taking 10-15s per connection and reliably timing out under
+    # any request burst. The tenant engine pool keeps connections warm.
+    from database import AsyncSessionLocal
     from sqlalchemy.future import select
     from sqlalchemy import func
 
@@ -105,7 +109,7 @@ async def _resolve_tenant_from_db(slug: str) -> dict | None:
 
     for attempt in range(_DB_RESOLVE_MAX_RETRIES + 1):
         try:
-            async with AdminSessionLocal() as session:
+            async with AsyncSessionLocal() as session:
                 from app.models.core import College
 
                 # Match by domain (slug == domain prefix) or by name (case-insensitive)
