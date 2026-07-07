@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import JSZip from 'jszip';
 import Editor from '@monaco-editor/react';
 import { 
   Code, Palette, FileCode, ArrowCounterClockwise, 
@@ -255,29 +256,11 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
 
   const handleExportZip = async () => {
     try {
-      setConsoleLogs(prev => [...prev, { level: 'info', text: 'Initializing export, loading compiler tools...', timestamp: new Date().toLocaleTimeString() }]);
-      
-      // Load JSZip dynamically
-      const jszip: any = await new Promise((resolve, reject) => {
-        if ((window as any).JSZip) {
-          resolve((window as any).JSZip);
-          return;
-        }
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-        script.async = true;
-        script.onload = () => resolve((window as any).JSZip);
-        script.onerror = () => reject(new Error('Failed to load zip compiler tool. Please check your internet connection.'));
-        document.body.appendChild(script);
-      });
-
-      const zip = new jszip();
+      const zip = new JSZip();
       zip.file('index.html', htmlCode);
       zip.file('style.css', cssCode);
       zip.file('script.js', jsCode);
-      
-      // Add README
-      zip.file('README.md', `# Web Dev Sandbox Export\n\nGenerated automatically from AcadMix WebDev Sandbox.\n\n### How to Run Locally\n1. Extract the zip archive.\n2. Open \`index.html\` directly in any browser.`);
+      zip.file('README.md', `# Web Dev Sandbox Export\n\nGenerated from AcadMix WebDev Sandbox.\n\n### Run Locally\n1. Extract the zip.\n2. Open \`index.html\` in any browser.`);
 
       const content = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(content);
@@ -288,10 +271,9 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
-      setConsoleLogs(prev => [...prev, { level: 'info', text: 'Project exported and downloaded successfully!', timestamp: new Date().toLocaleTimeString() }]);
+
+      setConsoleLogs(prev => [...prev, { level: 'info', text: 'Project exported successfully!', timestamp: new Date().toLocaleTimeString() }]);
     } catch (err: any) {
-      console.error(err.message);
       setConsoleLogs(prev => [...prev, { level: 'error', text: `Export failed: ${err.message}`, timestamp: new Date().toLocaleTimeString() }]);
     }
   };
