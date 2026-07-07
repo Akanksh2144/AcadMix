@@ -194,6 +194,13 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
     return () => window.removeEventListener('message', handleIframeMessage);
   }, []);
 
+  // Update iframe srcdoc directly on DOM node to prevent React prop re-writes and reloads during state re-renders
+  useEffect(() => {
+    if (iframeRef.current) {
+      iframeRef.current.srcdoc = iframeSrcDoc;
+    }
+  }, [iframeSrcDoc]);
+
   const startResize = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsResizing(true);
@@ -727,7 +734,6 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
             <iframe 
               ref={iframeRef}
               title="Live Sandboxed Preview"
-              srcDoc={iframeSrcDoc}
               className={`w-full h-full border-0 bg-white ${isResizing ? 'pointer-events-none' : ''}`}
               sandbox="allow-scripts allow-modals allow-same-origin allow-forms"
             />
