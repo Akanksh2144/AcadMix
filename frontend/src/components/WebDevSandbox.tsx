@@ -4,7 +4,7 @@ import {
   Code, Palette, FileCode, ArrowCounterClockwise, 
   CornersOut, CornersIn, Trash, Terminal, Sparkle, 
   UploadSimple, Plus, MagnifyingGlass, Globe, Info,
-  Sun, Moon
+  Sun, Moon, DownloadSimple, Gear, Rows, Columns, Square
 } from '@phosphor-icons/react';
 import AlertModal from './AlertModal';
 
@@ -40,9 +40,17 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
   const [activeFile, setActiveFile] = useState<'html' | 'css' | 'js'>('html');
   const [searchQuery, setSearchQuery] = useState('');
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
-  const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
+  const [consoleLogs, setConsoleLogs] = useState<Array<{ level: 'log' | 'warn' | 'error' | 'info'; text: string; timestamp: string }>>([]);
   const [isPreviewFullScreen, setIsPreviewFullScreen] = useState(false);
   const [iframeSrcDoc, setIframeSrcDoc] = useState('');
+  const [layout, setLayout] = useState<'vertical' | 'horizontal'>('vertical');
+  const [externalCDNs, setExternalCDNs] = useState<{ css: string[]; js: string[] }>(() => {
+    const saved = localStorage.getItem('webdev_cdns');
+    return saved ? JSON.parse(saved) : { css: [], js: [] };
+  });
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [cdnInput, setCdnInput] = useState({ css: '', js: '' });
+  const [consoleFilter, setConsoleFilter] = useState<'all' | 'error' | 'warn' | 'info'>('all');
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -75,32 +83,59 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
       const isReactTemplate = htmlCode.includes('babel.min.js') || htmlCode.includes('react.development.js');
       const scriptTagType = isReactTemplate ? 'type="text/babel"' : 'type="text/javascript"';
 
+      const cssCDNtags = externalCDNs.css.map(url => `<link rel="stylesheet" href="${url}">`).join('\n');
+      const jsCDNtags = externalCDNs.js.map(url => `<script src="${url}"></script>`).join('\n');
+
       const compiled = `
         <!DOCTYPE html>
         <html lang="en">
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          ${cssCDNtags}
           <style>
             ${cssCode}
           </style>
         </head>
         <body>
           ${htmlCode}
+          ${jsCDNtags}
           <script>
-            // Capture client logs
+            // Capture client logs with levels
             (function() {
               const _log = console.log;
+              const _warn = console.warn;
               const _error = console.error;
-              
+              const _info = console.info;
+
+              function formatArg(arg) {
+                if (arg === null) return "null";
+                if (arg === undefined) return "undefined";
+                if (typeof arg === "object") {
+                  try {
+                    return JSON.stringify(arg, null, 2);
+                  } catch (e) {
+                    return "[Circular Object]";
+                  }
+                }
+                return String(arg);
+              }
+
               console.log = function(...args) {
                 _log.apply(console, args);
-                window.parent.postMessage({ type: 'CONSOLE_LOG', data: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ') }, '*');
+                window.parent.postMessage({ type: 'CONSOLE_MSG', level: 'log', data: args.map(formatArg).join(' ') }, '*');
               };
-              
+              console.warn = function(...args) {
+                _warn.apply(console, args);
+                window.parent.postMessage({ type: 'CONSOLE_MSG', level: 'warn', data: args.map(formatArg).join(' ') }, '*');
+              };
               console.error = function(...args) {
                 _error.apply(console, args);
-                window.parent.postMessage({ type: 'CONSOLE_LOG', data: 'Error: ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ') }, '*');
+                window.parent.postMessage({ type: 'CONSOLE_MSG', level: 'error', data: args.map(formatArg).join(' ') }, '*');
+              };
+              console.info = function(...args) {
+                _info.apply(console, args);
+                window.parent.postMessage({ type: 'CONSOLE_MSG', level: 'info', data: args.map(formatArg).join(' ') }, '*');
               };
             })();
           </script>
@@ -118,20 +153,37 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
     }, 500);
 
     return () => clearTimeout(handler);
-  }, [htmlCode, cssCode, jsCode]);
+  }, [htmlCode, cssCode, jsCode, externalCDNs]);
 
-  // Persist code in localStorage
+  // Persist code & CDNs in localStorage
   useEffect(() => {
     localStorage.setItem('webdev_html', htmlCode);
     localStorage.setItem('webdev_css', cssCode);
     localStorage.setItem('webdev_js', jsCode);
   }, [htmlCode, cssCode, jsCode]);
 
+  useEffect(() => {
+    localStorage.setItem('webdev_cdns', JSON.stringify(externalCDNs));
+  }, [externalCDNs]);
+
   // Listen to message logs from the sandbox iframe
   useEffect(() => {
     const handleIframeMessage = (e: MessageEvent) => {
-      if (e.data && e.data.type === 'CONSOLE_LOG') {
-        setConsoleLogs(prev => [...prev.slice(-99), `[${new Date().toLocaleTimeString()}] ${e.data.data}`]);
+      if (e.data && e.data.type === 'CONSOLE_MSG') {
+        const newLog = {
+          level: e.data.level || 'log',
+          text: e.data.data,
+          timestamp: new Date().toLocaleTimeString()
+        };
+        setConsoleLogs(prev => [...prev.slice(-99), newLog]);
+      } else if (e.data && e.data.type === 'CONSOLE_LOG') {
+        // Fallback compatibility
+        const newLog = {
+          level: 'log',
+          text: e.data.data,
+          timestamp: new Date().toLocaleTimeString()
+        };
+        setConsoleLogs(prev => [...prev.slice(-99), newLog]);
       }
     };
     window.addEventListener('message', handleIframeMessage);
@@ -156,6 +208,49 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
     });
   };
 
+  const handleExportZip = async () => {
+    try {
+      setConsoleLogs(prev => [...prev, { level: 'info', text: 'Initializing export, loading compiler tools...', timestamp: new Date().toLocaleTimeString() }]);
+      
+      // Load JSZip dynamically
+      const jszip: any = await new Promise((resolve, reject) => {
+        if ((window as any).JSZip) {
+          resolve((window as any).JSZip);
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+        script.async = true;
+        script.onload = () => resolve((window as any).JSZip);
+        script.onerror = () => reject(new Error('Failed to load zip compiler tool. Please check your internet connection.'));
+        document.body.appendChild(script);
+      });
+
+      const zip = new jszip();
+      zip.file('index.html', htmlCode);
+      zip.file('style.css', cssCode);
+      zip.file('script.js', jsCode);
+      
+      // Add README
+      zip.file('README.md', `# Web Dev Sandbox Export\n\nGenerated automatically from AcadMix WebDev Sandbox.\n\n### How to Run Locally\n1. Extract the zip archive.\n2. Open \`index.html\` directly in any browser.`);
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(content);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `acadmix_webdev_${Date.now()}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      setConsoleLogs(prev => [...prev, { level: 'info', text: 'Project exported and downloaded successfully!', timestamp: new Date().toLocaleTimeString() }]);
+    } catch (err: any) {
+      console.error(err.message);
+      setConsoleLogs(prev => [...prev, { level: 'error', text: `Export failed: ${err.message}`, timestamp: new Date().toLocaleTimeString() }]);
+    }
+  };
+
   const getCodeForActiveFile = () => {
     if (activeFile === 'html') return htmlCode;
     if (activeFile === 'css') return cssCode;
@@ -176,6 +271,10 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
   ];
 
   const filteredFiles = files.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredLogs = consoleLogs.filter(log => {
+    if (consoleFilter === 'all') return true;
+    return log.level === consoleFilter;
+  });
 
   return (
     <div className={`flex-1 flex flex-col overflow-hidden min-h-0 h-full transition-colors ${
@@ -191,6 +290,47 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
           <span className="px-2 py-0.5 bg-teal-500/10 text-teal-400 rounded-full text-[10px] font-bold border border-teal-500/20">LIVE</span>
         </div>
         <div className="flex items-center gap-2">
+          {/* Layout Switcher */}
+          <div className={`flex rounded-lg overflow-hidden border ${
+            sandboxTheme === 'dark' ? 'border-slate-800 bg-slate-900' : 'border-slate-250 bg-slate-100'
+          }`}>
+            <button 
+              onClick={() => setLayout('vertical')}
+              className={`p-1.5 transition-all ${
+                layout === 'vertical'
+                  ? (sandboxTheme === 'dark' ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600 shadow-sm')
+                  : (sandboxTheme === 'dark' ? 'text-slate-400 hover:text-white' : 'text-slate-550 hover:text-slate-900')
+              }`}
+              title="Side-by-Side Split Layout"
+            >
+              <Columns size={13} weight="bold" />
+            </button>
+            <button 
+              onClick={() => setLayout('horizontal')}
+              className={`p-1.5 transition-all ${
+                layout === 'horizontal'
+                  ? (sandboxTheme === 'dark' ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600 shadow-sm')
+                  : (sandboxTheme === 'dark' ? 'text-slate-400 hover:text-white' : 'text-slate-550 hover:text-slate-900')
+              }`}
+              title="Top-and-Bottom Split Layout"
+            >
+              <Rows size={13} weight="bold" />
+            </button>
+          </div>
+
+          {/* CDN Settings Trigger */}
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className={`p-1.5 rounded-lg border transition-all ${
+              sandboxTheme === 'dark' 
+                ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800' 
+                : 'bg-white border-slate-250 text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+            title="External CDN Libraries"
+          >
+            <Gear size={14} weight="bold" />
+          </button>
+
           {/* Theme Switcher Button */}
           <button
             onClick={() => setSandboxTheme(prev => prev === 'dark' ? 'light' : 'dark')}
@@ -204,6 +344,20 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
             {sandboxTheme === 'dark' ? <Sun size={14} weight="bold" /> : <Moon size={14} weight="bold" />}
           </button>
           
+          {/* Export Zip Button */}
+          <button 
+            onClick={handleExportZip}
+            className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg border transition-all ${
+              sandboxTheme === 'dark' 
+                ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-transparent shadow-lg shadow-indigo-600/10' 
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white border-transparent shadow-lg shadow-indigo-600/10'
+            }`}
+            title="Export project files to local ZIP archive"
+          >
+            <DownloadSimple size={14} weight="bold" /> Export Zip
+          </button>
+
+          {/* Clear All Button */}
           <button 
             onClick={() => {
               setConfirmModal({
@@ -347,10 +501,12 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
           </div>
         </div>
 
-        {/* Center: Monaco Editor Panel */}
-        <div className={`flex-1 flex flex-col min-h-0 border-r transition-colors ${
-          sandboxTheme === 'dark' ? 'bg-slate-950 border-[#1F2937]/85' : 'bg-[#f3f4f6] border-slate-250/70'
-        }`}>
+        {/* Workspace Panels Container (Editor + Preview) */}
+        <div className={`flex-1 flex min-h-0 ${layout === 'vertical' ? 'flex-row' : 'flex-col'}`}>
+          {/* Center: Monaco Editor Panel */}
+          <div className={`flex-1 flex flex-col min-h-0 border-r transition-colors ${
+            sandboxTheme === 'dark' ? 'bg-slate-950 border-[#1F2937]/85' : 'bg-[#f3f4f6] border-slate-250/70'
+          }`}>
           {/* File Tabs */}
           <div className={`flex items-center justify-between border-b shrink-0 px-2.5 transition-colors ${
             sandboxTheme === 'dark' ? 'border-[#1F2937]/85 bg-[#0B0F19]' : 'border-slate-250/70 bg-slate-100/70'
@@ -409,7 +565,9 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
         <div className={`flex flex-col shrink-0 transition-all duration-300 ${
           isPreviewFullScreen 
             ? 'fixed inset-0 z-50 w-screen h-screen' 
-            : 'w-[480px] lg:w-[600px] border-l'
+            : (layout === 'vertical' 
+                ? 'w-[480px] lg:w-[600px] border-l' 
+                : 'flex-1 border-t min-h-[300px]')
         } ${
           sandboxTheme === 'dark'
             ? 'border-[#1F2937]/80 bg-[#111827]'
@@ -519,17 +677,38 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
 
             {/* Console Log Panel */}
             {isConsoleOpen && (
-              <div className={`flex flex-col flex-1 min-h-[140px] max-h-[180px] border-t overflow-hidden ${
+              <div className={`flex flex-col flex-1 min-h-[160px] max-h-[220px] border-t overflow-hidden ${
                 sandboxTheme === 'dark'
                   ? 'bg-[#0c1017] border-[#1F2937]/80'
                   : 'bg-slate-50 border-slate-200'
               }`}>
-                <div className={`flex items-center justify-between px-3 py-1 shrink-0 border-b ${
+                {/* Console Actions / Filter Header */}
+                <div className={`flex items-center justify-between px-3 py-1.5 shrink-0 border-b ${
                   sandboxTheme === 'dark'
                     ? 'bg-slate-950 border-[#1F2937]/50'
                     : 'bg-slate-100 border-slate-250/60'
                 }`}>
-                  <span className="text-[9px] font-bold text-slate-500">Captured Output</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500">Captured Output</span>
+                    {/* Log Filter Selector */}
+                    <div className="flex gap-1">
+                      {(['all', 'error', 'warn', 'info'] as const).map(lvl => (
+                        <button
+                          key={lvl}
+                          onClick={(e) => { e.stopPropagation(); setConsoleFilter(lvl); }}
+                          className={`text-[8px] px-1.5 py-0.5 rounded font-extrabold uppercase tracking-wide transition-all ${
+                            consoleFilter === lvl
+                              ? 'bg-indigo-600 text-white'
+                              : (sandboxTheme === 'dark' 
+                                  ? 'text-slate-450 hover:bg-slate-900 hover:text-slate-200' 
+                                  : 'text-slate-650 hover:bg-slate-200 hover:text-slate-900')
+                          }`}
+                        >
+                          {lvl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <button 
                     onClick={(e) => { e.stopPropagation(); setConsoleLogs([]); }} 
                     className={`text-[9px] font-bold hover:underline ${
@@ -539,24 +718,48 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
                     Clear Logs
                   </button>
                 </div>
-                <div className={`flex-1 p-3 overflow-y-auto custom-scrollbar font-mono text-[11px] space-y-1 select-text ${
-                  sandboxTheme === 'dark' ? 'text-teal-400/90' : 'text-teal-800'
-                }`}>
-                  {consoleLogs.length === 0 ? (
-                    <div className="text-slate-500 italic text-[10px]">No logs captured yet. Try adding console.log() in script.js</div>
+
+                {/* Console Log list */}
+                <div className="flex-1 p-2 overflow-y-auto custom-scrollbar font-mono text-[10.5px] space-y-1 select-text">
+                  {filteredLogs.length === 0 ? (
+                    <div className="text-slate-500 italic text-[10px] text-center py-4">
+                      {consoleLogs.length === 0 ? "No logs captured yet." : "No logs matching active level."}
+                    </div>
                   ) : (
-                    consoleLogs.map((log, idx) => (
-                      <div key={idx} className={`border-b pb-1 last:border-0 leading-relaxed break-all ${
-                        sandboxTheme === 'dark' ? 'border-slate-900/50' : 'border-slate-200/50'
-                      }`}>
-                        {log}
-                      </div>
-                    ))
+                    filteredLogs.map((log, idx) => {
+                      let levelColor = '';
+                      let label = '';
+                      
+                      if (log.level === 'error') {
+                        levelColor = sandboxTheme === 'dark' ? 'text-rose-400 bg-rose-950/20 border-rose-900/30' : 'text-rose-700 bg-rose-50 border-rose-200';
+                        label = '✕ ';
+                      } else if (log.level === 'warn') {
+                        levelColor = sandboxTheme === 'dark' ? 'text-amber-400 bg-amber-950/20 border-amber-900/30' : 'text-amber-700 bg-amber-50 border-amber-200';
+                        label = '⚠ ';
+                      } else if (log.level === 'info') {
+                        levelColor = sandboxTheme === 'dark' ? 'text-sky-400 bg-sky-950/20 border-sky-900/30' : 'text-sky-700 bg-sky-50 border-sky-200';
+                        label = 'ℹ ';
+                      } else {
+                        levelColor = sandboxTheme === 'dark' ? 'text-teal-400/90' : 'text-slate-800';
+                      }
+
+                      return (
+                        <div 
+                          key={idx} 
+                          className={`px-2 py-1 rounded-lg border border-transparent leading-relaxed break-all flex items-start gap-1 ${levelColor}`}
+                        >
+                          <span className="text-[9px] font-bold text-slate-500 shrink-0 mt-0.5 select-none">{log.timestamp}</span>
+                          <span className="shrink-0 font-bold select-none">{label}</span>
+                          <pre className="flex-1 whitespace-pre-wrap font-mono text-[10.5px] leading-relaxed m-0 p-0 select-text">{log.text}</pre>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
       <AlertModal
@@ -569,6 +772,181 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
         onConfirm={confirmModal.onConfirm}
         onCancel={() => setConfirmModal(prev => ({ ...prev, open: false }))}
       />
+
+      {/* External CDN Manager Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className={`w-full max-w-lg rounded-2xl border p-6 shadow-2xl transition-all ${
+            sandboxTheme === 'dark' ? 'bg-[#0f172a] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <div className="flex justify-between items-center mb-5 border-b pb-3 border-slate-850/20">
+              <h2 className="text-sm font-extrabold tracking-wider uppercase flex items-center gap-2">
+                <Gear size={16} className="text-indigo-500 animate-spin-slow" /> External Libraries & CDNs
+              </h2>
+              <button 
+                onClick={() => setIsSettingsOpen(false)}
+                className="text-xs font-bold text-slate-450 hover:text-indigo-500 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="mb-5">
+              <span className="text-[10px] font-extrabold tracking-widest text-slate-500 uppercase block mb-2">Quick Presets</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    const url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css';
+                    if (!externalCDNs.css.includes(url)) {
+                      setExternalCDNs(prev => ({ ...prev, css: [...prev.css, url] }));
+                    }
+                  }}
+                  className={`text-[9.5px] font-bold px-2.5 py-1.5 rounded-lg border transition-all ${
+                    sandboxTheme === 'dark' ? 'bg-slate-900 border-slate-800 text-indigo-400 hover:bg-slate-850' : 'bg-slate-50 border-slate-250 text-indigo-600 hover:bg-slate-100'
+                  }`}
+                >
+                  + FontAwesome CSS
+                </button>
+                <button
+                  onClick={() => {
+                    const url = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css';
+                    if (!externalCDNs.css.includes(url)) {
+                      setExternalCDNs(prev => ({ ...prev, css: [...prev.css, url] }));
+                    }
+                  }}
+                  className={`text-[9.5px] font-bold px-2.5 py-1.5 rounded-lg border transition-all ${
+                    sandboxTheme === 'dark' ? 'bg-slate-900 border-slate-800 text-indigo-400 hover:bg-slate-850' : 'bg-slate-50 border-slate-250 text-indigo-600 hover:bg-slate-100'
+                  }`}
+                >
+                  + Bootstrap 5 CSS
+                </button>
+                <button
+                  onClick={() => {
+                    const url = 'https://code.jquery.com/jquery-3.7.1.min.js';
+                    if (!externalCDNs.js.includes(url)) {
+                      setExternalCDNs(prev => ({ ...prev, js: [...prev.js, url] }));
+                    }
+                  }}
+                  className={`text-[9.5px] font-bold px-2.5 py-1.5 rounded-lg border transition-all ${
+                    sandboxTheme === 'dark' ? 'bg-slate-900 border-slate-800 text-indigo-400 hover:bg-slate-850' : 'bg-slate-50 border-slate-250 text-indigo-600 hover:bg-slate-100'
+                  }`}
+                >
+                  + jQuery JS
+                </button>
+                <button
+                  onClick={() => {
+                    const url = 'https://cdn.jsdelivr.net/npm/chart.js';
+                    if (!externalCDNs.js.includes(url)) {
+                      setExternalCDNs(prev => ({ ...prev, js: [...prev.js, url] }));
+                    }
+                  }}
+                  className={`text-[9.5px] font-bold px-2.5 py-1.5 rounded-lg border transition-all ${
+                    sandboxTheme === 'dark' ? 'bg-slate-900 border-slate-800 text-indigo-400 hover:bg-slate-850' : 'bg-slate-50 border-slate-250 text-indigo-600 hover:bg-slate-100'
+                  }`}
+                >
+                  + Chart.js JS
+                </button>
+              </div>
+            </div>
+
+            {/* CSS CDNs Section */}
+            <div className="mb-4">
+              <span className="text-[10px] font-extrabold tracking-widest text-slate-500 uppercase block mb-2">CSS Stylesheets</span>
+              <div className="flex gap-2 mb-2">
+                <input 
+                  type="text" 
+                  placeholder="https://cdn.example.com/library.css"
+                  value={cdnInput.css}
+                  onChange={(e) => setCdnInput(prev => ({ ...prev, css: e.target.value }))}
+                  className={`flex-1 text-xs px-3.5 py-2 rounded-xl border focus:outline-none focus:border-indigo-500 transition-colors ${
+                    sandboxTheme === 'dark' ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-250 text-slate-800'
+                  }`}
+                />
+                <button
+                  onClick={() => {
+                    if (cdnInput.css.trim()) {
+                      setExternalCDNs(prev => ({ ...prev, css: [...prev.css, cdnInput.css.trim()] }));
+                      setCdnInput(prev => ({ ...prev, css: '' }));
+                    }
+                  }}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs"
+                >
+                  Add
+                </button>
+              </div>
+              <div className="max-h-[80px] overflow-y-auto space-y-1.5 custom-scrollbar">
+                {externalCDNs.css.map((url, i) => (
+                  <div key={i} className="flex justify-between items-center bg-slate-500/5 px-2.5 py-1.5 rounded-lg border border-slate-550/10">
+                    <span className="text-[10.5px] truncate font-medium text-slate-400 max-w-[340px]">{url}</span>
+                    <button 
+                      onClick={() => setExternalCDNs(prev => ({ ...prev, css: prev.css.filter((_, idx) => idx !== i) }))}
+                      className="text-[9px] font-bold text-rose-500 hover:underline shrink-0"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
+                {externalCDNs.css.length === 0 && (
+                  <div className="text-[10.5px] text-slate-500 italic">No external styles loaded.</div>
+                )}
+              </div>
+            </div>
+
+            {/* JS CDNs Section */}
+            <div className="mb-6">
+              <span className="text-[10px] font-extrabold tracking-widest text-slate-500 uppercase block mb-2">JavaScript Scripts</span>
+              <div className="flex gap-2 mb-2">
+                <input 
+                  type="text" 
+                  placeholder="https://cdn.example.com/library.js"
+                  value={cdnInput.js}
+                  onChange={(e) => setCdnInput(prev => ({ ...prev, js: e.target.value }))}
+                  className={`flex-1 text-xs px-3.5 py-2 rounded-xl border focus:outline-none focus:border-indigo-500 transition-colors ${
+                    sandboxTheme === 'dark' ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-250 text-slate-800'
+                  }`}
+                />
+                <button
+                  onClick={() => {
+                    if (cdnInput.js.trim()) {
+                      setExternalCDNs(prev => ({ ...prev, js: [...prev.js, cdnInput.js.trim()] }));
+                      setCdnInput(prev => ({ ...prev, js: '' }));
+                    }
+                  }}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs"
+                >
+                  Add
+                </button>
+              </div>
+              <div className="max-h-[80px] overflow-y-auto space-y-1.5 custom-scrollbar">
+                {externalCDNs.js.map((url, i) => (
+                  <div key={i} className="flex justify-between items-center bg-slate-500/5 px-2.5 py-1.5 rounded-lg border border-slate-550/10">
+                    <span className="text-[10.5px] truncate font-medium text-slate-400 max-w-[340px]">{url}</span>
+                    <button 
+                      onClick={() => setExternalCDNs(prev => ({ ...prev, js: prev.js.filter((_, idx) => idx !== i) }))}
+                      className="text-[9px] font-bold text-rose-500 hover:underline shrink-0"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
+                {externalCDNs.js.length === 0 && (
+                  <div className="text-[10.5px] text-slate-500 italic">No external scripts loaded.</div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-850/20">
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-lg shadow-indigo-600/10"
+              >
+                Apply changes & Reload
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
