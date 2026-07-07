@@ -5,6 +5,7 @@ import {
   CornersOut, CornersIn, Trash, Terminal, Sparkle, 
   UploadSimple, Plus, MagnifyingGlass, Globe, Info
 } from '@phosphor-icons/react';
+import AlertModal from './AlertModal';
 
 // Pre-defined templates for instant sandbox initialization
 const TEMPLATES = {
@@ -43,6 +44,24 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
   const [iframeSrcDoc, setIframeSrcDoc] = useState('');
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    type: 'warning' | 'danger' | 'info';
+    confirmText: string;
+    cancelText: string;
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    type: 'warning',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    onConfirm: () => {},
+  });
 
   // Debounced live preview compiler
   useEffect(() => {
@@ -115,12 +134,21 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
   }, []);
 
   const handleTemplateLoad = (templateKey: keyof typeof TEMPLATES) => {
-    if (window.confirm("Are you sure you want to load this template? This will replace your current sandbox code.")) {
-      setHtmlCode(TEMPLATES[templateKey].html);
-      setCssCode(TEMPLATES[templateKey].css);
-      setJsCode(TEMPLATES[templateKey].js);
-      setConsoleLogs([]);
-    }
+    setConfirmModal({
+      open: true,
+      title: 'Load Template',
+      message: 'Are you sure you want to load this template? This will replace your current sandbox code.',
+      type: 'warning',
+      confirmText: 'Load Template',
+      cancelText: 'Cancel',
+      onConfirm: () => {
+        setHtmlCode(TEMPLATES[templateKey].html);
+        setCssCode(TEMPLATES[templateKey].css);
+        setJsCode(TEMPLATES[templateKey].js);
+        setConsoleLogs([]);
+        setConfirmModal(prev => ({ ...prev, open: false }));
+      }
+    });
   };
 
   const getCodeForActiveFile = () => {
@@ -156,12 +184,21 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
         <div className="flex items-center gap-2">
           <button 
             onClick={() => {
-              if (window.confirm("Nuke all code and reset to blank slate?")) {
-                setHtmlCode(TEMPLATES.blank.html);
-                setCssCode(TEMPLATES.blank.css);
-                setJsCode(TEMPLATES.blank.js);
-                setConsoleLogs([]);
-              }
+              setConfirmModal({
+                open: true,
+                title: 'Nuke Code',
+                message: 'Are you sure you want to nuke all code and reset to a blank slate?',
+                type: 'danger',
+                confirmText: 'Yes, Clear All',
+                cancelText: 'Cancel',
+                onConfirm: () => {
+                  setHtmlCode(TEMPLATES.blank.html);
+                  setCssCode(TEMPLATES.blank.css);
+                  setJsCode(TEMPLATES.blank.js);
+                  setConsoleLogs([]);
+                  setConfirmModal(prev => ({ ...prev, open: false }));
+                }
+              });
             }} 
             className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-rose-400 bg-slate-900 border border-slate-800 px-2.5 py-1.5 rounded-lg transition-all"
           >
@@ -408,6 +445,16 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
           </div>
         </div>
       </div>
+      <AlertModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText={confirmModal.confirmText}
+        cancelText={confirmModal.cancelText}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, open: false }))}
+      />
     </div>
   );
 };
