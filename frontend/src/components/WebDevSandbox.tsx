@@ -670,14 +670,10 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
               </button>
               <button
                 onClick={forceRunPreview}
-                className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors ${
-                  sandboxTheme === 'dark'
-                    ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40'
-                    : 'bg-white border-slate-200 text-slate-500 hover:text-emerald-600 hover:border-emerald-300'
-                }`}
+                className="px-2.5 py-1.5 flex items-center justify-center rounded-lg bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 transition-colors shadow-sm shadow-emerald-500/30"
                 title="Run preview now (Shift+Enter)"
               >
-                ▶ Run
+                <svg width="8" height="10" viewBox="0 0 8 10" fill="white"><path d="M0 0L8 5L0 10Z"/></svg>
               </button>
             </div>
           </div>
