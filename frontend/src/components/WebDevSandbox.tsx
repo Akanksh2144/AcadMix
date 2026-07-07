@@ -52,6 +52,10 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
   const [cdnInput, setCdnInput] = useState({ css: '', js: '' });
   const [consoleFilter, setConsoleFilter] = useState<'all' | 'error' | 'warn' | 'info'>('all');
   
+  const [previewWidth, setPreviewWidth] = useState(550);
+  const [previewHeight, setPreviewHeight] = useState(380);
+  const [isResizing, setIsResizing] = useState(false);
+  const workspaceRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const [confirmModal, setConfirmModal] = useState<{
@@ -189,6 +193,44 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
     window.addEventListener('message', handleIframeMessage);
     return () => window.removeEventListener('message', handleIframeMessage);
   }, []);
+
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!workspaceRef.current) return;
+      const rect = workspaceRef.current.getBoundingClientRect();
+      
+      if (layout === 'vertical') {
+        const newWidth = rect.right - e.clientX;
+        if (newWidth > 200 && newWidth < rect.width - 200) {
+          setPreviewWidth(newWidth);
+        }
+      } else {
+        const newHeight = rect.bottom - e.clientY;
+        if (newHeight > 120 && newHeight < rect.height - 80) {
+          setPreviewHeight(newHeight);
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, layout]);
 
   const handleTemplateLoad = (templateKey: keyof typeof TEMPLATES) => {
     setConfirmModal({
@@ -502,7 +544,10 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
         </div>
 
         {/* Workspace Panels Container (Editor + Preview) */}
-        <div className={`flex-1 flex min-h-0 ${layout === 'vertical' ? 'flex-row' : 'flex-col'}`}>
+        <div 
+          ref={workspaceRef}
+          className={`flex-1 flex min-h-0 ${layout === 'vertical' ? 'flex-row' : 'flex-col'}`}
+        >
           {/* Center: Monaco Editor Panel */}
           <div className={`flex-1 flex flex-col min-h-0 border-r transition-colors ${
             sandboxTheme === 'dark' ? 'bg-slate-950 border-[#1F2937]/85' : 'bg-[#f3f4f6] border-slate-250/70'
@@ -561,18 +606,50 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
           </div>
         </div>
 
+        {/* Vertical Dragger Bar */}
+        {layout === 'vertical' && !isPreviewFullScreen && (
+          <div 
+            onMouseDown={startResize}
+            className={`w-1.5 cursor-col-resize hover:bg-indigo-500 active:bg-indigo-600 transition-colors z-20 shrink-0 self-stretch relative ${
+              sandboxTheme === 'dark' ? 'bg-[#0B0F19] border-x border-slate-805/80' : 'bg-slate-50 border-x border-slate-200'
+            }`}
+            title="Drag horizontally to resize panels"
+          >
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-6 rounded bg-slate-400/50" />
+          </div>
+        )}
+
+        {/* Horizontal Dragger Bar */}
+        {layout === 'horizontal' && !isPreviewFullScreen && (
+          <div 
+            onMouseDown={startResize}
+            className={`h-1.5 cursor-row-resize hover:bg-indigo-500 active:bg-indigo-600 transition-colors z-20 shrink-0 w-full relative ${
+              sandboxTheme === 'dark' ? 'bg-[#0B0F19] border-y border-slate-805/80' : 'bg-slate-50 border-y border-slate-200'
+            }`}
+            title="Drag vertically to resize panels"
+          >
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-0.5 w-6 rounded bg-slate-400/50" />
+          </div>
+        )}
+
         {/* Right Pane: Live Preview Frame & Console */}
-        <div className={`flex flex-col shrink-0 transition-all duration-300 ${
-          isPreviewFullScreen 
-            ? 'fixed inset-0 z-50 w-screen h-screen' 
-            : (layout === 'vertical' 
-                ? 'w-[480px] lg:w-[600px] border-l' 
-                : 'flex-1 border-t min-h-[300px]')
-        } ${
-          sandboxTheme === 'dark'
-            ? 'border-[#1F2937]/80 bg-[#111827]'
-            : 'border-slate-250 bg-white'
-        }`}>
+        <div 
+          style={{
+            width: isPreviewFullScreen ? '100vw' : (layout === 'vertical' ? `${previewWidth}px` : undefined),
+            height: isPreviewFullScreen ? '100vh' : (layout === 'horizontal' ? `${previewHeight}px` : undefined)
+          }}
+          className={`flex flex-col shrink-0 transition-all duration-300 ${
+            isPreviewFullScreen 
+              ? 'fixed inset-0 z-50 w-screen h-screen' 
+              : (layout === 'vertical' 
+                  ? 'border-l' 
+                  : 'border-t')
+          } ${
+            sandboxTheme === 'dark'
+              ? 'border-[#1F2937]/80 bg-[#111827]'
+              : 'border-slate-250 bg-white'
+          }`}
+        >
           {/* Preview Navigation Header */}
           <div className={`border-b px-4 py-2.5 flex items-center justify-between shrink-0 transition-colors ${
             sandboxTheme === 'dark'
@@ -640,7 +717,7 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
               ref={iframeRef}
               title="Live Sandboxed Preview"
               srcDoc={iframeSrcDoc}
-              className="w-full h-full border-0 bg-white"
+              className={`w-full h-full border-0 bg-white ${isResizing ? 'pointer-events-none' : ''}`}
               sandbox="allow-scripts allow-modals allow-same-origin allow-forms"
             />
           </div>
