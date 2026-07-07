@@ -2343,21 +2343,24 @@ const CodePlayground = ({ navigate, user }) => {
         <div className={`flex-1 flex flex-col ${_isNativeSurface && !isLabFullScreen ? 'overflow-y-auto custom-scrollbar' : 'overflow-hidden'}`} style={{ overscrollBehavior: 'contain' }}>
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
             
-            {/* 1. Header Toolbar (Full Width at Top) */}
-            <div className="soft-card p-4 shrink-0 mb-4 bg-white/80 dark:bg-[#111827]/70 border border-slate-200/50 dark:border-white/5 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
+            {/* 1. Segmented Breadcrumbs Header Bar */}
+            <div className="soft-card p-3 shrink-0 mb-4 bg-white/80 dark:bg-[#111827]/70 border border-slate-200/50 dark:border-white/5 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                
+                {/* Segmented Selector Dropdowns (Left Side) */}
+                <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
+                  {/* Segment 1: Lab Selection */}
                   <div className="relative" ref={langMenuRef}>
                     <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
-                      className="flex items-center gap-2 px-4.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-extrabold text-sm text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-white/5">
-                      {_isMechLab ? <Wrench size={18} weight="duotone" className="text-red-500" /> : _isCivilLab ? <HardHat size={18} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={18} weight="duotone" className="text-yellow-500" /> : <Cpu size={18} weight="duotone" className="text-teal-500" />}
-                      {_isMechLab ? 'Mech Lab' : _isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}
-                      <CaretDown size={14} weight="bold" />
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-105 dark:hover:bg-white/10 transition-colors text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-white/5">
+                      {_isMechLab ? <Wrench size={14} weight="duotone" className="text-red-500" /> : _isCivilLab ? <HardHat size={14} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={14} weight="duotone" className="text-yellow-500" /> : <Cpu size={14} weight="duotone" className="text-teal-500" />}
+                      <span>{_isMechLab ? 'Mech Lab' : _isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}</span>
+                      <CaretDown size={10} weight="bold" className="text-slate-400" />
                     </button>
                     {showLangMenu && (
                       <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1.5 z-50 min-w-[190px]">
                         {LANGUAGES.map(lang => (
-                          <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
+                          <button key={lang.id} onClick={() => { handleLanguageChange(lang.id); setShowLangMenu(false); }}
                             className={`w-full text-left px-4 py-2.5 rounded-2xl flex items-center gap-3 transition-colors text-sm font-bold ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>
                             <span className="text-base shrink-0">{lang.icon}</span>
                             {lang.label}
@@ -2366,22 +2369,82 @@ const CodePlayground = ({ navigate, user }) => {
                       </div>
                     )}
                   </div>
-                  
-                  {/* Active category path display */}
-                  <div className="hidden md:flex items-center gap-1.5 font-bold text-xs text-slate-400">
-                    <span>/</span>
-                    <span className="text-slate-500">{_simCat.label}</span>
-                    {_simActiveBoard && (
-                      <>
-                        <span>/</span>
-                        <span className={`text-${_simCat.accent}-500 font-extrabold`}>{_simActiveBoard.label}</span>
-                      </>
+
+                  <CaretRight size={10} weight="bold" className="text-slate-400 dark:text-slate-600 shrink-0" />
+
+                  {/* Segment 2: Category Selection */}
+                  <div className="relative" ref={catMenuRef}>
+                    <button onClick={() => setShowCatMenu(!showCatMenu)}
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-105 dark:hover:bg-white/10 transition-colors text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-white/5">
+                      <span>{_simCat.icon}</span>
+                      <span>{_simCat.label}</span>
+                      <CaretDown size={10} weight="bold" className="text-slate-400" />
+                    </button>
+                    {showCatMenu && (
+                      <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1.5 z-50 min-w-[220px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                        {_activeCats.map(cat => {
+                          const isActive = simCategory === cat.id;
+                          const style = getCategoryStyles(cat.accent);
+                          return (
+                            <button key={cat.id} 
+                              onClick={() => {
+                                setSimCategory(cat.id);
+                                setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || '');
+                                setShowCatMenu(false);
+                              }}
+                              className={`w-full text-left px-4 py-2.5 rounded-2xl flex items-center gap-3 transition-colors text-sm font-bold ${
+                                isActive 
+                                  ? `${style.bgActive} ${style.textActive} ${style.borderActive}` 
+                                  : `hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300`
+                              }`}
+                            >
+                              <span className="shrink-0">{cat.icon}</span>
+                              <span className="flex-1 truncate">{cat.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
+
+                  <CaretRight size={10} weight="bold" className="text-slate-400 dark:text-slate-600 shrink-0" />
+
+                  {/* Segment 3: Board Selection */}
+                  <div className="relative" ref={boardMenuRef}>
+                    <button onClick={() => setShowBoardMenu(!showBoardMenu)}
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl transition-all font-extrabold border bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-200/50 dark:border-indigo-500/20 hover:bg-indigo-100/50 dark:hover:bg-indigo-500/20">
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 animate-pulse shrink-0" />
+                      <span className="truncate max-w-[150px]">{_simActiveBoard?.label || 'Select Preset'}</span>
+                      <CaretDown size={10} weight="bold" className="opacity-80" />
+                    </button>
+                    {showBoardMenu && (
+                      <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1.5 z-50 min-w-[200px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                        {_simBoards.map(board => {
+                          const isActive = wokwiBoard === board.id;
+                          return (
+                            <button key={board.id} 
+                              onClick={() => {
+                                setWokwiBoard(board.id);
+                                setShowBoardMenu(false);
+                              }}
+                              className={`w-full text-left px-4 py-2.5 rounded-2xl flex items-center gap-3 transition-colors text-sm font-bold ${
+                                isActive 
+                                  ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' 
+                                  : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'
+                              }`}
+                            >
+                              <span className="flex-1 truncate">{board.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
                 </div>
                 
-                {/* Action buttons */}
-                <div className="flex items-center gap-2 self-end sm:self-center">
+                {/* Action buttons (Right Side) */}
+                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                   {/* Python / Octave toggle */}
                   {(_simActiveBoard as any)?.octaveUrl && (
                     <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-2xl p-0.5 border border-slate-200/50 dark:border-white/5">
@@ -2429,309 +2492,210 @@ const CodePlayground = ({ navigate, user }) => {
                     {isLabFullScreen ? <CornersIn size={18} weight="bold" /> : <CornersOut size={18} weight="bold" />}
                   </button>
                 </div>
-              </div>
 
-              {/* Horizontal Scrollable Categories for Mobile (Hidden on lg screens) */}
-              <div className="flex lg:hidden mt-3 items-center bg-slate-100/80 dark:bg-slate-800/80 rounded-full p-1.5 gap-1 overflow-x-auto hide-scrollbar shadow-inner">
-                {_activeCats.map(cat => {
-                  const isActive = simCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
-                      className={`relative px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 z-10 ${
-                        isActive
-                          ? 'text-white'
-                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                      }`}
-                    >
-                      {isActive && (
-                        <motion.div
-                          layoutId="activeCategoryTabMobile"
-                          className={`absolute inset-0 rounded-full -z-10 ${SIM_ACCENT_CLASSES[cat.accent]?.active.replace('text-white', '') || 'bg-teal-500 shadow-sm'}`}
-                          initial={false}
-                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                        />
-                      )}
-                      {cat.icon}
-                      {cat.label}
-                    </button>
-                  );
-                })}
               </div>
             </div>
 
-            {/* 2. Main split area: left is Categories sidebar, right is sub-categories and simulator workspace */}
-            <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 relative" style={{ overscrollBehavior: 'contain' }}>
+            {/* 2. Workspace area below breadcrumb header */}
+            <div className="flex-1 flex flex-col gap-4 min-h-0">
               
-              {/* Left Sidebar: Categories List (Desktop Only) */}
-              <aside className="hidden lg:flex flex-col w-72 shrink-0 lg:sticky lg:top-24 max-h-[calc(100vh-140px)] min-h-0">
-                <div className="soft-card flex flex-col h-full bg-white/80 dark:bg-[#111827]/70 border border-slate-200/50 dark:border-white/5 shadow-sm overflow-hidden min-h-0">
-                  <div className="p-4 bg-slate-50/50 dark:bg-slate-900/30 border-b border-slate-200/50 dark:border-white/5 flex items-center justify-between shrink-0">
-                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Categories</span>
-                    <span className="text-[10px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
-                      {_activeCats.length} Areas
-                    </span>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1.5 min-h-0">
-                    {_activeCats.map(cat => {
-                      const isActive = simCategory === cat.id;
-                      const style = getCategoryStyles(cat.accent);
-                      return (
-                        <button
-                          key={cat.id}
-                          onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
-                          className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-left text-sm font-bold transition-all border border-transparent ${
-                            isActive
-                              ? `${style.bgActive} ${style.textActive} ${style.borderActive} shadow-sm`
-                              : `text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 ${style.textHover}`
-                          }`}
-                        >
-                          <span className="shrink-0">{cat.icon}</span>
-                          <span className="flex-1 truncate">{cat.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+              {/* Navigation helper for CircuitJS-based simulators */}
+              {((['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems', 'fluid_mechanics', 'communication', 'dsp', 'measurements', 'renewable_energy', 'protection_switchgear', 'dynamics'].includes(simCategory)) && !((_simActiveBoard as any)?.isNativeWasm || (_simActiveBoard as any)?.isNativeBlock)) && (
+                <div className={`flex items-center gap-4 text-xs font-medium px-4 py-2.5 rounded-2xl shrink-0 ${
+                  SIM_ACCENT_CLASSES[_simCat.accent]?.pill || 'bg-slate-100 text-slate-600'
+                }`}>
+                  <span className="flex items-center gap-1.5">
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Right-click + Drag</kbd>
+                    <span className="opacity-80">Pan / Move</span>
+                  </span>
+                  <span className="w-px h-3.5 bg-current opacity-20" />
+                  <span className="flex items-center gap-1.5">
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Scroll</kbd>
+                    <span className="opacity-80">Zoom</span>
+                  </span>
+                  <span className="w-px h-3.5 bg-current opacity-20" />
+                  <span className="flex items-center gap-1.5">
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Click</kbd>
+                    <span className="opacity-80">Select</span>
+                  </span>
+                  <span className="w-px h-3.5 bg-current opacity-20" />
+                  <span className="flex items-center gap-1.5">
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Delete</kbd>
+                    <span className="opacity-80">Remove</span>
+                  </span>
+                  <span className="w-px h-3.5 bg-current opacity-20" />
+                  <span className="flex items-center gap-1.5">
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Ctrl + Z</kbd>
+                    <span className="opacity-80">Undo</span>
+                  </span>
                 </div>
-              </aside>
-              
-              {/* Right Content Column: Two Containers */}
-              <div className="flex-1 flex flex-col gap-4 min-h-0">
-                
-                {/* Container 1: Sub-categories Container (Preset Board Selector) */}
-                {_simBoards.length > 1 && (
-                  <div className="soft-card p-3 shrink-0 bg-white/80 dark:bg-[#111827]/70 border border-slate-200/50 dark:border-white/5 shadow-sm">
-                    <div className="flex items-center bg-slate-50/50 dark:bg-slate-800/30 border border-slate-200/30 dark:border-white/5 rounded-full p-1.5 gap-1 overflow-x-auto hide-scrollbar shadow-inner">
-                      {_simBoards.map(board => {
-                        const isActive = wokwiBoard === board.id;
-                        return (
-                          <button
-                            key={board.id}
-                            onClick={() => setWokwiBoard(board.id)}
-                            className={`relative px-4.5 py-2 rounded-full text-xs font-extrabold whitespace-nowrap transition-all z-10 ${
-                              isActive
-                                ? 'text-white shadow-sm'
-                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                            }`}
-                          >
-                            {isActive && (
-                              <motion.div
-                                layoutId="activeBoardTab"
-                                className={`absolute inset-0 rounded-full -z-10 ${_simAccent.active.replace('text-white', '')}`}
-                                initial={false}
-                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                              />
-                            )}
-                            {board.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+              )}
 
-                {/* Navigation helper for CircuitJS-based simulators */}
-                {((['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems', 'fluid_mechanics', 'communication', 'dsp', 'measurements', 'renewable_energy', 'protection_switchgear', 'dynamics'].includes(simCategory)) && !((_simActiveBoard as any)?.isNativeWasm || (_simActiveBoard as any)?.isNativeBlock)) && (
-                  <div className={`flex items-center gap-4 text-xs font-medium px-4 py-2.5 rounded-2xl ${
-                    SIM_ACCENT_CLASSES[_simCat.accent]?.pill || 'bg-slate-100 text-slate-600'
-                  }`}>
-                    <span className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Right-click + Drag</kbd>
-                      <span className="opacity-80">Pan / Move</span>
-                    </span>
-                    <span className="w-px h-3.5 bg-current opacity-20" />
-                    <span className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Scroll</kbd>
-                      <span className="opacity-80">Zoom</span>
-                    </span>
-                    <span className="w-px h-3.5 bg-current opacity-20" />
-                    <span className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Click</kbd>
-                      <span className="opacity-80">Select</span>
-                    </span>
-                    <span className="w-px h-3.5 bg-current opacity-20" />
-                    <span className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Delete</kbd>
-                      <span className="opacity-80">Remove</span>
-                    </span>
-                    <span className="w-px h-3.5 bg-current opacity-20" />
-                    <span className="flex items-center gap-1.5">
-                      <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Ctrl + Z</kbd>
-                      <span className="opacity-80">Undo</span>
-                    </span>
-                  </div>
+              {/* Simulator Workspace Card */}
+              <div
+                className={
+                  isLabFullScreen
+                    ? "fixed inset-0 z-[100] bg-[#0B0C10] w-screen h-screen flex flex-col"
+                    : _isNativeSurface
+                      ? "soft-card overflow-hidden shrink-0 min-h-[760px] lg:min-h-[780px] rounded-2xl relative border border-slate-200/50 dark:border-white/5"
+                      : "soft-card overflow-hidden flex-1 min-h-0 rounded-2xl relative border border-slate-200/50 dark:border-white/5"
+                }
+                style={{ overscrollBehavior: 'contain' }}
+              >
+                {isLabFullScreen && !((_simActiveBoard as any)?.isNativeBlock || (_simActiveBoard as any)?.isNativeWasm) && (
+                  <button
+                    onClick={() => setIsLabFullScreen(false)}
+                    className="absolute bottom-10 right-1/2 translate-x-1/2 z-[999] bg-slate-900/90 hover:bg-slate-800 backdrop-blur-md text-white px-5 py-2.5 rounded-full shadow-[0_8px_32_rgba(0,0,0,0.4)] transition-all flex items-center gap-2 group border border-white/10 hover:border-indigo-500/50 opacity-40 hover:opacity-100 scale-95 hover:scale-100"
+                  >
+                    <CornersIn size={18} weight="bold" className="group-hover:rotate-12 transition-transform" />
+                    <span className="text-[11px] font-black uppercase tracking-[0.1em]">Exit Full Screen</span>
+                  </button>
                 )}
-
-                {/* Container 2: Simulator Workspace Card */}
-                <div
-                  className={
-                    isLabFullScreen
-                      ? "fixed inset-0 z-[100] bg-[#0B0C10] w-screen h-screen flex flex-col"
-                      : _isNativeSurface
-                        ? "soft-card overflow-hidden shrink-0 min-h-[760px] lg:min-h-[780px] rounded-2xl relative border border-slate-200/50 dark:border-white/5"
-                        : "soft-card overflow-hidden flex-1 min-h-0 rounded-2xl relative border border-slate-200/50 dark:border-white/5"
-                  }
-                  style={{ overscrollBehavior: 'contain' }}
-                >
-                  {isLabFullScreen && !((_simActiveBoard as any)?.isNativeBlock || (_simActiveBoard as any)?.isNativeWasm) && (
-                    <button
-                      onClick={() => setIsLabFullScreen(false)}
-                      className="absolute bottom-10 right-1/2 translate-x-1/2 z-[999] bg-slate-900/90 hover:bg-slate-800 backdrop-blur-md text-white px-5 py-2.5 rounded-full shadow-[0_8px_32_rgba(0,0,0,0.4)] transition-all flex items-center gap-2 group border border-white/10 hover:border-indigo-500/50 opacity-40 hover:opacity-100 scale-95 hover:scale-100"
-                    >
-                      <CornersIn size={18} weight="bold" className="group-hover:rotate-12 transition-transform" />
-                      <span className="text-[11px] font-black uppercase tracking-[0.1em]">Exit Full Screen</span>
-                    </button>
-                  )}
-                  {(_simActiveBoard as any)?.isNativeBlock ? (
-                    <div className="w-full h-full min-h-0 overflow-hidden bg-[#0B0C10] p-2">
-                      {(_simActiveBoard as any)?.civilTool ? (
-                        <CivilEngineeringStudio
-                          tool={(_simActiveBoard as any).civilTool}
-                          user={user}
-                          isFullScreen={isLabFullScreen}
-                          onExitFullScreen={() => setIsLabFullScreen(false)}
-                          onRequestFullScreen={() => setIsLabFullScreen(true)}
-                        />
-                      ) : (_simActiveBoard as any)?.mechTool ? (
-                        <MechanicalEngineeringStudio
-                          tool={(_simActiveBoard as any).mechTool}
-                          isFullScreen={isLabFullScreen}
-                          onExitFullScreen={() => setIsLabFullScreen(false)}
-                          onRequestFullScreen={() => setIsLabFullScreen(true)}
-                        />
-                      ) : (_simActiveBoard as any)?.id === 'geo-settle-native' ? (
-                        <SettlementCalculator
-                          isFullScreen={isLabFullScreen}
-                          onExitFullScreen={() => setIsLabFullScreen(false)}
-                          onRequestFullScreen={() => setIsLabFullScreen(true)}
-                        />
-                      ) : (_simActiveBoard as any)?.id === 'pcb-native' ? (
-                        <PCBDesignStudio 
-                          user={user} 
-                          isFullScreen={isLabFullScreen} 
-                          onExitFullScreen={() => setIsLabFullScreen(false)}
-                          onRequestFullScreen={() => setIsLabFullScreen(true)} 
-                        />
-                      ) : (_simActiveBoard as any)?.id === 'vlsi-native-block' ? (
-                        <VLSIDesignStudio 
-                          user={user} 
-                          isFullScreen={isLabFullScreen} 
-                          onExitFullScreen={() => setIsLabFullScreen(false)}
-                          onRequestFullScreen={() => setIsLabFullScreen(true)} 
-                        />
-                      ) : (_simActiveBoard as any)?.id === 'inst-spectrum' ? (
-                        <SpectrumAnalyzer
-                          isFullScreen={isLabFullScreen}
-                          onExitFullScreen={() => setIsLabFullScreen(false)}
-                          onRequestFullScreen={() => setIsLabFullScreen(true)}
-                        />
-                      ) : (_simActiveBoard as any)?.id === 'inst-funcgen' ? (
-                        <FunctionGenerator
-                          isFullScreen={isLabFullScreen}
-                          onExitFullScreen={() => setIsLabFullScreen(false)}
-                          onRequestFullScreen={() => setIsLabFullScreen(true)}
-                        />
-                      ) : (
-                        <DSPBlockSimulator 
-                          isFullScreen={isLabFullScreen} 
-                          onExitFullScreen={() => setIsLabFullScreen(false)} 
-                          onRequestFullScreen={() => setIsLabFullScreen(true)} 
-                        />
-                      )}
-                    </div>
-                  ) : (_simActiveBoard as any)?.isNativeWasm ? (
-                    <div className="w-full h-full min-h-0 overflow-hidden p-2">
-                      <SimulationIDE 
-                        key={(_simActiveBoard as any)?.id}
-                        language={(_simActiveBoard as any)?.nativeLanguage} 
-                        defaultCode={(_simActiveBoard as any)?.defaultCode || ''}
-                        onSimulate={(code) => handleNativeSimulate(code, (_simActiveBoard as any)?.nativeLanguage)}
-                        isSimulating={isNativeSimulating}
-                        output={nativeOutput}
+                {(_simActiveBoard as any)?.isNativeBlock ? (
+                  <div className="w-full h-full min-h-0 overflow-hidden bg-[#0B0C10] p-2">
+                    {(_simActiveBoard as any)?.civilTool ? (
+                      <CivilEngineeringStudio
+                        tool={(_simActiveBoard as any).civilTool}
+                        user={user}
                         isFullScreen={isLabFullScreen}
                         onExitFullScreen={() => setIsLabFullScreen(false)}
+                        onRequestFullScreen={() => setIsLabFullScreen(true)}
                       />
+                    ) : (_simActiveBoard as any)?.mechTool ? (
+                      <MechanicalEngineeringStudio
+                        tool={(_simActiveBoard as any).mechTool}
+                        isFullScreen={isLabFullScreen}
+                        onExitFullScreen={() => setIsLabFullScreen(false)}
+                        onRequestFullScreen={() => setIsLabFullScreen(true)}
+                      />
+                    ) : (_simActiveBoard as any)?.id === 'geo-settle-native' ? (
+                      <SettlementCalculator
+                        isFullScreen={isLabFullScreen}
+                        onExitFullScreen={() => setIsLabFullScreen(false)}
+                        onRequestFullScreen={() => setIsLabFullScreen(true)}
+                      />
+                    ) : (_simActiveBoard as any)?.id === 'pcb-native' ? (
+                      <PCBDesignStudio 
+                        user={user} 
+                        isFullScreen={isLabFullScreen} 
+                        onExitFullScreen={() => setIsLabFullScreen(false)}
+                        onRequestFullScreen={() => setIsLabFullScreen(true)} 
+                      />
+                    ) : (_simActiveBoard as any)?.id === 'vlsi-native-block' ? (
+                      <VLSIDesignStudio 
+                        user={user} 
+                        isFullScreen={isLabFullScreen} 
+                        onExitFullScreen={() => setIsLabFullScreen(false)}
+                        onRequestFullScreen={() => setIsLabFullScreen(true)} 
+                      />
+                    ) : (_simActiveBoard as any)?.id === 'inst-spectrum' ? (
+                      <SpectrumAnalyzer
+                        isFullScreen={isLabFullScreen}
+                        onExitFullScreen={() => setIsLabFullScreen(false)}
+                        onRequestFullScreen={() => setIsLabFullScreen(true)}
+                      />
+                    ) : (_simActiveBoard as any)?.id === 'inst-funcgen' ? (
+                      <FunctionGenerator
+                        isFullScreen={isLabFullScreen}
+                        onExitFullScreen={() => setIsLabFullScreen(false)}
+                        onRequestFullScreen={() => setIsLabFullScreen(true)}
+                      />
+                    ) : (
+                      <DSPBlockSimulator 
+                        isFullScreen={isLabFullScreen} 
+                        onExitFullScreen={() => setIsLabFullScreen(false)} 
+                        onRequestFullScreen={() => setIsLabFullScreen(true)} 
+                      />
+                    )}
+                  </div>
+                ) : (_simActiveBoard as any)?.isNativeWasm ? (
+                  <div className="w-full h-full min-h-0 overflow-hidden p-2">
+                    <SimulationIDE 
+                      key={(_simActiveBoard as any)?.id}
+                      language={(_simActiveBoard as any)?.nativeLanguage} 
+                      defaultCode={(_simActiveBoard as any)?.defaultCode || ''}
+                      onSimulate={(code) => handleNativeSimulate(code, (_simActiveBoard as any)?.nativeLanguage)}
+                      isSimulating={isNativeSimulating}
+                      output={nativeOutput}
+                      isFullScreen={isLabFullScreen}
+                      onExitFullScreen={() => setIsLabFullScreen(false)}
+                    />
+                  </div>
+                ) : (_simActiveBoard as any)?.noEmbed ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/60 dark:to-slate-900/60 p-8">
+                    <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-teal-500/25 flex items-center justify-center">
+                      <Cpu size={36} weight="duotone" className="text-white" />
                     </div>
-                  ) : (_simActiveBoard as any)?.noEmbed ? (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/60 dark:to-slate-900/60 p-8">
-                      <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-teal-500/25 flex items-center justify-center">
-                        <Cpu size={36} weight="duotone" className="text-white" />
-                      </div>
-                      <div className="text-center max-w-sm">
-                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Simulator Sandbox</h3>
-                        <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                          This board cannot be embedded securely. Launch the sandbox directly in the external editor window.
-                        </p>
-                      </div>
-                      <a
-                        href={(_simActiveBoard as any).externalUrl || _simActiveBoard?.url || '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:scale-[1.03] active:scale-[0.98] ${
-                          SIM_ACCENT_CLASSES[_simCat.accent]?.btn || 'bg-teal-500 hover:bg-teal-600'
-                        }`}
-                      >
-                        {(_simActiveBoard as any).externalLabel || _simActiveBoard?.openLabel || 'Open Full Editor'}
+                    <div className="text-center max-w-sm">
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Simulator Sandbox</h3>
+                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                        This board cannot be embedded securely. Launch the sandbox directly in the external editor window.
+                      </p>
+                    </div>
+                    <a
+                      href={(_simActiveBoard as any).externalUrl || _simActiveBoard?.url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:scale-[1.03] active:scale-[0.98] ${
+                        SIM_ACCENT_CLASSES[_simCat.accent]?.btn || 'bg-teal-500 hover:bg-teal-600'
+                      }`}
+                    >
+                      {(_simActiveBoard as any).externalLabel || _simActiveBoard?.openLabel || 'Open Full Editor'}
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                      </svg>
+                    </a>
+                  </div>
+                ) : (
+                  <iframe
+                    key={`${simCategory}-${wokwiBoard}-${useOctaveMode ? 'octave' : 'python'}`}
+                    src={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || _simBoards[0]?.url || ''}
+                    title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
+                    className="w-full h-full border-0"
+                    style={{ 
+                      touchAction: 'none',
+                      ...(_simActiveBoard?.url?.includes('falstad.com/em') ? {
+                        transform: 'scale(1.3)',
+                        transformOrigin: 'top left',
+                        width: '76.9%',
+                        height: '76.9%'
+                      } : {})
+                    }}
+                    sandbox={
+                      (_simActiveBoard?.url?.includes('jupyterlite') || 
+                       (_simActiveBoard as any)?.octaveUrl || 
+                       (_simActiveBoard?.url && !(_simActiveBoard?.url.includes('wokwi.com') || _simActiveBoard?.url.includes('falstad.com') || _simActiveBoard?.url.includes('tinkercad.com'))))
+                        ? "allow-scripts allow-same-origin allow-popups allow-forms"
+                        : "allow-scripts allow-same-origin allow-forms"
+                    }
+                  />
+                )}
+              </div>
+
+              {/* External fallback tools */}
+              {(() => {
+                const externalTools: { label: string; url: string }[] = [];
+                if (language === 'ecelab' && simCategory === 'embedded') {
+                  externalTools.push({ label: 'Tinkercad', url: 'https://www.tinkercad.com/circuits' });
+                }
+                if (externalTools.length === 0) return null;
+                return (
+                  <div className="flex items-center gap-2 mt-2 px-1 flex-wrap">
+                    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">External:</span>
+                    {externalTools.map(t => (
+                      <a key={t.label} href={t.url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200/70 dark:border-white/10 transition-all">
+                        {t.label}
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                         </svg>
                       </a>
-                    </div>
-                  ) : (
-                    <iframe
-                      key={`${simCategory}-${wokwiBoard}-${useOctaveMode ? 'octave' : 'python'}`}
-                      src={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || _simBoards[0]?.url || ''}
-                      title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
-                      className="w-full h-full border-0"
-                      style={{ 
-                        touchAction: 'none',
-                        ...(_simActiveBoard?.url?.includes('falstad.com/em') ? {
-                          transform: 'scale(1.3)',
-                          transformOrigin: 'top left',
-                          width: '76.9%',
-                          height: '76.9%'
-                        } : {})
-                      }}
-                      sandbox={
-                        (_simActiveBoard?.url?.includes('jupyterlite') || 
-                         (_simActiveBoard as any)?.octaveUrl || 
-                         (_simActiveBoard?.url && !(_simActiveBoard?.url.includes('wokwi.com') || _simActiveBoard?.url.includes('falstad.com') || _simActiveBoard?.url.includes('tinkercad.com'))))
-                          ? "allow-scripts allow-same-origin allow-popups allow-forms"
-                          : "allow-scripts allow-same-origin allow-forms"
-                      }
-                    />
-                  )}
-                </div>
+                    ))}
+                  </div>
+                );
+              })()}
 
-                {/* External fallback tools */}
-                {(() => {
-                  const externalTools: { label: string; url: string }[] = [];
-                  if (language === 'ecelab' && simCategory === 'embedded') {
-                    externalTools.push({ label: 'Tinkercad', url: 'https://www.tinkercad.com/circuits' });
-                  }
-                  if (externalTools.length === 0) return null;
-                  return (
-                    <div className="flex items-center gap-2 mt-2 px-1 flex-wrap">
-                      <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">External:</span>
-                      {externalTools.map(t => (
-                        <a key={t.label} href={t.url} target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200/70 dark:border-white/10 transition-all">
-                          {t.label}
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                          </svg>
-                        </a>
-                      ))}
-                    </div>
-                  );
-                })()}
-
-              </div>
-            </div>
-
-          </div>        </div>      ) : (
+            </div>          </div>        </div>      ) : (
         // Original layout (Grid) for ad-hoc coding (No challenge active)
         <div className="flex-1 overflow-y-auto lg:overflow-hidden">
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6 lg:h-full">
