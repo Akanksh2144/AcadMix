@@ -186,7 +186,12 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
     const cssCDNtags = externalCDNs.css.map((url: string) => `<link rel="stylesheet" href="${url}">`).join('\n');
     const jsCDNtags = externalCDNs.js.map((url: string) => `<script src="${url}"></script>`).join('\n');
     const compiled = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${cssCDNtags}<style>${cssCode}</style></head><body>${htmlCode}${jsCDNtags}<script ${scriptTagType}>${jsCode}<\/script></body></html>`;
-    if (iframeRef.current) iframeRef.current.srcdoc = compiled;
+    
+    if (compiled !== lastCompiledRef.current) {
+      if (iframeRef.current) iframeRef.current.srcdoc = compiled;
+      lastCompiledRef.current = compiled;
+      setIframeSrcDoc(compiled);
+    }
   }, [htmlCode, cssCode, jsCode, externalCDNs]);
 
   // Shift+Enter global shortcut → force run preview
@@ -228,10 +233,13 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
     return () => window.removeEventListener('message', handleIframeMessage);
   }, []);
 
+  const lastCompiledRef = useRef('');
+
   // Update iframe srcdoc directly on DOM node to prevent React prop re-writes and reloads during state re-renders
   useEffect(() => {
-    if (iframeRef.current) {
+    if (iframeRef.current && iframeSrcDoc && iframeSrcDoc !== lastCompiledRef.current) {
       iframeRef.current.srcdoc = iframeSrcDoc;
+      lastCompiledRef.current = iframeSrcDoc;
     }
   }, [iframeSrcDoc]);
 
