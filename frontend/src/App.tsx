@@ -64,6 +64,7 @@ const AptitudeArena = React.lazy(() => import('./pages/AptitudeArena'));
 const CompanyPrepHub = React.lazy(() => import('./pages/CompanyPrepHub'));
 const SQLPractice = React.lazy(() => import('./pages/SQLPractice'));
 const HardwareArena = React.lazy(() => import('./pages/HardwareArena'));
+const SystemDesignArena = React.lazy(() => import('./pages/SystemDesignArena'));
 const TransportAdminDashboard = React.lazy(() => import('./pages/TransportAdminDashboard'));
 const LibrarianDashboard = React.lazy(() => import('./pages/LibrarianDashboard'));
 const SecurityDashboard = React.lazy(() => import('./pages/SecurityDashboard'));
@@ -136,6 +137,7 @@ const PAGE_TO_PATH = {
   'placement-hub': '/placement-prep',
   'placement-prep/aptitude': '/placement-prep/aptitude',
   'placement-prep/company-prep': '/placement-prep/company-prep',
+  'placement-prep/system-design': '/placement-prep/system-design',
   'hardware-arena': '/hardware-arena',
   'visitor-management': '/visitors',
   'student-profile': '/student/profile',
@@ -460,6 +462,9 @@ function AppRoutes({ user, onLogin, onLogout }) {
       } />
       <Route path="/placement-prep/company-prep" element={
         <ProtectedRoute user={user}><CompanyPrepHub navigate={navigate} user={user} /></ProtectedRoute>
+      } />
+      <Route path="/placement-prep/system-design" element={
+        <ProtectedRoute user={user}><SystemDesignArena navigate={navigate} user={user} /></ProtectedRoute>
       } />
       <Route path="/sql-practice" element={
         <ProtectedRoute user={user}><SQLPractice navigate={navigate} user={user} /></ProtectedRoute>

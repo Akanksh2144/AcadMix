@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   Microphone, Database, Brain, Buildings, Target, Lightning,
-  ArrowRight, Sparkle, Lock, Cpu
+  ArrowRight, Sparkle, Lock, Cpu, TreeStructure
 } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 
@@ -53,6 +53,20 @@ const ARENAS = [
     route: '/hardware-arena',
     ready: true,
     tags: ['Embedded', 'VLSI', 'DSP', 'Analog', 'PCB', 'IoT'],
+  },
+  {
+    id: 'system-design',
+    title: 'System Design Arena',
+    subtitle: 'Interactive scaling challenges — design systems to support 1M+ QPS under latency & budget limits',
+    icon: TreeStructure,
+    color: 'from-cyan-500 to-blue-600',
+    iconBg: 'bg-cyan-50 dark:bg-cyan-500/10',
+    iconColor: 'text-cyan-500',
+    borderHover: 'hover:border-cyan-500',
+    shadowHover: 'hover:shadow-cyan-500/10',
+    route: '/placement-prep/system-design',
+    ready: true,
+    tags: ['Replication', 'Sharding', 'Load Balancers', 'Scale to 1B'],
   },
   {
     id: 'aptitude',
