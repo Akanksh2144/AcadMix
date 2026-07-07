@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import JSZip from 'jszip';
 import Editor from '@monaco-editor/react';
 import { 
@@ -58,6 +58,8 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
   const [isResizing, setIsResizing] = useState(false);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const editorRef = useRef<any>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
 
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
@@ -171,6 +173,31 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
     localStorage.setItem('webdev_cdns', JSON.stringify(externalCDNs));
   }, [externalCDNs]);
 
+  // Force-run the preview immediately (bypasses the debounce)
+  const forceRunPreview = useCallback(() => {
+    const isReactTemplate = htmlCode.includes('babel.min.js') || htmlCode.includes('react.development.js');
+    const scriptTagType = isReactTemplate ? 'type="text/babel"' : 'type="text/javascript"';
+    const cssCDNtags = externalCDNs.css.map((url: string) => `<link rel="stylesheet" href="${url}">`).join('\n');
+    const jsCDNtags = externalCDNs.js.map((url: string) => `<script src="${url}"></script>`).join('\n');
+    const compiled = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${cssCDNtags}<style>${cssCode}</style></head><body>${htmlCode}${jsCDNtags}<script ${scriptTagType}>${jsCode}<\/script></body></html>`;
+    if (iframeRef.current) iframeRef.current.srcdoc = compiled;
+  }, [htmlCode, cssCode, jsCode, externalCDNs]);
+
+  // Shift+Enter global shortcut → force run preview
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.shiftKey && e.key === 'Enter') {
+        // Only fire when not typing in an input/textarea outside Monaco
+        const tag = (document.activeElement as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        e.preventDefault();
+        forceRunPreview();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [forceRunPreview]);
+
   // Listen to message logs from the sandbox iframe
   useEffect(() => {
     const handleIframeMessage = (e: MessageEvent) => {
@@ -252,6 +279,28 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
         setConfirmModal(prev => ({ ...prev, open: false }));
       }
     });
+  };
+
+  // Format active file using Monaco's built-in formatter
+  const handleFormatCode = () => {
+    editorRef.current?.getAction('editor.action.formatDocument')?.run();
+  };
+
+  // Upload a .html / .css / .js file and inject its contents into the matching editor
+  const handleUploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      if (file.name.endsWith('.html')) { setHtmlCode(text); setActiveFile('html'); }
+      else if (file.name.endsWith('.css')) { setCssCode(text); setActiveFile('css'); }
+      else if (file.name.endsWith('.js') || file.name.endsWith('.ts')) { setJsCode(text); setActiveFile('js'); }
+      setConsoleLogs(prev => [...prev, { level: 'info', text: `Loaded ${file.name} into editor.`, timestamp: new Date().toLocaleTimeString() }]);
+    };
+    reader.readAsText(file);
+    // Reset input so same file can be re-uploaded
+    e.target.value = '';
   };
 
   const handleExportZip = async () => {
@@ -446,7 +495,21 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
             }`}>Files</span>
             <div className="flex gap-1.5">
               <button className={`p-1 rounded transition-colors ${sandboxTheme === 'dark' ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-550 hover:text-slate-900 hover:bg-slate-200/50'}`} title="Add File (Mock)"><Plus size={14} /></button>
-              <button className={`p-1 rounded transition-colors ${sandboxTheme === 'dark' ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-550 hover:text-slate-900 hover:bg-slate-200/50'}`} title="Upload File (Mock)"><UploadSimple size={14} /></button>
+              {/* Hidden file input wired to the upload button */}
+              <input
+                ref={uploadInputRef}
+                type="file"
+                accept=".html,.css,.js,.ts"
+                className="hidden"
+                onChange={handleUploadFile}
+              />
+              <button
+                onClick={() => uploadInputRef.current?.click()}
+                className={`p-1 rounded transition-colors ${sandboxTheme === 'dark' ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-550 hover:text-slate-900 hover:bg-slate-200/50'}`}
+                title="Upload .html / .css / .js file"
+              >
+                <UploadSimple size={14} />
+              </button>
             </div>
           </div>
 
@@ -592,6 +655,31 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
               <Sparkle size={10} className="text-teal-400 shrink-0 animate-pulse" />
               <span>Autosaved</span>
             </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleFormatCode}
+                className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors ${
+                  sandboxTheme === 'dark'
+                    ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/40'
+                    : 'bg-white border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-300'
+                }`}
+                title="Format / Prettify code (editor.action.formatDocument)"
+              >
+                <Sparkle size={10} />
+                Format
+              </button>
+              <button
+                onClick={forceRunPreview}
+                className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors ${
+                  sandboxTheme === 'dark'
+                    ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40'
+                    : 'bg-white border-slate-200 text-slate-500 hover:text-emerald-600 hover:border-emerald-300'
+                }`}
+                title="Run preview now (Shift+Enter)"
+              >
+                ▶ Run
+              </button>
+            </div>
           </div>
 
           {/* Monaco Editor Container */}
@@ -603,6 +691,15 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
               value={getCodeForActiveFile()}
               onChange={setCodeForActiveFile}
               loading={<div className="p-4 text-xs font-bold text-slate-400">Loading editor assets...</div>}
+              onMount={(editor) => {
+                editorRef.current = editor;
+                // Register Shift+Enter inside Monaco to force-run preview
+                editor.addCommand(
+                  // Monaco KeyMod.Shift | Monaco KeyCode.Enter
+                  (1 << 10) | 3,
+                  () => forceRunPreview()
+                );
+              }}
               options={{
                 fontSize: 14,
                 fontFamily: "'Fira Code', 'Cascadia Code', Consolas, monospace",
