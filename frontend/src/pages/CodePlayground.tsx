@@ -1016,6 +1016,84 @@ const SIM_ACCENT_CLASSES: Record<string, { active: string; pill: string; btn: st
   indigo:  { active: 'bg-indigo-500 text-white shadow-sm shadow-indigo-500/25', pill: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400', btn: 'bg-indigo-500 hover:bg-indigo-600 shadow-indigo-500/20' },
 };
 
+const getCategoryStyles = (accent: string) => {
+  const styles: Record<string, { bgActive: string; textActive: string; borderActive: string; textHover: string }> = {
+    teal: {
+      bgActive: 'bg-teal-50/70 dark:bg-teal-500/10',
+      textActive: 'text-teal-700 dark:text-teal-400',
+      borderActive: 'border-teal-200/50 dark:border-teal-500/20',
+      textHover: 'hover:text-teal-600 dark:hover:text-teal-400'
+    },
+    violet: {
+      bgActive: 'bg-violet-50/70 dark:bg-violet-500/10',
+      textActive: 'text-violet-700 dark:text-violet-400',
+      borderActive: 'border-violet-200/50 dark:border-violet-500/20',
+      textHover: 'hover:text-violet-600 dark:hover:text-teal-400'
+    },
+    sky: {
+      bgActive: 'bg-sky-50/70 dark:bg-sky-500/10',
+      textActive: 'text-sky-700 dark:text-sky-400',
+      borderActive: 'border-sky-200/50 dark:border-sky-500/20',
+      textHover: 'hover:text-sky-600 dark:hover:text-sky-400'
+    },
+    amber: {
+      bgActive: 'bg-amber-50/70 dark:bg-amber-500/10',
+      textActive: 'text-amber-700 dark:text-amber-400',
+      borderActive: 'border-amber-200/50 dark:border-amber-500/20',
+      textHover: 'hover:text-amber-600 dark:hover:text-amber-400'
+    },
+    emerald: {
+      bgActive: 'bg-emerald-50/70 dark:bg-emerald-500/10',
+      textActive: 'text-emerald-700 dark:text-emerald-400',
+      borderActive: 'border-emerald-200/50 dark:border-emerald-500/20',
+      textHover: 'hover:text-emerald-600 dark:hover:text-emerald-400'
+    },
+    rose: {
+      bgActive: 'bg-rose-50/70 dark:bg-rose-500/10',
+      textActive: 'text-rose-700 dark:text-rose-400',
+      borderActive: 'border-rose-200/50 dark:border-rose-500/20',
+      textHover: 'hover:text-rose-600 dark:hover:text-rose-400'
+    },
+    indigo: {
+      bgActive: 'bg-indigo-50/70 dark:bg-indigo-500/10',
+      textActive: 'text-indigo-700 dark:text-indigo-400',
+      borderActive: 'border-indigo-200/50 dark:border-indigo-500/20',
+      textHover: 'hover:text-indigo-600 dark:hover:text-indigo-400'
+    },
+    purple: {
+      bgActive: 'bg-purple-50/70 dark:bg-purple-500/10',
+      textActive: 'text-purple-700 dark:text-purple-400',
+      borderActive: 'border-purple-200/50 dark:border-purple-500/20',
+      textHover: 'hover:text-purple-600 dark:hover:text-purple-400'
+    },
+    red: {
+      bgActive: 'bg-red-50/70 dark:bg-red-500/10',
+      textActive: 'text-red-700 dark:text-red-400',
+      borderActive: 'border-red-200/50 dark:border-red-500/20',
+      textHover: 'hover:text-red-600 dark:hover:text-red-400'
+    },
+    orange: {
+      bgActive: 'bg-orange-50/70 dark:bg-orange-500/10',
+      textActive: 'text-orange-700 dark:text-orange-400',
+      borderActive: 'border-orange-200/50 dark:border-orange-500/20',
+      textHover: 'hover:text-orange-600 dark:hover:text-orange-400'
+    },
+    cyan: {
+      bgActive: 'bg-cyan-50/70 dark:bg-cyan-500/10',
+      textActive: 'text-cyan-700 dark:text-cyan-400',
+      borderActive: 'border-cyan-200/50 dark:border-cyan-500/20',
+      textHover: 'hover:text-cyan-600 dark:hover:text-cyan-400'
+    },
+    yellow: {
+      bgActive: 'bg-yellow-50/70 dark:bg-yellow-500/10',
+      textActive: 'text-yellow-700 dark:text-yellow-400',
+      borderActive: 'border-yellow-200/50 dark:border-yellow-500/20',
+      textHover: 'hover:text-yellow-600 dark:hover:text-yellow-400'
+    }
+  };
+  return styles[accent] || styles.teal;
+};
+
 const DEFAULT_TEMPLATES = {
   python: '# Write your Python code here\n\ndef main():\n    print("Hello, World!")\n\nmain()\n',
   javascript: '// Write your JavaScript code here\n\nfunction main() {\n  console.log("Hello, World!");\n}\n\nmain();\n',
@@ -2264,348 +2342,395 @@ const CodePlayground = ({ navigate, user }) => {
         // ECE / EEE / Civil Lab — multi-simulator panel
         <div className={`flex-1 flex flex-col ${_isNativeSurface && !isLabFullScreen ? 'overflow-y-auto custom-scrollbar' : 'overflow-hidden'}`} style={{ overscrollBehavior: 'contain' }}>
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
-            {/* Category Tabs + Board Selector Toolbar */}
-            <div className="soft-card p-3 shrink-0 mb-4 space-y-2">
-              {/* Row 1: Lab selector + Python/Octave toggle + Open External */}
-              <div className="flex items-center justify-between">
-                <div className="relative" ref={langMenuRef}>
-                  <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-bold text-sm text-slate-700 dark:text-slate-300">
-                    {_isMechLab ? <Wrench size={20} weight="duotone" className="text-red-500" /> : _isCivilLab ? <HardHat size={20} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={20} weight="duotone" className="text-yellow-500" /> : <Cpu size={20} weight="duotone" className="text-teal-500" />}
-                    {_isMechLab ? 'Mech Lab' : _isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}
-                    <CaretDown size={14} weight="bold" />
-                  </button>
-                  {showLangMenu && (
-                    <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1 z-50 min-w-[180px]">
-                      {LANGUAGES.map(lang => (
-                        <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
-                          className={`w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>
-                          <span className="text-base">{lang.icon}</span>
-                          {lang.label}
+            
+            {/* Grid Container for Layout Option 1 */}
+            <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 relative" style={{ overscrollBehavior: 'contain' }}>
+              
+              {/* 1. Left Sidebar: Categories List (Desktop Only) */}
+              <aside className="hidden lg:flex flex-col w-72 shrink-0 space-y-3 lg:sticky lg:top-24 max-h-[calc(100vh-140px)] overflow-y-auto custom-scrollbar p-0.5">
+                <div className="soft-card p-4 bg-white/60 dark:bg-slate-900/60 border border-slate-200/50 dark:border-white/5 flex items-center justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Categories</span>
+                  <span className="text-[10px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
+                    {_activeCats.length} Areas
+                  </span>
+                </div>
+                
+                <div className="soft-card p-2.5 space-y-1.5 bg-white/80 dark:bg-[#111827]/70 border border-slate-200/50 dark:border-white/5 shadow-sm">
+                  {_activeCats.map(cat => {
+                    const isActive = simCategory === cat.id;
+                    const style = getCategoryStyles(cat.accent);
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
+                        className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-left text-sm font-bold transition-all border border-transparent ${
+                          isActive
+                            ? `${style.bgActive} ${style.textActive} ${style.borderActive} shadow-sm`
+                            : `text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 ${style.textHover}`
+                        }`}
+                      >
+                        <span className="shrink-0">{cat.icon}</span>
+                        <span className="flex-1 truncate">{cat.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </aside>
+              
+              {/* 2. Main Workspace Container (Right Side) */}
+              <div className="flex-1 flex flex-col min-h-0">
+                
+                {/* Header Toolbar */}
+                <div className="soft-card p-4 shrink-0 mb-4 space-y-3.5 bg-white/80 dark:bg-[#111827]/70 border border-slate-200/50 dark:border-white/5 shadow-sm">
+                  
+                  {/* Row 1: Lab name + Preset switcher / tools */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative" ref={langMenuRef}>
+                        <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
+                          className="flex items-center gap-2 px-4.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-extrabold text-sm text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-white/5">
+                          {_isMechLab ? <Wrench size={18} weight="duotone" className="text-red-500" /> : _isCivilLab ? <HardHat size={18} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={18} weight="duotone" className="text-yellow-500" /> : <Cpu size={18} weight="duotone" className="text-teal-500" />}
+                          {_isMechLab ? 'Mech Lab' : _isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}
+                          <CaretDown size={14} weight="bold" />
                         </button>
-                      ))}
+                        {showLangMenu && (
+                          <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1.5 z-50 min-w-[190px]">
+                            {LANGUAGES.map(lang => (
+                              <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
+                                className={`w-full text-left px-4 py-2.5 rounded-2xl flex items-center gap-3 transition-colors text-sm font-bold ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>
+                                <span className="text-base shrink-0">{lang.icon}</span>
+                                {lang.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Active category path display */}
+                      <div className="hidden md:flex items-center gap-1.5 font-bold text-xs text-slate-400">
+                        <span>/</span>
+                        <span className="text-slate-500">{_simCat.label}</span>
+                        {_simActiveBoard && (
+                          <>
+                            <span>/</span>
+                            <span className={`text-${_simCat.accent}-500 font-extrabold`}>{_simActiveBoard.label}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-2 self-end sm:self-center">
+                      {/* Python / Octave toggle */}
+                      {(_simActiveBoard as any)?.octaveUrl && (
+                        <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-2xl p-0.5 border border-slate-200/50 dark:border-white/5">
+                          <button
+                            onClick={() => setUseOctaveMode(false)}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                              !useOctaveMode
+                                ? 'bg-indigo-500 text-white shadow-sm'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                            }`}
+                          >
+                            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="" className="w-3.5 h-3.5" />
+                            Python
+                          </button>
+                          <button
+                            onClick={() => setUseOctaveMode(true)}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                              useOctaveMode
+                                ? 'bg-orange-500 text-white shadow-sm'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                            }`}
+                          >
+                            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/matlab/matlab-original.svg" alt="" className="w-3.5 h-3.5" />
+                            Octave
+                          </button>
+                        </div>
+                      )}
+                      
+                      {!((_simActiveBoard as any)?.isNativeBlock || (_simActiveBoard as any)?.isNativeWasm) && (
+                        <a
+                          href={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`px-4.5 py-2 text-white rounded-2xl text-xs font-extrabold shadow-sm transition-all flex items-center gap-2 whitespace-nowrap ${_simAccent.btn}`}
+                        >
+                          {useOctaveMode && (_simActiveBoard as any)?.octaveUrl ? 'Open Octave' : (_simActiveBoard?.openLabel || 'Open External')} ↗
+                        </a>
+                      )}
+                      
+                      <button 
+                        onClick={() => setIsLabFullScreen(!isLabFullScreen)} 
+                        title={isLabFullScreen ? "Exit Full Screen" : "Full Screen"} 
+                        className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200/50 dark:hover:border-white/5"
+                      >
+                        {isLabFullScreen ? <CornersIn size={18} weight="bold" /> : <CornersOut size={18} weight="bold" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Horizontal Scrollable Categories for Mobile (Hidden on lg screens) */}
+                  <div className="flex lg:hidden items-center bg-slate-100/80 dark:bg-slate-800/80 rounded-full p-1.5 gap-1 overflow-x-auto hide-scrollbar shadow-inner">
+                    {_activeCats.map(cat => {
+                      const isActive = simCategory === cat.id;
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
+                          className={`relative px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 z-10 ${
+                            isActive
+                              ? 'text-white'
+                              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          {isActive && (
+                            <motion.div
+                              layoutId="activeCategoryTabMobile"
+                              className={`absolute inset-0 rounded-full -z-10 ${SIM_ACCENT_CLASSES[cat.accent]?.active.replace('text-white', '') || 'bg-teal-500 shadow-sm'}`}
+                              initial={false}
+                              transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                            />
+                          )}
+                          {cat.icon}
+                          {cat.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Preset Sub-tab pills */}
+                  {_simBoards.length > 1 && (
+                    <div className="flex items-center bg-slate-50/50 dark:bg-slate-800/30 border border-slate-200/30 dark:border-white/5 rounded-2xl p-1.5 gap-1 overflow-x-auto hide-scrollbar shadow-inner">
+                      {_simBoards.map(board => {
+                        const isActive = wokwiBoard === board.id;
+                        return (
+                          <button
+                            key={board.id}
+                            onClick={() => setWokwiBoard(board.id)}
+                            className={`relative px-4.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all z-10 ${
+                              isActive
+                                ? 'text-white shadow-sm'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                            }`}
+                          >
+                            {isActive && (
+                              <motion.div
+                                layoutId="activeBoardTab"
+                                className={`absolute inset-0 rounded-xl -z-10 ${_simAccent.active.replace('text-white', '')}`}
+                                initial={false}
+                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                              />
+                            )}
+                            {board.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  {/* Python / Octave toggle */}
-                  {(_simActiveBoard as any)?.octaveUrl && (
-                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5">
-                      <button
-                        onClick={() => setUseOctaveMode(false)}
-                        className={`px-3 py-1.5 rounded-[10px] text-[11px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                          !useOctaveMode
-                            ? 'bg-indigo-500 text-white shadow-sm'
-                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-                        }`}
-                      >
-                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="" className="w-3.5 h-3.5" />
-                        Python
-                      </button>
-                      <button
-                        onClick={() => setUseOctaveMode(true)}
-                        className={`px-3 py-1.5 rounded-[10px] text-[11px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                          useOctaveMode
-                            ? 'bg-orange-500 text-white shadow-sm'
-                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-                        }`}
-                      >
-                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/matlab/matlab-original.svg" alt="" className="w-3.5 h-3.5" />
-                        Octave
-                      </button>
-                    </div>
-                  )}
-                  {!((_simActiveBoard as any)?.isNativeBlock || (_simActiveBoard as any)?.isNativeWasm) && (
-                  <a
-                    href={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`px-4 py-1.5 text-white rounded-[10px] text-[11px] font-bold shadow-sm transition-all flex items-center gap-2 whitespace-nowrap ${_simAccent.btn}`}
-                  >
-                    {useOctaveMode && (_simActiveBoard as any)?.octaveUrl ? 'Open Octave' : (_simActiveBoard?.openLabel || 'Open External')} ↗
-                  </a>
-                  )}
-                  <button 
-                    onClick={() => setIsLabFullScreen(!isLabFullScreen)} 
-                    title={isLabFullScreen ? "Exit Full Screen" : "Full Screen"} 
-                    className="p-1.5 ml-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    {isLabFullScreen ? <CornersIn size={18} weight="bold" /> : <CornersOut size={18} weight="bold" />}
-                  </button>
-                </div>
-              </div>
-              {/* Row 2: Category pills (full width) */}
-              <div className="flex items-center bg-slate-100/80 dark:bg-slate-800/80 rounded-full p-1.5 gap-1 overflow-x-auto custom-scrollbar shadow-inner">
-                {_activeCats.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => { setSimCategory(cat.id); setWokwiBoard(_activeBoards[cat.id]?.[0]?.id || ''); }}
-                    className={`relative px-4 py-2 rounded-full text-[13px] font-bold whitespace-nowrap transition-all flex items-center gap-2 z-10 ${
-                      simCategory === cat.id
-                        ? 'text-white'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                    }`}
-                  >
-                    {simCategory === cat.id && (
-                      <motion.div
-                        layoutId="activeCategoryTab"
-                        className={`absolute inset-0 rounded-full -z-10 ${SIM_ACCENT_CLASSES[cat.accent]?.active.replace('text-white', '') || 'bg-teal-500 shadow-sm'}`}
-                        initial={false}
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                      />
-                    )}
-                    {cat.icon}
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-              {/* Row 3: Sub-board/preset pills (if more than 1 option) */}
-              {_simBoards.length > 1 && (
-                <div className="flex items-center bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 rounded-full p-1.5 gap-1 mt-3 mb-1 overflow-x-auto custom-scrollbar shadow-sm">
-                  {_simBoards.map(board => (
+
+                {/* Navigation helper for CircuitJS-based simulators */}
+                {((['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems', 'fluid_mechanics', 'communication', 'dsp', 'measurements', 'renewable_energy', 'protection_switchgear', 'dynamics'].includes(simCategory)) && !((_simActiveBoard as any)?.isNativeWasm || (_simActiveBoard as any)?.isNativeBlock)) && (
+                  <div className={`flex items-center gap-4 text-xs font-medium px-4 py-2.5 rounded-2xl mb-4 ${
+                    SIM_ACCENT_CLASSES[_simCat.accent]?.pill || 'bg-slate-100 text-slate-600'
+                  }`}>
+                    <span className="flex items-center gap-1.5">
+                      <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Right-click + Drag</kbd>
+                      <span className="opacity-80">Pan / Move</span>
+                    </span>
+                    <span className="w-px h-3.5 bg-current opacity-20" />
+                    <span className="flex items-center gap-1.5">
+                      <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Scroll</kbd>
+                      <span className="opacity-80">Zoom</span>
+                    </span>
+                    <span className="w-px h-3.5 bg-current opacity-20" />
+                    <span className="flex items-center gap-1.5">
+                      <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Click</kbd>
+                      <span className="opacity-80">Select</span>
+                    </span>
+                    <span className="w-px h-3.5 bg-current opacity-20" />
+                    <span className="flex items-center gap-1.5">
+                      <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Delete</kbd>
+                      <span className="opacity-80">Remove</span>
+                    </span>
+                    <span className="w-px h-3.5 bg-current opacity-20" />
+                    <span className="flex items-center gap-1.5">
+                      <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Ctrl + Z</kbd>
+                      <span className="opacity-80">Undo</span>
+                    </span>
+                  </div>
+                )}
+
+                {/* Simulator iframe / Native canvas workspace */}
+                <div
+                  className={
+                    isLabFullScreen
+                      ? "fixed inset-0 z-[100] bg-[#0B0C10] w-screen h-screen flex flex-col"
+                      : _isNativeSurface
+                        ? "soft-card overflow-hidden shrink-0 min-h-[760px] lg:min-h-[780px] rounded-2xl relative border border-slate-200/50 dark:border-white/5"
+                        : "soft-card overflow-hidden flex-1 min-h-0 rounded-2xl relative border border-slate-200/50 dark:border-white/5"
+                  }
+                  style={{ overscrollBehavior: 'contain' }}
+                >
+                  {isLabFullScreen && !((_simActiveBoard as any)?.isNativeBlock || (_simActiveBoard as any)?.isNativeWasm) && (
                     <button
-                      key={board.id}
-                      onClick={() => setWokwiBoard(board.id)}
-                      className={`relative px-4 py-1.5 rounded-full text-[12px] font-bold whitespace-nowrap transition-all z-10 ${
-                        wokwiBoard === board.id
-                          ? 'text-white'
-                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                      }`}
+                      onClick={() => setIsLabFullScreen(false)}
+                      className="absolute bottom-10 right-1/2 translate-x-1/2 z-[999] bg-slate-900/90 hover:bg-slate-800 backdrop-blur-md text-white px-5 py-2.5 rounded-full shadow-[0_8px_32_rgba(0,0,0,0.4)] transition-all flex items-center gap-2 group border border-white/10 hover:border-indigo-500/50 opacity-40 hover:opacity-100 scale-95 hover:scale-100"
                     >
-                      {wokwiBoard === board.id && (
-                        <motion.div
-                          layoutId="activeBoardTab"
-                          className={`absolute inset-0 rounded-full -z-10 ${_simAccent.active.replace('text-white', '')}`}
-                          initial={false}
-                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      <CornersIn size={18} weight="bold" className="group-hover:rotate-12 transition-transform" />
+                      <span className="text-[11px] font-black uppercase tracking-[0.1em]">Exit Full Screen</span>
+                    </button>
+                  )}
+                  {(_simActiveBoard as any)?.isNativeBlock ? (
+                    <div className="w-full h-full min-h-0 overflow-hidden bg-[#0B0C10] p-2">
+                      {(_simActiveBoard as any)?.civilTool ? (
+                        <CivilEngineeringStudio
+                          tool={(_simActiveBoard as any).civilTool}
+                          user={user}
+                          isFullScreen={isLabFullScreen}
+                          onExitFullScreen={() => setIsLabFullScreen(false)}
+                          onRequestFullScreen={() => setIsLabFullScreen(true)}
+                        />
+                      ) : (_simActiveBoard as any)?.mechTool ? (
+                        <MechanicalEngineeringStudio
+                          tool={(_simActiveBoard as any).mechTool}
+                          isFullScreen={isLabFullScreen}
+                          onExitFullScreen={() => setIsLabFullScreen(false)}
+                          onRequestFullScreen={() => setIsLabFullScreen(true)}
+                        />
+                      ) : (_simActiveBoard as any)?.id === 'geo-settle-native' ? (
+                        <SettlementCalculator
+                          isFullScreen={isLabFullScreen}
+                          onExitFullScreen={() => setIsLabFullScreen(false)}
+                          onRequestFullScreen={() => setIsLabFullScreen(true)}
+                        />
+                      ) : (_simActiveBoard as any)?.id === 'pcb-native' ? (
+                        <PCBDesignStudio 
+                          user={user} 
+                          isFullScreen={isLabFullScreen} 
+                          onExitFullScreen={() => setIsLabFullScreen(false)}
+                          onRequestFullScreen={() => setIsLabFullScreen(true)} 
+                        />
+                      ) : (_simActiveBoard as any)?.id === 'vlsi-native-block' ? (
+                        <VLSIDesignStudio 
+                          user={user} 
+                          isFullScreen={isLabFullScreen} 
+                          onExitFullScreen={() => setIsLabFullScreen(false)}
+                          onRequestFullScreen={() => setIsLabFullScreen(true)} 
+                        />
+                      ) : (_simActiveBoard as any)?.id === 'inst-spectrum' ? (
+                        <SpectrumAnalyzer
+                          isFullScreen={isLabFullScreen}
+                          onExitFullScreen={() => setIsLabFullScreen(false)}
+                          onRequestFullScreen={() => setIsLabFullScreen(true)}
+                        />
+                      ) : (_simActiveBoard as any)?.id === 'inst-funcgen' ? (
+                        <FunctionGenerator
+                          isFullScreen={isLabFullScreen}
+                          onExitFullScreen={() => setIsLabFullScreen(false)}
+                          onRequestFullScreen={() => setIsLabFullScreen(true)}
+                        />
+                      ) : (
+                        <DSPBlockSimulator 
+                          isFullScreen={isLabFullScreen} 
+                          onExitFullScreen={() => setIsLabFullScreen(false)} 
+                          onRequestFullScreen={() => setIsLabFullScreen(true)} 
                         />
                       )}
-                      {board.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {/* Navigation helper for CircuitJS-based simulators */}
-            {((['analog', 'digital', 'power_electronics', 'control_systems', 'electrical_machines', 'power_systems', 'fluid_mechanics', 'communication', 'dsp', 'measurements', 'renewable_energy', 'protection_switchgear', 'dynamics'].includes(simCategory)) && !((_simActiveBoard as any)?.isNativeWasm || (_simActiveBoard as any)?.isNativeBlock)) && (
-              <div className={`flex items-center gap-4 text-xs font-medium px-4 py-2 rounded-xl mb-2 ${
-                SIM_ACCENT_CLASSES[_simCat.accent]?.pill || 'bg-slate-100 text-slate-600'
-              }`}>
-                <span className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Right-click + Drag</kbd>
-                  <span className="opacity-80">Pan / Move</span>
-                </span>
-                <span className="w-px h-3.5 bg-current opacity-20" />
-                <span className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Scroll</kbd>
-                  <span className="opacity-80">Zoom</span>
-                </span>
-                <span className="w-px h-3.5 bg-current opacity-20" />
-                <span className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Click</kbd>
-                  <span className="opacity-80">Select</span>
-                </span>
-                <span className="w-px h-3.5 bg-current opacity-20" />
-                <span className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Delete</kbd>
-                  <span className="opacity-80">Remove</span>
-                </span>
-                <span className="w-px h-3.5 bg-current opacity-20" />
-                <span className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10 text-[10px] font-bold shadow-sm">Ctrl + Z</kbd>
-                  <span className="opacity-80">Undo</span>
-                </span>
-              </div>
-            )}
-            {/* Simulator iframe — or external-launch card for noEmbed boards */}
-            <div
-              className={
-                isLabFullScreen
-                  ? "fixed inset-0 z-[100] bg-[#0B0C10] w-screen h-screen flex flex-col"
-                  : _isNativeSurface
-                    ? "soft-card overflow-hidden shrink-0 min-h-[760px] lg:min-h-[780px] rounded-2xl relative"
-                    : "soft-card overflow-hidden flex-1 min-h-0 rounded-2xl relative"
-              }
-              style={{ overscrollBehavior: 'contain' }}
-            >
-              {isLabFullScreen && !((_simActiveBoard as any)?.isNativeBlock || (_simActiveBoard as any)?.isNativeWasm) && (
-                <button
-                  onClick={() => setIsLabFullScreen(false)}
-                  className="absolute bottom-10 right-1/2 translate-x-1/2 z-[999] bg-slate-900/90 hover:bg-slate-800 backdrop-blur-md text-white px-5 py-2.5 rounded-full shadow-[0_8px_32_rgba(0,0,0,0.4)] transition-all flex items-center gap-2 group border border-white/10 hover:border-indigo-500/50 opacity-40 hover:opacity-100 scale-95 hover:scale-100"
-                >
-                  <CornersIn size={18} weight="bold" className="group-hover:rotate-12 transition-transform" />
-                  <span className="text-[11px] font-black uppercase tracking-[0.1em]">Exit Full Screen</span>
-                </button>
-              )}
-              {(_simActiveBoard as any)?.isNativeBlock ? (
-                <div className="w-full h-full min-h-0 overflow-hidden bg-[#0B0C10] p-2">
-                  {(_simActiveBoard as any)?.civilTool ? (
-                    <CivilEngineeringStudio
-                      tool={(_simActiveBoard as any).civilTool}
-                      user={user}
-                      isFullScreen={isLabFullScreen}
-                      onExitFullScreen={() => setIsLabFullScreen(false)}
-                      onRequestFullScreen={() => setIsLabFullScreen(true)}
-                    />
-                  ) : (_simActiveBoard as any)?.mechTool ? (
-                    <MechanicalEngineeringStudio
-                      tool={(_simActiveBoard as any).mechTool}
-                      isFullScreen={isLabFullScreen}
-                      onExitFullScreen={() => setIsLabFullScreen(false)}
-                      onRequestFullScreen={() => setIsLabFullScreen(true)}
-                    />
-                  ) : (_simActiveBoard as any)?.id === 'geo-settle-native' ? (
-                    <SettlementCalculator
-                      isFullScreen={isLabFullScreen}
-                      onExitFullScreen={() => setIsLabFullScreen(false)}
-                      onRequestFullScreen={() => setIsLabFullScreen(true)}
-                    />
-                  ) : (_simActiveBoard as any)?.id === 'pcb-native' ? (
-                    <PCBDesignStudio 
-                      user={user} 
-                      isFullScreen={isLabFullScreen} 
-                      onExitFullScreen={() => setIsLabFullScreen(false)}
-                      onRequestFullScreen={() => setIsLabFullScreen(true)} 
-                    />
-                  ) : (_simActiveBoard as any)?.id === 'vlsi-native-block' ? (
-                    <VLSIDesignStudio 
-                      user={user} 
-                      isFullScreen={isLabFullScreen} 
-                      onExitFullScreen={() => setIsLabFullScreen(false)}
-                      onRequestFullScreen={() => setIsLabFullScreen(true)} 
-                    />
-                  ) : (_simActiveBoard as any)?.id === 'inst-spectrum' ? (
-                    <SpectrumAnalyzer
-                      isFullScreen={isLabFullScreen}
-                      onExitFullScreen={() => setIsLabFullScreen(false)}
-                      onRequestFullScreen={() => setIsLabFullScreen(true)}
-                    />
-                  ) : (_simActiveBoard as any)?.id === 'inst-funcgen' ? (
-                    <FunctionGenerator
-                      isFullScreen={isLabFullScreen}
-                      onExitFullScreen={() => setIsLabFullScreen(false)}
-                      onRequestFullScreen={() => setIsLabFullScreen(true)}
-                    />
+                    </div>
+                  ) : (_simActiveBoard as any)?.isNativeWasm ? (
+                    <div className="w-full h-full min-h-0 overflow-hidden p-2">
+                      <SimulationIDE 
+                        key={(_simActiveBoard as any)?.id}
+                        language={(_simActiveBoard as any)?.nativeLanguage} 
+                        defaultCode={(_simActiveBoard as any)?.defaultCode || ''}
+                        onSimulate={(code) => handleNativeSimulate(code, (_simActiveBoard as any)?.nativeLanguage)}
+                        isSimulating={isNativeSimulating}
+                        output={nativeOutput}
+                        isFullScreen={isLabFullScreen}
+                        onExitFullScreen={() => setIsLabFullScreen(false)}
+                      />
+                    </div>
+                  ) : (_simActiveBoard as any)?.noEmbed ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/60 dark:to-slate-900/60 p-8">
+                      <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-teal-500/25 flex items-center justify-center">
+                        <Cpu size={36} weight="duotone" className="text-white" />
+                      </div>
+                      <div className="text-center max-w-sm">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Simulator Sandbox</h3>
+                        <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                          This board cannot be embedded securely. Launch the sandbox directly in the external editor window.
+                        </p>
+                      </div>
+                      <a
+                        href={(_simActiveBoard as any).externalUrl || _simActiveBoard?.url || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:scale-[1.03] active:scale-[0.98] ${
+                          SIM_ACCENT_CLASSES[_simCat.accent]?.btn || 'bg-teal-500 hover:bg-teal-600'
+                        }`}
+                      >
+                        {(_simActiveBoard as any).externalLabel || _simActiveBoard?.openLabel || 'Open Full Editor'}
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                        </svg>
+                      </a>
+                    </div>
                   ) : (
-                    <DSPBlockSimulator 
-                      isFullScreen={isLabFullScreen} 
-                      onExitFullScreen={() => setIsLabFullScreen(false)} 
-                      onRequestFullScreen={() => setIsLabFullScreen(true)} 
+                    <iframe
+                      key={`${simCategory}-${wokwiBoard}-${useOctaveMode ? 'octave' : 'python'}`}
+                      src={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || _simBoards[0]?.url || ''}
+                      title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
+                      className="w-full h-full border-0"
+                      style={{ 
+                        touchAction: 'none',
+                        ...(_simActiveBoard?.url?.includes('falstad.com/em') ? {
+                          transform: 'scale(1.3)',
+                          transformOrigin: 'top left',
+                          width: '76.9%',
+                          height: '76.9%'
+                        } : {})
+                      }}
+                      sandbox={
+                        (_simActiveBoard?.url?.includes('jupyterlite') || 
+                         (_simActiveBoard as any)?.octaveUrl || 
+                         (_simActiveBoard?.url && !(_simActiveBoard?.url.includes('wokwi.com') || _simActiveBoard?.url.includes('falstad.com') || _simActiveBoard?.url.includes('tinkercad.com'))))
+                          ? "allow-scripts allow-same-origin allow-popups allow-forms"
+                          : "allow-scripts allow-same-origin allow-forms"
+                      }
                     />
                   )}
                 </div>
-              ) : (_simActiveBoard as any)?.isNativeWasm ? (
-                <div className="w-full h-full min-h-0 overflow-hidden p-2">
-                  <SimulationIDE 
-                    key={(_simActiveBoard as any)?.id}
-                    language={(_simActiveBoard as any)?.nativeLanguage} 
-                    defaultCode={(_simActiveBoard as any)?.defaultCode || ''}
-                    onSimulate={(code) => handleNativeSimulate(code, (_simActiveBoard as any)?.nativeLanguage)}
-                    isSimulating={isNativeSimulating}
-                    output={nativeOutput}
-                    isFullScreen={isLabFullScreen}
-                    onExitFullScreen={() => setIsLabFullScreen(false)}
-                  />
-                </div>
-              ) : (_simActiveBoard as any)?.noEmbed ? (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/60 dark:to-slate-900/60 p-8">
-                  <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-teal-500/25 flex items-center justify-center">
-                    <Cpu size={36} weight="duotone" className="text-white" />
-                  </div>
-                  <div className="text-center max-w-md">
-                    <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2">{_simActiveBoard?.label}</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                      This tool runs in its own environment and opens in a new tab. Use it for full-screen modeling, simulation, design, or analysis workflows.
-                    </p>
-                  </div>
-                  <a
-                    href={_simActiveBoard?.url || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`px-8 py-3.5 text-white rounded-2xl text-sm font-bold shadow-lg transition-all hover:scale-[1.04] active:scale-[0.97] flex items-center gap-2.5 ${_simAccent.btn}`}
-                  >
-                    {_simActiveBoard?.openLabel || 'Open External'}
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                    </svg>
-                  </a>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    External web tool
-                  </p>
-                </div>
-              ) : (
-                <iframe
-                  key={`${simCategory}-${wokwiBoard}-${useOctaveMode ? 'octave' : 'python'}`}
-                  src={(useOctaveMode && (_simActiveBoard as any)?.octaveUrl) || _simActiveBoard?.url || _simBoards[0]?.url || ''}
-                  title={`${_simCat.label} — ${_simActiveBoard?.label || 'Simulator'}`}
-                  className="w-full h-full border-0"
-                  style={{ 
-                    touchAction: 'none',
-                    ...(_simActiveBoard?.url?.includes('falstad.com/em') ? {
-                      transform: 'scale(1.3)',
-                      transformOrigin: 'top left',
-                      width: '76.9%',
-                      height: '76.9%'
-                    } : {})
-                  }}
-                  sandbox={
-                    (_simActiveBoard?.url?.includes('jupyterlite') || 
-                     (_simActiveBoard as any)?.octaveUrl || 
-                     _simActiveBoard?.url?.includes('octave')) 
-                      ? undefined 
-                      : "allow-scripts allow-same-origin allow-downloads allow-forms allow-popups"
+
+                {/* External fallback tools */}
+                {(() => {
+                  const externalTools: { label: string; url: string }[] = [];
+                  if (language === 'ecelab' && simCategory === 'embedded') {
+                    externalTools.push({ label: 'Tinkercad', url: 'https://www.tinkercad.com/circuits' });
                   }
-                  allow="clipboard-read; clipboard-write; fullscreen"
-                />
-              )}
-            </div>
-            {/* External launcher for PCB — EasyEDA full editor */}
-            {(_simActiveBoard as any)?.externalUrl && (
-              <div className="flex items-center justify-between mt-2 px-1">
-                <p className="text-xs text-slate-400 dark:text-slate-500">
-                  KiCanvas is a viewer/learning tool. For full PCB design →
-                </p>
-                <a
-                  href={(_simActiveBoard as any).externalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:scale-[1.03] active:scale-[0.98] ${
-                    SIM_ACCENT_CLASSES[_simCat.accent]?.btn || 'bg-indigo-500 hover:bg-indigo-600'
-                  }`}
-                >
-                  {(_simActiveBoard as any).externalLabel || 'Open Full Editor'}
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                  </svg>
-                </a>
+                  if (externalTools.length === 0) return null;
+                  return (
+                    <div className="flex items-center gap-2 mt-2 px-1 flex-wrap">
+                      <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">External:</span>
+                      {externalTools.map(t => (
+                        <a key={t.label} href={t.url} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200/70 dark:border-white/10 transition-all">
+                          {t.label}
+                          <svg className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                          </svg>
+                        </a>
+                      ))}
+                    </div>
+                  );
+                })()}
+
               </div>
-            )}
-            {/* External fallback tools — quick-launch bar */}
-            {(() => {
-              const externalTools: { label: string; url: string }[] = [];
-              if (language === 'ecelab' && simCategory === 'embedded') {
-                externalTools.push({ label: 'Tinkercad', url: 'https://www.tinkercad.com/circuits' });
-              }
-              if (externalTools.length === 0) return null;
-              return (
-                <div className="flex items-center gap-2 mt-2 px-1 flex-wrap">
-                  <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">External:</span>
-                  {externalTools.map(t => (
-                    <a key={t.label} href={t.url} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200/70 dark:border-white/10 transition-all">
-                      {t.label}
-                      <svg className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                      </svg>
-                    </a>
-                  ))}
-                </div>
-              );
-            })()}
+            </div>
+
           </div>
-        </div>
-      ) : (
+        </div>      ) : (
         // Original layout (Grid) for ad-hoc coding (No challenge active)
         <div className="flex-1 overflow-y-auto lg:overflow-hidden">
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6 lg:h-full">
