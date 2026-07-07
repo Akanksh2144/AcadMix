@@ -208,12 +208,12 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
       
       if (layout === 'vertical') {
         const newWidth = rect.right - e.clientX;
-        if (newWidth > 200 && newWidth < rect.width - 200) {
+        if (newWidth > 150 && newWidth < rect.width - 150) {
           setPreviewWidth(newWidth);
         }
       } else {
         const newHeight = rect.bottom - e.clientY;
-        if (newHeight > 120 && newHeight < rect.height - 80) {
+        if (newHeight > 100 && newHeight < rect.height - 100) {
           setPreviewHeight(newHeight);
         }
       }
@@ -551,7 +551,7 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
           } ${isResizing ? (layout === 'vertical' ? 'cursor-col-resize select-none' : 'cursor-row-resize select-none') : ''}`}
         >
           {/* Center: Monaco Editor Panel */}
-          <div className={`flex-1 flex flex-col min-h-0 border-r transition-colors ${
+          <div className={`flex-1 flex flex-col min-h-0 min-w-0 border-r transition-colors ${
             sandboxTheme === 'dark' ? 'bg-slate-950 border-[#1F2937]/85' : 'bg-[#f3f4f6] border-slate-250/70'
           }`}>
           {/* File Tabs */}
@@ -602,7 +602,8 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
                 lineNumbers: "on",
                 cursorBlinking: "smooth",
                 smoothScrolling: true,
-                padding: { top: 12 }
+                padding: { top: 12 },
+                automaticLayout: true
               }}
             />
           </div>
@@ -646,7 +647,7 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
             width: isPreviewFullScreen ? '100vw' : (layout === 'vertical' ? `${previewWidth}px` : undefined),
             height: isPreviewFullScreen ? '100vh' : (layout === 'horizontal' ? `${previewHeight}px` : undefined)
           }}
-          className={`flex flex-col shrink-0 ${isResizing ? '' : 'transition-all duration-300'} ${
+          className={`flex flex-col shrink-0 min-w-0 min-h-0 ${isResizing ? '' : 'transition-all duration-300'} ${
             isPreviewFullScreen 
               ? 'fixed inset-0 z-50 w-screen h-screen' 
               : (layout === 'vertical' 
