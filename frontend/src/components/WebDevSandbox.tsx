@@ -263,17 +263,35 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
       zip.file('README.md', `# Web Dev Sandbox Export\n\nGenerated from AcadMix WebDev Sandbox.\n\n### Run Locally\n1. Extract the zip.\n2. Open \`index.html\` in any browser.`);
 
       const content = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(content);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `acadmix_webdev_${Date.now()}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+
+      // Use File System Access API for a native Save As dialog (Chrome/Edge/Brave)
+      if ('showSaveFilePicker' in window) {
+        const fileHandle = await (window as any).showSaveFilePicker({
+          suggestedName: `acadmix_webdev_${Date.now()}.zip`,
+          types: [{
+            description: 'ZIP Archive',
+            accept: { 'application/zip': ['.zip'] },
+          }],
+        });
+        const writable = await fileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
+      } else {
+        // Fallback for Firefox/Safari — silent download to default Downloads folder
+        const url = URL.createObjectURL(content);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `acadmix_webdev_${Date.now()}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
 
       setConsoleLogs(prev => [...prev, { level: 'info', text: 'Project exported successfully!', timestamp: new Date().toLocaleTimeString() }]);
     } catch (err: any) {
+      // User cancelled the Save As dialog — don't show an error
+      if (err?.name === 'AbortError') return;
       setConsoleLogs(prev => [...prev, { level: 'error', text: `Export failed: ${err.message}`, timestamp: new Date().toLocaleTimeString() }]);
     }
   };
