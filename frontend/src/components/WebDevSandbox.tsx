@@ -561,7 +561,11 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
           <div 
             style={{
               width: layout === 'vertical' ? `${editorWidth}px` : undefined,
-              height: layout === 'horizontal' ? `${editorHeight}px` : undefined
+              height: layout === 'horizontal' ? `${editorHeight}px` : undefined,
+              minWidth: layout === 'vertical' ? '250px' : undefined,
+              maxWidth: layout === 'vertical' ? 'calc(100% - 250px)' : undefined,
+              minHeight: layout === 'horizontal' ? '180px' : undefined,
+              maxHeight: layout === 'horizontal' ? 'calc(100% - 180px)' : undefined
             }}
             className={`flex flex-col shrink-0 min-w-0 min-h-0 border-r transition-colors ${
               sandboxTheme === 'dark' ? 'bg-slate-950 border-[#1F2937]/85' : 'bg-[#f3f4f6] border-slate-250/70'
