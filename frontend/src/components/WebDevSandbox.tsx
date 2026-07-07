@@ -214,15 +214,11 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
       const rect = workspaceRef.current.getBoundingClientRect();
       
       if (layout === 'vertical') {
-        const newWidth = e.clientX - rect.left;
-        if (newWidth > 250 && newWidth < rect.width - 250) {
-          setEditorWidth(newWidth);
-        }
+        const raw = e.clientX - rect.left;
+        setEditorWidth(Math.min(Math.max(raw, 250), rect.width - 250));
       } else {
-        const newHeight = e.clientY - rect.top;
-        if (newHeight > 180 && newHeight < rect.height - 180) {
-          setEditorHeight(newHeight);
-        }
+        const raw = e.clientY - rect.top;
+        setEditorHeight(Math.min(Math.max(raw, 180), rect.height - 180));
       }
     };
 
@@ -553,7 +549,7 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
         {/* Workspace Panels Container (Editor + Preview) */}
         <div 
           ref={workspaceRef}
-          className={`flex-1 flex min-h-0 ${
+          className={`flex-1 flex min-h-0 overflow-hidden ${
             layout === 'vertical' ? 'flex-row' : 'flex-col'
           } ${isResizing ? (layout === 'vertical' ? 'cursor-col-resize select-none' : 'cursor-row-resize select-none') : ''}`}
         >
@@ -561,11 +557,7 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
           <div 
             style={{
               width: layout === 'vertical' ? `${editorWidth}px` : undefined,
-              height: layout === 'horizontal' ? `${editorHeight}px` : undefined,
-              minWidth: layout === 'vertical' ? '250px' : undefined,
-              maxWidth: layout === 'vertical' ? 'calc(100% - 250px)' : undefined,
-              minHeight: layout === 'horizontal' ? '180px' : undefined,
-              maxHeight: layout === 'horizontal' ? 'calc(100% - 180px)' : undefined
+              height: layout === 'horizontal' ? `${editorHeight}px` : undefined
             }}
             className={`flex flex-col shrink-0 min-w-0 min-h-0 border-r transition-colors ${
               sandboxTheme === 'dark' ? 'bg-slate-950 border-[#1F2937]/85' : 'bg-[#f3f4f6] border-slate-250/70'
