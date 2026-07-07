@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, CaretRight, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube, Broadcast, Equalizer, SunHorizon, Gauge, Path, Tree, Wall, Wrench, Gear, Engine, Robot, ThermometerHot, Car, CornersOut, CornersIn, MagnetStraight, Pulse, WifiHigh, ShareNetwork } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, CaretRight, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube, Broadcast, Equalizer, SunHorizon, Gauge, Path, Tree, Wall, Wrench, Gear, Engine, Robot, ThermometerHot, Car, CornersOut, CornersIn, MagnetStraight, Pulse, WifiHigh, ShareNetwork, Globe } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -44,6 +44,7 @@ const LANGUAGES = [
   { id: 'eeelab', label: 'EEE Lab', icon: <Lightning size={20} weight="duotone" className="text-yellow-500 shrink-0 drop-shadow-sm" /> },
   { id: 'civillab', label: 'Civil Lab', icon: <HardHat size={20} weight="duotone" className="text-orange-500 shrink-0 drop-shadow-sm" /> },
   { id: 'mechlab', label: 'Mech Lab', icon: <Wrench size={20} weight="duotone" className="text-red-500 shrink-0 drop-shadow-sm" /> },
+  { id: 'csdlab', label: 'CSD Lab', icon: <Cpu size={20} weight="duotone" className="text-indigo-500 shrink-0 drop-shadow-sm" /> },
 ];
 
 const SIMULATOR_CATEGORIES = [
@@ -815,6 +816,117 @@ const EEE_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: str
   ],
 };
 
+// ── CSD Lab Categories & Boards ─────────────────────────────────────────────
+const CSD_SIMULATOR_CATEGORIES = [
+  { id: 'engg_chemistry', label: 'Engg. Chemistry', icon: <Atom size={16} weight="duotone" />, accent: 'teal' },
+  { id: 'python', label: 'Python', icon: <Terminal size={16} weight="duotone" />, accent: 'indigo' },
+  { id: 'beee_lab', label: 'BEEE Lab', icon: <Lightning size={16} weight="duotone" />, accent: 'yellow' },
+  { id: 'caeg', label: 'CAEG', icon: <Blueprint size={16} weight="duotone" />, accent: 'orange' },
+  { id: 'elcs', label: 'ELCS', icon: <Broadcast size={16} weight="duotone" />, accent: 'rose' },
+  { id: 'c_lab', label: 'C Lab', icon: <Cpu size={16} weight="duotone" />, accent: 'sky' },
+  { id: 'applied_physics', label: 'Applied Physics', icon: <WaveSine size={16} weight="duotone" />, accent: 'red' },
+  { id: 'it_workshop', label: 'IT Workshop', icon: <Wrench size={16} weight="duotone" />, accent: 'slate' },
+  { id: 'java_oops', label: 'Java OOPS', icon: <Cube size={16} weight="duotone" />, accent: 'amber' },
+  { id: 'data_structures', label: 'Data Structures through C', icon: <Tree size={16} weight="duotone" />, accent: 'emerald' },
+  { id: 'r_programming', label: 'R Programming', icon: <ChartBar size={16} weight="duotone" />, accent: 'blue' },
+  { id: 'powerbi_tableau', label: 'PowerBI and Tableau', icon: <ChartLineUp size={16} weight="duotone" />, accent: 'yellow' },
+  { id: 'full_stack', label: 'Full Stack Development', icon: <Globe size={16} weight="duotone" />, accent: 'teal' },
+  { id: 'dbms', label: 'DBMS', icon: <Database size={16} weight="duotone" />, accent: 'purple' },
+  { id: 'computer_networks', label: 'Computer Networks', icon: <ShareNetwork size={16} weight="duotone" />, accent: 'blue' },
+  { id: 'advanced_comms', label: 'Advanced Communications Lab', icon: <Pulse size={16} weight="duotone" />, accent: 'rose' },
+  { id: 'etl_kafka', label: 'ETL Kafka', icon: <Gauge size={16} weight="duotone" />, accent: 'violet' },
+  { id: 'ml_lab', label: 'ML Lab', icon: <Robot size={16} weight="duotone" />, accent: 'indigo' },
+  { id: 'software_testing', label: 'Software Testing Methodologies Lab', icon: <CheckSquareOffset size={16} weight="duotone" />, accent: 'emerald' },
+  { id: 'big_data', label: 'Big Data Analytics Lab', icon: <Gauge size={16} weight="duotone" />, accent: 'amber' },
+  { id: 'predictive_analytics', label: 'Predictive Analytics Lab', icon: <ChartLineUp size={16} weight="duotone" />, accent: 'sky' },
+  { id: 'web_social_media', label: 'Web and Social Media Analytics', icon: <ShareNetwork size={16} weight="duotone" />, accent: 'rose' },
+];
+
+const CSD_SIMULATOR_BOARDS: Record<string, { id: string; label: string; url: string; openLabel?: string; externalUrl?: string; externalLabel?: string; noEmbed?: boolean; octaveUrl?: string; isNativeBlock?: boolean; isNativeWasm?: boolean; nativeLanguage?: string }[]> = {
+  engg_chemistry: [
+    { id: 'chem-table', label: 'Interactive Periodic Table', url: 'https://ptable.com/?embed=1', openLabel: 'Open Periodic Table' },
+    { id: 'chem-molview', label: 'MolView Molecular Visualizer', url: 'https://molview.org/', openLabel: 'Open MolView' },
+    { id: 'chem-phet-acids', label: 'PhET Acid-Base Solutions', url: 'https://phet.colorado.edu/sims/html/acid-base-solutions/latest/acid-base-solutions_all.html', openLabel: 'Open PhET Simulator' },
+  ],
+  python: [
+    { id: 'py-wasm', label: 'AcadMix Python IDE (Wasm)', url: '', isNativeWasm: true, nativeLanguage: 'python' },
+    { id: 'py-jupyter', label: 'Python JupyterLite Notebook', url: jupyterUrl('print("Welcome to Python Programming Lab!")\\n# Write your code here'), openLabel: 'Open Jupyter Notebook' },
+  ],
+  beee_lab: [
+    { id: 'beee-circuitjs', label: 'BEEE Circuit Simulator', url: 'https://lushprojects.com/circuitjs/circuitjs.html', openLabel: 'Open CircuitJS' },
+    { id: 'beee-ohms-law', label: "PhET Ohm's Law Simulation", url: 'https://phet.colorado.edu/sims/html/ohms-law/latest/ohms-law_all.html', openLabel: 'Open PhET Simulator' },
+    { id: 'beee-voltage-divider', label: 'Voltage Divider Network', url: 'https://lushprojects.com/circuitjs/circuitjs.html?startCircuit=voltdivide.txt', openLabel: 'Open CircuitJS' },
+  ],
+  caeg: [
+    { id: 'caeg-cad-studio', label: 'AcadMix Premium CAD Studio', url: '/cad-studio', openLabel: 'Launch CAD Studio', noEmbed: true },
+    { id: 'caeg-3d-editor', label: 'Three.js 3D Editor', url: 'https://threejs.org/editor/', openLabel: 'Open 3D Editor' },
+  ],
+  elcs: [
+    { id: 'elcs-speech', label: 'Voice Pitch & Modulation mock', url: 'https://musiclab.chromeexperiments.com/Voice-Spin/', openLabel: 'Open voice experiment' },
+    { id: 'elcs-pronunciation', label: 'Oxford Pronunciation Dictionary', url: 'https://www.dictionary.com/', openLabel: 'Open Pronunciation Dictionary' },
+  ],
+  c_lab: [
+    { id: 'c-wasm', label: 'AcadMix C IDE (Wasm)', url: '', isNativeWasm: true, nativeLanguage: 'c' },
+  ],
+  applied_physics: [
+    { id: 'phys-wave-interf', label: 'PhET Wave Interference', url: 'https://phet.colorado.edu/sims/html/wave-interference/latest/wave-interference_all.html', openLabel: 'Open PhET Simulator' },
+    { id: 'phys-bending-light', label: 'PhET Bending Light (Optics)', url: 'https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_all.html', openLabel: 'Open PhET Simulator' },
+  ],
+  it_workshop: [
+    { id: 'it-terminal', label: 'JSLinux Shell Environment', url: 'https://bellard.org/jslinux/vm.html?cpu=x86&url=alpine-x86.cfg&mem=192', openLabel: 'Launch Linux VM' },
+    { id: 'it-pcpartpicker', label: 'Virtual PC Builder & Assembly', url: 'https://pcpartpicker.com/list/', openLabel: 'Open PC Builder' },
+  ],
+  java_oops: [
+    { id: 'java-wasm', label: 'AcadMix Java IDE (Wasm)', url: '', isNativeWasm: true, nativeLanguage: 'java' },
+  ],
+  data_structures: [
+    { id: 'ds-visualgo', label: 'VisuAlgo DS Visualizer', url: 'https://visualgo.net/en', openLabel: 'Open VisuAlgo' },
+    { id: 'ds-c-sandbox', label: 'Data Structures Sandbox (C)', url: '', isNativeWasm: true, nativeLanguage: 'c' },
+  ],
+  r_programming: [
+    { id: 'r-webr', label: 'WebR Interactive Console', url: '', isNativeWasm: true, nativeLanguage: 'r' },
+  ],
+  powerbi_tableau: [
+    { id: 'pbi-looker', label: 'Looker Studio BI Dashboard', url: 'https://lookerstudio.google.com/embed/reporting/0B5ykTpih5jR_NDc2OTRkYTUtZmU5OC00NWFmLTk5M2EtYmIyYmZlZTRlMmUx/page/1M', openLabel: 'Open Dashboard' },
+    { id: 'pbi-python', label: 'Pandas Data Visualization Sandbox', url: jupyterUrl('import pandas as pd\\ndf = pd.DataFrame({"Category": ["A", "B", "C"], "Sales": [100, 150, 200]})\\nprint(df)'), openLabel: 'Open Notebook' },
+  ],
+  full_stack: [
+    { id: 'fs-sandbox', label: 'React / HTML Frontend Sandbox', url: 'https://codesandbox.io/embed/new', openLabel: 'Open CodeSandbox' },
+    { id: 'fs-sqlite', label: 'SQLite Database terminal', url: 'https://sqlite.org/fiddle/', openLabel: 'Open SQLite Console' },
+  ],
+  dbms: [
+    { id: 'dbms-sql-practice', label: 'AcadMix SQL Practice Hub', url: '/sql-practice', openLabel: 'Launch SQL Practice', noEmbed: true },
+    { id: 'dbms-sqlite', label: 'SQLite Web Fiddle', url: 'https://sqlite.org/fiddle/', openLabel: 'Open SQLite Console' },
+  ],
+  computer_networks: [
+    { id: 'cn-subnet', label: 'Interactive IP Subnet Calculator', url: 'https://www.subnet-calculator.com/', openLabel: 'Open Subnet Calculator' },
+    { id: 'cn-visualizer', label: 'Graph Traversal (DFS/BFS) Simulator', url: 'https://visualgo.net/en/dfsbfs', openLabel: 'Open VisuAlgo' },
+  ],
+  advanced_comms: [
+    { id: 'ac-dsp-native', label: 'DSP Block Simulator', url: '', isNativeBlock: true },
+    { id: 'ac-oscilloscope', label: 'Virtual Oscilloscope', url: 'https://academo.org/demos/virtual-oscilloscope/?embedded=true', openLabel: 'Open Scope' },
+  ],
+  etl_kafka: [
+    { id: 'kafka-mock', label: 'Kafka Event Producer/Consumer Console', url: jupyterUrl('print("=== Kafka ETL Stream Simulator ===")\\n# Mocking event stream\\nimport time\\nfor i in range(5):\\n    print(f"Published event: {i} | timestamp: {time.time()}")'), openLabel: 'Open Notebook' },
+  ],
+  ml_lab: [
+    { id: 'ml-tf-playground', label: 'TensorFlow Neural Network Playground', url: 'https://playground.tensorflow.org/', openLabel: 'Open TF Playground' },
+    { id: 'ml-jupyter', label: 'Python Machine Learning Sandbox', url: jupyterUrl('import sklearn\\nprint("scikit-learn loaded successfully!")'), openLabel: 'Open Notebook' },
+  ],
+  software_testing: [
+    { id: 'test-pytest', label: 'Python Unit Testing Sandbox', url: jupyterUrl('def test_example():\\n    assert 1 + 1 == 2\\nprint("Running test_example...")'), openLabel: 'Open Notebook' },
+  ],
+  big_data: [
+    { id: 'bd-spark', label: 'PySpark Big Data Analytics', url: jupyterUrl('print("Hadoop/Spark Mock Environment initialized")'), openLabel: 'Open Notebook' },
+  ],
+  predictive_analytics: [
+    { id: 'pa-forecast', label: 'Python Predictive Modeling Sandbox', url: jupyterUrl('import numpy as np\\n# Simple linear regression forecasting\\nx = np.arange(10)\\ny = 2*x + 1\\nprint("Model coefficients: slope=2, intercept=1")'), openLabel: 'Open Notebook' },
+  ],
+  web_social_media: [
+    { id: 'web-sentiment', label: 'Text Sentiment Analysis Mock', url: jupyterUrl('text = "AcadMix is awesome!"\\nprint("Analyzing sentiment...")\\nprint("Score: +0.95 (Positive)")'), openLabel: 'Open Notebook' },
+  ],
+};
+
 // ── Civil Lab Categories & Boards ───────────────────────────────────────────
 const CIVIL_SIMULATOR_CATEGORIES = [
   { id: 'structural', label: 'Structural Analysis', icon: <Blueprint size={16} weight="duotone" />, accent: 'rose' },
@@ -1185,8 +1297,9 @@ const CodePlayground = ({ navigate, user }) => {
   const _isEEELab = language === 'eeelab';
   const _isCivilLab = language === 'civillab';
   const _isMechLab = language === 'mechlab';
-  const _activeCats = _isMechLab ? MECH_SIMULATOR_CATEGORIES : _isCivilLab ? CIVIL_SIMULATOR_CATEGORIES : _isEEELab ? EEE_SIMULATOR_CATEGORIES : SIMULATOR_CATEGORIES;
-  const _activeBoards = _isMechLab ? MECH_SIMULATOR_BOARDS : _isCivilLab ? CIVIL_SIMULATOR_BOARDS : _isEEELab ? EEE_SIMULATOR_BOARDS : SIMULATOR_BOARDS;
+  const _isCSDLab = language === 'csdlab';
+  const _activeCats = _isMechLab ? MECH_SIMULATOR_CATEGORIES : _isCivilLab ? CIVIL_SIMULATOR_CATEGORIES : _isEEELab ? EEE_SIMULATOR_CATEGORIES : _isCSDLab ? CSD_SIMULATOR_CATEGORIES : SIMULATOR_CATEGORIES;
+  const _activeBoards = _isMechLab ? MECH_SIMULATOR_BOARDS : _isCivilLab ? CIVIL_SIMULATOR_BOARDS : _isEEELab ? EEE_SIMULATOR_BOARDS : _isCSDLab ? CSD_SIMULATOR_BOARDS : SIMULATOR_BOARDS;
   const _simCat = _activeCats.find(c => c.id === simCategory) || _activeCats[0];
   const _simBoards = _activeBoards[simCategory] || [];
   const _simActiveBoard = _simBoards.find(b => b.id === wokwiBoard) || _simBoards[0];
@@ -1532,6 +1645,9 @@ const CodePlayground = ({ navigate, user }) => {
     } else if (langId === 'mechlab') {
       setSimCategory('thermodynamics');
       setWokwiBoard(MECH_SIMULATOR_BOARDS['thermodynamics']?.[0]?.id || '');
+    } else if (langId === 'csdlab') {
+      setSimCategory('engg_chemistry');
+      setWokwiBoard(CSD_SIMULATOR_BOARDS['engg_chemistry']?.[0]?.id || 'chem-table');
     }
     const saved = sessionStorage.getItem(getCodeStorageKey(activeChallenge, langId));
     if (saved !== null) {
@@ -2348,8 +2464,8 @@ const CodePlayground = ({ navigate, user }) => {
             </div>
           </div>
         </div>
-      ) : (language === 'ecelab' || language === 'eeelab' || language === 'civillab' || language === 'mechlab') ? (
-        // ECE / EEE / Civil Lab — multi-simulator panel
+      ) : (language === 'ecelab' || language === 'eeelab' || language === 'civillab' || language === 'mechlab' || language === 'csdlab') ? (
+        // ECE / EEE / Civil Lab / CSD Lab — multi-simulator panel
         <div className={`flex-1 flex flex-col ${_isNativeSurface && !isLabFullScreen ? 'overflow-y-auto custom-scrollbar' : 'overflow-hidden'}`} style={{ overscrollBehavior: 'contain' }}>
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 w-full flex flex-col flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
             
@@ -2363,8 +2479,8 @@ const CodePlayground = ({ navigate, user }) => {
                   <div className="relative" ref={langMenuRef}>
                     <button data-testid="language-selector" onClick={() => setShowLangMenu(!showLangMenu)}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-105 dark:hover:bg-white/10 transition-colors text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-white/5">
-                      {_isMechLab ? <Wrench size={14} weight="duotone" className="text-red-500" /> : _isCivilLab ? <HardHat size={14} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={14} weight="duotone" className="text-yellow-500" /> : <Cpu size={14} weight="duotone" className="text-teal-500" />}
-                      <span>{_isMechLab ? 'Mech Lab' : _isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : 'ECE Lab'}</span>
+                      {_isMechLab ? <Wrench size={14} weight="duotone" className="text-red-500" /> : _isCivilLab ? <HardHat size={14} weight="duotone" className="text-orange-500" /> : _isEEELab ? <Lightning size={14} weight="duotone" className="text-yellow-500" /> : _isCSDLab ? <Cpu size={14} weight="duotone" className="text-indigo-500" /> : <Cpu size={14} weight="duotone" className="text-teal-500" />}
+                      <span>{_isMechLab ? 'Mech Lab' : _isCivilLab ? 'Civil Lab' : _isEEELab ? 'EEE Lab' : _isCSDLab ? 'CSD Lab' : 'ECE Lab'}</span>
                       <CaretDown size={10} weight="bold" className="text-slate-400" />
                     </button>
                     {showLangMenu && (
