@@ -686,7 +686,7 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={handleFormatCode}
-                className={`h-7 px-2.5 flex items-center gap-1.5 text-[10px] font-bold rounded-lg border transition-all duration-300 ${
+                className={`h-7 w-7 flex items-center justify-center rounded-lg border transition-all duration-300 ${
                   isFormatted
                     ? 'bg-emerald-500/10 border-emerald-500/45 text-emerald-400'
                     : (sandboxTheme === 'dark'
@@ -696,22 +696,16 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
                 title="Format / Prettify code (editor.action.formatDocument)"
               >
                 {isFormatted ? (
-                  <>
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
-                      <path d="M2.5 6l2.5 2.5 5-5"/>
-                    </svg>
-                    Formatted
-                  </>
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
+                    <path d="M2.5 6l2.5 2.5 5-5"/>
+                  </svg>
                 ) : (
-                  <>
-                    <Sparkle size={10} />
-                    Format
-                  </>
+                  <Sparkle size={14} />
                 )}
               </button>
               <button
                 onClick={forceRunPreview}
-                className="h-7 px-2.5 flex items-center justify-center rounded-lg bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 transition-colors shadow-sm shadow-emerald-500/30"
+                className="h-7 w-7 flex items-center justify-center rounded-lg bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 transition-colors shadow-sm shadow-emerald-500/30"
                 title="Run preview now (Shift+Enter)"
               >
                 <svg width="8" height="10" viewBox="0 0 8 10" fill="white" className="translate-x-[0.5px]"><path d="M0 0L8 5L0 10Z"/></svg>
