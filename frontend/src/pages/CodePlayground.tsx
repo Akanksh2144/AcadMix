@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube, Broadcast, Equalizer, SunHorizon, Gauge, Path, Tree, Wall, Wrench, Gear, Engine, Robot, ThermometerHot, Car, CornersOut, CornersIn, MagnetStraight, Pulse, WifiHigh, ShareNetwork } from '@phosphor-icons/react';
+import { Play, Terminal, Copy, Trash, CaretDown, CaretUp, CaretRight, Lightning, Clock, CheckCircle, ChartBar, WarningCircle, X, Funnel, ArrowCounterClockwise, Sparkle, ChartLineUp, Eye, CheckSquareOffset, Plus, MagnifyingGlass, Database, Cpu, Circuitry, WaveSine, Atom, Blueprint, HardHat, Drop, Compass, Cube, Broadcast, Equalizer, SunHorizon, Gauge, Path, Tree, Wall, Wrench, Gear, Engine, Robot, ThermometerHot, Car, CornersOut, CornersIn, MagnetStraight, Pulse, WifiHigh, ShareNetwork } from '@phosphor-icons/react';
 import PageHeader from '../components/PageHeader';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -2695,7 +2695,8 @@ const CodePlayground = ({ navigate, user }) => {
                 );
               })()}
 
-            </div>          </div>        </div>      ) : (
+            </div>
+          </div>        </div>      ) : (
         // Original layout (Grid) for ad-hoc coding (No challenge active)
         <div className="flex-1 overflow-y-auto lg:overflow-hidden">
           <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6 lg:h-full">
