@@ -64,8 +64,8 @@ const ARENAS = [
     iconColor: 'text-amber-500',
     borderHover: 'hover:border-amber-500',
     shadowHover: 'hover:shadow-amber-500/10',
-    route: null,
-    ready: false,
+    route: 'placement-prep/aptitude',
+    ready: true,
     tags: ['Quantitative', 'Logical', 'Verbal', 'Timed'],
   },
   {
@@ -78,8 +78,8 @@ const ARENAS = [
     iconColor: 'text-emerald-500',
     borderHover: 'hover:border-emerald-500',
     shadowHover: 'hover:shadow-emerald-500/10',
-    route: null,
-    ready: false,
+    route: 'placement-prep/company-prep',
+    ready: true,
     tags: ['TCS', 'Amazon', 'Google', 'Microsoft'],
   },
 ];

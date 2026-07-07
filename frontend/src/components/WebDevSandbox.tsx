@@ -3,7 +3,8 @@ import Editor from '@monaco-editor/react';
 import { 
   Code, Palette, FileCode, ArrowCounterClockwise, 
   CornersOut, CornersIn, Trash, Terminal, Sparkle, 
-  UploadSimple, Plus, MagnifyingGlass, Globe, Info
+  UploadSimple, Plus, MagnifyingGlass, Globe, Info,
+  Sun, Moon
 } from '@phosphor-icons/react';
 import AlertModal from './AlertModal';
 
@@ -15,14 +16,14 @@ const TEMPLATES = {
     js: '// Write your JavaScript logic here\nconsole.log("Web Sandbox Ready!");'
   },
   animation: {
-    html: '<div class="container">\n  <div class="glow-orb"></div>\n  <div class="card">\n    <h2>Glassmorphism Card</h2>\n    <p>Hover to see the premium card elevation and subtle glow animation.</p>\n  </div>\n</div>',
-    css: 'body {\n  margin: 0;\n  background: #090b0f;\n  font-family: "Outfit", sans-serif;\n  min-height: 100vh;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  overflow: hidden;\n}\n\n.container {\n  position: relative;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}\n\n.glow-orb {\n  position: absolute;\n  width: 250px;\n  height: 250px;\n  background: linear-gradient(135deg, #6366f1, #a855f7);\n  border-radius: 50%;\n  filter: blur(80px);\n  opacity: 0.6;\n  animation: rotateOrb 10s linear infinite;\n}\n\n.card {\n  backdrop-filter: blur(16px);\n  background: rgba(255, 255, 255, 0.03);\n  border: 1px solid rgba(255, 255, 255, 0.08);\n  border-radius: 24px;\n  padding: 3rem 2rem;\n  max-width: 320px;\n  text-align: center;\n  color: #ffffff;\n  box-shadow: 0 20px 40px rgba(0,0,0,0.5);\n  transition: all 0.3s ease;\n}\n\n.card:hover {\n  transform: translateY(-8px);\n  border-color: rgba(99, 102, 241, 0.4);\n  box-shadow: 0 30px 60px rgba(99, 102, 241, 0.15);\n}\n\n.card h2 {\n  margin: 0 0 1rem 0;\n  font-weight: 800;\n  background: linear-gradient(to right, #a5b4fc, #e879f9);\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n}\n\n.card p {\n  margin: 0;\n  font-size: 0.95rem;\n  line-height: 1.6;\n  color: #94a3b8;\n}\n\n@keyframes rotateOrb {\n  0% { transform: translate(0, 0) scale(1); }\n  50% { transform: translate(20px, -20px) scale(1.1); }\n  100% { transform: translate(0, 0) scale(1); }\n}',
-    js: '// Console log to verify initialization\nconsole.log("Glow Animation Template Loaded successfully!");'
+    html: '<div class="container">\n  <div class="card">\n    <div class="header">\n      <span class="badge">ACTIVE</span>\n      <span class="time">10:42 PM</span>\n    </div>\n    <h2>Neon Glow Dashboard</h2>\n    <p>A premium dark template featuring dynamic glowing border effects using custom CSS animations. No glassmorphism required!</p>\n    <button class="btn">Explore Widgets</button>\n  </div>\n</div>',
+    css: 'body {\n  margin: 0;\n  background: #020617;\n  font-family: "Outfit", sans-serif;\n  min-height: 100vh;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}\n\n.container {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}\n\n.card {\n  background: #0f172a;\n  border: 2px solid #3b82f6;\n  border-radius: 20px;\n  padding: 2.5rem;\n  max-width: 340px;\n  text-align: center;\n  color: #f8fafc;\n  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2), inset 0 0 10px rgba(59, 130, 246, 0.1);\n  animation: glowCycle 6s infinite alternate;\n  transition: all 0.3s ease;\n}\n\n.card:hover {\n  transform: translateY(-5px);\n  box-shadow: 0 0 30px rgba(168, 85, 247, 0.4), inset 0 0 15px rgba(168, 85, 247, 0.2);\n  border-color: #a855f7;\n}\n\n.header {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  margin-bottom: 1.5rem;\n}\n\n.badge {\n  background: #10b981;\n  color: white;\n  font-size: 0.7rem;\n  font-weight: 800;\n  padding: 0.25rem 0.6rem;\n  border-radius: 9999px;\n  letter-spacing: 0.05em;\n}\n\n.time {\n  color: #64748b;\n  font-size: 0.75rem;\n  font-weight: 600;\n}\n\n.card h2 {\n  margin: 0 0 1rem 0;\n  font-size: 1.5rem;\n  font-weight: 800;\n  background: linear-gradient(to right, #3b82f6, #a855f7);\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n}\n\n.card p {\n  margin: 0 0 2rem 0;\n  font-size: 0.9rem;\n  line-height: 1.6;\n  color: #94a3b8;\n}\n\n.btn {\n  background: linear-gradient(135deg, #3b82f6, #a855f7);\n  color: white;\n  border: none;\n  font-family: inherit;\n  font-weight: 700;\n  font-size: 0.85rem;\n  padding: 0.75rem 1.5rem;\n  border-radius: 12px;\n  cursor: pointer;\n  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);\n  transition: all 0.2s ease;\n  width: 100%;\n}\n\n.btn:hover {\n  transform: scale(1.02);\n  box-shadow: 0 6px 18px rgba(168, 85, 247, 0.4);\n}\n\n@keyframes glowCycle {\n  0% { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }\n  50% { border-color: #ec4899; box-shadow: 0 0 20px rgba(236, 72, 153, 0.2); }\n  100% { border-color: #a855f7; box-shadow: 0 0 20px rgba(168, 85, 247, 0.2); }\n}',
+    js: '// Console log to verify initialization\nconsole.log("Neon Glow Animation Template Loaded successfully!");'
   },
   react: {
     html: '<div id="root"></div>\n\n<!-- React and ReactDOM CDNs -->\n<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>\n<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>\n<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>\n<!-- Tailwind CSS runtime CDN -->\n<script src="https://cdn.tailwindcss.com"></script>\n<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">\n<script>\n  tailwind.config = {\n    theme: {\n      extend: {\n        fontFamily: {\n          sans: [\'Outfit\', \'sans-serif\'],\n        }\n      }\n    }\n  }\n</script>',
     css: '/* Custom styles */\n.fade-in {\n  animation: fadeIn 0.4s ease-out;\n}\n@keyframes fadeIn {\n  from { opacity: 0; transform: translateY(10px); }\n  to { opacity: 1; transform: translateY(0); }\n}',
-    js: 'const { useState } = React;\n\nfunction App() {\n  const [count, setCount] = useState(0);\n  return (\n    <div className="min-h-screen flex items-center justify-center bg-slate-900 text-slate-100 p-4">\n      <div className="max-w-md w-full bg-slate-800/60 backdrop-blur-md rounded-3xl border border-slate-700/50 p-8 shadow-2xl text-center fade-in">\n        <div className="flex justify-center mb-6">\n          <span className="p-4 bg-indigo-500/10 text-indigo-400 rounded-2xl border border-indigo-500/20">\n            <svg className="w-8 h-8 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">\n              <circle cx="12" cy="12" r="10" strokeDasharray="30 30" />\n            </svg>\n          </span>\n        </div>\n        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">\n          React + Tailwind\n        </h1>\n        <p className="text-slate-400 text-sm mt-2 leading-relaxed">\n          A fully reactive stateful Sandbox environment running in-browser. No bundler required!\n        </p>\n        \n        <div className="my-8">\n          <div className="text-5xl font-extrabold text-white transition-all select-none">\n            {count}\n          </div>\n          <div className="text-xs text-slate-500 mt-1">State Count</div>\n        </div>\n\n        <div className="flex gap-3 justify-center">\n          <button \n            onClick={() => setCount(count + 1)}\n            className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all text-sm"\n          >\n            Increment\n          </button>\n          <button \n            onClick={() => setCount(0)}\n            className="px-6 py-3 bg-slate-700 hover:bg-slate-600 active:scale-95 text-slate-200 font-bold rounded-xl transition-all text-sm"\n          >\n            Reset\n          </button>\n        </div>\n      </div>\n    </div>\n  );\n}\n\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(<App />);\nconsole.log("React app initialized successfully with Tailwind CSS");'
+    js: 'const { useState } = React;\n\nfunction App() {\n  const [count, setCount] = useState(0);\n  return (\n    <div className="min-h-screen flex items-center justify-center bg-slate-900 text-slate-100 p-4">\n      <div className="max-w-md w-full bg-slate-800 rounded-3xl border border-slate-750 p-8 shadow-2xl text-center fade-in">\n        <div className="flex justify-center mb-6">\n          <span className="p-4 bg-indigo-500/10 text-indigo-400 rounded-2xl border border-indigo-500/20">\n            <svg className="w-8 h-8 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">\n              <circle cx="12" cy="12" r="10" strokeDasharray="30 30" />\n            </svg>\n          </span>\n        </div>\n        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">\n          React + Tailwind\n        </h1>\n        <p className="text-slate-400 text-sm mt-2 leading-relaxed">\n          A fully reactive stateful Sandbox environment running in-browser. No bundler required!\n        </p>\n        \n        <div className="my-8">\n          <div className="text-5xl font-extrabold text-white transition-all select-none">\n            {count}\n          </div>\n          <div className="text-xs text-slate-505 mt-1">State Count</div>\n        </div>\n\n        <div className="flex gap-3 justify-center">\n          <button \n            onClick={() => setCount(count + 1)}\n            className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all text-sm"\n          >\n            Increment\n          </button>\n          <button \n            onClick={() => setCount(0)}\n            className="px-6 py-3 bg-slate-700 hover:bg-slate-600 active:scale-95 text-slate-200 font-bold rounded-xl transition-all text-sm"\n          >\n            Reset\n          </button>\n        </div>\n      </div>\n    </div>\n  );\n}\n\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(<App />);\nconsole.log("React app initialized successfully with Tailwind CSS");'
   },
   vue: {
     html: '<div id="app"></div>\n\n<!-- Vue 3 CDN -->\n<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>\n<!-- Tailwind CSS runtime CDN -->\n<script src="https://cdn.tailwindcss.com"></script>\n<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">\n<script>\n  tailwind.config = {\n    theme: {\n      extend: {\n        fontFamily: {\n          sans: [\'Outfit\', \'sans-serif\'],\n        }\n      }\n    }\n  }\n</script>',
@@ -61,6 +62,10 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
     confirmText: 'Confirm',
     cancelText: 'Cancel',
     onConfirm: () => {},
+  });
+
+  const [sandboxTheme, setSandboxTheme] = useState<'dark' | 'light'>(() => {
+    return isDark ? 'dark' : 'light';
   });
 
   // Debounced live preview compiler
@@ -173,15 +178,32 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
   const filteredFiles = files.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-slate-900 text-slate-100 min-h-0 h-full">
+    <div className={`flex-1 flex flex-col overflow-hidden min-h-0 h-full transition-colors ${
+      sandboxTheme === 'dark' ? 'bg-[#0B0F19] text-slate-100' : 'bg-[#F9FAFB] text-slate-900'
+    }`}>
       {/* Sandbox Header / Info Panel */}
-      <div className="bg-slate-950 border-b border-slate-800 px-4 py-2 flex items-center justify-between shrink-0">
+      <div className={`px-4 py-2.5 flex items-center justify-between shrink-0 border-b transition-colors ${
+        sandboxTheme === 'dark' ? 'bg-[#0B0F19] border-[#1F2937]/80' : 'bg-white border-slate-250/70 shadow-sm'
+      }`}>
         <div className="flex items-center gap-2">
           <Globe size={18} className="text-teal-400 shrink-0" />
           <span className="font-extrabold text-sm tracking-wider uppercase">Web Development Sandbox</span>
           <span className="px-2 py-0.5 bg-teal-500/10 text-teal-400 rounded-full text-[10px] font-bold border border-teal-500/20">LIVE</span>
         </div>
         <div className="flex items-center gap-2">
+          {/* Theme Switcher Button */}
+          <button
+            onClick={() => setSandboxTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+            className={`p-1.5 rounded-lg border transition-all ${
+              sandboxTheme === 'dark'
+                ? 'bg-slate-900 border-slate-800 text-amber-400 hover:text-amber-300'
+                : 'bg-slate-100 border-slate-250 text-indigo-600 hover:text-indigo-700 hover:bg-slate-200/50'
+            }`}
+            title={sandboxTheme === 'dark' ? "Switch to Light Theme" : "Switch to Dark Theme"}
+          >
+            {sandboxTheme === 'dark' ? <Sun size={14} weight="bold" /> : <Moon size={14} weight="bold" />}
+          </button>
+          
           <button 
             onClick={() => {
               setConfirmModal({
@@ -200,7 +222,11 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
                 }
               });
             }} 
-            className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-rose-400 bg-slate-900 border border-slate-800 px-2.5 py-1.5 rounded-lg transition-all"
+            className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-all border ${
+              sandboxTheme === 'dark' 
+                ? 'text-slate-400 hover:text-rose-400 bg-slate-900 border-slate-800' 
+                : 'text-slate-600 hover:text-rose-600 bg-white border-slate-250 hover:bg-slate-50'
+            }`}
           >
             <Trash size={14} /> Clear All
           </button>
@@ -210,23 +236,35 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
       {/* Main Workspace Area */}
       <div className="flex-1 flex min-h-0 relative">
         {/* Left Side: Mock File Explorer & Templates */}
-        <div className="w-64 bg-slate-950/70 border-r border-slate-800 flex flex-col shrink-0">
-          <div className="p-3 border-b border-slate-800 flex items-center justify-between shrink-0">
-            <span className="text-[10px] font-extrabold tracking-widest text-slate-400 uppercase">Files</span>
+        <div className={`w-64 flex flex-col shrink-0 border-r transition-colors ${
+          sandboxTheme === 'dark' ? 'bg-[#111827]/90 border-[#1F2937]/85' : 'bg-slate-50 border-slate-250/70'
+        }`}>
+          <div className={`p-3 flex items-center justify-between shrink-0 border-b ${
+            sandboxTheme === 'dark' ? 'border-[#1F2937]/85' : 'border-slate-250/70'
+          }`}>
+            <span className={`text-[10px] font-extrabold tracking-widest uppercase ${
+              sandboxTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+            }`}>Files</span>
             <div className="flex gap-1.5">
-              <button className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800" title="Add File (Mock)"><Plus size={14} /></button>
-              <button className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800" title="Upload File (Mock)"><UploadSimple size={14} /></button>
+              <button className={`p-1 rounded transition-colors ${sandboxTheme === 'dark' ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-550 hover:text-slate-900 hover:bg-slate-200/50'}`} title="Add File (Mock)"><Plus size={14} /></button>
+              <button className={`p-1 rounded transition-colors ${sandboxTheme === 'dark' ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-550 hover:text-slate-900 hover:bg-slate-200/50'}`} title="Upload File (Mock)"><UploadSimple size={14} /></button>
             </div>
           </div>
 
           {/* File Search */}
-          <div className="p-2 border-b border-slate-800 shrink-0 relative">
+          <div className={`p-2 border-b shrink-0 relative ${
+            sandboxTheme === 'dark' ? 'border-[#1F2937]/85' : 'border-slate-250/70'
+          }`}>
             <input 
               type="text" 
               placeholder="Search files..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900 text-xs text-slate-300 pl-8 pr-3 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-indigo-500"
+              className={`w-full text-xs pl-8 pr-3 py-1.5 rounded-lg border focus:outline-none focus:border-indigo-500 transition-colors ${
+                sandboxTheme === 'dark' 
+                  ? 'bg-slate-900 text-slate-350 border-slate-800' 
+                  : 'bg-white text-slate-800 border-slate-250 shadow-sm'
+              }`}
             />
             <MagnifyingGlass size={12} className="absolute left-4.5 top-1/2 -translate-y-1/2 text-slate-500" />
           </div>
@@ -237,10 +275,14 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
               <button 
                 key={file.key}
                 onClick={() => setActiveFile(file.key as any)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
                   activeFile === file.key 
-                    ? 'bg-slate-800 text-white border border-slate-700' 
-                    : 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200'
+                    ? (sandboxTheme === 'dark' 
+                        ? 'bg-slate-800 text-white border-slate-700' 
+                        : 'bg-white text-slate-900 border-slate-250 shadow-sm')
+                    : (sandboxTheme === 'dark'
+                        ? 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200 border-transparent'
+                        : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900 border-transparent')
                 }`}
               >
                 {file.icon}
@@ -250,45 +292,69 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
           </div>
 
           {/* Templates Section */}
-          <div className="p-3 border-t border-slate-800 shrink-0">
-            <span className="text-[10px] font-extrabold tracking-widest text-slate-400 uppercase block mb-3">Templates</span>
+          <div className={`p-3 border-t shrink-0 ${
+            sandboxTheme === 'dark' ? 'border-[#1F2937]/85' : 'border-slate-250/70'
+          }`}>
+            <span className={`text-[10px] font-extrabold tracking-widest uppercase block mb-3 ${
+              sandboxTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+            }`}>Templates</span>
             <div className="space-y-2">
               <button 
                 onClick={() => handleTemplateLoad('blank')}
-                className="w-full text-left p-2.5 rounded-xl border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900 transition-all"
+                className={`w-full text-left p-2.5 rounded-xl border transition-all ${
+                  sandboxTheme === 'dark'
+                    ? 'border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900'
+                    : 'border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50'
+                }`}
               >
-                <div className="text-xs font-bold text-slate-200">Blank Slate</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">Empty HTML / CSS starter</div>
+                <div className={`text-xs font-bold ${sandboxTheme === 'dark' ? 'text-slate-200' : 'text-slate-850'}`}>Blank Slate</div>
+                <div className={`text-[10px] mt-0.5 ${sandboxTheme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>Empty HTML / CSS starter</div>
               </button>
               <button 
                 onClick={() => handleTemplateLoad('animation')}
-                className="w-full text-left p-2.5 rounded-xl border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900 transition-all"
+                className={`w-full text-left p-2.5 rounded-xl border transition-all ${
+                  sandboxTheme === 'dark'
+                    ? 'border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900'
+                    : 'border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50'
+                }`}
               >
-                <div className="text-xs font-bold text-slate-200">Glow Orb Animation</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">Custom CSS shadows & keyframes</div>
+                <div className={`text-xs font-bold ${sandboxTheme === 'dark' ? 'text-slate-200' : 'text-slate-850'}`}>Neon Glow Dashboard</div>
+                <div className={`text-[10px] mt-0.5 ${sandboxTheme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>Dynamic border animation & flat design</div>
               </button>
               <button 
                 onClick={() => handleTemplateLoad('react')}
-                className="w-full text-left p-2.5 rounded-xl border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900 transition-all"
+                className={`w-full text-left p-2.5 rounded-xl border transition-all ${
+                  sandboxTheme === 'dark'
+                    ? 'border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900'
+                    : 'border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50'
+                }`}
               >
-                <div className="text-xs font-bold text-slate-200">React + Tailwind</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">Interactive React Counter</div>
+                <div className={`text-xs font-bold ${sandboxTheme === 'dark' ? 'text-slate-200' : 'text-slate-850'}`}>React + Tailwind</div>
+                <div className={`text-[10px] mt-0.5 ${sandboxTheme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>Interactive React Counter</div>
               </button>
               <button 
                 onClick={() => handleTemplateLoad('vue')}
-                className="w-full text-left p-2.5 rounded-xl border border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900 transition-all"
+                className={`w-full text-left p-2.5 rounded-xl border transition-all ${
+                  sandboxTheme === 'dark'
+                    ? 'border-slate-850 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900'
+                    : 'border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50'
+                }`}
               >
-                <div className="text-xs font-bold text-slate-200">Vue 3 App</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">Interactive Vue 3 Template</div>
+                <div className={`text-xs font-bold ${sandboxTheme === 'dark' ? 'text-slate-200' : 'text-slate-850'}`}>Vue 3 App</div>
+                <div className={`text-[10px] mt-0.5 ${sandboxTheme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>Interactive Vue 3 Template</div>
               </button>
             </div>
           </div>
         </div>
 
         {/* Center: Monaco Editor Panel */}
-        <div className="flex-1 flex flex-col min-h-0 bg-slate-950 border-r border-slate-800">
+        <div className={`flex-1 flex flex-col min-h-0 border-r transition-colors ${
+          sandboxTheme === 'dark' ? 'bg-slate-950 border-[#1F2937]/85' : 'bg-[#f3f4f6] border-slate-250/70'
+        }`}>
           {/* File Tabs */}
-          <div className="flex items-center justify-between border-b border-slate-850 bg-slate-950 shrink-0 px-2.5">
+          <div className={`flex items-center justify-between border-b shrink-0 px-2.5 transition-colors ${
+            sandboxTheme === 'dark' ? 'border-[#1F2937]/85 bg-[#0B0F19]' : 'border-slate-250/70 bg-slate-100/70'
+          }`}>
             <div className="flex gap-1 overflow-x-auto py-1.5">
               {files.map(file => (
                 <button
@@ -296,8 +362,12 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
                   onClick={() => setActiveFile(file.key as any)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
                     activeFile === file.key 
-                      ? 'bg-slate-900 text-white border-slate-700 shadow-inner' 
-                      : 'bg-transparent text-slate-500 border-transparent hover:text-slate-300'
+                      ? (sandboxTheme === 'dark' 
+                          ? 'bg-slate-900 text-white border-slate-700 shadow-inner' 
+                          : 'bg-white text-slate-900 border-slate-250 shadow-sm')
+                      : (sandboxTheme === 'dark'
+                          ? 'bg-transparent text-slate-500 border-transparent hover:text-slate-350'
+                          : 'bg-transparent text-slate-500 border-transparent hover:text-slate-800 hover:bg-slate-200/30')
                   }`}
                 >
                   {file.icon}
@@ -316,7 +386,7 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
           <div className="flex-1 min-h-0 relative">
             <Editor
               height="100%"
-              theme="vs-dark"
+              theme={sandboxTheme === 'dark' ? 'vs-dark' : 'light'}
               language={activeFile === 'html' ? 'html' : activeFile === 'css' ? 'css' : 'javascript'}
               value={getCodeForActiveFile()}
               onChange={setCodeForActiveFile}
@@ -336,24 +406,38 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
         </div>
 
         {/* Right Pane: Live Preview Frame & Console */}
-        <div className={`flex flex-col border-slate-800 bg-white shrink-0 transition-all duration-300 ${
+        <div className={`flex flex-col shrink-0 transition-all duration-300 ${
           isPreviewFullScreen 
             ? 'fixed inset-0 z-50 w-screen h-screen' 
             : 'w-[480px] lg:w-[600px] border-l'
+        } ${
+          sandboxTheme === 'dark'
+            ? 'border-[#1F2937]/80 bg-[#111827]'
+            : 'border-slate-250 bg-white'
         }`}>
           {/* Preview Navigation Header */}
-          <div className="bg-slate-950 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between shrink-0">
+          <div className={`border-b px-4 py-2.5 flex items-center justify-between shrink-0 transition-colors ${
+            sandboxTheme === 'dark'
+              ? 'bg-[#0B0F19] border-[#1F2937]/80'
+              : 'bg-slate-100/90 border-slate-200'
+          }`}>
             <div className="flex items-center gap-2 flex-1 max-w-[280px]">
               <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
               <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-              <div className="h-6 w-px bg-slate-800 mx-1 shrink-0" />
-              <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest truncate">Preview</div>
+              <div className={`h-6 w-px mx-1 shrink-0 ${sandboxTheme === 'dark' ? 'bg-[#1F2937]' : 'bg-slate-250'}`} />
+              <div className={`text-[10px] font-extrabold uppercase tracking-widest truncate ${
+                sandboxTheme === 'dark' ? 'text-slate-400' : 'text-slate-550'
+              }`}>Preview</div>
             </div>
 
             {/* Address Bar */}
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-900 border border-slate-850 text-[10.5px] font-bold text-slate-500 max-w-sm truncate flex-1 mx-4">
-              <Globe size={11} className="text-slate-600 shrink-0" />
+            <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[10.5px] font-bold max-w-sm truncate flex-1 mx-4 transition-colors ${
+              sandboxTheme === 'dark'
+                ? 'bg-[#1F2937]/50 border-[#1F2937]/80 text-slate-400'
+                : 'bg-white border-slate-250 text-slate-655'
+            }`}>
+              <Globe size={11} className="text-slate-500 shrink-0" />
               <span>Preview: /</span>
             </div>
 
@@ -369,14 +453,22 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
                   }
                   setConsoleLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Reloading Preview...`]);
                 }} 
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className={`p-1.5 rounded-lg transition-colors ${
+                  sandboxTheme === 'dark'
+                    ? 'hover:bg-slate-800 text-slate-400 hover:text-white'
+                    : 'hover:bg-slate-200 text-slate-550 hover:text-slate-900'
+                }`}
                 title="Refresh Preview"
               >
                 <ArrowCounterClockwise size={14} weight="bold" />
               </button>
               <button 
                 onClick={() => setIsPreviewFullScreen(!isPreviewFullScreen)} 
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className={`p-1.5 rounded-lg transition-colors ${
+                  sandboxTheme === 'dark'
+                    ? 'hover:bg-slate-800 text-slate-400 hover:text-white'
+                    : 'hover:bg-slate-200 text-slate-550 hover:text-slate-900'
+                }`}
                 title={isPreviewFullScreen ? "Exit Full Screen" : "Full Screen Preview"}
               >
                 {isPreviewFullScreen ? <CornersIn size={14} weight="bold" /> : <CornersOut size={14} weight="bold" />}
@@ -396,14 +488,22 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
           </div>
 
           {/* Console / Build Output Bar */}
-          <div className="bg-slate-950 border-t border-slate-800 flex flex-col shrink-0 min-h-[40px] max-h-[220px]">
+          <div className={`flex flex-col shrink-0 min-h-[40px] max-h-[220px] transition-colors border-t ${
+            sandboxTheme === 'dark'
+              ? 'bg-[#0B0F19] border-[#1F2937]/80'
+              : 'bg-slate-100/90 border-slate-200'
+          }`}>
             <button 
               onClick={() => setIsConsoleOpen(!isConsoleOpen)}
-              className="px-4 py-2.5 flex items-center justify-between hover:bg-slate-900 transition-colors w-full text-left"
+              className={`px-4 py-2.5 flex items-center justify-between transition-colors w-full text-left ${
+                sandboxTheme === 'dark' ? 'hover:bg-[#1F2937]/45' : 'hover:bg-slate-200/40'
+              }`}
             >
               <div className="flex items-center gap-2">
                 <Terminal size={14} className="text-teal-400 shrink-0" />
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-300">Console Logs</span>
+                <span className={`text-[10px] font-extrabold uppercase tracking-widest ${
+                  sandboxTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'
+                }`}>Console Logs</span>
                 {consoleLogs.length > 0 && (
                   <span className="px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] font-extrabold rounded-full">{consoleLogs.length}</span>
                 )}
@@ -413,28 +513,42 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                <span className="text-[10px] font-bold text-slate-400">Build Success</span>
+                <span className={`text-[10px] font-bold ${sandboxTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Build Success</span>
               </div>
             </button>
 
             {/* Console Log Panel */}
             {isConsoleOpen && (
-              <div className="flex flex-col flex-1 min-h-[140px] max-h-[180px] bg-[#0c1017] border-t border-slate-900 overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-1 bg-slate-950 shrink-0 border-b border-slate-900">
+              <div className={`flex flex-col flex-1 min-h-[140px] max-h-[180px] border-t overflow-hidden ${
+                sandboxTheme === 'dark'
+                  ? 'bg-[#0c1017] border-[#1F2937]/80'
+                  : 'bg-slate-50 border-slate-200'
+              }`}>
+                <div className={`flex items-center justify-between px-3 py-1 shrink-0 border-b ${
+                  sandboxTheme === 'dark'
+                    ? 'bg-slate-950 border-[#1F2937]/50'
+                    : 'bg-slate-100 border-slate-250/60'
+                }`}>
                   <span className="text-[9px] font-bold text-slate-500">Captured Output</span>
                   <button 
                     onClick={(e) => { e.stopPropagation(); setConsoleLogs([]); }} 
-                    className="text-[9px] font-bold text-slate-400 hover:text-white hover:underline"
+                    className={`text-[9px] font-bold hover:underline ${
+                      sandboxTheme === 'dark' ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800'
+                    }`}
                   >
                     Clear Logs
                   </button>
                 </div>
-                <div className="flex-1 p-3 overflow-y-auto custom-scrollbar font-mono text-[11px] text-teal-400/90 space-y-1 select-text">
+                <div className={`flex-1 p-3 overflow-y-auto custom-scrollbar font-mono text-[11px] space-y-1 select-text ${
+                  sandboxTheme === 'dark' ? 'text-teal-400/90' : 'text-teal-800'
+                }`}>
                   {consoleLogs.length === 0 ? (
                     <div className="text-slate-500 italic text-[10px]">No logs captured yet. Try adding console.log() in script.js</div>
                   ) : (
                     consoleLogs.map((log, idx) => (
-                      <div key={idx} className="border-b border-slate-900/50 pb-1 last:border-0 leading-relaxed break-all">
+                      <div key={idx} className={`border-b pb-1 last:border-0 leading-relaxed break-all ${
+                        sandboxTheme === 'dark' ? 'border-slate-900/50' : 'border-slate-200/50'
+                      }`}>
                         {log}
                       </div>
                     ))
