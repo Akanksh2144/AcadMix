@@ -57,6 +57,7 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
   const [editorHeight, setEditorHeight] = useState(300);
   const [isResizing, setIsResizing] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('saved');
+  const [isFormatted, setIsFormatted] = useState(false);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const editorRef = useRef<any>(null);
@@ -297,7 +298,11 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
 
   // Format active file using Monaco's built-in formatter
   const handleFormatCode = () => {
-    editorRef.current?.getAction('editor.action.formatDocument')?.run();
+    if (editorRef.current) {
+      editorRef.current.getAction('editor.action.formatDocument')?.run();
+      setIsFormatted(true);
+      setTimeout(() => setIsFormatted(false), 1000);
+    }
   };
 
   // Upload a .html / .css / .js file and inject its contents into the matching editor
@@ -681,15 +686,28 @@ const WebDevSandbox = ({ isDark }: { isDark: boolean }) => {
             <div className="flex items-center gap-1">
               <button
                 onClick={handleFormatCode}
-                className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors ${
-                  sandboxTheme === 'dark'
-                    ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/40'
-                    : 'bg-white border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-300'
+                className={`flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-lg border transition-all duration-300 ${
+                  isFormatted
+                    ? 'bg-emerald-500/10 border-emerald-500/45 text-emerald-400'
+                    : (sandboxTheme === 'dark'
+                        ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/40'
+                        : 'bg-white border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-300')
                 }`}
                 title="Format / Prettify code (editor.action.formatDocument)"
               >
-                <Sparkle size={10} />
-                Format
+                {isFormatted ? (
+                  <>
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
+                      <path d="M2.5 6l2.5 2.5 5-5"/>
+                    </svg>
+                    Formatted
+                  </>
+                ) : (
+                  <>
+                    <Sparkle size={10} />
+                    Format
+                  </>
+                )}
               </button>
               <button
                 onClick={forceRunPreview}
