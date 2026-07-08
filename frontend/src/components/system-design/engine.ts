@@ -277,8 +277,22 @@ export function runSimulation(
     // Calculate this node's metrics
     const capacity = getNodeCapacity(type, data);
     const latencyAdded = getNodeLatency(type, data);
-    const processedQPS = Math.min(incomingQPS, capacity);
-    const droppedQPS = Math.max(0, incomingQPS - capacity);
+    
+    // If the node has NO outbound connections, and it is NOT a valid sink, all incoming traffic is dropped
+    const isSink = ['sqlDatabase', 'nosqlDatabase', 'objectStorage', 'metricsDashboard', 'appServer'].includes(type);
+    const hasOutbound = (outbound[id] || []).length > 0;
+    
+    let processedQPS = 0;
+    let droppedQPS = 0;
+    
+    if (!hasOutbound && !isSink) {
+      processedQPS = 0;
+      droppedQPS = incomingQPS;
+    } else {
+      processedQPS = Math.min(incomingQPS, capacity);
+      droppedQPS = Math.max(0, incomingQPS - capacity);
+    }
+
     const utilization = capacity > 0 && capacity !== Infinity
       ? Math.min(incomingQPS / capacity, 1)
       : 0;
@@ -326,7 +340,7 @@ export function runSimulation(
     const node = nodeMap[id];
     if (!node) continue;
     if (node.type === 'client') {
-      totalQPS += metrics[id]?.processedQPS ?? 0;
+      totalQPS += node.data.requestsPerSec ?? 0;
     }
     totalFailed += metrics[id]?.droppedQPS ?? 0;
     totalCost += metrics[id]?.monthlyCost ?? 0;
