@@ -18,7 +18,7 @@ function UniversalNode({ id, data, type, nodeType }: NodeProps & { data: any; no
   return (
     <div
       className={`bg-[#FFFDF8] dark:bg-[#1E2433] border border-[#C8BFA9] dark:border-[#2E3545] border-l-[3px] rounded-xl shadow-sm min-w-[210px] transition-all ${
-        status === 'critical' ? 'ring-2 ring-red-500 bg-red-50/30 dark:bg-red-950/20' :
+        status === 'critical' || data?.chaosActive ? 'ring-2 ring-red-500 bg-red-50/30 dark:bg-red-950/20' :
         status === 'warning' ? 'ring-2 ring-amber-500 bg-amber-50/30 dark:bg-amber-950/20' : ''
       }`}
       style={{ borderLeftColor: color, fontFamily: "'Caveat', cursive" }}
@@ -30,15 +30,21 @@ function UniversalNode({ id, data, type, nodeType }: NodeProps & { data: any; no
             {label}
           </span>
         </div>
-        {status !== 'healthy' && (
+        {(status !== 'healthy' || data?.chaosActive) && (
           <WarningCircle 
             size={16} 
             weight="fill" 
-            className={status === 'critical' ? 'text-red-500 animate-pulse' : 'text-amber-500'} 
-            title={metrics?.bottleneck || 'Warning'} 
+            className={status === 'critical' || data?.chaosActive ? 'text-red-500 animate-pulse' : 'text-amber-500'} 
+            title={data?.chaosActive ? `Chaos Active: ${data.chaosActive}` : (metrics?.bottleneck || 'Warning')} 
           />
         )}
       </div>
+
+      {data?.chaosActive && (
+        <div className="mx-2 mb-1.5 px-2 py-0.5 rounded bg-red-500/15 border border-red-500/40 text-red-600 dark:text-red-400 text-xs font-bold font-[Caveat] flex items-center gap-1 animate-pulse truncate" title={data.chaosActive}>
+          <span>💥 {data.chaosActive}</span>
+        </div>
+      )}
 
       {metrics && (
         <div className="px-3 py-2 border-t border-[#E0D9CB] dark:border-[#2E3545] bg-[#F5F0E8]/60 dark:bg-[#161B28]/60 text-sm font-[Caveat]">

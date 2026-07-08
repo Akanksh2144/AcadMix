@@ -521,6 +521,75 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     }
   };
 
+  // Chaos Fault Injection Handler
+  const handleInjectChaos = useCallback((chaosItem: any) => {
+    if (!isSimulating) {
+      triggerAlert('Chaos Arena Locked', 'Please start the live simulation (▶ Run Simulation) first to inject faults and observe real-time cascading failures.', 'error');
+      return;
+    }
+
+    triggerAlert(
+      `💥 Chaos Injected: ${chaosItem.label}`,
+      `${chaosItem.description} — Observing real-time metric degradation and cascading failures across downstream services.`,
+      'error'
+    );
+
+    setNodes((currentNodes) => {
+      return currentNodes.map((node) => {
+        if (node.type === 'lane' || node.type === 'client') {
+          if (node.type === 'client' && chaosItem.impact?.qpsMultiplier) {
+            const oldQps = node.data?.requestsPerSec || 1000;
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                requestsPerSec: Math.round(oldQps * chaosItem.impact.qpsMultiplier),
+                chaosActive: `Surged ${chaosItem.impact.qpsMultiplier}x by ${chaosItem.label}`,
+              },
+            };
+          }
+          return node;
+        }
+
+        const currentErrors = typeof node.data?.errors === 'number' ? node.data.errors : 0;
+        const currentLatency = typeof node.data?.latency === 'number' ? node.data.latency : (typeof node.data?.customLatency === 'number' ? node.data.customLatency : 10);
+        const currentReplicas = typeof node.data?.replicas === 'number' ? node.data.replicas : 1;
+
+        const newErrors = Math.min(100, currentErrors + (chaosItem.impact?.errorRate || 0));
+        const newLatency = currentLatency + (chaosItem.impact?.addedLatency || 0);
+        const newReplicas = chaosItem.impact?.killReplicasPct
+          ? Math.max(1, Math.floor(currentReplicas * (1 - chaosItem.impact.killReplicasPct / 100)))
+          : currentReplicas;
+
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            errors: newErrors > 0 ? newErrors : undefined,
+            latency: newLatency !== 10 ? newLatency : undefined,
+            replicas: newReplicas,
+            chaosActive: chaosItem.label,
+          },
+        };
+      });
+    });
+  }, [isSimulating, triggerAlert, setNodes]);
+
+  // Clear Injected Chaos Faults
+  const handleClearChaos = useCallback(() => {
+    setNodes((currentNodes) => {
+      return currentNodes.map((node) => {
+        if (!node.data?.chaosActive && !node.data?.errors && !node.data?.latency) return node;
+        const { chaosActive, errors, latency, ...cleanData } = node.data;
+        return {
+          ...node,
+          data: cleanData,
+        };
+      });
+    });
+    triggerAlert('Chaos Faults Cleared', 'All injected fault states and degradation multipliers have been reset to baseline.', 'info');
+  }, [setNodes, triggerAlert]);
+
   // Reset Canvas
   const handleReset = () => {
     setNodes(currentChallenge.initialNodes);
@@ -584,8 +653,14 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
 
       {/* Workspace Split */}
       <div className="flex-1 flex min-h-0 overflow-hidden">
-        {/* Left Side: Component Palette */}
-        <ComponentPalette className="w-64 shrink-0 hidden md:flex" />
+        {/* Left Side: Component Palette & Chaos Arena */}
+        <ComponentPalette
+          className="w-64 shrink-0 hidden md:flex"
+          isSimulating={isSimulating}
+          onStartSimulation={handleRunSimulation}
+          onInjectChaos={handleInjectChaos}
+          onClearChaos={handleClearChaos}
+        />
 
         {/* Center: Canvas Workspace */}
         <div
