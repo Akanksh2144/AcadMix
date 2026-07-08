@@ -419,11 +419,12 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
 
         if (node.type === 'client') {
           if (chaosItem.impact?.qpsMultiplier) {
-            const oldQps = node.data?.requestsPerSec || 1000;
+            const oldQps = typeof node.data?.originalRequestsPerSec === 'number' ? node.data.originalRequestsPerSec : (node.data?.requestsPerSec || 1000);
             return {
               ...node,
               data: {
                 ...node.data,
+                originalRequestsPerSec: oldQps,
                 requestsPerSec: Math.round(oldQps * chaosItem.impact.qpsMultiplier),
                 chaosActive: `Surged ${chaosItem.impact.qpsMultiplier}x by ${chaosItem.label}`,
               },
@@ -434,21 +435,27 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
 
         const currentErrors = typeof node.data?.errors === 'number' ? node.data.errors : 0;
         const currentLatency = typeof node.data?.latency === 'number' ? node.data.latency : (typeof node.data?.customLatency === 'number' ? node.data.customLatency : 10);
-        const currentReplicas = typeof node.data?.replicas === 'number' ? node.data.replicas : 1;
+        const originalReplicas = typeof node.data?.originalReplicas === 'number' ? node.data.originalReplicas : (typeof node.data?.replicas === 'number' ? node.data.replicas : 1);
 
         const newErrors = Math.min(100, currentErrors + (chaosItem.impact?.errorRate || 0));
         const newLatency = currentLatency + (chaosItem.impact?.addedLatency || 0);
         const newReplicas = chaosItem.impact?.killReplicasPct
-          ? Math.max(1, Math.floor(currentReplicas * (1 - chaosItem.impact.killReplicasPct / 100)))
-          : currentReplicas;
+          ? Math.max(1, Math.floor(originalReplicas * (1 - chaosItem.impact.killReplicasPct / 100)))
+          : (typeof node.data?.replicas === 'number' ? node.data.replicas : originalReplicas);
+
+        const chaosCapacityMultiplier = chaosItem.impact?.capacityMultiplier
+          ? (typeof node.data?.chaosCapacityMultiplier === 'number' ? node.data.chaosCapacityMultiplier * chaosItem.impact.capacityMultiplier : chaosItem.impact.capacityMultiplier)
+          : node.data?.chaosCapacityMultiplier;
 
         return {
           ...node,
           data: {
             ...node.data,
+            originalReplicas,
             errors: newErrors > 0 ? newErrors : undefined,
             latency: newLatency !== 10 ? newLatency : undefined,
             replicas: newReplicas,
+            chaosCapacityMultiplier,
             chaosActive: chaosItem.label,
           },
         };
@@ -460,11 +467,15 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
   const handleClearChaos = useCallback(() => {
     setNodes((currentNodes) => {
       return currentNodes.map((node) => {
-        if (!node.data?.chaosActive && !node.data?.errors && !node.data?.latency) return node;
-        const { chaosActive, errors, latency, ...cleanData } = node.data;
+        if (!node.data?.chaosActive && !node.data?.errors && !node.data?.latency && !node.data?.chaosCapacityMultiplier) return node;
+        const { chaosActive, errors, latency, chaosCapacityMultiplier, originalReplicas, originalRequestsPerSec, ...cleanData } = node.data;
         return {
           ...node,
-          data: cleanData,
+          data: {
+            ...cleanData,
+            ...(typeof originalReplicas === 'number' ? { replicas: originalReplicas } : {}),
+            ...(typeof originalRequestsPerSec === 'number' ? { requestsPerSec: originalRequestsPerSec } : {}),
+          },
         };
       });
     });
@@ -476,11 +487,15 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     setNodes((currentNodes) => {
       return currentNodes.map((node) => {
         if (node.id !== nodeId) return node;
-        if (!node.data?.chaosActive && !node.data?.errors && !node.data?.latency) return node;
-        const { chaosActive, errors, latency, ...cleanData } = node.data;
+        if (!node.data?.chaosActive && !node.data?.errors && !node.data?.latency && !node.data?.chaosCapacityMultiplier) return node;
+        const { chaosActive, errors, latency, chaosCapacityMultiplier, originalReplicas, originalRequestsPerSec, ...cleanData } = node.data;
         return {
           ...node,
-          data: cleanData,
+          data: {
+            ...cleanData,
+            ...(typeof originalReplicas === 'number' ? { replicas: originalReplicas } : {}),
+            ...(typeof originalRequestsPerSec === 'number' ? { requestsPerSec: originalRequestsPerSec } : {}),
+          },
         };
       });
     });

@@ -147,7 +147,7 @@ const COST_TABLE: Record<string, number> = {
 
 // ── Capacity Limits ─────────────────────────────────────────────────────────
 
-function getNodeCapacity(type: string, data: Record<string, any>): number {
+function getRawNodeCapacity(type: string, data: Record<string, any>): number {
   if (data.throughput !== undefined && typeof data.throughput === 'number' && data.throughput > 0) {
     return data.throughput;
   }
@@ -304,6 +304,17 @@ function getNodeCapacity(type: string, data: Record<string, any>): number {
     default:
       return 10_000;
   }
+}
+
+function getNodeCapacity(type: string, data: Record<string, any>): number {
+  let base = getRawNodeCapacity(type, data);
+  if (base === Infinity) return base;
+  if (typeof data.chaosCapacityMultiplier === 'number' && data.chaosCapacityMultiplier > 0) {
+    base = Math.max(1, Math.round(base * data.chaosCapacityMultiplier));
+  } else if (typeof data.capacityMultiplier === 'number' && data.capacityMultiplier > 0) {
+    base = Math.max(1, Math.round(base * data.capacityMultiplier));
+  }
+  return base;
 }
 
 // ── Latency Calculation ─────────────────────────────────────────────────────
