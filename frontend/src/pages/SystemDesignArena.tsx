@@ -26,14 +26,17 @@ import '@xyflow/react/dist/style.css';
 import {
   Play, Trophy, Lightbulb, CornersOut, CornersIn,
   ArrowSquareOut, ArrowSquareIn, ArrowsClockwise,
-  Question, CheckCircle, Warning, X, CaretDown, CaretUp, BookOpen,
+  Question, CheckCircle, Warning, X, CaretDown, CaretUp, BookOpen, Stack,
+  Eraser, Lightning, Pause, Cursor,
 } from '@phosphor-icons/react';
 
 import PageHeader from '../components/PageHeader';
 import AlertModal from '../components/AlertModal';
 import ComponentPalette from '../components/system-design/ComponentPalette';
 import MetricsPanel from '../components/system-design/MetricsPanel';
+import { NodeDetailsPopup } from '../components/system-design/NodeDetailsPopup';
 import ChallengeSelector from '../components/system-design/ChallengeSelector';
+import SimulationSummaryModal from '../components/system-design/SimulationSummaryModal';
 import { CHALLENGES, checkChallengePassed } from '../components/system-design/challenges';
 import { runSimulation } from '../components/system-design/engine';
 import type { SimulationResult, ChallengeConfig } from '../components/system-design/types';
@@ -52,6 +55,7 @@ import ObjectStorageNode from '../components/system-design/nodes/ObjectStorageNo
 import MessageQueueNode from '../components/system-design/nodes/MessageQueueNode';
 import WorkerPoolNode from '../components/system-design/nodes/WorkerPoolNode';
 import MetricsDashboardNode from '../components/system-design/nodes/MetricsDashboardNode';
+import LaneNode from '../components/system-design/nodes/LaneNode';
 
 const nodeTypes = {
   client: ClientNode,
@@ -66,6 +70,30 @@ const nodeTypes = {
   messageQueue: MessageQueueNode,
   workerPool: WorkerPoolNode,
   metricsDashboard: MetricsDashboardNode,
+  lane: LaneNode,
+};
+
+import DataFlowEdge from '../components/system-design/edges/DataFlowEdge';
+
+const edgeTypes = {
+  dataFlow: DataFlowEdge,
+};
+
+const LANE_HEIGHT = 400;
+const LANE_WIDTH = 20000;
+const LANE_CONFIG = [
+  { id: 'lane-client', label: 'Client / Edge', color: 'purple', y: 0, height: LANE_HEIGHT, labelOffsetY: 0 },
+  { id: 'lane-network', label: 'Network / Ingress', color: 'blue', y: LANE_HEIGHT, height: LANE_HEIGHT, labelOffsetY: 0 },
+  { id: 'lane-compute', label: 'Compute / Logic', color: 'slate', y: LANE_HEIGHT * 2, height: LANE_HEIGHT, labelOffsetY: 0 },
+  { id: 'lane-data', label: 'Data / Storage', color: 'emerald', y: LANE_HEIGHT * 3, height: LANE_HEIGHT, labelOffsetY: 0 }
+];
+
+const getLaneForNode = (type: string) => {
+  if (['client', 'dns', 'cdn'].includes(type)) return 0;
+  if (['loadBalancer'].includes(type)) return 1;
+  if (['appServer', 'workerPool'].includes(type)) return 2;
+  if (['lane'].includes(type)) return -1;
+  return 3;
 };
 
 let nodeCounter = 1000;
@@ -86,14 +114,43 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     return saved ? new Set(JSON.parse(saved)) : new Set<string>();
   });
   const [showHintIndex, setShowHintIndex] = useState(0);
+  const [activePopupNodeId, setActivePopupNodeId] = useState<string | null>(null);
   const [isBriefExpanded, setIsBriefExpanded] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: '', message: '', type: 'info' as 'info' | 'error' | 'success' });
+  const [showLanes, setShowLanes] = useState(false);
+  const [activeTool, setActiveTool] = useState<'select' | 'eraser' | 'laser'>('select');
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
 
-  const { screenToFlowPosition, fitView } = useReactFlow();
+  const spofCount = useMemo(() => {
+    return nodes.filter(n => {
+      if (['appServer', 'workerPool', 'sqlDatabase', 'nosqlDatabase', 'cache'].includes(n.type || '')) {
+        const replicas = n.data?.replicas || n.data?.readReplicas || 1;
+        return replicas <= 1;
+      }
+      return false;
+    }).length;
+  }, [nodes]);
+
+  const { screenToFlowPosition, fitView, setCenter, getNodes } = useReactFlow();
   const workspaceRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [dynamicMinZoom, setDynamicMinZoom] = useState(0.25);
+
+  React.useEffect(() => {
+    const updateZoom = () => {
+      if (canvasRef.current) {
+        setDynamicMinZoom(canvasRef.current.clientHeight / (LANE_HEIGHT * 4));
+      }
+    };
+    updateZoom();
+    const observer = new ResizeObserver(updateZoom);
+    if (canvasRef.current) observer.observe(canvasRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // ── Callbacks ─────────────────────────────────────────────────────────────
 
@@ -102,6 +159,73 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     setAlertConfig({ title, message, type });
     setIsAlertOpen(true);
   };
+
+  const organizeIntoLanes = useCallback((currentNodes: Node[]) => {
+    const realNodes = currentNodes.filter(n => n.type !== 'lane');
+    const grouped: Record<number, Node[]> = { 0: [], 1: [], 2: [], 3: [] };
+    
+    realNodes.forEach(n => {
+      const laneIndex = getLaneForNode(n.type || '');
+      if (grouped[laneIndex]) {
+        grouped[laneIndex].push(n);
+      }
+    });
+
+    const newNodes: Node[] = [];
+    
+    if (showLanes) {
+      LANE_CONFIG.forEach((lane) => {
+        newNodes.push({
+          id: lane.id,
+          type: 'lane',
+          position: { x: -LANE_WIDTH / 2, y: lane.y },
+          data: { label: lane.label, color: lane.color, labelOffsetY: lane.labelOffsetY },
+          selectable: false,
+          draggable: false,
+          zIndex: -1,
+          style: { width: LANE_WIDTH, height: lane.height }
+        });
+      });
+    }
+
+    Object.keys(grouped).forEach(key => {
+      const laneIdx = Number(key);
+      const laneNodes = grouped[laneIdx];
+      // Center horizontally at x = 0
+      const startX = -(laneNodes.length * 350) / 2 + (350 / 2); 
+      
+      laneNodes.forEach((n, i) => {
+        newNodes.push({
+          ...n,
+          position: showLanes ? {
+             x: startX + (i * 350), 
+             y: LANE_CONFIG[laneIdx].y + (LANE_HEIGHT / 2) - 100
+          } : n.position
+        });
+      });
+    });
+
+    return newNodes;
+  }, [showLanes]);
+
+  const fitLanesView = useCallback(() => {
+    // Total height of all 4 lanes is LANE_HEIGHT * 4
+    // The exact vertical center is LANE_HEIGHT * 2
+    setCenter(0, LANE_HEIGHT * 2, { zoom: dynamicMinZoom, duration: 800 });
+  }, [setCenter, dynamicMinZoom]);
+
+  const nodeCountRef = useRef(nodes.length);
+  
+  React.useEffect(() => {
+    if (showLanes) {
+      setNodes(nds => organizeIntoLanes(nds));
+      setTimeout(() => fitLanesView(), 50);
+    } else {
+      setNodes(nds => nds.filter(n => n.type !== 'lane'));
+    }
+  }, [showLanes, organizeIntoLanes, setNodes, fitLanesView]);
+
+  // Removed second useEffect to prevent infinite render loop (Maximum update depth exceeded)
 
   // Node parameter update
   const handleNodeDataChange = useCallback(
@@ -128,32 +252,46 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
 
       let glowClass = '';
       if (status === 'critical') {
-        glowClass = '!border-rose-500 !shadow-2xl !shadow-rose-500/35 ring-2 ring-rose-500/30';
+        glowClass = '!border-[var(--accent-red)] ring-1 ring-[var(--accent-red)]/50';
       } else if (status === 'warning') {
-        glowClass = '!border-amber-500 !shadow-xl !shadow-amber-500/25 ring-2 ring-amber-500/15';
+        glowClass = '!border-[var(--accent-orange)] ring-1 ring-[var(--accent-orange)]/50';
       } else if (utilization > 0) {
-        glowClass = '!border-emerald-500 !shadow-lg !shadow-emerald-500/15';
+        glowClass = '!border-[var(--accent-green)]';
       } else {
         glowClass = 'opacity-90';
       }
 
       if (isSelected) {
-        glowClass += ' ring-2 ring-indigo-500/50 !border-indigo-550 !shadow-indigo-500/20';
+        glowClass += ' ring-1 ring-[var(--ink)] !border-[var(--ink)]';
+      }
+
+      const laneIndex = n.type && n.type !== 'lane' ? getLaneForNode(n.type) : -1;
+      let extent: any = undefined;
+      
+      // If lanes are on, strictly bind the node to its architectural lane vertically
+      if (showLanes && laneIndex !== -1) {
+        const paddingY = LANE_HEIGHT * 0.15; // 15% margin top and bottom (middle 70%)
+        extent = [
+          [-LANE_WIDTH, laneIndex * LANE_HEIGHT + paddingY],
+          [LANE_WIDTH, (laneIndex + 1) * LANE_HEIGHT - paddingY]
+        ];
       }
 
       return {
         ...n,
-        className: `transition-all duration-300 rounded-2xl ${glowClass}`,
+        extent,
+        className: `transition-colors transition-shadow duration-300 rounded-xl ${glowClass}`,
         data: {
           ...n.data,
           onDataChange: handleNodeDataChange,
           metrics: nodeMetrics,
+          isVertical: showLanes,
           // Inject overall sim result into dashboard nodes
           ...(n.type === 'metricsDashboard' ? { simResult } : {}),
         },
       };
     });
-  }, [nodes, handleNodeDataChange, simResult]);
+  }, [nodes, handleNodeDataChange, simResult, showLanes]);
 
   // Dynamic glowing and speed-controlled animated edges based on active traffic QPS load
   const enrichedEdges = useMemo(() => {
@@ -165,27 +303,28 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
       // Calculate speed: higher QPS = faster dash animations
       const animationSpeed = qps > 0 ? Math.max(0.5, 12 - Math.log(qps) * 1.0) : 0;
       
-      let strokeColor = '#94a3b8'; // Slate 400 when inactive
+      let strokeColor = 'var(--ink-faint)'; // Slate 400 when inactive
       if (isActive) {
         const utilization = sourceMetrics?.utilization ?? 0;
         if (utilization > 0.9) {
-          strokeColor = '#ef4444'; // Red for overloaded pipelines
+          strokeColor = 'var(--accent-red)'; // Red for overloaded pipelines
         } else if (utilization > 0.7) {
-          strokeColor = '#f59e0b'; // Amber warning pipelines
+          strokeColor = 'var(--accent-orange)'; // Amber warning pipelines
         } else {
-          strokeColor = '#6366f1'; // Indigo normal healthy pipelines
+          strokeColor = 'var(--accent-blue)'; // normal healthy pipelines
         }
       }
 
       return {
         ...e,
-        animated: isActive,
+        type: 'dataFlow',
+        animated: false,
         style: {
           stroke: strokeColor,
           strokeWidth: isActive ? 2.5 : 1.5,
-          transition: 'all 0.3s ease',
+          transition: 'stroke 0.3s ease, stroke-width 0.3s ease',
           animationDuration: isActive ? `${animationSpeed}s` : '0s',
-          filter: isActive ? `drop-shadow(0 0 4px ${strokeColor}50)` : 'none',
+          filter: 'none',
         },
       };
     });
@@ -305,8 +444,44 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simInputKey, currentChallenge]);
 
+  // Eraser & Laser tool handlers
+  const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    if (activeTool === 'eraser' || activeTool === 'laser') {
+      if (node.type === 'lane') return;
+      setNodes((nds) => nds.filter((n) => n.id !== node.id));
+      setEdges((eds) => eds.filter((e) => e.source !== node.id && e.target !== node.id));
+      return;
+    }
+  }, [activeTool, setNodes, setEdges]);
+
+  const handleEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
+    if (activeTool === 'eraser' || activeTool === 'laser') {
+      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+    }
+  }, [activeTool, setEdges]);
+
+  const handleNodeMouseEnter = useCallback((event: React.MouseEvent, node: Node) => {
+    if ((activeTool === 'eraser' || activeTool === 'laser') && event.buttons === 1) {
+      if (node.type === 'lane') return;
+      setNodes((nds) => nds.filter((n) => n.id !== node.id));
+      setEdges((eds) => eds.filter((e) => e.source !== node.id && e.target !== node.id));
+    }
+  }, [activeTool, setNodes, setEdges]);
+
+  const handleEdgeMouseEnter = useCallback((event: React.MouseEvent, edge: Edge) => {
+    if ((activeTool === 'eraser' || activeTool === 'laser') && event.buttons === 1) {
+      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+    }
+  }, [activeTool, setEdges]);
+
   // Run Load Test Simulation (Explicit verification with popup dialogs)
   const handleRunSimulation = () => {
+    if (isSimulating) {
+      setIsSimulating(false);
+      setShowSummaryModal(true);
+      return;
+    }
+
     if (nodes.length === 0) {
       triggerAlert('Empty Canvas', 'Drag and drop components to build your architecture first.', 'error');
       return;
@@ -340,28 +515,12 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
           newCompleted.add(currentChallenge.id);
           setCompletedChallenges(newCompleted);
           localStorage.setItem('acadmix_completed_sysdesign_challenges', JSON.stringify(Array.from(newCompleted)));
-
-          triggerAlert(
-            'Challenge Passed!',
-            `Outstanding work! Your system successfully handled ${currentChallenge.targetQPS} QPS under budget.`,
-            'success',
-          );
         } else {
-          // Cap grade to C- if the system did not meet the stage constraints
           result.grade = result.grade.startsWith('A') || result.grade.startsWith('B') ? 'C-' : result.grade;
-          triggerAlert(
-            'Verification Failed',
-            challengeRes.reasons.join('\n'),
-            'error',
-          );
         }
-      } else {
-        triggerAlert(
-          'Simulation Complete',
-          `Sandbox simulation processed ${result.system.successfulQPS} QPS with 0 errors.`,
-          'success',
-        );
       }
+      setSimResult(result);
+      setIsSimulating(true);
     } catch (err: any) {
       triggerAlert('Simulation Error', err.message || 'An error occurred during topological propagation.', 'error');
     }
@@ -372,6 +531,8 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     setNodes(currentChallenge.initialNodes);
     setEdges(currentChallenge.initialEdges);
     setSimResult(null);
+    setIsSimulating(false);
+    setShowSummaryModal(false);
     setShowHintIndex(0);
   };
 
@@ -381,6 +542,8 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     setNodes(challenge.initialNodes);
     setEdges(challenge.initialEdges);
     setSimResult(null);
+    setIsSimulating(false);
+    setShowSummaryModal(false);
     setShowHintIndex(0);
     // Auto-fit view after state registers
     setTimeout(() => fitView({ padding: 0.2, duration: 800 }), 100);
@@ -410,7 +573,7 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
   return (
     <div
       ref={workspaceRef}
-      className="h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300 relative"
+      className="h-screen flex flex-col bg-[var(--paper)] transition-colors duration-300 relative sda-canvas"
     >
       {/* Page Header (only when not in fullscreen mode) */}
       {!isFullScreen && (
@@ -436,95 +599,154 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
           onDrop={onDrop}
         >
           {/* Top Control Overlay */}
-          <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
+          <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none ">
             {/* Left buttons: Challenge selection + Hint */}
             <div className="flex items-center gap-2 pointer-events-auto">
               <button
                 onClick={() => setIsChallengeSelectorOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-850 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-extrabold transition-all border border-gray-200 dark:border-gray-800/80 shadow-md shadow-black/5 active:scale-95"
+                title="Select Stage"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--ink-border)] bg-[var(--paper-node)] text-[var(--ink-light)] hover:bg-[var(--paper-alt)] hover:text-[var(--ink)] transition-colors active:scale-95"
               >
-                <Trophy size={14} weight="fill" className="text-amber-500" />
-                Select Stage
+                <Trophy size={20} weight="fill" />
               </button>
 
               {currentChallenge.stage > 0 && (
                 <button
                   onClick={handleShowHint}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-gray-850 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-xl text-xs font-bold transition-all border border-gray-200 dark:border-gray-800/80 shadow-md shadow-black/5 active:scale-95"
+                  title={`Show Hint ${showHintIndex > 0 ? `(${showHintIndex}/${currentChallenge.hints.length})` : ''}`}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--ink-border)] bg-[var(--paper-node)] text-[var(--ink-light)] hover:bg-[var(--paper-alt)] hover:text-[var(--ink)] transition-colors active:scale-95"
                 >
-                  <Lightbulb size={14} weight="bold" className="text-amber-400" />
-                  Hint {showHintIndex > 0 ? `(${showHintIndex}/${currentChallenge.hints.length})` : ''}
+                  <Lightbulb size={20} weight="bold" className="text-[var(--accent-orange)]" />
                 </button>
               )}
             </div>
 
-            {/* Right buttons: Canvas actions */}
+            {/* Center / Right buttons: Canvas actions & tools */}
             <div className="flex items-center gap-2 pointer-events-auto">
+              {/* Tool Mode Selector */}
+              <div className="flex items-center rounded-xl border border-[var(--ink-border)] bg-[var(--paper-node)] p-0.5 shadow-sm">
+                <button
+                  onClick={() => setActiveTool('select')}
+                  title="Select / Drag Tool"
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${
+                    activeTool === 'select'
+                      ? 'bg-[var(--ink)] text-[var(--paper)] shadow-sm'
+                      : 'text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--paper-alt)]'
+                  }`}
+                >
+                  <Cursor size={18} weight="bold" />
+                </button>
+                <button
+                  onClick={() => setActiveTool('eraser')}
+                  title="Eraser Tool (Click or drag to erase)"
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${
+                    activeTool === 'eraser'
+                      ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20'
+                      : 'text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--paper-alt)]'
+                  }`}
+                >
+                  <Eraser size={18} weight="bold" />
+                </button>
+                <button
+                  onClick={() => setActiveTool('laser')}
+                  title="Laser Cutter (Slice across components & links to destroy)"
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${
+                    activeTool === 'laser'
+                      ? 'bg-rose-600 text-white shadow-sm shadow-rose-600/30 animate-pulse'
+                      : 'text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--paper-alt)]'
+                  }`}
+                >
+                  <Lightning size={18} weight="fill" />
+                </button>
+              </div>
+
+              <div className="w-px h-6 bg-[var(--ink-border)] mx-1" />
+
+              <button
+                onClick={() => setShowLanes(!showLanes)}
+                title="Toggle Architectural Lanes"
+                className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-colors active:scale-95 ${
+                  showLanes 
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20' 
+                    : 'bg-[var(--paper-node)] border-[var(--ink-border)] text-[var(--ink-light)] hover:bg-[var(--paper-alt)] hover:text-[var(--ink)]'
+                }`}
+              >
+                <Stack size={20} weight="bold" />
+              </button>
               <button
                 onClick={handleReset}
                 title="Reset Workspace"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-800/80 bg-white dark:bg-gray-850 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-700 transition-colors shadow-md shadow-black/5 active:scale-95"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--ink-border)] bg-[var(--paper-node)] text-[var(--ink-light)] hover:bg-[var(--paper-alt)] hover:text-[var(--ink)] transition-colors active:scale-95"
               >
-                <ArrowsClockwise size={16} weight="bold" />
+                <ArrowsClockwise size={20} weight="bold" />
               </button>
               <button
                 onClick={toggleFullScreen}
                 title="Fullscreen Toggle"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-800/80 bg-white dark:bg-gray-850 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-700 transition-colors shadow-md shadow-black/5 active:scale-95"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--ink-border)] bg-[var(--paper-node)] text-[var(--ink-light)] hover:bg-[var(--paper-alt)] hover:text-[var(--ink)] transition-colors active:scale-95"
               >
-                {isFullScreen ? <CornersIn size={16} weight="bold" /> : <CornersOut size={16} weight="bold" />}
+                {isFullScreen ? <CornersIn size={20} weight="bold" /> : <CornersOut size={20} weight="bold" />}
               </button>
               <button
                 onClick={handleRunSimulation}
-                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition-all shadow-lg shadow-emerald-500/25 active:scale-95 border-b-2 border-emerald-800"
+                className={`flex items-center gap-2 px-6 py-2 rounded-xl text-base font-bold transition-all active:scale-95 shadow-md ${
+                  isSimulating
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse shadow-rose-600/30'
+                    : 'bg-[var(--ink)] hover:opacity-90 text-[var(--paper)]'
+                }`}
               >
-                <Play size={12} weight="fill" />
-                Run Simulation
+                {isSimulating ? (
+                  <>
+                    <Pause size={18} weight="fill" />
+                    Stop Sim
+                  </>
+                ) : (
+                  <>
+                    <Play size={18} weight="fill" />
+                    Run Simulation
+                  </>
+                )}
               </button>
             </div>
           </div>
 
           {/* Challenge Brief Panel */}
           {currentChallenge.stage > 0 && (
-            <div className="absolute top-16 left-4 z-10 w-80 bg-white/95 dark:bg-[#1A202C]/95 backdrop-blur-md border border-slate-200/80 dark:border-white/10 p-4 rounded-2xl shadow-xl pointer-events-auto transition-all duration-300">
+            <div className="absolute top-16 left-4 z-10 w-80 bg-[var(--paper-node)] border border-[var(--ink-border)] p-4 rounded-xl shadow-sm pointer-events-auto transition-all duration-300 ">
               <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-extrabold text-xs uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-[var(--ink-light)] font-bold text-xs uppercase tracking-wider">
                   <BookOpen size={14} weight="bold" />
                   <span>Stage Brief</span>
                 </div>
                 <button
                   onClick={() => setIsBriefExpanded(!isBriefExpanded)}
-                  className="p-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                  className="p-1 rounded bg-transparent hover:bg-[var(--paper-alt)] text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
                 >
-                  {isBriefExpanded ? <CaretUp size={12} weight="bold" /> : <CaretDown size={12} weight="bold" />}
+                  {isBriefExpanded ? <CaretUp size={14} weight="bold" /> : <CaretDown size={14} weight="bold" />}
                 </button>
               </div>
 
               {isBriefExpanded ? (
                 <>
-                  <h4 className="text-sm font-black text-slate-900 dark:text-white mb-1.5">
+                  <h4 className="text-sm font-bold text-[var(--ink)] mb-1">
                     Stage {currentChallenge.stage}: {currentChallenge.title}
                   </h4>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+                  <p className="text-xs font-semibold text-[var(--ink-light)] leading-relaxed mb-3">
                     {currentChallenge.description}
                   </p>
-                  <div className="grid grid-cols-3 gap-2 border-t border-slate-100 dark:border-white/5 pt-3">
+                  <div className="grid grid-cols-2 gap-2 border-t border-[var(--ink-border)] pt-3">
                     <div>
-                      <span className="block text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Target</span>
-                      <span className="text-[11px] font-black text-slate-800 dark:text-slate-100">{currentChallenge.targetQPS.toLocaleString()} QPS</span>
+                      <span className="block text-[10px] font-bold text-[var(--ink-light)] tracking-wider uppercase mb-0.5">Target</span>
+                      <span className="text-sm font-bold text-[var(--ink)]">{currentChallenge.targetQPS.toLocaleString()} QPS</span>
                     </div>
                     <div>
-                      <span className="block text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Latency</span>
-                      <span className="text-[11px] font-black text-slate-800 dark:text-slate-100">&lt; {currentChallenge.maxLatencyP99}ms</span>
-                    </div>
-                    <div>
-                      <span className="block text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Budget</span>
-                      <span className="text-[11px] font-black text-slate-800 dark:text-slate-100">${currentChallenge.maxBudget}/mo</span>
+                      <span className="block text-[10px] font-bold text-[var(--ink-light)] tracking-wider uppercase mb-0.5">Latency</span>
+                      <span className="text-sm font-bold text-[var(--ink)]">&lt; {currentChallenge.maxLatencyP99}ms</span>
                     </div>
                   </div>
                 </>
               ) : (
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                <p className="text-sm font-bold text-[var(--ink)] truncate">
                   Stage {currentChallenge.stage}: {currentChallenge.title}
                 </p>
               )}
@@ -533,44 +755,66 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
 
           {/* Hint Overlay Banner */}
           {showHintIndex > 0 && currentChallenge.hints[showHintIndex - 1] && (
-            <div className="absolute top-16 left-4 right-4 z-10 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/30 rounded-2xl shadow-lg flex items-start gap-2.5 max-w-xl mx-auto pointer-events-auto">
-              <Lightbulb size={18} weight="fill" className="text-amber-500 shrink-0 mt-0.5" />
+            <div className="absolute top-16 left-4 right-4 z-10 p-4 bg-[var(--paper-node)] border border-[var(--accent-orange)] rounded-xl shadow-sm flex items-start gap-3 max-w-xl mx-auto pointer-events-auto ">
+              <Lightbulb size={24} weight="fill" className="text-[var(--accent-orange)] shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-0.5">Architect Tip</p>
-                <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                <p className="text-sm font-bold text-[var(--accent-orange)] tracking-wider mb-0.5">Architect Tip</p>
+                <p className="text-base text-[var(--ink)] leading-relaxed font-bold">
                   {currentChallenge.hints[showHintIndex - 1]}
                 </p>
               </div>
-              <button onClick={() => setShowHintIndex(0)} className="text-amber-500 hover:text-amber-700">
-                <X size={14} weight="bold" />
+              <button onClick={() => setShowHintIndex(0)} className="text-[var(--ink-light)] hover:text-[var(--ink)]">
+                <X size={18} weight="bold" />
               </button>
             </div>
           )}
 
           {/* Flow Diagram Canvas */}
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 relative" ref={canvasRef}>
+            {!showLanes && (
+              <style>{`
+                .react-flow__pane {
+                  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M6 2l12 11.2-5.8.5 3.3 7.3-2.3.9-3.2-7.4-4.4 4.8z' fill='%231e293b' stroke='%23ffffff' stroke-width='1.5'/%3E%3C/svg%3E"), default !important;
+                }
+              `}</style>
+            )}
             <ReactFlow
               nodes={enrichedNodes}
               edges={enrichedEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
+              onNodeClick={handleNodeClick}
+              onEdgeClick={handleEdgeClick}
+              onNodeMouseEnter={handleNodeMouseEnter}
+              onEdgeMouseEnter={handleEdgeMouseEnter}
+              onNodeDoubleClick={(_, node) => setActivePopupNodeId(node.id)}
+              onPaneClick={() => setActivePopupNodeId(null)}
+              onNodeDragStart={() => setActivePopupNodeId(null)}
               nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
               fitView
               deleteKeyCode="Delete"
-              defaultEdgeOptions={{ animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } }}
+              defaultEdgeOptions={{ type: 'dataFlow', animated: false, style: { stroke: '#6366f1', strokeWidth: 2 } }}
               proOptions={{ hideAttribution: true }}
+              minZoom={showLanes ? dynamicMinZoom : 0.1}
+              translateExtent={showLanes ? [[-LANE_WIDTH, 0], [LANE_WIDTH, LANE_HEIGHT * 4]] : undefined}
             >
-              <Background
-                variant={BackgroundVariant.Dots}
-                gap={20}
-                size={1}
-                color="rgba(148, 163, 184, 0.15)"
-              />
+              {showLanes && (
+                <Background
+                  variant={BackgroundVariant.Lines}
+                  gap={24}
+                  size={0.5}
+                  color="var(--grid)"
+                  className="opacity-30"
+                />
+              )}
               <Controls
                 position="bottom-left"
-                className="!bg-white/80 dark:!bg-gray-800/80 !border !border-gray-200 dark:!border-gray-700 !rounded-xl !shadow-lg backdrop-blur-sm"
+                className="!bg-[var(--paper-alt)] !border !border-[var(--ink-border)] !rounded-xl !shadow-sm"
               />
+
+
               
               <Panel position="bottom-center">
                 <div className="flex items-center gap-3 text-[10px] text-gray-400 dark:text-gray-500 font-mono bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-xl px-4 py-2 border border-gray-200/50 dark:border-gray-700/50 shadow-sm mb-2">
@@ -585,12 +829,50 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
                   </span>
                 </div>
               </Panel>
+
+              {activeTool !== 'select' && (
+                <Panel position="top-center">
+                  <div className={`flex items-center gap-3 px-5 py-2.5 rounded-2xl shadow-xl border font-bold text-sm backdrop-blur-md animate-bounce ${
+                    activeTool === 'eraser'
+                      ? 'bg-amber-500/90 text-white border-amber-400 shadow-amber-500/20'
+                      : 'bg-rose-600/90 text-white border-rose-400 shadow-rose-600/30'
+                  }`}>
+                    {activeTool === 'eraser' ? (
+                      <>
+                        <Eraser size={20} weight="fill" />
+                        <span>Eraser Tool Active — Click or drag across components &amp; links to erase them!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lightning size={20} weight="fill" />
+                        <span>Laser Cutter Active — Slice through components &amp; links to vaporize them!</span>
+                      </>
+                    )}
+                    <button
+                      onClick={() => setActiveTool('select')}
+                      className="ml-2 px-2.5 py-1 bg-black/20 hover:bg-black/30 rounded-lg text-xs font-extrabold transition-colors"
+                    >
+                      Exit
+                    </button>
+                  </div>
+                </Panel>
+              )}
+              
+              <NodeDetailsPopup 
+                selectedNode={activePopupNodeId ? enrichedNodes.find(n => n.id === activePopupNodeId) : null}
+                selectedNodeMetrics={(() => {
+                  const sel = activePopupNodeId ? enrichedNodes.find(n => n.id === activePopupNodeId) : null;
+                  return sel ? simResult?.nodeMetrics[sel.id] : undefined;
+                })()}
+                simResult={simResult}
+                onClose={() => setActivePopupNodeId(null)}
+              />
             </ReactFlow>
           </div>
         </div>
 
         {/* Right Side: Metrics Dashboard */}
-        <div className="w-80 shrink-0 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 flex flex-col">
+        <div className="w-80 shrink-0 border-l border-[var(--ink-border)] bg-[var(--paper-alt)] flex flex-col">
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
             <h3 className="text-xs font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
               Telemetry Dashboard
@@ -601,11 +883,6 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
               result={simResult}
               challengeTargets={currentChallenge.stage > 0 ? currentChallenge : undefined}
               challengeResult={challengeResult}
-              selectedNode={nodes.find(n => n.selected)}
-              selectedNodeMetrics={(() => {
-                const sel = nodes.find(n => n.selected);
-                return sel ? simResult?.nodeMetrics[sel.id] : undefined;
-              })()}
             />
           </div>
         </div>
@@ -627,6 +904,17 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
         onClose={() => setIsAlertOpen(false)}
         title={alertConfig.title}
         message={alertConfig.message}
+      />
+
+      {/* Simulation Summary Modal */}
+      <SimulationSummaryModal
+        isOpen={showSummaryModal}
+        onClose={() => setShowSummaryModal(false)}
+        result={simResult}
+        targetQPS={currentChallenge.targetQPS}
+        maxLatencyP99={currentChallenge.maxLatencyP99}
+        nodesCount={nodes.filter(n => n.type !== 'lane').length}
+        spofCount={spofCount}
       />
     </div>
   );

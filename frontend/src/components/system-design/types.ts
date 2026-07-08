@@ -170,8 +170,8 @@ export interface ChallengeConfig {
   targetQPS: number;
   /** Maximum acceptable p99 latency (ms) */
   maxLatencyP99: number;
-  /** Monthly budget cap ($) */
-  maxBudget: number;
+  /** Monthly budget cap ($) - deprecated/optional */
+  maxBudget?: number;
   /** Pre-placed nodes for this challenge */
   initialNodes: Array<{
     id: string;

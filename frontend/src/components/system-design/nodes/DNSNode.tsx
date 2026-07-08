@@ -3,53 +3,21 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Globe } from '@phosphor-icons/react';
 
 function DNSNode({ id, data }: NodeProps & { data: any }) {
-  const onChange = (field: string, value: any) => {
-    data.onDataChange?.(id, field, value);
-  };
-
   return (
-    <div className="bg-white dark:bg-gray-800 border-2 border-sky-400 dark:border-sky-500 rounded-2xl shadow-lg shadow-sky-500/10 min-w-[210px] overflow-hidden">
-      <div className="bg-gradient-to-r from-sky-500 to-blue-500 px-4 py-2 flex items-center gap-2">
-        <Globe size={16} weight="bold" className="text-white" />
-        <span className="text-xs font-bold text-white uppercase tracking-wider">DNS Resolver</span>
-      </div>
-
-      <div className="p-3 space-y-2.5">
-        <div>
-          <label className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            TTL: <span className="text-sky-500 font-bold">{data.ttl ?? 300}s</span>
-          </label>
-          <input
-            type="range"
-            min={1}
-            max={3600}
-            step={10}
-            value={data.ttl ?? 300}
-            onChange={(e) => onChange('ttl', Number(e.target.value))}
-            className="nodrag w-full h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-700 accent-sky-500 cursor-pointer"
-          />
-        </div>
-
-        <div>
-          <label className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Routing Policy</label>
-          <select
-            value={data.routingPolicy || 'round-robin'}
-            onChange={(e) => onChange('routingPolicy', e.target.value)}
-            className="nodrag w-full mt-0.5 px-2.5 py-1.5 text-xs rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-sky-400 focus:border-transparent outline-none transition-all"
-          >
-            <option value="round-robin">Round Robin</option>
-            <option value="geo">Geographic</option>
-            <option value="weighted">Weighted</option>
-            <option value="failover">Failover</option>
-          </select>
-        </div>
+    <div
+      className="bg-[#FFFDF8] dark:bg-[#1E2433] border border-[#C8BFA9] dark:border-[#2E3545] border-l-[3px] rounded-xl shadow-sm min-w-[210px]"
+      style={{ borderLeftColor: '#4A7FBA', fontFamily: "'Caveat', cursive" }}
+    >
+      <div className="px-4 py-2.5 flex items-center gap-2">
+        <Globe size={16} weight="bold" style={{ color: '#4A7FBA' }} />
+        <span className="text-base font-bold text-[#2D2D2D] dark:text-[#D4D4D4] font-[Caveat]">DNS Resolver</span>
       </div>
 
       {data.metrics && (
-        <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 text-[10px]">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-500">QPS: {data.metrics.processedQPS.toFixed(0)}</span>
-            <span className={`font-bold ${data.metrics.status === 'healthy' ? 'text-emerald-500' : 'text-red-500'}`}>
+        <div className="px-3 py-2 border-t border-[#E0D9CB] dark:border-[#2E3545] bg-[#F5F0E8]/60 dark:bg-[#161B28]/60 text-sm">
+          <div className="flex items-center justify-between font-[Caveat]">
+            <span className="text-[#6B6B6B] dark:text-[#8B8B9A] font-semibold">QPS: {data.metrics.processedQPS.toFixed(0)}</span>
+            <span className={`font-semibold ${data.metrics.status === 'healthy' ? 'text-[#5B9A6F]' : 'text-[#C45B5B]'}`}>
               +{data.metrics.latencyAdded}ms
             </span>
           </div>
@@ -58,13 +26,13 @@ function DNSNode({ id, data }: NodeProps & { data: any }) {
 
       <Handle
         type="target"
-        position={Position.Left}
-        className="!w-3.5 !h-3.5 !bg-sky-500 !border-2 !border-white dark:!border-gray-800 !rounded-full !shadow-md"
+        position={data?.isVertical ? Position.Top : Position.Left}
+        className="!w-3 !h-3 !bg-[#3D3D3D] dark:!bg-[#8B8B9A] !border-2 !border-[#FFFDF8] dark:!border-[#1E2433] !rounded-full !shadow-none"
       />
       <Handle
         type="source"
-        position={Position.Right}
-        className="!w-3.5 !h-3.5 !bg-sky-500 !border-2 !border-white dark:!border-gray-800 !rounded-full !shadow-md"
+        position={data?.isVertical ? Position.Bottom : Position.Right}
+        className="!w-3 !h-3 !bg-[#3D3D3D] dark:!bg-[#8B8B9A] !border-2 !border-[#FFFDF8] dark:!border-[#1E2433] !rounded-full !shadow-none"
       />
     </div>
   );

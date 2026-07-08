@@ -17,7 +17,6 @@ export const CHALLENGES: ChallengeConfig[] = [
     description: 'Free-build mode. Design any system architecture without constraints. Experiment freely with all components.',
     targetQPS: 0,
     maxLatencyP99: Infinity,
-    maxBudget: Infinity,
     initialNodes: [],
     initialEdges: [],
     hints: [
@@ -36,7 +35,6 @@ export const CHALLENGES: ChallengeConfig[] = [
     description: 'Design a high-throughput URL shortener like TinyURL. Read requests (redirects) dominate the traffic. Minimize redirect latency under heavy load.',
     targetQPS: 100000,
     maxLatencyP99: 80,
-    maxBudget: 500,
     initialNodes: [
       {
         id: 'client-1',
@@ -77,7 +75,6 @@ export const CHALLENGES: ChallengeConfig[] = [
     description: 'Design WhatsApp. The system must support low-latency message delivery, connection persistence (WebSockets), and buffer offline writes.',
     targetQPS: 300000,
     maxLatencyP99: 120,
-    maxBudget: 1500,
     initialNodes: [
       {
         id: 'client-1',
@@ -118,7 +115,6 @@ export const CHALLENGES: ChallengeConfig[] = [
     description: 'Scale video streaming traffic globally. Deliver heavy video chunks with sub-100ms startup times, and transcode video uploads asynchronously.',
     targetQPS: 500000,
     maxLatencyP99: 150,
-    maxBudget: 2500,
     initialNodes: [
       {
         id: 'client-1',
@@ -159,7 +155,6 @@ export const CHALLENGES: ChallengeConfig[] = [
     description: 'Design Uber. Handle high-frequency GPS coordinate updates from drivers, run real-time geospatial searches, and dispatch rides.',
     targetQPS: 150000,
     maxLatencyP99: 100,
-    maxBudget: 1800,
     initialNodes: [
       {
         id: 'client-1',
@@ -200,7 +195,6 @@ export const CHALLENGES: ChallengeConfig[] = [
     description: 'Design a flash sale or stock trading platform. Prevent double-booking/over-selling of limited stock under massive spikes of write requests.',
     targetQPS: 250000,
     maxLatencyP99: 110,
-    maxBudget: 3000,
     initialNodes: [
       {
         id: 'client-1',
@@ -241,7 +235,6 @@ export const CHALLENGES: ChallengeConfig[] = [
     description: 'Design a distributed search engine web crawler. Download web content, cache active DNS, filter duplicate links, and store pages.',
     targetQPS: 80000,
     maxLatencyP99: 200,
-    maxBudget: 1500,
     initialNodes: [
       {
         id: 'client-1',
@@ -282,7 +275,6 @@ export const CHALLENGES: ChallengeConfig[] = [
     description: 'Design Twitter. Scale the global news feed to 1 Million QPS. Support dynamic timeline generation, media file CDNs, and sharded databases.',
     targetQPS: 1000000,
     maxLatencyP99: 100,
-    maxBudget: 8000,
     initialNodes: [
       {
         id: 'client-1',
@@ -326,10 +318,6 @@ export function checkChallengePassed(
 
   if (result.system.errorRate > 0.05) {
     reasons.push(`Error rate ${(result.system.errorRate * 100).toFixed(1)}% exceeds 5% threshold`);
-  }
-
-  if (result.system.totalMonthlyCost > challenge.maxBudget) {
-    reasons.push(`Monthly cost $${result.system.totalMonthlyCost.toFixed(0)} exceeds $${challenge.maxBudget} budget`);
   }
 
   if (result.system.successfulQPS < challenge.targetQPS * 0.95) {

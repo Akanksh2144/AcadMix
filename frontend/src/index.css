@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -565,17 +565,10 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   background: #6366F1;
 }
 
-/* ══════════════════════════════════════════════
-   UTILITY OVERRIDES FOR CONSISTENCY
-   ══════════════════════════════════════════════ */
-
-/* Ensure all focus rings are consistent indigo */
 *:focus-visible {
   outline: 2px solid rgba(99, 102, 241, 0.5);
   outline-offset: 2px;
 }
-
-/* Consistent selection color */
 ::selection {
   background: rgba(99, 102, 241, 0.2);
   color: inherit;
@@ -584,51 +577,101 @@ html.dark ::selection {
   background: rgba(99, 102, 241, 0.3);
 }
 
-/* ══════════════════════════════════════════════
-   REACT FLOW FIXES
-   ══════════════════════════════════════════════ */
-.react-flow__controls {
-  overflow: hidden;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-  border: 1px solid #e5e7eb !important;
-}
-html.dark .react-flow__controls {
-  border-color: #374151 !important;
-}
-
 .react-flow__controls-button {
-  width: 32px !important;
-  height: 32px !important;
+  width: 30px !important;
+  height: 30px !important;
   padding: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  border-bottom: 1px solid #e5e7eb !important;
-  background-color: #ffffff !important;
-  color: #374151 !important;
+  border-bottom: 1px solid var(--ink-border) !important;
+  background-color: var(--paper-node) !important;
+  color: var(--ink) !important;
 }
 .react-flow__controls-button:last-child {
   border-bottom: none !important;
 }
 html.dark .react-flow__controls-button {
-  background-color: #1f2937 !important;
-  border-color: #374151 !important;
-  color: #d1d5db !important;
+  background-color: var(--paper-node) !important;
+  border-color: var(--ink-border) !important;
+  color: var(--ink) !important;
 }
 
 .react-flow__controls-button svg {
-  max-width: 14px !important;
-  max-height: 14px !important;
+  max-width: 13px !important;
+  max-height: 13px !important;
 }
 
-/* React Flow Edge Selection Styling */
+/* Edge styling — ink strokes */
 .react-flow__edge.selected .react-flow__edge-path {
-  stroke: #6366f1 !important;
-  stroke-width: 4 !important;
-  filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.5)) !important;
+  stroke: var(--ink) !important;
+  stroke-width: 3 !important;
+  filter: none !important;
 }
 
 .react-flow__edge:hover .react-flow__edge-path {
-  stroke-width: 3 !important;
+  stroke-width: 2.5 !important;
 }
+
+/* Selection box */
+.react-flow__selection {
+  border: 1px dashed var(--ink-light) !important;
+  background: rgba(123, 104, 174, 0.05) !important;
+}
+
+/* ----------------------------------------------
+   REACT FLOW � PAPER-INK CANVAS
+   ---------------------------------------------- */
+
+/* Paper-ink design system custom properties */
+:root {
+  --paper: #FFFFFF;
+  --paper-alt: #F8F9FA;
+  --paper-node: #FFFFFF;
+  --grid: #E2E8F0;
+  --ink: #0F172A;
+  --ink-light: #64748B;
+  --ink-faint: #94A3B8;
+  --ink-border: #CBD5E1;
+  --ink-border-light: #E2E8F0;
+  --accent-blue: #3B82F6;
+  --accent-green: #10B981;
+  --accent-orange: #F59E0B;
+  --accent-red: #EF4444;
+  --accent-purple: #8B5CF6;
+  --accent-teal: #14B8A6;
+  --accent-pink: #EC4899;
+}
+
+html.dark {
+  --paper: #FFFFFF;
+  --paper-alt: #F8F9FA;
+  --paper-node: #FFFFFF;
+  --grid: #E2E8F0;
+  --ink: #0F172A;
+  --ink-light: #64748B;
+  --ink-faint: #94A3B8;
+  --ink-border: #CBD5E1;
+  --ink-border-light: #E2E8F0;
+  --accent-blue: #3B82F6;
+  --accent-green: #10B981;
+  --accent-orange: #F59E0B;
+  --accent-red: #EF4444;
+  --accent-purple: #8B5CF6;
+  --accent-teal: #14B8A6;
+  --accent-pink: #EC4899;
+}
+
+/* Controls (zoom in/out/fit) */
+.react-flow__controls {
+  overflow: hidden;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid var(--ink-border) !important;
+  background: var(--paper-alt) !important;
+}
+html.dark .react-flow__controls {
+  border-color: var(--ink-border) !important;
+  background: var(--paper-alt) !important;
+}
+

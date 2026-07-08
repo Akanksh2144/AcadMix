@@ -17,10 +17,11 @@ import {
   Stack, HardDrive, Queue, Robot,
 } from '@phosphor-icons/react';
 import type { SimulationResult } from './types';
+import { NodeConfigurationMenu } from './NodeConfigurationMenu';
 
 // ── Concept Guide Map ───────────────────────────────────────────────────────
 
-const CONCEPT_GUIDES: Record<string, { title: string; category: string; description: string; tradeOffs: string[] }> = {
+export const CONCEPT_GUIDES: Record<string, { title: string; category: string; description: string; tradeOffs: string[] }> = {
   client: {
     title: 'Client / Users',
     category: 'Traffic Generator',
@@ -133,7 +134,7 @@ const CONCEPT_GUIDES: Record<string, { title: string; category: string; descript
   }
 };
 
-function getIconForType(type: string) {
+export function getIconForType(type: string) {
   switch (type) {
     case 'client': return Users;
     case 'dns': return Globe;
@@ -161,36 +162,21 @@ interface MetricsPanelProps {
     targetQPS: number;
   };
   challengeResult?: { passed: boolean; reasons: string[] };
-  selectedNode?: any;
-  selectedNodeMetrics?: any;
 }
 
 export default function MetricsPanel({
   result,
   challengeTargets,
   challengeResult,
-  selectedNode,
-  selectedNodeMetrics,
 }: MetricsPanelProps) {
-  const [activeTab, setActiveTab] = React.useState<'system' | 'node'>('system');
-
-  // Auto-toggle tab when user selects/deselects a node
-  React.useEffect(() => {
-    if (selectedNode) {
-      setActiveTab('node');
-    } else {
-      setActiveTab('system');
-    }
-  }, [selectedNode]);
-
   if (!result) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center px-6 py-10">
-        <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-          <ChartLineUp size={28} weight="duotone" className="text-gray-400" />
+      <div className="h-full flex flex-col items-center justify-center text-center px-6 py-10 ">
+        <div className="w-16 h-16 rounded-2xl bg-[var(--paper-node)] border border-[var(--ink-border)] flex items-center justify-center mb-4">
+          <ChartLineUp size={28} weight="bold" className="text-[var(--ink-light)]" />
         </div>
-        <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-1">No Simulation Data</h4>
-        <p className="text-xs text-gray-400 dark:text-gray-500 leading-relaxed max-w-[200px]">
+        <h4 className="text-xl font-bold text-[var(--ink)] mb-1">No Simulation Data</h4>
+        <p className="text-lg text-[var(--ink-light)] leading-relaxed max-w-[200px]">
           Click <strong>Run Simulation</strong> to test your architecture under load.
         </p>
       </div>
@@ -201,104 +187,90 @@ export default function MetricsPanel({
 
   // Latency chart data
   const latencyData = [
-    { name: 'p50', value: system.p50Latency, fill: '#22c55e' },
-    { name: 'p95', value: system.p95Latency, fill: '#f59e0b' },
-    { name: 'p99', value: system.p99Latency, fill: system.p99Latency > 200 ? '#ef4444' : '#f59e0b' },
+    { name: 'p50', value: system.p50Latency, fill: 'var(--accent-green)' },
+    { name: 'p95', value: system.p95Latency, fill: 'var(--accent-orange)' },
+    { name: 'p99', value: system.p99Latency, fill: system.p99Latency > 200 ? 'var(--accent-red)' : 'var(--accent-orange)' },
   ];
 
   // Grade color
-  const gradeColor = grade.startsWith('A') ? 'text-emerald-500' : grade.startsWith('B') ? 'text-blue-500' : grade.startsWith('C') ? 'text-amber-500' : 'text-red-500';
-  const gradeBg = grade.startsWith('A') ? 'bg-emerald-50 dark:bg-emerald-500/10' : grade.startsWith('B') ? 'bg-blue-50 dark:bg-blue-500/10' : grade.startsWith('C') ? 'bg-amber-50 dark:bg-amber-500/10' : 'bg-red-50 dark:bg-red-500/10';
+  const gradeColor = grade.startsWith('A') ? 'text-[var(--accent-green)]' : grade.startsWith('B') ? 'text-[var(--accent-blue)]' : grade.startsWith('C') ? 'text-[var(--accent-orange)]' : 'text-[var(--accent-red)]';
 
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden">
-      {/* Pill-shaped Tab Selector */}
-      {selectedNode && (
-        <div className="mx-3 mt-3 p-1 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center shrink-0">
-          <button
-            onClick={() => setActiveTab('system')}
-            className={`flex-1 py-1.5 px-3 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all ${activeTab === 'system' ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
-          >
-            System Metrics
-          </button>
-          <button
-            onClick={() => setActiveTab('node')}
-            className={`flex-1 py-1.5 px-3 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all ${activeTab === 'node' ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
-          >
-            Node Details
-          </button>
-        </div>
-      )}
-
-      {/* Tab Panels */}
       <div className="flex-1 overflow-y-auto min-h-0">
-        {activeTab === 'system' ? (
-          <div className="pb-4">
-            {/* Challenge Result Banner */}
-            {challengeResult && (
-              <div className={`mx-3 mt-3 p-3 rounded-xl border ${challengeResult.passed ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20' : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20'}`}>
-                <div className="flex items-center gap-2 mb-1">
-                  {challengeResult.passed
-                    ? <CheckCircle size={18} weight="fill" className="text-emerald-500" />
-                    : <XCircle size={18} weight="fill" className="text-red-500" />
-                  }
-                  <span className={`text-xs font-extrabold uppercase tracking-wider ${challengeResult.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {challengeResult.passed ? 'Challenge Passed!' : 'Not Passing'}
-                  </span>
-                </div>
-                {!challengeResult.passed && challengeResult.reasons.length > 0 && (
-                  <ul className="space-y-0.5 mt-1.5">
-                    {challengeResult.reasons.map((r, i) => (
-                      <li key={i} className="text-[10px] text-red-500 dark:text-red-400 flex items-start gap-1.5">
-                        <span className="mt-0.5 shrink-0">•</span>
-                        {r}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+        <div className="pb-4">
+          {/* Challenge Result Banner */}
+          {challengeResult && (
+            <div className={`mx-3 mt-3 p-3 rounded-xl border ${challengeResult.passed ? 'bg-[var(--paper-node)] border-[var(--accent-green)] text-[var(--accent-green)]' : 'bg-[var(--paper-node)] border-[var(--accent-red)] text-[var(--accent-red)]'} `}>
+              <div className="flex items-center gap-2 mb-1">
+                {challengeResult.passed
+                  ? <CheckCircle size={20} weight="bold" />
+                  : <XCircle size={20} weight="bold" />
+                }
+                <span className="text-lg font-bold tracking-wider">
+                  {challengeResult.passed ? 'Challenge Passed!' : 'Not Passing'}
+                </span>
               </div>
-            )}
+              {!challengeResult.passed && challengeResult.reasons.length > 0 && (
+                <ul className="space-y-0.5 mt-1.5">
+                  {challengeResult.reasons.map((r, i) => (
+                    <li key={i} className="text-sm font-bold opacity-90 flex items-start gap-1.5">
+                      <span className="shrink-0 mt-0.5">•</span>
+                      <span>{r}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
-            {/* Grade Card */}
-            <div className="mx-3 mt-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Trophy size={18} weight="duotone" className="text-amber-500" />
-                  <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">System Grade</span>
-                </div>
-                <div className={`${gradeBg} px-3 py-1 rounded-lg`}>
-                  <span className={`text-xl font-black ${gradeColor}`}>{grade}</span>
-                </div>
+          {/* Grade Header */}
+          <div className="px-4 pt-4 pb-2">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-lg font-extrabold text-[var(--ink)]">Performance</h4>
+              <div className="flex items-center gap-1.5 bg-[var(--paper-node)] px-2 py-1 rounded-lg border border-[var(--ink-border)]">
+                <Trophy size={16} weight="bold" className={gradeColor} />
+                <span className={`text-lg font-black ${gradeColor}`}>{grade}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-3 space-y-3">
+            {/* System KPIs */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="p-3 bg-[var(--paper-node)] rounded-xl border border-[var(--ink-border)]">
+                <span className="block text-xs font-bold text-[var(--ink-light)] tracking-wider mb-0.5">Max Throughput</span>
+                <span className="text-xl font-bold text-[var(--ink)]">{formatNum(system.successfulQPS)} QPS</span>
+              </div>
+              <div className="p-3 bg-[var(--paper-node)] rounded-xl border border-[var(--ink-border)]">
+                <span className="block text-xs font-bold text-[var(--ink-light)] tracking-wider mb-0.5">Availability</span>
+                <span className={`text-xl font-bold ${system.availabilityPercent < 99 ? 'text-[var(--accent-red)]' : 'text-[var(--accent-green)]'}`}>
+                  {system.availabilityPercent.toFixed(2)}%
+                </span>
+              </div>
+              <div className="p-3 bg-[var(--paper-node)] rounded-xl border border-[var(--ink-border)]">
+                <span className="block text-xs font-bold text-[var(--ink-light)] tracking-wider mb-0.5">Global Error Rate</span>
+                <span className={`text-xl font-bold ${system.errorRate > 0.05 ? 'text-[var(--accent-red)]' : system.errorRate > 0.01 ? 'text-[var(--accent-orange)]' : 'text-[var(--ink)]'}`}>
+                  {(system.errorRate * 100).toFixed(1)}%
+                </span>
+              </div>
+              <div className="p-3 bg-[var(--paper-node)] rounded-xl border border-[var(--ink-border)]">
+                <span className="block text-xs font-bold text-[var(--ink-light)] tracking-wider mb-0.5">Peak Saturation</span>
+                <span className="text-xl font-bold text-[var(--ink)]">
+                  {(Math.max(0, ...Object.values(nodeMetrics).map(m => m.utilization)) * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="col-span-2 p-3 bg-[var(--paper-node)] rounded-xl border border-[var(--ink-border)]">
+                <span className="block text-xs font-bold text-[var(--ink-light)] tracking-wider mb-0.5">Est. Network</span>
+                <span className="text-xl font-bold text-[var(--ink)]">{formatNum(system.successfulQPS * 0.05)} MB/s</span>
               </div>
             </div>
 
-            {/* Key Metrics Grid */}
-            <div className="grid grid-cols-2 gap-2 mx-3 mt-3">
-              {[
-                { icon: Lightning, label: 'Throughput', value: `${formatNum(system.successfulQPS)}`, sub: 'req/s', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
-                { icon: XCircle, label: 'Error Rate', value: `${(system.errorRate * 100).toFixed(1)}%`, sub: `${formatNum(system.failedQPS)} dropped`, color: system.errorRate > 0.05 ? 'text-red-500' : 'text-emerald-500', bg: system.errorRate > 0.05 ? 'bg-red-50 dark:bg-red-500/10' : 'bg-emerald-50 dark:bg-emerald-500/10' },
-                { icon: CurrencyDollar, label: 'Monthly Cost', value: `$${formatNum(system.totalMonthlyCost)}`, sub: '/month', color: challengeTargets && system.totalMonthlyCost > challengeTargets.maxBudget ? 'text-red-500' : 'text-emerald-500', bg: 'bg-gray-50 dark:bg-gray-800' },
-                { icon: ShieldCheck, label: 'Availability', value: `${system.availabilityPercent.toFixed(2)}%`, sub: '', color: system.availabilityPercent > 99 ? 'text-emerald-500' : 'text-amber-500', bg: 'bg-gray-50 dark:bg-gray-800' },
-              ].map((m) => {
-                const Icon = m.icon;
-                return (
-                  <div key={m.label} className={`p-3 rounded-xl border border-gray-200 dark:border-gray-700 ${m.bg}`}>
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Icon size={12} weight="bold" className={m.color} />
-                      <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{m.label}</span>
-                    </div>
-                    <p className={`text-lg font-black ${m.color}`}>{m.value}</p>
-                    {m.sub && <p className="text-[10px] text-gray-400">{m.sub}</p>}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Latency Chart */}
-            <div className="mx-3 mt-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-              <div className="flex items-center gap-1.5 mb-3">
-                <Clock size={14} weight="bold" className="text-gray-400" />
-                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Latency Profile (ms)</span>
+            {/* Overall Latency Profile */}
+            <div className="p-3 bg-[var(--paper-node)] rounded-xl border border-[var(--ink-border)]">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Clock size={16} weight="bold" className="text-[var(--ink-light)]" />
+                <span className="text-sm font-bold text-[var(--ink-light)] tracking-wider">Latency Profile (ms)</span>
               </div>
               <ResponsiveContainer width="100%" height={120}>
                 <BarChart data={latencyData} barCategoryGap="30%">
@@ -320,10 +292,10 @@ export default function MetricsPanel({
 
             {/* Bottleneck Alerts */}
             {bottlenecks.length > 0 && (
-              <div className="mx-3 mt-3 space-y-1.5">
+              <div className="space-y-1.5 ">
                 <div className="flex items-center gap-1.5 px-1">
-                  <Warning size={14} weight="bold" className="text-amber-500" />
-                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Bottlenecks</span>
+                  <Warning size={16} weight="bold" className="text-[var(--accent-orange)]" />
+                  <span className="text-sm font-bold text-[var(--ink-light)] tracking-wider">Bottlenecks</span>
                 </div>
                 {bottlenecks.slice(0, 5).map((nodeId) => {
                   const m = nodeMetrics[nodeId];
@@ -331,14 +303,14 @@ export default function MetricsPanel({
                   return (
                     <div
                       key={nodeId}
-                      className={`px-3 py-2 rounded-lg border text-xs ${
+                      className={`px-3 py-2 rounded-xl border text-sm ${
                         m.status === 'critical'
-                          ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400'
-                          : 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400'
+                          ? 'bg-[var(--paper-node)] border-[var(--accent-red)] text-[var(--accent-red)]'
+                          : 'bg-[var(--paper-node)] border-[var(--accent-orange)] text-[var(--accent-orange)]'
                       }`}
                     >
-                      <p className="font-semibold">{m.bottleneck || nodeId}</p>
-                      <p className="text-[10px] opacity-70 mt-0.5">
+                      <p className="font-bold">{m.bottleneck || nodeId}</p>
+                      <p className="text-sm opacity-70 mt-0.5">
                         {formatNum(m.incomingQPS)} QPS → capacity {formatNum(getCapacityDisplay(m))} • {(m.utilization * 100).toFixed(0)}% utilized
                       </p>
                     </div>
@@ -347,96 +319,7 @@ export default function MetricsPanel({
               </div>
             )}
           </div>
-        ) : (
-          /* Node Inspector Tab */
-          selectedNode && (() => {
-            const guide = CONCEPT_GUIDES[selectedNode.type] || {
-              title: selectedNode.data.label || selectedNode.type,
-              category: 'Infrastructure Tier',
-              description: 'Coordinates traffic or stores states inside the application architecture stack.',
-              tradeOffs: [],
-            };
-            const metrics = selectedNodeMetrics;
-
-            return (
-              <div className="p-4 space-y-4">
-                {/* Component Identity Card */}
-                <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200/50 dark:border-white/5">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
-                    {React.createElement(getIconForType(selectedNode.type), { size: 20, weight: 'bold', className: 'text-white' })}
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-slate-900 dark:text-white leading-none mb-1">{guide.title}</h4>
-                    <span className="text-[9px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest">{guide.category}</span>
-                  </div>
-                </div>
-
-                {/* Live Telemetry details */}
-                {metrics ? (
-                  <div className="space-y-2.5">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/50 dark:border-white/5">
-                        <span className="block text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Throughput</span>
-                        <span className="text-sm font-black text-slate-850 dark:text-slate-100">{formatNum(metrics.processedQPS)} QPS</span>
-                        {metrics.droppedQPS > 0 && (
-                          <span className="block text-[9px] font-bold text-red-500 mt-0.5">{formatNum(metrics.droppedQPS)} dropped</span>
-                        )}
-                      </div>
-                      <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/50 dark:border-white/5">
-                        <span className="block text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Latency Added</span>
-                        <span className="text-sm font-black text-slate-850 dark:text-slate-100">+{metrics.latencyAdded}ms</span>
-                      </div>
-                    </div>
-
-                    <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/50 dark:border-white/5">
-                      <div className="flex items-center justify-between text-[10px] font-bold mb-1">
-                        <span className="text-slate-400 uppercase tracking-wider">Node Utilization</span>
-                        <span className={metrics.status === 'critical' ? 'text-red-500' : metrics.status === 'warning' ? 'text-amber-500' : 'text-emerald-500'}>
-                          {(metrics.utilization * 100).toFixed(0)}%
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            metrics.status === 'critical' ? 'bg-red-500' : metrics.status === 'warning' ? 'bg-amber-500' : 'bg-emerald-500'
-                          }`}
-                          style={{ width: `${Math.min(metrics.utilization * 100, 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/50 dark:border-white/5 text-center text-slate-400 dark:text-slate-500 text-xs">
-                    Run simulation to see real-time node telemetry metrics.
-                  </div>
-                )}
-
-                {/* Concept Overview Description */}
-                <div className="border-t border-slate-150 dark:border-white/5 pt-3">
-                  <h5 className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Architect Guide</h5>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                    {guide.description}
-                  </p>
-                </div>
-
-                {/* Interview Trade-offs & Tips */}
-                {guide.tradeOffs.length > 0 && (
-                  <div className="border-t border-slate-150 dark:border-white/5 pt-3">
-                    <h5 className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Interview Trade-offs & Tips</h5>
-                    <div className="space-y-2">
-                      {guide.tradeOffs.map((tip, i) => (
-                        <div key={i} className="text-[11px] text-slate-650 dark:text-slate-350 leading-relaxed flex items-start gap-2 bg-indigo-50/20 dark:bg-indigo-950/15 p-3 rounded-2xl border border-indigo-100/30 dark:border-indigo-950/10 font-medium">
-                          <span className="text-indigo-500 shrink-0 select-none">💡</span>
-                          <span>{tip}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()
-        )}
+        </div>
       </div>
     </div>
   );
@@ -444,7 +327,7 @@ export default function MetricsPanel({
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatNum(n: number): string {
+export function formatNum(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return n.toFixed(0);

@@ -3,56 +3,26 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Robot } from '@phosphor-icons/react';
 
 function WorkerPoolNode({ id, data }: NodeProps & { data: any }) {
-  const onChange = (field: string, value: any) => {
-    data.onDataChange?.(id, field, value);
-  };
-
   return (
-    <div className="bg-white dark:bg-gray-800 border-2 border-indigo-400 dark:border-indigo-500 rounded-2xl shadow-lg shadow-indigo-500/10 min-w-[210px] overflow-hidden">
-      <div className="bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2 flex items-center gap-2">
-        <Robot size={16} weight="bold" className="text-white" />
-        <span className="text-xs font-bold text-white uppercase tracking-wider">Background Workers</span>
-      </div>
-
-      <div className="p-3 space-y-2.5">
-        <div>
-          <label className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Worker Count</label>
-          <input
-            type="number"
-            min={1}
-            max={50}
-            value={data.workers ?? 4}
-            onChange={(e) => onChange('workers', Math.max(1, Number(e.target.value)))}
-            className="nodrag w-full mt-0.5 px-2.5 py-1.5 text-xs rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none transition-all"
-          />
-        </div>
-
-        <div>
-          <label className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Task execution: <span className="text-indigo-500 font-bold">{data.taskProcessingTime ?? 200}ms</span>
-          </label>
-          <input
-            type="range"
-            min={10}
-            max={5000}
-            step={10}
-            value={data.taskProcessingTime ?? 200}
-            onChange={(e) => onChange('taskProcessingTime', Number(e.target.value))}
-            className="nodrag w-full h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-700 accent-indigo-500 cursor-pointer"
-          />
-        </div>
+    <div
+      className="bg-[#FFFDF8] dark:bg-[#1E2433] border border-[#C8BFA9] dark:border-[#2E3545] border-l-[3px] rounded-xl shadow-sm min-w-[210px]"
+      style={{ borderLeftColor: '#7B68AE', fontFamily: "'Caveat', cursive" }}
+    >
+      <div className="px-3 pt-3 pb-1 flex items-center gap-2">
+        <Robot size={16} weight="bold" style={{ color: '#7B68AE' }} />
+        <span className="text-base font-bold text-[#2D2D2D] dark:text-[#D4D4D4] font-[Caveat]">Background Workers</span>
       </div>
 
       {data.metrics && (
-        <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 text-[10px] space-y-1">
+        <div className="px-3 py-2 border-t border-[#E0D9CB] dark:border-[#2E3545] bg-[#F5F0E8]/60 dark:bg-[#161B28]/60 text-sm space-y-1 font-[Caveat]">
           <div className="flex items-center justify-between">
-            <span className="text-gray-500">Util: {(data.metrics.utilization * 100).toFixed(0)}%</span>
-            <span className="font-bold text-indigo-500">{data.metrics.processedQPS.toFixed(0)} tasks/s</span>
+            <span className="text-[#6B6B6B] dark:text-[#8B8B9A] font-semibold">Util: {(data.metrics.utilization * 100).toFixed(0)}%</span>
+            <span className="font-bold" style={{ color: '#7B68AE' }}>{data.metrics.processedQPS.toFixed(0)} tasks/s</span>
           </div>
-          <div className="h-1 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+          <div className="h-1 rounded-full bg-[#D8D0C0] dark:bg-[#2E3545] overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
-                data.metrics.utilization > 0.9 ? 'bg-red-500' : data.metrics.utilization > 0.7 ? 'bg-amber-500' : 'bg-emerald-500'
+                data.metrics.utilization > 0.9 ? 'bg-[#C45B5B]' : data.metrics.utilization > 0.7 ? 'bg-[#D08C4A]' : 'bg-[#5B9A6F]'
               }`}
               style={{ width: `${Math.min(data.metrics.utilization * 100, 100)}%` }}
             />
@@ -62,13 +32,13 @@ function WorkerPoolNode({ id, data }: NodeProps & { data: any }) {
 
       <Handle
         type="target"
-        position={Position.Left}
-        className="!w-3.5 !h-3.5 !bg-indigo-500 !border-2 !border-white dark:!border-gray-800 !rounded-full !shadow-md"
+        position={data?.isVertical ? Position.Top : Position.Left}
+        className="!w-3 !h-3 !bg-[#3D3D3D] dark:!bg-[#8B8B9A] !border-2 !border-[#FFFDF8] dark:!border-[#1E2433] !rounded-full !shadow-none"
       />
       <Handle
         type="source"
-        position={Position.Right}
-        className="!w-3.5 !h-3.5 !bg-indigo-500 !border-2 !border-white dark:!border-gray-800 !rounded-full !shadow-md"
+        position={data?.isVertical ? Position.Bottom : Position.Right}
+        className="!w-3 !h-3 !bg-[#3D3D3D] dark:!bg-[#8B8B9A] !border-2 !border-[#FFFDF8] dark:!border-[#1E2433] !rounded-full !shadow-none"
       />
     </div>
   );
