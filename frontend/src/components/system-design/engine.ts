@@ -23,27 +23,38 @@ const COST_TABLE: Record<string, number> = {
   messageQueue: 40,
   workerPool: 60,   // per worker
   metricsDashboard: 0,
-  // 28 New Expanded Components
+  // 41 Expanded & Case-Study Components
   apiGateway: 45,
   firewall: 60,
   reverseProxy: 25,
+  consistentHashRing: 20,
   serverless: 35,
   kubernetes: 250,
   cronJob: 15,
   websocketServer: 70,
   serviceMesh: 90,
+  presenceServer: 40,
+  transcodingWorker: 150,
+  syncService: 60,
+  searchCrawler: 80,
+  idGenerator: 25,
   memcached: 50,
   cdnEdgeCache: 40,
   localCache: 0,
+  leaderboardStore: 70,
   timeSeriesDb: 110,
   graphDb: 140,
   vectorDb: 150,
   searchEngine: 130,
   dataWarehouse: 300,
+  spatialIndex: 90,
+  ledgerDatabase: 150,
   eventBus: 35,
   deadLetterQueue: 10,
   streamProcessor: 120,
   pubsub: 30,
+  pushGateway: 40,
+  emailSmsService: 30,
   llmGateway: 200,
   modelServing: 400,
   featureStore: 110,
@@ -56,6 +67,8 @@ const COST_TABLE: Record<string, number> = {
   vpnGateway: 40,
   bastionHost: 20,
   blockStorage: 45,
+  paymentGateway: 50,
+  reconciliationEngine: 45,
 };
 
 // ── Capacity Limits ─────────────────────────────────────────────────────────
@@ -73,7 +86,11 @@ function getNodeCapacity(type: string, data: Record<string, any>): number {
     case 'firewall':
     case 'reverseProxy':
     case 'rateLimiter':
+    case 'consistentHashRing':
+    case 'presenceServer':
       return 200_000;
+    case 'idGenerator':
+      return 500_000;
     case 'appServer': {
       const replicas = data.replicas ?? 1;
       const maxThreads = data.maxThreads ?? 200;
@@ -84,11 +101,14 @@ function getNodeCapacity(type: string, data: Record<string, any>): number {
       return pods * 250;
     }
     case 'serverless':
+    case 'syncService':
+    case 'emailSmsService':
       return 50_000;
     case 'cache':
     case 'memcached':
     case 'cdnEdgeCache':
     case 'localCache':
+    case 'leaderboardStore':
       return 300_000;
     case 'sqlDatabase': {
       const baseCapacity = data.indexed ? 10_000 : 2_000;
@@ -102,23 +122,29 @@ function getNodeCapacity(type: string, data: Record<string, any>): number {
       return 50_000;
     case 'vectorDb':
     case 'searchEngine':
+    case 'spatialIndex':
+    case 'searchCrawler':
       return 25_000;
     case 'dataWarehouse':
-      return 5_000;
+    case 'ledgerDatabase':
+    case 'reconciliationEngine':
+      return 10_000;
     case 'objectStorage':
     case 'blockStorage':
       return 15_000;
     case 'messageQueue':
     case 'eventBus':
     case 'pubsub':
-    case 'streamProcessor': {
+    case 'streamProcessor':
+    case 'pushGateway': {
       const partitions = data.partitions ?? 4;
       return partitions * 10_000;
     }
     case 'deadLetterQueue':
       return 50_000;
     case 'workerPool':
-    case 'cronJob': {
+    case 'cronJob':
+    case 'transcodingWorker': {
       const workers = data.workers ?? 4;
       const taskTime = data.taskProcessingTime ?? 200;
       return workers * (1000 / taskTime);
@@ -137,6 +163,8 @@ function getNodeCapacity(type: string, data: Record<string, any>): number {
     case 'authService':
     case 'secretManager':
       return 50_000;
+    case 'paymentGateway':
+      return 20_000;
     case 'aiAgent':
       return 100;
     case 'logAggregator':
@@ -171,13 +199,18 @@ function getNodeLatency(type: string, data: Record<string, any>): number {
     case 'reverseProxy':
     case 'rateLimiter':
     case 'serviceMesh':
+    case 'leaderboardStore':
       return 2;
+    case 'consistentHashRing':
+    case 'idGenerator':
+      return 1;
     case 'appServer':
     case 'websocketServer':
       return data.processingTime ?? 50;
     case 'serverless':
       return data.coldStartMs ? 45 : 15;
     case 'kubernetes':
+    case 'syncService':
       return 20;
     case 'cache':
     case 'memcached':
@@ -193,15 +226,18 @@ function getNodeLatency(type: string, data: Record<string, any>): number {
       return baseLatency + (readReplicas > 0 ? replicationLag * 0.1 : 0);
     }
     case 'nosqlDatabase':
-    case 'timeSeriesDb': {
+    case 'timeSeriesDb':
+    case 'spatialIndex': {
       const consistency = data.consistencyLevel ?? 'eventual';
       return consistency === 'strong' ? 15 : consistency === 'causal' ? 8 : 3;
     }
     case 'graphDb':
     case 'vectorDb':
     case 'searchEngine':
+    case 'ledgerDatabase':
       return data.latency ?? 15;
     case 'dataWarehouse':
+    case 'reconciliationEngine':
       return 150;
     case 'objectStorage':
     case 'blockStorage':
@@ -210,11 +246,14 @@ function getNodeLatency(type: string, data: Record<string, any>): number {
     case 'eventBus':
     case 'pubsub':
     case 'deadLetterQueue':
+    case 'pushGateway':
       return 5;
     case 'streamProcessor':
+    case 'emailSmsService':
       return 25;
     case 'workerPool':
     case 'cronJob':
+    case 'transcodingWorker':
       return data.taskProcessingTime ?? 200;
     case 'llmGateway':
       return data.latency ?? 450;
@@ -223,7 +262,10 @@ function getNodeLatency(type: string, data: Record<string, any>): number {
     case 'featureStore':
     case 'authService':
     case 'secretManager':
+    case 'presenceServer':
       return 10;
+    case 'paymentGateway':
+      return 120;
     case 'aiAgent':
       return 600;
     case 'logAggregator':
@@ -232,6 +274,8 @@ function getNodeLatency(type: string, data: Record<string, any>): number {
     case 'vpnGateway':
     case 'bastionHost':
       return 3;
+    case 'searchCrawler':
+      return 100;
     case 'metricsDashboard':
       return 0;
     default:
@@ -407,7 +451,9 @@ export function runSimulation(
     const isSink = [
       'sqlDatabase', 'nosqlDatabase', 'objectStorage', 'metricsDashboard', 'appServer',
       'timeSeriesDb', 'graphDb', 'vectorDb', 'searchEngine', 'dataWarehouse',
-      'deadLetterQueue', 'pubsub', 'logAggregator', 'alertManager', 'blockStorage'
+      'deadLetterQueue', 'pubsub', 'logAggregator', 'alertManager', 'blockStorage',
+      'spatialIndex', 'ledgerDatabase', 'leaderboardStore', 'pushGateway', 'emailSmsService',
+      'reconciliationEngine', 'paymentGateway'
     ].includes(type);
     const hasOutbound = (outbound[id] || []).length > 0;
     

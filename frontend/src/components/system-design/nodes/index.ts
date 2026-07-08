@@ -28,7 +28,7 @@ import UniversalNode from './UniversalNode';
 
 /**
  * nodeTypes registry for React Flow's <ReactFlow nodeTypes={nodeTypes} />
- * Supports all 40 system design components across 9 architectural categories.
+ * Supports all 53 system design components across 10 architectural categories.
  */
 export const systemDesignNodeTypes = {
   // Existing 12 nodes (for exact backward compatibility)
@@ -45,27 +45,38 @@ export const systemDesignNodeTypes = {
   workerPool: WorkerPoolNode,
   metricsDashboard: MetricsDashboardNode,
 
-  // 28 NEW Expanded System Design Nodes (powered by UniversalNode)
+  // 41 Expanded & Case-Study System Design Nodes (powered by UniversalNode)
   apiGateway: UniversalNode,
   firewall: UniversalNode,
   reverseProxy: UniversalNode,
+  consistentHashRing: UniversalNode,
   serverless: UniversalNode,
   kubernetes: UniversalNode,
   cronJob: UniversalNode,
   websocketServer: UniversalNode,
   serviceMesh: UniversalNode,
+  presenceServer: UniversalNode,
+  transcodingWorker: UniversalNode,
+  syncService: UniversalNode,
+  searchCrawler: UniversalNode,
+  idGenerator: UniversalNode,
   memcached: UniversalNode,
   cdnEdgeCache: UniversalNode,
   localCache: UniversalNode,
+  leaderboardStore: UniversalNode,
   timeSeriesDb: UniversalNode,
   graphDb: UniversalNode,
   vectorDb: UniversalNode,
   searchEngine: UniversalNode,
   dataWarehouse: UniversalNode,
+  spatialIndex: UniversalNode,
+  ledgerDatabase: UniversalNode,
   eventBus: UniversalNode,
   deadLetterQueue: UniversalNode,
   streamProcessor: UniversalNode,
   pubsub: UniversalNode,
+  pushGateway: UniversalNode,
+  emailSmsService: UniversalNode,
   llmGateway: UniversalNode,
   modelServing: UniversalNode,
   featureStore: UniversalNode,
@@ -78,6 +89,8 @@ export const systemDesignNodeTypes = {
   vpnGateway: UniversalNode,
   bastionHost: UniversalNode,
   blockStorage: UniversalNode,
+  paymentGateway: UniversalNode,
+  reconciliationEngine: UniversalNode,
 } as const;
 
 export type SystemDesignNodeType = keyof typeof systemDesignNodeTypes;
