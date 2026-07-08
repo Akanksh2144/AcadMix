@@ -148,6 +148,12 @@ const COST_TABLE: Record<string, number> = {
 // ── Capacity Limits ─────────────────────────────────────────────────────────
 
 function getNodeCapacity(type: string, data: Record<string, any>): number {
+  if (data.throughput !== undefined && typeof data.throughput === 'number' && data.throughput > 0) {
+    return data.throughput;
+  }
+  if (data.capacity !== undefined && typeof data.capacity === 'number' && data.capacity > 0) {
+    return data.capacity;
+  }
   switch (type) {
     case 'client':
       return Infinity;
@@ -303,6 +309,12 @@ function getNodeCapacity(type: string, data: Record<string, any>): number {
 // ── Latency Calculation ─────────────────────────────────────────────────────
 
 function getNodeLatency(type: string, data: Record<string, any>): number {
+  if (data.latency !== undefined && typeof data.latency === 'number' && data.latency >= 0) {
+    return data.latency;
+  }
+  if (data.customLatency !== undefined && typeof data.customLatency === 'number' && data.customLatency >= 0) {
+    return data.customLatency;
+  }
   switch (type) {
     case 'client':
       return 0;
@@ -451,6 +463,9 @@ function getNodeLatency(type: string, data: Record<string, any>): number {
 // ── Monthly Cost Calculation ────────────────────────────────────────────────
 
 function getNodeCost(type: string, data: Record<string, any>): number {
+  if (data.cost !== undefined && typeof data.cost === 'number' && data.cost >= 0) {
+    return data.cost;
+  }
   const base = COST_TABLE[type] ?? 0;
   switch (type) {
     case 'appServer':
@@ -634,6 +649,15 @@ export function runSimulation(
     } else {
       processedQPS = Math.min(incomingQPS, capacity);
       droppedQPS = Math.max(0, incomingQPS - capacity);
+    }
+
+    if (processedQPS > 0) {
+      const customErrorPercent = typeof data.errors === 'number' ? data.errors : (typeof data.errorRate === 'number' ? data.errorRate : 0);
+      if (customErrorPercent > 0) {
+        const errorDrops = processedQPS * (customErrorPercent / 100);
+        processedQPS = Math.max(0, processedQPS - errorDrops);
+        droppedQPS += errorDrops;
+      }
     }
 
     const utilization = capacity > 0 && capacity !== Infinity

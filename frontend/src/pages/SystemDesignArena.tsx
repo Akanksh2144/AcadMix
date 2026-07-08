@@ -272,17 +272,36 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
         ];
       }
 
+      const className = `transition-colors transition-shadow duration-300 rounded-xl ${glowClass}`;
+      const currentData = n.data || {};
+      const injectedSimResult = n.type === 'metricsDashboard' ? simResult : undefined;
+
+      const isDataEqual =
+        currentData.onDataChange === handleNodeDataChange &&
+        currentData.metrics === nodeMetrics &&
+        currentData.isVertical === showLanes &&
+        (n.type !== 'metricsDashboard' || currentData.simResult === injectedSimResult);
+
+      const isNodeEqual =
+        isDataEqual &&
+        n.className === className &&
+        JSON.stringify(n.extent) === JSON.stringify(extent);
+
+      if (isNodeEqual) {
+        return n;
+      }
+
       return {
         ...n,
         extent,
-        className: `transition-colors transition-shadow duration-300 rounded-xl ${glowClass}`,
+        className,
         data: {
-          ...n.data,
+          ...currentData,
           onDataChange: handleNodeDataChange,
           metrics: nodeMetrics,
           isVertical: showLanes,
           // Inject overall sim result into dashboard nodes
-          ...(n.type === 'metricsDashboard' ? { simResult } : {}),
+          ...(n.type === 'metricsDashboard' ? { simResult: injectedSimResult } : {}),
         },
       };
     });
@@ -308,6 +327,17 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
         } else {
           strokeColor = 'var(--accent-blue)'; // normal healthy pipelines
         }
+      }
+
+      const isEdgeEqual =
+        e.type === 'dataFlow' &&
+        e.animated === false &&
+        e.style?.stroke === strokeColor &&
+        e.style?.strokeWidth === (isActive ? 2.5 : 1.5) &&
+        e.style?.animationDuration === (isActive ? `${animationSpeed}s` : '0s');
+
+      if (isEdgeEqual) {
+        return e;
       }
 
       return {
