@@ -28,108 +28,33 @@ export const CHALLENGES: ChallengeConfig[] = [
     locked: false,
   },
 
-  // ── Stage 1: Single Server (1 User) ────────────────────────────────────
+  // ── Stage 1: URL Shortener (TinyURL) ────────────────────────────────────
   {
-    id: 'stage-1-single-server',
+    id: 'stage-1-tinyurl',
     stage: 1,
-    title: 'The Monolith',
-    description: 'A single server hosting both the application and database. Can it handle 100 concurrent users?',
-    targetQPS: 100,
-    maxLatencyP99: 500,
-    maxBudget: 100,
-    initialNodes: [
-      {
-        id: 'client-1',
-        type: 'client',
-        position: { x: 50, y: 180 },
-        data: { label: 'Users', requestsPerSec: 100, protocol: 'http2' },
-      },
-      {
-        id: 'server-1',
-        type: 'appServer',
-        position: { x: 350, y: 150 },
-        data: { label: 'Web Server', replicas: 1, maxThreads: 200, processingTime: 50 },
-      },
-      {
-        id: 'db-1',
-        type: 'sqlDatabase',
-        position: { x: 650, y: 150 },
-        data: { label: 'Database', readReplicas: 0, replicationLag: 0, indexed: true, sharded: false, shardCount: 1 },
-      },
-    ],
-    initialEdges: [
-      { id: 'e-c1-s1', source: 'client-1', target: 'server-1' },
-      { id: 'e-s1-db1', source: 'server-1', target: 'db-1' },
-    ],
-    hints: [
-      'This simple setup works fine at low traffic. Try increasing the client QPS to see when it breaks.',
-      'Notice how the server has limited threads — what happens when concurrent requests exceed thread count?',
-    ],
-    locked: false,
-  },
-
-  // ── Stage 2: Separate Tiers (10K Users) ─────────────────────────────────
-  {
-    id: 'stage-2-separate-tiers',
-    stage: 2,
-    title: 'Dedicated Database',
-    description: 'Traffic has grown to 5,000 QPS. The monolith server is crashing because app logic and database compete for CPU/RAM. Separate them.',
-    targetQPS: 5_000,
-    maxLatencyP99: 400,
-    maxBudget: 300,
-    initialNodes: [
-      {
-        id: 'client-1',
-        type: 'client',
-        position: { x: 50, y: 180 },
-        data: { label: 'Users', requestsPerSec: 5000, protocol: 'http2' },
-      },
-      {
-        id: 'server-1',
-        type: 'appServer',
-        position: { x: 350, y: 150 },
-        data: { label: 'App Server', replicas: 1, maxThreads: 200, processingTime: 50 },
-      },
-    ],
-    initialEdges: [
-      { id: 'e-c1-s1', source: 'client-1', target: 'server-1' },
-    ],
-    hints: [
-      'The app server only has 200 threads but needs to handle 5,000 QPS. You need to scale.',
-      'Try adding a dedicated SQL Database and connecting the app server to it.',
-      'Enable indexing on the database to reduce query latency from O(N) to O(log N).',
-      'Consider increasing app server replicas to handle more concurrent connections.',
-    ],
-    locked: false,
-  },
-
-  // ── Stage 3: Load Balancer & Horizontal Scale (100K Users) ──────────────
-  {
-    id: 'stage-3-load-balancer',
-    stage: 3,
-    title: 'Horizontal Scaling',
-    description: '25,000 QPS is hitting your single app server. It\'s a single point of failure. Scale horizontally with a load balancer.',
-    targetQPS: 25_000,
-    maxLatencyP99: 300,
-    maxBudget: 800,
+    title: 'URL Shortener (TinyURL)',
+    description: 'Design a high-throughput URL shortener like TinyURL. Read requests (redirects) dominate the traffic. Minimize redirect latency under heavy load.',
+    targetQPS: 100000,
+    maxLatencyP99: 80,
+    maxBudget: 500,
     initialNodes: [
       {
         id: 'client-1',
         type: 'client',
         position: { x: 50, y: 200 },
-        data: { label: 'Users', requestsPerSec: 25000, protocol: 'http2' },
+        data: { label: 'Users', requestsPerSec: 100000, protocol: 'http2' },
       },
       {
         id: 'server-1',
         type: 'appServer',
-        position: { x: 500, y: 200 },
-        data: { label: 'App Server', replicas: 1, maxThreads: 200, processingTime: 50 },
+        position: { x: 400, y: 200 },
+        data: { label: 'TinyURL App', replicas: 1, maxThreads: 200, processingTime: 50 },
       },
       {
         id: 'db-1',
         type: 'sqlDatabase',
-        position: { x: 800, y: 200 },
-        data: { label: 'PostgreSQL', readReplicas: 0, replicationLag: 50, indexed: true, sharded: false, shardCount: 1 },
+        position: { x: 750, y: 200 },
+        data: { label: 'URL Map DB', readReplicas: 0, replicationLag: 50, indexed: true, sharded: false, shardCount: 1 },
       },
     ],
     initialEdges: [
@@ -137,141 +62,233 @@ export const CHALLENGES: ChallengeConfig[] = [
       { id: 'e-s1-db1', source: 'server-1', target: 'db-1' },
     ],
     hints: [
-      'A single app server with 200 threads cannot handle 25,000 QPS.',
-      'Add a Load Balancer between the client and app server.',
-      'Scale the app server to 3+ replicas using the replicas slider.',
-      'Round-robin load balancing distributes requests evenly across replicas.',
+      'The App Server only has 1 replica (200 capacity) but needs to handle 100,000 QPS. You need a CDN to intercept static reads at the edge.',
+      'Add a CDN node between the Client and App Server. Set its hit ratio high (e.g. 0.85+).',
+      'The database is receiving too many read misses. Place a Redis Cache between the App Server and the database.',
     ],
     locked: false,
   },
 
-  // ── Stage 4: Caching & CDN (1M Users) ──────────────────────────────────
+  // ── Stage 2: Real-Time Chat (WhatsApp) ──────────────────────────────────
   {
-    id: 'stage-4-caching',
-    stage: 4,
-    title: 'Cache Everything',
-    description: '100,000 QPS with heavy read traffic. Your database is the bottleneck. Add caching and a CDN to absorb repeated requests.',
-    targetQPS: 100_000,
-    maxLatencyP99: 200,
-    maxBudget: 2_000,
+    id: 'stage-2-whatsapp',
+    stage: 2,
+    title: 'Real-Time Chat (WhatsApp)',
+    description: 'Design WhatsApp. The system must support low-latency message delivery, connection persistence (WebSockets), and buffer offline writes.',
+    targetQPS: 300000,
+    maxLatencyP99: 120,
+    maxBudget: 1500,
     initialNodes: [
       {
         id: 'client-1',
         type: 'client',
         position: { x: 50, y: 220 },
-        data: { label: 'Users', requestsPerSec: 100000, protocol: 'http2' },
-      },
-      {
-        id: 'lb-1',
-        type: 'loadBalancer',
-        position: { x: 300, y: 200 },
-        data: { label: 'Load Balancer', algorithm: 'round-robin', healthCheckInterval: 10 },
+        data: { label: 'Active Users', requestsPerSec: 300000, protocol: 'http1.1' },
       },
       {
         id: 'server-1',
         type: 'appServer',
-        position: { x: 550, y: 200 },
-        data: { label: 'App Cluster', replicas: 5, maxThreads: 200, processingTime: 50 },
+        position: { x: 450, y: 220 },
+        data: { label: 'Chat Gateway', replicas: 2, maxThreads: 200, processingTime: 30 },
       },
       {
         id: 'db-1',
         type: 'sqlDatabase',
-        position: { x: 850, y: 200 },
-        data: { label: 'PostgreSQL', readReplicas: 0, replicationLag: 50, indexed: true, sharded: false, shardCount: 1 },
+        position: { x: 800, y: 220 },
+        data: { label: 'Messages DB', readReplicas: 0, replicationLag: 50, indexed: true, sharded: false, shardCount: 1 },
       },
     ],
     initialEdges: [
-      { id: 'e-c1-lb1', source: 'client-1', target: 'lb-1' },
-      { id: 'e-lb1-s1', source: 'lb-1', target: 'server-1' },
+      { id: 'e-c1-s1', source: 'client-1', target: 'server-1' },
       { id: 'e-s1-db1', source: 'server-1', target: 'db-1' },
     ],
     hints: [
-      'The database can only handle ~10,000 QPS even with indexes. You need a cache.',
-      'Add a Redis Cache between the App Server and Database with an 80%+ hit ratio.',
-      'Add a CDN at the edge to serve static assets — this offloads ~85% of requests before they even hit your servers.',
-      'Cache-aside pattern: app checks cache first, on miss reads DB and writes result to cache.',
+      'Standard HTTP/1.1 is too slow for real-time delivery. Change the client protocol to WebSocket.',
+      'Direct writes to the SQL Database will fail at this volume. Insert a Message Queue (Kafka/SQS) to buffer write operations.',
+      'Add a Worker Pool to read from the Message Queue and write to a NoSQL Database (e.g., MongoDB/Cassandra) optimized for write throughput.',
     ],
     locked: false,
   },
 
-  // ── Stage 5: Database Scale-Out (100M Users) ───────────────────────────
+  // ── Stage 3: Video Streaming (Netflix/YouTube) ──────────────────────────
   {
-    id: 'stage-5-read-replicas',
-    stage: 5,
-    title: 'Database Scale-Out',
-    description: '500,000 QPS. Your single database primary is the write bottleneck. Add read replicas and consider message queues for write buffering.',
-    targetQPS: 500_000,
+    id: 'stage-3-netflix',
+    stage: 3,
+    title: 'Video Streaming (Netflix/YouTube)',
+    description: 'Scale video streaming traffic globally. Deliver heavy video chunks with sub-100ms startup times, and transcode video uploads asynchronously.',
+    targetQPS: 500000,
     maxLatencyP99: 150,
-    maxBudget: 5_000,
+    maxBudget: 2500,
     initialNodes: [
       {
         id: 'client-1',
         type: 'client',
         position: { x: 50, y: 250 },
-        data: { label: 'Users', requestsPerSec: 500000, protocol: 'http2' },
-      },
-      {
-        id: 'cdn-1',
-        type: 'cdn',
-        position: { x: 250, y: 100 },
-        data: { label: 'CDN', cacheHitRatio: 0.85, edgeLatency: 10 },
-      },
-      {
-        id: 'lb-1',
-        type: 'loadBalancer',
-        position: { x: 250, y: 300 },
-        data: { label: 'Load Balancer', algorithm: 'least-connections', healthCheckInterval: 10 },
+        data: { label: 'Streamers', requestsPerSec: 500000, protocol: 'http2' },
       },
       {
         id: 'server-1',
         type: 'appServer',
-        position: { x: 500, y: 300 },
-        data: { label: 'App Cluster', replicas: 10, maxThreads: 200, processingTime: 30 },
-      },
-      {
-        id: 'cache-1',
-        type: 'cache',
-        position: { x: 750, y: 200 },
-        data: { label: 'Redis', evictionPolicy: 'lru', hitRatio: 0.85, pattern: 'cache-aside', maxSize: 512, ttl: 300 },
+        position: { x: 450, y: 250 },
+        data: { label: 'Video Catalog Server', replicas: 3, maxThreads: 200, processingTime: 40 },
       },
       {
         id: 'db-1',
         type: 'sqlDatabase',
-        position: { x: 1000, y: 300 },
-        data: { label: 'PostgreSQL Primary', readReplicas: 0, replicationLag: 50, indexed: true, sharded: false, shardCount: 1 },
+        position: { x: 800, y: 250 },
+        data: { label: 'Metadata DB', readReplicas: 0, replicationLag: 50, indexed: true, sharded: false, shardCount: 1 },
       },
     ],
     initialEdges: [
-      { id: 'e-c1-cdn', source: 'client-1', target: 'cdn-1' },
-      { id: 'e-c1-lb1', source: 'client-1', target: 'lb-1' },
-      { id: 'e-lb1-s1', source: 'lb-1', target: 'server-1' },
-      { id: 'e-s1-cache', source: 'server-1', target: 'cache-1' },
-      { id: 'e-cache-db1', source: 'cache-1', target: 'db-1' },
+      { id: 'e-c1-s1', source: 'client-1', target: 'server-1' },
+      { id: 'e-s1-db1', source: 'server-1', target: 'db-1' },
     ],
     hints: [
-      'The primary database is saturated. Add 3+ read replicas to distribute read queries.',
-      'Be aware of replication lag — reads from replicas might return stale data.',
-      'Consider adding a Message Queue (Kafka) to buffer heavy write operations like activity logs.',
-      'A write-back cache can reduce write pressure on the primary database.',
+      'Video files cannot be served directly from databases or app servers. Route client traffic through a CDN to cache media files.',
+      'Add an Object Storage node (like S3) to host raw and transcoded video files.',
+      'Add a Worker Pool connected to a Message Queue to handle heavy video encoding jobs asynchronously.',
     ],
     locked: false,
   },
 
-  // ── Stage 6: Global Scale (1B Users) ───────────────────────────────────
+  // ── Stage 4: Ride-Hailing (Uber/Lyft) ──────────────────────────────────
   {
-    id: 'stage-6-billion-users',
-    stage: 6,
-    title: 'One Billion Users',
-    description: '1,000,000 QPS across global regions. Data exceeds 10TB. You need sharding, async processing, and multi-region architecture.',
-    targetQPS: 1_000_000,
+    id: 'stage-4-uber',
+    stage: 4,
+    title: 'Ride-Hailing (Uber/Lyft)',
+    description: 'Design Uber. Handle high-frequency GPS coordinate updates from drivers, run real-time geospatial searches, and dispatch rides.',
+    targetQPS: 150000,
     maxLatencyP99: 100,
-    maxBudget: 10_000,
+    maxBudget: 1800,
+    initialNodes: [
+      {
+        id: 'client-1',
+        type: 'client',
+        position: { x: 50, y: 200 },
+        data: { label: 'Drivers (GPS Pings)', requestsPerSec: 150000, protocol: 'http2' },
+      },
+      {
+        id: 'server-1',
+        type: 'appServer',
+        position: { x: 400, y: 200 },
+        data: { label: 'Dispatch Core', replicas: 2, maxThreads: 250, processingTime: 30 },
+      },
+      {
+        id: 'db-1',
+        type: 'sqlDatabase',
+        position: { x: 750, y: 200 },
+        data: { label: 'Trip Logs', readReplicas: 0, replicationLag: 50, indexed: true, sharded: false, shardCount: 1 },
+      },
+    ],
+    initialEdges: [
+      { id: 'e-c1-s1', source: 'client-1', target: 'server-1' },
+      { id: 'e-s1-db1', source: 'server-1', target: 'db-1' },
+    ],
+    hints: [
+      'Scale the app servers by putting a Load Balancer in front of them, using the IP-hash algorithm to ensure sticky routing.',
+      'To query active locations, keep geohashes in a Redis Cache (in-memory geospatial store) instead of writing to disk.',
+      'Persist final ride history logs to a NoSQL Database optimized for high write throughput.',
+    ],
+    locked: false,
+  },
+
+  // ── Stage 5: Flash Sale (Robinhood/Ticketmaster) ───────────────────────
+  {
+    id: 'stage-5-flash-sale',
+    stage: 5,
+    title: 'Flash Sale (Robinhood/Ticketmaster)',
+    description: 'Design a flash sale or stock trading platform. Prevent double-booking/over-selling of limited stock under massive spikes of write requests.',
+    targetQPS: 250000,
+    maxLatencyP99: 110,
+    maxBudget: 3000,
+    initialNodes: [
+      {
+        id: 'client-1',
+        type: 'client',
+        position: { x: 50, y: 220 },
+        data: { label: 'Buyers', requestsPerSec: 250000, protocol: 'http2' },
+      },
+      {
+        id: 'server-1',
+        type: 'appServer',
+        position: { x: 450, y: 220 },
+        data: { label: 'Orders Gateway', replicas: 3, maxThreads: 200, processingTime: 20 },
+      },
+      {
+        id: 'db-1',
+        type: 'sqlDatabase',
+        position: { x: 800, y: 220 },
+        data: { label: 'Inventory DB', readReplicas: 0, replicationLag: 50, indexed: true, sharded: false, shardCount: 1 },
+      },
+    ],
+    initialEdges: [
+      { id: 'e-c1-s1', source: 'client-1', target: 'server-1' },
+      { id: 'e-s1-db1', source: 'server-1', target: 'db-1' },
+    ],
+    hints: [
+      'Direct orders will choke the database. Buffer incoming purchases by placing a Message Queue (Kafka) after the app servers.',
+      'Use a SQL Database to guarantee ACID transactions (prevent double selling). Shard it (e.g. 4+ shards) to increase write throughput.',
+      'Add a Redis Cache (write-back pattern) to track inventory seat counts in-memory.',
+    ],
+    locked: false,
+  },
+
+  // ── Stage 6: Distributed Web Crawler ──────────────────────────────────
+  {
+    id: 'stage-6-web-crawler',
+    stage: 6,
+    title: 'Distributed Web Crawler',
+    description: 'Design a distributed search engine web crawler. Download web content, cache active DNS, filter duplicate links, and store pages.',
+    targetQPS: 80000,
+    maxLatencyP99: 200,
+    maxBudget: 1500,
+    initialNodes: [
+      {
+        id: 'client-1',
+        type: 'client',
+        position: { x: 50, y: 200 },
+        data: { label: 'Seed URL Queue', requestsPerSec: 80000, protocol: 'http2' },
+      },
+      {
+        id: 'server-1',
+        type: 'appServer',
+        position: { x: 400, y: 200 },
+        data: { label: 'Crawler Controller', replicas: 1, maxThreads: 200, processingTime: 50 },
+      },
+      {
+        id: 'db-1',
+        type: 'sqlDatabase',
+        position: { x: 750, y: 200 },
+        data: { label: 'Deduplication DB', readReplicas: 0, replicationLag: 50, indexed: true, sharded: false, shardCount: 1 },
+      },
+    ],
+    initialEdges: [
+      { id: 'e-c1-s1', source: 'client-1', target: 'server-1' },
+      { id: 'e-s1-db1', source: 'server-1', target: 'db-1' },
+    ],
+    hints: [
+      'DNS resolution on every page fetch is a bottleneck. Add a DNS cache node (Geo-DNS or high TTL) to speed up link resolution.',
+      'Asynchronously distribute downloading jobs using a Message Queue connected to a Worker Pool of crawler bots.',
+      'Store raw page HTML files in Object Storage rather than in a relational database. Deduplicate links using a Redis Bloom Filter.',
+    ],
+    locked: false,
+  },
+
+  // ── Stage 7: News Feed (Twitter/Instagram) ──────────────────────────────
+  {
+    id: 'stage-7-twitter-feed',
+    stage: 7,
+    title: 'Global News Feed (Twitter/Instagram)',
+    description: 'Design Twitter. Scale the global news feed to 1 Million QPS. Support dynamic timeline generation, media file CDNs, and sharded databases.',
+    targetQPS: 1000000,
+    maxLatencyP99: 100,
+    maxBudget: 8000,
     initialNodes: [
       {
         id: 'client-1',
         type: 'client',
         position: { x: 50, y: 300 },
-        data: { label: 'Global Users', requestsPerSec: 1000000, protocol: 'http2' },
+        data: { label: 'Global Readers', requestsPerSec: 1000000, protocol: 'http2' },
       },
       {
         id: 'dns-1',
@@ -284,13 +301,9 @@ export const CHALLENGES: ChallengeConfig[] = [
       { id: 'e-c1-dns', source: 'client-1', target: 'dns-1' },
     ],
     hints: [
-      'Start with a CDN to absorb static traffic, then route through a Load Balancer.',
-      'You need multiple app server clusters with 15+ replicas and optimized processing times.',
-      'Add Redis cache with 90%+ hit ratio before the database layer.',
-      'Shard the SQL database across 4+ shards with consistent hashing on user_id.',
-      'Use Kafka to buffer high-volume writes (activity logs, analytics events) asynchronously.',
-      'Add a Worker Pool to process queued tasks without blocking the request path.',
-      'Target: p99 < 100ms, error rate < 1%, budget under $10K/month.',
+      'Distribute load via Geo-DNS routing to regional clusters, and use a CDN to absorb dynamic photo/video loads.',
+      'Add a Load Balancer routing to large App Server clusters (e.g. 12+ replicas) with optimized processing times.',
+      'Use Redis Cache to store active user feed timelines (fan-out on write). Shard the PostgreSQL Metadata DB across 4+ shards.',
     ],
     locked: false,
   },
