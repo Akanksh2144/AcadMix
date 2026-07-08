@@ -2247,7 +2247,7 @@ const CodePlayground = ({ navigate, user }) => {
                     <CaretDown size={14} weight="bold" />
                   </button>
                   {showLangMenu && (
-                    <div className="absolute top-full left-0 mt-2 bg-white rounded-xl dark:bg-[#151B2B] shadow-xl border border-slate-100 dark:border-white/10 p-1 z-50 min-w-[160px]">
+                    <div className="absolute top-full left-0 mt-2 bg-white rounded-xl dark:bg-[#151B2B] shadow-xl border border-slate-100 dark:border-white/10 p-1 z-50 min-w-[160px] max-h-[350px] overflow-y-auto">
                       {LANGUAGES.map(lang => (
                         <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
                           className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>
@@ -2500,7 +2500,7 @@ const CodePlayground = ({ navigate, user }) => {
                       <CaretDown size={10} weight="bold" className="text-slate-400" />
                     </button>
                     {showLangMenu && (
-                      <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1.5 z-50 min-w-[190px]">
+                      <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1.5 z-50 min-w-[190px] max-h-[350px] overflow-y-auto">
                         {LANGUAGES.map(lang => (
                           <button key={lang.id} onClick={() => { handleLanguageChange(lang.id); setShowLangMenu(false); }}
                             className={`w-full text-left px-4 py-2.5 rounded-2xl flex items-center gap-3 transition-colors text-sm font-bold ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>
@@ -2855,7 +2855,7 @@ const CodePlayground = ({ navigate, user }) => {
                         <CaretDown size={14} weight="bold" />
                       </button>
                       {showLangMenu && (
-                        <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1 z-50 min-w-[180px]">
+                        <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 dark:bg-[#151B2B] dark:border-white/10 p-1 z-50 min-w-[180px] max-h-[350px] overflow-y-auto">
                           {LANGUAGES.map(lang => (
                             <button key={lang.id} onClick={() => handleLanguageChange(lang.id)}
                               className={`w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition-colors text-sm font-medium ${language === lang.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'}`}>

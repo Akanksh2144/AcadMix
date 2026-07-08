@@ -109,18 +109,37 @@ async def get_current_user(request: Request, session: AsyncSession = Depends(get
         if payload.get("type") != "access":
             raise HTTPException(status_code=401, detail="Invalid token type")
             
+        redis_online = True
         if TokenBlacklistConfig.USE_BLACKLIST and redis_client:
             jti = payload.get("jti")
-            if jti and await redis_client.exists(f"revoked_access:{jti}"):
-                raise HTTPException(status_code=401, detail="Token revoked")
+            if jti:
+                try:
+                    if await redis_client.exists(f"revoked_access:{jti}"):
+                        raise HTTPException(status_code=401, detail="Token revoked")
+                except HTTPException:
+                    raise
+                except Exception as redis_exc:
+                    logger.warning(
+                        "Redis blacklist lookup failed (possible timeout/outage): %s. Failing open.",
+                        str(redis_exc)
+                    )
+                    redis_online = False
         
         # --- Active Session Verification ---
         session_id = payload.get("session_id")
-        if session_id and redis_client:
-            is_active = await redis_client.exists(f"session:active:{payload['sub']}:{session_id}")
-            if not is_active:
-                raise HTTPException(status_code=401, detail="Session expired due to inactivity")
-        elif redis_client:
+        if session_id and redis_client and redis_online:
+            try:
+                is_active = await redis_client.exists(f"session:active:{payload['sub']}:{session_id}")
+                if not is_active:
+                    raise HTTPException(status_code=401, detail="Session expired due to inactivity")
+            except HTTPException:
+                raise
+            except Exception as redis_exc:
+                logger.warning(
+                    "Redis active session lookup failed (possible timeout/outage): %s. Failing open.",
+                    str(redis_exc)
+                )
+        elif redis_client and redis_online:
             # Hard enforcement: legacy tokens (missing session_id) must be proactively evicted.
             raise HTTPException(status_code=401, detail="Session re-authentication required")
         
