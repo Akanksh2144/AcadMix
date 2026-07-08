@@ -23,6 +23,39 @@ const COST_TABLE: Record<string, number> = {
   messageQueue: 40,
   workerPool: 60,   // per worker
   metricsDashboard: 0,
+  // 28 New Expanded Components
+  apiGateway: 45,
+  firewall: 60,
+  reverseProxy: 25,
+  serverless: 35,
+  kubernetes: 250,
+  cronJob: 15,
+  websocketServer: 70,
+  serviceMesh: 90,
+  memcached: 50,
+  cdnEdgeCache: 40,
+  localCache: 0,
+  timeSeriesDb: 110,
+  graphDb: 140,
+  vectorDb: 150,
+  searchEngine: 130,
+  dataWarehouse: 300,
+  eventBus: 35,
+  deadLetterQueue: 10,
+  streamProcessor: 120,
+  pubsub: 30,
+  llmGateway: 200,
+  modelServing: 400,
+  featureStore: 110,
+  aiAgent: 80,
+  authService: 50,
+  secretManager: 30,
+  rateLimiter: 20,
+  logAggregator: 100,
+  alertManager: 25,
+  vpnGateway: 40,
+  bastionHost: 20,
+  blockStorage: 45,
 };
 
 // ── Capacity Limits ─────────────────────────────────────────────────────────
@@ -32,40 +65,83 @@ function getNodeCapacity(type: string, data: Record<string, any>): number {
     case 'client':
       return Infinity;
     case 'dns':
-      return 1_000_000; // DNS can handle very high QPS
+      return 1_000_000;
     case 'cdn':
       return 500_000;
     case 'loadBalancer':
+    case 'apiGateway':
+    case 'firewall':
+    case 'reverseProxy':
+    case 'rateLimiter':
       return 200_000;
     case 'appServer': {
       const replicas = data.replicas ?? 1;
       const maxThreads = data.maxThreads ?? 200;
       return replicas * maxThreads;
     }
+    case 'kubernetes': {
+      const pods = data.pods ?? 6;
+      return pods * 250;
+    }
+    case 'serverless':
+      return 50_000;
     case 'cache':
-      return 300_000; // Redis can handle ~300K ops/sec
+    case 'memcached':
+    case 'cdnEdgeCache':
+    case 'localCache':
+      return 300_000;
     case 'sqlDatabase': {
       const baseCapacity = data.indexed ? 10_000 : 2_000;
       const readReplicas = data.readReplicas ?? 0;
       const shardCount = data.sharded ? (data.shardCount ?? 1) : 1;
       return baseCapacity * (1 + readReplicas) * shardCount;
     }
-    case 'nosqlDatabase': {
-      return 50_000; // Cassandra / DynamoDB baseline
-    }
+    case 'nosqlDatabase':
+    case 'timeSeriesDb':
+    case 'graphDb':
+      return 50_000;
+    case 'vectorDb':
+    case 'searchEngine':
+      return 25_000;
+    case 'dataWarehouse':
+      return 5_000;
     case 'objectStorage':
-      return 10_000;
-    case 'messageQueue': {
+    case 'blockStorage':
+      return 15_000;
+    case 'messageQueue':
+    case 'eventBus':
+    case 'pubsub':
+    case 'streamProcessor': {
       const partitions = data.partitions ?? 4;
-      const consumerGroups = data.consumerGroups ?? 1;
-      return partitions * consumerGroups * 5_000;
+      return partitions * 10_000;
     }
-    case 'workerPool': {
+    case 'deadLetterQueue':
+      return 50_000;
+    case 'workerPool':
+    case 'cronJob': {
       const workers = data.workers ?? 4;
       const taskTime = data.taskProcessingTime ?? 200;
-      // Workers can process (1000/taskTime) tasks/sec each
       return workers * (1000 / taskTime);
     }
+    case 'websocketServer':
+      return 100_000;
+    case 'serviceMesh':
+    case 'vpnGateway':
+    case 'bastionHost':
+      return 150_000;
+    case 'llmGateway':
+      return data.tps ?? 50;
+    case 'modelServing':
+      return (data.gpus ?? 4) * 50;
+    case 'featureStore':
+    case 'authService':
+    case 'secretManager':
+      return 50_000;
+    case 'aiAgent':
+      return 100;
+    case 'logAggregator':
+    case 'alertManager':
+      return 100_000;
     case 'metricsDashboard':
       return Infinity;
     default:
@@ -81,42 +157,81 @@ function getNodeLatency(type: string, data: Record<string, any>): number {
       return 0;
     case 'dns': {
       const ttl = data.ttl ?? 300;
-      // Lower TTL = more DNS lookups = higher avg latency
       return ttl > 60 ? 2 : 10;
     }
-    case 'cdn': {
-      const hitRatio = data.cacheHitRatio ?? 0.85;
+    case 'cdn':
+    case 'cdnEdgeCache': {
+      const hitRatio = data.cacheHitRatio ?? data.hitRatio ?? 0.85;
       const edgeLat = data.edgeLatency ?? 10;
-      // Hits served fast, misses go to origin (added downstream)
-      return edgeLat * hitRatio + 0; // miss latency added downstream
+      return edgeLat * hitRatio;
     }
     case 'loadBalancer':
-      return 2; // minimal routing overhead
+    case 'apiGateway':
+    case 'firewall':
+    case 'reverseProxy':
+    case 'rateLimiter':
+    case 'serviceMesh':
+      return 2;
     case 'appServer':
+    case 'websocketServer':
       return data.processingTime ?? 50;
-    case 'cache': {
+    case 'serverless':
+      return data.coldStartMs ? 45 : 15;
+    case 'kubernetes':
+      return 20;
+    case 'cache':
+    case 'memcached':
+    case 'localCache': {
       const hitRatio = data.hitRatio ?? 0.8;
-      // Cache hit: ~1ms, miss: passed to downstream (0 here)
       return 1 * hitRatio;
     }
     case 'sqlDatabase': {
       const indexed = data.indexed ?? true;
       const replicationLag = data.replicationLag ?? 50;
       const baseLatency = indexed ? 5 : 50;
-      // If has replicas, avg latency includes some lag for consistency
       const readReplicas = data.readReplicas ?? 0;
       return baseLatency + (readReplicas > 0 ? replicationLag * 0.1 : 0);
     }
-    case 'nosqlDatabase': {
+    case 'nosqlDatabase':
+    case 'timeSeriesDb': {
       const consistency = data.consistencyLevel ?? 'eventual';
       return consistency === 'strong' ? 15 : consistency === 'causal' ? 8 : 3;
     }
+    case 'graphDb':
+    case 'vectorDb':
+    case 'searchEngine':
+      return data.latency ?? 15;
+    case 'dataWarehouse':
+      return 150;
     case 'objectStorage':
-      return data.latency ?? 50;
+    case 'blockStorage':
+      return data.latency ?? 30;
     case 'messageQueue':
-      return 5; // enqueue latency
+    case 'eventBus':
+    case 'pubsub':
+    case 'deadLetterQueue':
+      return 5;
+    case 'streamProcessor':
+      return 25;
     case 'workerPool':
+    case 'cronJob':
       return data.taskProcessingTime ?? 200;
+    case 'llmGateway':
+      return data.latency ?? 450;
+    case 'modelServing':
+      return data.latency ?? 120;
+    case 'featureStore':
+    case 'authService':
+    case 'secretManager':
+      return 10;
+    case 'aiAgent':
+      return 600;
+    case 'logAggregator':
+    case 'alertManager':
+      return 5;
+    case 'vpnGateway':
+    case 'bastionHost':
+      return 3;
     case 'metricsDashboard':
       return 0;
     default:
@@ -131,17 +246,25 @@ function getNodeCost(type: string, data: Record<string, any>): number {
   switch (type) {
     case 'appServer':
       return base * (data.replicas ?? 1);
+    case 'kubernetes':
+      return base + (data.pods ?? 6) * 20;
     case 'sqlDatabase': {
       const replicas = data.readReplicas ?? 0;
       const shards = data.sharded ? (data.shardCount ?? 1) : 1;
       return base * (1 + replicas) * shards;
     }
     case 'workerPool':
+    case 'cronJob':
       return base * (data.workers ?? 4);
     case 'cache':
+    case 'memcached':
       return base * Math.ceil((data.maxSize ?? 256) / 256);
     case 'messageQueue':
+    case 'eventBus':
+    case 'pubsub':
       return base * (data.partitions ?? 4);
+    case 'modelServing':
+      return base * (data.gpus ?? 4);
     default:
       return base;
   }
@@ -159,18 +282,20 @@ function getEffectiveOutgoingQPS(
   incomingQPS: number,
 ): number {
   switch (type) {
-    case 'cdn': {
-      const hitRatio = data.cacheHitRatio ?? 0.85;
-      // Only cache misses go downstream
+    case 'cdn':
+    case 'cdnEdgeCache': {
+      const hitRatio = data.cacheHitRatio ?? data.hitRatio ?? 0.85;
       return incomingQPS * (1 - hitRatio);
     }
-    case 'cache': {
+    case 'cache':
+    case 'memcached':
+    case 'localCache': {
       const hitRatio = data.hitRatio ?? 0.8;
-      // Only cache misses go downstream
       return incomingQPS * (1 - hitRatio);
     }
     case 'messageQueue':
-      // Queue passes all through (buffered)
+    case 'eventBus':
+    case 'pubsub':
       return incomingQPS;
     default:
       return incomingQPS;
@@ -279,7 +404,11 @@ export function runSimulation(
     const latencyAdded = getNodeLatency(type, data);
     
     // If the node has NO outbound connections, and it is NOT a valid sink, all incoming traffic is dropped
-    const isSink = ['sqlDatabase', 'nosqlDatabase', 'objectStorage', 'metricsDashboard', 'appServer'].includes(type);
+    const isSink = [
+      'sqlDatabase', 'nosqlDatabase', 'objectStorage', 'metricsDashboard', 'appServer',
+      'timeSeriesDb', 'graphDb', 'vectorDb', 'searchEngine', 'dataWarehouse',
+      'deadLetterQueue', 'pubsub', 'logAggregator', 'alertManager', 'blockStorage'
+    ].includes(type);
     const hasOutbound = (outbound[id] || []).length > 0;
     
     let processedQPS = 0;

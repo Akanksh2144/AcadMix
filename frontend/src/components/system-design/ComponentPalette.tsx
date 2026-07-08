@@ -6,58 +6,8 @@
  */
 
 import React, { useState } from 'react';
-import {
-  Users, Globe, CloudArrowDown, Scales, Desktop, Lightning,
-  Database, Stack, HardDrive, Queue, Robot, ChartLineUp,
-  CaretDown, CaretRight, MagnifyingGlass,
-} from '@phosphor-icons/react';
-
-// ── Palette Data ────────────────────────────────────────────────────────────
-
-const PALETTE_SECTIONS = [
-  {
-    title: 'Edge & Routing',
-    items: [
-      { type: 'client', label: 'Client / Users', icon: Users, color: 'var(--accent-purple)', defaults: { label: 'Users', requestsPerSec: 1000, protocol: 'http2' } },
-      { type: 'dns', label: 'DNS', icon: Globe, color: 'var(--accent-blue)', defaults: { label: 'DNS', ttl: 300, routingPolicy: 'round-robin' } },
-      { type: 'cdn', label: 'CDN', icon: CloudArrowDown, color: 'var(--accent-teal)', defaults: { label: 'CDN', cacheHitRatio: 0.85, edgeLatency: 10 } },
-      { type: 'loadBalancer', label: 'Load Balancer', icon: Scales, color: 'var(--accent-orange)', defaults: { label: 'Load Balancer', algorithm: 'round-robin', healthCheckInterval: 10 } },
-    ],
-  },
-  {
-    title: 'Compute',
-    items: [
-      { type: 'appServer', label: 'App Server', icon: Desktop, color: 'var(--accent-blue)', defaults: { label: 'App Server', replicas: 1, maxThreads: 200, processingTime: 50 } },
-      { type: 'workerPool', label: 'Worker Pool', icon: Robot, color: 'var(--accent-purple)', defaults: { label: 'Workers', workers: 4, taskProcessingTime: 200 } },
-    ],
-  },
-  {
-    title: 'Caching',
-    items: [
-      { type: 'cache', label: 'Redis Cache', icon: Lightning, color: 'var(--accent-red)', defaults: { label: 'Redis', evictionPolicy: 'lru', hitRatio: 0.8, pattern: 'cache-aside', maxSize: 256, ttl: 300 } },
-    ],
-  },
-  {
-    title: 'Storage',
-    items: [
-      { type: 'sqlDatabase', label: 'SQL Database', icon: Database, color: 'var(--accent-green)', defaults: { label: 'PostgreSQL', readReplicas: 0, replicationLag: 50, indexed: true, sharded: false, shardCount: 1 } },
-      { type: 'nosqlDatabase', label: 'NoSQL Database', icon: Stack, color: 'var(--accent-green)', defaults: { label: 'MongoDB', consistencyLevel: 'eventual', partitionKey: 'user_id' } },
-      { type: 'objectStorage', label: 'Object Storage', icon: HardDrive, color: 'var(--ink-light)', defaults: { label: 'S3 / Blob', latency: 50, maxThroughput: 100 } },
-    ],
-  },
-  {
-    title: 'Messaging',
-    items: [
-      { type: 'messageQueue', label: 'Message Queue', icon: Queue, color: 'var(--accent-orange)', defaults: { label: 'Kafka', queueType: 'kafka', partitions: 4, consumerGroups: 1 } },
-    ],
-  },
-  {
-    title: 'Monitoring',
-    items: [
-      { type: 'metricsDashboard', label: 'Metrics Dashboard', icon: ChartLineUp, color: 'var(--accent-pink)', defaults: { label: 'Metrics' } },
-    ],
-  },
-];
+import { CaretDown, CaretRight, MagnifyingGlass } from '@phosphor-icons/react';
+import { PALETTE_SECTIONS } from './nodeRegistry';
 
 // ── Component ───────────────────────────────────────────────────────────────
 

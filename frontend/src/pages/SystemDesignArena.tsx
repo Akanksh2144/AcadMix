@@ -43,33 +43,11 @@ import type { SimulationResult, ChallengeConfig } from '../components/system-des
 
 // ── Node Types Registration ──────────────────────────────────────────────────
 
-import ClientNode from '../components/system-design/nodes/ClientNode';
-import DNSNode from '../components/system-design/nodes/DNSNode';
-import CDNNode from '../components/system-design/nodes/CDNNode';
-import LoadBalancerNode from '../components/system-design/nodes/LoadBalancerNode';
-import AppServerNode from '../components/system-design/nodes/AppServerNode';
-import CacheNode from '../components/system-design/nodes/CacheNode';
-import SQLDatabaseNode from '../components/system-design/nodes/SQLDatabaseNode';
-import NoSQLDatabaseNode from '../components/system-design/nodes/NoSQLDatabaseNode';
-import ObjectStorageNode from '../components/system-design/nodes/ObjectStorageNode';
-import MessageQueueNode from '../components/system-design/nodes/MessageQueueNode';
-import WorkerPoolNode from '../components/system-design/nodes/WorkerPoolNode';
-import MetricsDashboardNode from '../components/system-design/nodes/MetricsDashboardNode';
+import { systemDesignNodeTypes } from '../components/system-design/nodes/index';
 import LaneNode from '../components/system-design/nodes/LaneNode';
 
 const nodeTypes = {
-  client: ClientNode,
-  dns: DNSNode,
-  cdn: CDNNode,
-  loadBalancer: LoadBalancerNode,
-  appServer: AppServerNode,
-  cache: CacheNode,
-  sqlDatabase: SQLDatabaseNode,
-  nosqlDatabase: NoSQLDatabaseNode,
-  objectStorage: ObjectStorageNode,
-  messageQueue: MessageQueueNode,
-  workerPool: WorkerPoolNode,
-  metricsDashboard: MetricsDashboardNode,
+  ...systemDesignNodeTypes,
   lane: LaneNode,
 };
 
