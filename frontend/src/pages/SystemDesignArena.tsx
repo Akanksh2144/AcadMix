@@ -17,6 +17,7 @@ import {
   addEdge,
   ReactFlowProvider,
   useReactFlow,
+  useUpdateNodeInternals,
   type Connection,
   type Edge,
   type Node,
@@ -113,9 +114,26 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
   }, [nodes]);
 
   const { screenToFlowPosition, fitView, setCenter, getNodes } = useReactFlow();
+  const updateNodeInternals = useUpdateNodeInternals();
   const workspaceRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [dynamicMinZoom, setDynamicMinZoom] = useState(0.25);
+
+  React.useEffect(() => {
+    const updateAll = () => {
+      getNodes().forEach((n) => {
+        if (n.type !== 'lane') {
+          updateNodeInternals(n.id);
+        }
+      });
+    };
+    const timer1 = setTimeout(updateAll, 50);
+    const timer2 = setTimeout(updateAll, 250);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [showLanes, updateNodeInternals, getNodes]);
 
   React.useEffect(() => {
     const updateZoom = () => {
