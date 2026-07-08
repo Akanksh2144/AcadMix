@@ -280,7 +280,7 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
   return (
     <div
       ref={workspaceRef}
-      className="flex-1 min-h-0 flex flex-col bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300 relative"
+      className="h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-300 relative"
     >
       {/* Page Header (only when not in fullscreen mode) */}
       {!isFullScreen && (
