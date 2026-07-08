@@ -214,7 +214,6 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
       }));
 
       const result = runSimulation(graphNodes, graphEdges);
-      setSimResult(result);
 
       // Check challenge targets
       if (currentChallenge.stage > 0) {
@@ -230,8 +229,12 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
             `Outstanding work! Your system successfully handled ${currentChallenge.targetQPS} QPS under budget.`,
             'success',
           );
+        } else {
+          // Cap grade to C- if the system did not meet the stage constraints
+          result.grade = result.grade.startsWith('A') || result.grade.startsWith('B') ? 'C-' : result.grade;
         }
       }
+      setSimResult(result);
     } catch (err: any) {
       triggerAlert('Simulation Error', err.message || 'An error occurred during topological propagation.', 'error');
     }

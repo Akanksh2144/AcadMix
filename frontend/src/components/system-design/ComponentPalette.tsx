@@ -88,7 +88,7 @@ export default function ComponentPalette({ className = '' }: ComponentPalettePro
   })).filter((section) => section.items.length > 0);
 
   return (
-    <div className={`flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 ${className}`}>
+    <div className={`flex flex-col h-full min-h-0 overflow-hidden bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
         <h3 className="text-xs font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">
