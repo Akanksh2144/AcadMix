@@ -683,22 +683,6 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
             </div>
           )}
 
-          {/* Hint Overlay Banner */}
-          {showHintIndex > 0 && currentChallenge.hints[showHintIndex - 1] && (
-            <div className="absolute top-16 left-4 right-4 z-10 p-4 bg-[var(--paper-node)] border border-[var(--accent-orange)] rounded-xl shadow-sm flex items-start gap-3 max-w-xl mx-auto pointer-events-auto ">
-              <Lightbulb size={24} weight="fill" className="text-[var(--accent-orange)] shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-bold text-[var(--accent-orange)] tracking-wider mb-0.5">Architect Tip</p>
-                <p className="text-base text-[var(--ink)] leading-relaxed font-bold">
-                  {currentChallenge.hints[showHintIndex - 1]}
-                </p>
-              </div>
-              <button onClick={() => setShowHintIndex(0)} className="text-[var(--ink-light)] hover:text-[var(--ink)]">
-                <X size={18} weight="bold" />
-              </button>
-            </div>
-          )}
-
           {/* Flow Diagram Canvas */}
           <div className="flex-1 min-h-0 relative" ref={canvasRef}>
             {!showLanes && (
@@ -753,6 +737,24 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
                   </span>
                 </div>
               </Panel>
+
+              {showHintIndex > 0 && currentChallenge.hints[showHintIndex - 1] && (
+                <Panel position="bottom-right" className="!mb-6 !mr-6 max-w-md z-50">
+                  <div className="bg-gray-900 dark:bg-black text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-gray-800 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <Lightbulb size={20} weight="fill" className="text-amber-400 shrink-0" />
+                    <p className="text-xs md:text-sm font-medium leading-snug flex-1">
+                      {currentChallenge.hints[showHintIndex - 1]}
+                    </p>
+                    <button
+                      onClick={() => setShowHintIndex(0)}
+                      className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
+                      title="Close Hint"
+                    >
+                      <X size={16} weight="bold" />
+                    </button>
+                  </div>
+                </Panel>
+              )}
               
               <NodeDetailsPopup 
                 selectedNode={activePopupNodeId ? enrichedNodes.find(n => n.id === activePopupNodeId) : null}
