@@ -26,7 +26,7 @@ import '@xyflow/react/dist/style.css';
 import {
   Play, Trophy, Lightbulb, CornersOut, CornersIn,
   ArrowSquareOut, ArrowSquareIn, ArrowsClockwise,
-  Question, CheckCircle, Warning, X,
+  Question, CheckCircle, Warning, X, CaretDown, CaretUp, BookOpen,
 } from '@phosphor-icons/react';
 
 import PageHeader from '../components/PageHeader';
@@ -86,6 +86,7 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     return saved ? new Set(JSON.parse(saved)) : new Set<string>();
   });
   const [showHintIndex, setShowHintIndex] = useState(0);
+  const [isBriefExpanded, setIsBriefExpanded] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -187,7 +188,45 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     [screenToFlowPosition, setNodes],
   );
 
-  // Run Load Test Simulation
+  // Live simulation update when graph structure or configuration changes
+  React.useEffect(() => {
+    if (nodes.length === 0) {
+      setSimResult(null);
+      return;
+    }
+    const clientNode = nodes.find((n) => n.type === 'client');
+    if (!clientNode) {
+      setSimResult(null);
+      return;
+    }
+    try {
+      const graphNodes = nodes.map((n) => ({
+        id: n.id,
+        type: n.type!,
+        data: n.data,
+      }));
+      const graphEdges = edges.map((e) => ({
+        source: e.source,
+        target: e.target,
+        sourceHandle: e.sourceHandle,
+        targetHandle: e.targetHandle,
+      }));
+      const result = runSimulation(graphNodes, graphEdges);
+
+      // Cap grade to C- if the system did not meet the stage constraints
+      if (currentChallenge.stage > 0) {
+        const challengeRes = checkChallengePassed(currentChallenge, result);
+        if (!challengeRes.passed) {
+          result.grade = result.grade.startsWith('A') || result.grade.startsWith('B') ? 'C-' : result.grade;
+        }
+      }
+      setSimResult(result);
+    } catch (err) {
+      // Ignore errors during live dragging to avoid console spam
+    }
+  }, [nodes, edges, currentChallenge]);
+
+  // Run Load Test Simulation (Explicit verification with popup dialogs)
   const handleRunSimulation = () => {
     if (nodes.length === 0) {
       triggerAlert('Empty Canvas', 'Drag and drop components to build your architecture first.', 'error');
@@ -215,7 +254,6 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
 
       const result = runSimulation(graphNodes, graphEdges);
 
-      // Check challenge targets
       if (currentChallenge.stage > 0) {
         const challengeRes = checkChallengePassed(currentChallenge, result);
         if (challengeRes.passed) {
@@ -232,9 +270,19 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
         } else {
           // Cap grade to C- if the system did not meet the stage constraints
           result.grade = result.grade.startsWith('A') || result.grade.startsWith('B') ? 'C-' : result.grade;
+          triggerAlert(
+            'Verification Failed',
+            challengeRes.reasons.join('\n'),
+            'error',
+          );
         }
+      } else {
+        triggerAlert(
+          'Simulation Complete',
+          `Sandbox simulation processed ${result.system.successfulQPS} QPS with 0 errors.`,
+          'success',
+        );
       }
-      setSimResult(result);
     } catch (err: any) {
       triggerAlert('Simulation Error', err.message || 'An error occurred during topological propagation.', 'error');
     }
@@ -357,9 +405,56 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
             </div>
           </div>
 
+          {/* Challenge Brief Panel */}
+          {currentChallenge.stage > 0 && (
+            <div className="absolute top-16 left-4 z-10 w-80 bg-white/95 dark:bg-[#1A202C]/95 backdrop-blur-md border border-slate-200/80 dark:border-white/10 p-4 rounded-2xl shadow-xl pointer-events-auto transition-all duration-300">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-extrabold text-xs uppercase tracking-wider">
+                  <BookOpen size={14} weight="bold" />
+                  <span>Stage Brief</span>
+                </div>
+                <button
+                  onClick={() => setIsBriefExpanded(!isBriefExpanded)}
+                  className="p-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                >
+                  {isBriefExpanded ? <CaretUp size={12} weight="bold" /> : <CaretDown size={12} weight="bold" />}
+                </button>
+              </div>
+
+              {isBriefExpanded ? (
+                <>
+                  <h4 className="text-sm font-black text-slate-900 dark:text-white mb-1.5">
+                    Stage {currentChallenge.stage}: {currentChallenge.title}
+                  </h4>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+                    {currentChallenge.description}
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 border-t border-slate-100 dark:border-white/5 pt-3">
+                    <div>
+                      <span className="block text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Target</span>
+                      <span className="text-[11px] font-black text-slate-800 dark:text-slate-100">{currentChallenge.targetQPS.toLocaleString()} QPS</span>
+                    </div>
+                    <div>
+                      <span className="block text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Latency</span>
+                      <span className="text-[11px] font-black text-slate-800 dark:text-slate-100">&lt; {currentChallenge.maxLatencyP99}ms</span>
+                    </div>
+                    <div>
+                      <span className="block text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Budget</span>
+                      <span className="text-[11px] font-black text-slate-800 dark:text-slate-100">${currentChallenge.maxBudget}/mo</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                  Stage {currentChallenge.stage}: {currentChallenge.title}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Hint Overlay Banner */}
           {showHintIndex > 0 && currentChallenge.hints[showHintIndex - 1] && (
-            <div className="absolute top-16 left-4 right-4 z-10 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/30 rounded-2xl shadow-lg flex items-start gap-2.5 max-w-xl mx-auto">
+            <div className="absolute top-16 left-4 right-4 z-10 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/30 rounded-2xl shadow-lg flex items-start gap-2.5 max-w-xl mx-auto pointer-events-auto">
               <Lightbulb size={18} weight="fill" className="text-amber-500 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-0.5">Architect Tip</p>
