@@ -27,7 +27,7 @@ import {
   Play, Trophy, Lightbulb, CornersOut, CornersIn,
   ArrowSquareOut, ArrowSquareIn, ArrowsClockwise,
   Question, CheckCircle, Warning, X, CaretDown, CaretUp, BookOpen, Stack,
-  Eraser, Lightning, Pause, Cursor,
+  Pause,
 } from '@phosphor-icons/react';
 
 import PageHeader from '../components/PageHeader';
@@ -121,7 +121,6 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: '', message: '', type: 'info' as 'info' | 'error' | 'success' });
   const [showLanes, setShowLanes] = useState(false);
-  const [activeTool, setActiveTool] = useState<'select' | 'eraser' | 'laser'>('select');
   const [isSimulating, setIsSimulating] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
 
@@ -444,36 +443,6 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simInputKey, currentChallenge]);
 
-  // Eraser & Laser tool handlers
-  const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    if (activeTool === 'eraser' || activeTool === 'laser') {
-      if (node.type === 'lane') return;
-      setNodes((nds) => nds.filter((n) => n.id !== node.id));
-      setEdges((eds) => eds.filter((e) => e.source !== node.id && e.target !== node.id));
-      return;
-    }
-  }, [activeTool, setNodes, setEdges]);
-
-  const handleEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
-    if (activeTool === 'eraser' || activeTool === 'laser') {
-      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
-    }
-  }, [activeTool, setEdges]);
-
-  const handleNodeMouseEnter = useCallback((event: React.MouseEvent, node: Node) => {
-    if ((activeTool === 'eraser' || activeTool === 'laser') && event.buttons === 1) {
-      if (node.type === 'lane') return;
-      setNodes((nds) => nds.filter((n) => n.id !== node.id));
-      setEdges((eds) => eds.filter((e) => e.source !== node.id && e.target !== node.id));
-    }
-  }, [activeTool, setNodes, setEdges]);
-
-  const handleEdgeMouseEnter = useCallback((event: React.MouseEvent, edge: Edge) => {
-    if ((activeTool === 'eraser' || activeTool === 'laser') && event.buttons === 1) {
-      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
-    }
-  }, [activeTool, setEdges]);
-
   // Run Load Test Simulation (Explicit verification with popup dialogs)
   const handleRunSimulation = () => {
     if (isSimulating) {
@@ -621,47 +590,8 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
               )}
             </div>
 
-            {/* Center / Right buttons: Canvas actions & tools */}
+            {/* Right buttons: Canvas actions */}
             <div className="flex items-center gap-2 pointer-events-auto">
-              {/* Tool Mode Selector */}
-              <div className="flex items-center rounded-xl border border-[var(--ink-border)] bg-[var(--paper-node)] p-0.5 shadow-sm">
-                <button
-                  onClick={() => setActiveTool('select')}
-                  title="Select / Drag Tool"
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${
-                    activeTool === 'select'
-                      ? 'bg-[var(--ink)] text-[var(--paper)] shadow-sm'
-                      : 'text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--paper-alt)]'
-                  }`}
-                >
-                  <Cursor size={18} weight="bold" />
-                </button>
-                <button
-                  onClick={() => setActiveTool('eraser')}
-                  title="Eraser Tool (Click or drag to erase)"
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${
-                    activeTool === 'eraser'
-                      ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20'
-                      : 'text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--paper-alt)]'
-                  }`}
-                >
-                  <Eraser size={18} weight="bold" />
-                </button>
-                <button
-                  onClick={() => setActiveTool('laser')}
-                  title="Laser Cutter (Slice across components & links to destroy)"
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${
-                    activeTool === 'laser'
-                      ? 'bg-rose-600 text-white shadow-sm shadow-rose-600/30 animate-pulse'
-                      : 'text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--paper-alt)]'
-                  }`}
-                >
-                  <Lightning size={18} weight="fill" />
-                </button>
-              </div>
-
-              <div className="w-px h-6 bg-[var(--ink-border)] mx-1" />
-
               <button
                 onClick={() => setShowLanes(!showLanes)}
                 title="Toggle Architectural Lanes"
@@ -784,10 +714,6 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
-              onNodeClick={handleNodeClick}
-              onEdgeClick={handleEdgeClick}
-              onNodeMouseEnter={handleNodeMouseEnter}
-              onEdgeMouseEnter={handleEdgeMouseEnter}
               onNodeDoubleClick={(_, node) => setActivePopupNodeId(node.id)}
               onPaneClick={() => setActivePopupNodeId(null)}
               onNodeDragStart={() => setActivePopupNodeId(null)}
@@ -813,8 +739,6 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
                 position="bottom-left"
                 className="!bg-[var(--paper-alt)] !border !border-[var(--ink-border)] !rounded-xl !shadow-sm"
               />
-
-
               
               <Panel position="bottom-center">
                 <div className="flex items-center gap-3 text-[10px] text-gray-400 dark:text-gray-500 font-mono bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-xl px-4 py-2 border border-gray-200/50 dark:border-gray-700/50 shadow-sm mb-2">
@@ -829,34 +753,6 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
                   </span>
                 </div>
               </Panel>
-
-              {activeTool !== 'select' && (
-                <Panel position="top-center">
-                  <div className={`flex items-center gap-3 px-5 py-2.5 rounded-2xl shadow-xl border font-bold text-sm backdrop-blur-md animate-bounce ${
-                    activeTool === 'eraser'
-                      ? 'bg-amber-500/90 text-white border-amber-400 shadow-amber-500/20'
-                      : 'bg-rose-600/90 text-white border-rose-400 shadow-rose-600/30'
-                  }`}>
-                    {activeTool === 'eraser' ? (
-                      <>
-                        <Eraser size={20} weight="fill" />
-                        <span>Eraser Tool Active — Click or drag across components &amp; links to erase them!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lightning size={20} weight="fill" />
-                        <span>Laser Cutter Active — Slice through components &amp; links to vaporize them!</span>
-                      </>
-                    )}
-                    <button
-                      onClick={() => setActiveTool('select')}
-                      className="ml-2 px-2.5 py-1 bg-black/20 hover:bg-black/30 rounded-lg text-xs font-extrabold transition-colors"
-                    >
-                      Exit
-                    </button>
-                  </div>
-                </Panel>
-              )}
               
               <NodeDetailsPopup 
                 selectedNode={activePopupNodeId ? enrichedNodes.find(n => n.id === activePopupNodeId) : null}
