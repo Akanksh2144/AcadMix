@@ -2,9 +2,10 @@ import React, { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Desktop, WarningCircle } from '@phosphor-icons/react';
 import { COMPONENT_MAP } from '../nodeRegistry';
+import { NodeChaosBanner } from './NodeChaosBanner';
 
 function UniversalNode({ id, data, type, nodeType }: NodeProps & { data: any; nodeType?: string }) {
-  const resolvedType = nodeType || type || 'appServer';
+  const resolvedType = data?.nodeType || nodeType || type || 'appServer';
   const metadata = COMPONENT_MAP[resolvedType];
   
   const Icon = metadata?.icon || Desktop;
@@ -14,37 +15,34 @@ function UniversalNode({ id, data, type, nodeType }: NodeProps & { data: any; no
   const isVertical = data?.isVertical;
   const metrics = data?.metrics;
   const status = metrics?.status || 'healthy';
+  const hasChaos = Boolean(data?.chaosActive || (data?.errors && data.errors > 0));
 
   return (
     <div
       className={`bg-[#FFFDF8] dark:bg-[#1E2433] border border-[#C8BFA9] dark:border-[#2E3545] border-l-[3px] rounded-xl shadow-sm min-w-[210px] transition-all ${
-        status === 'critical' || data?.chaosActive ? 'ring-2 ring-red-500 bg-red-50/30 dark:bg-red-950/20' :
+        status === 'critical' || hasChaos ? '!border-red-500 ring-2 ring-red-500 bg-red-50/90 dark:bg-red-950/80 shadow-lg shadow-red-500/30 animate-pulse' :
         status === 'warning' ? 'ring-2 ring-amber-500 bg-amber-50/30 dark:bg-amber-950/20' : ''
       }`}
-      style={{ borderLeftColor: color, fontFamily: "'Caveat', cursive" }}
+      style={{ borderLeftColor: hasChaos ? '#EF4444' : color, fontFamily: "'Caveat', cursive" }}
     >
       <div className="px-3 pt-3 pb-1.5 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Icon size={18} weight="bold" style={{ color }} />
+          <Icon size={18} weight="bold" style={{ color: hasChaos ? '#EF4444' : color }} />
           <span className="text-base font-bold text-[#2D2D2D] dark:text-[#D4D4D4] font-[Caveat] truncate max-w-[140px]" title={label}>
             {label}
           </span>
         </div>
-        {(status !== 'healthy' || data?.chaosActive) && (
+        {(status !== 'healthy' || hasChaos) && (
           <WarningCircle 
             size={16} 
             weight="fill" 
-            className={status === 'critical' || data?.chaosActive ? 'text-red-500 animate-pulse' : 'text-amber-500'} 
+            className={status === 'critical' || hasChaos ? 'text-red-500 animate-pulse' : 'text-amber-500'} 
             title={data?.chaosActive ? `Chaos Active: ${data.chaosActive}` : (metrics?.bottleneck || 'Warning')} 
           />
         )}
       </div>
 
-      {data?.chaosActive && (
-        <div className="mx-2 mb-1.5 px-2 py-0.5 rounded bg-red-500/15 border border-red-500/40 text-red-600 dark:text-red-400 text-xs font-bold font-[Caveat] flex items-center gap-1 animate-pulse truncate" title={data.chaosActive}>
-          <span>💥 {data.chaosActive}</span>
-        </div>
-      )}
+      <NodeChaosBanner id={id} data={data} />
 
       {metrics && (
         <div className="px-3 py-2 border-t border-[#E0D9CB] dark:border-[#2E3545] bg-[#F5F0E8]/60 dark:bg-[#161B28]/60 text-sm font-[Caveat]">

@@ -314,6 +314,7 @@ export default function ComponentPalette({
                               chaosId: item.id,
                               description: item.description,
                               impact: item.impact,
+                              rawChaosItem: item,
                             }));
                           }
                         }}

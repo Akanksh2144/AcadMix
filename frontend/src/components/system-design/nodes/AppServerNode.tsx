@@ -1,17 +1,24 @@
 import React, { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Desktop } from '@phosphor-icons/react';
+import { NodeChaosBanner } from './NodeChaosBanner';
 
 function AppServerNode({ id, data }: NodeProps & { data: any }) {
+  const hasChaos = Boolean(data?.chaosActive || (data?.errors && data.errors > 0));
+
   return (
     <div
-      className="bg-[#FFFDF8] dark:bg-[#1E2433] border border-[#C8BFA9] dark:border-[#2E3545] border-l-[3px] rounded-xl shadow-sm min-w-[210px]"
-      style={{ borderLeftColor: '#4A7FBA', fontFamily: "'Caveat', cursive" }}
+      className={`bg-[#FFFDF8] dark:bg-[#1E2433] border border-[#C8BFA9] dark:border-[#2E3545] border-l-[3px] rounded-xl shadow-sm min-w-[210px] transition-all ${
+        hasChaos ? '!border-red-500 ring-2 ring-red-500 bg-red-50/90 dark:bg-red-950/80 shadow-lg shadow-red-500/30 animate-pulse' : ''
+      }`}
+      style={{ borderLeftColor: hasChaos ? '#EF4444' : '#4A7FBA', fontFamily: "'Caveat', cursive" }}
     >
       <div className="px-3 pt-3 pb-1 flex items-center gap-2">
-        <Desktop size={16} weight="bold" style={{ color: '#4A7FBA' }} />
+        <Desktop size={16} weight="bold" style={{ color: hasChaos ? '#EF4444' : '#4A7FBA' }} />
         <span className="text-base font-bold text-[#2D2D2D] dark:text-[#D4D4D4] font-[Caveat]">App Server Cluster</span>
       </div>
+
+      <NodeChaosBanner id={id} data={data} />
 
       {data.metrics && (
         <div className="px-3 py-2 border-t border-[#E0D9CB] dark:border-[#2E3545] bg-[#F5F0E8]/60 dark:bg-[#161B28]/60 text-sm space-y-1 font-[Caveat]">
@@ -47,3 +54,4 @@ function AppServerNode({ id, data }: NodeProps & { data: any }) {
 }
 
 export default memo(AppServerNode);
+

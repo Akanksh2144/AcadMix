@@ -38,6 +38,7 @@ import MetricsPanel from '../components/system-design/MetricsPanel';
 import { NodeDetailsPopup } from '../components/system-design/NodeDetailsPopup';
 import ChallengeSelector from '../components/system-design/ChallengeSelector';
 import SimulationSummaryModal from '../components/system-design/SimulationSummaryModal';
+import ChaosTargetModal from '../components/system-design/ChaosTargetModal';
 import { CHALLENGES, checkChallengePassed } from '../components/system-design/challenges';
 import { runSimulation } from '../components/system-design/engine';
 import type { SimulationResult, ChallengeConfig } from '../components/system-design/types';
@@ -102,6 +103,7 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
   const [showLanes, setShowLanes] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [activeChaosItemForModal, setActiveChaosItemForModal] = useState<any | null>(null);
 
   const spofCount = useMemo(() => {
     return nodes.filter(n => {
@@ -372,6 +374,133 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     [setEdges],
   );
 
+  // Chaos Fault Injection Handler with Granular SPOF & Layer Targeting
+  const handleInjectChaos = useCallback((chaosItem: any, targetIds?: string | string[], blastMode: 'single' | 'layer' | 'global' = 'global') => {
+    if (!isSimulating) {
+      triggerAlert('Chaos Arena Locked', 'Please start the live simulation (▶ Run Simulation) first to inject faults and observe real-time cascading failures.', 'error');
+      return;
+    }
+
+    const targetList = targetIds ? (Array.isArray(targetIds) ? targetIds : [targetIds]) : [];
+    
+    let scopeMsg = 'across all downstream services (System-Wide Blast Radius)';
+    if (blastMode === 'single' && targetList.length > 0) {
+      scopeMsg = `strictly on targeted component (${targetList.join(', ')}) [SPOF Failover Test]`;
+    } else if (blastMode === 'layer') {
+      scopeMsg = 'on matching architectural layer components';
+    }
+
+    triggerAlert(
+      `💥 Chaos Injected: ${chaosItem.label}`,
+      `${chaosItem.description} — Applied ${scopeMsg}.`,
+      'error'
+    );
+
+    setNodes((currentNodes) => {
+      return currentNodes.map((node) => {
+        if (node.type === 'lane' || node.type === 'metricsDashboard') return node;
+
+        // Single node target mode: only modify exact target nodes!
+        if (blastMode === 'single' && targetList.length > 0 && !targetList.includes(node.id)) {
+          return node;
+        }
+
+        // Layer target mode: filter strictly by layer profile
+        if (blastMode === 'layer') {
+          const id = chaosItem.id || '';
+          const isDbOrStorage = node.type === 'sqlDatabase' || node.type === 'nosqlDatabase' || node.type === 'objectStorage' || node.type === 'cache';
+          const isCompute = node.type === 'appServer' || node.type === 'workerPool' || node.type === 'singlePageApp';
+          const isGateway = node.type === 'dns' || node.type === 'cdn' || node.type === 'loadBalancer' || node.type === 'reverseProxy';
+
+          if ((id.includes('disk') || id.includes('storage') || id.includes('cache')) && !isDbOrStorage) return node;
+          if ((id.includes('instance') || id.includes('memory') || id.includes('thread') || id.includes('cpu') || id.includes('deadlock')) && !isCompute) return node;
+          if ((id.includes('network') || id.includes('packet') || id.includes('latency') || id.includes('dns') || id.includes('tls') || id.includes('lb')) && !isGateway) return node;
+        }
+
+        if (node.type === 'client') {
+          if (chaosItem.impact?.qpsMultiplier) {
+            const oldQps = node.data?.requestsPerSec || 1000;
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                requestsPerSec: Math.round(oldQps * chaosItem.impact.qpsMultiplier),
+                chaosActive: `Surged ${chaosItem.impact.qpsMultiplier}x by ${chaosItem.label}`,
+              },
+            };
+          }
+          return node;
+        }
+
+        const currentErrors = typeof node.data?.errors === 'number' ? node.data.errors : 0;
+        const currentLatency = typeof node.data?.latency === 'number' ? node.data.latency : (typeof node.data?.customLatency === 'number' ? node.data.customLatency : 10);
+        const currentReplicas = typeof node.data?.replicas === 'number' ? node.data.replicas : 1;
+
+        const newErrors = Math.min(100, currentErrors + (chaosItem.impact?.errorRate || 0));
+        const newLatency = currentLatency + (chaosItem.impact?.addedLatency || 0);
+        const newReplicas = chaosItem.impact?.killReplicasPct
+          ? Math.max(1, Math.floor(currentReplicas * (1 - chaosItem.impact.killReplicasPct / 100)))
+          : currentReplicas;
+
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            errors: newErrors > 0 ? newErrors : undefined,
+            latency: newLatency !== 10 ? newLatency : undefined,
+            replicas: newReplicas,
+            chaosActive: chaosItem.label,
+          },
+        };
+      });
+    });
+  }, [isSimulating, triggerAlert, setNodes]);
+
+  // Clear Injected Chaos Faults
+  const handleClearChaos = useCallback(() => {
+    setNodes((currentNodes) => {
+      return currentNodes.map((node) => {
+        if (!node.data?.chaosActive && !node.data?.errors && !node.data?.latency) return node;
+        const { chaosActive, errors, latency, ...cleanData } = node.data;
+        return {
+          ...node,
+          data: cleanData,
+        };
+      });
+    });
+    triggerAlert('Chaos Faults Cleared', 'All injected fault states and degradation multipliers have been reset to baseline.', 'info');
+  }, [setNodes, triggerAlert]);
+
+  // Remove chaos strictly from a single node (1-click Heal)
+  const handleRemoveNodeChaos = useCallback((nodeId: string) => {
+    setNodes((currentNodes) => {
+      return currentNodes.map((node) => {
+        if (node.id !== nodeId) return node;
+        if (!node.data?.chaosActive && !node.data?.errors && !node.data?.latency) return node;
+        const { chaosActive, errors, latency, ...cleanData } = node.data;
+        return {
+          ...node,
+          data: cleanData,
+        };
+      });
+    });
+    triggerAlert('Node Healed 🩺', `Chaos faults removed from component. Returned to healthy baseline.`, 'success');
+  }, [setNodes, triggerAlert]);
+
+  useEffect(() => {
+    const listener = (e: any) => {
+      if (e?.detail?.nodeId) {
+        handleRemoveNodeChaos(e.detail.nodeId);
+      }
+    };
+    window.addEventListener('acadmix:remove-node-chaos', listener);
+    return () => window.removeEventListener('acadmix:remove-node-chaos', listener);
+  }, [handleRemoveNodeChaos]);
+
+  const activeChaosNodes = useMemo(() => {
+    return nodes.filter((n) => n.type !== 'lane' && n.type !== 'metricsDashboard' && Boolean(n.data?.chaosActive || (typeof n.data?.errors === 'number' && n.data.errors > 0)));
+  }, [nodes]);
+
   // Drop component from sidebar onto canvas
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -393,19 +522,45 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
 
       const defaults = defaultsStr ? JSON.parse(defaultsStr) : {};
 
+      if (type === 'chaosMonkey') {
+        const chaosObj = defaults.rawChaosItem || {
+          label: defaults.label?.replace('Chaos: ', '') || 'Chaos Fault',
+          description: defaults.description,
+          impact: defaults.impact,
+          id: defaults.chaosId,
+        };
+
+        // Check if dropped directly over/onto an existing component on the canvas
+        const targetNode = nodes.find((n) => {
+          if (n.type === 'lane' || n.type === 'metricsDashboard' || n.type === 'chaosMonkey') return false;
+          const extent = n.extent as { x: number; y: number } | undefined;
+          const nx = extent ? extent.x : (n.position?.x ?? 0);
+          const ny = extent ? extent.y : (n.position?.y ?? 0);
+          return position.x >= nx - 40 && position.x <= nx + 250 && position.y >= ny - 40 && position.y <= ny + 160;
+        });
+
+        if (targetNode) {
+          handleInjectChaos(chaosObj, targetNode.id, 'single');
+        } else {
+          setActiveChaosItemForModal(chaosObj);
+        }
+        return;
+      }
+
       const newNode: Node = {
         id: `node_${type}_${nodeCounter++}`,
-        type,
+        type: (nodeTypes as any)[type] ? type : 'singlePageApp',
         position,
         data: {
           ...defaults,
+          nodeType: type,
           label: `${defaults.label || type}`,
         },
       };
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [screenToFlowPosition, setNodes],
+    [screenToFlowPosition, setNodes, nodes, handleInjectChaos],
   );
 
   // Extract simulation-relevant configuration to avoid infinite loops from React Flow layout measurement updates
@@ -521,75 +676,6 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     }
   };
 
-  // Chaos Fault Injection Handler
-  const handleInjectChaos = useCallback((chaosItem: any) => {
-    if (!isSimulating) {
-      triggerAlert('Chaos Arena Locked', 'Please start the live simulation (▶ Run Simulation) first to inject faults and observe real-time cascading failures.', 'error');
-      return;
-    }
-
-    triggerAlert(
-      `💥 Chaos Injected: ${chaosItem.label}`,
-      `${chaosItem.description} — Observing real-time metric degradation and cascading failures across downstream services.`,
-      'error'
-    );
-
-    setNodes((currentNodes) => {
-      return currentNodes.map((node) => {
-        if (node.type === 'lane' || node.type === 'client') {
-          if (node.type === 'client' && chaosItem.impact?.qpsMultiplier) {
-            const oldQps = node.data?.requestsPerSec || 1000;
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                requestsPerSec: Math.round(oldQps * chaosItem.impact.qpsMultiplier),
-                chaosActive: `Surged ${chaosItem.impact.qpsMultiplier}x by ${chaosItem.label}`,
-              },
-            };
-          }
-          return node;
-        }
-
-        const currentErrors = typeof node.data?.errors === 'number' ? node.data.errors : 0;
-        const currentLatency = typeof node.data?.latency === 'number' ? node.data.latency : (typeof node.data?.customLatency === 'number' ? node.data.customLatency : 10);
-        const currentReplicas = typeof node.data?.replicas === 'number' ? node.data.replicas : 1;
-
-        const newErrors = Math.min(100, currentErrors + (chaosItem.impact?.errorRate || 0));
-        const newLatency = currentLatency + (chaosItem.impact?.addedLatency || 0);
-        const newReplicas = chaosItem.impact?.killReplicasPct
-          ? Math.max(1, Math.floor(currentReplicas * (1 - chaosItem.impact.killReplicasPct / 100)))
-          : currentReplicas;
-
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            errors: newErrors > 0 ? newErrors : undefined,
-            latency: newLatency !== 10 ? newLatency : undefined,
-            replicas: newReplicas,
-            chaosActive: chaosItem.label,
-          },
-        };
-      });
-    });
-  }, [isSimulating, triggerAlert, setNodes]);
-
-  // Clear Injected Chaos Faults
-  const handleClearChaos = useCallback(() => {
-    setNodes((currentNodes) => {
-      return currentNodes.map((node) => {
-        if (!node.data?.chaosActive && !node.data?.errors && !node.data?.latency) return node;
-        const { chaosActive, errors, latency, ...cleanData } = node.data;
-        return {
-          ...node,
-          data: cleanData,
-        };
-      });
-    });
-    triggerAlert('Chaos Faults Cleared', 'All injected fault states and degradation multipliers have been reset to baseline.', 'info');
-  }, [setNodes, triggerAlert]);
-
   // Reset Canvas
   const handleReset = () => {
     setNodes(currentChallenge.initialNodes);
@@ -668,6 +754,39 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
           onDragOver={onDragOver}
           onDrop={onDrop}
         >
+          {/* Floating Active Chaos HUD Banner */}
+          {activeChaosNodes.length > 0 && (
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 bg-red-950/95 border-2 border-red-500 text-red-100 px-4 py-2.5 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-4 animate-bounce-subtle max-w-[80vw] overflow-x-auto">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xl animate-pulse">💥</span>
+                <div>
+                  <h4 className="text-sm font-bold tracking-wide text-white">Chaos Active ({activeChaosNodes.length} {activeChaosNodes.length === 1 ? 'Node' : 'Nodes'} Affected)</h4>
+                  <p className="text-[11px] text-red-300 font-medium">Click [×] on any node badge below or inside canvas to heal immediately.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap max-h-20 overflow-y-auto">
+                {activeChaosNodes.map((n) => (
+                  <span key={n.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-900/90 border border-red-400/60 text-xs font-semibold text-white shadow-sm">
+                    <span>{n.data?.label || n.type}: <strong className="text-amber-300 font-bold">{n.data?.chaosActive || `${n.data?.errors}% Errors`}</strong></span>
+                    <button
+                      onClick={() => handleRemoveNodeChaos(n.id)}
+                      className="w-4 h-4 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center text-[11px] font-bold text-white transition-colors ml-1 shadow"
+                      title="Heal this node"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <button
+                onClick={handleClearChaos}
+                className="ml-auto px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-600/40 transition-all flex items-center gap-1.5 flex-shrink-0 border border-red-400/50"
+              >
+                <span>🩺 Heal All Nodes</span>
+              </button>
+            </div>
+          )}
+
           {/* Top Control Overlay */}
           <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none ">
             {/* Left buttons: Challenge selection + Hint */}
@@ -935,6 +1054,18 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
         maxLatencyP99={currentChallenge.maxLatencyP99}
         nodesCount={nodes.filter(n => n.type !== 'lane').length}
         spofCount={spofCount}
+      />
+
+      {/* Chaos Granular SPOF Targeting Modal */}
+      <ChaosTargetModal
+        isOpen={Boolean(activeChaosItemForModal)}
+        onClose={() => setActiveChaosItemForModal(null)}
+        chaosItem={activeChaosItemForModal}
+        nodes={nodes}
+        onInject={(item, targetIds, blastMode) => {
+          setActiveChaosItemForModal(null);
+          handleInjectChaos(item, targetIds, blastMode);
+        }}
       />
     </div>
   );
