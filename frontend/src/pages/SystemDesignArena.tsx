@@ -579,7 +579,7 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
                 <Trophy size={20} weight="fill" />
               </button>
 
-              {currentChallenge.stage > 0 && (
+              {currentChallenge.hints && currentChallenge.hints.length > 0 && (
                 <button
                   onClick={handleShowHint}
                   title={`Show Hint ${showHintIndex > 0 ? `(${showHintIndex}/${currentChallenge.hints.length})` : ''}`}
@@ -739,15 +739,36 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
               </Panel>
 
               {showHintIndex > 0 && currentChallenge.hints[showHintIndex - 1] && (
-                <Panel position="bottom-right" className="!mb-6 !mr-6 max-w-md z-50">
-                  <div className="bg-gray-900 dark:bg-black text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-gray-800 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <Lightbulb size={20} weight="fill" className="text-amber-400 shrink-0" />
-                    <p className="text-xs md:text-sm font-medium leading-snug flex-1">
-                      {currentChallenge.hints[showHintIndex - 1]}
-                    </p>
+                <Panel position="bottom-right" className="!mb-6 !mr-6 max-w-lg z-50">
+                  <div className="bg-[#18181b] text-gray-100 p-4 rounded-xl shadow-2xl flex items-start gap-3 border border-gray-800 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <Lightbulb size={22} weight="fill" className="text-amber-400 shrink-0 mt-0.5" />
+                    <div className="flex flex-col flex-1 gap-1.5 min-w-0">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                        <span>Architectural Hint ({showHintIndex}/{currentChallenge.hints.length})</span>
+                        <div className="flex items-center gap-1.5 ml-2">
+                          <button
+                            onClick={() => setShowHintIndex(prev => prev <= 1 ? currentChallenge.hints.length : prev - 1)}
+                            className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-mono text-xs transition-colors"
+                            title="Previous Hint"
+                          >
+                            ←
+                          </button>
+                          <button
+                            onClick={() => setShowHintIndex(prev => prev >= currentChallenge.hints.length ? 1 : prev + 1)}
+                            className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-mono text-xs transition-colors"
+                            title="Next Hint"
+                          >
+                            →
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm font-normal leading-relaxed text-gray-100 font-serif">
+                        {currentChallenge.hints[showHintIndex - 1]}
+                      </p>
+                    </div>
                     <button
                       onClick={() => setShowHintIndex(0)}
-                      className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
+                      className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0 -mr-1 -mt-1"
                       title="Close Hint"
                     >
                       <X size={16} weight="bold" />
