@@ -122,8 +122,28 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
   const enrichedNodes = useMemo(() => {
     return nodes.map((n) => {
       const nodeMetrics = simResult?.nodeMetrics[n.id];
+      const status = nodeMetrics?.status || 'healthy';
+      const utilization = nodeMetrics?.utilization ?? 0;
+      const isSelected = n.selected;
+
+      let glowClass = '';
+      if (status === 'critical') {
+        glowClass = '!border-rose-500 !shadow-2xl !shadow-rose-500/35 ring-2 ring-rose-500/30';
+      } else if (status === 'warning') {
+        glowClass = '!border-amber-500 !shadow-xl !shadow-amber-500/25 ring-2 ring-amber-500/15';
+      } else if (utilization > 0) {
+        glowClass = '!border-emerald-500 !shadow-lg !shadow-emerald-500/15';
+      } else {
+        glowClass = 'opacity-90';
+      }
+
+      if (isSelected) {
+        glowClass += ' ring-2 ring-indigo-500/50 !border-indigo-550 !shadow-indigo-500/20';
+      }
+
       return {
         ...n,
+        className: `transition-all duration-300 rounded-2xl ${glowClass}`,
         data: {
           ...n.data,
           onDataChange: handleNodeDataChange,
@@ -134,6 +154,42 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
       };
     });
   }, [nodes, handleNodeDataChange, simResult]);
+
+  // Dynamic glowing and speed-controlled animated edges based on active traffic QPS load
+  const enrichedEdges = useMemo(() => {
+    return edges.map((e) => {
+      const sourceMetrics = simResult?.nodeMetrics[e.source];
+      const qps = sourceMetrics?.processedQPS ?? 0;
+      const isActive = qps > 0;
+      
+      // Calculate speed: higher QPS = faster dash animations
+      const animationSpeed = qps > 0 ? Math.max(0.5, 12 - Math.log(qps) * 1.0) : 0;
+      
+      let strokeColor = '#94a3b8'; // Slate 400 when inactive
+      if (isActive) {
+        const utilization = sourceMetrics?.utilization ?? 0;
+        if (utilization > 0.9) {
+          strokeColor = '#ef4444'; // Red for overloaded pipelines
+        } else if (utilization > 0.7) {
+          strokeColor = '#f59e0b'; // Amber warning pipelines
+        } else {
+          strokeColor = '#6366f1'; // Indigo normal healthy pipelines
+        }
+      }
+
+      return {
+        ...e,
+        animated: isActive,
+        style: {
+          stroke: strokeColor,
+          strokeWidth: isActive ? 2.5 : 1.5,
+          transition: 'all 0.3s ease',
+          animationDuration: isActive ? `${animationSpeed}s` : '0s',
+          filter: isActive ? `drop-shadow(0 0 4px ${strokeColor}50)` : 'none',
+        },
+      };
+    });
+  }, [edges, simResult]);
 
   // Connect edges
   const onConnect = useCallback(
@@ -495,7 +551,7 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
           <div className="flex-1 min-h-0">
             <ReactFlow
               nodes={enrichedNodes}
-              edges={edges}
+              edges={enrichedEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
@@ -545,6 +601,11 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
               result={simResult}
               challengeTargets={currentChallenge.stage > 0 ? currentChallenge : undefined}
               challengeResult={challengeResult}
+              selectedNode={nodes.find(n => n.selected)}
+              selectedNodeMetrics={(() => {
+                const sel = nodes.find(n => n.selected);
+                return sel ? simResult?.nodeMetrics[sel.id] : undefined;
+              })()}
             />
           </div>
         </div>
