@@ -23,52 +23,126 @@ const COST_TABLE: Record<string, number> = {
   messageQueue: 40,
   workerPool: 60,   // per worker
   metricsDashboard: 0,
-  // 41 Expanded & Case-Study Components
+  // 119 Expanded & Categorized Components across 18 categories
+  singlePageApp: 0,
+  mobileClient: 0,
+  desktopApp: 0,
+  iotDevice: 0,
+  smartTV: 0,
+  serviceWorker: 0,
+  graphqlClient: 0,
+  websocketClient: 0,
+  sseClient: 0,
+  reverseProxy: 25,
+  bastionHost: 20,
+  vpnGateway: 40,
+  natGateway: 30,
+  bareMetal: 450,
+  networkLoadBalancer: 45,
   apiGateway: 45,
   firewall: 60,
-  reverseProxy: 25,
-  consistentHashRing: 20,
+  serviceMesh: 90,
+  ingressController: 35,
+  egressProxy: 25,
+  bgpRouter: 100,
+  vpcPeering: 15,
+  dnsResolver: 10,
   serverless: 35,
   kubernetes: 250,
   cronJob: 15,
   websocketServer: 70,
-  serviceMesh: 90,
   presenceServer: 40,
   transcodingWorker: 150,
   syncService: 60,
   searchCrawler: 80,
   idGenerator: 25,
-  memcached: 50,
-  cdnEdgeCache: 40,
-  localCache: 0,
-  leaderboardStore: 70,
+  microservice: 65,
+  grpcService: 50,
+  blockStorage: 45,
+  fileSystem: 80,
+  blobStorage: 30,
+  coldStorage: 5,
+  nvmePool: 120,
   timeSeriesDb: 110,
   graphDb: 140,
   vectorDb: 150,
   searchEngine: 130,
   dataWarehouse: 300,
   spatialIndex: 90,
-  ledgerDatabase: 150,
-  eventBus: 35,
-  deadLetterQueue: 10,
-  streamProcessor: 120,
-  pubsub: 30,
-  pushGateway: 40,
-  emailSmsService: 30,
+  dataLake: 180,
+  olapEngine: 220,
+  etlPipeline: 70,
   llmGateway: 200,
   modelServing: 400,
   featureStore: 110,
   aiAgent: 80,
+  embeddingEngine: 130,
+  modelRegistry: 30,
+  fineTuningWorker: 500,
+  paymentGateway: 50,
+  ledgerDatabase: 150,
+  reconciliationEngine: 45,
+  fraudDetection: 120,
+  memcached: 50,
+  cdnEdgeCache: 40,
+  localCache: 0,
+  leaderboardStore: 70,
+  bufferCache: 35,
+  eventBus: 35,
+  deadLetterQueue: 10,
+  streamProcessor: 120,
+  pubsub: 30,
+  taskQueue: 40,
+  priorityQueue: 45,
   authService: 50,
   secretManager: 30,
   rateLimiter: 20,
+  certificateAuthority: 25,
+  hsmModule: 180,
+  siemEngine: 160,
+  zeroTrustProxy: 55,
+  serviceRegistry: 35,
+  configServer: 25,
+  featureFlags: 40,
+  portalGateway: 60,
+  tenantRouter: 30,
+  circuitBreaker: 15,
+  chaosMonkey: 20,
+  healthChecker: 10,
+  backupService: 40,
+  failoverController: 35,
+  consistentHashRing: 20,
   logAggregator: 100,
   alertManager: 25,
-  vpnGateway: 40,
-  bastionHost: 20,
-  blockStorage: 45,
-  paymentGateway: 50,
-  reconciliationEngine: 45,
+  distributedTracer: 80,
+  profilerNode: 50,
+  bloomFilter: 5,
+  hyperLogLog: 5,
+  lruCacheNode: 5,
+  merkleTree: 10,
+  skipList: 10,
+  quadTree: 15,
+  consistentHashNode: 10,
+  cqrsRouter: 30,
+  eventSourcing: 60,
+  sagaOrchestrator: 70,
+  sidecarContainer: 15,
+  stranglerFig: 40,
+  shardingRouter: 35,
+  factoryPattern: 5,
+  singletonService: 5,
+  observerBroker: 10,
+  strategyRouter: 10,
+  stateMachine: 25,
+  commandBus: 20,
+  pushGateway: 40,
+  emailSmsService: 30,
+  externalApi: 15,
+  webhookReceiver: 25,
+  mockServer: 10,
+  legacyMainframe: 600,
+  blockchainNode: 350,
+  captchaService: 20,
 };
 
 // ── Capacity Limits ─────────────────────────────────────────────────────────
@@ -82,94 +156,143 @@ function getNodeCapacity(type: string, data: Record<string, any>): number {
     case 'cdn':
       return 500_000;
     case 'loadBalancer':
+    case 'networkLoadBalancer':
     case 'apiGateway':
     case 'firewall':
     case 'reverseProxy':
     case 'rateLimiter':
     case 'consistentHashRing':
     case 'presenceServer':
-      return 200_000;
+    case 'ingressController':
+    case 'egressProxy':
+    case 'bgpRouter':
+    case 'vpcPeering':
+    case 'dnsResolver':
+    case 'tenantRouter':
+    case 'circuitBreaker':
+    case 'shardingRouter':
+    case 'cqrsRouter':
+    case 'stranglerFig':
+      return 300_000;
     case 'idGenerator':
-      return 500_000;
-    case 'appServer': {
-      const replicas = data.replicas ?? 1;
-      const maxThreads = data.maxThreads ?? 200;
+    case 'bloomFilter':
+    case 'hyperLogLog':
+    case 'lruCacheNode':
+    case 'merkleTree':
+    case 'skipList':
+    case 'quadTree':
+    case 'consistentHashNode':
+      return 1_000_000;
+    case 'appServer':
+    case 'microservice':
+    case 'grpcService': {
+      const replicas = data.replicas ?? 2;
+      const maxThreads = data.maxThreads ?? 250;
       return replicas * maxThreads;
     }
     case 'kubernetes': {
-      const pods = data.pods ?? 6;
-      return pods * 250;
+      const pods = data.pods ?? 8;
+      return pods * 300;
     }
+    case 'bareMetal':
+      return 50_000;
     case 'serverless':
     case 'syncService':
     case 'emailSmsService':
-      return 50_000;
+    case 'webhookReceiver':
+      return 80_000;
     case 'cache':
     case 'memcached':
     case 'cdnEdgeCache':
     case 'localCache':
     case 'leaderboardStore':
-      return 300_000;
-    case 'sqlDatabase': {
-      const baseCapacity = data.indexed ? 10_000 : 2_000;
+    case 'bufferCache':
+      return 500_000;
+    case 'sqlDatabase':
+    case 'olapEngine': {
+      const baseCapacity = data.indexed ? 15_000 : 3_000;
       const readReplicas = data.readReplicas ?? 0;
-      const shardCount = data.sharded ? (data.shardCount ?? 1) : 1;
-      return baseCapacity * (1 + readReplicas) * shardCount;
+      return baseCapacity * (1 + readReplicas);
     }
     case 'nosqlDatabase':
     case 'timeSeriesDb':
     case 'graphDb':
-      return 50_000;
+      return 60_000;
     case 'vectorDb':
     case 'searchEngine':
     case 'spatialIndex':
     case 'searchCrawler':
-      return 25_000;
+      return 30_000;
     case 'dataWarehouse':
     case 'ledgerDatabase':
     case 'reconciliationEngine':
-      return 10_000;
+    case 'dataLake':
+      return 15_000;
     case 'objectStorage':
     case 'blockStorage':
-      return 15_000;
+    case 'fileSystem':
+    case 'blobStorage':
+    case 'coldStorage':
+    case 'nvmePool':
+    case 'eventSourcing':
+      return 25_000;
     case 'messageQueue':
     case 'eventBus':
     case 'pubsub':
     case 'streamProcessor':
-    case 'pushGateway': {
-      const partitions = data.partitions ?? 4;
-      return partitions * 10_000;
+    case 'pushGateway':
+    case 'taskQueue':
+    case 'priorityQueue': {
+      const partitions = data.partitions ?? 8;
+      return partitions * 12_000;
     }
     case 'deadLetterQueue':
-      return 50_000;
+      return 80_000;
     case 'workerPool':
     case 'cronJob':
-    case 'transcodingWorker': {
-      const workers = data.workers ?? 4;
-      const taskTime = data.taskProcessingTime ?? 200;
+    case 'transcodingWorker':
+    case 'sagaOrchestrator': {
+      const workers = data.workers ?? 6;
+      const taskTime = data.taskProcessingTime ?? 180;
       return workers * (1000 / taskTime);
     }
     case 'websocketServer':
-      return 100_000;
+      return 150_000;
     case 'serviceMesh':
     case 'vpnGateway':
     case 'bastionHost':
-      return 150_000;
+    case 'natGateway':
+    case 'zeroTrustProxy':
+      return 200_000;
     case 'llmGateway':
-      return data.tps ?? 50;
+      return data.tps ?? 60;
     case 'modelServing':
-      return (data.gpus ?? 4) * 50;
+    case 'fineTuningWorker':
+      return (data.gpus ?? 8) * 60;
+    case 'embeddingEngine':
+      return 500;
     case 'featureStore':
     case 'authService':
     case 'secretManager':
-      return 50_000;
+    case 'certificateAuthority':
+    case 'serviceRegistry':
+    case 'configServer':
+    case 'featureFlags':
+      return 75_000;
     case 'paymentGateway':
-      return 20_000;
+    case 'fraudDetection':
+      return 30_000;
     case 'aiAgent':
-      return 100;
+      return 150;
     case 'logAggregator':
     case 'alertManager':
-      return 100_000;
+    case 'distributedTracer':
+    case 'siemEngine':
+      return 120_000;
+    case 'legacyMainframe':
+      return 50;
+    case 'blockchainNode':
+      return 100;
     case 'metricsDashboard':
       return Infinity;
     default:
@@ -194,19 +317,36 @@ function getNodeLatency(type: string, data: Record<string, any>): number {
       return edgeLat * hitRatio;
     }
     case 'loadBalancer':
+    case 'networkLoadBalancer':
     case 'apiGateway':
     case 'firewall':
     case 'reverseProxy':
     case 'rateLimiter':
     case 'serviceMesh':
     case 'leaderboardStore':
+    case 'bufferCache':
+    case 'circuitBreaker':
+    case 'shardingRouter':
+    case 'cqrsRouter':
+    case 'stranglerFig':
       return 2;
     case 'consistentHashRing':
     case 'idGenerator':
+    case 'bloomFilter':
+    case 'hyperLogLog':
+    case 'lruCacheNode':
+    case 'merkleTree':
+    case 'skipList':
+    case 'quadTree':
+    case 'consistentHashNode':
       return 1;
     case 'appServer':
+    case 'microservice':
+    case 'grpcService':
     case 'websocketServer':
-      return data.processingTime ?? 50;
+      return data.processingTime ?? 40;
+    case 'bareMetal':
+      return 15;
     case 'serverless':
       return data.coldStartMs ? 45 : 15;
     case 'kubernetes':
@@ -215,67 +355,92 @@ function getNodeLatency(type: string, data: Record<string, any>): number {
     case 'cache':
     case 'memcached':
     case 'localCache': {
-      const hitRatio = data.hitRatio ?? 0.8;
+      const hitRatio = data.hitRatio ?? 0.82;
       return 1 * hitRatio;
     }
-    case 'sqlDatabase': {
+    case 'sqlDatabase':
+    case 'olapEngine': {
       const indexed = data.indexed ?? true;
-      const replicationLag = data.replicationLag ?? 50;
-      const baseLatency = indexed ? 5 : 50;
+      const baseLatency = indexed ? 4 : 45;
       const readReplicas = data.readReplicas ?? 0;
-      return baseLatency + (readReplicas > 0 ? replicationLag * 0.1 : 0);
+      return baseLatency + (readReplicas > 0 ? 5 : 0);
     }
     case 'nosqlDatabase':
     case 'timeSeriesDb':
     case 'spatialIndex': {
       const consistency = data.consistencyLevel ?? 'eventual';
-      return consistency === 'strong' ? 15 : consistency === 'causal' ? 8 : 3;
+      return consistency === 'strong' ? 14 : consistency === 'causal' ? 7 : 3;
     }
     case 'graphDb':
     case 'vectorDb':
     case 'searchEngine':
     case 'ledgerDatabase':
-      return data.latency ?? 15;
+    case 'dataLake':
+      return data.latency ?? 14;
     case 'dataWarehouse':
     case 'reconciliationEngine':
-      return 150;
+      return 140;
     case 'objectStorage':
     case 'blockStorage':
-      return data.latency ?? 30;
+    case 'fileSystem':
+    case 'blobStorage':
+    case 'nvmePool':
+      return data.latency ?? 25;
+    case 'coldStorage':
+      return 5000;
     case 'messageQueue':
     case 'eventBus':
     case 'pubsub':
     case 'deadLetterQueue':
     case 'pushGateway':
-      return 5;
+    case 'taskQueue':
+    case 'priorityQueue':
+      return 4;
     case 'streamProcessor':
     case 'emailSmsService':
-      return 25;
+    case 'webhookReceiver':
+      return 20;
     case 'workerPool':
     case 'cronJob':
     case 'transcodingWorker':
-      return data.taskProcessingTime ?? 200;
+    case 'sagaOrchestrator':
+      return data.taskProcessingTime ?? 180;
     case 'llmGateway':
-      return data.latency ?? 450;
+      return data.latency ?? 420;
     case 'modelServing':
-      return data.latency ?? 120;
+    case 'fineTuningWorker':
+      return data.latency ?? 95;
+    case 'embeddingEngine':
+      return 35;
     case 'featureStore':
     case 'authService':
     case 'secretManager':
     case 'presenceServer':
-      return 10;
+    case 'serviceRegistry':
+    case 'configServer':
+    case 'featureFlags':
+      return 8;
     case 'paymentGateway':
-      return 120;
+    case 'fraudDetection':
+      return 80;
     case 'aiAgent':
-      return 600;
+      return 500;
     case 'logAggregator':
     case 'alertManager':
-      return 5;
+    case 'distributedTracer':
+    case 'siemEngine':
+      return 4;
     case 'vpnGateway':
     case 'bastionHost':
-      return 3;
+    case 'natGateway':
+    case 'zeroTrustProxy':
+      return 2;
     case 'searchCrawler':
-      return 100;
+      return 80;
+    case 'legacyMainframe':
+      return 800;
+    case 'blockchainNode':
+      return 1200;
     case 'metricsDashboard':
       return 0;
     default:
@@ -453,7 +618,10 @@ export function runSimulation(
       'timeSeriesDb', 'graphDb', 'vectorDb', 'searchEngine', 'dataWarehouse',
       'deadLetterQueue', 'pubsub', 'logAggregator', 'alertManager', 'blockStorage',
       'spatialIndex', 'ledgerDatabase', 'leaderboardStore', 'pushGateway', 'emailSmsService',
-      'reconciliationEngine', 'paymentGateway'
+      'reconciliationEngine', 'paymentGateway', 'fileSystem', 'blobStorage', 'coldStorage',
+      'dataLake', 'olapEngine', 'modelRegistry', 'siemEngine', 'distributedTracer',
+      'profilerNode', 'eventSourcing', 'externalApi', 'mockServer', 'legacyMainframe',
+      'blockchainNode', 'singlePageApp', 'mobileClient', 'desktopApp', 'iotDevice', 'smartTV'
     ].includes(type);
     const hasOutbound = (outbound[id] || []).length > 0;
     
