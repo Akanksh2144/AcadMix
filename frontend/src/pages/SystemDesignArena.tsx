@@ -188,6 +188,28 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     [screenToFlowPosition, setNodes],
   );
 
+  // Extract simulation-relevant configuration to avoid infinite loops from React Flow layout measurement updates
+  const simInputKey = useMemo(() => {
+    return JSON.stringify({
+      nodes: nodes.map(n => ({
+        id: n.id,
+        type: n.type,
+        data: Object.keys(n.data || {}).reduce((acc: any, key) => {
+          if (key !== 'onDataChange' && key !== 'metrics' && key !== 'simResult') {
+            acc[key] = n.data[key];
+          }
+          return acc;
+        }, {}),
+      })),
+      edges: edges.map(e => ({
+        source: e.source,
+        target: e.target,
+        sourceHandle: e.sourceHandle,
+        targetHandle: e.targetHandle,
+      }))
+    });
+  }, [nodes, edges]);
+
   // Live simulation update when graph structure or configuration changes
   React.useEffect(() => {
     if (nodes.length === 0) {
@@ -224,7 +246,8 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     } catch (err) {
       // Ignore errors during live dragging to avoid console spam
     }
-  }, [nodes, edges, currentChallenge]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [simInputKey, currentChallenge]);
 
   // Run Load Test Simulation (Explicit verification with popup dialogs)
   const handleRunSimulation = () => {
