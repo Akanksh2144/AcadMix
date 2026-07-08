@@ -16,7 +16,15 @@ interface ComponentPaletteProps {
 }
 
 export default function ComponentPalette({ className = '' }: ComponentPaletteProps) {
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    PALETTE_SECTIONS.forEach((section, idx) => {
+      if (idx > 0) {
+        initial[section.title] = true;
+      }
+    });
+    return initial;
+  });
   const [searchQuery, setSearchQuery] = useState('');
 
   const toggleSection = (title: string) => {
@@ -60,7 +68,7 @@ export default function ComponentPalette({ className = '' }: ComponentPalettePro
       {/* Scrollable palette */}
       <div className="flex-1 overflow-y-auto min-h-0 py-1">
         {filteredSections.map((section) => {
-          const isCollapsed = collapsedSections[section.title];
+          const isCollapsed = searchQuery.trim() !== '' ? false : collapsedSections[section.title];
           return (
             <div key={section.title}>
               {/* Section header */}

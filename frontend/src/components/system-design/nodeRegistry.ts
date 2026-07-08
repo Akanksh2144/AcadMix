@@ -20,7 +20,7 @@ import {
   Keyhole, ShieldWarning, Pulse, Eye, Funnel, Hash,
   ListNumbers, Path, Circuitry, Cube, Crosshair, CurrencyCircleDollar,
   Receipt, Wallet, BugBeetle, ArrowClockwise, Heartbeat, Archive,
-  type Icon
+  SlidersHorizontal, type Icon
 } from '@phosphor-icons/react';
 
 export interface ComponentMetadata {
