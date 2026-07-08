@@ -5,7 +5,7 @@
  * Recharts metrics panel, and progressive challenge engine.
  */
 
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   ReactFlow,
   Controls,
