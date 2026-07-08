@@ -99,6 +99,31 @@ export function NodeDetailsPopup({ selectedNode, selectedNodeMetrics, simResult,
         </div>
       )}
 
+      {/* Chaos & Fault Status Panel inside Config Popup */}
+      {Boolean(selectedNode.data?.chaosActive || (typeof selectedNode.data?.errors === 'number' && selectedNode.data.errors > 0)) && (
+        <div className="p-3.5 bg-red-500/10 dark:bg-red-950/50 rounded-xl border border-red-500/60 shadow-md space-y-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-red-600 dark:text-red-300 font-bold text-xs">
+              <span className="text-base animate-pulse">💥</span>
+              <span className="tracking-wide">Fault Injected: {selectedNode.data?.chaosActive || `${selectedNode.data?.errors}% Errors`}</span>
+            </div>
+          </div>
+          <p className="text-[11px] text-red-600/90 dark:text-red-300/80 leading-relaxed font-medium">
+            This component is actively impacted by chaos engineering simulation. Click below to heal and remove fault injection from this specific node.
+          </p>
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('acadmix:remove-node-chaos', { detail: { nodeId: selectedNode.id } }));
+              }
+            }}
+            className="w-full py-2 px-3 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center justify-center gap-1.5 border border-red-400/50"
+          >
+            <span>Heal / Remove Chaos 🩺</span>
+          </button>
+        </div>
+      )}
+
       {/* Configuration Controls */}
       <NodeConfigurationMenu 
         type={selectedNode.type}

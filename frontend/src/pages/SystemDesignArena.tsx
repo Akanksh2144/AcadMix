@@ -497,9 +497,6 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
     return () => window.removeEventListener('acadmix:remove-node-chaos', listener);
   }, [handleRemoveNodeChaos]);
 
-  const activeChaosNodes = useMemo(() => {
-    return nodes.filter((n) => n.type !== 'lane' && n.type !== 'metricsDashboard' && Boolean(n.data?.chaosActive || (typeof n.data?.errors === 'number' && n.data.errors > 0)));
-  }, [nodes]);
 
   // Drop component from sidebar onto canvas
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -754,38 +751,7 @@ function SystemDesignFlowWorkspace({ navigate, user }: any) {
           onDragOver={onDragOver}
           onDrop={onDrop}
         >
-          {/* Floating Active Chaos HUD Banner */}
-          {activeChaosNodes.length > 0 && (
-            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 bg-red-950/95 border-2 border-red-500 text-red-100 px-4 py-2.5 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-4 animate-bounce-subtle max-w-[80vw] overflow-x-auto">
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-xl animate-pulse">💥</span>
-                <div>
-                  <h4 className="text-sm font-bold tracking-wide text-white">Chaos Active ({activeChaosNodes.length} {activeChaosNodes.length === 1 ? 'Node' : 'Nodes'} Affected)</h4>
-                  <p className="text-[11px] text-red-300 font-medium">Click [×] on any node badge below or inside canvas to heal immediately.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap max-h-20 overflow-y-auto">
-                {activeChaosNodes.map((n) => (
-                  <span key={n.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-900/90 border border-red-400/60 text-xs font-semibold text-white shadow-sm">
-                    <span>{n.data?.label || n.type}: <strong className="text-amber-300 font-bold">{n.data?.chaosActive || `${n.data?.errors}% Errors`}</strong></span>
-                    <button
-                      onClick={() => handleRemoveNodeChaos(n.id)}
-                      className="w-4 h-4 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center text-[11px] font-bold text-white transition-colors ml-1 shadow"
-                      title="Heal this node"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <button
-                onClick={handleClearChaos}
-                className="ml-auto px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-600/40 transition-all flex items-center gap-1.5 flex-shrink-0 border border-red-400/50"
-              >
-                <span>🩺 Heal All Nodes</span>
-              </button>
-            </div>
-          )}
+
 
           {/* Top Control Overlay */}
           <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none ">
