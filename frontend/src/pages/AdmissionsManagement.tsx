@@ -376,6 +376,11 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
                                 {cand.lead_source}
                               </span>
                             )}
+                            {cand.fee_payment_status === 'paid' && (
+                              <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                Fee Paid
+                              </span>
+                            )}
                           </div>
                           {cand.exam_percentile && (
                             <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 mt-2 flex items-center gap-1">
@@ -646,18 +651,45 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
                   <p>Counselor: <span className="text-indigo-600 dark:text-indigo-400">{selectedCandidate.assigned_counselor_name || 'Unassigned'}</span></p>
                   <p>Ad Source: <span className="text-purple-600 dark:text-purple-400">{selectedCandidate.lead_source || 'Website Form'}</span></p>
                 </div>
-                <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
-                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Move Candidate Stage</label>
-                  <select
-                    value={selectedCandidate.status}
-                    onChange={(e) => handleStatusChange(selectedCandidate.id, e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {STAGES.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                    <option value="rejected">Rejected / Withdrawn</option>
-                  </select>
+                <div className="pt-2 border-t border-slate-200/60 dark:border-white/5 space-y-2">
+                  <div className="flex justify-between items-center text-xs font-bold">
+                    <span className="text-slate-500">Seat Reservation Fee:</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-black ${
+                      selectedCandidate.fee_payment_status === 'paid' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10' : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10'
+                    }`}>
+                      {selectedCandidate.fee_payment_status || 'Pending'} ({selectedCandidate.locked_fee_amount ? `Rs. ${selectedCandidate.locked_fee_amount}` : 'Rs. 10,000'})
+                    </span>
+                  </div>
+                  {selectedCandidate.fee_payment_status !== 'paid' && (
+                    <button 
+                      onClick={async () => {
+                        try {
+                          const res = await admissionsAPI.createSeatLockOrder(selectedCandidate.id, 10000);
+                          toast.success(`Razorpay Order Created: ${res.data.razorpay_order_id}`);
+                          setSelectedCandidate(prev => prev ? { ...prev, razorpay_order_id: res.data.razorpay_order_id } : null);
+                          loadCandidates();
+                        } catch {
+                          toast.error('Failed to create payment order');
+                        }
+                      }}
+                      className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5"
+                    >
+                      <CreditCard size={14} weight="bold" /> Issue Razorpay Seat-Lock Link
+                    </button>
+                  )}
+                  <div className="pt-1">
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Move Candidate Stage</label>
+                    <select
+                      value={selectedCandidate.status}
+                      onChange={(e) => handleStatusChange(selectedCandidate.id, e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {STAGES.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                      <option value="rejected">Rejected / Withdrawn</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 

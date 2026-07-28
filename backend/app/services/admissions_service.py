@@ -473,3 +473,69 @@ class AdmissionsService:
             "last_outreach_at": cand.last_outreach_at.isoformat(),
             "status": "dispatched"
         }
+
+    async def generate_seat_lock_order(self, college_id: str, candidate_id: str, amount: float = 10000.0) -> Dict[str, Any]:
+        """
+        Generates a Seat-Lock Reservation Fee Invoice & Razorpay Payment Order for an admission candidate.
+        """
+        res = await self.db.execute(
+            select(Admission).where(
+                Admission.college_id == college_id,
+                Admission.id == candidate_id
+            )
+        )
+        cand = res.scalars().first()
+        if not cand:
+            raise ValueError("Candidate not found")
+
+        cand.locked_fee_amount = amount
+
+        from app.models.administration import FeeInvoice
+        inv_no = f"INV-SEAT-{cand.admission_number}"
+        
+        existing_inv = await self.db.execute(
+            select(FeeInvoice).where(
+                FeeInvoice.college_id == college_id,
+                FeeInvoice.invoice_no == inv_no
+            )
+        )
+        inv = existing_inv.scalars().first()
+        if not inv:
+            inv = FeeInvoice(
+                college_id=college_id,
+                student_id=cand.email or cand.mobile_number,
+                invoice_no=inv_no,
+                fee_type="Seat Reservation Fee",
+                total_amount=amount,
+                paid=0.0,
+                due=amount,
+                status="unpaid",
+                description=f"Seat reservation fee for candidate {cand.full_name} ({cand.branch})"
+            )
+            self.db.add(inv)
+            await self.db.flush()
+
+        cand.invoice_id = inv.id
+
+        import os, uuid
+        razorpay_key = os.getenv("RAZORPAY_KEY_ID", "rzp_test_acadmix2026")
+        order_id = f"order_{uuid.uuid4().hex[:12]}"
+        cand.razorpay_order_id = order_id
+
+        await self.db.commit()
+
+        return {
+            "candidate_id": cand.id,
+            "admission_number": cand.admission_number,
+            "invoice_id": inv.id,
+            "invoice_no": inv_no,
+            "razorpay_order_id": order_id,
+            "razorpay_key_id": razorpay_key,
+            "amount": amount,
+            "amount_paise": int(amount * 100),
+            "currency": "INR",
+            "full_name": cand.full_name,
+            "email": cand.email,
+            "mobile_number": cand.mobile_number,
+            "message": "Seat-lock payment order created successfully"
+        }

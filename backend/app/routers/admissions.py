@@ -279,3 +279,20 @@ async def send_candidate_nudge(
         return success(res)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+class SeatLockOrderPayload(BaseModel):
+    amount: float = 10000.0
+
+@router.post("/{candidate_id}/create-seat-lock-order")
+async def create_seat_lock_order(
+    candidate_id: str,
+    payload: SeatLockOrderPayload = SeatLockOrderPayload(),
+    user: dict = Depends(require_role("admin", "hod", "admissions_officer")),
+    session: AsyncSession = Depends(get_db)
+):
+    service = AdmissionsService(session)
+    try:
+        res = await service.generate_seat_lock_order(user["college_id"], candidate_id, payload.amount)
+        return success(res)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

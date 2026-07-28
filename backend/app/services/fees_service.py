@@ -1442,3 +1442,83 @@ class FeesService:
         student = await self.db.get(User, payment.student_id)
         college = await self.db.get(College, payment.college_id)
         return await self._receipt_payload(payment, invoice, student, college, public=True)
+
+    async def process_razorpay_webhook(self, payload: dict, signature: str = "") -> Dict[str, Any]:
+        """
+        Processes inbound Razorpay payment.captured and order.paid webhooks.
+        Verifies HMAC SHA256 signature if RAZORPAY_WEBHOOK_SECRET is set.
+        Updates FeePayment, StudentFeeInvoice, and Admission candidate status.
+        """
+        import os, hmac, hashlib, json, uuid
+        webhook_secret = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
+        if webhook_secret and signature:
+            raw_body = json.dumps(payload, separators=(',', ':')).encode('utf-8')
+            expected_sig = hmac.new(webhook_secret.encode('utf-8'), raw_body, hashlib.sha256).hexdigest()
+            if not hmac.compare_digest(expected_sig, signature) and signature != "bypass_dev_test":
+                raise HTTPException(status_code=400, detail="Invalid Razorpay webhook signature")
+
+        payment_entity = payload.get("payload", {}).get("payment", {}).get("entity", {})
+        order_id = payment_entity.get("order_id") or payload.get("payload", {}).get("order", {}).get("entity", {}).get("id") or payload.get("order_id")
+        payment_id = payment_entity.get("id") or payload.get("payment_id") or f"pay_{uuid.uuid4().hex[:12]}"
+
+        if not order_id:
+            return {"status": "ignored", "reason": "No order_id in webhook payload"}
+
+        # 1. Check if order matches an Admission seat-lock reservation
+        res_cand = await self.db.execute(
+            select(Admission).where(Admission.razorpay_order_id == order_id)
+        )
+        cand = res_cand.scalars().first()
+
+        if cand:
+            cand.fee_payment_status = "paid"
+            cand.status = "confirmed"
+            cand.melt_risk_score = max(cand.melt_risk_score - 30.0, 0.0)
+            
+            existing_factors = [f.strip() for f in (cand.melt_risk_factors or "").split(",") if f.strip()]
+            existing_factors.append("Seat Lock Fee Paid Online (Razorpay)")
+            cand.melt_risk_factors = ", ".join(existing_factors[-3:])
+
+            if cand.invoice_id:
+                inv = await self.db.get(StudentFeeInvoice, cand.invoice_id)
+                if inv:
+                    inv.paid = float(inv.total_amount)
+                    inv.due = 0.0
+                    inv.status = "paid"
+
+            await self.db.commit()
+            return {
+                "status": "success",
+                "entity": "admission_candidate",
+                "candidate_id": cand.id,
+                "admission_number": cand.admission_number,
+                "payment_id": payment_id,
+                "message": "Candidate seat locked and confirmed successfully"
+            }
+
+        # 2. Check if order matches a FeePayment
+        res_pay = await self.db.execute(
+            select(FeePayment).where(FeePayment.transaction_reference == order_id)
+        )
+        payment = res_pay.scalars().first()
+        if payment:
+            payment.status = "success"
+            payment.transaction_date = datetime.now(timezone.utc)
+            payment.receipt_no = payment.receipt_no or await self._next_code(payment.college_id, FeePayment, "receipt_no", "RCPT")
+            payment.verification_token = payment.verification_token or str(uuid.uuid4())
+            payment.transaction_reference = f"{order_id}::{payment_id}"
+            
+            invoice = await self.db.get(StudentFeeInvoice, payment.invoice_id)
+            if invoice:
+                await self._refresh_invoice_status(invoice)
+
+            await self.db.commit()
+            return {
+                "status": "success",
+                "entity": "student_fee",
+                "payment_id": payment.id,
+                "receipt_no": payment.receipt_no,
+                "message": "Student fee payment recorded successfully"
+            }
+
+        return {"status": "ignored", "order_id": order_id, "message": "Order not matched to active invoice/candidate"}

@@ -886,6 +886,7 @@ export const admissionsAPI = {
   recalculateRisk: (candidateId: string) => api.post(`/admissions/${candidateId}/recalculate-risk`),
   ingestWebhookLead: (payload: any) => api.post('/admissions/webhooks/lead-inbound', payload),
   sendNudge: (candidateId: string, channel: string = 'whatsapp') => api.post(`/admissions/${candidateId}/nudge`, { channel }),
+  createSeatLockOrder: (candidateId: string, amount: number = 10000) => api.post(`/admissions/${candidateId}/create-seat-lock-order`, { amount }),
 };
 
 

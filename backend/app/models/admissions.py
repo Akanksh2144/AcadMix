@@ -49,6 +49,8 @@ class Admission(Base, SoftDeleteMixin):
     assigned_counselor_id   = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     assigned_counselor_name = Column(String, nullable=True)
     last_outreach_at        = Column(DateTime(timezone=True), nullable=True)
+    invoice_id              = Column(String, ForeignKey("fee_invoices.id", ondelete="SET NULL"), nullable=True)
+    razorpay_order_id       = Column(String, nullable=True)
     
     created_at        = Column(DateTime(timezone=True), server_default=func.now())
 

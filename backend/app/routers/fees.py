@@ -470,3 +470,19 @@ async def cashier_session_history(
 ):
     cashier_id = user["id"] if user["role"] == "cashier" else None
     return await svc.cashier_session_history(user["college_id"], cashier_id, limit)
+
+
+@router.post("/fees/webhooks/razorpay")
+async def razorpay_payment_webhook(
+    request: Request,
+    svc: FeesService = Depends(get_fees_service)
+):
+    from fastapi import Request
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = dict(await request.form())
+
+    sig_header = request.headers.get("X-Razorpay-Signature", "")
+    res = await svc.process_razorpay_webhook(payload, sig_header)
+    return {"success": True, "data": res}
