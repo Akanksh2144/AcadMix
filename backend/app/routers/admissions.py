@@ -27,6 +27,10 @@ class BulkImportPayload(BaseModel):
 class UpdateStatusPayload(BaseModel):
     status: str
 
+class NudgePayload(BaseModel):
+    channel: str = "whatsapp"
+
+
 
 @router.get("")
 async def list_candidates(
@@ -73,6 +77,9 @@ async def list_candidates(
             "documents_verified": c.documents_verified,
             "fee_payment_status": c.fee_payment_status,
             "locked_fee_amount": c.locked_fee_amount,
+            "lead_source": c.lead_source,
+            "assigned_counselor_name": c.assigned_counselor_name,
+            "last_outreach_at": c.last_outreach_at.isoformat() if c.last_outreach_at else None,
             "melt_risk_score": c.melt_risk_score,
             "melt_risk_factors": c.melt_risk_factors
         } for c in candidates
@@ -255,6 +262,20 @@ async def ingest_lead_webhook(
     service = AdmissionsService(session)
     try:
         res = await service.ingest_inbound_lead(college_id, body)
+        return success(res)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{candidate_id}/nudge")
+async def send_candidate_nudge(
+    candidate_id: str,
+    payload: NudgePayload,
+    user: dict = Depends(require_role("admin", "hod", "admissions_officer")),
+    session: AsyncSession = Depends(get_db)
+):
+    service = AdmissionsService(session)
+    try:
+        res = await service.dispatch_candidate_outreach(user["college_id"], candidate_id, payload.channel)
         return success(res)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

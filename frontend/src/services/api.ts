@@ -885,6 +885,7 @@ export const admissionsAPI = {
   rollover: (candidateId: string) => api.post(`/admissions/${candidateId}/rollover`),
   recalculateRisk: (candidateId: string) => api.post(`/admissions/${candidateId}/recalculate-risk`),
   ingestWebhookLead: (payload: any) => api.post('/admissions/webhooks/lead-inbound', payload),
+  sendNudge: (candidateId: string, channel: string = 'whatsapp') => api.post(`/admissions/${candidateId}/nudge`, { channel }),
 };
 
 

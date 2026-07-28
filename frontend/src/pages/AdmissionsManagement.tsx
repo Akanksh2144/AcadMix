@@ -435,25 +435,42 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
                           <td className="px-4 py-3">
                             <div className="font-extrabold text-slate-800 dark:text-white text-sm">{c.full_name}</div>
                             <div className="text-[10px] text-slate-400">{c.email} • {c.mobile_number}</div>
+                            {c.assigned_counselor_name && (
+                              <div className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                                Counselor: {c.assigned_counselor_name}
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-3 font-semibold text-slate-500 max-w-xs truncate">
                             {c.melt_risk_factors || "No risk flags detected"}
                           </td>
                           <td className="px-4 py-3">
                             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 uppercase">{c.status}</span>
+                            {c.last_outreach_at && (
+                              <div className="text-[8px] font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                Nudged
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => {
-                                toast.success(`Calling ${c.full_name} at ${c.mobile_number}...`);
+                                window.open(`tel:${c.mobile_number}`);
+                                toast.success(`Initiating call to ${c.full_name}...`);
                               }}
                               className="px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 text-[10px] font-black hover:bg-slate-200 dark:hover:bg-white/10"
                             >
                               Call Lead
                             </button>
                             <button
-                              onClick={() => {
-                                toast.success(`[WhatsApp Nudge Sent] Reminded ${c.full_name} to confirm their seat.`);
+                              onClick={async () => {
+                                try {
+                                  await admissionsAPI.sendNudge(c.id, 'whatsapp');
+                                  toast.success(`[WhatsApp Nudge Sent] Reminded ${c.full_name} to confirm their seat.`);
+                                  loadCandidates();
+                                } catch {
+                                  toast.error('Failed to dispatch WhatsApp nudge');
+                                }
                               }}
                               className="px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black hover:bg-indigo-100"
                             >
@@ -626,6 +643,8 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
                   <p>Quota: <span className="text-slate-900 dark:text-white">{selectedCandidate.quota}</span></p>
                   <p>Category: <span className="text-slate-900 dark:text-white">{selectedCandidate.category}</span></p>
                   <p>Gender: <span className="text-slate-900 dark:text-white">{selectedCandidate.gender}</span></p>
+                  <p>Counselor: <span className="text-indigo-600 dark:text-indigo-400">{selectedCandidate.assigned_counselor_name || 'Unassigned'}</span></p>
+                  <p>Ad Source: <span className="text-purple-600 dark:text-purple-400">{selectedCandidate.lead_source || 'Website Form'}</span></p>
                 </div>
                 <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
                   <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Move Candidate Stage</label>

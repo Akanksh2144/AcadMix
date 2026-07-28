@@ -46,6 +46,9 @@ class Admission(Base, SoftDeleteMixin):
     utm_source         = Column(String, nullable=True)
     melt_risk_score    = Column(Float, default=0.0)
     melt_risk_factors  = Column(String, nullable=True)  # comma-separated reasons
+    assigned_counselor_id   = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    assigned_counselor_name = Column(String, nullable=True)
+    last_outreach_at        = Column(DateTime(timezone=True), nullable=True)
     
     created_at        = Column(DateTime(timezone=True), server_default=func.now())
 

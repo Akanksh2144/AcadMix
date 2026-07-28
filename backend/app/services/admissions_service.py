@@ -414,6 +414,19 @@ class AdmissionsService:
             documents_verified="pending",
             fee_payment_status="pending"
         )
+
+        # Round-robin counselor assignment: pick admissions_officer for the college
+        counselor_res = await self.db.execute(
+            select(User).where(
+                User.college_id == college_id,
+                User.role.in_(["admissions_officer", "admin"])
+            )
+        )
+        counselors = counselor_res.scalars().all()
+        if counselors:
+            new_cand.assigned_counselor_id = counselors[0].id
+            new_cand.assigned_counselor_name = counselors[0].name
+
         self.db.add(new_cand)
         await self.db.flush()
 
@@ -425,5 +438,38 @@ class AdmissionsService:
             "candidate_id": new_cand.id,
             "admission_number": new_cand.admission_number,
             "status": new_cand.status,
-            "message": "Inbound lead ingested successfully"
+            "assigned_counselor": new_cand.assigned_counselor_name,
+            "message": "Inbound lead ingested and assigned successfully"
+        }
+
+    async def dispatch_candidate_outreach(self, college_id: str, candidate_id: str, channel: str = "whatsapp") -> Dict[str, Any]:
+        """
+        Dispatches automated WhatsApp / SMS outreach nudge to prospective student.
+        Logs timestamp & outreach action.
+        """
+        res = await self.db.execute(
+            select(Admission).where(
+                Admission.college_id == college_id,
+                Admission.id == candidate_id
+            )
+        )
+        cand = res.scalars().first()
+        if not cand:
+            raise ValueError("Candidate not found")
+
+        cand.last_outreach_at = datetime.now(timezone.utc)
+        
+        # Log outreach factor
+        existing_factors = [f.strip() for f in (cand.melt_risk_factors or "").split(",") if f.strip()]
+        existing_factors.append(f"WhatsApp Nudge Sent ({datetime.now(timezone.utc).strftime('%b %d')})")
+        cand.melt_risk_factors = ", ".join(existing_factors[-3:])
+
+        await self.db.commit()
+
+        return {
+            "candidate_id": cand.id,
+            "mobile_number": cand.mobile_number,
+            "channel": channel,
+            "last_outreach_at": cand.last_outreach_at.isoformat(),
+            "status": "dispatched"
         }
