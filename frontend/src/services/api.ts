@@ -881,6 +881,7 @@ export const admissionsAPI = {
   generateMeritList: (phaseName: string) => api.post('/admissions/generate-merit-list', { phase_name: phaseName }),
   runCounseling: (branchCapacities: any) => api.post('/admissions/run-counseling', { branch_capacities: branchCapacities }),
   verifyDocuments: (candidateId: string, status: string) => api.put(`/admissions/${candidateId}/verify-documents`, { status }),
+  updateStatus: (candidateId: string, status: string) => api.patch(`/admissions/${candidateId}/status`, { status }),
   rollover: (candidateId: string) => api.post(`/admissions/${candidateId}/rollover`),
   recalculateRisk: (candidateId: string) => api.post(`/admissions/${candidateId}/recalculate-risk`),
 };

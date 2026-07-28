@@ -48,6 +48,41 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
   // Capacities
   const [capacities, setCapacities] = useState({ CSE: 60, ECE: 60, MECH: 60 });
   const [csvData, setCsvData] = useState('');
+  const [draggedCandidateId, setDraggedCandidateId] = useState<string | null>(null);
+
+  const handleStatusChange = async (candidateId: string, newStatus: string) => {
+    try {
+      setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, status: newStatus } : c));
+      if (selectedCandidate && selectedCandidate.id === candidateId) {
+        setSelectedCandidate(prev => prev ? { ...prev, status: newStatus } : null);
+      }
+      await admissionsAPI.updateStatus(candidateId, newStatus);
+      const stageObj = STAGES.find(s => s.id === newStatus);
+      toast.success(`Moved candidate to ${stageObj ? stageObj.name : newStatus}`);
+    } catch {
+      toast.error('Failed to update stage');
+      loadCandidates();
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, candidateId: string) => {
+    setDraggedCandidateId(candidateId);
+    e.dataTransfer.setData('text/plain', candidateId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetStage: string) => {
+    e.preventDefault();
+    const candidateId = e.dataTransfer.getData('text/plain') || draggedCandidateId;
+    if (!candidateId) return;
+    setDraggedCandidateId(null);
+    await handleStatusChange(candidateId, targetStage);
+  };
   
   useEffect(() => {
     loadCandidates();
@@ -275,18 +310,25 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
               {STAGES.map(stage => {
                 const stageCandidates = filtered.filter(c => c.status === stage.id);
                 return (
-                  <div key={stage.id} className="bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/10 p-4 rounded-3xl min-w-[220px] flex flex-col space-y-4">
+                  <div 
+                    key={stage.id} 
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, stage.id)}
+                    className="bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/10 p-4 rounded-3xl min-w-[220px] flex flex-col space-y-4 hover:border-indigo-400/50 transition-colors"
+                  >
                     <div className="flex justify-between items-center">
                       <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">{stage.name}</h4>
                       <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5">{stageCandidates.length}</span>
                     </div>
 
-                    <div className="flex-1 flex flex-col gap-3">
+                    <div className="flex-1 flex flex-col gap-3 min-h-[150px]">
                       {stageCandidates.map(cand => (
                         <div 
                           key={cand.id} 
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, cand.id)}
                           onClick={() => setSelectedCandidate(cand)}
-                          className="p-4 rounded-2xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.01] hover:-translate-y-0.5 hover:shadow-md cursor-pointer transition-all duration-200"
+                          className="p-4 rounded-2xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.01] hover:-translate-y-0.5 hover:shadow-md cursor-grab active:cursor-grabbing transition-all duration-200"
                         >
                           <p className="text-xs font-bold text-slate-400">{cand.admission_number}</p>
                           <h5 className="font-extrabold text-slate-800 dark:text-slate-200 mt-1">{cand.full_name}</h5>
@@ -302,7 +344,7 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
                         </div>
                       ))}
                       {stageCandidates.length === 0 && (
-                        <div className="flex-1 border border-dashed border-slate-200 dark:border-white/5 rounded-2xl flex items-center justify-center p-6 text-center text-[10px] font-extrabold text-slate-400">Empty Column</div>
+                        <div className="flex-1 border border-dashed border-slate-200 dark:border-white/5 rounded-2xl flex items-center justify-center p-6 text-center text-[10px] font-extrabold text-slate-400">Drag Candidate Here</div>
                       )}
                     </div>
                   </div>
@@ -543,6 +585,19 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
                   <p>Quota: <span className="text-slate-900 dark:text-white">{selectedCandidate.quota}</span></p>
                   <p>Category: <span className="text-slate-900 dark:text-white">{selectedCandidate.category}</span></p>
                   <p>Gender: <span className="text-slate-900 dark:text-white">{selectedCandidate.gender}</span></p>
+                </div>
+                <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Move Candidate Stage</label>
+                  <select
+                    value={selectedCandidate.status}
+                    onChange={(e) => handleStatusChange(selectedCandidate.id, e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {STAGES.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                    <option value="rejected">Rejected / Withdrawn</option>
+                  </select>
                 </div>
               </div>
 

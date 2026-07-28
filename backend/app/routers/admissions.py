@@ -24,6 +24,10 @@ class VerifyDocsPayload(BaseModel):
 class BulkImportPayload(BaseModel):
     csv_data: str
 
+class UpdateStatusPayload(BaseModel):
+    status: str
+
+
 @router.get("")
 async def list_candidates(
     q: Optional[str] = None,
@@ -126,6 +130,32 @@ async def verify_documents(
         candidate.status = "admitted"
     await session.commit()
     return success({"message": f"Document status updated to {payload.status}"})
+
+@router.patch("/{candidate_id}/status")
+async def update_candidate_status(
+    candidate_id: str,
+    payload: UpdateStatusPayload,
+    user: dict = Depends(require_role("admin", "hod", "admissions_officer")),
+    session: AsyncSession = Depends(get_db)
+):
+    res = await session.execute(
+        select(Admission).where(
+            Admission.college_id == user["college_id"],
+            Admission.id == candidate_id
+        )
+    )
+    candidate = res.scalars().first()
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+        
+    candidate.status = payload.status
+    await session.commit()
+    return success({
+        "id": candidate.id,
+        "status": candidate.status,
+        "message": f"Status updated to {candidate.status}"
+    })
+
 
 @router.post("/{candidate_id}/rollover")
 async def rollover_candidate(
