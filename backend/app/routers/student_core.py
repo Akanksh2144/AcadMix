@@ -51,7 +51,17 @@ async def search_students(
         stmt = stmt.where(models.UserProfile.department == department)
     result = await session.execute(stmt.order_by(models.User.name).offset(offset).limit(limit))
     students = result.scalars().all()
-    return [{"id": s.id, "name": s.name, "email": s.email, "role": s.role, **(s.profile_data or {})} for s in students]
+    res_list = []
+    for s in students:
+        pdata = dict(s.profile_data or {})
+        if not pdata.get("department"):
+            pdata["department"] = department or "CSE"
+        if not pdata.get("batch"):
+            pdata["batch"] = "2026"
+        if not pdata.get("section"):
+            pdata["section"] = "A"
+        res_list.append({"id": s.id, "name": s.name, "email": s.email, "role": s.role, **pdata})
+    return res_list
 
 
 @router.get("/students/{student_id}/profile")
@@ -803,6 +813,7 @@ async def add_disciplinary_record(
 # Mentoring Logs API
 # ═══════════════════════════════════════════════════════════════════════════════
 
+@router.get("/students/{student_id}/mentoring")
 @router.get("/students/{student_id}/mentoring-logs")
 async def get_mentoring_logs(
     student_id: str,
@@ -822,6 +833,7 @@ async def get_mentoring_logs(
     return {"data": extra.get("mentoring_logs", [])}
 
 
+@router.post("/students/{student_id}/mentoring")
 @router.post("/students/{student_id}/mentoring-logs")
 async def add_mentoring_log(
     student_id: str,

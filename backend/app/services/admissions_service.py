@@ -236,11 +236,14 @@ class AdmissionsService:
             user_id=new_user.id,
             college_id=college_id,
             roll_number=reg_number,
-            batch=candidate.batch,
-            department=candidate.allocated_branch or candidate.branch,
+            batch=candidate.batch or "2026",
+            department=candidate.allocated_branch or candidate.branch or "CSE",
             section="A",
+            current_semester=1,
+            enrollment_status="active",
             phone=candidate.mobile_number,
-            gender=candidate.gender
+            gender=candidate.gender or "Other",
+            address=candidate.address
         )
         self.db.add(new_profile)
         
