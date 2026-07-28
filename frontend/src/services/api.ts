@@ -884,6 +884,7 @@ export const admissionsAPI = {
   updateStatus: (candidateId: string, status: string) => api.patch(`/admissions/${candidateId}/status`, { status }),
   rollover: (candidateId: string) => api.post(`/admissions/${candidateId}/rollover`),
   recalculateRisk: (candidateId: string) => api.post(`/admissions/${candidateId}/recalculate-risk`),
+  ingestWebhookLead: (payload: any) => api.post('/admissions/webhooks/lead-inbound', payload),
 };
 
 

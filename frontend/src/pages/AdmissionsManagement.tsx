@@ -44,6 +44,15 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
   const [counselingModal, setCounselingModal] = useState(false);
   const [meritModal, setMeritModal] = useState(false);
   const [importModal, setImportModal] = useState(false);
+  const [webhookModal, setWebhookModal] = useState(false);
+
+  // Webhook Simulation Lead State
+  const [testLeadName, setTestLeadName] = useState('Ananya Verma');
+  const [testLeadMobile, setTestLeadMobile] = useState('9876501234');
+  const [testLeadEmail, setTestLeadEmail] = useState('ananya.verma@gmail.com');
+  const [testLeadBranch, setTestLeadBranch] = useState('CSE');
+  const [testLeadSource, setTestLeadSource] = useState('Meta Ads (FB/IG)');
+  const [ingestingWebhook, setIngestingWebhook] = useState(false);
   
   // Capacities
   const [capacities, setCapacities] = useState({ CSE: 60, ECE: 60, MECH: 60 });
@@ -100,6 +109,27 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
       toast.error('Failed to load candidate list');
     }
     setLoading(false);
+  };
+
+  const handleSimulateWebhook = async () => {
+    setIngestingWebhook(true);
+    try {
+      const res = await admissionsAPI.ingestWebhookLead({
+        full_name: testLeadName,
+        mobile_number: testLeadMobile,
+        email: testLeadEmail,
+        branch: testLeadBranch,
+        lead_source: testLeadSource,
+        utm_source: 'campaign_monsoon_2026'
+      });
+      toast.success(`Inbound Webhook Processed! Status: ${res.data.status} (Ref: ${res.data.admission_number})`);
+      setWebhookModal(false);
+      loadCandidates();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || 'Webhook ingestion failed');
+    } finally {
+      setIngestingWebhook(false);
+    }
   };
 
   const handleImport = async () => {
@@ -260,6 +290,12 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
           </div>
           <div className="flex gap-2">
             <button 
+              onClick={() => setWebhookModal(true)} 
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-extrabold hover:bg-indigo-100 transition-all"
+            >
+              <Sparkle size={16} /> Webhook & Ad Leads
+            </button>
+            <button 
               onClick={() => setImportModal(true)} 
               className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-extrabold hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
             >
@@ -335,6 +371,11 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
                           <div className="flex flex-wrap gap-1.5 mt-2">
                             <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">{cand.branch}</span>
                             <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400">{cand.quota}</span>
+                            {cand.lead_source && (
+                              <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                                {cand.lead_source}
+                              </span>
+                            )}
                           </div>
                           {cand.exam_percentile && (
                             <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 mt-2 flex items-center gap-1">
@@ -786,6 +827,115 @@ const AdmissionsManagement: React.FC<AdmissionsManagementProps> = ({ navigate, u
               <div className="flex gap-2 justify-end">
                 <button onClick={() => setImportModal(false)} className="px-4 py-2 rounded-full border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-500">Cancel</button>
                 <button onClick={handleImport} className="px-5 py-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-full text-xs font-black">Upload Candidates</button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Webhook & Lead Ingestion Modal */}
+      <AnimatePresence>
+        {webhookModal && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setWebhookModal(false)}
+              className="fixed inset-0 bg-black z-40"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed inset-0 m-auto w-full max-w-xl h-fit bg-white dark:bg-[#0B0F19] rounded-3xl border border-slate-100 dark:border-white/10 z-50 p-6 space-y-4"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[10px] font-black uppercase bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 px-2 py-0.5 rounded-full">Real-Time Ingestion</span>
+                  <h3 className="text-lg font-extrabold text-slate-900 dark:text-white mt-1">Webhook & Ad Lead Configuration</h3>
+                </div>
+                <button onClick={() => setWebhookModal(false)} className="text-slate-400 hover:text-slate-600">
+                  <XCircle size={22} weight="fill" />
+                </button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 space-y-2">
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Live Inbound Webhook Endpoint URL</p>
+                <div className="p-3 bg-slate-900 text-slate-100 rounded-xl text-xs font-mono break-all flex justify-between items-center">
+                  <span>{window.location.origin}/api/v1/admissions/webhooks/lead-inbound</span>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/api/v1/admissions/webhooks/lead-inbound`);
+                      toast.success('Webhook URL copied!');
+                    }}
+                    className="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-[10px] font-bold"
+                  >
+                    Copy URL
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400">Supports Meta (FB/IG) Lead Ads, Google Lead Forms, Shiksha webhooks, & custom JSON forms with auto-deduplication.</p>
+              </div>
+
+              {/* Simulation Sandbox Form */}
+              <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/10 space-y-3">
+                <h4 className="text-xs font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-wider">Test Inbound Webhook Simulator</h4>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 mb-1">Full Name</label>
+                    <input 
+                      type="text" 
+                      value={testLeadName} 
+                      onChange={e => setTestLeadName(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 mb-1">10-Digit Mobile</label>
+                    <input 
+                      type="text" 
+                      value={testLeadMobile} 
+                      onChange={e => setTestLeadMobile(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 mb-1">Email</label>
+                    <input 
+                      type="email" 
+                      value={testLeadEmail} 
+                      onChange={e => setTestLeadEmail(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 mb-1">Ad Lead Source</label>
+                    <select 
+                      value={testLeadSource} 
+                      onChange={e => setTestLeadSource(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold"
+                    >
+                      <option value="Meta Ads (FB/IG)">Meta Ads (FB/IG)</option>
+                      <option value="Google Ads">Google Ads</option>
+                      <option value="Website Form">Website Form</option>
+                      <option value="Shiksha Lead">Shiksha Lead</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-1">
+                  <button 
+                    onClick={handleSimulateWebhook}
+                    disabled={ingestingWebhook}
+                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-xs font-black transition-all disabled:opacity-50"
+                  >
+                    {ingestingWebhook ? 'Ingesting...' : 'Fire Test Webhook Payload'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button onClick={() => setWebhookModal(false)} className="px-5 py-2 rounded-full border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-500">Close</button>
               </div>
             </motion.div>
           </>

@@ -210,3 +210,51 @@ async def recalculate_risk(
         return success(res)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/webhooks/lead-inbound")
+async def verify_meta_webhook(
+    request: Request
+):
+    params = request.query_params
+    mode = params.get("hub.mode")
+    token = params.get("hub.verify_token")
+    challenge = params.get("hub.challenge")
+
+    import os
+    verify_secret = os.getenv("WEBHOOK_VERIFY_TOKEN", "acadmix_lead_secret_2026")
+    if mode == "subscribe" and token == verify_secret:
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse(content=challenge or "OK", status_code=200)
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(content=challenge or "OK", status_code=200)
+
+@router.post("/webhooks/lead-inbound")
+async def ingest_lead_webhook(
+    request: Request,
+    session: AsyncSession = Depends(get_db)
+):
+    try:
+        body = await request.json()
+    except Exception:
+        body = dict(await request.form())
+
+    college_id = body.get("college_id") or request.query_params.get("college_id")
+    tenant = getattr(request.state, "tenant", None)
+    if tenant and tenant.college_id:
+        college_id = tenant.college_id
+
+    if not college_id:
+        from app.models.core import College
+        c_res = await session.execute(select(College).limit(1))
+        col = c_res.scalars().first()
+        if col:
+            college_id = col.id
+        else:
+            raise HTTPException(status_code=400, detail="Missing tenant/college_id for lead ingestion")
+
+    service = AdmissionsService(session)
+    try:
+        res = await service.ingest_inbound_lead(college_id, body)
+        return success(res)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

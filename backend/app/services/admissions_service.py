@@ -320,3 +320,110 @@ class AdmissionsService:
             "melt_risk_score": cand.melt_risk_score,
             "melt_risk_factors": cand.melt_risk_factors
         }
+
+    async def ingest_inbound_lead(self, college_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Parses inbound lead webhook payload from Meta Ads, Google Ads, Shiksha, or Direct Web Forms.
+        Deduplicates against mobile_number + college_id.
+        Creates/updates Admission candidate and calculates AI Melt Risk.
+        """
+        full_name = payload.get("full_name") or payload.get("name")
+        mobile_number = payload.get("mobile_number") or payload.get("phone") or payload.get("mobile")
+        email = payload.get("email")
+        branch = payload.get("branch") or payload.get("preferred_branch") or "CSE"
+        source = payload.get("lead_source") or payload.get("source") or "Website Form"
+        utm_source = payload.get("utm_source")
+        course_prefs = payload.get("course_preferences") or branch
+
+        # Handle Meta LeadGen payload format
+        if "field_data" in payload:
+            source = "Meta Ads (FB/IG)"
+            for field in payload.get("field_data", []):
+                fn = field.get("name", "").lower()
+                vals = field.get("values", [])
+                val = vals[0] if vals else ""
+                if "name" in fn and not full_name:
+                    full_name = val
+                elif ("phone" in fn or "mobile" in fn) and not mobile_number:
+                    mobile_number = val
+                elif "email" in fn and not email:
+                    email = val
+                elif "branch" in fn or "course" in fn:
+                    branch = val
+
+        # Handle Google Lead Form payload format
+        if "user_column_data" in payload:
+            source = "Google Ads"
+            for col in payload.get("user_column_data", []):
+                c_id = col.get("column_id", "").lower()
+                val = col.get("string_value", "")
+                if "full_name" in c_id or "name" in c_id:
+                    full_name = val
+                elif "phone" in c_id:
+                    mobile_number = val
+                elif "email" in c_id:
+                    email = val
+
+        if not full_name or not mobile_number:
+            raise ValueError("Inbound payload must contain full_name and mobile_number")
+
+        # Sanitize mobile number
+        mobile_number = "".join(filter(str.isdigit, str(mobile_number)))[-10:]
+        if len(mobile_number) < 10:
+            raise ValueError("Invalid 10-digit mobile number")
+
+        # Check existing lead
+        res = await self.db.execute(
+            select(Admission).where(
+                Admission.college_id == college_id,
+                Admission.mobile_number == mobile_number
+            )
+        )
+        existing = res.scalars().first()
+
+        if existing:
+            existing.lead_source = source or existing.lead_source
+            if utm_source:
+                existing.utm_source = utm_source
+            await self.calculate_candidate_melt_risk(college_id, existing.id)
+            return {
+                "action": "updated",
+                "candidate_id": existing.id,
+                "admission_number": existing.admission_number,
+                "status": existing.status,
+                "message": "Lead deduplicated and updated successfully"
+            }
+
+        # Create new lead candidate
+        admission_number = f"ADM-{uuid.uuid4().hex[:6].upper()}"
+        new_cand = Admission(
+            college_id=college_id,
+            admission_number=admission_number,
+            full_name=full_name,
+            mobile_number=mobile_number,
+            email=email,
+            gender="Other",
+            branch=branch,
+            batch=datetime.now(timezone.utc).strftime("%Y"),
+            quota="General",
+            category="General",
+            course_preferences=course_prefs,
+            status="enquiry",
+            lead_source=source,
+            utm_source=utm_source,
+            documents_verified="pending",
+            fee_payment_status="pending"
+        )
+        self.db.add(new_cand)
+        await self.db.flush()
+
+        await self.calculate_candidate_melt_risk(college_id, new_cand.id)
+        await self.db.commit()
+
+        return {
+            "action": "created",
+            "candidate_id": new_cand.id,
+            "admission_number": new_cand.admission_number,
+            "status": new_cand.status,
+            "message": "Inbound lead ingested successfully"
+        }
