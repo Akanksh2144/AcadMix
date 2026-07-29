@@ -220,12 +220,12 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
                   </filter>
                 </defs>
                 
-                {/* Crescent Moon */}
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="url(#moonGrad)" filter="url(#moonGlow)" transform="translate(1.5, 1.5) scale(0.7)" />
+                {/* Crescent Moon Centered */}
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="url(#moonGrad)" filter="url(#moonGlow)" transform="translate(0, 0) scale(0.8)" />
                 
                 {/* Elegant Sparkle Stars */}
                 <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" fill="#FFF" opacity="0.9" transform="translate(15, 2) scale(0.18)" className="animate-pulse" />
-                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" fill="#FFF" opacity="0.6" transform="translate(4, 14) scale(0.1)" />
+                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" fill="#FFF" opacity="0.6" transform="translate(3, 16) scale(0.1)" />
               </svg>
             </div>
           </motion.button>
