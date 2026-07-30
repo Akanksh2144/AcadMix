@@ -71,10 +71,10 @@ async def _get_redis():
     except Exception:
         return None
 
-def _insights_cache_key(sql: str, role: str) -> str:
-    """SHA-256 hash of (generated SQL + role) for semantic cache deduplication."""
-    digest = hashlib.sha256(f"{role}:{sql.strip()}".encode()).hexdigest()
-    return f"insights_cache:v3:{digest}"
+def _insights_cache_key(sql: str, role: str, college_id: str = "", department: str = "") -> str:
+    """SHA-256 hash of (college_id + department + role + SQL) for strict tenant/scope semantic cache deduplication."""
+    digest = hashlib.sha256(f"{college_id}:{department}:{role}:{sql.strip()}".encode()).hexdigest()
+    return f"insights_cache:v4:{digest}"
 
 async def route_intent(query: str) -> str:
     """Classifies the query intent using Vertex Flash Lite."""
@@ -300,7 +300,7 @@ async def orchestrate_query(request: InsightsQueryRequest, current_user: dict, d
 
     # Semantic Cache Lookup
     redis = await _get_redis()
-    cache_key = _insights_cache_key(generated_sql, role)
+    cache_key = _insights_cache_key(generated_sql, role, target_college, user_department)
     if redis and not request.cached_sql:
         try:
             cached = await redis.get(cache_key)
