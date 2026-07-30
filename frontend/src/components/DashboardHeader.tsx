@@ -208,7 +208,7 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
 
             {/* Dark Mode Scene inside the Button */}
             <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${isDark ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-75 -rotate-45'}`}>
-              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="moonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#FFFFFF" />
@@ -220,12 +220,12 @@ const DashboardHeader = ({ user, title, onLogout, onProfileClick }) => {
                   </filter>
                 </defs>
                 
-                {/* Crescent Moon Centered */}
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="url(#moonGrad)" filter="url(#moonGlow)" transform="translate(0, 0) scale(0.8)" />
+                {/* Crescent Moon - Perfectly centered in 24x24 viewBox */}
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="url(#moonGrad)" filter="url(#moonGlow)" />
                 
                 {/* Elegant Sparkle Stars */}
-                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" fill="#FFF" opacity="0.9" transform="translate(15, 2) scale(0.18)" className="animate-pulse" />
-                <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4Z" fill="#FFF" opacity="0.6" transform="translate(3, 16) scale(0.1)" />
+                <path d="M12 0L13.5 4.5L18 6L13.5 7.5L12 12L10.5 7.5L6 6L10.5 4.5Z" fill="#FFF" opacity="0.9" transform="translate(13, 0) scale(0.35)" className="animate-pulse" />
+                <path d="M12 0L13.5 4.5L18 6L13.5 7.5L12 12L10.5 7.5L6 6L10.5 4.5Z" fill="#FFF" opacity="0.6" transform="translate(2, 13) scale(0.22)" />
               </svg>
             </div>
           </motion.button>
