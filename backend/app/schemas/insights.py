@@ -39,3 +39,10 @@ class PinnedInsightResponse(BaseModel):
     chart_suggestion: Optional[str] = None
     role: str
     created_at: Any
+
+class InsightsFeedbackRequest(BaseModel):
+    query_id: Optional[str] = None
+    message: str
+    generated_sql: Optional[str] = None
+    rating: str = Field(..., description="'positive' or 'negative'")
+    comment: Optional[str] = None

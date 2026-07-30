@@ -190,9 +190,12 @@ async def orchestrate_query(request: InsightsQueryRequest, current_user: dict, d
     """
     Main entry point for unified conversational ERP queries.
     """
+    start_time = time.time()
     role = current_user.get("role", "").upper()
     user_id = current_user.get("id")
     target_college = request.active_college_id if request.active_college_id and role in ["DHTE_NODAL", "SUPERADMIN"] else current_user.get("college_id")
+    repair_attempts = 0
+    is_mv_hit = False
 
     # Fetch department for HOD/FACULTY prompt constraint
     user_department = ""
@@ -240,6 +243,7 @@ async def orchestrate_query(request: InsightsQueryRequest, current_user: dict, d
             filter_str = parts[1].strip() if len(parts) > 1 else None
             
             if mv_key in MV_REGISTRY:
+                is_mv_hit = True
                 mv = MV_REGISTRY[mv_key]
                 view_name = mv["view"]
                 sql = f"SELECT * FROM {view_name} WHERE 1=1"
@@ -335,6 +339,7 @@ async def orchestrate_query(request: InsightsQueryRequest, current_user: dict, d
             
             # Self-healing SQL repair
             if attempt < max_attempts - 1 and not request.cached_sql and not intent.startswith("KNOWN_MV:"):
+                repair_attempts += 1
                 logger.info(f"Self-healing SQL retry (attempt {attempt + 1}) on ValueError: {err_str[:100]}")
                 try:
                     repair_history = history_dicts.copy() if not request.cached_sql else []
@@ -411,6 +416,14 @@ async def orchestrate_query(request: InsightsQueryRequest, current_user: dict, d
         "exportable": len(data) > 0,
         "generated_sql": generated_sql
     }
+
+    # Telemetry logging & metrics calculation
+    latency_ms = int((time.time() - start_time) * 1000)
+    cost_inr = 0.02 if is_mv_hit else (0.45 + (repair_attempts * 0.45))
+    logger.info(
+        f"[INSIGHTS_TELEMETRY] user={user_id} role={role} dept={user_department} college={target_college} "
+        f"is_mv={is_mv_hit} latency_ms={latency_ms} cost_inr={cost_inr:.2f} repair_attempts={repair_attempts} query='{request.message[:60]}'"
+    )
 
     # Write back to Redis Cache
     if redis and not request.cached_sql:

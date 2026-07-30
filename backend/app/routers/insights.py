@@ -6,7 +6,7 @@ import hashlib
 import json
 import logging
 
-from app.schemas.insights import InsightsQueryRequest, InsightsQueryResponse, PinnedInsightCreate, PinnedInsightResponse
+from app.schemas.insights import InsightsQueryRequest, InsightsQueryResponse, PinnedInsightCreate, PinnedInsightResponse, InsightsFeedbackRequest
 from app.services.ai_service import generate_insights_sql, format_insights_summary, validate_insights_semantics
 from app.services.insights_executor import execute_insights_query
 from app.core.security import get_current_user
@@ -148,3 +148,19 @@ async def delete_pin(
     await db.flush()  # ensure dirty flag is written within the managed transaction
     logger.info("delete_pin: success — pin_id=%s soft-deleted", pin_id)
     return {"message": "Success"}
+
+@router.post("/feedback")
+async def submit_insights_feedback(
+    feedback: InsightsFeedbackRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    role = current_user.get("role", "").upper()
+    user_id = current_user.get("id")
+    college_id = current_user.get("college_id")
+    
+    logger.info(
+        f"[INSIGHTS_FEEDBACK] rating={feedback.rating} user={user_id} role={role} college={college_id} "
+        f"query='{feedback.message[:60]}' comment='{feedback.comment or ''}' sql='{feedback.generated_sql or ''}'"
+    )
+    return {"status": "success", "message": "Feedback recorded. Thank you!"}

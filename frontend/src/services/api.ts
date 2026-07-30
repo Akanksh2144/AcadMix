@@ -780,6 +780,7 @@ export const insightsAPI = {
   getPins: () => api.get('/insights/pins'),
   createPin: (data) => api.post('/insights/pins', data),
   deletePin: (id) => api.delete(`/insights/pins/${id}`),
+  sendFeedback: (data) => api.post('/insights/feedback', data),
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
